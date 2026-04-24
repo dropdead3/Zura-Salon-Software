@@ -346,7 +346,7 @@ serve(async (req: Request) => {
           console.error(`Push failed (${response.status}):`, errorText);
           failed++;
         }
-      } catch (pushError) {
+      } catch (pushError: any) {
         console.error(`Push error:`, pushError);
         failed++;
       }

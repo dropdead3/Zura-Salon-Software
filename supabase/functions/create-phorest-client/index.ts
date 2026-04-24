@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
         const settings = (orgData?.settings || {}) as Record<string, any>;
       phorestWriteEnabled = settings.phorest_write_enabled === true;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log("Could not resolve org for write-gate check, defaulting to disabled");
     }
 

@@ -121,7 +121,7 @@ serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("batch-payment-methods error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

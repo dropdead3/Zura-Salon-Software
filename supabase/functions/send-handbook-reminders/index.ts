@@ -126,30 +126,30 @@ serve(async (req: Request): Promise<Response> => {
 
       // Get this user's roles
       const roles = userRoles
-        ?.filter(r => r.user_id === employee.user_id)
-        .map(r => r.role) || [];
+        ?.filter((r: any) => r.user_id === employee.user_id)
+        .map((r: any) => r.role) || [];
 
       if (roles.length === 0) continue;
 
       // Find handbooks visible to this user's roles
-      const visibleHandbooks = handbooks.filter(h => {
+      const visibleHandbooks = handbooks.filter((h: any) => {
         const visibleRoles = h.visible_to_roles || [];
-        return roles.some(role => visibleRoles.includes(role));
+        return roles.some((role: any) => visibleRoles.includes(role));
       });
 
       // Find which handbooks haven't been acknowledged
       const userAcks = acknowledgments
-        ?.filter(a => a.user_id === employee.user_id)
-        .map(a => a.handbook_id) || [];
+        ?.filter((a: any) => a.user_id === employee.user_id)
+        .map((a: any) => a.handbook_id) || [];
 
-      const pendingHandbooks = visibleHandbooks.filter(h => !userAcks.includes(h.id));
+      const pendingHandbooks = visibleHandbooks.filter((h: any) => !userAcks.includes(h.id));
 
       if (pendingHandbooks.length > 0) {
         employeesToRemind.push({
           user_id: employee.user_id,
           email: employee.email,
           full_name: employee.full_name,
-          pending_handbooks: pendingHandbooks.map(h => h.title),
+          pending_handbooks: pendingHandbooks.map((h: any) => h.title),
           organization_id: employee.organization_id,
         });
       }
@@ -163,7 +163,7 @@ serve(async (req: Request): Promise<Response> => {
     for (const employee of employeesToRemind) {
       try {
         const handbookList = employee.pending_handbooks
-          .map(title => `<li style="margin-bottom: 8px;">${title}</li>`)
+          .map((title: any) => `<li style="margin-bottom: 8px;">${title}</li>`)
           .join("");
 
         // Prepare template variables
@@ -190,7 +190,7 @@ serve(async (req: Request): Promise<Response> => {
           success: result.success, 
           pendingCount: employee.pending_handbooks.length 
         });
-      } catch (emailError) {
+      } catch (emailError: any) {
         emailResults.push({ 
           email: employee.email, 
           success: false, 

@@ -284,17 +284,17 @@ serve(async (req) => {
     const adoptionContext = `
 UNUSED FEATURES & INTEGRATIONS:
 ${unusedFeatures.length > 0 ? unusedFeatures.map((f: any) => `  - ${f.name} (key: feature:${f.feature_key}): ${f.description}`).join("\n") : "All available features are enabled."}
-${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrations.map(i => `  - ${i}`).join("\n")}` : "\nAll key integrations are connected."}
+${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrations.map((i: any) => `  - ${i}`).join("\n")}` : "\nAll key integrations are connected."}
 `;
 
     // Pre-compute key metrics
-    const pastAppointments = appointments.filter((a) => a.appointment_date <= today);
-    const futureAppointments = appointments.filter((a) => a.appointment_date > today);
-    const cancelledCount = pastAppointments.filter((a) => a.status === "cancelled").length;
-    const noShowCount = pastAppointments.filter((a) => a.status === "no_show").length;
-    const completedCount = pastAppointments.filter((a) => a.status === "completed").length;
+    const pastAppointments = appointments.filter((a: any) => a.appointment_date <= today);
+    const futureAppointments = appointments.filter((a: any) => a.appointment_date > today);
+    const cancelledCount = pastAppointments.filter((a: any) => a.status === "cancelled").length;
+    const noShowCount = pastAppointments.filter((a: any) => a.status === "no_show").length;
+    const completedCount = pastAppointments.filter((a: any) => a.status === "completed").length;
     const totalPast = pastAppointments.length;
-    const rebookedCount = pastAppointments.filter((a) => a.rebooked_at_checkout).length;
+    const rebookedCount = pastAppointments.filter((a: any) => a.rebooked_at_checkout).length;
 
     // Sales aggregates derived inline from transaction_items rows.
     // (Previously this read from `daily_sales_summary` which used different
@@ -318,12 +318,12 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         total_transactions: agg.transactionIds.size,
         average_ticket: agg.transactionIds.size > 0 ? agg.revenue / agg.transactionIds.size : 0,
       }))
-      .sort((a, b) => b.summary_date.localeCompare(a.summary_date));
+      .sort((a: any, b: any) => b.summary_date.localeCompare(a.summary_date));
 
-    const thisWeekSales = dailySales.filter((s) => s.summary_date >= weekAgo);
-    const lastWeekSales = dailySales.filter((s) => s.summary_date < weekAgo);
-    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
-    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
+    const thisWeekSales = dailySales.filter((s: any) => s.summary_date >= weekAgo);
+    const lastWeekSales = dailySales.filter((s: any) => s.summary_date < weekAgo);
+    const thisWeekRevenue = thisWeekSales.reduce((sum: any, s: any) => sum + s.total_revenue, 0);
+    const lastWeekRevenue = lastWeekSales.reduce((sum: any, s: any) => sum + s.total_revenue, 0);
 
     // High-ticket & retail metrics (last 30 days)
     const totalCompleted30d = highTicketAppts.length;
@@ -398,7 +398,7 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
       .from("phorest_staff_mapping")
       .select("phorest_staff_id, user_id")
       .eq("is_active", true);
-    const phorestToUser = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m.user_id]));
+    const phorestToUser = new Map<string, string>((staffMappings || []).map((m: any) => [m.phorest_staff_id, m.user_id] as [string, string]));
 
     for (const apt of staffAppts) {
       const userId = phorestToUser.get(apt.phorest_staff_id);
@@ -412,12 +412,12 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         if (apt.rebooked_at_checkout) staffMetrics[userId].rebooked++;
       }
     }
-    const staffList = Object.values(staffMetrics).filter(s => s.completed > 0);
-    staffList.sort((a, b) => b.revenue - a.revenue);
+    const staffList = Object.values(staffMetrics).filter((s: any) => s.completed > 0);
+    staffList.sort((a: any, b: any) => b.revenue - a.revenue);
     const top3Staff = staffList.slice(0, 3);
     const bottom3Staff = staffList.length > 3 ? staffList.slice(-3).reverse() : [];
     const teamAvgRebook = staffList.length > 0
-      ? staffList.reduce((s, st) => s + (st.completed > 0 ? st.rebooked / st.completed : 0), 0) / staffList.length * 100
+      ? staffList.reduce((s: any, st: any) => s + (st.completed > 0 ? st.rebooked / st.completed : 0), 0) / staffList.length * 100
       : 0;
 
     // ─── DAY-OF-WEEK PATTERNS ───
@@ -436,10 +436,10 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
 
     const wowMetrics = (appts: any[]) => {
       const total = appts.length;
-      const cancelled = appts.filter(a => a.status === 'cancelled').length;
-      const noShow = appts.filter(a => a.status === 'no_show').length;
-      const completed = appts.filter(a => a.status === 'completed').length;
-      const rebooked = appts.filter(a => a.rebooked_at_checkout).length;
+      const cancelled = appts.filter((a: any) => a.status === 'cancelled').length;
+      const noShow = appts.filter((a: any) => a.status === 'no_show').length;
+      const completed = appts.filter((a: any) => a.status === 'completed').length;
+      const rebooked = appts.filter((a: any) => a.rebooked_at_checkout).length;
       return {
         total,
         cancelRate: total > 0 ? (cancelled / total * 100) : 0,
@@ -482,7 +482,7 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         }
 
         locationComparisonContext = `\nCROSS-LOCATION COMPARISON (Last 30 days):\n` +
-          Object.values(locMap).map(l =>
+          Object.values(locMap).map((l: any) =>
             `  ${l.name}: ${l.completed} completed, $${l.revenue.toFixed(0)} revenue, ` +
             `rebook ${l.completed > 0 ? (l.rebooked / l.completed * 100).toFixed(1) : '0'}%, ` +
             `cancel ${l.total > 0 ? (l.cancelled / l.total * 100).toFixed(1) : '0'}%`
@@ -498,7 +498,7 @@ REVENUE (Last 14 days):
 - Last week total: $${lastWeekRevenue.toFixed(0)}
 - Week-over-week change: ${lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue * 100).toFixed(1) : "N/A"}%
 - Daily sales entries: ${dailySales.length}
-${dailySales.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
+${dailySales.slice(0, 7).map((s: any) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
 
 APPOINTMENTS (Last 7 + Next 7 days):
 - Total past week: ${totalPast}
@@ -519,8 +519,8 @@ STAFF:
 
 STAFF PERFORMANCE BREAKDOWN (Last 30 days):
 - Team average rebook rate: ${teamAvgRebook.toFixed(1)}%
-${top3Staff.length > 0 ? `Top performers:\n${top3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : 'Insufficient staff data for rankings.'}
-${bottom3Staff.length > 0 ? `\nNeeds attention:\n${bottom3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : ''}
+${top3Staff.length > 0 ? `Top performers:\n${top3Staff.map((s: any) => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : 'Insufficient staff data for rankings.'}
+${bottom3Staff.length > 0 ? `\nNeeds attention:\n${bottom3Staff.map((s: any) => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : ''}
 
 CLIENT RETENTION HEALTH:
 - At-risk clients (45-90 days since last visit): ${atRiskCount} (avg lifetime spend: $${atRiskAvgSpend.toFixed(0)})
@@ -532,13 +532,13 @@ DAY-OF-WEEK PATTERNS (Last week):
 ${Object.entries(dowCounts).map(([dow, count]) => `  ${dowNames[Number(dow)]}: ${count} appointments (avg ${(count / weeksInRange).toFixed(1)}/week)`).join('\n')}
 
 REVENUE FORECASTS (Next 7 days):
-${forecasts.length > 0 ? forecasts.map((f) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
+${forecasts.length > 0 ? forecasts.map((f: any) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
 
 ACTIVE ANOMALIES (Unacknowledged):
-${anomalies.length > 0 ? anomalies.map((a) => `  ${a.anomaly_type} (${a.severity}): value=${a.metric_value}, expected=${a.expected_value}, deviation=${a.deviation_percent}%`).join("\n") : "No active anomalies"}
+${anomalies.length > 0 ? anomalies.map((a: any) => `  ${a.anomaly_type} (${a.severity}): value=${a.metric_value}, expected=${a.expected_value}, deviation=${a.deviation_percent}%`).join("\n") : "No active anomalies"}
 
 SCHEDULING SUGGESTIONS (Pending):
-${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
+${suggestions.length > 0 ? suggestions.map((s: any) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
 
 HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
 - Total completed appointments: ${totalCompleted30d}
@@ -815,7 +815,7 @@ ENRICHMENT RULES FOR EVERY INSIGHT:
       } else {
         throw new Error("No tool call in response");
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       console.error("Failed to parse AI response:", parseErr, JSON.stringify(aiData));
       return new Response(
         JSON.stringify({ error: "Failed to parse AI insights" }),
@@ -917,7 +917,7 @@ ENRICHMENT RULES FOR EVERY INSIGHT:
       JSON.stringify(saved || { insights, generated_at: now, expires_at: expiresAt }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("ai-business-insights error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),

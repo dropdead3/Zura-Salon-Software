@@ -30,7 +30,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -49,7 +49,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -75,7 +75,7 @@ serve(async (req) => {
 
     // Store detected anomalies
     if (anomalies.length > 0) {
-      const anomaliesToInsert = anomalies.map(a => ({
+      const anomaliesToInsert = anomalies.map((a: any) => ({
         organization_id: organizationId,
         location_id: locationId || null,
         anomaly_type: a.type,
@@ -89,7 +89,7 @@ serve(async (req) => {
       await supabase.from("detected_anomalies").insert(anomaliesToInsert);
 
       // Send push notifications for critical anomalies
-      const criticalAnomalies = anomalies.filter(a => a.severity === 'critical');
+      const criticalAnomalies = anomalies.filter((a: any) => a.severity === 'critical');
       if (criticalAnomalies.length > 0) {
         await sendAnomalyAlerts(supabase, organizationId, criticalAnomalies);
       }
@@ -105,7 +105,7 @@ serve(async (req) => {
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Anomaly detection error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

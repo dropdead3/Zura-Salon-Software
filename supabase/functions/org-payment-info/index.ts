@@ -97,7 +97,7 @@ serve(async (req) => {
       limit: 12,
     });
 
-    const invoices = invoiceList.data.map((inv) => ({
+    const invoices = invoiceList.data.map((inv: any) => ({
       id: inv.id,
       number: inv.number,
       date: inv.created ? new Date(inv.created * 1000).toISOString() : null,
@@ -116,7 +116,7 @@ serve(async (req) => {
       JSON.stringify({ payment_method: paymentMethod, invoices }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[ORG-PAYMENT-INFO] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

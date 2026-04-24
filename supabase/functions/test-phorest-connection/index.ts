@@ -86,7 +86,7 @@ serve(async (req: Request) => {
               const errorText = await response.text();
               console.log(`${response.status}: ${errorText.substring(0, 100)}`);
             }
-          } catch (e) {
+          } catch (e: any) {
             console.log(`Connection error:`, e);
           }
         }
@@ -165,14 +165,14 @@ serve(async (req: Request) => {
                 });
               }
             }
-          } catch (e) {
+          } catch (e: any) {
             console.log(`Could not fetch staff for branch ${branchId}:`, e);
           }
         }
         
         staffCount = staffList.length;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log("Could not fetch staff:", e);
     }
 

@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
       .select('id, name')
       .in('id', [scheduled_location_id, arrived_location_id]);
 
-    const scheduledLocation = locations?.find(l => l.id === scheduled_location_id);
-    const arrivedLocation = locations?.find(l => l.id === arrived_location_id);
+    const scheduledLocation = locations?.find((l: any) => l.id === scheduled_location_id);
+    const arrivedLocation = locations?.find((l: any) => l.id === arrived_location_id);
 
     await supabase.from('user_notifications').insert({
       user_id: stylist_user_id,
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
 
     if (pushTokens && pushTokens.length > 0) {
       for (const tokenRecord of pushTokens) {
-        try { console.log('Would send push to:', tokenRecord.subscription); } catch (pushError) { console.error('Push failed:', pushError); }
+        try { console.log('Would send push to:', tokenRecord.subscription); } catch (pushError: any) { console.error('Push failed:', pushError); }
       }
     }
 
@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),

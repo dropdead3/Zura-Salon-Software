@@ -23,7 +23,7 @@ const CORS_HEADERS_BASE: Record<string, string> = {
 export function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") || "";
 
-  const isAllowed = ALLOWED_ORIGINS.some((allowed) => {
+  const isAllowed = ALLOWED_ORIGINS.some((allowed: any) => {
     if (typeof allowed === "string") return allowed === origin;
     return allowed.test(origin);
   });

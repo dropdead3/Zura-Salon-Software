@@ -146,7 +146,7 @@ Deno.serve(async (req: Request) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Growth report error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

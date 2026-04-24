@@ -92,7 +92,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({ appointmentId: result.appointment_id, action: "book" }),
       });
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Failed to enqueue service emails:", e);
     }
 

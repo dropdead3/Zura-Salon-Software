@@ -13,7 +13,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { supabaseAdmin } = authResult;
@@ -47,7 +47,7 @@ serve(async (req) => {
 
     if (empError) throw empError;
 
-    const employeeUserIds = employees?.map((e) => e.user_id) || [];
+    const employeeUserIds = employees?.map((e: any) => e.user_id) || [];
 
     // Fetch roles for these employees
     const { data: roles, error: roleError } = employeeUserIds.length > 0
@@ -65,15 +65,14 @@ serve(async (req) => {
 
     for (const location of locations) {
       // Find employees at this location
-      const locationEmployees = employees?.filter(
-        (e) => e.location_ids?.includes(location.id)
+      const locationEmployees = employees?.filter((e: any) => e.location_ids?.includes(location.id)
       ) || [];
-      const locationUserIds = locationEmployees.map((e) => e.user_id);
+      const locationUserIds = locationEmployees.map((e: any) => e.user_id);
 
       // Count stylists and assistants
-      const locationRoles = roles?.filter((r) => locationUserIds.includes(r.user_id)) || [];
-      const stylistCount = locationRoles.filter((r) => r.role === "stylist").length;
-      const assistantCount = locationRoles.filter((r) => r.role === "stylist_assistant").length;
+      const locationRoles = roles?.filter((r: any) => locationUserIds.includes(r.user_id)) || [];
+      const stylistCount = locationRoles.filter((r: any) => r.role === "stylist").length;
+      const assistantCount = locationRoles.filter((r: any) => r.role === "stylist_assistant").length;
 
       snapshots.push({
         location_id: location.id,

@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         latest.set(r.system, { status: r.status, source: r.source });
       }
     }
-    const allDone = COMPLETION_SYSTEMS.every((s) => {
+    const allDone = COMPLETION_SYSTEMS.every((s: any) => {
       const entry = latest.get(s);
       return entry?.status === "completed" && entry.source === "wizard";
     });
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
       } else {
         dispatchReason = "no_owner_email";
       }
-    } catch (err) {
+    } catch (err: any) {
       // Function not deployed (no email infra) → fall back silently
       dispatchReason = `email_unavailable:${(err as Error).message}`;
     }

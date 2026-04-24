@@ -49,7 +49,7 @@ serve(async (req) => {
             .slice(0, 4000);
           pageContext = textContent;
         }
-      } catch (e) {
+      } catch (e: any) {
         console.log("Failed to fetch URL, proceeding without page content:", e.message);
       }
     }
@@ -116,7 +116,7 @@ Rules:
       JSON.stringify({ description }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("generate-product-description error:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Unknown error" }),

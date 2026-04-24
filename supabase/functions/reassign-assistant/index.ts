@@ -71,8 +71,8 @@ serve(async (req: Request) => {
       );
     }
 
-    const assistantUserIds = assistantRoles.map(r => r.user_id);
-    const eligibleAssistants = assistantUserIds.filter(id => !declinedByArray.includes(id));
+    const assistantUserIds = assistantRoles.map((r: any) => r.user_id);
+    const eligibleAssistants = assistantUserIds.filter((id: any) => !declinedByArray.includes(id));
 
     if (eligibleAssistants.length === 0) {
       await supabase.from("assistant_requests").update({
@@ -93,8 +93,8 @@ serve(async (req: Request) => {
       .neq("id", request_id)
       .or(`and(start_time.lte.${request.start_time},end_time.gt.${request.start_time}),and(start_time.lt.${request.end_time},end_time.gte.${request.end_time}),and(start_time.gte.${request.start_time},end_time.lte.${request.end_time})`);
 
-    const busyAssistants = new Set(conflicts?.map(c => c.assistant_id) || []);
-    const availableAssistants = eligibleAssistants.filter(id => !busyAssistants.has(id));
+    const busyAssistants = new Set(conflicts?.map((c: any) => c.assistant_id) || []);
+    const availableAssistants = eligibleAssistants.filter((id: any) => !busyAssistants.has(id));
 
     if (availableAssistants.length === 0) {
       await supabase.from("assistant_requests").update({
@@ -112,12 +112,12 @@ serve(async (req: Request) => {
       .select("*")
       .in("assistant_id", availableAssistants);
 
-    const existingAssistantIds = new Set(assignments?.map(a => a.assistant_id) || []);
-    const newAssistants = availableAssistants.filter(id => !existingAssistantIds.has(id));
+    const existingAssistantIds = new Set(assignments?.map((a: any) => a.assistant_id) || []);
+    const newAssistants = availableAssistants.filter((id: any) => !existingAssistantIds.has(id));
 
     if (newAssistants.length > 0) {
       await supabase.from("assistant_assignments")
-        .insert(newAssistants.map(id => ({ assistant_id: id, total_assignments: 0 })));
+        .insert(newAssistants.map((id: any) => ({ assistant_id: id, total_assignments: 0 })));
     }
 
     const { data: allAssignments } = await supabase

@@ -26,8 +26,8 @@ async function verifyStripeSignature(
   }
 
   const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
-  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
+  const timestamp = elements.find((e: any) => e.startsWith('t='))?.slice(2);
+  const sig = elements.find((e: any) => e.startsWith('v1='))?.slice(3);
 
   if (!timestamp || !sig) {
     console.error("Invalid signature format");
@@ -59,11 +59,11 @@ async function verifyStripeSignature(
     );
 
     const expectedHex = Array.from(new Uint8Array(expected))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b: any) => b.toString(16).padStart(2, '0'))
       .join('');
 
     return expectedHex === sig;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signature verification error:", error);
     return false;
   }
@@ -124,7 +124,7 @@ async function sendPaymentFailedEmail(
       `,
     });
     console.log("Payment failed email sent successfully");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to send payment failed email:", error);
   }
 }
@@ -409,7 +409,7 @@ async function handleCheckoutCompleted(
         plan_tier: 'standard',
         stylist_count: lp.stylist_count || 0,
       }));
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to parse location_plans metadata:", e);
     }
   }
@@ -427,7 +427,7 @@ async function handleCheckoutCompleted(
   console.log(`Enabling color bar for organization: ${orgId}, locations: ${locationPlans.length}, scales: ${scaleCount}, interval: ${billingInterval}`);
 
   // 1. Upsert the org-level feature flag (master switch)
-  const planSummary = locationPlans.map((lp) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
+  const planSummary = locationPlans.map((lp: any) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
   const { error } = await supabase
     .from('organization_feature_flags')
     .upsert({
@@ -473,7 +473,7 @@ async function handleCheckoutCompleted(
     const activatedAt = new Date().toISOString();
     const refundEligibleUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const entitlementRows = locationPlans.map((lp, idx) => ({
+    const entitlementRows = locationPlans.map((lp: any, idx: any) => ({
       organization_id: orgId,
       location_id: lp.location_id,
       plan_tier: lp.plan_tier,
@@ -686,7 +686,7 @@ async function handlePaymentIntentSucceeded(
   }
 
   // Remove undefined keys
-  Object.keys(updatePayload).forEach(k => updatePayload[k] === undefined && delete updatePayload[k]);
+  Object.keys(updatePayload).forEach((k: any) => updatePayload[k] === undefined && delete updatePayload[k]);
 
   // Online booking deposit reconciliation
   if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {
@@ -983,7 +983,7 @@ async function handleSetupIntentSucceeded(
       console.error(`Failed to fetch PM ${paymentMethodId}: ${pmResponse.status}`);
       return;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error fetching payment method from Stripe:", err);
     return;
   }

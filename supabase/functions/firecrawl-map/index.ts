@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       JSON.stringify(data),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error mapping:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to map';
     return new Response(

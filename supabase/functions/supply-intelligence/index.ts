@@ -426,7 +426,7 @@ Generate insights covering:
     return new Response(JSON.stringify({ insights: parsedInsights }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("supply-intelligence error:", error);
     return new Response(
       JSON.stringify({ error: error.message ?? "Internal error" }),

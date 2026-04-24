@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       if (!appointments || appointments.length === 0) continue;
 
       // Further filter by actual time window
-      const filteredAppointments = appointments.filter(appt => {
+      const filteredAppointments = appointments.filter((appt: any) => {
         const apptDatetime = new Date(`${appt.appointment_date}T${appt.start_time}`);
         return apptDatetime >= windowStart && apptDatetime <= windowEnd;
       });
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       }
 
       // Fetch reminder configs per org
-      const orgIds = [...new Set(filteredAppointments.map(a => a.organization_id).filter(Boolean))];
+      const orgIds = [...new Set(filteredAppointments.map((a: any) => a.organization_id).filter(Boolean))];
       const { data: configs } = await supabase
         .from("appointment_reminders_config")
         .select("id, organization_id, reminder_type, is_active, subject, html_body")
@@ -84,11 +84,11 @@ Deno.serve(async (req) => {
         .eq("reminder_type", reminderType)
         .eq("is_active", true);
 
-      const configMap = new Map(configs?.map(c => [c.organization_id, c]) || []);
+      const configMap = new Map<string, any>(configs?.map((c: any) => [c.organization_id, c] as [string, any]) || []);
 
       // Fetch location overrides
-      const configIds = configs?.map(c => c.id) || [];
-      const locationIds = [...new Set(filteredAppointments.map(a => a.location_id).filter(Boolean))];
+      const configIds = configs?.map((c: any) => c.id) || [];
+      const locationIds = [...new Set(filteredAppointments.map((a: any) => a.location_id).filter(Boolean))];
       let overrideMap = new Map<string, any>();
 
       if (configIds.length > 0 && locationIds.length > 0) {
@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
           .in("config_id", configIds)
           .in("location_id", locationIds);
 
-        overrides?.forEach(o => overrideMap.set(`${o.config_id}:${o.location_id}`, o));
+        overrides?.forEach((o: any) => overrideMap.set(`${o.config_id}:${o.location_id}`, o));
       }
 
       // Fetch location names
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
           .from("locations")
           .select("id, name, city")
           .in("id", locationIds);
-        locations?.forEach(l => locationNameMap.set(l.id, l.name));
+        locations?.forEach((l: any) => locationNameMap.set(l.id, l.name));
       }
 
       // Send reminders
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
           ? overrideMap.get(`${config.id}:${locationId}`)
           : null;
 
-        const servicesList = groupAppts.map(a => a.service_name).filter(Boolean).join(", ");
+        const servicesList = groupAppts.map((a: any) => a.service_name).filter(Boolean).join(", ");
         const stylistName = first.staff_name || "your stylist";
         const locationName = locationId ? locationNameMap.get(locationId) || "" : "";
         const firstName = first.client_name?.split(" ")[0] || "there";
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
 
         if (result.success && !result.skipped) {
           // Mark all appointments in this group as reminded
-          const apptIds = groupAppts.map(a => a.id);
+          const apptIds = groupAppts.map((a: any) => a.id);
           await supabase
             .from("appointments")
             .update({ [flagColumn]: true })
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, sent: totalSent }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[reminders] Error:", message);
     return new Response(

@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
       auto_connected_location_id,
       bank_last4: bankLast4,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("verify-zura-pay-connection error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

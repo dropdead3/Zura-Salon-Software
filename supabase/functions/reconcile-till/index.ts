@@ -115,17 +115,17 @@ Deno.serve(async (req) => {
         const localPIIds = new Set((localAppointments || []).map((a: any) => a.stripe_payment_intent_id));
 
         // Categorize
-        const succeeded = stripePIs.filter(pi => pi.status === "succeeded");
-        const totalStripeAmount = succeeded.reduce((sum, pi) => sum + pi.amount, 0); // cents
-        const totalStripeTips = succeeded.reduce((sum, pi) => {
+        const succeeded = stripePIs.filter((pi: any) => pi.status === "succeeded");
+        const totalStripeAmount = succeeded.reduce((sum: any, pi: any) => sum + pi.amount, 0); // cents
+        const totalStripeTips = succeeded.reduce((sum: any, pi: any) => {
           const tipMeta = pi.metadata?.tip_amount;
           return sum + (tipMeta ? parseInt(tipMeta, 10) : 0);
         }, 0);
 
         // Find unmatched PIs (in Stripe but not in local records)
         const unmatchedPIs = succeeded
-          .filter(pi => !localPIIds.has(pi.id))
-          .map(pi => ({
+          .filter((pi: any) => !localPIIds.has(pi.id))
+          .map((pi: any) => ({
             id: pi.id,
             amount: pi.amount,
             created: pi.created,
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
           }));
 
         // Find local records with PIs not in Stripe (data integrity issue)
-        const stripePIIds = new Set(stripePIs.map(pi => pi.id));
+        const stripePIIds = new Set(stripePIs.map((pi: any) => pi.id));
         const orphanedLocal = (localAppointments || [])
           .filter((a: any) => a.stripe_payment_intent_id && !stripePIIds.has(a.stripe_payment_intent_id))
           .map((a: any) => ({

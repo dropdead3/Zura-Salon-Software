@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     }
 
     const beforeSnapshots: Record<string, any> = {};
-    clientSnapshots.forEach((c) => {
+    clientSnapshots.forEach((c: any) => {
       beforeSnapshots[c.id] = c;
     });
 
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
         let totalSalonCredit = 0;
         let totalGiftCard = 0;
 
-        secondaryBalances.forEach((b) => {
+        secondaryBalances.forEach((b: any) => {
           totalSalonCredit += Number(b.salon_credit_balance || 0);
           totalGiftCard += Number(b.gift_card_balance || 0);
         });
@@ -220,8 +220,7 @@ Deno.serve(async (req) => {
           .eq("client_id", primaryClientId)
           .limit(1);
 
-        const totalPoints = secondaryPoints.reduce(
-          (sum, p) => sum + Number(p.points_balance || 0),
+        const totalPoints = secondaryPoints.reduce((sum: any, p: any) => sum + Number(p.points_balance || 0),
           0
         );
 
@@ -285,11 +284,10 @@ Deno.serve(async (req) => {
     try {
       // Get phorest_client_ids for secondary clients
       const secondaryPhorestIds = clientSnapshots
-        .filter((c) => secondaryClientIds.includes(c.id) && c.phorest_client_id)
-        .map((c) => c.phorest_client_id);
+        .filter((c: any) => secondaryClientIds.includes(c.id) && c.phorest_client_id)
+        .map((c: any) => c.phorest_client_id);
 
-      const primaryPhorestId = clientSnapshots.find(
-        (c) => c.id === primaryClientId
+      const primaryPhorestId = clientSnapshots.find((c: any) => c.id === primaryClientId
       )?.phorest_client_id;
 
       if (secondaryPhorestIds.length > 0 && primaryPhorestId) {
@@ -354,7 +352,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Merge error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),

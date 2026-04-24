@@ -107,7 +107,7 @@ serve(async (req: Request): Promise<Response> => {
 
         console.log(`Email sent to ${stylist.email}:`, result);
         emailResults.push({ email: stylist.email, success: result.success, result });
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error(`Failed to send email to ${stylist.email}:`, emailError);
         emailResults.push({ email: stylist.email, success: false, error: String(emailError) });
       }

@@ -99,11 +99,11 @@ Deno.serve(async (req) => {
       started > 0 ? (completed / started) * 100 : 0;
 
     const currentRate = rate(weeklyStarted[4], weeklyCompleted[4]);
-    const trailingRates = [0, 1, 2, 3].map((i) =>
+    const trailingRates = [0, 1, 2, 3].map((i: any) =>
       rate(weeklyStarted[i], weeklyCompleted[i]),
     );
     const trailingAvg =
-      trailingRates.reduce((a, b) => a + b, 0) / trailingRates.length;
+      trailingRates.reduce((a: any, b: any) => a + b, 0) / trailingRates.length;
     const deltaPp = currentRate - trailingAvg;
 
     // Only alert when the current week has enough signal to compare
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       trailingAvg,
       deltaPp,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[setup-funnel-digest] error:", err);
     return json({ error: (err as Error).message }, 500);
   }

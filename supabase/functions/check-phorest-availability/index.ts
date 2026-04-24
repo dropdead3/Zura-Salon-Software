@@ -127,7 +127,7 @@ serve(async (req) => {
           .select("duration_minutes")
           .in("phorest_service_id", service_ids);
 
-        const totalDuration = services?.reduce((sum, s) => sum + (s.duration_minutes || 60), 0) || 60;
+        const totalDuration = services?.reduce((sum: any, s: any) => sum + (s.duration_minutes || 60), 0) || 60;
 
         // Generate slots from 9am to 7pm with 15-minute intervals
         const startHour = 9;
@@ -143,7 +143,7 @@ serve(async (req) => {
             const slotEnd = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMin.toString().padStart(2, '0')}`;
 
             // Check if this slot overlaps with any existing appointment
-            const hasConflict = appointments?.some(apt => {
+            const hasConflict = appointments?.some((apt: any) => {
               const aptStart = apt.start_time;
               const aptEnd = apt.end_time;
               return !(slotEnd <= aptStart || slotStart >= aptEnd);

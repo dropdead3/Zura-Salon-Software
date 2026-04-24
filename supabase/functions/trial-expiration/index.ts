@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, ...results }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Trial expiration error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

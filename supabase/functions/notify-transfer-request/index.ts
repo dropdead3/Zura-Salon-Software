@@ -53,10 +53,10 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, notified: results.filter(r => r.inserted).length, total: recipients.length }),
+      JSON.stringify({ success: true, notified: results.filter((r: any) => r.inserted).length, total: recipients.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

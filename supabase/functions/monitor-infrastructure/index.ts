@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] DB connection stats error:", e);
     }
 
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
           const avgMs =
             data.durations.length > 0
               ? Math.round(
-                  data.durations.reduce((a, b) => a + b, 0) / data.durations.length
+                  data.durations.reduce((a: any, b: any) => a + b, 0) / data.durations.length
                 )
               : 0;
 
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
               avg_ms: avgMs,
               p95_ms:
                 data.durations.length > 0
-                  ? data.durations.sort((a, b) => a - b)[
+                  ? data.durations.sort((a: any, b: any) => a - b)[
                       Math.floor(data.durations.length * 0.95)
                     ]
                   : 0,
@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] Edge function perf error:", e);
     }
 
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] Storage stats error:", e);
     }
 
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[monitor] Fatal error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

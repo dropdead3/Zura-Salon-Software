@@ -15,7 +15,7 @@ const SERVICES = [
         const client = createClient(supabaseUrl, serviceKey) as any;
         await client.from('organizations').select('id').limit(1);
         return { healthy: true, responseTime: Date.now() - start };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -48,7 +48,7 @@ const SERVICES = [
           responseTime,
           error: response.ok ? undefined : `HTTP ${response.status}`,
         };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -75,7 +75,7 @@ const SERVICES = [
           responseTime,
           error: response.ok ? undefined : `HTTP ${response.status}`,
         };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -136,18 +136,18 @@ Deno.serve(async (req) => {
         });
     }
 
-    const hasDown = results.some(r => r.status === 'down');
-    const hasDegraded = results.some(r => r.status === 'degraded');
+    const hasDown = results.some((r: any) => r.status === 'down');
+    const hasDegraded = results.some((r: any) => r.status === 'degraded');
     const overallStatus = hasDown ? 'down' : hasDegraded ? 'degraded' : 'healthy';
 
     // If there are critical issues, create a platform notification
     if (hasDown) {
-      const downServices = results.filter(r => r.status === 'down');
+      const downServices = results.filter((r: any) => r.status === 'down');
       await adminClient.from('platform_notifications').insert({
         type: 'critical_error',
         severity: 'critical',
         title: 'Service Outage Detected',
-        message: `The following services are down: ${downServices.map(s => s.service_name).join(', ')}`,
+        message: `The following services are down: ${downServices.map((s: any) => s.service_name).join(', ')}`,
         metadata: { services: downServices },
       });
     }
@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
 
     if (hasDown && !activeAutoIncident) {
       // Auto-create a new incident
-      const downServices = results.filter(r => r.status === 'down');
-      const serviceNames = downServices.map(s => s.service_name).join(', ');
+      const downServices = results.filter((r: any) => r.status === 'down');
+      const serviceNames = downServices.map((s: any) => s.service_name).join(', ');
       await adminClient.from('platform_incidents').insert({
         status: 'active',
         severity: 'critical',
@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Health check error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ message: "No admins to notify" }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    const adminUserIds = adminRoles.map(r => r.user_id);
+    const adminUserIds = adminRoles.map((r: any) => r.user_id);
     const { data: adminProfiles, error: profilesError } = await supabase
       .from("employee_profiles")
       .select("email, display_name, full_name, organization_id")
@@ -45,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ message: "No admin emails found" }), { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } });
     }
 
-    const adminEmails = adminProfiles.map(p => p.email).filter(Boolean) as string[];
+    const adminEmails = adminProfiles.map((p: any) => p.email).filter(Boolean) as string[];
     const organizationId = adminProfiles[0]?.organization_id;
     const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace(".supabase.co", ".lovable.app")}`;
 

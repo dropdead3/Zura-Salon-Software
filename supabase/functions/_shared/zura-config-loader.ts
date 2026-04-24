@@ -103,7 +103,7 @@ export async function loadZuraConfig(
     if (knowledgeRes.data) result.knowledge = knowledgeRes.data;
     if (guardrailsRes.data) result.guardrails = guardrailsRes.data;
     if (roleRulesRes.data) result.roleRules = roleRulesRes.data;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error loading AI config:", e);
     // Return defaults on error - functions continue working
   }
@@ -159,14 +159,14 @@ export function buildZuraPromptPrefix(config: ZuraConfig): string {
 
   // Guardrails
   if (config.guardrails.length > 0) {
-    const hardBlocks = config.guardrails.filter(g => g.severity === "hard_block");
-    const softWarns = config.guardrails.filter(g => g.severity === "soft_warn");
+    const hardBlocks = config.guardrails.filter((g: any) => g.severity === "hard_block");
+    const softWarns = config.guardrails.filter((g: any) => g.severity === "soft_warn");
 
     if (hardBlocks.length > 0) {
-      sections.push("ABSOLUTE RULES (never violate):\n" + hardBlocks.map(g => `- ${g.rule_description}`).join("\n"));
+      sections.push("ABSOLUTE RULES (never violate):\n" + hardBlocks.map((g: any) => `- ${g.rule_description}`).join("\n"));
     }
     if (softWarns.length > 0) {
-      sections.push("GUIDELINES (politely deflect if asked):\n" + softWarns.map(g => `- ${g.rule_description}`).join("\n"));
+      sections.push("GUIDELINES (politely deflect if asked):\n" + softWarns.map((g: any) => `- ${g.rule_description}`).join("\n"));
     }
   }
 

@@ -31,7 +31,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -57,7 +57,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -110,7 +110,7 @@ serve(async (req) => {
       else dailyMap[d].product_revenue += rev;
       dailyMap[d].total_transactions += 1;
     }
-    const historicalSales = Object.values(dailyMap).sort((a, b) => a.summary_date.localeCompare(b.summary_date));
+    const historicalSales = Object.values(dailyMap).sort((a: any, b: any) => a.summary_date.localeCompare(b.summary_date));
 
     // ── 30-Day Gap Ratio Calculation ──
     const thirtyDaysAgo = new Date();
@@ -138,7 +138,7 @@ serve(async (req) => {
 
     // Build scheduled totals by date
     const scheduledByDate: Record<string, number> = {};
-    (scheduledAppointments || []).forEach(apt => {
+    (scheduledAppointments || []).forEach((apt: any) => {
       const d = apt.appointment_date;
       if (!scheduledByDate[d]) scheduledByDate[d] = 0;
       scheduledByDate[d] += Number(apt.total_price) || 0;
@@ -146,7 +146,7 @@ serve(async (req) => {
 
     // Build actual totals by date from historical sales (filter to 30-day window)
     const actualByDate: Record<string, number> = {};
-    (historicalSales || []).forEach(day => {
+    (historicalSales || []).forEach((day: any) => {
       if (day.summary_date >= thirtyDaysAgoStr && day.summary_date <= yesterdayStr) {
         if (!actualByDate[day.summary_date]) actualByDate[day.summary_date] = 0;
         actualByDate[day.summary_date] += Number(day.total_revenue) || 0;
@@ -166,7 +166,7 @@ serve(async (req) => {
     // Calculate gap adjustment factor, clamped [0.70, 1.00]
     let gapAdjustmentFactor = 1.0;
     if (ratios.length >= 3) {
-      const avgRatio = ratios.reduce((s, r) => s + r, 0) / ratios.length;
+      const avgRatio = ratios.reduce((s: any, r: any) => s + r, 0) / ratios.length;
       gapAdjustmentFactor = Math.min(1.0, Math.max(0.70, avgRatio));
     }
 
@@ -197,7 +197,7 @@ serve(async (req) => {
 
     // Aggregate historical data by day of week
     const dayOfWeekAverages: Record<number, { total: number; count: number; services: number; products: number }> = {};
-    (historicalSales || []).forEach(day => {
+    (historicalSales || []).forEach((day: any) => {
       const date = new Date(day.summary_date);
       const dow = date.getDay();
       if (!dayOfWeekAverages[dow]) {
@@ -211,7 +211,7 @@ serve(async (req) => {
 
     // Calculate booked revenue per day
     const bookedByDate: Record<string, number> = {};
-    (upcomingAppointments || []).forEach(apt => {
+    (upcomingAppointments || []).forEach((apt: any) => {
       const date = apt.appointment_date;
       if (!bookedByDate[date]) bookedByDate[date] = 0;
       bookedByDate[date] += Number(apt.total_price) || 0;
@@ -337,13 +337,13 @@ Return ONLY valid JSON, no markdown or explanation.`
         const parsed = JSON.parse(cleanContent.trim());
         forecasts = parsed.forecasts || [];
         summary = parsed.summary;
-      } catch (parseError) {
+      } catch (parseError: any) {
         console.error("Failed to parse AI response:", parseError, content);
         forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend, gapAdjustmentFactor);
       }
     } else {
       forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend, gapAdjustmentFactor);
-      const totalPredicted = forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0);
+      const totalPredicted = forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0);
       summary = {
         totalPredicted,
         avgDaily: forecasts.length > 0 ? Math.round(totalPredicted / forecasts.length) : 0,
@@ -356,7 +356,7 @@ Return ONLY valid JSON, no markdown or explanation.`
 
     // Store forecasts in database
     if (forecasts.length > 0) {
-      const forecastsToUpsert = forecasts.map(f => ({
+      const forecastsToUpsert = forecasts.map((f: any) => ({
         organization_id: organizationId,
         location_id: locationId || null,
         forecast_date: f.date,
@@ -380,8 +380,8 @@ Return ONLY valid JSON, no markdown or explanation.`
         success: true,
         forecasts,
         summary: summary || {
-          totalPredicted: forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0),
-          avgDaily: forecasts.length ? Math.round(forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0) / forecasts.length) : 0,
+          totalPredicted: forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0),
+          avgDaily: forecasts.length ? Math.round(forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0) / forecasts.length) : 0,
           trend,
           keyInsight: `Based on ${historicalSales?.length || 0} days of historical data`
         },
@@ -393,7 +393,7 @@ Return ONLY valid JSON, no markdown or explanation.`
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Revenue forecasting error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -408,8 +408,8 @@ function calculateTrend(sales: any[]): 'up' | 'down' | 'stable' {
   const recent = sales.slice(-7);
   const previous = sales.slice(-14, -7);
   
-  const recentAvg = recent.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0) / 7;
-  const previousAvg = previous.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0) / 7;
+  const recentAvg = recent.reduce((sum: any, d: any) => sum + (Number(d.total_revenue) || 0), 0) / 7;
+  const previousAvg = previous.reduce((sum: any, d: any) => sum + (Number(d.total_revenue) || 0), 0) / 7;
   
   const change = ((recentAvg - previousAvg) / previousAvg) * 100;
   

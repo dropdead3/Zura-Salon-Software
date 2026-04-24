@@ -44,7 +44,7 @@ async function decrypt(encryptedText: string, key: string): Promise<string> {
   const keyData = encoder.encode(key.padEnd(32, '0').slice(0, 32));
   
   const combined = new Uint8Array(
-    atob(encryptedText).split('').map(c => c.charCodeAt(0))
+    atob(encryptedText).split('').map((c: any) => c.charCodeAt(0))
   );
   
   const iv = combined.slice(0, 12);
@@ -362,7 +362,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({ token: refreshToken }),
             });
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error revoking QuickBooks token:', e);
           }
         }

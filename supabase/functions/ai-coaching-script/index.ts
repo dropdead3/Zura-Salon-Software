@@ -71,12 +71,12 @@ serve(async (req) => {
     const { stylistName, currentLevel, nextLevel, kpiSnapshot, goalDaysRemaining } = parsed.data;
 
     // Identify strengths and weaknesses
-    const met = kpiSnapshot.filter((k) => k.gap <= 0);
-    const unmet = kpiSnapshot.filter((k) => k.gap > 0);
-    const declining = unmet.filter((k) => k.trajectory === "declining");
+    const met = kpiSnapshot.filter((k: any) => k.gap <= 0);
+    const unmet = kpiSnapshot.filter((k: any) => k.gap > 0);
+    const declining = unmet.filter((k: any) => k.trajectory === "declining");
 
-    const strengthsList = met.map((k) => k.metric).join(", ") || "None yet";
-    const weakList = unmet.map((k) => `${k.metric} (gap: ${k.gap.toFixed(1)} ${k.unit}, ${k.trajectory})`).join("; ");
+    const strengthsList = met.map((k: any) => k.metric).join(", ") || "None yet";
+    const weakList = unmet.map((k: any) => `${k.metric} (gap: ${k.gap.toFixed(1)} ${k.unit}, ${k.trajectory})`).join("; ");
 
     const goalContext = goalDaysRemaining
       ? `\n- Goal timeline: ${goalDaysRemaining} days to level up`
@@ -90,7 +90,7 @@ Context:
 - Next level: ${nextLevel || "Top level (maintenance)"}
 - Strengths (metrics already met): ${strengthsList}
 - Gaps: ${weakList || "None — all met"}
-- Declining metrics: ${declining.length > 0 ? declining.map((k) => k.metric).join(", ") : "None"}${goalContext}
+- Declining metrics: ${declining.length > 0 ? declining.map((k: any) => k.metric).join(", ") : "None"}${goalContext}
 
 Generate a structured coaching plan.`;
 
@@ -188,7 +188,7 @@ Generate a structured coaching plan.`;
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("ai-coaching-script error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
         connected_account_id: connectedAccountId,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("create-booking-payment-intent error:", error);
     return jsonResponse(
       { error: error.message || "An unexpected error occurred" },

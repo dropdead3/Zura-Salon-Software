@@ -45,7 +45,7 @@ function buildPrompt(
     "",
     "Configured rules (these are the ONLY rules that may appear in your output):",
   ];
-  ruleBlocks.forEach((b) => {
+  ruleBlocks.forEach((b: any) => {
     const v = b.value as { v?: unknown };
     const val = v && typeof v === "object" && "v" in v ? v.v : b.value;
     lines.push(`- ${b.block_key}: ${JSON.stringify(val)}${b.required ? " (required)" : ""}`);
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     }
 
     // Required-rule guard
-    const missingRequired = blocks.filter((b) => {
+    const missingRequired = blocks.filter((b: any) => {
       if (!b.required) return false;
       const v = b.value as { v?: unknown };
       const val = v && typeof v === "object" && "v" in v ? v.v : b.value;
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
     if (missingRequired.length > 0) {
       return new Response(
         JSON.stringify({
-          error: `Required rules not configured: ${missingRequired.map((b) => b.block_key).join(", ")}`,
+          error: `Required rules not configured: ${missingRequired.map((b: any) => b.block_key).join(", ")}`,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, jobId: job.id, output_md: outputMd }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (e) {
+  } catch (e: any) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("policy-draft-variants error:", msg);
     return new Response(JSON.stringify({ error: msg }), {

@@ -309,7 +309,7 @@ function aggregateData(
   const totals: Record<string, number> = {};
   
   for (const metric of metrics) {
-    const values = data.map((d) => {
+    const values = data.map((d: any) => {
       const fieldMap: Record<string, string> = {
         total_revenue: "total_revenue",
         service_revenue: "service_revenue",
@@ -321,10 +321,10 @@ function aggregateData(
 
     switch (metric.aggregation) {
       case "sum":
-        totals[metric.id] = values.reduce((a, b) => a + b, 0);
+        totals[metric.id] = values.reduce((a: any, b: any) => a + b, 0);
         break;
       case "avg":
-        totals[metric.id] = values.reduce((a, b) => a + b, 0) / values.length;
+        totals[metric.id] = values.reduce((a: any, b: any) => a + b, 0) / values.length;
         break;
       case "count":
         totals[metric.id] = values.length;

@@ -111,7 +111,7 @@ async function fetchFromSource(source: PriceSource): Promise<FetchedPrice[]> {
       wholesale_price: Number(p.wholesale_price || p.cost_price || 0),
       recommended_retail: p.recommended_retail ? Number(p.recommended_retail) : null,
     }));
-  } catch (err) {
+  } catch (err: any) {
     console.error(`Error fetching from ${source.brand}:`, err);
     return [];
   }
@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in wholesale-price-sync:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         format,
         requested_by: request.requested_by,
         status: 'completed',
-        record_count: Object.values(exportData).reduce((sum, val) => {
+        record_count: Object.values(exportData).reduce((sum: any, val: any) => {
           if (Array.isArray(val)) return sum + val.length;
           return sum;
         }, 0),
@@ -171,8 +171,8 @@ Deno.serve(async (req) => {
       const mainData = exportData[request.export_type] || exportData.users || [];
       if (Array.isArray(mainData) && mainData.length > 0) {
         const headers = Object.keys(mainData[0]).join(',');
-        const rows = mainData.map(row => 
-          Object.values(row).map(v => 
+        const rows = mainData.map((row: any) => 
+          Object.values(row).map((v: any) => 
             typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : v
           ).join(',')
         ).join('\n');
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Data export error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Calendar feed error:", error);
     return new Response("Internal server error", { status: 500, headers: corsHeaders });
   }

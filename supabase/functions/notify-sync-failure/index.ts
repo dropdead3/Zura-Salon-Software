@@ -90,7 +90,7 @@ serve(async (req: Request) => {
     });
 
     const emailResults = await Promise.all(emailPromises);
-    const successCount = emailResults.filter(r => r.success).length;
+    const successCount = emailResults.filter((r: any) => r.success).length;
 
     const notificationPromises = admins.map(async (admin) => {
       await supabase.from("notifications").insert({

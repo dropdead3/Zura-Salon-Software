@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ success: true, scanned: results.length, results }),
       { status: 200, headers: { ...wildcardCorsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("SEO daily scan error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }),
@@ -778,7 +778,7 @@ async function computeRevenueSnapshot(
     }
 
     return upserts.length;
-  } catch (err) {
+  } catch (err: any) {
     console.error("Revenue snapshot error:", err);
     return 0;
   }

@@ -41,7 +41,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -71,7 +71,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -103,7 +103,7 @@ serve(async (req) => {
     }
 
     // Fetch staff mappings to get user IDs and names
-    const staffIds = [...new Set((appointments || []).map(a => a.phorest_staff_id).filter(Boolean))];
+    const staffIds = [...new Set((appointments || []).map((a: any) => a.phorest_staff_id).filter(Boolean))];
     
     let staffMap: Record<string, { userId: string; name: string }> = {};
     if (staffIds.length > 0) {
@@ -149,7 +149,7 @@ serve(async (req) => {
       .eq("day_of_week", dayOfWeek);
 
     // Transform appointments with staff info
-    const enrichedAppointments: ExistingAppointment[] = (appointments || []).map(apt => ({
+    const enrichedAppointments: ExistingAppointment[] = (appointments || []).map((apt: any) => ({
       id: apt.id,
       start_time: apt.start_time,
       end_time: apt.end_time,
@@ -162,18 +162,18 @@ serve(async (req) => {
       date,
       dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek],
       serviceDuration: serviceDurationMinutes,
-      existingAppointments: enrichedAppointments.map(apt => ({
+      existingAppointments: enrichedAppointments.map((apt: any) => ({
         startTime: apt.start_time,
         endTime: apt.end_time,
         clientName: apt.client_name || 'Client'
       })),
-      availableStaff: (availableStaff || []).map(s => ({
+      availableStaff: (availableStaff || []).map((s: any) => ({
         id: s.user_id,
         name: s.display_name || `${s.first_name || ''} ${s.last_name || ''}`.trim()
       })),
       peakHours: (patterns || [])
-        .filter(p => p.peak_score && p.peak_score > 0.7)
-        .map(p => p.hour_of_day),
+        .filter((p: any) => p.peak_score && p.peak_score > 0.7)
+        .map((p: any) => p.hour_of_day),
       businessHours: { start: 9, end: 20 }
     };
 
@@ -266,19 +266,19 @@ Return ONLY the JSON response, no markdown or explanation.`
       
       const parsed = JSON.parse(cleanContent.trim());
       suggestions = parsed.suggestions || [];
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Failed to parse AI response:", parseError, content);
       // Return fallback suggestions based on simple gap analysis
       suggestions = generateFallbackSuggestions(
         enrichedAppointments,
         availableStaff || [],
-        serviceDurationMinutes
+        serviceDurationMinutes ?? 60
       );
     }
 
     // Store suggestions in database for analytics
     if (suggestions.length > 0) {
-      const suggestionsToInsert = suggestions.slice(0, 5).map(s => ({
+      const suggestionsToInsert = suggestions.slice(0, 5).map((s: any) => ({
         organization_id: organizationId,
         staff_user_id: s.staffUserId || (availableStaff?.[0]?.user_id),
         suggested_date: date,
@@ -306,7 +306,7 @@ Return ONLY the JSON response, no markdown or explanation.`
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Scheduling copilot error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -326,7 +326,7 @@ function generateFallbackSuggestions(
   const businessEnd = 20 * 60; // 8 PM in minutes
 
   // Find gaps in schedule
-  const sortedApts = [...appointments].sort((a, b) => 
+  const sortedApts = [...appointments].sort((a: any, b: any) => 
     a.start_time.localeCompare(b.start_time)
   );
 

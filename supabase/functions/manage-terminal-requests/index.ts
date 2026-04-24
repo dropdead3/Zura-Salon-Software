@@ -302,7 +302,7 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

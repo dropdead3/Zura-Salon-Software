@@ -220,11 +220,11 @@ Deno.serve(async (req) => {
         success: true,
         analyzed: organizations?.length || 0,
         high_risk: highRiskOrgs.length,
-        analyses: analyses.filter(a => a.risk_level === 'high' || a.risk_level === 'critical'),
+        analyses: analyses.filter((a: any) => a.risk_level === 'high' || a.risk_level === 'critical'),
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Churn detection error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

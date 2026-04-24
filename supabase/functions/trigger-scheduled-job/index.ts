@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } catch (invokeError) {
+    } catch (invokeError: any) {
       const duration = Date.now() - startTime;
 
       // Update log entry with error
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Trigger job error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

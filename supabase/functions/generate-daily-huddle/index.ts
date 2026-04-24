@@ -31,7 +31,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -56,7 +56,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -102,8 +102,8 @@ serve(async (req) => {
       .eq("organization_id", organizationId)
       .eq("appointment_date", yesterdayStr);
 
-    const noShows = yesterdayAppts?.filter((a) => a.status === "no_show").length || 0;
-    const cancellations = yesterdayAppts?.filter((a) => a.status === "cancelled").length || 0;
+    const noShows = yesterdayAppts?.filter((a: any) => a.status === "no_show").length || 0;
+    const cancellations = yesterdayAppts?.filter((a: any) => a.status === "cancelled").length || 0;
     contextData.yesterdayOperations = {
       totalAppointments: totalAppts || 0,
       noShows,
@@ -131,21 +131,21 @@ serve(async (req) => {
       .eq("organization_id", organizationId)
       .eq("is_approved", true);
 
-    const todayBirthdays = birthdays?.filter((e) => {
+    const todayBirthdays = birthdays?.filter((e: any) => {
       if (!e.birth_date) return false;
       const bd = new Date(e.birth_date);
       return bd.getMonth() + 1 === todayMonth && bd.getDate() === todayDay;
     }) || [];
 
-    const todayAnniversaries = birthdays?.filter((e) => {
+    const todayAnniversaries = birthdays?.filter((e: any) => {
       if (!e.hire_date) return false;
       const hd = new Date(e.hire_date);
       return hd.getMonth() + 1 === todayMonth && hd.getDate() === todayDay;
     }) || [];
 
     contextData.celebrations = {
-      birthdays: todayBirthdays.map((e) => e.display_name || e.full_name),
-      anniversaries: todayAnniversaries.map((e) => ({
+      birthdays: todayBirthdays.map((e: any) => e.display_name || e.full_name),
+      anniversaries: todayAnniversaries.map((e: any) => ({
         name: e.display_name || e.full_name,
         years: today.getFullYear() - new Date(e.hire_date!).getFullYear(),
       })),
@@ -236,7 +236,7 @@ Estimate reasonable sales goals based on the yesterday's data.`;
                         aiContent.match(/```\n?([\s\S]*?)\n?```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : aiContent;
       huddleContent = JSON.parse(jsonStr.trim());
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Failed to parse AI response:", aiContent);
       return new Response(
         JSON.stringify({ error: "Failed to parse AI response", raw: aiContent }),
@@ -253,7 +253,7 @@ Estimate reasonable sales goals based on the yesterday's data.`;
       }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating huddle:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

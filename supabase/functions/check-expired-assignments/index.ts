@@ -73,8 +73,8 @@ serve(async (req: Request) => {
           .select("user_id")
           .in("role", ["stylist_assistant", "assistant"]);
 
-        const assistantUserIds = (assistantRoles || []).map(r => r.user_id);
-        const eligibleAssistants = assistantUserIds.filter(id => !declinedByArray.includes(id));
+        const assistantUserIds = (assistantRoles || []).map((r: any) => r.user_id);
+        const eligibleAssistants = assistantUserIds.filter((id: any) => !declinedByArray.includes(id));
 
         const { data: conflicts } = await supabase
           .from("assistant_requests")
@@ -85,8 +85,8 @@ serve(async (req: Request) => {
           .neq("id", request.id)
           .or(`and(start_time.lte.${request.start_time},end_time.gt.${request.start_time}),and(start_time.lt.${request.end_time},end_time.gte.${request.end_time}),and(start_time.gte.${request.start_time},end_time.lte.${request.end_time})`);
 
-        const busyAssistants = new Set(conflicts?.map(c => c.assistant_id) || []);
-        const availableAssistants = eligibleAssistants.filter(id => !busyAssistants.has(id));
+        const busyAssistants = new Set(conflicts?.map((c: any) => c.assistant_id) || []);
+        const availableAssistants = eligibleAssistants.filter((id: any) => !busyAssistants.has(id));
 
         let newAssistantName = null;
 

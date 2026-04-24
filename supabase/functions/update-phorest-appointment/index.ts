@@ -268,9 +268,9 @@ serve(async (req) => {
         throw new Error(`Cannot edit services on a ${currentStatus} appointment`);
       }
 
-      localUpdate.service_name = services.map(s => s.name).join(', ');
-      const totalPrice = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
-      const totalDuration = services.reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0);
+      localUpdate.service_name = services.map((s: any) => s.name).join(', ');
+      const totalPrice = services.reduce((sum: any, s: any) => sum + (s.price ?? 0), 0);
+      const totalDuration = services.reduce((sum: any, s: any) => sum + (s.duration_minutes ?? 0), 0);
       if (totalPrice > 0) localUpdate.total_price = totalPrice;
       if (totalDuration > 0) {
         localUpdate.duration_minutes = totalDuration;

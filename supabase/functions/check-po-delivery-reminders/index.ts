@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     // Filter: only send if no follow-up or last follow-up > 3 days ago
-    const eligiblePOs = (overduePOs || []).filter(po => {
+    const eligiblePOs = (overduePOs || []).filter((po: any) => {
       if (!po.delivery_followup_sent_at) return true;
       return po.delivery_followup_sent_at < threeDaysAgo;
     });
@@ -58,12 +58,12 @@ Deno.serve(async (req) => {
       const orgName = org?.name || "Our Organization";
 
       // Fetch product names
-      const productIds = orgPOs.map(po => po.product_id);
+      const productIds = orgPOs.map((po: any) => po.product_id);
       const { data: products } = await supabase
         .from("products")
         .select("id, name")
         .in("id", productIds);
-      const productMap = new Map((products || []).map(p => [p.id, p.name]));
+      const productMap = new Map((products || []).map((p: any) => [p.id, p.name]));
 
       // Group by supplier email
       const bySupplier = new Map<string, typeof orgPOs>();
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       for (const [email, supplierPOs] of bySupplier) {
         const supplierName = supplierPOs[0].supplier_name || "Supplier";
 
-        const productList = supplierPOs.map(po => {
+        const productList = supplierPOs.map((po: any) => {
           const name = productMap.get(po.product_id) || "Product";
           const poNum = po.po_number || po.id.slice(0, 8).toUpperCase();
           return `<li>${name} (${poNum}) — Expected: ${new Date(po.expected_delivery_date).toLocaleDateString()}</li>`;
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         if (result.success) {
           sent += supplierPOs.length;
           // Update follow-up timestamp
-          const ids = supplierPOs.map(po => po.id);
+          const ids = supplierPOs.map((po: any) => po.id);
           await supabase
             .from("purchase_orders")
             .update({ delivery_followup_sent_at: new Date().toISOString() })
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

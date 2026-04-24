@@ -34,7 +34,7 @@ async function verifyCallRailSignature(body: string, signature: string | null): 
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
-    const expected = Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const expected = Array.from(new Uint8Array(signatureBytes)).map((b: any) => b.toString(16).padStart(2, '0')).join('');
     return signature === expected;
   } catch { return false; }
 }
@@ -47,7 +47,7 @@ async function verifyMetaSignature(body: string, signature: string | null): Prom
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
-    const computed = Array.from(new Uint8Array(signatureBytes)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const computed = Array.from(new Uint8Array(signatureBytes)).map((b: any) => b.toString(16).padStart(2, '0')).join('');
     return signature.slice(7) === computed;
   } catch { return false; }
 }
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     await supabase.from('inquiry_activity_log').insert({ inquiry_id: insertedLead.id, action: 'created', notes: `Lead captured from ${source}` });
 
     return new Response(JSON.stringify({ success: true, lead_id: insertedLead.id }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing external lead:', error);
     return new Response(JSON.stringify({ success: false, error: 'Failed to process lead' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

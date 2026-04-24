@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
     }
 
     return json({ success: true, scheduled_for: scheduledFor });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[enqueue-setup-followup] unexpected:", err);
     return json({ error: (err as Error).message }, 500);
   }

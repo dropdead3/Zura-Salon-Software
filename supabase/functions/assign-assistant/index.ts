@@ -60,7 +60,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const assistantUserIds = assistantRoles.map(r => r.user_id);
+    const assistantUserIds = assistantRoles.map((r: any) => r.user_id);
 
     // Check for conflicts
     const { data: conflicts } = await supabase
@@ -71,8 +71,8 @@ serve(async (req: Request) => {
       .not("assistant_id", "is", null)
       .or(`and(start_time.lte.${request.start_time},end_time.gt.${request.start_time}),and(start_time.lt.${request.end_time},end_time.gte.${request.end_time}),and(start_time.gte.${request.start_time},end_time.lte.${request.end_time})`);
 
-    const busyAssistants = new Set(conflicts?.map(c => c.assistant_id) || []);
-    const availableAssistants = assistantUserIds.filter(id => !busyAssistants.has(id));
+    const busyAssistants = new Set(conflicts?.map((c: any) => c.assistant_id) || []);
+    const availableAssistants = assistantUserIds.filter((id: any) => !busyAssistants.has(id));
 
     if (availableAssistants.length === 0) {
       return new Response(
@@ -87,13 +87,13 @@ serve(async (req: Request) => {
       .select("*")
       .in("assistant_id", availableAssistants);
 
-    const existingAssistantIds = new Set(assignments?.map(a => a.assistant_id) || []);
-    const newAssistants = availableAssistants.filter(id => !existingAssistantIds.has(id));
+    const existingAssistantIds = new Set(assignments?.map((a: any) => a.assistant_id) || []);
+    const newAssistants = availableAssistants.filter((id: any) => !existingAssistantIds.has(id));
 
     if (newAssistants.length > 0) {
       await supabase
         .from("assistant_assignments")
-        .insert(newAssistants.map(id => ({ assistant_id: id, total_assignments: 0 })));
+        .insert(newAssistants.map((id: any) => ({ assistant_id: id, total_assignments: 0 })));
     }
 
     const { data: allAssignments } = await supabase
@@ -176,7 +176,7 @@ serve(async (req: Request) => {
           tag: "assistant-assignment",
         }),
       });
-    } catch (pushError) {
+    } catch (pushError: any) {
       console.error("Failed to send push notification:", pushError);
     }
 

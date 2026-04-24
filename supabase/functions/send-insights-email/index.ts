@@ -286,7 +286,7 @@ serve(async (req: Request): Promise<Response> => {
           console.error(`[send-insights-email] Failed for ${uid}:`, result.error);
           failed++;
         }
-      } catch (userErr) {
+      } catch (userErr: any) {
         console.error(`[send-insights-email] Error processing user:`, userErr);
         failed++;
       }

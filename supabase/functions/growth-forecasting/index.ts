@@ -49,10 +49,10 @@ function linearRegression(xs: number[], ys: number[]): { slope: number; intercep
   const n = xs.length;
   if (n < 2) return { slope: 0, intercept: ys[0] || 0, r2: 0 };
 
-  const sumX = xs.reduce((a, b) => a + b, 0);
-  const sumY = ys.reduce((a, b) => a + b, 0);
-  const sumXY = xs.reduce((a, x, i) => a + x * ys[i], 0);
-  const sumX2 = xs.reduce((a, x) => a + x * x, 0);
+  const sumX = xs.reduce((a: any, b: any) => a + b, 0);
+  const sumY = ys.reduce((a: any, b: any) => a + b, 0);
+  const sumXY = xs.reduce((a: any, x: any, i: any) => a + x * ys[i], 0);
+  const sumX2 = xs.reduce((a: any, x: any) => a + x * x, 0);
 
   const denom = n * sumX2 - sumX * sumX;
   if (denom === 0) return { slope: 0, intercept: sumY / n, r2: 0 };
@@ -62,8 +62,8 @@ function linearRegression(xs: number[], ys: number[]): { slope: number; intercep
 
   // R-squared
   const meanY = sumY / n;
-  const ssRes = ys.reduce((a, y, i) => a + Math.pow(y - (slope * xs[i] + intercept), 2), 0);
-  const ssTot = ys.reduce((a, y) => a + Math.pow(y - meanY, 2), 0);
+  const ssRes = ys.reduce((a: any, y: any, i: any) => a + Math.pow(y - (slope * xs[i] + intercept), 2), 0);
+  const ssTot = ys.reduce((a: any, y: any) => a + Math.pow(y - meanY, 2), 0);
   const r2 = ssTot === 0 ? 0 : 1 - ssRes / ssTot;
 
   return { slope, intercept, r2 };
@@ -72,18 +72,18 @@ function linearRegression(xs: number[], ys: number[]): { slope: number; intercep
 // Calculate seasonal indices (average ratio of each quarter to overall trend)
 function calculateSeasonalIndices(quarters: QuarterData[]): Record<number, number> {
   const indices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
-  const avgRevenue = quarters.reduce((s, q) => s + q.totalRevenue, 0) / quarters.length;
+  const avgRevenue = quarters.reduce((s: any, q: any) => s + q.totalRevenue, 0) / quarters.length;
 
   if (avgRevenue === 0) return { 1: 1, 2: 1, 3: 1, 4: 1 };
 
-  quarters.forEach((q) => {
+  quarters.forEach((q: any) => {
     indices[q.q].push(q.totalRevenue / avgRevenue);
   });
 
   const result: Record<number, number> = {};
   for (let i = 1; i <= 4; i++) {
     const vals = indices[i];
-    result[i] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 1;
+    result[i] = vals.length > 0 ? vals.reduce((a: any, b: any) => a + b, 0) / vals.length : 1;
   }
   return result;
 }
@@ -96,14 +96,14 @@ function calculateMonthlySeasonalIndicesFor(
   const indices: Record<number, number[]> = {};
   for (let i = 1; i <= 12; i++) indices[i] = [];
 
-  const avg = months.reduce((s, m) => s + getValue(m), 0) / months.length;
+  const avg = months.reduce((s: any, m: any) => s + getValue(m), 0) / months.length;
   if (avg === 0) {
     const result: Record<number, number> = {};
     for (let i = 1; i <= 12; i++) result[i] = 1;
     return result;
   }
 
-  months.forEach((m) => {
+  months.forEach((m: any) => {
     const calMonth = parseInt(m.month.split("-")[1]); // 1-12
     indices[calMonth].push(getValue(m) / avg);
   });
@@ -111,7 +111,7 @@ function calculateMonthlySeasonalIndicesFor(
   const result: Record<number, number> = {};
   for (let i = 1; i <= 12; i++) {
     const vals = indices[i];
-    result[i] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 1;
+    result[i] = vals.length > 0 ? vals.reduce((a: any, b: any) => a + b, 0) / vals.length : 1;
   }
   return result;
 }
@@ -128,7 +128,7 @@ function determineMomentum(growthRates: number[]): string {
   for (let i = 1; i < recent.length; i++) {
     diffs.push(recent[i] - recent[i - 1]);
   }
-  const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+  const avgDiff = diffs.reduce((a: any, b: any) => a + b, 0) / diffs.length;
 
   if (avgDiff > 2) return "accelerating";
   if (avgDiff < -2) return "decelerating";
@@ -145,13 +145,14 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
 
     const body = await validateBody(req, GrowthForecastSchema, getCorsHeaders(req));
-    const { organizationId, locationId, granularity, horizonMonths } = body;
+    const { organizationId, locationId, granularity, horizonMonths: horizonMonthsRaw } = body;
+    const horizonMonths: number = horizonMonthsRaw ?? 12;
     // Verify org access
     try {
       const orgId = body.organizationId || body.organization_id;
@@ -159,7 +160,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -269,15 +270,15 @@ serve(async (req) => {
 
     // ── Monthly forecasting branch ──────────────────────────────────────
     if (granularity === "monthly") {
-      const sortedMonths = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+      const sortedMonths = Array.from(monthMap.values()).sort((a: any, b: any) => a.month.localeCompare(b.month));
 
       // Linear regression on monthly revenue
-      const mxs = sortedMonths.map((_, i) => i);
-      const revYs = sortedMonths.map((m) => m.totalRevenue);
+      const mxs = sortedMonths.map((_: any, i: any) => i);
+      const revYs = sortedMonths.map((m: any) => m.totalRevenue);
       const revRegression = linearRegression(mxs, revYs);
 
       // Linear regression on monthly transactions (appointments)
-      const txnYs = sortedMonths.map((m) => m.transactions);
+      const txnYs = sortedMonths.map((m: any) => m.transactions);
       const txnRegression = linearRegression(mxs, txnYs);
 
       // Monthly seasonal indices for revenue and appointments
@@ -304,7 +305,7 @@ serve(async (req) => {
       // YoY growth (last month vs same month last year)
       const lastMonthCal = parseInt(lastMonth.month.split("-")[1]);
       const lastMonthYear = parseInt(lastMonth.month.split("-")[0]);
-      const sameMonthLastYear = sortedMonths.find((m) => {
+      const sameMonthLastYear = sortedMonths.find((m: any) => {
         const cal = parseInt(m.month.split("-")[1]);
         const yr = parseInt(m.month.split("-")[0]);
         return cal === lastMonthCal && yr === lastMonthYear - 1;
@@ -362,7 +363,7 @@ serve(async (req) => {
       }
 
       // Build monthly actuals
-      const monthlyActuals = sortedMonths.map((m) => ({
+      const monthlyActuals = sortedMonths.map((m: any) => ({
         period: `${MONTH_NAMES[parseInt(m.month.split("-")[1]) - 1]} ${m.month.split("-")[0]}`,
         month: m.month,
         revenue: m.totalRevenue,
@@ -372,7 +373,7 @@ serve(async (req) => {
 
       // Build monthly scenarios grouped
       const monthlyScenarios: Record<string, any[]> = {};
-      monthlyProjections.forEach((p) => {
+      monthlyProjections.forEach((p: any) => {
         if (!monthlyScenarios[p.scenario]) monthlyScenarios[p.scenario] = [];
         monthlyScenarios[p.scenario].push({
           period: p.period,
@@ -388,8 +389,8 @@ serve(async (req) => {
       });
 
       // Calculate 3M/6M/12M summary totals from baseline
-      const baselineMonthly = monthlyProjections.filter((p) => p.scenario === "baseline");
-      const sum = (arr: any[], key: string) => arr.reduce((s, p) => s + (p[key] || 0), 0);
+      const baselineMonthly = monthlyProjections.filter((p: any) => p.scenario === "baseline");
+      const sum = (arr: any[], key: string) => arr.reduce((s: any, p: any) => s + (p[key] || 0), 0);
 
       const projectedRevenue3m = Math.round(sum(baselineMonthly.slice(0, Math.min(3, horizonMonths)), "revenue") * 100) / 100;
       const projectedRevenue6m = Math.round(sum(baselineMonthly.slice(0, Math.min(6, horizonMonths)), "revenue") * 100) / 100;
@@ -405,7 +406,7 @@ serve(async (req) => {
         if (LOVABLE_API_KEY && sortedMonths.length >= 3) {
           const recentMonths = sortedMonths.slice(-12);
           const context = `Historical monthly revenue & appointment data for a salon/beauty business (last ${recentMonths.length} months):
-${recentMonths.map((m) => `${MONTH_NAMES[parseInt(m.month.split("-")[1]) - 1]} ${m.month.split("-")[0]}: Revenue $${m.totalRevenue.toLocaleString()}, Appointments ${m.transactions}`).join("\n")}
+${recentMonths.map((m: any) => `${MONTH_NAMES[parseInt(m.month.split("-")[1]) - 1]} ${m.month.split("-")[0]}: Revenue $${m.totalRevenue.toLocaleString()}, Appointments ${m.transactions}`).join("\n")}
 
 3-month projected revenue (baseline): $${projectedRevenue3m.toLocaleString()}
 6-month projected revenue (baseline): $${projectedRevenue6m.toLocaleString()}
@@ -447,7 +448,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Monthly AI insights error:", e);
       }
 
@@ -493,7 +494,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
     // ── Quarterly forecasting (existing logic) ─────────────────────────
     // Aggregate into quarters
     const quarterMap = new Map<string, QuarterData>();
-    monthMap.forEach((m) => {
+    monthMap.forEach((m: any) => {
       const { year, q } = getQuarterFromDate(m.month + "-01");
       const label = getQuarterLabel(year, q);
       const existing = quarterMap.get(label);
@@ -517,8 +518,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
       }
     });
 
-    const quarters = Array.from(quarterMap.values()).sort(
-      (a, b) => a.year * 10 + a.q - (b.year * 10 + b.q)
+    const quarters = Array.from(quarterMap.values()).sort((a: any, b: any) => a.year * 10 + a.q - (b.year * 10 + b.q)
     );
 
     // Calculate growth rates
@@ -532,8 +532,8 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
     }
 
     // Linear regression on quarterly revenue
-    const xs = quarters.map((_, i) => i);
-    const ys = quarters.map((q) => q.totalRevenue);
+    const xs = quarters.map((_: any, i: any) => i);
+    const ys = quarters.map((q: any) => q.totalRevenue);
     const regression = linearRegression(xs, ys);
 
     // Seasonal indices
@@ -544,8 +544,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
 
     // YoY growth
     const lastQuarter = quarters[quarters.length - 1];
-    const sameQuarterLastYear = quarters.find(
-      (q) => q.q === lastQuarter?.q && q.year === (lastQuarter?.year || 0) - 1
+    const sameQuarterLastYear = quarters.find((q: any) => q.q === lastQuarter?.q && q.year === (lastQuarter?.year || 0) - 1
     );
     const yoyGrowth =
       sameQuarterLastYear && sameQuarterLastYear.totalRevenue > 0
@@ -614,9 +613,9 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (LOVABLE_API_KEY && quarters.length >= 2) {
         const context = `Historical quarterly revenue data for a salon/beauty business:
-${quarters.map((q) => `${q.quarter}: $${q.totalRevenue.toLocaleString()} (services: $${q.serviceRevenue.toLocaleString()}, products: $${q.productRevenue.toLocaleString()})`).join("\n")}
+${quarters.map((q: any) => `${q.quarter}: $${q.totalRevenue.toLocaleString()} (services: $${q.serviceRevenue.toLocaleString()}, products: $${q.productRevenue.toLocaleString()})`).join("\n")}
 
-QoQ growth rates: ${growthRates.map((r) => `${r.toFixed(1)}%`).join(", ")}
+QoQ growth rates: ${growthRates.map((r: any) => `${r.toFixed(1)}%`).join(", ")}
 YoY growth: ${yoyGrowth !== null ? `${yoyGrowth.toFixed(1)}%` : "N/A"}
 Momentum: ${momentum}
 Seasonal indices: ${Object.entries(seasonalIndices).map(([q, idx]) => `Q${q}: ${idx.toFixed(2)}`).join(", ")}
@@ -659,7 +658,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("AI insights error:", e);
     }
 
@@ -677,7 +676,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
     }
 
     // Store projections with insights
-    const projectionsWithInsights = projections.map((p) => ({
+    const projectionsWithInsights = projections.map((p: any) => ({
       ...p,
       insights: p.scenario === "baseline" ? insights : null,
     }));
@@ -722,7 +721,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Accuracy backfill error:", e);
     }
 
@@ -765,7 +764,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
     }
 
     // Build actuals for the chart (past quarters)
-    const actuals = quarters.map((q) => ({
+    const actuals = quarters.map((q: any) => ({
       period: q.quarter,
       revenue: q.totalRevenue,
       serviceRevenue: q.serviceRevenue,
@@ -775,7 +774,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
 
     // Build response grouped by scenario
     const scenarios: Record<string, any[]> = {};
-    projectionsWithInsights.forEach((p) => {
+    projectionsWithInsights.forEach((p: any) => {
       if (!scenarios[p.scenario]) scenarios[p.scenario] = [];
       scenarios[p.scenario].push({
         period: p.period_label,
@@ -806,13 +805,13 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           trendR2: regression.r2,
           dataPoints: dailyData.length,
           quartersAvailable: quarters.length,
-          nextQuarterBaseline: projections.find((p) => p.scenario === "baseline")?.projected_revenue || 0,
-          nextQuarterLabel: projections.find((p) => p.scenario === "baseline")?.period_label || "",
+          nextQuarterBaseline: projections.find((p: any) => p.scenario === "baseline")?.projected_revenue || 0,
+          nextQuarterLabel: projections.find((p: any) => p.scenario === "baseline")?.period_label || "",
         },
       }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error("growth-forecasting error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

@@ -132,7 +132,7 @@ serve(async (req) => {
             },
           });
           notificationsSent++;
-        } catch (pushError) {
+        } catch (pushError: any) {
           console.error("Error sending push notification:", pushError);
         }
       }
@@ -145,7 +145,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error processing mentions:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', caller.id);
 
-    const isAdmin = callerRoles?.some(r => ['admin', 'manager', 'super_admin'].includes(r.role));
+    const isAdmin = callerRoles?.some((r: any) => ['admin', 'manager', 'super_admin'].includes(r.role));
     const { data: callerProfile } = await supabaseAdmin
       .from('employee_profiles')
       .select('is_super_admin, organization_id')
@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error);
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,

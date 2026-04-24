@@ -149,7 +149,7 @@ serve(async (req) => {
               },
             });
           }
-        } catch (stripeError) {
+        } catch (stripeError: any) {
           results.failed.push({
             payment_id: payment.id,
             amount: totalAmount,
@@ -169,7 +169,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error processing autopay:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

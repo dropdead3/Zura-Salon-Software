@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       const benchmarkRows: any[] = [];
       for (const [domain, data] of byDomain) {
         if (data.orgIds.size < MIN_COHORT) continue;
-        const sorted = [...data.scores].sort((a, b) => a - b);
+        const sorted = [...data.scores].sort((a: any, b: any) => a - b);
         const pct = (p: number) => {
           const idx = (p / 100) * (sorted.length - 1);
           const lo = Math.floor(idx);
@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     if (lovableApiKey && signals.length > 0) {
       const topSignals = signals
-        .filter((s) => s.confidence !== "low")
+        .filter((s: any) => s.confidence !== "low")
         .slice(0, 5);
 
       if (topSignals.length > 0) {
@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
               }
             }
           }
-        } catch (aiErr) {
+        } catch (aiErr: any) {
           console.log("AI insight generation failed, signals saved without text:", aiErr);
         }
       }
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Industry aggregator error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

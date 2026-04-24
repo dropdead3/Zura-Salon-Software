@@ -64,8 +64,7 @@ Deno.serve(async (req) => {
     for (const { brand, is_professional, products } of brand_products) {
       try {
         // Filter out duplicates
-        const newProducts = products.filter(
-          (p) => !existingSet.has(`${brand}::${p.name}`.toLowerCase())
+        const newProducts = products.filter((p: any) => !existingSet.has(`${brand}::${p.name}`.toLowerCase())
         );
         const skippedCount = products.length - newProducts.length;
 
@@ -79,7 +78,7 @@ Deno.serve(async (req) => {
         let insertedCount = 0;
 
         for (let i = 0; i < newProducts.length; i += CHUNK_SIZE) {
-          const chunk = newProducts.slice(i, i + CHUNK_SIZE).map((p) => ({
+          const chunk = newProducts.slice(i, i + CHUNK_SIZE).map((p: any) => ({
             brand,
             name: p.name,
             category: p.category,
@@ -101,7 +100,7 @@ Deno.serve(async (req) => {
             console.error(`Insert error for ${brand} chunk ${i}:`, insertError);
           } else {
             insertedCount += (inserted || []).length;
-            chunk.forEach((p) => existingSet.add(`${brand}::${p.name}`.toLowerCase()));
+            chunk.forEach((p: any) => existingSet.add(`${brand}::${p.name}`.toLowerCase()));
           }
         }
 
@@ -113,7 +112,7 @@ Deno.serve(async (req) => {
         });
 
         console.log(`${brand}: inserted ${insertedCount}, skipped ${skippedCount}`);
-      } catch (brandError) {
+      } catch (brandError: any) {
         console.error(`Error inserting ${brand}:`, brandError);
         results.push({
           brand,
@@ -123,7 +122,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const totalInserted = results.reduce((s, r) => s + (r.products_inserted || 0), 0);
+    const totalInserted = results.reduce((s: any, r: any) => s + (r.products_inserted || 0), 0);
 
     return new Response(
       JSON.stringify({
@@ -131,15 +130,15 @@ Deno.serve(async (req) => {
         summary: {
           brands_processed: results.length,
           total_inserted: totalInserted,
-          brands_succeeded: results.filter((r) => r.status === "success").length,
-          brands_failed: results.filter((r) => r.status === "error").length,
-          brands_skipped: results.filter((r) => r.status === "skipped").length,
+          brands_succeeded: results.filter((r: any) => r.status === "success").length,
+          brands_failed: results.filter((r: any) => r.status === "error").length,
+          brands_skipped: results.filter((r: any) => r.status === "skipped").length,
         },
         results,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Bulk import error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),

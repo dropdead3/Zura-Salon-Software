@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
         });
 
         sentCount++;
-      } catch (orgErr) {
+      } catch (orgErr: any) {
         console.error(
           `[supply-digest] Error processing org ${org.id}:`,
           orgErr,
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[supply-digest] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
@@ -174,8 +174,7 @@ function buildDigestHtml(
   };
 
   const insightsHtml = insights
-    .map(
-      (i) => `
+    .map((i: any) => `
     <tr>
       <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">
         <div style="display: flex; align-items: flex-start; gap: 8px;">

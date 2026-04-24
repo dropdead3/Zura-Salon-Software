@@ -147,7 +147,7 @@ serve(async (req) => {
         const settings = (orgData?.settings || {}) as Record<string, any>;
       phorestWriteEnabled = settings.phorest_write_enabled === true;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log("Could not resolve org for write-gate check, defaulting to disabled");
     }
 
@@ -212,7 +212,7 @@ serve(async (req) => {
       clientId: client_id,
       staffId: staff_id,
       startTime: start_time,
-      services: service_ids.map(id => ({ serviceId: id })),
+      services: service_ids.map((id: any) => ({ serviceId: id })),
       notes: notes || undefined,
       status: 'CONFIRMED',
     };
@@ -325,7 +325,7 @@ serve(async (req) => {
           .eq("phorest_branch_id", branch_id)
           .maybeSingle();
         resolvedLocationId = locLookup?.id || null;
-      } catch (_e) {
+      } catch (_e: any) {
         console.log("Could not resolve location_id from branch_id");
       }
     }
@@ -337,7 +337,7 @@ serve(async (req) => {
       try {
         const { data: { user: reqUser } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
         createdByUserId = reqUser?.id || null;
-      } catch (_) { /* ignore */ }
+      } catch (_: any) { /* ignore */ }
     }
 
     // ── Native mode: insert into appointments table ──
@@ -408,7 +408,7 @@ serve(async (req) => {
             actor_name: "System",
             new_value: { service: serviceName, client: resolvedClientName, date: appointmentDate, time: startTimeLocal },
           });
-        } catch (auditErr) {
+        } catch (auditErr: any) {
           console.log("Audit log write failed (non-fatal):", auditErr);
         }
       }
@@ -491,10 +491,10 @@ serve(async (req) => {
             event_type: "created",
             actor_user_id: createdByUserId,
             actor_name: "System",
-            new_value: { service: serviceName, client: client?.name || 'Client', date: appointmentDate, time: startTimeLocal },
+            new_value: { service: serviceName, client: resolvedClientName, date: appointmentDate, time: startTimeLocal },
           });
         }
-      } catch (auditErr) {
+      } catch (auditErr: any) {
         console.log("Audit log write failed (non-fatal):", auditErr);
       }
     }
@@ -525,11 +525,11 @@ serve(async (req) => {
               .in("role", ["admin", "manager", "super_admin"]);
 
             if (managers && managers.length > 0) {
-              const notifications = managers.map((m) => ({
+              const notifications = managers.map((m: any) => ({
                 user_id: m.user_id,
                 type: 'redo_booking',
                 title: 'Redo Appointment Booked',
-                message: `Redo for ${client?.name || 'Client'}: ${redo_reason || 'No reason'}. Service: ${serviceName}.`,
+                message: `Redo for ${resolvedClientName}: ${redo_reason || 'No reason'}. Service: ${serviceName}.`,
                 severity: 'info',
                 metadata: { appointment_id: appointmentId, redo_reason, original_appointment_id },
               }));
@@ -541,7 +541,7 @@ serve(async (req) => {
             }
           }
         }
-      } catch (notifErr) {
+      } catch (notifErr: any) {
         console.log("[redo] Notification error (non-fatal):", notifErr);
       }
     }

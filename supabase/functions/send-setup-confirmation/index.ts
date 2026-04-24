@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
           },
         },
       },
-    ).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }));
+    ).catch((e: any) => ({ error: e instanceof Error ? e.message : String(e) }));
 
     if ((sendResult as any)?.error) {
       console.warn(
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     }
 
     return json({ success: true, scheduled: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[send-setup-confirmation] error:", err);
     return json(
       { error: err instanceof Error ? err.message : "Unknown error" },

@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response("OK", { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("[track-email] Error:", error);
     return new Response("Error", { status: 500 });
   }

@@ -193,7 +193,7 @@ Generate the content now.`;
       JSON.stringify({ generated: true, content, preview }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("seo-generate-content error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),

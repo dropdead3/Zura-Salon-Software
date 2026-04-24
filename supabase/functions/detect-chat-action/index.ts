@@ -191,7 +191,7 @@ serve(async (req) => {
       JSON.stringify({ detected: true, action: result, saved: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error("detect-chat-action error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

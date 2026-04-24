@@ -13,7 +13,7 @@ const CACHE_HOURS = 6;
 type RoleTier = "leadership" | "stylist" | "booth_renter" | "front_desk";
 
 function determineRoleTier(roles: string[]): RoleTier {
-  if (roles.some((r) => ["super_admin", "admin", "manager"].includes(r))) return "leadership";
+  if (roles.some((r: any) => ["super_admin", "admin", "manager"].includes(r))) return "leadership";
   if (roles.includes("booth_renter")) return "booth_renter";
   if (roles.includes("receptionist")) return "front_desk";
   return "stylist";
@@ -157,19 +157,19 @@ serve(async (req) => {
     const todayAppts = myTodayApptsRes.data || [];
 
     // Compute personal metrics
-    const completed = pastAppts.filter((a) => a.status === "completed" || a.status === "checked_in" || a.status === "in_progress");
-    const cancelled = pastAppts.filter((a) => a.status === "cancelled");
-    const noShows = pastAppts.filter((a) => a.status === "no_show");
-    const rebooked = completed.filter((a) => a.rebooked_at_checkout);
-    const totalRevenue = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
+    const completed = pastAppts.filter((a: any) => a.status === "completed" || a.status === "checked_in" || a.status === "in_progress");
+    const cancelled = pastAppts.filter((a: any) => a.status === "cancelled");
+    const noShows = pastAppts.filter((a: any) => a.status === "no_show");
+    const rebooked = completed.filter((a: any) => a.rebooked_at_checkout);
+    const totalRevenue = completed.reduce((sum: any, a: any) => sum + (a.total_price || 0), 0);
     const avgTicket = completed.length > 0 ? totalRevenue / completed.length : 0;
 
     // Weekly breakdown for trends
-    const thisWeekAppts = completed.filter((a) => a.appointment_date >= weekAgo);
-    const thisWeekRevenue = thisWeekAppts.reduce((sum, a) => sum + (a.total_price || 0), 0);
+    const thisWeekAppts = completed.filter((a: any) => a.appointment_date >= weekAgo);
+    const thisWeekRevenue = thisWeekAppts.reduce((sum: any, a: any) => sum + (a.total_price || 0), 0);
 
     // Unique clients (for retention)
-    const clientNames = new Set(completed.map((a) => a.client_name).filter(Boolean));
+    const clientNames = new Set(completed.map((a: any) => a.client_name).filter(Boolean));
 
     // Build role-tier-specific data context
     let dataContext = `
@@ -193,7 +193,7 @@ MY PERFORMANCE:
 
 TODAY'S SCHEDULE:
 ${todayAppts.length > 0
-  ? todayAppts.map((a) => `  ${a.start_time?.slice(11, 16) || "?"}-${a.end_time?.slice(11, 16) || "?"}: ${a.client_name || "Walk-in"} (${a.service_name || "Service"})`).join("\n")
+  ? todayAppts.map((a: any) => `  ${a.start_time?.slice(11, 16) || "?"}-${a.end_time?.slice(11, 16) || "?"}: ${a.client_name || "Walk-in"} (${a.service_name || "Service"})`).join("\n")
   : "No appointments today"}
 
 UPCOMING (Next 7 days):
@@ -363,7 +363,7 @@ Generate 3-5 personal insights and 2-4 action items. Categories available: my_pe
       } else {
         throw new Error("No tool call in response");
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       console.error("Failed to parse AI response:", parseErr, JSON.stringify(aiData));
       return new Response(
         JSON.stringify({ error: "Failed to parse personal insights" }),
@@ -402,7 +402,7 @@ Generate 3-5 personal insights and 2-4 action items. Categories available: my_pe
       JSON.stringify(saved || { insights, generated_at: now, expires_at: expiresAt }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("ai-personal-insights error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),

@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       .eq("appointment_id", appointmentId)
       .eq("status", "pending");
 
-    const queueItems = steps.map((step) => {
+    const queueItems = steps.map((step: any) => {
       const offsetMs = step.timing_value * 60 * 60 * 1000; // hours to ms
       let scheduledAt: Date;
 
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, action: "queued", queued: queueItems.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[enqueue] Error:", message);
     return new Response(

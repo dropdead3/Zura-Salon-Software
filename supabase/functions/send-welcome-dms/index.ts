@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
         // Find existing DM between these two users
         if (existingChannels) {
           for (const channel of existingChannels) {
-            const memberIds = (channel.chat_channel_members as any[]).map(m => m.user_id);
+            const memberIds = (channel.chat_channel_members as any[]).map((m: any) => m.user_id);
             if (memberIds.length === 2 && 
                 memberIds.includes(sender.user_id) && 
                 memberIds.includes(new_member_user_id)) {
@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
 
         results.push({ sender_role: rule.sender_role, sender_id: sender.user_id, success: true });
 
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error processing rule ${rule.id}:`, err);
         results.push({ 
           sender_role: rule.sender_role, 
@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in send-welcome-dms:', error);
     return new Response(
       JSON.stringify({ error: error.message }),

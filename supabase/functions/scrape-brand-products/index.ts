@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     const productKeywords = ['product', 'color', 'shade', 'catalog', 'professional', 'range', 'collection', 'hair-color', 'haircolor', 'developer', 'lightener', 'treatment'];
     const relevantLinks = allLinks.filter((link: string) => {
       const lower = link.toLowerCase();
-      return productKeywords.some(kw => lower.includes(kw));
+      return productKeywords.some((kw: any) => lower.includes(kw));
     });
 
     // Take the top N pages
@@ -234,14 +234,14 @@ Rules:
           sizes: Array.isArray(p.sizes) ? p.sizes : [],
           confidence: p.confidence || 'medium',
         }));
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to parse AI response:', e);
       }
     }
 
     // Deduplicate by name
     const seen = new Set<string>();
-    products = products.filter(p => {
+    products = products.filter((p: any) => {
       const key = p.name.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -260,7 +260,7 @@ Rules:
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in scrape-brand-products:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to scrape brand products';
     return new Response(

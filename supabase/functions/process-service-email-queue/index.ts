@@ -56,17 +56,17 @@ Deno.serve(async (req) => {
     console.log(`[process-queue] Processing ${pendingItems.length} pending items`);
 
     // Fetch step details for all items
-    const stepIds = [...new Set(pendingItems.map(i => i.step_id))];
+    const stepIds = [...new Set(pendingItems.map((i: any) => i.step_id))];
     const { data: steps } = await supabase
       .from("service_email_flow_steps")
       .select("id, subject, html_body, timing_type, timing_value, flow_id")
       .in("id", stepIds);
 
-    const stepMap = new Map(steps?.map(s => [s.id, s]) || []);
+    const stepMap = new Map(steps?.map((s: any) => [s.id, s]) || []);
 
     // Fetch location overrides
     const locationIds = [...new Set(
-      pendingItems.map(i => (i.appointments as any)?.location_id).filter(Boolean)
+      pendingItems.map((i: any) => (i.appointments as any)?.location_id).filter(Boolean)
     )];
     let overrideMap = new Map<string, any>();
     if (locationIds.length > 0) {
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         .in("step_id", stepIds)
         .in("location_id", locationIds);
 
-      overrides?.forEach(o => {
+      overrides?.forEach((o: any) => {
         overrideMap.set(`${o.step_id}:${o.location_id}`, o);
       });
     }
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
         .from("locations")
         .select("id, name")
         .in("id", locationIds);
-      locations?.forEach(l => locationNameMap.set(l.id, l.name));
+      locations?.forEach((l: any) => locationNameMap.set(l.id, l.name));
     }
 
     // Group by (client_id + date) for same-day consolidation
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         await supabase
           .from("service_email_queue")
           .update({ status: "skipped", error_message: "No client email" })
-          .in("id", groupItems.map(i => i.id));
+          .in("id", groupItems.map((i: any) => i.id));
         totalSkipped += groupItems.length;
         continue;
       }
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
       // Adjust subject for multi-service consolidation
       if (groupItems.length > 1) {
         const serviceNames = groupItems
-          .map(i => (i.appointments as any)?.service_name)
+          .map((i: any) => (i.appointments as any)?.service_name)
           .filter(Boolean);
         consolidatedSubject = `Information about your upcoming services: ${serviceNames.join(", ")}`;
       }
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
           .eq("id", primaryId);
 
         if (groupItems.length > 1) {
-          const mergedIds = groupItems.slice(1).map(i => i.id);
+          const mergedIds = groupItems.slice(1).map((i: any) => i.id);
           await supabase
             .from("service_email_queue")
             .update({ status: "merged", merged_into_id: primaryId })
@@ -209,13 +209,13 @@ Deno.serve(async (req) => {
         await supabase
           .from("service_email_queue")
           .update({ status: "skipped", error_message: result.skipReason || "skipped" })
-          .in("id", groupItems.map(i => i.id));
+          .in("id", groupItems.map((i: any) => i.id));
         totalSkipped += groupItems.length;
       } else {
         await supabase
           .from("service_email_queue")
           .update({ status: "skipped", error_message: result.error || "send failed" })
-          .in("id", groupItems.map(i => i.id));
+          .in("id", groupItems.map((i: any) => i.id));
         totalSkipped += groupItems.length;
       }
     }
@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, sent: totalSent, merged: totalMerged, skipped: totalSkipped }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[process-queue] Error:", message);
     return new Response(

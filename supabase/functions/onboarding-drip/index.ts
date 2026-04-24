@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       const createdAt = new Date(org.created_at);
       const daysSinceCreation = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
 
-      const applicableStep = DRIP_SEQUENCE.find(step => {
+      const applicableStep = DRIP_SEQUENCE.find((step: any) => {
         if (step.day !== daysSinceCreation) return false;
         if (step.condition && !step.condition(org)) return false;
         return true;
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
           });
 
           results.emailsSent++;
-        } catch (emailError) {
+        } catch (emailError: any) {
           console.error(`Failed to send onboarding email to ${org.billing_email}:`, emailError);
         }
       }
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, ...results }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Onboarding drip error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

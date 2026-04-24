@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     }
 
     const signedFormIds: string[] = Array.isArray(signed_form_template_ids)
-      ? signed_form_template_ids.filter((id) => typeof id === "string")
+      ? signed_form_template_ids.filter((id: any) => typeof id === "string")
       : [];
 
     const email = client.email.trim().toLowerCase();
@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
     const formsRequired = requiredFormIds.size > 0;
 
     // Filter the client-claimed signed list to only those that actually match the requirements
-    const validSignedIds = signedFormIds.filter((id) => requiredFormIds.has(id));
+    const validSignedIds = signedFormIds.filter((id: any) => requiredFormIds.has(id));
     const allRequiredSigned =
       formsRequired && validSignedIds.length === requiredFormIds.size;
     const formsCompleted = !formsRequired || allRequiredSigned;
@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
         (tmplRows ?? []).map((t: any) => [t.id as string, t.version as string])
       );
 
-      const sigRows = validSignedIds.map((tplId) => ({
+      const sigRows = validSignedIds.map((tplId: any) => ({
         client_id: clientId,
         form_template_id: tplId,
         form_version: versionMap.get(tplId) ?? "1",
@@ -356,7 +356,7 @@ Deno.serve(async (req) => {
       forms_required: formsRequired,
       forms_completed: formsCompleted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("create-public-booking error:", error);
     return jsonResponse(
       { error: error.message || "An unexpected error occurred" },

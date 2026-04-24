@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
         .single();
       const settings = (orgData?.settings || {}) as Record<string, any>;
       phorestWriteEnabled = settings.phorest_write_enabled === true;
-    } catch (e) {
+    } catch (e: any) {
       console.log("Could not resolve org for write-gate check, defaulting to disabled");
     }
 
@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
         );
         phorestUpdated = true;
         console.log("Successfully updated appointment in Phorest");
-      } catch (phorestError) {
+      } catch (phorestError: any) {
         console.error("Failed to update Phorest, updating local only:", phorestError);
       }
     } else if (!phorestWriteEnabled) {
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
             updated_at: new Date().toISOString(),
           })
           .eq("external_id", localApt.phorest_id);
-      } catch (_) { /* non-fatal */ }
+      } catch (_: any) { /* non-fatal */ }
     } else if (targetTable === "appointments" && localApt.external_id) {
       try {
         await supabase
@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
             updated_at: new Date().toISOString(),
           })
           .eq("phorest_id", localApt.external_id);
-      } catch (_) { /* non-fatal */ }
+      } catch (_: any) { /* non-fatal */ }
     }
 
     // Write audit log entry for reschedule
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
           new_value: { date: new_date, time: new_time },
         });
       }
-    } catch (auditErr) {
+    } catch (auditErr: any) {
       console.log("Audit log write failed (non-fatal):", auditErr);
     }
 
