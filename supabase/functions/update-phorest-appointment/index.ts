@@ -360,6 +360,27 @@ serve(async (req) => {
         throw new Error("Failed to update appointment locally");
       }
     }
+
+    // ── Fire-and-forget visit stats refresh ──
+    // After a status change (especially to 'completed'), refresh the cached
+    // visit_count / total_spend / last_visit_date columns on `clients` so
+    // the Client Directory and command-surface preview update within seconds.
+    // The RPC is idempotent (IS DISTINCT FROM guards) and org-scoped, so it's
+    // safe to fail silently — the next nightly sweep will catch any miss.
+    // NOT awaited: must not add latency to the checkout response.
+    if (orgId && status) {
+      supabase
+        .rpc('refresh_client_visit_stats', { p_organization_id: orgId })
+        .then(({ data, error }: { data: any; error: any }) => {
+          if (error) {
+            console.warn('refresh_client_visit_stats failed (non-fatal):', error.message);
+          } else {
+            const updated = Array.isArray(data) && data[0]?.updated_count;
+            console.log(`refresh_client_visit_stats ok (org=${orgId}, updated=${updated ?? 0})`);
+          }
+        });
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
