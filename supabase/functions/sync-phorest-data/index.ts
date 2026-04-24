@@ -840,19 +840,34 @@ async function syncAppointments(
           console.log('On-demand client fetch: failed to list branches, skipping pass 2:', e.message);
         }
 
-        // Build a hint: existing phorest_clients rows tell us which branch a
-        // sibling client lives in. We use this only as a probe-order hint —
-        // the per-region lookup is still authoritative.
+        // Build branch hints for unresolved client IDs.
+        // PRIORITY 1 (S2): the appointment's own phorest_branch_id is the
+        // strongest signal — that's the branch the upstream record lives in.
+        // PRIORITY 2: sibling phorest_clients rows already pointing at a branch.
         const branchHintMap = new Map<string, string>(); // clientId -> branchId hint
+
+        // S2 priority 1: appointment's own branch
+        for (const apt of missingNames) {
+          if (apt.phorest_client_id && apt.phorest_branch_id && !branchHintMap.has(apt.phorest_client_id)) {
+            branchHintMap.set(apt.phorest_client_id, apt.phorest_branch_id);
+          }
+        }
+
+        // S2 priority 2: sibling client rows (only when no appointment-branch hint)
         if (unresolved.length > 0) {
-          const { data: hintRows } = await supabase
-            .from('phorest_clients')
-            .select('phorest_client_id, phorest_branch_id')
-            .in('phorest_client_id', unresolved)
-            .not('phorest_branch_id', 'is', null);
-          (hintRows || []).forEach((r: any) => {
-            if (r.phorest_branch_id) branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
-          });
+          const stillNeedHint = unresolved.filter((id: string) => !branchHintMap.has(id));
+          if (stillNeedHint.length > 0) {
+            const { data: hintRows } = await supabase
+              .from('phorest_clients')
+              .select('phorest_client_id, phorest_branch_id')
+              .in('phorest_client_id', stillNeedHint)
+              .not('phorest_branch_id', 'is', null);
+            (hintRows || []).forEach((r: any) => {
+              if (r.phorest_branch_id && !branchHintMap.has(r.phorest_client_id)) {
+                branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
+              }
+            });
+          }
         }
 
         let onDemandFetched = 0;
