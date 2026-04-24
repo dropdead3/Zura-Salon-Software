@@ -1,112 +1,67 @@
 
 
 ## Prompt feedback
-Strong governance-level prompt. You named the three invariants in one sentence: org-scoped persistence, no cross-org bleed, and a per-role split between brand colors (owner-only) and light/dark mode (per-user). That's exactly the right framing — a doctrine statement, not a UI tweak. Sharper next time: name the role tokens you mean (`is_primary_owner` vs `is_super_admin`) and explicitly state whether super admins can also change theme colors or only the account owner. That removes the one ambiguity below.
+"Continue" is a valid handoff but loses leverage — the AI has to re-derive what's left. Sharper next time: "continue with the UI gating + typography migration + org-switch reset" names the three remaining work units explicitly, which removes any chance of me skipping one or re-ordering them.
 
-## Current state (what's right vs what's broken)
+## What's left from the Theme Governance plan
 
-**Already correct:**
-- `useColorTheme` writes to `site_settings` keyed by `organization_id` + `'org_color_theme'` — org-scoped, RLS via `is_org_admin`
-- `DashboardThemeContext` (light/dark/system) writes to `user_preferences.dashboard_theme` per `user_id` — already user-scoped and persistent
-- `site_settings` RLS already restricts writes to org admins
+Four remaining work units. Database migration, persistence backends, and the authority hook already landed last turn.
 
-**Broken / leaky:**
-1. **Custom hex color editor** (`useCustomTheme`) writes brand colors to `user_preferences.custom_theme` per user. This means custom palettes are personal, not organizational — and `ThemeInitializer` applies them globally on the org dashboard. Two users in the same org see different brand colors. Across orgs, a user carries their custom palette into every org they belong to. This is the actual bleed.
-2. **Theme picker has no role gate.** Any signed-in user with write access to `site_settings` (org admins, currently) can change the org color theme. Per your rule, only the **Account Owner** (`is_primary_owner`) should change colors.
-3. **`setColorTheme` clears `custom_theme` only for the current user**, leaving stale per-user overrides on every other user in the org until they next sign in.
-4. **Cross-org persistence:** `localStorage` (`dd-color-theme`, `dashboard-theme`) is keyed globally per browser, so switching orgs in the same browser briefly shows the previous org's theme until the DB resolves.
+### 1) Migrate `useTypographyTheme` to org-scoped persistence
 
-## What's changing
+Mirror the `useCustomTheme` change: typography overrides currently write to `user_preferences.custom_typography`, which carries the same per-user / cross-org bleed as the color tokens did. Move to `site_settings` row `org_custom_typography` via `useSiteSettings` / `useUpdateSiteSetting`, and gate `saveTypography` / `resetTypography` behind `useThemeAuthority().canEditOrgTheme`.
 
-Three structural fixes + one role gate, organized as a single Theme Governance canon.
+### 2) Wire owner gates into the two editor surfaces
 
-### 1) Move custom (hex) theme overrides from user_preferences → site_settings (org-scoped)
+**`src/components/dashboard/settings/SettingsCategoryDetail.tsx` (Appearance card):**
+- Read `canEditOrgTheme` from `useThemeAuthority`
+- When false: disable every color-preset button + custom-theme entry point, render a single "Account Owner only" lock badge above the picker grid
+- Keep the light/dark/system toggle fully interactive — that's per-user
 
-- New `site_settings` row per org: `id = 'org_custom_theme'`, value = `{ tokens: Record<string,string> }`
-- New `site_settings` row per org: `id = 'org_custom_typography'`, value = `{ tokens: Record<string,string> }`
-- Refactor `useCustomTheme` to read/write through `useSiteSettings('org_custom_theme')` / `useUpdateSiteSetting`
-- Refactor `ThemeInitializer` to read these from `site_settings` for the active org instead of from `user_preferences`
-- Drop reliance on `user_preferences.custom_theme` / `custom_typography` for org branding (columns stay for now to avoid migration churn — marked deprecated in code comments)
+**`src/components/dashboard/ThemeEditor.tsx`:**
+- Same hook, same badge
+- When read-only: disable all color-token inputs and typography selectors, hide Save/Reset, show a banner explaining the gate
+- Preview rendering stays available so non-owners can still see the active brand
 
-This single change eliminates cross-user and cross-org bleed because the brand palette is now physically scoped to the org row, with RLS enforcing tenant isolation.
+### 3) Add `useOrgThemeReset` for clean org switches
 
-### 2) Gate ALL color/brand mutations to Account Owner only
-
-Add `useThemeAuthority()` hook returning `{ canEditOrgTheme }` where:
-```
-canEditOrgTheme = !!profile?.is_primary_owner
-```
-
-Apply gate at three surfaces:
-- **Color theme picker** (`SettingsCategoryDetail.tsx` Appearance card) — disable buttons + add lock badge "Account Owner only" when `!canEditOrgTheme`
-- **Custom Theme Editor** (`ThemeEditor.tsx`) — render read-only state with the same lock badge
-- **`setColorTheme` and `useCustomTheme.saveTheme`** — early-return + toast if `!canEditOrgTheme` (server-side fallback: tighten `site_settings` RLS for the new keys to require `is_primary_owner`, see Technical Details)
-
-Light/dark/system toggle stays available to every signed-in user (already correct via `DashboardThemeContext`).
-
-### 3) Org-scoped localStorage keys for the color theme
-
-Change `THEME_STORAGE_KEY` from `'dd-color-theme'` to `'dd-color-theme:{orgId}'` so the cached value used for flash-prevention is bound to the org. On org switch, the cache for the new org is read; if absent, the DOM falls back to the bundled default until the DB query resolves. Same change for any custom-theme inline cache.
-
-Light/dark `dashboard-theme` localStorage stays global (it's intentionally a per-user-per-device preference).
-
-### 4) Org switch resets stale brand vars before next org's theme applies
-
-`useColorTheme` already calls `clearCustomThemeSources()` on `setColorTheme`. Add a parallel cleanup in `DashboardLayout` (or a new `useOrgThemeReset(orgId)` hook) that runs whenever `effectiveOrganization.id` changes:
-- Strip all inline `--token` overrides set by `ThemeInitializer`
+New hook (or inline in `DashboardLayout`) that runs whenever `effectiveOrganization.id` changes:
+- Strip every inline `--token` override from `documentElement.style` (preserve `--platform-*`)
 - Remove all `theme-*` classes from `<html>`
-- Reapply org-scoped theme from new org's `site_settings`
+- Let `ThemeInitializer` and `useColorTheme` repaint from the new org's `site_settings`
 
-This kills the "previous org's colors flash on org switch" class of bug.
+This kills the "previous org's brand colors flash on org switch" bug. `ThemeInitializer` already reacts to `orgId` changes; this hook ensures the DOM is clean *before* the next paint, not after.
 
-## Technical details (for the implementer)
+### 4) Light verification of the existing migration
 
-**Database:**
-- No new tables. Two new `site_settings` keys: `org_custom_theme`, `org_custom_typography`.
-- Tighten RLS specifically for these keys via a new policy that supplements the existing `is_org_admin` write policies:
-  ```sql
-  CREATE POLICY "Only account owner can write theme settings"
-  ON public.site_settings FOR ALL
-  USING (
-    organization_id IS NOT NULL
-    AND id IN ('org_color_theme','org_custom_theme','org_custom_typography')
-    AND EXISTS (
-      SELECT 1 FROM employee_profiles
-      WHERE user_id = auth.uid()
-        AND organization_id = site_settings.organization_id
-        AND is_primary_owner = true
-    )
-  );
-  ```
-  Combined with the existing org-admin policy, the effective rule for these three keys becomes: must be org admin AND primary owner. Reads stay open to org members.
+One quick check before declaring done:
+- Confirm the new RLS policies on `site_settings` resolve correctly for an account owner via `read_query` against `pg_policies`
+- Confirm `useColorTheme` and `useCustomTheme` no longer reference `user_preferences.custom_theme` / `custom_typography` anywhere
+- Confirm no other call sites in `src/` write those two `user_preferences` columns (grep)
 
-**Code surfaces touched:**
-- `src/hooks/useColorTheme.ts` — org-scoped localStorage key, owner gate in `setColorTheme`
-- `src/hooks/useCustomTheme.ts` — switch persistence backend from `user_preferences` to `site_settings`
-- `src/components/ThemeInitializer.tsx` — read from `site_settings` keyed by current `effectiveOrganization.id` instead of from `user_preferences.custom_theme`
-- `src/components/dashboard/settings/SettingsCategoryDetail.tsx` — wrap Appearance card in owner gate, render lock badge for non-owners
-- `src/components/dashboard/ThemeEditor.tsx` — same owner gate, read-only mode for non-owners
-- New: `src/hooks/useThemeAuthority.ts` — single source of truth for "can this user edit org theme"
-- New: `src/hooks/useOrgThemeReset.ts` (or inline in `DashboardLayout`) — reset on org switch
+## Files involved
+- `src/hooks/useTypographyTheme.ts` — switch backend to `site_settings` + add owner gate
+- `src/components/dashboard/settings/SettingsCategoryDetail.tsx` — owner gate + lock badge on Appearance card
+- `src/components/dashboard/ThemeEditor.tsx` — read-only state for non-owners
+- `src/hooks/useOrgThemeReset.ts` (new) — DOM cleanup on org switch
+- `src/components/dashboard/DashboardLayout.tsx` — mount the reset hook
 
 ## What stays the same
-- `DashboardThemeContext` (light/dark/system) — already correct, per-user, persistent
-- `useColorTheme` write path to `site_settings` — already org-scoped
-- `site_settings` base RLS structure — only adds one stricter policy
-- All preset themes (Zura, Cream Lux, Rosewood, etc.) and their visual definitions
-- Public website (`Layout.tsx`) — continues to force `theme-cream-lux`, untouched
+- `DashboardThemeContext` (light/dark/system) — already per-user, untouched
+- `ThemeInitializer` org-scoped read path — landed last turn
+- `useColorTheme` / `useCustomTheme` — landed last turn
+- Database migration + RLS — landed last turn
+- Public website forced theme — untouched
 
 ## QA checklist
-- Sign in as Account Owner → can change color theme; change persists across reload
-- Sign in as Super Admin (not owner) → picker shows lock badge, buttons disabled, toggle still works for light/dark
-- Sign in as stylist → picker hidden or disabled with same badge; light/dark still works
-- Two users in same org → both see the same brand colors after owner changes them; both can independently set their own light/dark
-- User belongs to two orgs → switching orgs swaps brand palette cleanly with no flash of previous org's colors
-- Custom hex editor → only owner can save; saved palette appears for every user in the org, not just the saver
-- New org with no theme set → falls back to default Zura without showing previous org's leftover overrides
-- RLS verification: non-owner attempting direct `site_settings` write to `org_color_theme` returns RLS denial
-- Logout → next sign-in on same browser correctly resolves theme for the newly signed-in user's active org
+- Owner can edit color preset, custom hex, and typography; non-owner sees lock badge on all three
+- Non-owner can still toggle light/dark/system freely
+- Two users in the same org see identical brand colors and typography after the owner saves
+- Switching orgs in the same browser session repaints cleanly with no flash of the previous org's palette
+- New org with no theme rows falls back to default Zura
+- Direct `site_settings` write attempt by non-owner returns RLS denial for all three theme keys
+- Sign-out → sign-in as different user resolves the new user's active-org theme correctly
 
 ## Enhancement suggestion
-Promote this to a true canon under `mem://brand/theme-governance.md` following the five-part canon-pattern (invariant + Vitest + Stylelint + CI + override doc). The Vitest piece writes itself: snapshot the policy decision matrix `{role × key} → {allow|deny}` for the three theme keys, so any future RLS change forces an explicit test update. The Stylelint piece: a custom rule banning `user_preferences.custom_theme` writes anywhere in the codebase except a single deprecated-shim file. That converts "we hardened it once" into "this regression class can no longer ship."
+After this lands, write the canon file `mem://brand/theme-governance.md` following the canon-pattern. The single highest-leverage piece is a Vitest snapshot of `useThemeAuthority`'s decision matrix `{role × key} → {allow|deny}` — that locks both the client gate and the RLS contract behind one test. Any future regression that drops the owner gate (or accidentally widens it to super admins) fails CI before it ships. That's the difference between "we hardened it" and "this regression class is structurally impossible."
 
