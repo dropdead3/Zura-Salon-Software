@@ -587,14 +587,18 @@ async function syncAppointments(
       // is the source of truth. new Date() in Deno is UTC which caused premature
       // "completed" badges for appointments still in the org's local future.
 
-      upsertBatch.push({
+      // SIGNAL PRESERVATION (R6a): if Phorest's payload doesn't carry a name,
+      // omit the client_name/client_phone keys entirely so a previously-resolved
+      // value (set by the post-sync backfill or a prior payload that did include
+      // it) is NOT clobbered to NULL on every subsequent sync. Same logic for
+      // phone. The upsert receives a row shape without those keys → Postgres
+      // leaves the existing column values alone.
+      const baseRow: Record<string, unknown> = {
         phorest_id: phorestId,
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
         phorest_client_id: phorestClientId,
-        client_name: extractedClientName,
-        client_phone: extractedClientPhone,
         appointment_date: appointmentDate,
         start_time: startTime,
         end_time: endTime,
@@ -604,20 +608,33 @@ async function syncAppointments(
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
         is_new_client: apt.isNewClient || false,
-      });
+      };
+      if (extractedClientName) baseRow.client_name = extractedClientName;
+      if (extractedClientPhone) baseRow.client_phone = extractedClientPhone;
+      upsertBatch.push(baseRow);
     }
 
-    // Batch upsert in chunks of 200
-    for (let i = 0; i < upsertBatch.length; i += 200) {
-      const chunk = upsertBatch.slice(i, i + 200);
-      const { error } = await supabase
-        .from("phorest_appointments")
-        .upsert(chunk, { onConflict: 'phorest_id' });
+    // Batch upsert in chunks of 200. Group rows by their key shape so the
+    // PostgREST upsert preserves omitted columns instead of inferring NULL.
+    const groupedByShape = new Map<string, Record<string, unknown>[]>();
+    for (const row of upsertBatch) {
+      const shapeKey = Object.keys(row).sort().join('|');
+      const bucket = groupedByShape.get(shapeKey) ?? [];
+      bucket.push(row);
+      groupedByShape.set(shapeKey, bucket);
+    }
+    for (const bucket of groupedByShape.values()) {
+      for (let i = 0; i < bucket.length; i += 200) {
+        const chunk = bucket.slice(i, i + 200);
+        const { error } = await supabase
+          .from("phorest_appointments")
+          .upsert(chunk, { onConflict: 'phorest_id' });
 
-      if (error) {
-        console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
-      } else {
-        synced += chunk.length;
+        if (error) {
+          console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
+        } else {
+          synced += chunk.length;
+        }
       }
     }
     
