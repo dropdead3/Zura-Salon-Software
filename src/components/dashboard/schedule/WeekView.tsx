@@ -421,7 +421,6 @@ export function WeekView({
   }, [stylistAppointments, weekDays]);
 
   // Current time indicator
-  const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
   const todayInWeek = weekDays.find(d => isOrgToday(d));
   const showCurrentTime = !!todayInWeek;
   const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
