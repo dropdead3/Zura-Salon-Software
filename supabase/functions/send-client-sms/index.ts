@@ -22,7 +22,7 @@ interface TwilioConfig {
 }
 
 async function getOrgTwilioConfig(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string,
 ): Promise<TwilioConfig | null> {
   const { data } = await supabase

@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
+async function getAllActiveOrgs(supabase: any) {
   const { data } = await supabase
     .from("organizations")
     .select("id")
@@ -110,7 +110,7 @@ async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
 }
 
 async function runDailyScan(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<{ escalated: number; tasksGenerated: number; revenueSnapshots: number }> {
   let escalated = 0;
@@ -147,7 +147,7 @@ async function runDailyScan(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function escalateOverdueTasks(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const now = new Date();
@@ -245,7 +245,7 @@ async function escalateOverdueTasks(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectReviewOpportunities(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const yesterday = new Date();
@@ -412,7 +412,7 @@ async function detectReviewOpportunities(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectPhotoFreshnessIssues(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const { data: lowContentScores } = await supabase
@@ -499,7 +499,7 @@ async function detectPhotoFreshnessIssues(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectGBPPostingGaps(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   // Find location/GBP objects with low local_presence health
@@ -597,7 +597,7 @@ async function detectGBPPostingGaps(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectUnrespondedReviews(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   // Check for review health scores indicating low response rates
@@ -695,7 +695,7 @@ async function detectUnrespondedReviews(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function computeRevenueSnapshot(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   try {

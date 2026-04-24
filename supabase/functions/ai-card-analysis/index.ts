@@ -82,7 +82,7 @@ function parseDateRange(dateRange?: string): { from: string; to: string } {
 }
 
 async function fetchCardMetrics(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   cardName: string,
   dateRange: string | undefined,
   locationName: string | undefined

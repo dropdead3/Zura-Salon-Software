@@ -26,7 +26,7 @@ export interface SmsResult {
  * Resolve a template from sms_templates and interpolate variables.
  */
 async function resolveTemplate(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   templateKey: string,
   variables: Record<string, string>
 ): Promise<string | null> {
@@ -59,7 +59,7 @@ interface TwilioConfig {
  * Fetch Twilio credentials for an organization from organization_secrets.
  */
 async function getOrgTwilioConfig(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<TwilioConfig | null> {
   const { data } = await supabase
@@ -127,7 +127,7 @@ async function sendViaTwilio(
  * Otherwise, logs the message (dev/testing mode).
  */
 export async function sendSms(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   payload: SmsPayload,
   organizationId?: string
 ): Promise<SmsResult> {
