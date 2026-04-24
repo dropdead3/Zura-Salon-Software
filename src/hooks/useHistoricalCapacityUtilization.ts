@@ -15,6 +15,11 @@ export interface DayCapacity {
   revenue: number;
   gapHours: number;
   isClosed: boolean;
+  /**
+   * Sum of `max(0, stylistBooked - stylistAvailable)` across stylists for the
+   * day. Surfaces double/triple-booking that would otherwise be averaged out.
+   */
+  overbookedHours: number;
 }
 
 export interface ServiceMix {
@@ -47,6 +52,8 @@ export interface CapacityData {
   peakDay: DayCapacity | null;
   lowDay: DayCapacity | null;
   breakdown: CapacityBreakdownData;
+  /** Total over-booked hours across all days/stylists in the period. */
+  totalOverbookedHours: number;
 }
 
 // Parse hours from location hours_json for a specific day
