@@ -25,7 +25,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey) as AdminClient;
 
   const token = authHeader.replace("Bearer ", "");
   const { data, error } = await supabaseAdmin.auth.getUser(token);
