@@ -510,6 +510,95 @@ export function deriveAccentEdgeColor(hexColor: string, isDark: boolean): string
   return hslToHex(`${Math.round(h)} ${Math.round(accentS)}% ${Math.round(accentL)}%`);
 }
 
+// CANON: Single source of truth for appointment card border + accent edge.
+// Do NOT set borderColor / borderLeftColor inline anywhere else in
+// AppointmentCardContent or sibling components. The leading accent is
+// derived per-category from the card's own hue — it is never `primary`.
+// History: this helper exists because three inline branches drifted
+// (consultation-only accent bug, then global purple bug). One helper,
+// one decision, no drift.
+export interface AppointmentBorderStyleInput {
+  catColor: { bg: string; text: string } | null;
+  darkStyle: DarkCategoryStyle | null;
+  isDark: boolean;
+  displayGradient: { background: string; textColor: string } | null;
+  willShowLeadingAccent: boolean;
+}
+
+export function getAppointmentBorderStyle(input: AppointmentBorderStyleInput): React.CSSProperties {
+  const { catColor, darkStyle, isDark, displayGradient, willShowLeadingAccent } = input;
+  const accentLeftWidth = willShowLeadingAccent ? '4px' : '1px';
+
+  // Branch 1: gradient / consultation
+  if (displayGradient) {
+    const base: React.CSSProperties = {
+      background: displayGradient.background,
+      color: displayGradient.textColor,
+    };
+    if (!willShowLeadingAccent) return base;
+    const accentEdge = deriveAccentEdgeColor(displayGradient.textColor, isDark);
+    return {
+      ...base,
+      borderLeftColor: accentEdge,
+      borderLeftWidth: accentLeftWidth,
+      borderLeftStyle: 'solid',
+    };
+  }
+
+  // Branch 2: dark category fill
+  if (isDark && darkStyle) {
+    const base: React.CSSProperties = {
+      backgroundColor: darkStyle.fill,
+      color: darkStyle.text,
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      transition: 'background-color 150ms ease, box-shadow 150ms ease',
+    };
+    if (!willShowLeadingAccent) {
+      return { ...base, borderColor: darkStyle.fill };
+    }
+    const accentEdge = catColor ? deriveAccentEdgeColor(catColor.bg, true) : darkStyle.accent;
+    return {
+      ...base,
+      borderTopColor: darkStyle.fill,
+      borderRightColor: darkStyle.fill,
+      borderBottomColor: darkStyle.fill,
+      borderLeftColor: accentEdge,
+      borderLeftWidth: accentLeftWidth,
+    };
+  }
+
+  // Branch 3: light category fill
+  if (catColor) {
+    const boostedBg = boostPaleCategoryColor(catColor.bg);
+    const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
+    const lightTokens = deriveLightModeColor(boostedBg);
+    const base: React.CSSProperties = {
+      backgroundColor: boostedBg,
+      color: boostedText,
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      boxShadow: 'none',
+      opacity: 1,
+      backdropFilter: 'none',
+    };
+    if (!willShowLeadingAccent) {
+      return { ...base, borderColor: lightTokens.stroke };
+    }
+    const accentEdge = deriveAccentEdgeColor(boostedBg, false);
+    return {
+      ...base,
+      borderTopColor: lightTokens.stroke,
+      borderRightColor: lightTokens.stroke,
+      borderBottomColor: lightTokens.stroke,
+      borderLeftColor: accentEdge,
+      borderLeftWidth: accentLeftWidth,
+    };
+  }
+
+  return {};
+}
+
 export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const hslStr = hexToHsl(hexColor);
   const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));

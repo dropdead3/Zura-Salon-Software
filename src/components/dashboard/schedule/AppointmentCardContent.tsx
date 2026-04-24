@@ -25,8 +25,8 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Pre-checkout statuses where Stripe Connect setup is still actionable.
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_EDGE } from '@/lib/design-tokens';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor, deriveAccentEdgeColor } from '@/utils/categoryColors';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, getAppointmentBorderStyle } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
@@ -620,71 +620,14 @@ export function AppointmentCardContent({
     size !== 'compact';
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
-    if (displayGradient) {
-      const base: React.CSSProperties = {
-        background: displayGradient.background,
-        color: displayGradient.textColor,
-      };
-      if (!willShowLeadingAccent) return base;
-      // Derive the accent from the gradient's textColor so the left edge
-      // stays in the same hue family as the gradient (e.g. consultation gold).
-      const accentEdge = deriveAccentEdgeColor(displayGradient.textColor, isDark);
-      return {
-        ...base,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-        borderLeftStyle: 'solid' as const,
-      };
-    }
-    if (useCategoryColor && isDark && darkStyle) {
-      const base = {
-        backgroundColor: darkStyle.fill,
-        color: darkStyle.text,
-        borderWidth: '1px',
-        borderStyle: 'solid' as const,
-        transition: 'background-color 150ms ease, box-shadow 150ms ease',
-      };
-      if (!willShowLeadingAccent) {
-        return { ...base, borderColor: darkStyle.fill };
-      }
-      const accentEdge = deriveAccentEdgeColor(catColor.bg, true);
-      return {
-        ...base,
-        borderTopColor: darkStyle.fill,
-        borderRightColor: darkStyle.fill,
-        borderBottomColor: darkStyle.fill,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-      };
-    }
-    if (useCategoryColor) {
-      const boostedBg = boostPaleCategoryColor(catColor.bg);
-      const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
-      const lightTokens = deriveLightModeColor(boostedBg);
-      const base = {
-        backgroundColor: boostedBg,
-        color: boostedText,
-        borderWidth: '1px',
-        borderStyle: 'solid' as const,
-        boxShadow: 'none',
-        opacity: 1,
-        backdropFilter: 'none',
-      };
-      if (!willShowLeadingAccent) {
-        return { ...base, borderColor: lightTokens.stroke };
-      }
-      const accentEdge = deriveAccentEdgeColor(boostedBg, false);
-      return {
-        ...base,
-        borderTopColor: lightTokens.stroke,
-        borderRightColor: lightTokens.stroke,
-        borderBottomColor: lightTokens.stroke,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-      };
-    }
-    return {};
-  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, willShowLeadingAccent]);
+    return getAppointmentBorderStyle({
+      catColor: useCategoryColor ? catColor : null,
+      darkStyle,
+      isDark,
+      displayGradient,
+      willShowLeadingAccent,
+    });
+  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, willShowLeadingAccent]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
@@ -701,10 +644,6 @@ export function AppointmentCardContent({
     );
   }
 
-  const showLeadingAccent =
-    !BLOCKED_CATEGORIES.includes(appointment.service_category || '') &&
-    size !== 'compact';
-
   const gridContent = (
     <div
       className={cn(
@@ -715,8 +654,7 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
-        // ── Leading edge accent (per-card, color set inline via borderLeftColor) ──
-        showLeadingAccent && LEADING_ACCENT_EDGE,
+        // ── Leading edge accent: width + color set inline via getAppointmentBorderStyle ──
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
