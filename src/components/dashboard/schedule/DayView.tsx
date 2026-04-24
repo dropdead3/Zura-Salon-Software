@@ -893,7 +893,7 @@ export function DayView({
                  return (
                     <div 
                       key={stylist.user_id} 
-                      className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                      className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                       style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
                     >
                       {/* Past-time overlay — pixel-aligned to the current-time indicator */}
