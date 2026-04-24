@@ -2852,7 +2852,20 @@ async function executeSyncWorkflow({
     const startedAt = new Date();
     try {
       results.clients = await syncClients(supabase, businessId, username, password);
-      await logSync(supabase, 'clients', 'success', results.clients.synced, undefined, undefined, undefined, undefined, undefined, startedAt);
+
+      // S7e: Health gate — log `partial` when the sync was either chunk-aborted
+      // by the timeout guard or covered <95% of the upstream tenant.
+      const { synced = 0, total = 0, partial = false, global_total = 0 } = results.clients;
+      const coverageBase = global_total > 0 ? global_total : total;
+      const coveragePct = coverageBase > 0 ? (synced / coverageBase) * 100 : 100;
+      const status = (partial || coveragePct < 95) ? 'partial' : 'success';
+      console.log(`[SYNC HEALTH] Client sync result: ${synced}/${coverageBase} (${coveragePct.toFixed(1)}%) → ${status}`);
+      await logSync(
+        supabase, 'clients', status, synced,
+        partial ? 'Aborted by gateway-timeout guard; rerun to fill remainder' : undefined,
+        { coverage_pct: Number(coveragePct.toFixed(1)), global_total, partial },
+        undefined, undefined, undefined, startedAt,
+      );
 
       try {
         const { data: updateCount, error: calcError } = await supabase.rpc('update_preferred_stylists');
