@@ -729,16 +729,32 @@ async function syncAppointments(
     // worse than no rows — they satisfy schema but violate purpose, and they
     // hide IDs from the next residual scan (which is keyed on "no name").
     try {
-      // R6b: prioritize current/upcoming appointments. Insertion-order LIMIT 1000
-      // was burning the on-demand budget on historical rows while today's
-      // schedule kept rendering "Walk-in". Order by appointment_date DESC then
-      // future-first so the operator-visible window resolves first.
+      // S3: snapshot name coverage in the visible window BEFORE backfill
+      // so we can detect coverage regressions in subsequent syncs.
+      const visibleWindowFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const { count: visibleTotalBefore } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .not('phorest_client_id', 'is', null);
+      const { count: visibleMissingBefore } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .is('client_name', null)
+        .not('phorest_client_id', 'is', null);
+
+      // S2: prioritize current/upcoming appointments. Includes phorest_branch_id
+      // so we can probe the appointment's actual branch first instead of relying
+      // on sibling-client hints that might point to the wrong branch.
       const { data: missingNames } = await supabase
         .from('phorest_appointments')
-        .select('id, phorest_client_id, appointment_date')
+        .select('id, phorest_client_id, appointment_date, phorest_branch_id')
         .is('client_name', null)
         .not('phorest_client_id', 'is', null)
-        .gte('appointment_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .gte('appointment_date', visibleWindowFrom)
         .order('appointment_date', { ascending: true })
         .limit(1000);
 
