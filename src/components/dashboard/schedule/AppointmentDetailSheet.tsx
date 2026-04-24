@@ -1114,18 +1114,19 @@ export function AppointmentDetailSheet({
               ?? svc?.requiresConsultation ?? false,
           }],
         });
-        fireAuditLog.mutate({
-          appointmentId: appointment.id,
-          organizationId: resolvedOrgId,
-          eventType: AUDIT_EVENTS[auditEvent],
-          previousValue: { service: serviceName, value: previousValue },
-          newValue: { service: serviceName, value: newValue },
-        });
+        fireAuditLog(
+          AUDIT_EVENTS[auditEvent],
+          { service: serviceName, value: previousValue },
+          { service: serviceName, value: newValue },
+        );
       } catch (err: any) {
         toast.error('Failed to save change', { description: err?.message });
       }
     },
-    [appointment, resolvedOrgId, services, upsertAssignments, fireAuditLog],
+    // fireAuditLog is declared later in this component; we intentionally omit it
+    // from deps — it has stable identity per render and reads from closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [appointment, resolvedOrgId, services, upsertAssignments],
   );
 
   const stylistOptions = useMemo(
