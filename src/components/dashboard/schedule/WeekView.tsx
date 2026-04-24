@@ -298,6 +298,7 @@ export function WeekView({
   inactiveConnectLocationIds,
 }: WeekViewProps) {
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const { isToday: isOrgToday, isTomorrow: isOrgTomorrow, nowMinutes: wkNowMins } = useOrgNow();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
 
@@ -319,10 +320,20 @@ export function WeekView({
     ? Math.max(MIN_ROW_HEIGHT, Math.floor(availableHeight / totalSlots))
     : MIN_ROW_HEIGHT;
 
-  // Auto-scroll to 1 hour before earliest opening time across the week
+  // Week starts with currentDate, followed by 6 future days
+  const weekDays = useMemo(() =>
+    Array.from({ length: 7 }, (_, i) => addDays(currentDate, i)),
+    [currentDate.toDateString()]
+  );
+
+  // Auto-scroll: prefer the now-line if today is in this week and within hours,
+  // otherwise scroll to 1 hour before the earliest opening time across the week.
   useEffect(() => {
     if (!scrollRef.current) return;
+    const ref = scrollRef.current;
+
     let earliestOpen = hoursStart;
+    let latestClose = hoursEnd;
     if (locationHoursJson) {
       const openHours = weekDays.map(day => {
         const info = getLocationHoursForDate(locationHoursJson, locationHolidayClosures ?? null, day);
@@ -333,16 +344,37 @@ export function WeekView({
       if (openHours.length > 0) {
         earliestOpen = Math.min(...openHours);
       }
+      const closeHours = weekDays.map(day => {
+        const info = getLocationHoursForDate(locationHoursJson, locationHolidayClosures ?? null, day);
+        if (info.isClosed || !info.closeTime) return -Infinity;
+        const [h] = info.closeTime.split(':').map(Number);
+        return h;
+      }).filter(h => h !== -Infinity);
+      if (closeHours.length > 0) {
+        latestClose = Math.max(...closeHours);
+      }
     }
-    const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
-    const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
-    const top = slotsOffset * ROW_HEIGHT;
-    const ref = scrollRef.current;
+
+    const todayIsInWeek = weekDays.some(d => isOrgToday(d));
+    const nowHour = wkNowMins / 60;
+    const withinBusinessHours = nowHour >= earliestOpen && nowHour < latestClose;
+
+    let top: number;
+    if (todayIsInWeek && withinBusinessHours) {
+      const slotsFromStart = (wkNowMins - hoursStart * 60) / slotInterval;
+      const nowTopPx = slotsFromStart * ROW_HEIGHT;
+      top = Math.max(0, nowTopPx - ref.clientHeight / 3);
+    } else {
+      const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
+      const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
+      top = slotsOffset * ROW_HEIGHT;
+    }
+
     requestAnimationFrame(() => {
       ref?.scrollTo({ top, behavior: 'instant' });
     });
-  }, [currentDate.toDateString(), locationHoursJson, hoursStart, slotInterval, ROW_HEIGHT]);
-  
+  }, [currentDate.toDateString(), locationHoursJson, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, weekDays, isOrgToday, wkNowMins, locationHolidayClosures]);
+
   // Week starts with currentDate, followed by 6 future days
   const weekDays = useMemo(() => 
     Array.from({ length: 7 }, (_, i) => addDays(currentDate, i)),
