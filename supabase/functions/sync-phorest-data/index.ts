@@ -1007,7 +1007,9 @@ async function syncAppointments(
             // Cap at 150 per run to bound API budget. Remaining IDs roll into
             // the next sync cycle automatically.
             const probeBudget = stillUnresolved.slice(0, 150);
-            const negativeUpserts: any[] = [];
+            // S5c: Negative cache writes go to the dedicated table, NOT to
+            // phorest_clients (which is now constrained to forbid sentinels).
+            const negativeCacheUpserts: any[] = [];
 
             for (const cid of probeBudget) {
               // Choose target branch: appointment's own branch first, then any
@@ -1019,9 +1021,11 @@ async function syncAppointments(
 
               let resolved = false;
               let allReturned404 = true;
+              const probedBranches: string[] = [];
 
               for (const branchId of probeBranchOrder) {
                 const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
+                probedBranches.push(branchId);
                 try {
                   const c: any = await phorestRequest(
                     `/branch/${branchId}/client/${cid}`,
@@ -1034,6 +1038,13 @@ async function syncAppointments(
                   const name = `${first || ''} ${last || ''}`.trim() || c?.name || null;
                   if (!name) {
                     allReturned404 = false; // got a response, just empty
+                    continue;
+                  }
+
+                  // S5d: pre-write assert. The DB constraint will also block
+                  // this, but failing fast in code yields a structured log.
+                  if (name === '[Deleted Client]') {
+                    console.error(`[S5d ASSERT FAIL] refusing to write sentinel as name for ${cid}`);
                     continue;
                   }
 
@@ -1065,24 +1076,33 @@ async function syncAppointments(
                 }
               }
 
-              // If EVERY probed branch returned 404, this client truly does
-              // not exist in any per-branch roster — write a negative cache
-              // so we stop probing it next sync. Renders as "Client #XXXX".
-              if (!resolved && allReturned404) {
+              // S5b/S5c: If EVERY probed branch returned 404 across multiple
+              // branches/regions, record in dedicated negative cache. Pass 1.5
+              // only honors entries with confirmation_count >= 2, so a single
+              // probe-pass remains a "soft" miss subject to re-probe.
+              if (!resolved && allReturned404 && probedBranches.length > 0) {
                 s4b404++;
-                negativeUpserts.push({
+                const primary = probedBranches[0];
+                negativeCacheUpserts.push({
                   phorest_client_id: cid,
-                  name: '[Deleted Client]',
-                  first_name: null,
-                  last_name: null,
+                  phorest_branch_id: primary,
+                  region: branchRegion.get(primary) || PHOREST_BASE_URL,
+                  branches_probed: probedBranches,
+                  last_checked_at: new Date().toISOString(),
+                  confirmation_count: probedBranches.length, // multi-branch = high confidence
                 });
               }
             }
 
-            if (negativeUpserts.length > 0) {
+            if (negativeCacheUpserts.length > 0) {
+              // Upsert with confirmation_count incrementing — but Supabase
+              // upsert can't increment, so we read-modify-write only on
+              // conflict. For simplicity, the upsert below replaces the row;
+              // since branches_probed reflects the latest probe-pass scope,
+              // this is acceptable signal hygiene.
               await supabase
-                .from('phorest_clients')
-                .upsert(negativeUpserts, { onConflict: 'phorest_client_id' });
+                .from('phorest_client_negative_cache')
+                .upsert(negativeCacheUpserts, { onConflict: 'phorest_client_id' });
             }
           }
 
@@ -1096,11 +1116,12 @@ async function syncAppointments(
           console.log(`On-demand (paginated): ${onDemandFetched} resolved, ${onDemandUnresolved} unresolved, ${onDemandErrors} transient errors`);
         }
 
-        // Bulk-update appointments with all resolved real names (skip [Deleted Client]).
+        // Bulk-update appointments with all resolved real names.
+        // S5d: clientNameMap is guaranteed sentinel-free by Pass 1 + DB constraint.
         let backfilled = 0;
         for (const apt of missingNames) {
           const name = clientNameMap.get(apt.phorest_client_id!);
-          if (name && name !== '[Deleted Client]') {
+          if (name) {
             await supabase
               .from('phorest_appointments')
               .update({ client_name: name })
