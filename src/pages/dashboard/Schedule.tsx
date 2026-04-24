@@ -942,7 +942,7 @@ export default function Schedule() {
           {view === 'week' && (
             <WeekView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
               hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
@@ -974,7 +974,7 @@ export default function Schedule() {
           {view === 'month' && (
             <MonthView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               onDayClick={handleDayClick}
               onAppointmentClick={handleAppointmentClick}
               locationHoursJson={selectedLocationData?.hours_json}
@@ -985,7 +985,7 @@ export default function Schedule() {
           {view === 'agenda' && (
             <AgendaView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               onAppointmentClick={handleAppointmentClick}
               assistedAppointmentIds={assistedAppointmentIds}
               assistantNamesMap={assistantNamesMap}
