@@ -56,4 +56,45 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Platform-primitive isolation gate. Banning raw shadcn primitives in
+    // the platform layer prevents org-theme tokens (--primary, --background,
+    // --muted, etc.) from bleeding into platform admin surfaces. Every
+    // primitive listed here has a Platform* equivalent in
+    // src/components/platform/ui/ that reads --platform-* tokens instead.
+    //
+    // Migration override (use sparingly, with a one-line reason):
+    //   // eslint-disable-next-line no-restricted-imports -- <reason>
+    //
+    // Primitives without Platform* wrappers yet (Progress, RadioGroup,
+    // Slider, Tabs, Skeleton, Toggle, Tooltip, Popover, DropdownMenu,
+    // Separator, Calendar) are tracked in mem://style/platform-primitive-
+    // isolation.md Deferral Register: create the wrapper, then add the
+    // path here in the same change.
+    files: [
+      "src/components/platform/**/*.{ts,tsx}",
+      "src/pages/dashboard/platform/**/*.{ts,tsx}",
+    ],
+    // Lint fixtures intentionally violate the rule to assert it fires.
+    ignores: [
+      "src/components/platform/__lint-fixtures__/**",
+    ],
+    rules: {
+      "no-restricted-imports": ["error", {
+        paths: [
+          { name: "@/components/ui/checkbox",     message: "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer." },
+          { name: "@/components/ui/switch",       message: "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme." },
+          { name: "@/components/ui/alert-dialog", message: "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme." },
+          { name: "@/components/ui/dialog",       message: "Use PlatformDialogContent from @/components/platform/ui/PlatformDialog — raw dialog reads --background/--popover from the org theme." },
+          { name: "@/components/ui/label",        message: "Use PlatformLabel from @/components/platform/ui — raw label reads --foreground from the org theme." },
+          { name: "@/components/ui/textarea",     message: "Use PlatformTextarea from @/components/platform/ui — raw textarea reads --input/--border from the org theme." },
+          { name: "@/components/ui/select",       message: "Use Platform* select exports from @/components/platform/ui/PlatformSelect — raw select reads --popover/--primary from the org theme." },
+          { name: "@/components/ui/input",        message: "Use PlatformInput from @/components/platform/ui — raw input reads --input/--ring from the org theme." },
+          { name: "@/components/ui/button",       message: "Use PlatformButton from @/components/platform/ui — raw button reads --primary/--secondary from the org theme." },
+          { name: "@/components/ui/card",         message: "Use Platform* card exports from @/components/platform/ui/PlatformCard — raw card reads --card/--card-foreground from the org theme." },
+          { name: "@/components/ui/badge",        message: "Use PlatformBadge from @/components/platform/ui — raw badge reads --primary/--secondary from the org theme." },
+        ],
+      }],
+    },
+  },
 );
