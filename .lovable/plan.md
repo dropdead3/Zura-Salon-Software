@@ -1,62 +1,119 @@
 
+## Prompt feedback
+Good prompt. You gave the most useful possible symptom: "it's only visible on the New Client Consultation card." That isolates the bug from "accent rendering is broken" to "accent appears only on one rendering path," which is a much stronger debugging signal. Even better next time: pair that observation with one short structural hint like "compare the consultation card path to standard service-colored cards." That would point directly to the actual split in the code.
 
-## Why the accent isn't visible
+## What the problem actually is
+The accent is not missing randomly.
 
-The CSS variable `--platform-primary` is **only defined inside `.platform-theme` / `.platform-light` / `.platform-dark` scopes** (verified in `src/index.css` lines 2148–2247). Those classes are restricted to the platform admin layer (`/dashboard/platform/*`) by the **Platform Theme Isolation** canon.
+It only shows on the consultation card because that card goes through the `displayGradient` path, while most other schedule cards go through the `useCategoryColor` path.
 
-You're on `/org/drop-dead-salons/dashboard/schedule` — an **organization** route. There, `--platform-primary` resolves to nothing, so:
+In `AppointmentCardContent.tsx`:
 
-```css
-border-left-color: hsl(var(--platform-primary)/0.7)  →  transparent
+- `showLeadingAccent` is true for most non-compact, non-blocked cards
+- `LEADING_ACCENT_BORDER` is being applied to the card root
+- but `cardStyle` sets an inline `borderColor` whenever `useCategoryColor` is true
+
+That inline `borderColor` overrides the class-based `border-l-primary/70`, so the left accent gets replaced by the same stroke color as the rest of the card border.
+
+Why consultation is different:
+- consultation cards use `displayGradient`
+- the `displayGradient` style path sets `background` and `color`, but not `borderColor`
+- because no inline `borderColor` is applied there, the left accent survives and becomes visible
+
+So the issue is not visibility logic. The issue is CSS precedence:
+- class-based left border accent
+- overridden by inline full-border color on service-colored cards
+
+## Files involved
+- `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+- `src/lib/design-tokens.ts`
+
+## Implementation plan
+
+### 1) Keep the accent token, but stop letting inline borderColor wipe it out
+Update the service-colored `cardStyle` branches in `AppointmentCardContent.tsx` so they do not override the left border when `showLeadingAccent` is enabled.
+
+Current problematic behavior:
+- `borderColor` is applied inline for all sides
+- inline style wins over `border-l-*` utility class
+
+### 2) Split border styling into two cases
+In the `useCategoryColor` branches, compute border styling conditionally:
+
+#### Case A — accent enabled
+For non-compact, non-blocked cards:
+- preserve top/right/bottom border color from category styling
+- do not set the left border color inline
+- allow `LEADING_ACCENT_BORDER` to control the left edge
+
+Implementation direction:
+- either move full-border coloring out of inline styles and into class/style composition that supports side-specific borders
+- or set side-specific inline values:
+  - `borderTopColor`
+  - `borderRightColor`
+  - `borderBottomColor`
+  - omit `borderLeftColor`
+
+#### Case B — accent disabled
+For compact or blocked cards:
+- keep the existing full border behavior unchanged
+
+### 3) Apply the same fix to both category-color branches
+There are two style branches that can override the accent:
+- dark themed category cards
+- light themed category cards
+
+Both need the same side-aware border treatment.
+
+### 4) Keep the existing accent visibility rules
+Do not change:
+- compact cards: no accent
+- blocked/break cards: no accent
+- agenda variant: unchanged
+
+The bug is not in the visibility gate; it is in the border-color override.
+
+### 5) Keep the token source stable
+No need to change the org-scoped token choice unless visual tuning is needed. `LEADING_ACCENT_BORDER` can remain the canonical accent token.
+
+If visual parity with Top Staff still needs refinement after the fix, tune only these values in `src/lib/design-tokens.ts`:
+- border width
+- opacity
+- ring opacity
+
+## Expected result after fix
+- consultation cards still show the accent
+- standard service-colored cards also show the accent
+- the accent follows the rounded corners because it remains a native left border
+- top/right/bottom border still match the card’s category stroke
+- no extra overlay, no inset pill, no SVG, no padding hacks
+
+## Technical detail
+The root cause is this combination:
+
+```tsx
+showLeadingAccent && LEADING_ACCENT_BORDER
+style={cardStyle}
 ```
 
-The class is being applied. The color just doesn't exist in this scope. That's why nothing renders.
+with `cardStyle` containing:
 
-This was a doctrine violation on my part: I reached for a "purple" token without checking it was scope-legal. Top Staff (the reference) uses `chart-4` — a semantic chart token defined in the org theme — exactly because chart tokens are theme-portable.
-
-## The fix
-
-### File 1 — `src/lib/design-tokens.ts`
-
-Replace the broken token (line 304–305):
-
-```ts
-// ❌ Current — uses platform-scoped variable that doesn't resolve on org routes
-export const LEADING_ACCENT_BORDER =
-  'border-l-[3px] border-l-[hsl(var(--platform-primary)/0.7)] ring-1 ring-[hsl(var(--platform-primary)/0.08)]';
-
-// ✅ Replacement — uses primary (org-scoped, exists everywhere)
-export const LEADING_ACCENT_BORDER =
-  'border-l-[3px] border-l-primary/70 ring-1 ring-primary/10';
+```tsx
+borderColor: ...
 ```
 
-`primary` is the org dashboard's brand purple — defined in every theme (Zura, Cream, Rose, Sage, Ocean, Ember, Noir) per the dashboard theme orchestration canon. It will:
-- Resolve on every dashboard route
-- Adapt automatically when the user switches themes
-- Stay purple in the default Zura theme
-- Match the existing primary ring used on selected appointment cards (already on line 684)
-
-### File 2 — no changes
-`AppointmentCardContent.tsx` already imports and applies `LEADING_ACCENT_BORDER` correctly on line 681. Once the token resolves to a real color, the border will appear.
-
-## Why this won't recur
-
-Adding the canon entry below to memory locks the rule in:
-
-> Tokens prefixed `--platform-*` are scoped to `.platform-theme` / `.platform-light` / `.platform-dark` and **MUST NOT** be referenced from organization dashboard components. Use `primary`, `chart-N`, or other org-scoped semantic tokens instead.
-
-I'll save this as a Core memory rule so future accent / color decisions check scope before token selection.
+Because inline styles outrank Tailwind utility classes, the category stroke replaces the accent on the left side. Gradient consultation cards avoid this because their style object does not include `borderColor`.
 
 ## QA checklist
-- Schedule cards on `/org/.../dashboard/schedule` show a 3px purple left border that curves into the card's `rounded-[10px]` corners
-- Border appears on Day, Week views
-- Skipped on compact cards, blocked/break cards, agenda variant
-- Cancelled cards: border dims with parent `opacity-60`
-- Selected cards: `ring-primary` selection halo renders cleanly outside the left border
-- Theme switch (Zura → Cream → Rose etc.): border color follows the active theme's `--primary`, not stuck on purple
-- Light + dark mode: border stays visible at appropriate contrast
+- Confirmed and completed standard appointment cards show the leading accent
+- Unconfirmed/service-colored cards show the leading accent
+- Consultation gradient cards still show the leading accent
+- Compact cards still do not show it
+- Block/Break cards still do not show it
+- Left edge uses accent color, while top/right/bottom retain category stroke
+- Rounded corner wrap remains clean at 100%, 125%, 150%, and 200% zoom
+- Selected ring and no-show ring still render correctly
+- No layout shift or content overlap introduced
 
 ## Enhancement suggestion
-
-Add a one-line **canon test** that grep-fails CI if any file outside `src/pages/dashboard/platform/**` or `src/components/platform/**` references `--platform-` or `platform-primary`. That converts this class of bug from "ship → user reports → debug" to "blocked at commit." It's the same canon-pattern enforcement gate already used for typography weight bans.
-
+After this fix, extract the card stroke decision into a small helper such as `getAppointmentBorderStyle({ useCategoryColor, isDark, showLeadingAccent, catColor, darkStyle })`. That turns the bug-prone style precedence into one canonical decision point and prevents future regressions where a new inline `borderColor` silently kills the accent again.
