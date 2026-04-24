@@ -106,6 +106,8 @@ import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { ServiceRow } from '@/components/dashboard/schedule/ServiceRow';
+import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 import { Pencil, Send } from 'lucide-react';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
