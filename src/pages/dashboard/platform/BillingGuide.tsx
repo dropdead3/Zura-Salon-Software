@@ -24,8 +24,8 @@ import {
   PlatformTableCell,
 } from '@/components/platform/ui/PlatformTable';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { cn } from '@/lib/utils';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 

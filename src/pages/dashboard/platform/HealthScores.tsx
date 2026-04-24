@@ -10,8 +10,8 @@ import {
   PlatformCardHeader,
   PlatformCardTitle,
 } from '@/components/platform/ui/PlatformCard';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { Select, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger, SelectValue } from '@/components/platform/ui/PlatformSelect';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import {

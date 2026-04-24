@@ -14,7 +14,7 @@ import {
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Input } from '@/components/ui/input';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { 
   Select, 
   SelectContent, 
@@ -28,7 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { 
