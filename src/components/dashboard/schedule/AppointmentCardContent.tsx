@@ -26,7 +26,7 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
 import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_EDGE } from '@/lib/design-tokens';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor, deriveAccentEdgeColor } from '@/utils/categoryColors';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, getAppointmentBorderStyle } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
