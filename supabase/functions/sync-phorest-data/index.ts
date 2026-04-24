@@ -1286,8 +1286,41 @@ async function syncClients(
       
       console.log(`Fetching clients for branch: ${branchName} [${branchRegionLabel}] (${branchId}), mapped location: ${locationId}`);
 
+      // S7g: Resolve effective base via cross-region fallback. The /branch
+      // enumeration may classify a branch as EU (it appears in the EU branch
+      // list) yet the per-branch /client endpoint actually lives on the US
+      // base — Phorest replicates branch metadata across regions but data
+      // lives on a single region. When the pinned base 404s, retry the
+      // opposite region before declaring the branch a failure.
+      let effectiveBase = branchBase;
       try {
-        // Fetch clients for this branch with pagination — pinned to its region.
+        await phorestRequest(
+          `/branch/${branchId}/client?size=1&page=0`,
+          businessId, username, password, effectiveBase,
+        );
+      } catch (probeErr: any) {
+        if (String(probeErr.message).includes('404')) {
+          const altBase = effectiveBase === PHOREST_BASE_URL ? PHOREST_BASE_URL_US : PHOREST_BASE_URL;
+          console.log(`Branch ${branchName}: pinned base ${effectiveBase} returned 404, trying ${altBase}`);
+          try {
+            await phorestRequest(
+              `/branch/${branchId}/client?size=1&page=0`,
+              businessId, username, password, altBase,
+            );
+            effectiveBase = altBase;
+            console.log(`Branch ${branchName}: cross-region fallback succeeded on ${altBase}`);
+          } catch (altErr: any) {
+            console.log(`Branch ${branchName}: both regions 404, skipping branch (${altErr.message})`);
+            branchCoverage.push({ branch: branchName, region: branchRegionLabel, fetched: 0, expected: 0 });
+            continue;
+          }
+        } else {
+          throw probeErr;
+        }
+      }
+
+      try {
+        // Fetch clients for this branch with pagination — pinned to effective region.
         let page = 0;
         let hasMore = true;
         let branchClientCount = 0;
@@ -1299,7 +1332,7 @@ async function syncClients(
             businessId, 
             username, 
             password,
-            branchBase, // S7b: pin region per branch
+            effectiveBase, // S7g: cross-region-resolved base
           );
           const clients = clientsData._embedded?.clients || clientsData.clients || [];
           const pageInfo = clientsData.page || {};
