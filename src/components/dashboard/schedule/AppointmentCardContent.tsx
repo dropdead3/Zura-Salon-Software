@@ -203,6 +203,23 @@ function useServiceBands(
   }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, skipForCompact]);
 }
 
+// ─── Leading Accent Bar ───────────────────────────────────────
+// Inset rounded pill that signals appointment status. Matches the agenda
+// divider pattern (AgendaContent line ~443) — a clean canonical bar, not an
+// edge-bleed shape. Color resolves from APPOINTMENT_STATUS_COLORS so it stays
+// in lockstep with the status badge dot.
+function LeadingAccentBar({ colorClass }: { colorClass: string }) {
+  return (
+    <div
+      className={cn(
+        'absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full pointer-events-none z-[5]',
+        colorClass
+      )}
+      aria-hidden
+    />
+  );
+}
+
 // ─── Grid Content (compact / medium / full) ───────────────────
 function GridContent({
   appointment,
@@ -259,7 +276,7 @@ function GridContent({
   const statusLabel = useShortLabels ? badge.shortLabel : badge.label;
 
   return (
-    <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
+    <div className="pl-3.5 pr-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
@@ -689,6 +706,15 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
+      {/* Leading status accent — inset rounded pill, canonical status signal */}
+      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && !displayGradient && (
+        <LeadingAccentBar
+          colorClass={
+            (APPOINTMENT_STATUS_COLORS[(appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_COLORS]?.bg) ||
+            APPOINTMENT_STATUS_COLORS.booked.bg
+          }
+        />
+      )}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
