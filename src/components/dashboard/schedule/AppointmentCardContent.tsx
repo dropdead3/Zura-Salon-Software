@@ -131,19 +131,7 @@ function CardOverlays({
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
         }}
       />
-      {/* Corner-wrapping accent — single bordered box masked to reveal only top ~14px,
-          producing one continuous stroke that traces both rounded corners */}
-      {useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
-        <div
-          className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
-          style={{
-            border: '2.5px solid hsl(var(--border))',
-            opacity: 0.85,
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
-            maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
-          }}
-        />
-      )}
+      {/* Corner accent removed */}
       {isNoShow && (
         <>
           <div className="absolute inset-0 bg-destructive/12 z-10 pointer-events-none" />
@@ -700,18 +688,7 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Corner-wrapping accent — neutral border token, ghost UI edge thickening */}
-      {!useCategoryColor && !displayGradient && (
-        <div
-          className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
-          style={{
-            border: '2.5px solid hsl(var(--border))',
-            opacity: 0.85,
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
-            maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
-          }}
-        />
-      )}
+      {/* Corner accent removed */}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
