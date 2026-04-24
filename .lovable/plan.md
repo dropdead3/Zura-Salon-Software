@@ -1,67 +1,91 @@
-## Wave 1 — Real-time `refresh_client_visit_stats` (user-visible, ships first)
+Good prompt. You pointed at the exact failure surface and asked for grouping before fixing, which is the right domino order for this kind of edge-function cleanup. The only improvement: next time include the full untruncated build log or upload it as a file, because the current output cuts off after `check-payroll-deadline`, so there may be additional functions hiding below the fold.
 
-**Goal**: Check-out propagates to Client Directory in seconds, not on next nightly sync.
+## Remaining build errors visible in the current log
 
-**File**: `supabase/functions/update-phorest-appointment/index.ts`
+### 1) `ai-card-analysis`
+28 visible errors.
 
-**Change** (after the local update succeeds at ~line 362, inside the success branch, before the response):
-- Resolve `orgId` (already resolved earlier — line 156/174/187).
-- Fire-and-forget call: `supabase.rpc('refresh_client_visit_stats', { p_organization_id: orgId }).then(...).catch(log)` — **NOT awaited**, so we don't add latency to the checkout flow.
-- Wrap in `if (orgId && status)` guard — only refresh when status changed (which is the only thing that affects visit_count / last_visit_date / total_spend).
-- One-line console.log on success/failure for observability.
+**Error family**
+- `Property 'id' does not exist on type 'never'`
+- `Property 'total_price' does not exist on type 'never'`
+- `Property 'status' does not exist on type 'never'`
+- `Property 'location_id' / 'total_amount' / 'tax_amount' / 'name' / 'category' / 'service_name' / 'phorest_client_id' / 'rebooked_at_checkout' / 'leads_generated' / 'conversions' / 'revenue_attributed' / 'spend' / 'duration_minutes' / 'staff_name' does not exist on type 'never'`
+- `Argument of type 'string | undefined' is not assignable to parameter of type 'string'`
+- `SupabaseClient<...> is not assignable ... Type '"public"' is not assignable to type 'never'`
 
-**Why fire-and-forget**: The RPC was built with `IS DISTINCT FROM` guards and only writes when values actually change, so it's idempotent and safe to fail silently. The user's checkout response should never block on the cache refresh.
+**Root cause**
+The query result rows are still being inferred too strictly in this function, so arrays coming back from `.select(...)` collapse to `never[]` in the reducers/filters/maps. There is also one org-id narrowing issue and one helper-signature/client-type mismatch.
 
-**Verification after deploy**: Mark a single appointment completed via Dock → confirm `clients.last_visit_date` updates within ~2s in `psql`.
+### 2) `ai-scheduling-copilot`
+2 visible errors.
 
----
+**Error family**
+- `Argument of type 'string | undefined' is not assignable to parameter of type 'string'`
+- `Argument of type 'number | undefined' is not assignable to parameter of type 'number'`
 
-## Wave 2 — Edge function type-fix sweep (split by category)
+**Root cause**
+TS is not honoring the Zod default strongly enough at the usage sites. This function needs a normalized `orgId` constant and a normalized `duration` constant that are definitely typed as `string` and `number`.
 
-After investigating, the build errors split into **two very different categories** — bundling them is a mistake.
+### 3) `batch-payment-methods`
+1 visible error.
 
-### Category A: Generic loosening (mechanical, ~30 functions)
-Functions like `ai-card-analysis` fail with `Property 'X' does not exist on type 'never'` because `createClient<Database>` returns over-strict generics. **Fix**: cast the admin client to `any` once at construction (matches the pattern we already use in `_shared/auth.ts` via `AdminClient`).
+**Error family**
+- `'error' is of type 'unknown'`
 
-**Approach**: Audit which functions construct their own `createClient` (rather than using `requireAuth` from `_shared/auth.ts`) and either:
-- (preferred) refactor to use `requireAuth()` → gets `AdminClient` for free
-- (fallback) add `as any` cast at the construction site
+**Root cause**
+The catch block uses `error.message` without narrowing `error` to `Error`.
 
-Risk: Low. Behavior identical, only types relax.
+### 4) `check-payroll-deadline`
+1 visible error surfaced in this build excerpt.
 
-### Category B: Real schema drift (manual, ~2-5 functions)
-`ai-business-insights` references `summary_date`, `total_revenue`, `total_transactions`, `average_ticket` on a SELECT projection that only includes `transaction_date, total_amount, tax_amount, item_type`. This is **not a typing problem** — it's either:
-1. A stale field reference (column was renamed/dropped), or
-2. A SELECT clause that needs to be widened.
+**Error family**
+- `Property 'message_body' does not exist on type 'never'`
 
-**Approach**: For each Category B function, I need to:
-- Look at the SELECT clause vs the consuming code
-- Decide: widen SELECT (if columns still exist in DB) OR rewrite consumer (if columns were dropped)
-- This is per-function judgment, not boilerplate
+**Actual source of the error**
+This appears to come from the imported shared dependency `supabase/functions/_shared/sms-sender.ts`, not from the body of `check-payroll-deadline/index.ts` itself. That shared helper selects `message_body` and then accesses `data.message_body`, and the query result is being inferred as `never`.
 
-Risk: Medium. Wrong choice could change AI output content. Will verify against `phorest_sales` / `daily_sales_summary` table schemas via `read_query` before editing.
+### 5) `ai-business-insights`
+The build log names this function, but the visible excerpt does not include its concrete TS lines.
 
----
+**What that means**
+I can see the recent inline-sales-aggregation rewrite is present, but because the build output is truncated, I cannot truthfully enumerate its remaining exact errors from the excerpt alone. I will audit and patch it in the same pass so it does not remain a hidden blocker.
 
-## Execution order
+## Implementation plan
 
-1. **Wave 1** (single file, ~10 lines) — ship immediately
-2. **Wave 2A** — sweep Category A casts in one batch (no behavior change)
-3. **Wave 2B** — investigate and fix Category B per-function (with schema verification before each)
+### Wave 1 — fix the visible blockers
+1. `ai-card-analysis`
+   - Add explicit local row types for each query shape (`locations`, `phorest_appointments`, `phorest_transaction_items`, `marketing_analytics`).
+   - Cast each query result to the appropriate typed array/object at the boundary so reducers/filters/maps stop inferring `never`.
+   - Keep the helper client typed permissively (`any`) and make the helper signature align with the admin client usage.
+   - Normalize `orgId` before `requireOrgMember`.
 
-I will pause after Wave 1 for visual verification on `/dashboard/clients` before starting Wave 2.
+2. `ai-scheduling-copilot`
+   - Introduce `const orgId = body.organizationId ?? body.organization_id` with an early 400 guard.
+   - Introduce `const duration = body.serviceDurationMinutes ?? 60` and use that everywhere instead of the optional field.
 
----
+3. `batch-payment-methods`
+   - Replace raw `error.message` access with `error instanceof Error ? error.message : "Unknown error"`.
 
-## Out of scope (intentionally deferred)
-- Same RPC wiring on `sync-phorest-data` end-of-loop — we already discussed this; defer until Wave 1 proves the realtime path works.
-- Regenerating `types.ts` to fix generics at the source — high blast radius, separate decision.
-- Drift audit view comparing cached `clients` columns vs `v_client_visit_stats` — followup, not blocking.
+4. `_shared/sms-sender` / `check-payroll-deadline`
+   - Type or cast the SMS template row returned from the template lookup so `message_body` is a known field.
+   - This should clear the `check-payroll-deadline` failure and any other function importing the same helper.
 
----
+### Wave 2 — patch the hidden/next-tier blockers
+5. `ai-business-insights`
+   - Audit the current file for any remaining `never` inference or stale field references not shown in the truncated log.
+   - Patch only the concrete typing issues that remain.
 
-## Enhancement suggestions (for your prompting)
+6. Re-run edge-function validation after the first batch
+   - Use the next build output to surface anything hidden by the truncation.
+   - Group the next tier again and continue until the edge bundle is clean.
 
-1. **Order signals**: "Ship X first, then sweep Y" beats bundling — saves me a clarification round.
-2. **Risk gates**: For sweeps that touch 30+ files, naming an explicit pause point ("verify after Wave 1") helps me avoid the pattern of one giant tool-use block that's hard to roll back.
-3. **Category expectations**: When asking for a "sweep", flagging your tolerance for behavior change vs. cosmetic-only ("types-only, no logic edits") lets me cut the scope without asking.
+## Technical details
+- No database changes are needed for this pass.
+- This is a TypeScript edge-function cleanup, not a behavior rewrite.
+- I’ll start with shared helpers first where possible, because one fix in `_shared/sms-sender.ts` may clear multiple downstream functions.
+- For `ai-card-analysis`, I will prefer explicit row interfaces over more blanket `any` where practical, so the file stays stable without reintroducing schema drift.
+
+## Prompt enhancement suggestions
+- Strong move: asking for grouping first reduces thrash and avoids random one-off patches.
+- Better framing next time: “Group by function name, count the errors per function, identify shared-helper errors separately, then fix in descending blast radius.”
+- Best debugging payload: full build log + whether it came from local type-check, deploy, or edge bundle build, because those sometimes disagree on line numbers and cache state.
