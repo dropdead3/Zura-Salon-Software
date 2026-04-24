@@ -598,6 +598,9 @@ async function syncAppointments(
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
+        // S2: persist the upstream branch on every synced row so reconciliation
+        // and on-demand client probes can target the appointment's real branch.
+        phorest_branch_id: apt.branchId || null,
         phorest_client_id: phorestClientId,
         appointment_date: appointmentDate,
         start_time: startTime,
@@ -613,25 +616,6 @@ async function syncAppointments(
       if (extractedClientPhone) baseRow.client_phone = extractedClientPhone;
       upsertBatch.push(baseRow);
     }
-
-    // R7: SYNC HEALTH CONTRACT — snapshot resolved-name count for the
-    // operator-visible 14-day window BEFORE the upsert. After the upsert,
-    // re-snapshot and compare. Any drop > 5% indicates the upsert path is
-    // null-overwriting names again (the very regression R6a fixed). We log
-    // a structured warning so phorest_sync_log carries the signal even when
-    // no human is watching the schedule.
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const horizonIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    let preNamedCount = 0;
-    try {
-      const { count } = await supabase
-        .from('phorest_appointments')
-        .select('id', { count: 'exact', head: true })
-        .gte('appointment_date', todayIso)
-        .lte('appointment_date', horizonIso)
-        .not('client_name', 'is', null);
-      preNamedCount = count ?? 0;
-    } catch (_) { /* non-fatal */ }
 
     // Batch upsert via RPC that COALESCEs client_name/client_phone so a
     // missing-from-payload value never null-overwrites a previously resolved
@@ -649,37 +633,90 @@ async function syncAppointments(
         synced += chunk.length;
       }
     }
-
+    
     console.log(`Synced ${synced} of ${upsertBatch.length} appointments (${allAppointments.length} fetched from API)`);
 
-    // R7: post-upsert health check. A drop in resolved names is structural
-    // damage — it means a future Phorest payload shape change (or a code
-    // regression) is null-overwriting names. We do NOT auto-rollback because
-    // the post-sync backfill below can still restore many of them; we DO
-    // emit a high-severity log so the next responder knows where to look.
+    // ── S1: Stale-appointment reconciliation ──
+    // For each branch we just fetched, soft-delete any active local Phorest
+    // rows in the same date window that were NOT returned by the upstream
+    // fetch. This closes the drift gap that produced "ghost" appointments
+    // (e.g. an upstream edit replaced the row but the old local row stayed
+    // active and kept rendering on the schedule).
+    //
+    // Bounded to (branch × window) so a partial fetch failure for one branch
+    // can't false-delete rows from another branch.
     try {
-      const { count: postCount } = await supabase
-        .from('phorest_appointments')
-        .select('id', { count: 'exact', head: true })
-        .gte('appointment_date', todayIso)
-        .lte('appointment_date', horizonIso)
-        .not('client_name', 'is', null);
-      const post = postCount ?? 0;
-      const delta = post - preNamedCount;
-      const dropPct = preNamedCount > 0 ? ((preNamedCount - post) / preNamedCount) * 100 : 0;
-      if (preNamedCount > 0 && dropPct > 5) {
-        console.error(
-          `[SYNC HEALTH] REGRESSION: resolved-name count dropped ${dropPct.toFixed(1)}% ` +
-          `(${preNamedCount} → ${post}, Δ=${delta}) over the next-14-day window. ` +
-          `Likely cause: upsert is null-overwriting client_name. Inspect the RPC path.`,
-        );
-      } else {
-        console.log(
-          `[SYNC HEALTH] OK: resolved-name count ${preNamedCount} → ${post} (Δ=${delta}) ` +
-          `over next-14-day window.`,
-        );
+      const seenByBranch = new Map<string, Set<string>>();
+      for (const apt of allAppointments) {
+        const bId = apt.branchId;
+        const phId = apt.appointmentId || apt.id || apt.appointmentid;
+        if (!bId || !phId) continue;
+        if (!seenByBranch.has(bId)) seenByBranch.set(bId, new Set());
+        seenByBranch.get(bId)!.add(phId);
       }
-    } catch (_) { /* non-fatal */ }
+
+      // Only reconcile branches we actually attempted to fetch (i.e. we have
+      // an entry in seenByBranch OR the branch was in the original branches
+      // list and the fetch returned zero rows — empty Set is correct here).
+      const branchIdsToReconcile = new Set<string>();
+      for (const branch of branches) {
+        const id = branch.branchId || branch.id;
+        if (id) branchIdsToReconcile.add(id);
+      }
+
+      let totalSoftDeleted = 0;
+      const allSampleIds: string[] = [];
+      for (const bId of branchIdsToReconcile) {
+        const seen = Array.from(seenByBranch.get(bId) || []);
+
+        // SAFETY: if the branch returned zero rows AND we have a meaningful
+        // count of existing local rows in the window, skip reconciliation
+        // for this branch. A truly-empty calendar is rare; an empty fetch
+        // is more likely an upstream error than a real wipe.
+        if (seen.length === 0) {
+          const { count: existingCount } = await supabase
+            .from('phorest_appointments')
+            .select('id', { count: 'exact', head: true })
+            .eq('phorest_branch_id', bId)
+            .gte('appointment_date', dateFrom)
+            .lte('appointment_date', dateTo)
+            .is('deleted_at', null);
+          if ((existingCount || 0) > 5) {
+            console.log(`[RECONCILE] Skip branch ${bId}: 0 fetched but ${existingCount} active locally — treating as transient fetch failure`);
+            continue;
+          }
+        }
+
+        const { data: rec, error: recErr } = await supabase.rpc(
+          'reconcile_phorest_appointments',
+          {
+            p_branch_id: bId,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
+            p_seen_phorest_ids: seen,
+          },
+        );
+        if (recErr) {
+          console.log(`[RECONCILE] branch ${bId} failed:`, recErr.message);
+          continue;
+        }
+        const row = Array.isArray(rec) ? rec[0] : rec;
+        const cnt = row?.soft_deleted_count || 0;
+        const samples = (row?.sample_ids || []) as string[];
+        if (cnt > 0) {
+          totalSoftDeleted += cnt;
+          allSampleIds.push(...samples);
+          console.log(`[RECONCILE] branch ${bId}: soft-deleted ${cnt} stale rows. Samples: ${samples.join(',')}`);
+        }
+      }
+      if (totalSoftDeleted > 0) {
+        console.log(`[SYNC HEALTH] Stale reconciliation removed ${totalSoftDeleted} mirrored appointments across ${branchIdsToReconcile.size} branches.`);
+      } else {
+        console.log(`[SYNC HEALTH] Stale reconciliation: 0 stale rows across ${branchIdsToReconcile.size} branches.`);
+      }
+    } catch (reconErr: any) {
+      console.error('Stale reconciliation error (non-fatal):', reconErr?.message || reconErr);
+    }
 
     // ── Post-sync: Backfill client names from phorest_clients ──
     // Two passes: (1) resolve from local table, (2) on-demand fetch the
@@ -692,16 +729,32 @@ async function syncAppointments(
     // worse than no rows — they satisfy schema but violate purpose, and they
     // hide IDs from the next residual scan (which is keyed on "no name").
     try {
-      // R6b: prioritize current/upcoming appointments. Insertion-order LIMIT 1000
-      // was burning the on-demand budget on historical rows while today's
-      // schedule kept rendering "Walk-in". Order by appointment_date DESC then
-      // future-first so the operator-visible window resolves first.
+      // S3: snapshot name coverage in the visible window BEFORE backfill
+      // so we can detect coverage regressions in subsequent syncs.
+      const visibleWindowFrom = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const { count: visibleTotalBefore } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .not('phorest_client_id', 'is', null);
+      const { count: visibleMissingBefore } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .is('client_name', null)
+        .not('phorest_client_id', 'is', null);
+
+      // S2: prioritize current/upcoming appointments. Includes phorest_branch_id
+      // so we can probe the appointment's actual branch first instead of relying
+      // on sibling-client hints that might point to the wrong branch.
       const { data: missingNames } = await supabase
         .from('phorest_appointments')
-        .select('id, phorest_client_id, appointment_date')
+        .select('id, phorest_client_id, appointment_date, phorest_branch_id')
         .is('client_name', null)
         .not('phorest_client_id', 'is', null)
-        .gte('appointment_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .gte('appointment_date', visibleWindowFrom)
         .order('appointment_date', { ascending: true })
         .limit(1000);
 
@@ -787,19 +840,34 @@ async function syncAppointments(
           console.log('On-demand client fetch: failed to list branches, skipping pass 2:', e.message);
         }
 
-        // Build a hint: existing phorest_clients rows tell us which branch a
-        // sibling client lives in. We use this only as a probe-order hint —
-        // the per-region lookup is still authoritative.
+        // Build branch hints for unresolved client IDs.
+        // PRIORITY 1 (S2): the appointment's own phorest_branch_id is the
+        // strongest signal — that's the branch the upstream record lives in.
+        // PRIORITY 2: sibling phorest_clients rows already pointing at a branch.
         const branchHintMap = new Map<string, string>(); // clientId -> branchId hint
+
+        // S2 priority 1: appointment's own branch
+        for (const apt of missingNames) {
+          if (apt.phorest_client_id && apt.phorest_branch_id && !branchHintMap.has(apt.phorest_client_id)) {
+            branchHintMap.set(apt.phorest_client_id, apt.phorest_branch_id);
+          }
+        }
+
+        // S2 priority 2: sibling client rows (only when no appointment-branch hint)
         if (unresolved.length > 0) {
-          const { data: hintRows } = await supabase
-            .from('phorest_clients')
-            .select('phorest_client_id, phorest_branch_id')
-            .in('phorest_client_id', unresolved)
-            .not('phorest_branch_id', 'is', null);
-          (hintRows || []).forEach((r: any) => {
-            if (r.phorest_branch_id) branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
-          });
+          const stillNeedHint = unresolved.filter((id: string) => !branchHintMap.has(id));
+          if (stillNeedHint.length > 0) {
+            const { data: hintRows } = await supabase
+              .from('phorest_clients')
+              .select('phorest_client_id, phorest_branch_id')
+              .in('phorest_client_id', stillNeedHint)
+              .not('phorest_branch_id', 'is', null);
+            (hintRows || []).forEach((r: any) => {
+              if (r.phorest_branch_id && !branchHintMap.has(r.phorest_client_id)) {
+                branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
+              }
+            });
+          }
         }
 
         let onDemandFetched = 0;
@@ -937,6 +1005,28 @@ async function syncAppointments(
 
       if (walkInCount && walkInCount > 0) {
         console.log(`Marked ${walkInCount} appointments as walk-ins (no client ID)`);
+      }
+
+      // S3: name-coverage snapshot AFTER backfill — surfaces structured warnings
+      // when residual unresolved-name count is high or coverage didn't improve.
+      const { count: visibleMissingAfter } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .is('client_name', null)
+        .not('phorest_client_id', 'is', null);
+      const totalSnap = visibleTotalBefore || 0;
+      const missingBefore = visibleMissingBefore || 0;
+      const missingAfter = visibleMissingAfter || 0;
+      const covBefore = totalSnap > 0 ? ((totalSnap - missingBefore) / totalSnap) * 100 : 100;
+      const covAfter = totalSnap > 0 ? ((totalSnap - missingAfter) / totalSnap) * 100 : 100;
+      console.log(`[SYNC HEALTH] Name coverage in visible window: before=${covBefore.toFixed(1)}% (${missingBefore} missing of ${totalSnap}), after=${covAfter.toFixed(1)}% (${missingAfter} missing of ${totalSnap})`);
+      if (missingAfter > 0 && missingAfter >= missingBefore) {
+        console.log(`[SYNC HEALTH WARN] Backfill did not reduce residual unresolved set (${missingAfter} remaining). Operator cards will render "Client #XXXX".`);
+      }
+      if (totalSnap > 0 && (missingAfter / totalSnap) > 0.05) {
+        console.log(`[SYNC HEALTH WARN] Visible-window unresolved-name share is ${(missingAfter / totalSnap * 100).toFixed(1)}% (>5%). Investigate Phorest client API access for unresolved IDs.`);
       }
     } catch (backfillError: any) {
       console.error('Client name backfill error (non-fatal):', backfillError);

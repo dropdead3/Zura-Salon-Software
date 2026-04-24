@@ -1,151 +1,110 @@
-# Plan — Wave 0 (final TS fixes) + Waves 1–4 (Phorest-style Services)
+## Diagnosis
 
-## Context confirmed by inspection
+Your prompt is strong because it names concrete expected behavior from the source system and proposes plausible failure modes instead of just saying “it’s wrong.” That makes debugging much faster.
 
-- **process-client-automations**: line 46 already destructures `{ organizationId, dryRun }` from a Zod schema that uses `.optional()` (without defaults) on these fields → both end up `string | undefined` / `boolean | undefined`. Line 49 also re-reads `body.organizationId || body.organization_id`, which is `string | undefined`.
-- **process-service-email-queue**: `stepMap = new Map(steps?.map(...) || [])` — TS infers value type as `{}`, so `step.subject` / `step.html_body` (lines 135–136) error.
-- **revenue-forecasting**: schema uses `.optional().default(7)`, but `body` typing remains `number | undefined` because Zod's inferred type from `.optional().default()` is still `number | undefined` after destructure in some cases — needs nullish-coalesce at use sites (179, 342, 345). Cleaner: read `forecastDays` once with `?? 7`.
-- **send-push-notification**: `Uint8Array` produced from `crypto.getRandomValues` and `base64UrlToUint8Array` widens to `Uint8Array<ArrayBufferLike>`; Deno's strict `BufferSource` requires `ArrayBuffer` (not `SharedArrayBuffer`). Fix is `as BufferSource` at the 5 call sites.
-- **supply-intelligence**: `productMap = new Map((products ?? []).map((p: any) => [p.id, p]))` — value inferred as `{}`. Need `new Map<string, any>(...)`.
-- **AppointmentDetailSheet services derivation** (line 1029): currently produces `{ name, duration, category, price }` per service from `serviceLookup`. No per-service start time, no per-service stylist override merged in. The drawer is wired to `useUpdateAppointmentServices` (writes via `update-phorest-appointment` edge function, demo-mode short-circuits to sessionStorage) and `useServiceAssignments` (per-service stylist overrides via `appointment_service_assignments`).
-- **`appointment_service_assignments` table**: has `service_name + assigned_user_id + assigned_staff_name`. **Does NOT have** `start_time_offset_minutes`, `duration_minutes_override`, or `price_override`. Per-service time/duration/price editing requires a schema migration (Wave 3a).
+A tighter version for future debugging would be:
 
-## Wave 0 — final TS error fixes (5 files, ~16 errors)
+- expected source-of-truth record
+- actual mirrored record
+- whether the issue is wrong row, duplicate row, stale deleted row, or missing enrichment
+- one exact example with staff + date + time
 
-### 1. `supabase/functions/process-client-automations/index.ts`
-- Line 46: replace destructure with defaults: `const organizationId = body.organizationId ?? body.organization_id; const dryRun = body.dryRun ?? false;`
-- Line 49: `await requireOrgAdmin(supabaseAdmin, user.id, organizationId!)` (with prior `if (!organizationId) return ...` guard).
-- Line 71: pass `dryRun` (now `boolean`).
+Example:
+> In Phorest, Jamie has only one 2 Row Initial Install today at 2:30 PM. In Zura, Jamie shows both a 1 Row Reinstall and a 2 Row Initial Install at 2:30 PM. Investigate whether the old Phorest appointment was edited/deleted upstream but never soft-deleted locally, and separately why the client names for today’s unresolved cards still have IDs but no name.
 
-### 2. `supabase/functions/process-service-email-queue/index.ts`
-- Line 65: `const stepMap = new Map<string, any>(steps?.map((s: any) => [s.id, s]) || []);`
+## What is actually happening
 
-### 3. `supabase/functions/revenue-forecasting/index.ts`
-- Line 50: replace `forecastDays` destructure with `const forecastDays: number = body.forecastDays ?? 7;` (top of try block, after `body` resolves).
-- Lines 179, 342, 345 then type-clean automatically.
+This is not a live card-by-card read from Phorest. The schedule reads from the local mirrored table/view:
 
-### 4. `supabase/functions/send-push-notification/index.ts`
-- Line 52 (importKey ikm): `ikm as BufferSource`.
-- Line 61 (`salt:`): `salt: salt as BufferSource`.
-- Line 62 (`info:`): `info: info as BufferSource`.
-- Line 150 (importKey cek): `cek as BufferSource`.
-- Line 152 (`iv: nonce`): `iv: nonce as BufferSource`.
-
-### 5. `supabase/functions/supply-intelligence/index.ts`
-- Line 131: `const productMap = new Map<string, any>((products ?? []).map((p: any) => [p.id, p]));`
-
-## Wave 1 — Drawer service-row data shape
-
-In `AppointmentDetailSheet.tsx` `services` memo (line 1029):
-
-```tsx
-const services = useMemo(() => {
-  if (!appointment?.service_name) return [];
-  const apptStart = appointment.start_time; // "HH:MM:SS"
-  let cursorMin = parseTimeToMinutes(apptStart);
-  return appointment.service_name
-    .split(',').map(s => s.trim()).filter(Boolean)
-    .map(name => {
-      const info = serviceLookup?.get(name);
-      const override = assignmentMap.get(name);
-      const duration = info?.duration_minutes || 0;
-      const startMin = cursorMin;
-      cursorMin += duration;
-      return {
-        name,
-        duration,
-        category: info?.category || null,
-        price: info?.price ?? null,
-        startTime: minutesToHHMM(startMin),
-        endTime: minutesToHHMM(cursorMin),
-        assignedStylist: override
-          ? { userId: override.assigned_user_id, name: override.assigned_staff_name }
-          : { userId: appointment.stylist_user_id, name: appointment.staff_name },
-      };
-    });
-}, [appointment, serviceLookup, assignmentMap]);
+```text
+Phorest API -> sync-phorest-data -> phorest_appointments -> v_all_appointments -> schedule UI
 ```
 
-This stays purely derived — no DB writes. Time chips are visual only in Wave 1 (read-only).
+Current findings:
 
-## Wave 2 — `<ServiceRow>` interactive UI
+- The schedule is reading correctly from `v_all_appointments` / `phorest_appointments`.
+- Client-name rendering is already correct in the UI via `getDisplayClientName()`.
+- Today’s missing names are not a display bug: they are rows with `phorest_client_id` present but no matching `phorest_clients` row yet.
+- Jamie currently has two active local rows at the same 2:30 PM start:
+  - `1 Row Reinstall` for Melinda Bean
+  - `2 Row Initial Install` with unresolved client name
+- That strongly supports your stale-mirror theory: the old local row remained after the upstream appointment changed or was replaced.
 
-New component `src/components/dashboard/schedule/ServiceRow.tsx` rendered in place of the existing line-1759 row. Phorest-style chip layout:
+## Root causes to fix
 
-```
-[Time] [Duration] [Service name + RQ checkbox]                    [Stylist] [Price]    [⋯]
- 9:00    1h         Haircut   ☐ RQ                                  Erin     $40
-```
+1. **No stale-appointment reconciliation**
+   `sync-phorest-data` upserts whatever it fetches, but it does not soft-delete local Phorest appointments that disappear from the latest upstream fetch for the same branch/date window.
 
-- **Time chip** → opens `<TimePicker>` popover (15-min increments, clamped to ±2h from appointment start).
-- **Duration chip** → numeric input popover (5-min increments, 5–240 min).
-- **Price chip** → numeric input popover (currency, 0–$2000).
-- **Stylist chip** → `<StylistPicker>` reusing the existing team list (`teamMembers`).
-- **RQ checkbox** → "Requires Consultation" toggle; persists to `appointment_service_assignments.requires_consultation`.
-- **⋯ menu** → "Remove service".
-- Below the last row: **+ Add service** ghost button (opens existing `EditServicesDialog` in add-only mode, or inline service picker — TBD; default: reuse dialog).
+2. **Client resolution is still incomplete**
+   Today’s unresolved cards are not missing because the UI forgot to join names. They are missing because those `phorest_client_id`s still do not exist in `phorest_clients`.
 
-Tokens: `tokens.button.cardFooter` for "Add service", `tokens.body.muted` for chip labels, `font-display` only on titles (chips stay `font-sans`). All currency wrapped in `<BlurredAmount>`.
+3. **The current on-demand client sweep is too broad and not exact enough for operator-visible rows**
+   Logs show unresolved IDs remain after branch probing, so the sync needs a more surgical resolution path for visible appointments.
 
-## Wave 3 — Mutation wiring (REQUIRES SCHEMA MIGRATION)
+## Plan
 
-### Wave 3a — DB migration
-Add per-service override columns to `appointment_service_assignments`:
+### Wave S1 — Reconcile stale Phorest appointments
+Update `supabase/functions/sync-phorest-data/index.ts` so each appointment sync also soft-deletes active local Phorest rows that were **not** returned by Phorest for the same branch/date window.
 
-```sql
-ALTER TABLE public.appointment_service_assignments
-  ADD COLUMN IF NOT EXISTS start_time_offset_minutes integer,
-  ADD COLUMN IF NOT EXISTS duration_minutes_override integer,
-  ADD COLUMN IF NOT EXISTS price_override numeric(10,2),
-  ADD COLUMN IF NOT EXISTS requires_consultation boolean NOT NULL DEFAULT false;
-```
+Scope:
+- Compare fetched `phorest_id`s vs existing local `phorest_appointments` in the sync window
+- Soft-delete local rows missing from the current upstream result
+- Never touch local/Zura-native appointments
+- Preserve existing operator soft-deletes
+- Log counts and sample IDs for auditability
 
-All nullable (override semantics: `NULL` = inherit from `phorest_services` lookup). Existing RLS policies cover the new columns — no policy change needed. Idempotent.
+Outcome:
+- Old rows like Jamie’s stale `1 Row Reinstall` stop surfacing after the next sync.
 
-### Wave 3b — Hook extensions
-- Extend `useServiceAssignments.ts` upsert payload to accept `startTimeOffsetMinutes`, `durationMinutesOverride`, `priceOverride`, `requiresConsultation`.
-- Extend `useUpdateAppointmentServices.ts` `ServiceEntry` to carry the same four fields. **Edge function `update-phorest-appointment` is NOT modified** — per the Phorest Write-Back Safety Gate doctrine, all per-service overrides write to Zura's `appointment_service_assignments` only. The edge function continues to handle the canonical `service_name` string mutation.
-- Demo-mode (`appointmentId.startsWith('demo-')`) persists overrides to sessionStorage under a parallel key.
+### Wave S2 — Make client-name resolution targeted for visible appointments
+Strengthen the client backfill path so today/near-future appointments resolve first and by exact source context.
 
-### Wave 3c — Audit logging
-Each chip mutation fires an audit event via the existing `useLogAuditEvent` hook with a granular event type:
-- `SERVICE_TIME_ADJUSTED`
-- `SERVICE_DURATION_ADJUSTED`
-- `SERVICE_PRICE_OVERRIDDEN`
-- `SERVICE_STYLIST_REASSIGNED` (already exists)
-- `SERVICE_RQ_TOGGLED`
+Scope:
+- Persist the Phorest branch identifier on synced appointments
+- Prioritize unresolved appointments in the operator-visible window first
+- Resolve missing client names using exact unresolved `phorest_client_id`s, probing the appointment’s real branch first
+- Backfill `phorest_appointments.client_name` immediately after successful resolution
 
-New event types added to `src/lib/audit-event-types.ts`.
+Outcome:
+- Appointment cards with valid IDs but missing names can resolve reliably instead of waiting on a broad client sweep.
 
-## Wave 4 — Token alignment sweep (deferred per architectural-blind-spot note)
+### Wave S3 — Add sync-health enforcement for mirror correctness
+Extend the sync contract so this kind of drift becomes detectable immediately.
 
-Ripgrep `src/components/dashboard/schedule/` for local `Record<...Status..., {...}>` maps and migrate to `APPOINTMENT_STATUS_BADGE` / `APPOINTMENT_STATUS_CONFIG`. Tracked as a follow-up wave after Waves 0–3 ship and verify clean. Not blocking.
+Scope:
+- Snapshot active appointment counts in the visible window before/after sync
+- Snapshot resolved-name counts before/after sync
+- Log a structured warning when:
+  - stale rows are soft-deleted
+  - name coverage drops materially
+  - an unusually large unresolved client set remains
 
-## Out of scope
+Outcome:
+- Future mirror drift becomes observable instead of requiring a human to spot it in the calendar.
 
-- Phorest write-back of per-service edits (permanently disabled — Phorest Write-Back Safety Gate).
-- Multi-row drag-to-reorder service ordering (future wave; current ordering is comma-position in `service_name`).
-- DB-level CHECK constraint on `appointment_service_assignments.start_time_offset_minutes` range (future wave once usage patterns stabilize).
-- Adding `noImplicitAny: false` to `supabase/functions/deno.json` — recommended as a separate hygiene wave to prevent the `: any` annotation sprawl from recurring.
+### Wave S4 — Verify against the exact Jamie case
+After implementation, validate the specific operator complaint.
 
-## Verification
+Acceptance checks:
+- Jamie no longer shows the stale `1 Row Reinstall` if it is not present upstream
+- Jamie retains only the valid upstream appointment(s)
+- today’s unresolved-name count drops from the current residual set
+- no fresh duplicate active rows are introduced by the reconciliation step
 
-1. Edge function deploy succeeds (no TS errors across all 5 fixed files + the broader `functions/` tree).
-2. Open a multi-service appointment → each service renders on its own row with Time/Duration/Price/Stylist chips.
-3. Click Time chip → adjust → row refreshes; subsequent rows' computed start times shift accordingly; audit log records `SERVICE_TIME_ADJUSTED`.
-4. Reload drawer → overrides persist (read from `appointment_service_assignments`).
-5. Demo appointment (`demo-*` ID) → edits persist to sessionStorage, no edge function call.
-6. `SELECT count(*) FROM appointment_service_assignments WHERE start_time_offset_minutes IS NOT NULL` after a test edit → ≥ 1.
+## Technical details
 
-## Architectural feedback (per project knowledge)
+Files likely involved:
+- `supabase/functions/sync-phorest-data/index.ts`
+- one new migration for any schema support needed (likely `phorest_branch_id` on `phorest_appointments`, plus indexes if needed)
 
-**Positive**: You correctly identified the recurring drift pattern (local style maps duplicating canonical tokens, embedded staff joins on visit history) — that's exactly the kind of architectural pattern recognition that prevents future bugs. Calling it out before it compounds is the right instinct.
+Implementation notes:
+- The schedule UI likely does **not** need a rendering change for this issue.
+- The fix belongs in the sync/mirror layer, not the card component.
+- Reconciliation should be bounded to the sync window and branch context to avoid false deletions.
+- Logging should follow the existing sync-health pattern rather than silently mutating rows.
 
-**Better prompt framing for future**: When approving multi-wave work, consider front-loading constraints in the approval, e.g.:
-> "Approved — Waves 0–4. Constraints: no Phorest write-back, no schema changes without surfacing them first, defer Wave 4 token sweep if any wave runs long."
+## Enhancement suggestion
 
-This eliminates ambiguity about which trade-offs I'm allowed to make autonomously vs. which need to come back for re-approval. Your current pattern works, but explicit constraint-loading reduces my surface area for accidentally over-stepping.
+After this fix, the next prompt that would drive the cleanest follow-up is:
 
-**Architectural blind spot surfaced this round**: Wave 3 requires a schema migration to `appointment_service_assignments` — this wasn't in the original Wave 1–4 outline because the table's current shape (stylist override only) was assumed sufficient. Worth establishing a doctrine: **before approving a wave that touches a table, the plan must include the table's `\d+` output or explicitly state "no schema change required"**. Prevents Wave-N from discovering mid-implementation that a column doesn't exist.
-
-**Enhancement suggestion**: After Wave 3 ships, consider a small `ServicesSectionAuditHarness` (dev-only route, similar to `/dashboard/_internal/spatial-audit`) that renders the Services section in 6 states: empty / single / multi-service / with overrides / with discount + tip / completed (read-only). Catches regressions on the chip layout when future waves touch row rendering.
+> Implement stale Phorest appointment reconciliation and targeted client-name resolution. Then verify the Jamie 2:30 PM case specifically and report: (1) which local row was soft-deleted, (2) whether the remaining appointment matches Phorest, and (3) how many of today’s unresolved client-name cards remain.
