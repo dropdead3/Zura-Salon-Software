@@ -136,7 +136,26 @@ export function ServiceRow({
   );
 
   return (
-    <div className="flex items-center gap-2 py-2 group">
+    <div className="flex flex-col gap-2 py-2.5 group">
+      {/* Row 1: Service identity (name + category + RQ) */}
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-sm truncate flex-1 min-w-0">{service.name}</span>
+        {service.category && (
+          <Badge variant="outline" className="text-[10px] shrink-0">{service.category}</Badge>
+        )}
+        <label className="inline-flex items-center gap-1 shrink-0 cursor-pointer select-none">
+          <Checkbox
+            checked={service.requiresConsultation}
+            onCheckedChange={(v) => onToggleRq?.(!!v)}
+            disabled={readOnly}
+            className="h-3.5 w-3.5"
+          />
+          <span className="text-[10px] text-muted-foreground tracking-wide">RQ</span>
+        </label>
+      </div>
+
+      {/* Row 2: Chip cluster (time, duration, stylist, price, overflow) */}
+      <div className="flex flex-wrap items-center gap-2">
       {/* Time chip */}
       <Popover open={timeOpen} onOpenChange={setTimeOpen}>
         <PopoverTrigger asChild>
@@ -187,22 +206,6 @@ export function ServiceRow({
         </PopoverContent>
       </Popover>
 
-      {/* Service name + category + RQ */}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="text-sm truncate">{service.name}</span>
-        {service.category && (
-          <Badge variant="outline" className="text-[10px] shrink-0">{service.category}</Badge>
-        )}
-        <label className="inline-flex items-center gap-1 shrink-0 cursor-pointer select-none">
-          <Checkbox
-            checked={service.requiresConsultation}
-            onCheckedChange={(v) => onToggleRq?.(!!v)}
-            disabled={readOnly}
-            className="h-3.5 w-3.5"
-          />
-          <span className="text-[10px] text-muted-foreground tracking-wide">RQ</span>
-        </label>
-      </div>
 
       {/* Stylist chip */}
       <Popover open={stylistOpen} onOpenChange={setStylistOpen}>
@@ -212,7 +215,7 @@ export function ServiceRow({
               <Avatar className="h-4 w-4">
                 <AvatarFallback className="text-[7px]">{getInitials(stylistName)}</AvatarFallback>
               </Avatar>
-              <span className="text-[11px] max-w-[90px] truncate">{stylistName}</span>
+              <span className="text-[11px] max-w-[120px] truncate">{stylistName}</span>
             </ChipBtn>
           </span>
         </PopoverTrigger>
@@ -294,6 +297,7 @@ export function ServiceRow({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      </div>
     </div>
   );
 }
