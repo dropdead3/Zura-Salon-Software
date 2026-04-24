@@ -25,7 +25,7 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Pre-checkout statuses where Stripe Connect setup is still actionable.
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, SCHEDULE_LEADING_ACCENT } from '@/lib/design-tokens';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_BORDER } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
@@ -203,21 +203,6 @@ function useServiceBands(
   }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, skipForCompact]);
 }
 
-// ─── Leading Accent Bar ───────────────────────────────────────
-// Inset rounded pill matching the canonical schedule ear accent. This is a
-// single shared purple accent across card variants, not a per-status signal.
-function LeadingAccentBar() {
-  return (
-    <div
-      className={cn(
-        'absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full pointer-events-none z-[5]',
-        SCHEDULE_LEADING_ACCENT
-      )}
-      aria-hidden
-    />
-  );
-}
-
 // ─── Grid Content (compact / medium / full) ───────────────────
 function GridContent({
   appointment,
@@ -274,7 +259,7 @@ function GridContent({
   const statusLabel = useShortLabels ? badge.shortLabel : badge.label;
 
   return (
-    <div className="pl-3.5 pr-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
+    <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
@@ -678,6 +663,10 @@ export function AppointmentCardContent({
     );
   }
 
+  const showLeadingAccent =
+    !BLOCKED_CATEGORIES.includes(appointment.service_category || '') &&
+    size !== 'compact';
+
   const gridContent = (
     <div
       className={cn(
@@ -688,6 +677,8 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
+        // ── Leading ear accent (matches Top Staff card pattern) ──
+        showLeadingAccent && LEADING_ACCENT_BORDER,
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
@@ -704,10 +695,6 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Leading schedule ear accent — shared across card variants */}
-      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && (
-        <LeadingAccentBar />
-      )}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
