@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
 import { 
@@ -13,6 +14,7 @@ import {
   themePresets,
   type ThemePresetKey,
 } from '@/hooks/useCustomTheme';
+import { useThemeAuthority } from '@/hooks/useThemeAuthority';
 import { 
   Palette, 
   Save, 
@@ -23,6 +25,7 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
