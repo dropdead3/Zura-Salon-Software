@@ -109,6 +109,8 @@ import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpda
 import { ServiceRow } from '@/components/dashboard/schedule/ServiceRow';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 import { Pencil, Send } from 'lucide-react';
+import { SpatialRow, OverflowActions } from '@/components/spatial';
+import { useSpatialState } from '@/lib/responsive/useSpatialState';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
@@ -1576,17 +1578,30 @@ export function AppointmentDetailSheet({
                   </div>
                     <div className="flex items-center gap-2">
                       <h2 className="font-display text-lg font-medium tracking-wide truncate">{appointment.client_name}</h2>
-                      {/* Walk-in badge (#7) */}
-                      {isWalkIn && (
-                        <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 dark:text-amber-300">
-                          <UserX className="h-2.5 w-2.5 mr-0.5" /> Walk-In
-                        </Badge>
+                      {/* Inline View Profile (icon-only, ghost) */}
+                      {onOpenClientProfile && appointment.phorest_client_id && (
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                                onClick={handleOpenClientProfile}
+                                aria-label="View client profile"
+                              >
+                                <User className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">View client profile</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
-                    {/* Last visit date (#4) */}
+                    {/* Last visit date */}
                     {historyLoading && !lastVisitDate && (
                       <Skeleton className="h-3 w-24 mt-1" />
                     )}
@@ -1595,83 +1610,75 @@ export function AppointmentDetailSheet({
                         Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
                       </p>
                     )}
-                    {/* View Client Profile */}
-                    {onOpenClientProfile && appointment.phorest_client_id && (
-                      <button
-                        onClick={handleOpenClientProfile}
-                        className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors mt-1"
-                      >
-                        <User className="h-3 w-3" />
-                        View Profile
-                        <ExternalLink className="h-2.5 w-2.5" />
-                      </button>
-                    )}
                   </div>
                 </div>
 
-                {/* Status + Dropdown */}
-                <div className="flex items-center gap-2 mt-3">
-                  <Badge className={cn(statusConfig.bg, statusConfig.text)}>
-                    <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
-                  </Badge>
-                  {appointment.status === 'confirmed' && (
-                    <span className="text-xs text-muted-foreground">
-                      {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
-                        ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
-                        : '(method unknown)'}
-                    </span>
-                  )}
-
-                  {appointment.is_redo && (
-                    <Badge variant="outline" className="text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">
-                      <RotateCcw className="h-3 w-3 mr-1" /> Redo
+                {/* Consolidated chip strip — wraps gracefully via SpatialRow */}
+                <div className="mt-3">
+                  <SpatialRow className="!gap-2">
+                    <Badge className={cn(statusConfig.bg, statusConfig.text, 'shrink-0')}>
+                      <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
                     </Badge>
-                  )}
-                  {recurrenceLabel && (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      <Repeat className="h-3 w-3 mr-1" /> {recurrenceLabel}
-                    </Badge>
-                  )}
-                  {appointment.is_new_client && (
-                    <Badge variant="outline" className="text-emerald-700 dark:text-emerald-300 border-emerald-300">
-                      <Star className="h-3 w-3 mr-1" /> New
-                    </Badge>
-                  )}
-                  {appointment._source === 'local' ? (
-                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
-                      Source: Native
-                    </Badge>
-                  ) : appointment._source === 'phorest' ? (
-                    <Badge variant="outline" className="text-[10px] text-muted-foreground border-border">
-                      Source: Synced (legacy)
-                    </Badge>
-                  ) : null}
+                    {appointment.status === 'confirmed' && (
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
+                          ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
+                          : '(method unknown)'}
+                      </span>
+                    )}
+                    {isWalkIn && (
+                      <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-700 dark:text-amber-300">
+                        <UserX className="h-2.5 w-2.5 mr-0.5" /> Walk-In
+                      </Badge>
+                    )}
+                    {appointment.is_redo && (
+                      <Badge variant="outline" className="shrink-0 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700">
+                        <RotateCcw className="h-3 w-3 mr-1" /> Redo
+                      </Badge>
+                    )}
+                    {recurrenceLabel && (
+                      <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                        <Repeat className="h-3 w-3 mr-1" /> {recurrenceLabel}
+                      </Badge>
+                    )}
+                    {appointment.is_new_client && (
+                      <Badge variant="outline" className="shrink-0 text-emerald-700 dark:text-emerald-300 border-emerald-300">
+                        <Star className="h-3 w-3 mr-1" /> New
+                      </Badge>
+                    )}
+                  </SpatialRow>
                 </div>
 
-                {/* Status Lifecycle Timeline */}
-                {!isTerminal && (
-                  <div className="flex items-center gap-1 mt-4">
+                {/* Status Lifecycle Stepper — full labels, container-aware */}
+                {!isTerminal ? (
+                  <div className="mt-4 grid grid-cols-4 gap-2">
                     {LIFECYCLE_STEPS.map((step, i) => {
                       const isActive = i <= currentStepIndex;
                       const isCurrent = step === appointment.status;
                       return (
-                        <div key={step} className="flex-1 flex items-center gap-1">
+                        <div key={step} className="flex flex-col gap-1.5 min-w-0">
                           <div className={cn(
-                            'h-1.5 flex-1 rounded-full transition-colors',
-                            isActive ? 'bg-primary' : 'bg-muted'
+                            'h-1 rounded-full transition-colors',
+                            isActive ? 'bg-primary' : 'bg-muted',
+                            isCurrent && 'ring-2 ring-primary/30 ring-offset-1 ring-offset-background',
                           )} />
-                          {isCurrent && (
-                            <span className="text-[9px] font-medium text-primary font-display uppercase tracking-wider whitespace-nowrap">
-                              {STATUS_CONFIG[step].label}
-                            </span>
-                          )}
+                          <span className={cn(
+                            'font-display text-[9px] tracking-wider uppercase truncate',
+                            isCurrent ? 'text-primary' : isActive ? 'text-foreground/70' : 'text-muted-foreground',
+                          )}>
+                            {STATUS_CONFIG[step].label}
+                          </span>
                         </div>
                       );
                     })}
                   </div>
-                )}
-                {isTerminal && (
-                  <div className="mt-4 h-1.5 rounded-full bg-destructive/30" />
+                ) : (
+                  <div className="mt-4 flex items-center gap-2">
+                    <div className="h-1 flex-1 rounded-full bg-destructive/30" />
+                    <span className="font-display text-[10px] tracking-wider uppercase text-destructive shrink-0">
+                      {statusConfig.label}
+                    </span>
+                  </div>
                 )}
               </div>
 

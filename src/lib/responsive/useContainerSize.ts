@@ -22,12 +22,12 @@ export function useContainerSize<T extends HTMLElement = HTMLDivElement>() {
 
     const flush = () => {
       frame = 0;
-      if (pending) {
-        setSize((prev) =>
-          prev.width === pending!.width && prev.height === pending!.height ? prev : pending!,
-        );
-        pending = null;
-      }
+      const next = pending;
+      pending = null;
+      if (!next) return;
+      setSize((prev) =>
+        prev.width === next.width && prev.height === next.height ? prev : next,
+      );
     };
 
     const ro = new ResizeObserver((entries) => {
