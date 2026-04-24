@@ -1051,11 +1051,15 @@ async function syncClients(
         landline: client.landline || null,
         birthday: client.dateOfBirth || client.birthday || null,
         client_since: client.createdAt || null,
-        visit_count: client.appointmentCount || 0,
-        last_visit: client.lastAppointmentDate || null,
-        first_visit: client.createdAt || null,
+        // NOTE: visit_count, total_spend, last_visit, first_visit are
+        // intentionally NOT written here. Zura derives them locally from
+        // phorest_appointments via v_client_visit_stats and writes them via
+        // refresh_client_visit_stats() at the end of this sync run.
+        // Phorest's appointmentCount/totalSpend/lastAppointmentDate fields
+        // were always returning falsy for this org, which silently zeroed
+        // out every client. See plan: derive at the source, mirror at the
+        // consumer.
         preferred_stylist_id: preferredStylistId,
-        total_spend: client.totalSpend || 0,
         is_vip: client.isVip || client.vipStatus === 'VIP' || false,
         notes: client.notes || null,
         client_category: client.clientCategory || null,
