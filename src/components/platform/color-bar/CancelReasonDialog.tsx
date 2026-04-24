@@ -5,21 +5,24 @@
  *
  * Doctrine: silent suspensions destroy operator memory. Forcing a one-click
  * reason makes "why is this org off?" answerable from the dashboard alone.
+ *
+ * Theme: Platform-scoped. All chrome reads from `--platform-*` tokens via
+ * Platform* primitive wrappers — never from the org-side global tokens.
  */
 
 import { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+  PlatformAlertDialogCancel,
+  PlatformAlertDialogContent,
+  PlatformAlertDialogDescription,
+  PlatformAlertDialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
+import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
+import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import { PauseCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -91,28 +94,28 @@ export function CancelReasonDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleClose}>
-      <AlertDialogContent>
+      <PlatformAlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <PauseCircle className="w-4 h-4 text-muted-foreground" />
+            <div className="w-9 h-9 rounded-lg bg-[hsl(var(--platform-bg-hover))] flex items-center justify-center shrink-0">
+              <PauseCircle className="w-4 h-4 text-[hsl(var(--platform-foreground-muted))]" />
             </div>
-            <AlertDialogTitle className="font-display tracking-wide">
+            <PlatformAlertDialogTitle className="font-display tracking-wide">
               Suspend Color Bar
-            </AlertDialogTitle>
+            </PlatformAlertDialogTitle>
           </div>
-          <AlertDialogDescription className="font-sans text-sm leading-relaxed pt-2">
+          <PlatformAlertDialogDescription className="font-sans text-sm leading-relaxed pt-2">
             You're suspending Color Bar for <strong>{orgName}</strong>. Capture
             the reason — it surfaces in the reactivation dialog so the next
             admin understands the context.
-          </AlertDialogDescription>
+          </PlatformAlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label className="font-sans text-xs text-muted-foreground">
+            <PlatformLabel className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
               Reason
-            </Label>
+            </PlatformLabel>
             <div className="grid gap-1.5">
               {REASON_OPTIONS.map((opt) => {
                 const active = reason === opt.value;
@@ -123,16 +126,16 @@ export function CancelReasonDialog({
                     onClick={() => setReason(opt.value)}
                     className={cn(
                       'text-left rounded-lg border px-3 py-2 transition-colors',
-                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--platform-primary))]',
                       active
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-border/80 hover:bg-muted/40',
+                        ? 'border-[hsl(var(--platform-primary))] bg-[hsl(var(--platform-primary)/0.1)]'
+                        : 'border-[hsl(var(--platform-border))] hover:border-[hsl(var(--platform-border)/0.8)] hover:bg-[hsl(var(--platform-bg-hover))]',
                     )}
                   >
-                    <div className="font-sans text-sm font-medium text-foreground">
+                    <div className="font-sans text-sm font-medium text-[hsl(var(--platform-foreground))]">
                       {opt.label}
                     </div>
-                    <div className="font-sans text-xs text-muted-foreground mt-0.5">
+                    <div className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))] mt-0.5">
                       {opt.description}
                     </div>
                   </button>
@@ -142,10 +145,10 @@ export function CancelReasonDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="suspension-notes" className="font-sans text-xs text-muted-foreground">
+            <PlatformLabel htmlFor="suspension-notes" className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
               Notes (optional)
-            </Label>
-            <Textarea
+            </PlatformLabel>
+            <PlatformTextarea
               id="suspension-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -157,18 +160,19 @@ export function CancelReasonDialog({
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <PlatformAlertDialogCancel disabled={isPending}>Cancel</PlatformAlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
               handleConfirm();
             }}
             disabled={isPending || !reason}
+            className="bg-[hsl(var(--platform-primary))] text-[hsl(var(--platform-primary-foreground))] hover:bg-[hsl(var(--platform-primary)/0.9)]"
           >
             {isPending ? 'Suspending…' : 'Suspend Color Bar'}
           </AlertDialogAction>
         </AlertDialogFooter>
-      </AlertDialogContent>
+      </PlatformAlertDialogContent>
     </AlertDialog>
   );
 }
