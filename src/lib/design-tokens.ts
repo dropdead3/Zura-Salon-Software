@@ -297,16 +297,16 @@ export const SCROLLBAR_CSS = {
 type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' | 'walk_in' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
 /** Day / Week view appointment card colors (saturated for calendar cells, with dark mode variants) */
-export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
-  pending:      { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200' },
-  booked:       { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200' },
-  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200' },
-  confirmed:    { bg: 'bg-green-500 dark:bg-green-700',            border: 'border-green-600 dark:border-green-900',               text: 'text-white dark:text-green-100' },
-  walk_in:      { bg: 'bg-teal-500 dark:bg-teal-700',             border: 'border-teal-600 dark:border-teal-900',                 text: 'text-white dark:text-teal-100' },
-  checked_in:   { bg: 'bg-blue-500 dark:bg-blue-700',              border: 'border-blue-600 dark:border-blue-900',                 text: 'text-white dark:text-blue-100' },
-  completed:    { bg: 'bg-purple-500 dark:bg-purple-700',          border: 'border-purple-600 dark:border-purple-900',             text: 'text-white dark:text-purple-100' },
-  cancelled:    { bg: 'bg-muted/50 dark:bg-muted/30',              border: 'border-muted dark:border-muted/50',                    text: 'text-muted-foreground' },
-  no_show:      { bg: 'bg-destructive dark:bg-destructive/80',     border: 'border-destructive',                                   text: 'text-destructive-foreground' },
+export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string; accent: string }> = {
+  pending:      { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200',     accent: 'text-amber-500 dark:text-amber-400' },
+  booked:       { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200',     accent: 'text-amber-500 dark:text-amber-400' },
+  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-800/60',         border: 'border-amber-400 dark:border-amber-700',               text: 'text-amber-900 dark:text-amber-200',     accent: 'text-amber-500 dark:text-amber-400' },
+  confirmed:    { bg: 'bg-green-500 dark:bg-green-700',            border: 'border-green-600 dark:border-green-900',               text: 'text-white dark:text-green-100',         accent: 'text-green-700 dark:text-green-300' },
+  walk_in:      { bg: 'bg-teal-500 dark:bg-teal-700',             border: 'border-teal-600 dark:border-teal-900',                 text: 'text-white dark:text-teal-100',          accent: 'text-teal-700 dark:text-teal-300' },
+  checked_in:   { bg: 'bg-blue-500 dark:bg-blue-700',              border: 'border-blue-600 dark:border-blue-900',                 text: 'text-white dark:text-blue-100',          accent: 'text-blue-700 dark:text-blue-300' },
+  completed:    { bg: 'bg-purple-500 dark:bg-purple-700',          border: 'border-purple-600 dark:border-purple-900',             text: 'text-white dark:text-purple-100',        accent: 'text-purple-700 dark:text-purple-300' },
+  cancelled:    { bg: 'bg-muted/50 dark:bg-muted/30',              border: 'border-muted dark:border-muted/50',                    text: 'text-muted-foreground',                  accent: 'text-muted-foreground' },
+  no_show:      { bg: 'bg-destructive dark:bg-destructive/80',     border: 'border-destructive',                                   text: 'text-destructive-foreground',            accent: 'text-destructive' },
 };
 
 /** Agenda / badge / pastel variant colors */

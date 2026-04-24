@@ -100,28 +100,58 @@ function getIndicatorFlags(
   };
 }
 
-// ─── Left Edge Accent (tapered ribbon hugging the card's rounded corners) ─
-function LeftEdgeAccent({ color }: { color: string }) {
+// ─── Schedule card geometry constants (single source of truth) ─
+// Keep these in sync with the `rounded-[10px]` class on the card shell.
+export const SCHEDULE_CARD_RADIUS = 10;
+export const SCHEDULE_ACCENT_WIDTH = 3.5;
+
+// ─── Left Edge Accent (single tapered shape hugging the card's rounded corners) ─
+// Drawn as ONE closed SVG path so the top and bottom naturally taper to a point
+// where the outer (radius-following) edge meets the inner (straight) edge inside
+// each rounded corner. No stacked pieces, no seams.
+function LeftEdgeAccent({
+  height,
+  radius = SCHEDULE_CARD_RADIUS,
+  width = SCHEDULE_ACCENT_WIDTH,
+  className,
+}: {
+  height?: number;
+  radius?: number;
+  width?: number;
+  className?: string;
+}) {
+  // Fallback height keeps geometry sensible if pixelHeight is unavailable.
+  // Compress the radius on short cards so the two tapers meet cleanly instead
+  // of overlapping past the midline.
+  const H = Math.max(height ?? 64, width * 2 + 2);
+  const R = Math.max(1, Math.min(radius, (H - 2) / 2));
+  const W = width;
+
+  // Outer edge (x=0) follows the card silhouette via two quadratic curves at
+  // top-left and bottom-left. Inner edge (x=W) runs straight; both edges
+  // converge to a single point inside each corner — that's the taper.
+  const tipOffset = R * 0.32; // controls how deep the point sits inside the corner
+  const d = [
+    `M ${tipOffset.toFixed(3)},${tipOffset.toFixed(3)}`,            // top tip (inside TL radius)
+    `Q 0,${(R * 0.55).toFixed(3)} 0,${R.toFixed(3)}`,                // curve out to left edge
+    `L 0,${(H - R).toFixed(3)}`,                                     // straight down left edge
+    `Q 0,${(H - R * 0.55).toFixed(3)} ${tipOffset.toFixed(3)},${(H - tipOffset).toFixed(3)}`, // curve in to bottom tip
+    `L ${W.toFixed(3)},${(H - R - 0.5).toFixed(3)}`,                 // up inner edge to bottom of straight band
+    `L ${W.toFixed(3)},${(R + 0.5).toFixed(3)}`,                     // straight up inner edge
+    'Z',
+  ].join(' ');
+
   return (
-    <div
-      className="absolute inset-y-0 left-0 pointer-events-none z-[4]"
-      style={{ width: 10 }}
+    <svg
+      className={cn('absolute top-0 left-0 h-full pointer-events-none z-[4]', className)}
+      width={W + R}
+      height={H}
+      viewBox={`0 0 ${W + R} ${H}`}
+      preserveAspectRatio="none"
       aria-hidden
     >
-      {/* Top corner cap — tapered point inside top-left radius */}
-      <svg width="10" height="10" viewBox="0 0 10 10" className="absolute top-0 left-0 block">
-        <path d="M 3,3 Q 0,5 0,10 L 3.5,10 Z" fill={color} />
-      </svg>
-      {/* Middle band */}
-      <div
-        className="absolute left-0"
-        style={{ top: 10, bottom: 10, width: 3.5, backgroundColor: color }}
-      />
-      {/* Bottom corner cap — tapered point inside bottom-left radius */}
-      <svg width="10" height="10" viewBox="0 0 10 10" className="absolute bottom-0 left-0 block">
-        <path d="M 0,0 L 3.5,0 L 3,7 Q 0,5 0,0 Z" fill={color} />
-      </svg>
-    </div>
+      <path d={d} fill="currentColor" />
+    </svg>
   );
 }
 
