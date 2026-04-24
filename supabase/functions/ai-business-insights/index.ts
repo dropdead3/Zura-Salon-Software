@@ -497,8 +497,8 @@ REVENUE (Last 14 days):
 - This week total: $${thisWeekRevenue.toFixed(0)}
 - Last week total: $${lastWeekRevenue.toFixed(0)}
 - Week-over-week change: ${lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue * 100).toFixed(1) : "N/A"}%
-- Daily sales entries: ${salesData.length}
-${salesData.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue || 0} (${s.total_transactions || 0} transactions, avg ticket $${s.average_ticket || 0})`).join("\n")}
+- Daily sales entries: ${dailySales.length}
+${dailySales.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
 
 APPOINTMENTS (Last 7 + Next 7 days):
 - Total past week: ${totalPast}
