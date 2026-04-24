@@ -24,6 +24,7 @@ import { DraftBookingsSheet } from '@/components/dashboard/schedule/DraftBooking
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
+import { buildDisplayAppointments } from '@/lib/visit-grouping';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
