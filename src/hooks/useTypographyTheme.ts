@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useThemeAuthority } from '@/hooks/useThemeAuthority';
 
 // Typography token definitions with defaults
 export const typographyTokens = {
@@ -42,6 +44,10 @@ export const typographyTokens = {
 export type TypographyCategory = keyof typeof typographyTokens;
 export type TypographyTheme = Record<string, string>;
 
+const SITE_SETTINGS_KEY = 'org_custom_typography';
+
+type OrgTypographyValue = { tokens?: TypographyTheme } & Record<string, unknown>;
+
 // Get current computed value of a CSS variable
 function getCSSVariable(varName: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(`--${varName}`).trim();
@@ -68,56 +74,28 @@ function getAllCurrentValues(): TypographyTheme {
   return values;
 }
 
+/**
+ * Theme Governance — typography overrides are ORGANIZATION-scoped.
+ * Persisted in `site_settings` row `org_custom_typography`. Mutations
+ * are gated by `useThemeAuthority().canEditOrgTheme` (Account Owner only).
+ * RLS enforces the same gate server-side.
+ */
 export function useTypographyTheme() {
-  const [savedTheme, setSavedTheme] = useState<TypographyTheme | null>(null);
   const [pendingChanges, setPendingChanges] = useState<TypographyTheme>({});
   const [currentValues, setCurrentValues] = useState<TypographyTheme>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // Fetch current user and their custom typography theme
-  useEffect(() => {
-    const fetchTheme = async () => {
-      try {
-        // Get initial values from computed styles
-        setCurrentValues(getAllCurrentValues());
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-        
-        setUserId(user.id);
-        
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .select('custom_typography')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (error) throw error;
-        
-        if (data?.custom_typography) {
-          const theme = data.custom_typography as TypographyTheme;
-          setSavedTheme(theme);
-          // Apply saved theme on load
-          applyTheme(theme);
-          // Update current values
-          setCurrentValues(prev => ({ ...prev, ...theme }));
-        }
-      } catch (error) {
-        console.error('Error fetching typography theme:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchTheme();
-  }, []);
-  
+  const orgId = useSettingsOrgId();
+  const { canEditOrgTheme } = useThemeAuthority();
+
+  const { data: dbValue, isLoading } = useSiteSettings<OrgTypographyValue>(SITE_SETTINGS_KEY);
+  const updateSetting = useUpdateSiteSetting<OrgTypographyValue>();
+
+  const savedTheme: TypographyTheme | null = useMemo(
+    () => (dbValue?.tokens as TypographyTheme | undefined) ?? null,
+    [dbValue?.tokens]
+  );
+
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: TypographyTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -126,57 +104,65 @@ export function useTypographyTheme() {
       }
     });
   }, []);
-  
+
+  // Apply saved org typography on load + initialize current values
+  useEffect(() => {
+    const defaults = getAllCurrentValues();
+    if (savedTheme) {
+      applyTheme(savedTheme);
+      setCurrentValues({ ...defaults, ...savedTheme });
+    } else {
+      setCurrentValues(defaults);
+    }
+  }, [savedTheme, applyTheme]);
+
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, value: string) => {
     setCSSVariable(key, value);
     setPendingChanges(prev => ({ ...prev, [key]: value }));
     setCurrentValues(prev => ({ ...prev, [key]: value }));
   }, []);
-  
-  // Check if there are unsaved changes
+
   const hasUnsavedChanges = Object.keys(pendingChanges).length > 0;
-  
-  // Get merged theme (saved + pending)
+
   const getMergedTheme = useCallback((): TypographyTheme => {
     return { ...savedTheme, ...pendingChanges };
   }, [savedTheme, pendingChanges]);
-  
-  // Save all pending changes to database
+
+  // Save all pending changes — owner-gated, org-scoped
   const saveTheme = useCallback(async () => {
-    if (!userId) {
+    if (!canEditOrgTheme) {
       toast({
-        title: "Error",
-        description: "You must be logged in to save typography changes",
+        title: "Permission denied",
+        description: "Only the Account Owner can change organization typography.",
         variant: "destructive",
       });
       return false;
     }
-    
+    if (!orgId) {
+      toast({
+        title: "Error",
+        description: "No active organization context.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsSaving(true);
     try {
       const mergedTheme = getMergedTheme();
-      
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          custom_typography: mergedTheme,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id',
-        });
-      
-      if (error) throw error;
-      
-      setSavedTheme(mergedTheme);
+      await updateSetting.mutateAsync({
+        key: SITE_SETTINGS_KEY,
+        value: { tokens: mergedTheme },
+      });
+
       setPendingChanges({});
-      
+
       toast({
         title: "Typography saved",
-        description: "Your custom typography has been saved and will persist across sessions",
+        description: "Organization typography has been updated for everyone.",
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error saving typography:', error);
@@ -189,59 +175,56 @@ export function useTypographyTheme() {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, getMergedTheme, toast]);
-  
+  }, [canEditOrgTheme, orgId, getMergedTheme, updateSetting, toast]);
+
   // Discard pending changes (revert to saved theme)
   const discardChanges = useCallback(() => {
-    // Remove all CSS overrides for pending changes
     Object.keys(pendingChanges).forEach(key => {
       removeCSSVariable(key);
     });
-    
-    // Re-apply saved theme
     if (savedTheme) {
       applyTheme(savedTheme);
     }
-    
-    // Reset current values
     const defaults = getAllCurrentValues();
     if (savedTheme) {
       setCurrentValues({ ...defaults, ...savedTheme });
     } else {
       setCurrentValues(defaults);
     }
-    
     setPendingChanges({});
   }, [pendingChanges, savedTheme, applyTheme]);
-  
-  // Reset to default typography (clear all customizations)
+
+  // Reset to default typography — owner-gated, org-scoped
   const resetToDefault = useCallback(async () => {
-    if (!userId) return false;
-    
+    if (!canEditOrgTheme) {
+      toast({
+        title: "Permission denied",
+        description: "Only the Account Owner can reset organization typography.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (!orgId) return false;
+
     setIsSaving(true);
     try {
-      // Clear all custom CSS overrides
       Object.values(typographyTokens).flat().forEach(token => {
         removeCSSVariable(token.key);
       });
-      
-      // Clear from database
-      const { error } = await supabase
-        .from('user_preferences')
-        .update({ custom_typography: null })
-        .eq('user_id', userId);
-      
-      if (error) throw error;
-      
-      setSavedTheme(null);
+
+      await updateSetting.mutateAsync({
+        key: SITE_SETTINGS_KEY,
+        value: { tokens: {} },
+      });
+
       setPendingChanges({});
       setCurrentValues(getAllCurrentValues());
-      
+
       toast({
         title: "Typography reset",
-        description: "Your typography has been reset to the default",
+        description: "Organization typography has been reset to the default.",
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error resetting typography:', error);
@@ -254,8 +237,8 @@ export function useTypographyTheme() {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, toast]);
-  
+  }, [canEditOrgTheme, orgId, updateSetting, toast]);
+
   return {
     savedTheme,
     pendingChanges,
@@ -263,6 +246,7 @@ export function useTypographyTheme() {
     isLoading,
     isSaving,
     hasUnsavedChanges,
+    canEditOrgTheme,
     setVariable,
     saveTheme,
     discardChanges,
