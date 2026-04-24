@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { PlatformCard as Card, PlatformCardContent as CardContent, PlatformCardHeader as CardHeader, PlatformCardTitle as CardTitle, PlatformCardDescription as CardDescription } from '@/components/platform/ui/PlatformCard';
+import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { PlatformTextarea as Textarea } from '@/components/platform/ui/PlatformTextarea';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import {
   Table,
   TableBody,
@@ -18,18 +18,18 @@ import {
 } from '@/components/ui/table';
 import {
   Dialog,
-  DialogContent,
+  PlatformDialogContent as DialogContent,
   DialogHeader,
-  DialogTitle,
+  PlatformDialogTitle as DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/platform/ui/PlatformSelect';
 import { Plus, Pencil, Trash2, Eye, GripVertical, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 

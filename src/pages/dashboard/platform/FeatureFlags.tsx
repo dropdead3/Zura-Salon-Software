@@ -12,29 +12,29 @@ import { Slider } from '@/components/ui/slider';
 import { PlatformTextarea as Textarea } from '@/components/platform/ui/PlatformTextarea';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogCancel as AlertDialogCancel,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  PlatformAlertDialogTitle as AlertDialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/platform/ui/PlatformSelect';
 import {
   Collapsible,
   CollapsibleContent,

@@ -24,11 +24,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/platform/ui/PlatformSelect';
 import {
   PlatformCard,
   PlatformCardContent,

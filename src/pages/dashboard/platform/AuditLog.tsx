@@ -15,13 +15,13 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import {
+  Select,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+  SelectValue,
+} from '@/components/platform/ui/PlatformSelect';
 import { 
   DropdownMenu,
   DropdownMenuContent,

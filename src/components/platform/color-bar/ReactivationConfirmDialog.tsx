@@ -9,13 +9,13 @@
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogCancel as AlertDialogCancel,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  PlatformAlertDialogTitle as AlertDialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import { AlertTriangle } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format';
 

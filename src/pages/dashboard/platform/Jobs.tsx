@@ -17,13 +17,13 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import {
+  Select,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
+  SelectValue,
+} from '@/components/platform/ui/PlatformSelect';
 import {
   Collapsible,
   CollapsibleContent,
@@ -32,14 +32,14 @@ import {
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogCancel as AlertDialogCancel,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  PlatformAlertDialogTitle as AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from '@/components/platform/ui/PlatformDialog';
 import { toast } from 'sonner';
 import { 
   useLatestJobRuns, 
