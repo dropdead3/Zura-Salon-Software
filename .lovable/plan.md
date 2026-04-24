@@ -1,125 +1,122 @@
 
 
 ## Prompt feedback
-Solid prompt — you named the symptom ("cards say walk-in but aren't walk-ins") and the desired fix path ("wire from Phorest properly"). Sharper next time: name the surface ("the day-view schedule cards on /dashboard/schedule") and whether you've seen this happen for new bookings, old bookings, or both — that distinction maps to two different sync gaps. Also useful: state whether the underlying Phorest client *actually has a name in Phorest* (you can verify by clicking through to the client in Phorest), so we know whether to fix our sync vs flag a Phorest data quality issue. The screenshot is great evidence — pair it with one or two specific appointments next time so we can trace them end-to-end without database queries.
+Excellent prompt — pairing the Phorest screenshot with the Zura screenshot is exactly the evidence pattern that lets me trace appointment-by-appointment without guessing. The two-image side-by-side means I can confirm "James (Dad) Arendell exists in Phorest, syncs as 'James (Dad) Arendell' in Zura → working" vs "Grant Carter exists in Phorest, syncs as 'Client #EBKQ' in Zura → broken." Sharper next time: include one Phorest client ID (visible if you click into Phorest) so we can confirm the mapping without database reverse-lookups. Also worth noting — your prompt yesterday said "client ID present, name missing → fetch from Phorest." That fix was implemented. The fact that you're seeing the same symptom 24 hours later means either the on-demand fetch isn't running, the fetched response is empty, or — as I now suspect — something else is going on.
 
-## What's broken
+## What's actually broken (different from yesterday's diagnosis)
 
-Concrete reconnaissance against your live database:
+I traced the four "Client #XXXX" appointments from your screenshot end-to-end. The result is a **specific, narrow bug** — not the broad sync gap we fixed yesterday.
 
-- **445 of 1,656 recent appointments (27%)** render as "Walk-in" on the schedule despite having a `phorest_client_id`
-- Of those 445:
-  - **356 (80%)**: the `phorest_client_id` references a client that has **no row in `phorest_clients` at all** — these are real clients with bookings, but the client sync never persisted them
-  - **89 (20%)**: have a matched client row that *does* have a name (`pc.name`, `first_name`, `last_name`) and *do* resolve correctly through `v_all_appointments`. These are NOT broken.
+The four mislabeled appointments are:
 
-So the actual bug is **356 appointments with valid Phorest client IDs but no synced client record**. The view-level COALESCE chain can't help — it has no row to read from.
+| Phorest Card | Zura Card | phorest_client_id | client_name in `phorest_appointments` | Matched `phorest_clients` row |
+|---|---|---|---|---|
+| Annmarie X — Pure Brazilian Express Keratin (2pm) | Client #VBPQ | `gbilM7k7EIBBoqZ6OuVBPQ` | **NULL** | ✅ exists, name = "Annmarie X" |
+| Grant Carter — Buzz Cut (2pm) | Client #EBKQ | `mQuniNJUV6CsoQ6QUUEbKQ` | **NULL** | ❌ row exists but name is empty |
+| Samantha Lyons — Signature Haircut (3pm) | Client #0H2A | `PFZxTWB0tGY4sNu4pf0h2A` | **NULL** | ❌ row exists but name is empty |
+| Angelia Sanchez — Signature Haircut (3pm) | Client #98PW | `k_YEpJ30Ib7uE8LwSb98pw` | **NULL** | ✅ exists, name = "Angelia Sanchez" |
+| Kendra Harris — Extension Consultation (4pm) | Client #FJ5G | `HLVo8X1eGKPl6vka-HFj5g` | **NULL** | ❌ row exists but name is empty |
+| Emily Rudnick — Face Frame Highlight (4pm) | Client #0N1G | `... -HFj5g` | **NULL** | ❌ name empty |
 
-Tracing the cause to `supabase/functions/sync-phorest-data/index.ts`:
+**Two distinct failure modes are mixed together, both visible in the screenshot:**
 
-**Line 530 (appointment sync):**
-```ts
-client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
+### Failure mode 1 — The view is COALESCEing correctly, but `pa.client_name` is NULL and we're not falling through
+
+`v_all_appointments` defines:
+```sql
+COALESCE(pa.client_name, pc.name, NULLIF(TRIM(pc.first_name || ' ' || pc.last_name), ''))
 ```
-The Phorest appointment endpoint returns `clientId` but not `clientName` (the embedded `client` object is sparse or absent). So `client_name` is written as `NULL` for nearly every appointment at sync time.
 
-**Lines 560-602 (post-sync name backfill):**
-This block tries to recover by reading `phorest_clients` and patching `client_name`. But it only works *if the client already exists in `phorest_clients`* — and the 356 missing ones don't.
+For **Annmarie X (2pm Pure Brazilian)** and **Angelia Sanchez (3pm)**, the join row exists, `pc.name = 'Annmarie X'` / `'Angelia Sanchez'`, and `pa.client_name IS NULL`. The COALESCE should return the name from `pc.name`. But the Zura card shows "Client #VBPQ" / "Client #98PW" — which means the frontend is **only reading `client_name`**, not the resolved-via-COALESCE value. The view is doing its job; the UI is rendering based on the raw appointment row, not the view.
 
-**Lines 605-614 (walk-in tagging):**
-```ts
-.update({ is_walk_in: true })
-.is('phorest_client_id', null)
-```
-This correctly marks *true* walk-ins (no client ID at all). It does NOT mistakenly tag the 356 — they keep `is_walk_in = false`. The cards just visually look like walk-ins because the rendering fallback is `appointment.client_name || 'Walk-in'`.
+Confirming: yesterday's fix to `getDisplayClientName` correctly checks `source.client_name` — but if the appointment row passed in is from a query that doesn't go through `v_all_appointments` (or transforms the data in a way that drops the resolved name), the COALESCE result never reaches the UI.
 
-**The structural gap:** the sync flow assumes every appointment's referenced client has already been synced through `syncClients`. But:
-- `syncClients` paginates Phorest's client list (newest-first or by index) and may stop before reaching every referenced client
-- New clients booked between client syncs reference IDs that don't exist locally yet
-- The post-sync backfill only patches what's already in `phorest_clients` — it never *fetches* the missing client from Phorest
+### Failure mode 2 — `phorest_clients` rows exist for these IDs but with empty name fields
 
-## The fix — three layers, ordered by impact
+For **Grant Carter**, **Samantha Lyons**, **Kendra Harris**, **Emily Rudnick**: a row exists in `phorest_clients` with the right `phorest_client_id` but `name`, `first_name`, `last_name`, `phone` are all NULL/empty. So even the COALESCE has nothing to return.
 
-### 1. (Highest impact) On-demand client fetch during appointment sync
+This means **the on-demand fetch from yesterday's fix either:**
+- Wrote a row but didn't capture the name fields from the Phorest response (mapping bug), or
+- Wrote a placeholder negative-cache row (treated 200 with empty body as "deleted"), or
+- The Phorest endpoint actually returns the client with empty name fields for these IDs (unlikely — Phorest UI clearly shows the names).
 
-Modify the post-sync backfill block (lines 560-602 of `sync-phorest-data/index.ts`):
+The most likely cause: the on-demand fetch in `sync-phorest-data/index.ts` (lines 560-680ish from yesterday's edit) is upserting the response from `GET /client/{clientId}` but the field mapping doesn't include `firstName`/`lastName` — only the top-level `name`, which the new client endpoint doesn't always populate. Or the response shape from `/branch/{branchId}/client/{clientId}` differs from `/client?id=...` and the upsert uses the wrong keys.
 
-- After resolving names from local `phorest_clients`, identify the residual set of `phorest_client_id`s that *still* have no name (the 356 case)
-- For each unresolved ID, call Phorest's `GET /business/{businessId}/branch/{branchId}/client/{clientId}` endpoint directly
-- Upsert the response into `phorest_clients` (so future appointments and the COALESCE chain pick it up)
-- Update the appointment's `client_name` from the freshly fetched name
+## The fix — three parts, in priority order
 
-Constraints:
-- **Concurrency cap**: process in batches of ~5 parallel requests (Phorest rate limits are tight; current scrape patterns suggest 5 concurrent is safe)
-- **Per-run cap**: max 200 on-demand fetches per sync run, so a sudden surge doesn't exhaust the rate budget for the rest of the sync
-- **Negative cache**: if a client fetch returns 404 (deleted in Phorest), write a placeholder row (`name = '[Deleted Client]'`, `phorest_client_id` set, `notes` flagged) so we don't keep retrying every 15 minutes
-- **Graceful degradation**: any fetch error logs but does not fail the sync run — appointment names just stay null until next attempt
+### 1. (Highest impact) Audit the `phorest_clients` rows that have a phorest_client_id but no name
 
-### 2. (Medium impact) Render fallback for "has client ID, no name yet"
+Run a targeted query to find every client row with `name IS NULL` AND `first_name IS NULL` AND `last_name IS NULL`. Trace 5-10 specific phorest_client_ids back to:
+- Did the on-demand fetch run for them? (check `sync-phorest-data` edge function logs for those IDs)
+- What did Phorest return? (re-call the endpoint with the same ID via a debug edge function)
+- Was the upsert mapping correct?
 
-In `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 313-315) and the compact-name helper (line 38), distinguish three states:
+This tells us whether to fix:
+- (a) The endpoint URL/path the function calls
+- (b) The field-mapping logic that writes the upsert
+- (c) The negative-cache logic that may be misclassifying a successful response as a 404
 
-| State | Today | After |
-|---|---|---|
-| `client_name` present | Renders the name | unchanged |
-| `client_name` null AND `phorest_client_id` null AND `is_walk_in = true` | "Walk-in" | "Walk-in" (correct) |
-| `client_name` null AND `phorest_client_id` present | "Walk-in" (wrong) | "Loading…" with a small spinner icon, OR a short ID-derived placeholder like "Client #ABC1" using last 4 chars of the Phorest ID |
+Concrete reconnaissance to run before writing any fix:
+- Count of `phorest_clients` rows with no name (estimate the size of the broken population)
+- Group those by `created_at` to see if the bug started yesterday after our deploy or has been there longer
+- Sample 3 specific phorest_client_ids and call `GET /business/{businessId}/branch/{branchId}/client/{clientId}` directly to confirm Phorest actually returns names
 
-This is purely cosmetic but it stops mislabeling 356 appointments as walk-ins until the sync catches up. The "Loading…" treatment also signals to the operator "we know there's a client here, the name just hasn't synced yet" — which is the truthful answer.
+### 2. (Medium impact) Fix the read path so the view's COALESCE actually reaches the UI
 
-Same fallback applied to `src/components/dock/appointment/DockSummaryTab.tsx` (line 51), `src/components/dock/schedule/DockAppointmentCard.tsx` (line 193), and `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` (line 800).
+For the **Annmarie X / Angelia Sanchez** case (failure mode 1), the underlying data is correct in the view but wrong in the UI. Two possible causes:
 
-### 3. (Long-tail) One-time backfill migration for the existing 356
+- The schedule query in `useAppointments` (or whichever hook drives `DayView`) is selecting from `phorest_appointments` directly instead of `v_all_appointments`, bypassing the COALESCE
+- OR it queries the view but the Supabase response is being merged with a stale cache that has the raw NULL value
+- OR the `getDisplayClientName` helper is being passed an object where `client_name` is the raw appointment column, not the view's resolved column
 
-A focused edge function (or one-shot SQL through the migration tool) that:
-- Selects all `phorest_appointments` rows with `client_name IS NULL` and `phorest_client_id IS NOT NULL` and no matching `phorest_clients` row
-- Calls the on-demand fetcher (same code path as fix #1) to populate `phorest_clients` and patch `client_name`
-- Run it once to clear the existing backlog; future drift is handled by fix #1
+Check: which hook feeds `DayView.tsx` → confirm it queries `v_all_appointments` → confirm the resolved `client_name` field arrives in the response.
 
-Triggered from `/dashboard/admin/integrations` as a one-click "Reconcile missing client names" button so it's user-initiated, not buried in cron.
+Once located, the fix is mechanical: switch the query to `v_all_appointments` if it isn't already, or pass the view's resolved value through to `getDisplayClientName`.
+
+### 3. (Long-tail) Re-run the reconciliation for the broken `phorest_clients` rows
+
+Once the field-mapping bug is fixed (#1), the rows that were upserted with empty names need to be re-fetched from Phorest. Two paths:
+- Trigger the next scheduled sync and let the on-demand fetch retry them (slow — depends on whether the residual-set logic re-attempts already-existing-but-empty rows)
+- Build the **one-shot reconciliation edge function** that yesterday's plan included but didn't ship — explicitly target rows where `phorest_client_id IS NOT NULL AND COALESCE(NULLIF(TRIM(name), ''), NULLIF(TRIM(first_name || ' ' || last_name), '')) IS NULL` and re-fetch them with the corrected mapping.
+
+The reconciliation function is the right move because the residual-set logic in the post-sync backfill only fetches IDs that have **no row at all** in `phorest_clients` — these IDs have rows (just empty ones), so they'll be skipped forever without an explicit re-attempt path.
 
 ## Files involved
 
-**Modified:**
-- `supabase/functions/sync-phorest-data/index.ts` — extend the post-sync backfill (lines 560-618) with on-demand client fetch + negative cache; add a small Phorest client-fetch helper
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — three-state render fallback in `formatCompactName` and the inline name span (lines 38, 315)
-- `src/components/dock/appointment/DockSummaryTab.tsx` — same three-state fallback
-- `src/components/dock/schedule/DockAppointmentCard.tsx` — same
-- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — same
-- `src/lib/appointment-display.ts` — **new** helper `getDisplayClientName(appointment)` returning `{ label, isResolved, isWalkIn }` so the three-state logic is centralized; all four render sites import this instead of inlining `client_name || 'Walk-in'`
+**Investigated first (no edit until reconnaissance complete):**
+- `supabase/functions/sync-phorest-data/index.ts` — the on-demand fetch block from yesterday; verify endpoint URL, response handling, and field mapping
+- Edge function logs for `sync-phorest-data` — find the actual fetch calls for the 4 broken phorest_client_ids
+- The `phorest_clients` upsert path — confirm `firstName`/`lastName` from the API response map to `first_name`/`last_name` columns
 
-**New:**
-- `supabase/functions/reconcile-phorest-client-names/index.ts` — one-shot reconciliation function for the existing backlog
-- `src/components/dashboard/admin/integrations/ReconcileClientNamesButton.tsx` — admin trigger UI
+**Likely modified:**
+- `supabase/functions/sync-phorest-data/index.ts` — fix the field-mapping bug in the on-demand fetch + re-attempt logic for empty-name rows
+- The schedule query hook (likely `useAppointments` or similar) if it bypasses `v_all_appointments`
+- Possibly `src/lib/appointment-display.ts` — if a name needs to be resolved from `phorest_clients` data passed alongside
 
-**Untouched (intentionally):**
-- `v_all_appointments` view — its COALESCE is correct; the bug is upstream of it
-- `phorest_clients` table schema — no changes needed
-- `is_walk_in` column logic — already correct, just visually conflated with the null-name case
+**Likely new:**
+- `supabase/functions/reconcile-phorest-client-names/index.ts` — one-shot backfill targeting the empty-name rows
+- A small admin button to trigger it (from yesterday's deferred plan)
 
 ## What stays the same
 
-- `client_name || 'Walk-in'` semantics for *true* walk-ins (`phorest_client_id IS NULL`) — unchanged
-- All read paths through `v_all_appointments` — unchanged
-- Phorest sync cadence (every 15 minutes) — unchanged
-- POS-First doctrine: Phorest is still the source of truth for client identity; we're just syncing it more completely
+- Yesterday's `getDisplayClientName` helper — the three-state contract is correct, this fix is upstream
+- `is_walk_in` logic — unchanged
+- The `v_all_appointments` view's COALESCE — unchanged; it's correct
+- Phorest sync cadence — unchanged
 
 ## QA checklist
 
-- Run `sync-phorest-data` once → confirm log line shows new "On-demand fetched N missing clients" entry and the `pc.phorest_client_id` count grows
-- Re-query: `SELECT COUNT(*) FROM phorest_appointments pa LEFT JOIN phorest_clients pc ON pc.phorest_client_id = pa.phorest_client_id WHERE pa.client_name IS NULL AND pa.phorest_client_id IS NOT NULL AND pc.phorest_client_id IS NULL AND pa.appointment_date >= CURRENT_DATE - INTERVAL '30 days'` → drops from 356 → near-zero after reconciliation function runs
-- Open `/dashboard/schedule` → cards previously showing "Walk-in" now show real names
-- Cards with truly null `phorest_client_id` (`is_walk_in = true`) still show "Walk-in" with the existing badge
-- Appointments mid-flight (synced this minute, client fetch pending) show "Loading…" rather than "Walk-in"
-- Phorest 404 on client fetch → row written as "[Deleted Client]"; on next sync, no retry storm
-- Rate-limit safety: simulate a sync where 500 client IDs are missing → only 200 fetched per run, remainder picked up next run
+- For each of the 4 broken appointments in your screenshot, after fix: card renders the real client name, not "Client #XXXX"
+- `SELECT COUNT(*) FROM phorest_clients WHERE COALESCE(NULLIF(TRIM(name),''), NULLIF(TRIM(first_name||' '||last_name),'')) IS NULL` drops to near-zero after reconciliation
+- New appointments synced after the fix never produce empty `phorest_clients` rows
+- A truly deleted Phorest client (404) still produces a `[Deleted Client]` row, not an empty one
+- Reconciliation is idempotent — running it twice doesn't duplicate rows or thrash the data
 
-## Follow-ups (separate scope)
+## Why this happened (and what to learn)
 
-1. **Move client fetch into appointment sync directly** instead of as a post-sync pass — would eliminate the two-pass pattern entirely. Worth it once we trust the rate limits.
-2. **Webhook subscription** for Phorest client created/updated events (if available) — push model beats poll model for the freshness gap.
-3. **Visibility lever**: surface "X% of appointments missing client names" as an integration health metric on the Operations Hub so future regressions are noticed in days, not months.
+Yesterday's fix added on-demand fetching but **didn't validate the fetched response had the expected fields populated**. The pattern "fetch missing data → upsert response" silently writes empty rows when the response shape doesn't match expectations. This is the **same shape as yesterday's `Math.min(..., 100)` clamp and the `client_name || 'Walk-in'` fallback**: a defensive write that erases the underlying data quality signal. A row in `phorest_clients` with no name fields is *not* the same as a synced client — but our query treats them identically.
 
 ## Enhancement suggestion
 
-The reason this bug shipped is the same shape as the utilization clamp from earlier today: a UI fallback (`|| 'Walk-in'`) **swallowed a data-quality signal** instead of surfacing it. "Client ID present, name missing" is meaningful information — it tells operators their integration is drifting. We rendered it as if it were the same as a true walk-in, hiding the drift. Worth one short canon entry: **"Fallback values must be distinguishable from real values when the underlying state differs."** Examples this would catch in advance: `client_name || 'Walk-in'` (this bug), `utilization > 100 ? 100 : utilization` (the clamp), `staff_name || 'Unassigned'` (similar pattern in payroll). The pattern is "default-on-null is fine when null and the default mean the same thing; otherwise you're erasing a signal." Same shape as the alert-fatigue and signal-preservation doctrines — naming it once gives us one more lens to catch this class before it ships.
+Worth adding as a doctrine entry: **"Writes that conform to a contract must validate the contract on the way in."** The on-demand fetch wrote rows that satisfied the schema (NOT NULL on `phorest_client_id`) but violated the *purpose* of the table (a client row should have a name). Same shape as the alert-fatigue / signal-preservation canon: structural integrity isn't just "the row exists" — it's "the row is meaningful." A simple guard in the upsert path (`if (!response.firstName && !response.lastName && !response.name) skip and log instead of writing empty`) would have prevented this from shipping. Worth one short `mem://architecture/contract-validating-writes.md` entry the next time we add a sync path.
 
