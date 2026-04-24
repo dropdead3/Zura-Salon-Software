@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+// eslint-disable-next-line no-restricted-imports -- Platform* wrapper file legitimately re-styles the raw Textarea primitive.
 import { Textarea, type TextareaProps } from '@/components/ui/textarea';
 
 const PlatformTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
