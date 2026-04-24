@@ -1057,7 +1057,11 @@ export function AppointmentDetailSheet({
           startTimeOffsetMinutes: startMin - apptStartMin,
           assignedStylist: {
             userId: override?.assigned_user_id ?? appointment.stylist_user_id ?? null,
-            name: override?.assigned_staff_name ?? appointment.staff_name ?? null,
+            name: override?.assigned_staff_name ?? (
+              teamMembers.find(m => m.user_id === appointment.stylist_user_id)?.display_name
+              || teamMembers.find(m => m.user_id === appointment.stylist_user_id)?.full_name
+              || null
+            ),
           },
           requiresConsultation: !!override?.requires_consultation,
         };
