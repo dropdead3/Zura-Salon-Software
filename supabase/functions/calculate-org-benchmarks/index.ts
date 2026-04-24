@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
           .eq("organization_id", org.id)
           .eq("is_active", true);
 
-        const totalRevenue = txnItems.reduce((sum, s) => sum + (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0), 0);
+        const totalRevenue = txnItems.reduce((sum: any, s: any) => sum + (Number(s.total_amount) || 0) + (Number(s.tax_amount) || 0), 0);
         metrics.revenue_per_location = locationCount && locationCount > 0
           ? totalRevenue / locationCount
           : 0;
@@ -216,13 +216,13 @@ Deno.serve(async (req) => {
 
     for (const metric of BENCHMARK_METRICS) {
       const values = orgMetrics
-        .map((om) => ({
+        .map((om: any) => ({
           org_id: om.organization_id,
           value: om.metrics[metric.metric_key] || 0,
         }))
-        .sort((a, b) => metric.inverse ? a.value - b.value : b.value - a.value);
+        .sort((a: any, b: any) => metric.inverse ? a.value - b.value : b.value - a.value);
 
-      values.forEach((v, index) => {
+      values.forEach((v: any, index: any) => {
         const percentile = Math.round(((values.length - index) / values.length) * 100);
 
         benchmarkRecords.push({
@@ -254,9 +254,9 @@ Deno.serve(async (req) => {
     // Calculate platform averages
     const platformAverages: Record<string, number> = {};
     for (const metric of BENCHMARK_METRICS) {
-      const values = orgMetrics.map((om) => om.metrics[metric.metric_key] || 0);
+      const values = orgMetrics.map((om: any) => om.metrics[metric.metric_key] || 0);
       platformAverages[metric.metric_key] = values.length > 0
-        ? values.reduce((a, b) => a + b, 0) / values.length
+        ? values.reduce((a: any, b: any) => a + b, 0) / values.length
         : 0;
     }
 
@@ -266,9 +266,9 @@ Deno.serve(async (req) => {
         processed: orgMetrics.length,
         period: { start: periodStartStr, end: periodEndStr },
         platform_averages: platformAverages,
-        top_performers: BENCHMARK_METRICS.map((m) => {
+        top_performers: BENCHMARK_METRICS.map((m: any) => {
           const sorted = orgMetrics
-            .sort((a, b) => 
+            .sort((a: any, b: any) => 
               m.inverse 
                 ? (a.metrics[m.metric_key] || 0) - (b.metrics[m.metric_key] || 0)
                 : (b.metrics[m.metric_key] || 0) - (a.metrics[m.metric_key] || 0)
@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
             .slice(0, 3);
           return {
             metric: m.label,
-            leaders: sorted.map((s) => ({
+            leaders: sorted.map((s: any) => ({
               name: s.organization_name,
               value: s.metrics[m.metric_key] || 0,
             })),

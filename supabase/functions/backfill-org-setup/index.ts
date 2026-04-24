@@ -145,14 +145,14 @@ Deno.serve(async (req) => {
       .eq("organization_id", organization_id)
       .eq("is_active", true);
     if (!stepData["step_2_footprint"] && locations && locations.length > 0) {
-      const locShapes = locations.map((l) => ({
+      const locShapes = locations.map((l: any) => ({
         id: l.id,
         name: l.name ?? "",
         city: l.city ?? "",
         state: l.state ?? "",
       }));
       const operatingStates = Array.from(
-        new Set(locShapes.map((l) => l.state).filter(Boolean)),
+        new Set(locShapes.map((l: any) => l.state).filter(Boolean)),
       );
       stepData["step_2_footprint"] = {
         locations: locShapes,
@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       .eq("organization_id", organization_id)
       .eq("is_active", true);
     if (!stepData["step_3_team"] && employees && employees.length > 0) {
-      const types = new Set(employees.map((e) => e.employment_type).filter(Boolean));
+      const types = new Set(employees.map((e: any) => e.employment_type).filter(Boolean));
       const count = employees.length;
       const band: "1-3" | "4-10" | "11-25" | "26+" =
         count <= 3 ? "1-3" : count <= 10 ? "4-10" : count <= 25 ? "11-25" : "26+";
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
       .limit(500);
     if (!stepData["step_5_catalog"] && services && services.length > 0) {
       const rawCategories = Array.from(
-        new Set(services.map((s) => (s.category ?? "").toLowerCase()).filter(Boolean)),
+        new Set(services.map((s: any) => (s.category ?? "").toLowerCase()).filter(Boolean)),
       );
       // Map raw service categories to wizard's canonical category vocabulary
       const CATEGORY_MAP: Record<string, string> = {
@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
         nail: "nails", nails: "nails", manicure: "nails", pedicure: "nails",
       };
       const mapped = Array.from(new Set(
-        rawCategories.map((c) => CATEGORY_MAP[c] ?? null).filter(Boolean) as string[],
+        rawCategories.map((c: any) => CATEGORY_MAP[c] ?? null).filter(Boolean) as string[],
       ));
       stepData["step_5_catalog"] = {
         service_categories: mapped,
@@ -357,8 +357,8 @@ Deno.serve(async (req) => {
     // Marked source='backfill' so the followup processor doesn't treat
     // a backfilled 'completed' as a real wizard completion.
     const logRows = results
-      .filter((r) => r.status === "backfilled" || r.status === "skipped")
-      .map((r) => ({
+      .filter((r: any) => r.status === "backfilled" || r.status === "skipped")
+      .map((r: any) => ({
         organization_id,
         system: r.system,
         status: r.status === "backfilled" ? "completed" : "skipped",
@@ -389,7 +389,7 @@ Deno.serve(async (req) => {
       step_7_intent: 7,
       step_7_5_apps: 8,
     };
-    const eventRows = results.map((r) => ({
+    const eventRows = results.map((r: any) => ({
       organization_id,
       user_id: user.id,
       step_key: r.step_key,
@@ -413,9 +413,9 @@ Deno.serve(async (req) => {
       .eq("id", organization_id)
       .is("signup_source", null);
 
-    const backfilled = results.filter((r) => r.status === "backfilled").length;
-    const pending = results.filter((r) => r.status === "pending_intent").length;
-    const skippedCt = results.filter((r) => r.status === "skipped").length;
+    const backfilled = results.filter((r: any) => r.status === "backfilled").length;
+    const pending = results.filter((r: any) => r.status === "pending_intent").length;
+    const skippedCt = results.filter((r: any) => r.status === "skipped").length;
 
     // Server-side audit ledger — replaces the localStorage attempt key so
     // platform ops can audit who ran backfill, when, and what was inferred.

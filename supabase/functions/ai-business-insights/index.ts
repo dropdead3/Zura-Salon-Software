@@ -288,13 +288,13 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
 `;
 
     // Pre-compute key metrics
-    const pastAppointments = appointments.filter((a) => a.appointment_date <= today);
-    const futureAppointments = appointments.filter((a) => a.appointment_date > today);
-    const cancelledCount = pastAppointments.filter((a) => a.status === "cancelled").length;
-    const noShowCount = pastAppointments.filter((a) => a.status === "no_show").length;
-    const completedCount = pastAppointments.filter((a) => a.status === "completed").length;
+    const pastAppointments = appointments.filter((a: any) => a.appointment_date <= today);
+    const futureAppointments = appointments.filter((a: any) => a.appointment_date > today);
+    const cancelledCount = pastAppointments.filter((a: any) => a.status === "cancelled").length;
+    const noShowCount = pastAppointments.filter((a: any) => a.status === "no_show").length;
+    const completedCount = pastAppointments.filter((a: any) => a.status === "completed").length;
     const totalPast = pastAppointments.length;
-    const rebookedCount = pastAppointments.filter((a) => a.rebooked_at_checkout).length;
+    const rebookedCount = pastAppointments.filter((a: any) => a.rebooked_at_checkout).length;
 
     // Sales aggregates derived inline from transaction_items rows.
     // (Previously this read from `daily_sales_summary` which used different
@@ -318,12 +318,12 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         total_transactions: agg.transactionIds.size,
         average_ticket: agg.transactionIds.size > 0 ? agg.revenue / agg.transactionIds.size : 0,
       }))
-      .sort((a, b) => b.summary_date.localeCompare(a.summary_date));
+      .sort((a: any, b: any) => b.summary_date.localeCompare(a.summary_date));
 
-    const thisWeekSales = dailySales.filter((s) => s.summary_date >= weekAgo);
-    const lastWeekSales = dailySales.filter((s) => s.summary_date < weekAgo);
-    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
-    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
+    const thisWeekSales = dailySales.filter((s: any) => s.summary_date >= weekAgo);
+    const lastWeekSales = dailySales.filter((s: any) => s.summary_date < weekAgo);
+    const thisWeekRevenue = thisWeekSales.reduce((sum: any, s: any) => sum + s.total_revenue, 0);
+    const lastWeekRevenue = lastWeekSales.reduce((sum: any, s: any) => sum + s.total_revenue, 0);
 
     // High-ticket & retail metrics (last 30 days)
     const totalCompleted30d = highTicketAppts.length;
@@ -413,11 +413,11 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
       }
     }
     const staffList = Object.values(staffMetrics).filter(s => s.completed > 0);
-    staffList.sort((a, b) => b.revenue - a.revenue);
+    staffList.sort((a: any, b: any) => b.revenue - a.revenue);
     const top3Staff = staffList.slice(0, 3);
     const bottom3Staff = staffList.length > 3 ? staffList.slice(-3).reverse() : [];
     const teamAvgRebook = staffList.length > 0
-      ? staffList.reduce((s, st) => s + (st.completed > 0 ? st.rebooked / st.completed : 0), 0) / staffList.length * 100
+      ? staffList.reduce((s: any, st: any) => s + (st.completed > 0 ? st.rebooked / st.completed : 0), 0) / staffList.length * 100
       : 0;
 
     // ─── DAY-OF-WEEK PATTERNS ───
@@ -498,7 +498,7 @@ REVENUE (Last 14 days):
 - Last week total: $${lastWeekRevenue.toFixed(0)}
 - Week-over-week change: ${lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue * 100).toFixed(1) : "N/A"}%
 - Daily sales entries: ${dailySales.length}
-${dailySales.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
+${dailySales.slice(0, 7).map((s: any) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
 
 APPOINTMENTS (Last 7 + Next 7 days):
 - Total past week: ${totalPast}
@@ -532,13 +532,13 @@ DAY-OF-WEEK PATTERNS (Last week):
 ${Object.entries(dowCounts).map(([dow, count]) => `  ${dowNames[Number(dow)]}: ${count} appointments (avg ${(count / weeksInRange).toFixed(1)}/week)`).join('\n')}
 
 REVENUE FORECASTS (Next 7 days):
-${forecasts.length > 0 ? forecasts.map((f) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
+${forecasts.length > 0 ? forecasts.map((f: any) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
 
 ACTIVE ANOMALIES (Unacknowledged):
-${anomalies.length > 0 ? anomalies.map((a) => `  ${a.anomaly_type} (${a.severity}): value=${a.metric_value}, expected=${a.expected_value}, deviation=${a.deviation_percent}%`).join("\n") : "No active anomalies"}
+${anomalies.length > 0 ? anomalies.map((a: any) => `  ${a.anomaly_type} (${a.severity}): value=${a.metric_value}, expected=${a.expected_value}, deviation=${a.deviation_percent}%`).join("\n") : "No active anomalies"}
 
 SCHEDULING SUGGESTIONS (Pending):
-${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
+${suggestions.length > 0 ? suggestions.map((s: any) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
 
 HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
 - Total completed appointments: ${totalCompleted30d}

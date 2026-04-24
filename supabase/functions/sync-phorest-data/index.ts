@@ -753,8 +753,8 @@ async function syncAppointments(
           // the unresolved IDs too.
           const hintedBranches = new Set(branchHintMap.values());
           const orderedBranchProbe = [
-            ...branchIds.filter((b) => hintedBranches.has(b)),
-            ...branchIds.filter((b) => !hintedBranches.has(b)),
+            ...branchIds.filter((b: any) => hintedBranches.has(b)),
+            ...branchIds.filter((b: any) => !hintedBranches.has(b)),
           ];
 
           for (const branchId of orderedBranchProbe) {
@@ -1433,7 +1433,7 @@ async function syncSalesTransactions(
                   .select('id');
               });
               const results = await Promise.all(updates);
-              reconciled += results.reduce((sum, r) => sum + (r.data?.length || 0), 0);
+              reconciled += results.reduce((sum: any, r: any) => sum + (r.data?.length || 0), 0);
             }
             if (reconciled > 0) {
               console.log(`Reconciled ${reconciled} appointments to completed via transaction match for ${branchName}`);

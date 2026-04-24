@@ -167,12 +167,12 @@ async function calcRevenue(
     },
   ];
 
-  const validMetrics = metrics.filter((m) => m.value > 0 || m.benchmark > 0);
+  const validMetrics = metrics.filter((m: any) => m.value > 0 || m.benchmark > 0);
   const categoryScore = validMetrics.length > 0
-    ? Math.round(validMetrics.reduce((s, m) => s + m.score, 0) / validMetrics.length)
+    ? Math.round(validMetrics.reduce((s: any, m: any) => s + m.score, 0) / validMetrics.length)
     : 50;
 
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "revenue",
@@ -241,8 +241,8 @@ async function calcClient(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "client",
@@ -318,8 +318,8 @@ async function calcRetention(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "retention",
@@ -388,8 +388,8 @@ async function calcUtilization(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "utilization",
@@ -430,9 +430,9 @@ async function calcTeamPerformance(
   }
 
   const values = Array.from(byStaff.values());
-  const mean = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const mean = values.length > 0 ? values.reduce((a: any, b: any) => a + b, 0) / values.length : 0;
   const stddev = values.length > 1
-    ? Math.sqrt(values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / values.length)
+    ? Math.sqrt(values.reduce((s: any, v: any) => s + Math.pow(v - mean, 2), 0) / values.length)
     : 0;
   const variance = mean > 0 ? 1 - stddev / mean : 0;
 
@@ -453,8 +453,8 @@ async function calcTeamPerformance(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "team_performance",
@@ -529,8 +529,8 @@ async function calcOperational(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
-  const sorted = [...metrics].sort((a, b) => a.score - b.score);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
+  const sorted = [...metrics].sort((a: any, b: any) => a.score - b.score);
 
   return {
     category: "operational_consistency",
@@ -591,7 +591,7 @@ async function calcInventory(
     },
   ];
 
-  const categoryScore = Math.round(metrics.reduce((s, m) => s + m.score, 0) / metrics.length);
+  const categoryScore = Math.round(metrics.reduce((s: any, m: any) => s + m.score, 0) / metrics.length);
 
   return {
     category: "inventory_cost",
@@ -693,7 +693,7 @@ Deno.serve(async (req) => {
           ]);
 
           // Filter available categories, normalize weights
-          const available = categories.filter((c) => c.available);
+          const available = categories.filter((c: any) => c.available);
           let totalWeight = 0;
           const weighted: { cat: CategoryResult; weight: number }[] = [];
 
@@ -707,7 +707,7 @@ Deno.serve(async (req) => {
 
           // Normalize
           const locScore = totalWeight > 0
-            ? Math.round(weighted.reduce((s, w) => s + w.cat.score * (w.weight / totalWeight), 0))
+            ? Math.round(weighted.reduce((s: any, w: any) => s + w.cat.score * (w.weight / totalWeight), 0))
             : 0;
 
           const breakdown: Record<string, any> = {};
@@ -757,7 +757,7 @@ Deno.serve(async (req) => {
           dataProfile.hasInventory ? calcInventory(supabase, org.id, null) : Promise.resolve({ category: "inventory_cost", score: 0, available: false, metrics: [], topDrag: "", topStrength: "", leverRecommendation: "" }),
         ]);
 
-        const orgAvailable = orgCategories.filter((c) => c.available);
+        const orgAvailable = orgCategories.filter((c: any) => c.available);
         let orgTotalWeight = 0;
         const orgWeighted: { cat: CategoryResult; weight: number }[] = [];
 
@@ -770,7 +770,7 @@ Deno.serve(async (req) => {
         }
 
         const orgScore = orgTotalWeight > 0
-          ? Math.round(orgWeighted.reduce((s, w) => s + w.cat.score * (w.weight / orgTotalWeight), 0))
+          ? Math.round(orgWeighted.reduce((s: any, w: any) => s + w.cat.score * (w.weight / orgTotalWeight), 0))
           : 0;
 
         const orgBreakdown: Record<string, any> = {};

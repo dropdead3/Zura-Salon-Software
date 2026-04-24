@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         latest.set(r.system, { status: r.status, source: r.source });
       }
     }
-    const allDone = COMPLETION_SYSTEMS.every((s) => {
+    const allDone = COMPLETION_SYSTEMS.every((s: any) => {
       const entry = latest.get(s);
       return entry?.status === "completed" && entry.source === "wizard";
     });

@@ -270,7 +270,7 @@ async function detectContentGaps(
     if (!svc.price || svc.price < 50) continue;
     const nameNorm = svc.name.toLowerCase();
     const hasPage = existingPageLabels.has(nameNorm) ||
-      [...existingPageLabels].some((l) => l.includes(nameNorm) || nameNorm.includes(l));
+      [...existingPageLabels].some((l: any) => l.includes(nameNorm) || nameNorm.includes(l));
 
     if (hasPage) continue;
 

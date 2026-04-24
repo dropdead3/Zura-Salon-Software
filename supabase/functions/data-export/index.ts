@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         format,
         requested_by: request.requested_by,
         status: 'completed',
-        record_count: Object.values(exportData).reduce((sum, val) => {
+        record_count: Object.values(exportData).reduce((sum: any, val: any) => {
           if (Array.isArray(val)) return sum + val.length;
           return sum;
         }, 0),

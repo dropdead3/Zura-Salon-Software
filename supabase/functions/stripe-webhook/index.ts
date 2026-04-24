@@ -427,7 +427,7 @@ async function handleCheckoutCompleted(
   console.log(`Enabling color bar for organization: ${orgId}, locations: ${locationPlans.length}, scales: ${scaleCount}, interval: ${billingInterval}`);
 
   // 1. Upsert the org-level feature flag (master switch)
-  const planSummary = locationPlans.map((lp) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
+  const planSummary = locationPlans.map((lp: any) => `${lp.location_id}:${lp.plan_tier}`).join(', ');
   const { error } = await supabase
     .from('organization_feature_flags')
     .upsert({
@@ -473,7 +473,7 @@ async function handleCheckoutCompleted(
     const activatedAt = new Date().toISOString();
     const refundEligibleUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const entitlementRows = locationPlans.map((lp, idx) => ({
+    const entitlementRows = locationPlans.map((lp: any, idx: any) => ({
       organization_id: orgId,
       location_id: lp.location_id,
       plan_tier: lp.plan_tier,

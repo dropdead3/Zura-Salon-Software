@@ -116,8 +116,8 @@ Deno.serve(async (req) => {
 
         // Categorize
         const succeeded = stripePIs.filter(pi => pi.status === "succeeded");
-        const totalStripeAmount = succeeded.reduce((sum, pi) => sum + pi.amount, 0); // cents
-        const totalStripeTips = succeeded.reduce((sum, pi) => {
+        const totalStripeAmount = succeeded.reduce((sum: any, pi: any) => sum + pi.amount, 0); // cents
+        const totalStripeTips = succeeded.reduce((sum: any, pi: any) => {
           const tipMeta = pi.metadata?.tip_amount;
           return sum + (tipMeta ? parseInt(tipMeta, 10) : 0);
         }, 0);

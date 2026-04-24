@@ -289,7 +289,7 @@ serve(async (req) => {
 
           const hint = branchHintMap.get(clientId);
           const orderedBranches = hint
-            ? [hint, ...branchIds.filter((b) => b !== hint)]
+            ? [hint, ...branchIds.filter((b: any) => b !== hint)]
             : branchIds;
 
           for (const branchId of orderedBranches) {

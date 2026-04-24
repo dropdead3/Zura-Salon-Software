@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
           const avgMs =
             data.durations.length > 0
               ? Math.round(
-                  data.durations.reduce((a, b) => a + b, 0) / data.durations.length
+                  data.durations.reduce((a: any, b: any) => a + b, 0) / data.durations.length
                 )
               : 0;
 
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
               avg_ms: avgMs,
               p95_ms:
                 data.durations.length > 0
-                  ? data.durations.sort((a, b) => a - b)[
+                  ? data.durations.sort((a: any, b: any) => a - b)[
                       Math.floor(data.durations.length * 0.95)
                     ]
                   : 0,

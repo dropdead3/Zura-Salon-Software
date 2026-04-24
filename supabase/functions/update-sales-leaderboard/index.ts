@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     });
 
     const rankings = Object.values(byUser)
-      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .sort((a: any, b: any) => b.totalRevenue - a.totalRevenue)
       .slice(0, 10);
 
     if (rankings.length === 0) {

@@ -191,7 +191,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Build participant list HTML
     const participantListHtml = inactiveParticipants
-      .sort((a, b) => b.days_inactive - a.days_inactive)
+      .sort((a: any, b: any) => b.days_inactive - a.days_inactive)
       .map(p => `
         <tr style="border-bottom: 1px solid #e5e5e5;">
           <td style="padding: 12px; font-weight: 500;">${p.display_name || p.full_name}</td>

@@ -174,8 +174,7 @@ function buildDigestHtml(
   };
 
   const insightsHtml = insights
-    .map(
-      (i) => `
+    .map((i: any) => `
     <tr>
       <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb;">
         <div style="display: flex; align-items: flex-start; gap: 8px;">

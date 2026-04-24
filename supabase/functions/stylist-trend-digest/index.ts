@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
         .single();
       const orgSlug = orgData?.slug || "";
 
-      const sortedLevels = [...levels].sort((a, b) => a.display_order - b.display_order);
+      const sortedLevels = [...levels].sort((a: any, b: any) => a.display_order - b.display_order);
 
       for (const stylist of stylists) {
         if (!stylist.email) {
@@ -308,12 +308,11 @@ function computeWindowKpis(
     }
   }
 
-  const windowAppts = (appts || []).filter(
-    (a) => a.appointment_date >= startStr && a.appointment_date < endStr && a.status !== "no_show"
+  const windowAppts = (appts || []).filter((a: any) => a.appointment_date >= startStr && a.appointment_date < endStr && a.status !== "no_show"
   );
-  const rebooked = windowAppts.filter((a) => a.rebooked_at_checkout).length;
-  const totalMin = windowAppts.reduce((s, a) => s + (Number(a.duration_minutes) || 60), 0);
-  const activeDays = new Set(windowAppts.map((a) => a.appointment_date)).size;
+  const rebooked = windowAppts.filter((a: any) => a.rebooked_at_checkout).length;
+  const totalMin = windowAppts.reduce((s: any, a: any) => s + (Number(a.duration_minutes) || 60), 0);
+  const activeDays = new Set(windowAppts.map((a: any) => a.appointment_date)).size;
   const totalRev = serviceRev + productRev;
 
   // Avg ticket
@@ -331,8 +330,7 @@ function computeWindowKpis(
   // current (eval) window and set prior retention to 0, skipping retention velocity
   // in digest emails.
   const windowClients = new Set(windowAppts.filter(a => a.client_id).map(a => a.client_id));
-  const priorAppts = (appts || []).filter(
-    (a) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
+  const priorAppts = (appts || []).filter((a: any) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
   );
   const priorClients = new Set(priorAppts.map(a => a.client_id));
   let retentionRate = 0;
@@ -371,7 +369,7 @@ function buildDigestHtml(
   deepLink: string,
 ): string {
   const kpiRows = projectionLines
-    .map((line) => `<tr><td style="padding:6px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;">${line}</td></tr>`)
+    .map((line: any) => `<tr><td style="padding:6px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;">${line}</td></tr>`)
     .join("");
 
   const escapedSummary = aiSummary

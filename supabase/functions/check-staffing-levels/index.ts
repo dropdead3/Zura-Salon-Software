@@ -67,7 +67,7 @@ serve(async (req) => {
       .eq("is_active", true)
       .eq("is_approved", true);
 
-    const employeeUserIds = employees?.map((e) => e.user_id) || [];
+    const employeeUserIds = employees?.map((e: any) => e.user_id) || [];
     const { data: roles } = employeeUserIds.length > 0
       ? await supabase.from("user_roles").select("user_id, role").in("user_id", employeeUserIds).in("role", ["stylist", "stylist_assistant"])
       : { data: [] };
@@ -75,11 +75,11 @@ serve(async (req) => {
     const alertLocations: { name: string; currentStaff: number; targetStaff: number; percentage: number; organization_id: string }[] = [];
 
     for (const location of locations) {
-      const locationEmployees = employees?.filter((e) => e.location_ids?.includes(location.id)) || [];
-      const locationUserIds = locationEmployees.map((e) => e.user_id);
-      const locationRoles = roles?.filter((r) => locationUserIds.includes(r.user_id)) || [];
-      const stylistCount = locationRoles.filter((r) => r.role === "stylist").length;
-      const assistantCount = locationRoles.filter((r) => r.role === "stylist_assistant").length;
+      const locationEmployees = employees?.filter((e: any) => e.location_ids?.includes(location.id)) || [];
+      const locationUserIds = locationEmployees.map((e: any) => e.user_id);
+      const locationRoles = roles?.filter((r: any) => locationUserIds.includes(r.user_id)) || [];
+      const stylistCount = locationRoles.filter((r: any) => r.role === "stylist").length;
+      const assistantCount = locationRoles.filter((r: any) => r.role === "stylist_assistant").length;
       const currentStaff = stylistCount + assistantCount;
       const assistantTarget = Math.ceil((location.stylist_capacity || 0) * (location.assistant_ratio || 0.5));
       const targetStaff = (location.stylist_capacity || 0) + assistantTarget;
@@ -104,13 +104,13 @@ serve(async (req) => {
       .select("user_id, email, full_name, organization_id")
       .eq("is_active", true).eq("is_approved", true);
 
-    const adminUserIds = adminProfiles?.map((p) => p.user_id) || [];
+    const adminUserIds = adminProfiles?.map((p: any) => p.user_id) || [];
     const { data: adminRoles } = adminUserIds.length > 0
       ? await supabase.from("user_roles").select("user_id, role").in("user_id", adminUserIds).in("role", ["admin", "super_admin", "manager"])
       : { data: [] };
 
-    const adminEmails = adminProfiles?.filter((p) => adminRoles?.some((r) => r.user_id === p.user_id)).map((p) => p.email).filter(Boolean) || [];
-    const adminIds = adminRoles?.map((r) => r.user_id) || [];
+    const adminEmails = adminProfiles?.filter((p: any) => adminRoles?.some((r: any) => r.user_id === p.user_id)).map((p: any) => p.email).filter(Boolean) || [];
+    const adminIds = adminRoles?.map((r: any) => r.user_id) || [];
 
     let notificationsSent = 0;
     let emailsSent = 0;
@@ -133,10 +133,10 @@ serve(async (req) => {
           .filter(Boolean)
       );
 
-      const notifications = alertLocations.flatMap((loc) =>
+      const notifications = alertLocations.flatMap((loc: any) =>
         adminIds
-          .filter((userId) => !alertedPairs.has(`${userId}:${loc.id}`))
-          .map((userId) => ({
+          .filter((userId: any) => !alertedPairs.has(`${userId}:${loc.id}`))
+          .map((userId: any) => ({
             user_id: userId,
             type: "staffing_alert",
             title: `⚠️ Staffing Alert: ${loc.name}`,
@@ -160,7 +160,7 @@ serve(async (req) => {
 
     if (settings.email_enabled && adminEmails.length > 0) {
       const locationList = alertLocations
-        .map((loc) => `• ${loc.name}: ${loc.percentage}% (${loc.currentStaff}/${loc.targetStaff})`)
+        .map((loc: any) => `• ${loc.name}: ${loc.percentage}% (${loc.currentStaff}/${loc.targetStaff})`)
         .join("<br>");
 
       // Use org from first alert location

@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       .eq("appointment_id", appointmentId)
       .eq("status", "pending");
 
-    const queueItems = steps.map((step) => {
+    const queueItems = steps.map((step: any) => {
       const offsetMs = step.timing_value * 60 * 60 * 1000; // hours to ms
       let scheduledAt: Date;
 

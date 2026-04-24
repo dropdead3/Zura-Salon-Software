@@ -110,7 +110,7 @@ serve(async (req) => {
       else dailyMap[d].product_revenue += rev;
       dailyMap[d].total_transactions += 1;
     }
-    const historicalSales = Object.values(dailyMap).sort((a, b) => a.summary_date.localeCompare(b.summary_date));
+    const historicalSales = Object.values(dailyMap).sort((a: any, b: any) => a.summary_date.localeCompare(b.summary_date));
 
     // ── 30-Day Gap Ratio Calculation ──
     const thirtyDaysAgo = new Date();
@@ -166,7 +166,7 @@ serve(async (req) => {
     // Calculate gap adjustment factor, clamped [0.70, 1.00]
     let gapAdjustmentFactor = 1.0;
     if (ratios.length >= 3) {
-      const avgRatio = ratios.reduce((s, r) => s + r, 0) / ratios.length;
+      const avgRatio = ratios.reduce((s: any, r: any) => s + r, 0) / ratios.length;
       gapAdjustmentFactor = Math.min(1.0, Math.max(0.70, avgRatio));
     }
 
@@ -343,7 +343,7 @@ Return ONLY valid JSON, no markdown or explanation.`
       }
     } else {
       forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend, gapAdjustmentFactor);
-      const totalPredicted = forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0);
+      const totalPredicted = forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0);
       summary = {
         totalPredicted,
         avgDaily: forecasts.length > 0 ? Math.round(totalPredicted / forecasts.length) : 0,
@@ -380,8 +380,8 @@ Return ONLY valid JSON, no markdown or explanation.`
         success: true,
         forecasts,
         summary: summary || {
-          totalPredicted: forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0),
-          avgDaily: forecasts.length ? Math.round(forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0) / forecasts.length) : 0,
+          totalPredicted: forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0),
+          avgDaily: forecasts.length ? Math.round(forecasts.reduce((sum: any, f: any) => sum + f.predictedRevenue, 0) / forecasts.length) : 0,
           trend,
           keyInsight: `Based on ${historicalSales?.length || 0} days of historical data`
         },
@@ -408,8 +408,8 @@ function calculateTrend(sales: any[]): 'up' | 'down' | 'stable' {
   const recent = sales.slice(-7);
   const previous = sales.slice(-14, -7);
   
-  const recentAvg = recent.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0) / 7;
-  const previousAvg = previous.reduce((sum, d) => sum + (Number(d.total_revenue) || 0), 0) / 7;
+  const recentAvg = recent.reduce((sum: any, d: any) => sum + (Number(d.total_revenue) || 0), 0) / 7;
+  const previousAvg = previous.reduce((sum: any, d: any) => sum + (Number(d.total_revenue) || 0), 0) / 7;
   
   const change = ((recentAvg - previousAvg) / previousAvg) * 100;
   

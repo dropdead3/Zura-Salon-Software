@@ -97,7 +97,7 @@ serve(async (req) => {
       limit: 12,
     });
 
-    const invoices = invoiceList.data.map((inv) => ({
+    const invoices = invoiceList.data.map((inv: any) => ({
       id: inv.id,
       number: inv.number,
       date: inv.created ? new Date(inv.created * 1000).toISOString() : null,

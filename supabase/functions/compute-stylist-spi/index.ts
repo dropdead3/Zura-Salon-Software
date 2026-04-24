@@ -91,7 +91,7 @@ serve(async (req) => {
         .gte("appointment_date", periodStart)
         .lte("appointment_date", periodEnd);
 
-      const totalRevenue = (appts ?? []).reduce((s, a) => s + (Number(a.total_price) || 0), 0);
+      const totalRevenue = (appts ?? []).reduce((s: any, a: any) => s + (Number(a.total_price) || 0), 0);
       const totalAppts = (appts ?? []).length;
       const completedAppts = (appts ?? []).filter(a => a.status === "completed").length;
       const rebookedAppts = (appts ?? []).filter(a => a.rebooked_at_checkout === true).length;
@@ -147,12 +147,12 @@ serve(async (req) => {
         .limit(12);
 
       const scores = (spiHistory ?? []).map(s => Number(s.spi_score));
-      const spiAvg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : spiScore;
+      const spiAvg = scores.length > 0 ? scores.reduce((a: any, b: any) => a + b, 0) / scores.length : spiScore;
 
       let consistency = 50;
       if (scores.length >= 2) {
         const mean = spiAvg;
-        const variance = scores.reduce((sum, v) => sum + (v - mean) ** 2, 0) / scores.length;
+        const variance = scores.reduce((sum: any, v: any) => sum + (v - mean) ** 2, 0) / scores.length;
         const cv = mean > 0 ? Math.sqrt(variance) / mean : 1;
         consistency = Math.max(0, Math.min(100, Math.round((1 - cv * 2) * 100)));
       }

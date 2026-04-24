@@ -147,8 +147,8 @@ Deno.serve(async (req) => {
           reason: r.reason ?? "replay (idempotency)",
           deep_link: r.deep_link ?? undefined,
         }));
-        const completed = results.filter((r) => r.status === "completed").length;
-        const failed = results.filter((r) => r.status === "failed").length;
+        const completed = results.filter((r: any) => r.status === "completed").length;
+        const failed = results.filter((r: any) => r.status === "failed").length;
         return json({
           success: failed === 0 && completed > 0,
           partial: failed > 0,
@@ -331,9 +331,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    const completed = results.filter((r) => r.status === "completed").length;
-    const failed = results.filter((r) => r.status === "failed").length;
-    const total = results.filter((r) => r.status !== "skipped").length;
+    const completed = results.filter((r: any) => r.status === "completed").length;
+    const failed = results.filter((r: any) => r.status === "failed").length;
+    const total = results.filter((r: any) => r.status !== "skipped").length;
     const success = failed === 0 && completed > 0;
 
     // Wave 13A.B5 — only stamp setup_completed_at on a clean run with real work.
@@ -541,7 +541,7 @@ async function executeStepHandler(
     case "step_4_compensation": {
       // Component writes: { models: string[], unmodeled_description? }
       const models: string[] = Array.isArray(data.models) ? data.models : [];
-      const cleanModels = models.filter((m) => m && m !== "__escape__");
+      const cleanModels = models.filter((m: any) => m && m !== "__escape__");
       // Wave 13G.A — persist unmodeled_description (was dropped despite
       // the component requiring ≥10 chars when __escape__ is selected).
       const unmodeledComp =
@@ -677,8 +677,7 @@ async function executeStepHandler(
         serverQualified.size > 0
           ? serverQualified
           : (clientQualified ? new Set(clientQualified) : null);
-      const installed = installedRaw.filter(
-        (k) => (effectiveQualified === null || effectiveQualified.has(k)) && !declined.includes(k),
+      const installed = installedRaw.filter((k: any) => (effectiveQualified === null || effectiveQualified.has(k)) && !declined.includes(k),
       );
       const interest: string[] = Array.isArray(data.expressed_interest)
         ? data.expressed_interest.filter(Boolean)

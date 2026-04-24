@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     // Insert with ignore-on-conflict (unique index on org+step+day prevents dupes)
-    const insertRows = rows.map((r) => ({
+    const insertRows = rows.map((r: any) => ({
       organization_id: r.organization_id,
       step_number: r.step_number,
       step_label: r.step_label ?? null,

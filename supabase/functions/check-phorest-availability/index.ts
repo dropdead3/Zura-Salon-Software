@@ -127,7 +127,7 @@ serve(async (req) => {
           .select("duration_minutes")
           .in("phorest_service_id", service_ids);
 
-        const totalDuration = services?.reduce((sum, s) => sum + (s.duration_minutes || 60), 0) || 60;
+        const totalDuration = services?.reduce((sum: any, s: any) => sum + (s.duration_minutes || 60), 0) || 60;
 
         // Generate slots from 9am to 7pm with 15-minute intervals
         const startHour = 9;

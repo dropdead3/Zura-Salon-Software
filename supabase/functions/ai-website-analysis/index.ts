@@ -63,12 +63,12 @@ function runRuleChecks(
   siteSettings: Record<string, unknown>
 ): Finding[] {
   const findings: Finding[] = [];
-  const homePage = pages.find((p) => p.id === "home");
+  const homePage = pages.find((p: any) => p.id === "home");
   const homeSections = homePage?.sections ?? [];
-  const enabledHomeSections = homeSections.filter((s) => s.enabled);
+  const enabledHomeSections = homeSections.filter((s: any) => s.enabled);
 
   // ─── SEO ───
-  for (const page of pages.filter((p) => p.enabled)) {
+  for (const page of pages.filter((p: any) => p.enabled)) {
     if (!page.seo_title || page.seo_title.trim() === "") {
       findings.push({
         id: `seo_title_${page.id}`,
@@ -114,7 +114,7 @@ function runRuleChecks(
     }
   }
 
-  const heroSection = enabledHomeSections.find((s) => s.type === "hero");
+  const heroSection = enabledHomeSections.find((s: any) => s.type === "hero");
   if (heroSection) {
     findings.push({
       id: "seo_hero_heading",
@@ -137,7 +137,7 @@ function runRuleChecks(
     });
   }
 
-  const faqSection = homeSections.find((s) => s.type === "faq");
+  const faqSection = homeSections.find((s: any) => s.type === "faq");
   if (faqSection?.enabled) {
     findings.push({
       id: "seo_faq",
@@ -184,8 +184,7 @@ function runRuleChecks(
     });
   }
 
-  const servicesSection = enabledHomeSections.find(
-    (s) => s.type === "services_preview" || s.type === "popular_services"
+  const servicesSection = enabledHomeSections.find((s: any) => s.type === "services_preview" || s.type === "popular_services"
   );
   if (servicesSection) {
     findings.push({
@@ -209,8 +208,7 @@ function runRuleChecks(
     });
   }
 
-  const testimonialsSection = enabledHomeSections.find(
-    (s) => s.type === "testimonials"
+  const testimonialsSection = enabledHomeSections.find((s: any) => s.type === "testimonials"
   );
   if (testimonialsSection) {
     findings.push({
@@ -234,8 +232,7 @@ function runRuleChecks(
     });
   }
 
-  const newClientSection = enabledHomeSections.find(
-    (s) => s.type === "new_client"
+  const newClientSection = enabledHomeSections.find((s: any) => s.type === "new_client"
   );
   if (newClientSection) {
     findings.push({
@@ -272,7 +269,7 @@ function runRuleChecks(
       });
     }
   }
-  if (!findings.some((f) => f.id.startsWith("content_label_"))) {
+  if (!findings.some((f: any) => f.id.startsWith("content_label_"))) {
     findings.push({
       id: "content_labels_ok",
       category: "content",
@@ -337,8 +334,7 @@ function runRuleChecks(
     });
   }
 
-  const aboutPage = pages.find(
-    (p) =>
+  const aboutPage = pages.find((p: any) =>
       (p.id === "about" || p.slug === "about") && p.enabled
   );
   if (aboutPage) {
@@ -362,8 +358,7 @@ function runRuleChecks(
     });
   }
 
-  const gallerySection = enabledHomeSections.find(
-    (s) => s.type === "gallery"
+  const gallerySection = enabledHomeSections.find((s: any) => s.type === "gallery"
   );
   if (gallerySection) {
     findings.push({
@@ -426,8 +421,8 @@ function scoreFindingsByCategory(findings: Finding[]): CategoryScore[] {
   return Object.entries(categories).map(([key, { label, findings: catFindings }]) => ({
     category: key,
     label,
-    score: catFindings.reduce((sum, f) => sum + f.points, 0),
-    maxScore: catFindings.reduce((sum, f) => sum + f.maxPoints, 0),
+    score: catFindings.reduce((sum: any, f: any) => sum + f.points, 0),
+    maxScore: catFindings.reduce((sum: any, f: any) => sum + f.maxPoints, 0),
     findings: catFindings,
   }));
 }
@@ -463,11 +458,11 @@ Rules:
 
   const userPrompt = `Analyze this salon website configuration. Current score: ${totalScore}/${maxScore}.
 
-Pages: ${JSON.stringify(pages.map((p) => ({ id: p.id, title: p.title, enabled: p.enabled, sectionCount: p.sections.filter((s) => s.enabled).length, seo_title: p.seo_title, seo_description: p.seo_description })))}
+Pages: ${JSON.stringify(pages.map((p: any) => ({ id: p.id, title: p.title, enabled: p.enabled, sectionCount: p.sections.filter((s: any) => s.enabled).length, seo_title: p.seo_title, seo_description: p.seo_description })))}
 
-Category scores: ${JSON.stringify(categories.map((c) => ({ category: c.label, score: c.score, max: c.maxScore })))}
+Category scores: ${JSON.stringify(categories.map((c: any) => ({ category: c.label, score: c.score, max: c.maxScore })))}
 
-Existing issues found: ${JSON.stringify(categories.flatMap((c) => c.findings.filter((f) => f.severity !== "pass").map((f) => f.message)))}
+Existing issues found: ${JSON.stringify(categories.flatMap((c: any) => c.findings.filter((f: any) => f.severity !== "pass").map((f: any) => f.message)))}
 
 Provide 3-5 NEW enhancement suggestions as a JSON array of strings.`;
 
@@ -540,8 +535,8 @@ serve(async (req) => {
       (siteSettings ?? {}) as Record<string, unknown>
     );
     const categories = scoreFindingsByCategory(findings);
-    const totalScore = categories.reduce((sum, c) => sum + c.score, 0);
-    const maxScore = categories.reduce((sum, c) => sum + c.maxScore, 0);
+    const totalScore = categories.reduce((sum: any, c: any) => sum + c.score, 0);
+    const maxScore = categories.reduce((sum: any, c: any) => sum + c.maxScore, 0);
     const scorePercent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
 
     // Pass 2: AI suggestions

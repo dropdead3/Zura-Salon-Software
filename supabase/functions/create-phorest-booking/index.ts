@@ -525,7 +525,7 @@ serve(async (req) => {
               .in("role", ["admin", "manager", "super_admin"]);
 
             if (managers && managers.length > 0) {
-              const notifications = managers.map((m) => ({
+              const notifications = managers.map((m: any) => ({
                 user_id: m.user_id,
                 type: 'redo_booking',
                 title: 'Redo Appointment Booked',

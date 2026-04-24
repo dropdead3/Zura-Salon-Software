@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       items.push({ price: SCALE_LICENSE_PRICE_ID, quantity: totalScales });
     }
 
-    const locationIds = location_plans.map((lp) => lp.location_id);
+    const locationIds = location_plans.map((lp: any) => lp.location_id);
     logStep("Creating subscription", { items: items.length, totalScales });
 
     // Create subscription — charge immediately

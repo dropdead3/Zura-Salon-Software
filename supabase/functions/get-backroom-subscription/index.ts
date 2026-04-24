@@ -59,8 +59,7 @@ Deno.serve(async (req) => {
       limit: 10,
     });
 
-    const colorBarSub = subscriptions.data.find(
-      (s) => ['active', 'trialing'].includes(s.status) && (s.metadata as Record<string, string>)?.addon_type === "backroom"
+    const colorBarSub = subscriptions.data.find((s: any) => ['active', 'trialing'].includes(s.status) && (s.metadata as Record<string, string>)?.addon_type === "backroom"
     );
 
     if (!colorBarSub) {
@@ -71,8 +70,7 @@ Deno.serve(async (req) => {
     }
 
     const meta = colorBarSub.metadata as Record<string, string>;
-    const scaleItem = colorBarSub.items.data.find(
-      (item) => item.price.id === SCALE_LICENSE_PRICE_ID
+    const scaleItem = colorBarSub.items.data.find((item: any) => item.price.id === SCALE_LICENSE_PRICE_ID
     );
 
     // Calculate monthly cost from items

@@ -114,10 +114,10 @@ async function fetchCardMetrics(
       if (locationId) q = q.eq("location_id", locationId);
       const { data: appts } = await q;
 
-      const totalRevenue = appts?.reduce((s, a) => s + (a.total_price || 0), 0) || 0;
+      const totalRevenue = appts?.reduce((s: any, a: any) => s + (a.total_price || 0), 0) || 0;
       const serviceCount = appts?.length || 0;
       const avgTicket = serviceCount > 0 ? totalRevenue / serviceCount : 0;
-      const completed = appts?.filter((a) => a.status === "completed").length || 0;
+      const completed = appts?.filter((a: any) => a.status === "completed").length || 0;
 
       return {
         "Total Revenue": `$${totalRevenue.toLocaleString()}`,
@@ -145,7 +145,7 @@ async function fetchCardMetrics(
         if (!dailyTotals[d]) dailyTotals[d] = 0;
         dailyTotals[d] += (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0);
       });
-      const total = Object.values(dailyTotals).reduce((s, v) => s + v, 0);
+      const total = Object.values(dailyTotals).reduce((s: any, v: any) => s + v, 0);
       const days = Object.keys(dailyTotals).length;
       const dailyAvg = days > 0 ? total / days : 0;
 
@@ -170,7 +170,7 @@ async function fetchCardMetrics(
       if (locationId) q = q.eq("location_id", locationId);
       const { data: upcoming } = await q;
 
-      const projectedRevenue = upcoming?.reduce((s, a) => s + (a.total_price || 0), 0) || 0;
+      const projectedRevenue = upcoming?.reduce((s: any, a: any) => s + (a.total_price || 0), 0) || 0;
 
       return {
         "Upcoming Appointments (7 days)": upcoming?.length || 0,
@@ -192,7 +192,7 @@ async function fetchCardMetrics(
           byLoc[r.location_id || "unknown"] = (byLoc[r.location_id || "unknown"] || 0) + (Number(r.total_amount) || 0) + (Number(r.tax_amount) || 0);
         }
         const { data: locs } = await supabase.from("locations").select("id, name");
-        const locNames = Object.fromEntries((locs || []).map((l) => [l.id, l.name]));
+        const locNames = Object.fromEntries((locs || []).map((l: any) => [l.id, l.name]));
         const metrics: Record<string, string | number> = { "Date Range": `${from} to ${to}` };
         for (const [id, rev] of Object.entries(byLoc)) {
           metrics[locNames[id] || id] = `$${rev.toLocaleString()}`;
@@ -245,7 +245,7 @@ async function fetchCardMetrics(
           const svc = a.service_name || "Unknown";
           byService[svc] = (byService[svc] || 0) + 1;
         }
-        const sorted = Object.entries(byService).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        const sorted = Object.entries(byService).sort((a: any, b: any) => b[1] - a[1]).slice(0, 10);
         const metrics: Record<string, string | number> = { "Date Range": `${from} to ${to}`, "Total Appointments": appts.length };
         for (const [svc, count] of sorted) {
           metrics[svc] = count;
@@ -266,8 +266,8 @@ async function fetchCardMetrics(
       if (locationId) q = q.eq("location_id", locationId);
       const { data: appts } = await q;
 
-      const uniqueClients = new Set(appts?.map((a) => a.phorest_client_id).filter(Boolean)).size;
-      const rebooked = appts?.filter((a) => a.rebooked_at_checkout).length || 0;
+      const uniqueClients = new Set(appts?.map((a: any) => a.phorest_client_id).filter(Boolean)).size;
+      const rebooked = appts?.filter((a: any) => a.rebooked_at_checkout).length || 0;
       const rebookRate = appts && appts.length > 0 ? ((rebooked / appts.length) * 100).toFixed(1) : "0";
 
       return {
@@ -290,9 +290,9 @@ async function fetchCardMetrics(
       const { data: appts } = await q;
 
       const total = appts?.length || 0;
-      const completed = appts?.filter((a) => a.status === "completed").length || 0;
-      const cancelled = appts?.filter((a) => a.status === "cancelled").length || 0;
-      const noShow = appts?.filter((a) => a.status === "no_show").length || 0;
+      const completed = appts?.filter((a: any) => a.status === "completed").length || 0;
+      const cancelled = appts?.filter((a: any) => a.status === "cancelled").length || 0;
+      const noShow = appts?.filter((a: any) => a.status === "no_show").length || 0;
 
       return {
         "Total Appointments": total,
@@ -320,7 +320,7 @@ async function fetchCardMetrics(
       if (locationId) q = q.eq("location_id", locationId);
       const { data: appts } = await q;
 
-      const activeClients = new Set(appts?.map((a) => a.phorest_client_id).filter(Boolean)).size;
+      const activeClients = new Set(appts?.map((a: any) => a.phorest_client_id).filter(Boolean)).size;
       const totalClients = count || 0;
 
       return {
@@ -339,10 +339,10 @@ async function fetchCardMetrics(
         .limit(20);
 
       if (analytics && analytics.length > 0) {
-        const totalLeads = analytics.reduce((s, a) => s + (a.leads_generated || 0), 0);
-        const totalConversions = analytics.reduce((s, a) => s + (a.conversions || 0), 0);
-        const totalRevenue = analytics.reduce((s, a) => s + (a.revenue_attributed || 0), 0);
-        const totalSpend = analytics.reduce((s, a) => s + (a.spend || 0), 0);
+        const totalLeads = analytics.reduce((s: any, a: any) => s + (a.leads_generated || 0), 0);
+        const totalConversions = analytics.reduce((s: any, a: any) => s + (a.conversions || 0), 0);
+        const totalRevenue = analytics.reduce((s: any, a: any) => s + (a.revenue_attributed || 0), 0);
+        const totalSpend = analytics.reduce((s: any, a: any) => s + (a.spend || 0), 0);
 
         return {
           "Total Leads": totalLeads,
@@ -371,9 +371,9 @@ async function fetchCardMetrics(
       if (locationId) q = q.eq("location_id", locationId);
       const { data: appts } = await q;
 
-      const totalMinutes = appts?.reduce((s, a) => s + (a.duration_minutes || 0), 0) || 0;
+      const totalMinutes = appts?.reduce((s: any, a: any) => s + (a.duration_minutes || 0), 0) || 0;
       const totalHours = (totalMinutes / 60).toFixed(1);
-      const staffNames = new Set(appts?.map((a) => a.staff_name).filter(Boolean));
+      const staffNames = new Set(appts?.map((a: any) => a.staff_name).filter(Boolean));
 
       return {
         "Total Booked Hours": totalHours,
@@ -412,7 +412,7 @@ async function fetchCardMetrics(
     if (locationId) q = q.eq("location_id", locationId);
     const { data: fallback } = await q;
 
-    const totalRev = fallback?.reduce((s, a) => s + (a.total_price || 0), 0) || 0;
+    const totalRev = fallback?.reduce((s: any, a: any) => s + (a.total_price || 0), 0) || 0;
 
     return {
       "Recent Appointments": fallback?.length || 0,

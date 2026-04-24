@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
 
           const ACCESSORY_KEYWORDS = ["hub", "dock", "case", "cover", "cable", "mount"];
           const isAccessory = (name: string) =>
-            ACCESSORY_KEYWORDS.some((kw) => name.toLowerCase().includes(kw));
+            ACCESSORY_KEYWORDS.some((kw: any) => name.toLowerCase().includes(kw));
 
           const s700Skus: Record<string, unknown>[] = [];
           const s710Skus: Record<string, unknown>[] = [];
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
             return undefined;
           };
 
-          const apiAccessories = accessorySkus.map(enrichSku).map((a) => {
+          const apiAccessories = accessorySkus.map(enrichSku).map((a: any) => {
             const productName = String((a.hardware_product as Record<string, unknown>)?.name || a.product || "Accessory");
             return {
               id: a.id,

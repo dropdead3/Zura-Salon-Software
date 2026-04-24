@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
+      const subtotal = lineItems.reduce((sum: any, item: any) => sum + item.total, 0);
       const taxRate = 0; // Could be configurable per org
       const taxAmount = subtotal * taxRate;
       const total = subtotal + taxAmount;

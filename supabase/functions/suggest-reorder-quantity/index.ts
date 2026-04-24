@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       .or(`item_name.ilike.%${product.name}%${product.sku ? `,item_name.ilike.%${product.sku}%` : ""}`);
 
     // Calculate sales velocity
-    const totalSold = (txItems || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const totalSold = (txItems || []).reduce((sum: any, item: any) => sum + (item.quantity || 1), 0);
     const daysInPeriod = Math.max(1, Math.ceil((Date.now() - ninetyDaysAgo.getTime()) / 86400000));
     const avgDailySales = totalSold / daysInPeriod;
 
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       weeklyMap[weekNum] = (weeklyMap[weekNum] || 0) + (item.quantity || 1);
     }
 
-    const weeks = Object.keys(weeklyMap).map(Number).sort((a, b) => a - b);
+    const weeks = Object.keys(weeklyMap).map(Number).sort((a: any, b: any) => a - b);
     let trend = "stable";
     if (weeks.length >= 4) {
       const recentAvg = (weeklyMap[0] || 0 + (weeklyMap[1] || 0)) / 2;

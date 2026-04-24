@@ -199,7 +199,7 @@ async function measureTaskEffectiveness(
     }
 
     const deltas = Object.values(metrics).filter((v): v is number => typeof v === "number");
-    const avgDelta = deltas.length > 0 ? deltas.reduce((a, b) => a + b, 0) / deltas.length : 0;
+    const avgDelta = deltas.length > 0 ? deltas.reduce((a: any, b: any) => a + b, 0) / deltas.length : 0;
     const confidence = avgDelta > 0 ? Math.min(0.8, avgDelta / 50) : 0.1;
 
     await supabase.from("seo_task_impact").insert({

@@ -180,8 +180,8 @@ serve(async (req) => {
     // 4. If no candidate exceeds minimum threshold, return silence
     const MIN_SCORE = 0.3;
     const topCandidates = leverCandidates
-      .filter((c) => c.score >= MIN_SCORE)
-      .sort((a, b) => b.score - a.score);
+      .filter((c: any) => c.score >= MIN_SCORE)
+      .sort((a: any, b: any) => b.score - a.score);
 
     if (topCandidates.length === 0) {
       // Deactivate old active recommendations
@@ -353,17 +353,17 @@ function calculateLeverCandidates(
     const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0];
-    const recentReadings = defReadings.filter((r) => r.reading_date >= twoWeeksAgo);
-    const olderReadings = defReadings.filter((r) => r.reading_date < twoWeeksAgo);
+    const recentReadings = defReadings.filter((r: any) => r.reading_date >= twoWeeksAgo);
+    const olderReadings = defReadings.filter((r: any) => r.reading_date < twoWeeksAgo);
 
     const recentAvg =
       recentReadings.length > 0
-        ? recentReadings.reduce((s, r) => s + r.value, 0) / recentReadings.length
+        ? recentReadings.reduce((s: any, r: any) => s + r.value, 0) / recentReadings.length
         : defReadings[0].value;
 
     const olderAvg =
       olderReadings.length > 0
-        ? olderReadings.reduce((s, r) => s + r.value, 0) / olderReadings.length
+        ? olderReadings.reduce((s: any, r: any) => s + r.value, 0) / olderReadings.length
         : recentAvg;
 
     const deviation =
@@ -400,10 +400,10 @@ function calculateLeverCandidates(
 
   for (const [leverType, kpis] of leverGroups) {
     const avgDeviation =
-      kpis.reduce((s, k) => s + Math.abs(k.deviation), 0) / kpis.length;
+      kpis.reduce((s: any, k: any) => s + Math.abs(k.deviation), 0) / kpis.length;
     const avgTrend =
-      kpis.reduce((s, k) => s + k.trend, 0) / kpis.length;
-    const maxDataPoints = Math.max(...kpis.map((k) => k.dataPoints));
+      kpis.reduce((s: any, k: any) => s + k.trend, 0) / kpis.length;
+    const maxDataPoints = Math.max(...kpis.map((k: any) => k.dataPoints));
     const dataCompleteness = Math.min(maxDataPoints / 30, 1); // 30 readings = full
 
     // Weighted score
@@ -439,7 +439,7 @@ function calculateLeverCandidates(
       estimatedImpact: Math.abs(estimatedImpact),
       drivers,
       evidence: {
-        kpi_deviations: kpis.map((k) => ({
+        kpi_deviations: kpis.map((k: any) => ({
           metric: k.def.metric_key,
           current: k.currentAvg,
           target: k.def.target_value,
@@ -448,7 +448,7 @@ function calculateLeverCandidates(
           data_points: k.dataPoints,
         })),
       },
-      relatedKpis: kpis.map((k) => ({
+      relatedKpis: kpis.map((k: any) => ({
         key: k.def.metric_key,
         name: k.def.display_name,
         current: k.currentAvg,
@@ -478,9 +478,9 @@ async function generateAISummary(
 Lever type: ${candidate.lever_type}
 Deviation score: ${(candidate.score * 100).toFixed(0)}%
 Related KPIs:
-${candidate.relatedKpis.map((k) => `- ${k.name}: current ${k.current.toFixed(1)}${k.unit}, target ${k.target}${k.unit}`).join("\n")}
+${candidate.relatedKpis.map((k: any) => `- ${k.name}: current ${k.current.toFixed(1)}${k.unit}, target ${k.target}${k.unit}`).join("\n")}
 Drivers:
-${candidate.drivers.map((d) => `- ${d}`).join("\n")}
+${candidate.drivers.map((d: any) => `- ${d}`).join("\n")}
 
 Respond with a JSON object containing:
 - title: A concise lever name (e.g. "Adjust Color Service Pricing")

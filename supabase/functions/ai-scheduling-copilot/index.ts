@@ -326,7 +326,7 @@ function generateFallbackSuggestions(
   const businessEnd = 20 * 60; // 8 PM in minutes
 
   // Find gaps in schedule
-  const sortedApts = [...appointments].sort((a, b) => 
+  const sortedApts = [...appointments].sort((a: any, b: any) => 
     a.start_time.localeCompare(b.start_time)
   );
 

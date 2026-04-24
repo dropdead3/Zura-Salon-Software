@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
 
       const hasUnitCost = supplierPOs.some(po => po.unit_cost != null);
       const hasTotalCost = supplierPOs.some(po => po.total_cost != null);
-      const grandTotal = supplierPOs.reduce((sum, po) => sum + (Number(po.total_cost) || 0), 0);
+      const grandTotal = supplierPOs.reduce((sum: any, po: any) => sum + (Number(po.total_cost) || 0), 0);
 
       const allNotes = supplierPOs.filter(po => po.notes).map(po => po.notes).join("; ");
 

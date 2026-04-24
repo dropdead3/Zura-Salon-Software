@@ -613,7 +613,7 @@ async function computeOpportunityRisk(
 
     const meta = obj.metadata || {};
     const avgScore = objScores.size > 0
-      ? [...objScores.values()].reduce((a, b) => a + b, 0) / objScores.size
+      ? [...objScores.values()].reduce((a: any, b: any) => a + b, 0) / objScores.size
       : 50;
 
     // Opportunity = inverse of score (low score = high opportunity)

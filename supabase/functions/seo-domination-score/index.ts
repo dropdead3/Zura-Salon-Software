@@ -157,9 +157,9 @@ Deno.serve(async (req: Request) => {
       const totalContent = orgContentPages + competitorContentPages;
       const contentDominance = totalContent > 0 ? Math.round((orgContentPages / totalContent) * 100) : 0;
 
-      const avgPage = pageScores.length > 0 ? Math.round(pageScores.reduce((a, b) => a + b, 0) / pageScores.length) : 0;
-      const avgConversion = conversionScores.length > 0 ? Math.round(conversionScores.reduce((a, b) => a + b, 0) / conversionScores.length) : 0;
-      const avgGap = competitorGapScores.length > 0 ? Math.round(competitorGapScores.reduce((a, b) => a + b, 0) / competitorGapScores.length) : 0;
+      const avgPage = pageScores.length > 0 ? Math.round(pageScores.reduce((a: any, b: any) => a + b, 0) / pageScores.length) : 0;
+      const avgConversion = conversionScores.length > 0 ? Math.round(conversionScores.reduce((a: any, b: any) => a + b, 0) / conversionScores.length) : 0;
+      const avgGap = competitorGapScores.length > 0 ? Math.round(competitorGapScores.reduce((a: any, b: any) => a + b, 0) / competitorGapScores.length) : 0;
       const competitorSuppression = Math.max(0, 100 - avgGap);
 
       const dominationScore = Math.round(

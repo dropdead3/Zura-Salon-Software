@@ -231,7 +231,7 @@ Return EVERY shade and product. Be thorough and accurate.`;
                     {
                       role: "user",
                       content: `Brand: ${brand}
-AI generated ${products.length} products. Product names include: ${products.slice(0, 30).map((p) => p.name).join(", ")}${products.length > 30 ? ` ... and ${products.length - 30} more` : ""}
+AI generated ${products.length} products. Product names include: ${products.slice(0, 30).map((p: any) => p.name).join(", ")}${products.length > 30 ? ` ... and ${products.length - 30} more` : ""}
 
 Website content:
 ${scrapedMarkdown.slice(0, 8000)}

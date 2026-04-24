@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     // ── LOW STOCK ALERTS ──
     const lowStockProducts = (allProducts || []).filter(p => p.reorder_level != null);
 
-    const belowThreshold = lowStockProducts.filter((p) => {
+    const belowThreshold = lowStockProducts.filter((p: any) => {
       const settings = settingsMap.get(p.organization_id);
       if (settings && !settings.enabled) return false;
       const thresholdPct = settings?.default_threshold_pct ?? 100;
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     for (const [orgId, orgProducts] of byOrg) {
       const settings = settingsMap.get(orgId);
-      const productNames = orgProducts.slice(0, 10).map((p) => p.name).join(", ");
+      const productNames = orgProducts.slice(0, 10).map((p: any) => p.name).join(", ");
       const suffix = orgProducts.length > 10 ? ` and ${orgProducts.length - 10} more` : "";
 
       const recipientUserIds: string[] = settings?.recipient_user_ids || [];

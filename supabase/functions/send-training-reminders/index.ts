@@ -57,14 +57,14 @@ serve(async (req: Request) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const videoIds = [...new Set(assignments.map((a) => a.video_id))];
-    const userIds = [...new Set(assignments.map((a) => a.user_id))];
+    const videoIds = [...new Set(assignments.map((a: any) => a.video_id))];
+    const userIds = [...new Set(assignments.map((a: any) => a.user_id))];
 
     const { data: completedProgress } = await supabase
       .from("training_progress").select("user_id, video_id").in("video_id", videoIds).in("user_id", userIds).not("completed_at", "is", null);
 
-    const completedSet = new Set((completedProgress || []).map((p) => `${p.user_id}-${p.video_id}`));
-    const incompleteAssignments = assignments.filter((a) => !completedSet.has(`${a.user_id}-${a.video_id}`));
+    const completedSet = new Set((completedProgress || []).map((p: any) => `${p.user_id}-${p.video_id}`));
+    const incompleteAssignments = assignments.filter((a: any) => !completedSet.has(`${a.user_id}-${a.video_id}`));
 
     if (incompleteAssignments.length === 0) {
       return new Response(JSON.stringify({ message: "No incomplete assignments", sent: 0 }),
@@ -74,17 +74,17 @@ serve(async (req: Request) => {
     const { data: profiles } = await supabase
       .from("employee_profiles").select("user_id, email, full_name, display_name, organization_id").in("user_id", userIds);
 
-    const profileMap = new Map<string, UserProfile>((profiles || []).map((p) => [p.user_id, p]));
+    const profileMap = new Map<string, UserProfile>((profiles || []).map((p: any) => [p.user_id, p]));
 
     const { data: preferences } = await supabase
       .from("notification_preferences").select("user_id, task_reminder_enabled, email_notifications_enabled").in("user_id", userIds);
 
-    const prefsMap = new Map<string, NotificationPreference>((preferences || []).map((p) => [p.user_id, p]));
+    const prefsMap = new Map<string, NotificationPreference>((preferences || []).map((p: any) => [p.user_id, p]));
 
     const { data: templates } = await supabase
       .from("email_templates").select("template_key, subject, html_body").in("template_key", ["training_reminder", "training_overdue"]);
 
-    const templateMap = new Map((templates || []).map((t) => [t.template_key, t]));
+    const templateMap = new Map((templates || []).map((t: any) => [t.template_key, t]));
 
     let notificationsSent = 0;
     let emailsSent = 0;
@@ -104,17 +104,17 @@ serve(async (req: Request) => {
       const taskRemindersEnabled = prefs?.task_reminder_enabled !== false;
       const emailEnabled = prefs?.email_notifications_enabled === true;
 
-      const overdueTrainings = userTrainings.filter((t) => new Date(t.due_date) < now);
-      const dueSoonTrainings = userTrainings.filter((t) => new Date(t.due_date) >= now);
+      const overdueTrainings = userTrainings.filter((t: any) => new Date(t.due_date) < now);
+      const dueSoonTrainings = userTrainings.filter((t: any) => new Date(t.due_date) >= now);
       const userName = profile.display_name || profile.full_name || "Team Member";
 
       if (overdueTrainings.length > 0 && taskRemindersEnabled) {
-        const trainingTitles = overdueTrainings.map((t) => t.training_videos?.title || "Training").join(", ");
+        const trainingTitles = overdueTrainings.map((t: any) => t.training_videos?.title || "Training").join(", ");
 
         await supabase.from("notifications").insert({
           user_id: userId, type: "training_overdue", title: "Overdue Training",
           message: `You have ${overdueTrainings.length} overdue training(s): ${trainingTitles}`,
-          metadata: { training_ids: overdueTrainings.map((t) => t.video_id), due_dates: overdueTrainings.map((t) => t.due_date) },
+          metadata: { training_ids: overdueTrainings.map((t: any) => t.video_id), due_dates: overdueTrainings.map((t: any) => t.due_date) },
         });
         notificationsSent++;
 
@@ -139,12 +139,12 @@ serve(async (req: Request) => {
       }
 
       if (dueSoonTrainings.length > 0 && taskRemindersEnabled) {
-        const trainingTitles = dueSoonTrainings.map((t) => t.training_videos?.title || "Training").join(", ");
+        const trainingTitles = dueSoonTrainings.map((t: any) => t.training_videos?.title || "Training").join(", ");
 
         await supabase.from("notifications").insert({
           user_id: userId, type: "training_due_soon", title: "Training Due Soon",
           message: `You have ${dueSoonTrainings.length} training(s) due soon: ${trainingTitles}`,
-          metadata: { training_ids: dueSoonTrainings.map((t) => t.video_id), due_dates: dueSoonTrainings.map((t) => t.due_date) },
+          metadata: { training_ids: dueSoonTrainings.map((t: any) => t.video_id), due_dates: dueSoonTrainings.map((t: any) => t.due_date) },
         });
         notificationsSent++;
 
