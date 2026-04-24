@@ -737,84 +737,111 @@ async function syncAppointments(
         let onDemandFetched = 0;
         let onDemandUnresolved = 0;
         let onDemandErrors = 0;
+
+        // PHOREST QUIRK: GET /branch/{id}/client/{clientId} returns 404 for many
+        // clients that visibly exist in Phorest's UI — the third-party single-
+        // resource endpoint is permissioned/scoped differently from the list
+        // endpoint that powers their calendar. Strategy: paginate the list
+        // endpoint per branch (in the branch's own region), match locally
+        // against the unresolved set, stop early when all are resolved. This
+        // also costs ~5 list calls per branch instead of 200 single fetches.
         if (unresolved.length > 0 && branchIds.length > 0) {
-          for (let i = 0; i < unresolved.length; i += 5) {
-            const batch = unresolved.slice(i, i + 5);
-            await Promise.all(batch.map(async (clientId) => {
-              let foundClient: any = null;
-              let foundBranchId: string | null = null;
-              let sawTransientError = false;
+          const remainingIds = new Set(unresolved);
 
-              // Probe order: hinted branch first (if any), then the rest.
-              const hint = branchHintMap.get(clientId);
-              const orderedBranches = hint
-                ? [hint, ...branchIds.filter((b) => b !== hint)]
-                : branchIds;
+          // Probe order: branches that already have hints (= we know real
+          // clients live there) first, since they're more likely to contain
+          // the unresolved IDs too.
+          const hintedBranches = new Set(branchHintMap.values());
+          const orderedBranchProbe = [
+            ...branchIds.filter((b) => hintedBranches.has(b)),
+            ...branchIds.filter((b) => !hintedBranches.has(b)),
+          ];
 
-              for (const branchId of orderedBranches) {
-                const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
-                try {
-                  const client: any = await phorestRequest(
-                    `/branch/${branchId}/client/${clientId}`,
-                    businessId, username, password,
-                    region, // SCOPE TO THE BRANCH'S OWN REGION — no cross-region 404s
-                  );
-                  foundClient = client;
-                  foundBranchId = branchId;
+          for (const branchId of orderedBranchProbe) {
+            if (remainingIds.size === 0) break;
+            const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
+
+            let page = 0;
+            let hasMore = true;
+            // Cap pages to bound the rate budget — large client books should
+            // still resolve over a few sync cycles even if not in one pass.
+            const maxPages = 20;
+
+            while (hasMore && page < maxPages && remainingIds.size > 0) {
+              try {
+                const data: any = await phorestRequest(
+                  `/branch/${branchId}/client?size=200&page=${page}`,
+                  businessId, username, password,
+                  region,
+                );
+
+                const clients =
+                  data?._embedded?.clients ||
+                  data?.clients ||
+                  data?.page?.content ||
+                  (Array.isArray(data) ? data : []);
+
+                if (!clients.length) {
+                  hasMore = false;
                   break;
-                } catch (e: any) {
-                  const msg = String(e?.message || '');
-                  // 404 from a branch's own region just means "this client
-                  // isn't in this branch" — keep probing the others.
-                  if (!msg.includes('404')) {
-                    sawTransientError = true;
-                  }
                 }
-              }
 
-              if (foundClient) {
-                const first = foundClient.firstName || null;
-                const last = foundClient.lastName || null;
-                const name = `${first || ''} ${last || ''}`.trim() || foundClient.name || null;
-                // CONTRACT VALIDATION: only write when response carries a name.
-                if (!name) {
+                const upserts: any[] = [];
+                for (const c of clients) {
+                  const cid = c.clientId || c.id;
+                  if (!cid || !remainingIds.has(cid)) continue;
+
+                  const first = c.firstName || null;
+                  const last = c.lastName || null;
+                  const name = `${first || ''} ${last || ''}`.trim() || c.name || null;
+                  // CONTRACT VALIDATION: skip empty rows.
+                  if (!name) continue;
+
+                  upserts.push({
+                    phorest_client_id: cid,
+                    name,
+                    first_name: first,
+                    last_name: last,
+                    email: c.email || null,
+                    phone: c.mobile || c.phone || null,
+                    phorest_branch_id: branchId,
+                  });
+                  clientNameMap.set(cid, name);
+                  remainingIds.delete(cid);
+                  onDemandFetched++;
+                }
+
+                if (upserts.length > 0) {
+                  await supabase
+                    .from('phorest_clients')
+                    .upsert(upserts, { onConflict: 'phorest_client_id' });
+                }
+
+                const totalPages = data?.page?.totalPages || 1;
+                page++;
+                hasMore = page < totalPages && clients.length >= 200;
+              } catch (e: any) {
+                const msg = String(e?.message || '');
+                if (!msg.includes('404')) {
                   onDemandErrors++;
-                  console.log(`On-demand fetch ${clientId}: response had no name fields, skipping write`);
-                  return;
+                  console.log(`Paginated client list (branch ${branchId}, page ${page}): ${msg}`);
                 }
-                await supabase.from('phorest_clients').upsert({
-                  phorest_client_id: clientId,
-                  name,
-                  first_name: first,
-                  last_name: last,
-                  email: foundClient.email || null,
-                  phone: foundClient.mobile || foundClient.phone || null,
-                  phorest_branch_id: foundBranchId,
-                }, { onConflict: 'phorest_client_id' });
-                clientNameMap.set(clientId, name);
-                onDemandFetched++;
-                return;
+                hasMore = false;
               }
+            }
+          }
 
-              // SIGNAL PRESERVATION: do NOT write [Deleted Client] here.
-              // Absence of a successful lookup is not evidence of deletion —
-              // it could mean a new branch we don't know about, a transient
-              // outage, or a permission gap. Leave the row absent and let the
-              // appointment render the "Client #ABCD" placeholder, which
-              // truthfully says "we know the ID; we can't resolve the name."
-              if (sawTransientError) {
-                onDemandErrors++;
-                console.log(`On-demand fetch ${clientId}: transient error across branches; will retry next sync`);
-              } else {
-                onDemandUnresolved++;
-                console.log(`On-demand fetch ${clientId}: 404 from every branch; leaving unresolved`);
-              }
-            }));
+          onDemandUnresolved = remainingIds.size;
+          if (onDemandUnresolved > 0) {
+            // SIGNAL PRESERVATION: log IDs that remain unresolved after the
+            // paginated sweep — they will render as "Client #ABCD" in the UI.
+            // Do NOT write any placeholder row.
+            console.log(`On-demand paginated sweep: ${onDemandUnresolved} IDs still unresolved after probing ${orderedBranchProbe.length} branches`);
           }
         }
 
         if (onDemandFetched > 0 || onDemandUnresolved > 0 || onDemandErrors > 0) {
-          console.log(`On-demand: ${onDemandFetched} fetched, ${onDemandUnresolved} unresolved-404, ${onDemandErrors} transient errors (NO negative-cache writes)`);
+          console.log(`On-demand (paginated): ${onDemandFetched} resolved, ${onDemandUnresolved} unresolved, ${onDemandErrors} transient errors (NO negative-cache writes)`);
         }
 
         // Bulk-update appointments with all resolved real names (skip [Deleted Client]).
