@@ -25,7 +25,7 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Pre-checkout statuses where Stripe Connect setup is still actionable.
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_EDGE } from '@/lib/design-tokens';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, getAppointmentBorderStyle } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
