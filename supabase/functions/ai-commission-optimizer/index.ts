@@ -206,7 +206,7 @@ Recommend optimal service and retail commission rates for each level to hit the 
       JSON.stringify(recommendations),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

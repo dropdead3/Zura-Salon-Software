@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         }
 
         console.log(`Hardware SKUs API returned ${skuResponse.status}, using fallback pricing`);
-      } catch (e) {
+      } catch (e: any) {
         console.warn("Hardware SKUs API call failed, using fallback:", e);
       }
 
@@ -462,7 +462,7 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ error: `Unknown action: ${body.action}` }, 400);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

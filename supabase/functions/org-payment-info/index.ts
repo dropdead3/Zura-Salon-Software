@@ -116,7 +116,7 @@ serve(async (req) => {
       JSON.stringify({ payment_method: paymentMethod, invoices }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[ORG-PAYMENT-INFO] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

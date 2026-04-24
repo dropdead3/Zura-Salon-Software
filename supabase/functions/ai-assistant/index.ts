@@ -110,7 +110,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -124,7 +124,7 @@ serve(async (req) => {
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -174,7 +174,7 @@ serve(async (req) => {
           systemPrompt = systemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
           systemPrompt = systemPrompt.replace(new RegExp(`"${AI_ASSISTANT_NAME}"`, 'g'), `"${config.personality.display_name}"`);
         }
-      } catch (configError) {
+      } catch (configError: any) {
         console.error("Failed to load AI config, using defaults:", configError);
       }
     }
@@ -228,7 +228,7 @@ serve(async (req) => {
     return new Response(response.body, {
       headers: { ...getCorsHeaders(req), "Content-Type": "text/event-stream" },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("AI assistant error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, kpis, recipients: adminEmails.length }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Weekly digest error:', error);
     return new Response(JSON.stringify({ error: String(error) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

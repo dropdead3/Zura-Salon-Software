@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       requested: rows.length,
       inserted: data?.length ?? 0,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[log-setup-outreach] unexpected:", err);
     return json({ error: (err as Error).message }, 500);
   }

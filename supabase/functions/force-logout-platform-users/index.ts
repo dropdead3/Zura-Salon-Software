@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
         } else {
           console.error(`Failed to sign out user ${userId}:`, signOutError);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error signing out user ${userId}:`, err);
       }
     }
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in force-logout-platform-users:', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Failed to force logout users' }),

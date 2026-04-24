@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
     await supabase.from('inquiry_activity_log').insert({ inquiry_id: insertedLead.id, action: 'created', notes: `Lead captured from ${source}` });
 
     return new Response(JSON.stringify({ success: true, lead_id: insertedLead.id }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing external lead:', error);
     return new Response(JSON.stringify({ success: false, error: 'Failed to process lead' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

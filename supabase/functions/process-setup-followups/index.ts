@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
       } else {
         dispatchReason = "no_owner_email";
       }
-    } catch (err) {
+    } catch (err: any) {
       // Function not deployed (no email infra) → fall back silently
       dispatchReason = `email_unavailable:${(err as Error).message}`;
     }

@@ -362,7 +362,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({ token: refreshToken }),
             });
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error revoking QuickBooks token:', e);
           }
         }

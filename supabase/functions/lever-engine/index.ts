@@ -19,7 +19,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -29,7 +29,7 @@ serve(async (req) => {
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, body.organization_id);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -274,7 +274,7 @@ serve(async (req) => {
       JSON.stringify({ recommendation: newRec, cached: false }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error("lever-engine error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
@@ -546,7 +546,7 @@ Be specific to salon/medspa operations. Use advisory tone, no shame language.`;
     }
 
     return null;
-  } catch (e) {
+  } catch (e: any) {
     console.error("AI summary generation failed:", e);
     return null;
   }

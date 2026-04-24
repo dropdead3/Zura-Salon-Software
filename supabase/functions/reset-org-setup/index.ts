@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       success: true,
       removed_synthetic_commits: removedSynthetic ?? 0,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[reset-org-setup] error:", err);
     return json({ error: (err as Error).message }, 500);
   }

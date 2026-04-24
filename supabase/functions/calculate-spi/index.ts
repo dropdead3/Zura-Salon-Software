@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, scores }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("SPI calculation error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),

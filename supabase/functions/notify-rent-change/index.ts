@@ -93,7 +93,7 @@ serve(async (req) => {
       JSON.stringify({ success: emailResult.success, message: emailResult.success ? "Notification sent" : "Failed to send", email_sent_to: renterEmail }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending rent change notification:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

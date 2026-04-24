@@ -151,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
               clientId: client.id,
             });
             clientsContacted++;
-          } catch (emailError) {
+          } catch (emailError: any) {
             console.error(`Error sending email to ${client.email}:`, emailError);
           }
         } else {

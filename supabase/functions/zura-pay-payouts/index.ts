@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
         organization_id,
         location_id || null
       );
-    } catch (_resolveErr) {
+    } catch (_resolveErr: any) {
       return jsonResponse(
         { error: "Point Of Sale is not active for this organization" },
         400
@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       payout_schedule: payoutSchedule,
       bank_account: bankAccount,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("zura-pay-payouts error:", error);
     return jsonResponse(
       { error: error.message || "Internal error" },

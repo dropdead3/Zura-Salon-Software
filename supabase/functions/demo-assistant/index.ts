@@ -185,7 +185,7 @@ async function logDemoQuery(supabase: any, queryText: string, matchedCount: numb
       query_text: queryText.slice(0, 200),
       matched_feature_count: matchedCount,
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("Failed to log demo query:", e);
   }
 }
@@ -358,7 +358,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 
-  } catch (e) {
+  } catch (e: any) {
     console.error("Demo assistant error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

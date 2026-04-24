@@ -20,7 +20,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { supabaseAdmin } = authResult;

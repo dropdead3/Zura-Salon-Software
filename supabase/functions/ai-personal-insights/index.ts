@@ -363,7 +363,7 @@ Generate 3-5 personal insights and 2-4 action items. Categories available: my_pe
       } else {
         throw new Error("No tool call in response");
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       console.error("Failed to parse AI response:", parseErr, JSON.stringify(aiData));
       return new Response(
         JSON.stringify({ error: "Failed to parse personal insights" }),
@@ -402,7 +402,7 @@ Generate 3-5 personal insights and 2-4 action items. Categories available: my_pe
       JSON.stringify(saved || { insights, generated_at: now, expires_at: expiresAt }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("ai-personal-insights error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),

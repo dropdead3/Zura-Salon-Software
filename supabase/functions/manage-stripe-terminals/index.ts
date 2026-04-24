@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
             );
             console.log(`[manage-stripe-terminals] Cellular enabled for location ${(result as { id: string }).id}`);
           }
-        } catch (cellularErr) {
+        } catch (cellularErr: any) {
           // Non-fatal — log but don't block location creation
           console.warn(`[manage-stripe-terminals] Failed to enable cellular:`, cellularErr);
         }
@@ -526,7 +526,7 @@ Deno.serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),

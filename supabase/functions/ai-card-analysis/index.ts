@@ -419,7 +419,7 @@ async function fetchCardMetrics(
       "Recent Revenue": `$${totalRev.toLocaleString()}`,
       "Date Range": `${from} to ${to}`,
     };
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error fetching card metrics:", err);
     return { "Note": "Unable to fetch live data for this card" };
   }
@@ -435,7 +435,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -449,7 +449,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -568,7 +568,7 @@ Provide a brief, insightful analysis.`;
         actionItems = JSON.parse(jsonMatch[1]);
         // Remove the JSON block from the insight text
         insightText = rawContent.replace(/```json:actions\s*\n[\s\S]*?\n```/, '').trim();
-      } catch (parseErr) {
+      } catch (parseErr: any) {
         console.error("Failed to parse action items JSON:", parseErr);
         // Fall back to empty array, insight still displays
       }
@@ -577,7 +577,7 @@ Provide a brief, insightful analysis.`;
     return new Response(JSON.stringify({ insight: insightText, actionItems }), {
       headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("ai-card-analysis error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

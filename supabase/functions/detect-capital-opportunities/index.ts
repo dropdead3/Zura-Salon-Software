@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
             offersCreated++;
           }
         }
-      } catch (locErr) {
+      } catch (locErr: any) {
         errors.push(`Error processing location ${loc.id}: ${(locErr as Error).message}`);
       }
     }
@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("detect-capital-opportunities error:", error);
     return new Response(
       JSON.stringify({ error: (error as Error).message }),

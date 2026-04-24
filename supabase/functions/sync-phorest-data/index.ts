@@ -303,7 +303,7 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
         email: s.email,
       })),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Staff sync error:", error);
     throw error;
   }
@@ -870,12 +870,12 @@ async function syncAppointments(
       if (walkInCount && walkInCount > 0) {
         console.log(`Marked ${walkInCount} appointments as walk-ins (no client ID)`);
       }
-    } catch (backfillError) {
+    } catch (backfillError: any) {
       console.error('Client name backfill error (non-fatal):', backfillError);
     }
 
     return { total: allAppointments.length, synced };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Appointments sync error:", error);
     throw error;
   }
@@ -1108,7 +1108,7 @@ async function syncClients(
     }
 
     return { total: clientDataMap.size, synced };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Clients sync error:", error);
     throw error;
   }
@@ -1223,7 +1223,7 @@ async function syncPerformanceReports(
     }
 
     return { total: staffPerformanceMap.size, synced };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Performance reports sync error:", error);
     throw error;
   }
@@ -1694,7 +1694,7 @@ async function syncSalesTransactions(
       daily_summaries: summariesSynced,
       tips_backfilled: tipsBackfilled
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Sales sync error:", error);
     throw error;
   }
@@ -2425,7 +2425,7 @@ serve(async (req) => {
             timestamp: new Date().toISOString(),
           }),
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to send failure notification:', e);
       }
     };

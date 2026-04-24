@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
         } else {
           results.push({ email: tp.email || tp.user_id, status: 'deleted' });
         }
-      } catch (err) {
+      } catch (err: any) {
         results.push({ email: tp.email || tp.user_id, status: 'error', error: String(err) });
       }
     }
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -15,7 +15,7 @@ const SERVICES = [
         const client = createClient(supabaseUrl, serviceKey) as any;
         await client.from('organizations').select('id').limit(1);
         return { healthy: true, responseTime: Date.now() - start };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -48,7 +48,7 @@ const SERVICES = [
           responseTime,
           error: response.ok ? undefined : `HTTP ${response.status}`,
         };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -75,7 +75,7 @@ const SERVICES = [
           responseTime,
           error: response.ok ? undefined : `HTTP ${response.status}`,
         };
-      } catch (error) {
+      } catch (error: any) {
         return { healthy: false, responseTime: Date.now() - start, error: String(error) };
       }
     },
@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Health check error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

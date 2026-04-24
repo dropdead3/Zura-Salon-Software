@@ -234,7 +234,7 @@ Rules:
           sizes: Array.isArray(p.sizes) ? p.sizes : [],
           confidence: p.confidence || 'medium',
         }));
-      } catch (e) {
+      } catch (e: any) {
         console.error('Failed to parse AI response:', e);
       }
     }
@@ -260,7 +260,7 @@ Rules:
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in scrape-brand-products:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to scrape brand products';
     return new Response(

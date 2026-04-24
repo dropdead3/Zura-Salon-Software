@@ -281,7 +281,7 @@ serve(async (req) => {
                 token: accessToken,
               }),
             });
-          } catch (e) {
+          } catch (e: any) {
             console.error('Error revoking Gusto token:', e);
           }
         }

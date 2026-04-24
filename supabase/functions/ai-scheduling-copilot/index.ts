@@ -41,7 +41,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -71,7 +71,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -266,7 +266,7 @@ Return ONLY the JSON response, no markdown or explanation.`
       
       const parsed = JSON.parse(cleanContent.trim());
       suggestions = parsed.suggestions || [];
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Failed to parse AI response:", parseError, content);
       // Return fallback suggestions based on simple gap analysis
       suggestions = generateFallbackSuggestions(
@@ -306,7 +306,7 @@ Return ONLY the JSON response, no markdown or explanation.`
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Scheduling copilot error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

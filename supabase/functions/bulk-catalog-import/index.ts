@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
         });
 
         console.log(`${brand}: inserted ${insertedCount}, skipped ${skippedCount}`);
-      } catch (brandError) {
+      } catch (brandError: any) {
         console.error(`Error inserting ${brand}:`, brandError);
         results.push({
           brand,
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Bulk import error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),

@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
       afterpay_available: paymentMethodTypes.includes("afterpay_clearpay"),
       surcharge_amount_cents: surchargeAmountCents,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("create-checkout-payment-link error:", error);
     return jsonResponse(
       { error: error.message || "An unexpected error occurred" },

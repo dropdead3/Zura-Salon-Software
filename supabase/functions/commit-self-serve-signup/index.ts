@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       user_id: userId,
       email_verification_required: true,
     }, 200, corsHeaders);
-  } catch (err) {
+  } catch (err: any) {
     console.error("[commit-self-serve-signup] error:", err);
     return json(
       { error: err instanceof Error ? err.message : "Unknown error" },

@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] DB connection stats error:", e);
     }
 
@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] Edge function perf error:", e);
     }
 
@@ -270,7 +270,7 @@ Deno.serve(async (req) => {
           );
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("[monitor] Storage stats error:", e);
     }
 
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[monitor] Fatal error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

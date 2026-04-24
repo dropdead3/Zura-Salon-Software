@@ -171,7 +171,7 @@ Return EVERY shade and product. Be thorough and accurate.`;
     try {
       const parsed = JSON.parse(toolCall.function.arguments);
       products = parsed.products;
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to parse AI response:", e);
       return new Response(
         JSON.stringify({ success: false, error: "Failed to parse AI response" }),
@@ -280,7 +280,7 @@ Analyze: Are the AI-generated products accurate? Flag any that seem invented or 
           } else {
             console.error(`Firecrawl scrape failed: ${scrapeResp.status}`);
           }
-        } catch (verifyError) {
+        } catch (verifyError: any) {
           console.error("Verification error:", verifyError);
         }
       } else {
@@ -299,7 +299,7 @@ Analyze: Are the AI-generated products accurate? Flag any that seem invented or 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating catalog:", error);
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),

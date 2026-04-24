@@ -103,7 +103,7 @@ export async function loadZuraConfig(
     if (knowledgeRes.data) result.knowledge = knowledgeRes.data;
     if (guardrailsRes.data) result.guardrails = guardrailsRes.data;
     if (roleRulesRes.data) result.roleRules = roleRulesRes.data;
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error loading AI config:", e);
     // Return defaults on error - functions continue working
   }

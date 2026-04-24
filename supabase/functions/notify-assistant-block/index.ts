@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify(pushPayload),
       });
-    } catch (pushErr) {
+    } catch (pushErr: any) {
       console.warn("[notify-assistant-block] Push send failed:", pushErr);
     }
 
@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
             emailType: "transactional",
           });
         }
-      } catch (emailErr) {
+      } catch (emailErr: any) {
         console.warn(
           `[notify-assistant-block] Email failed for ${userId}:`,
           emailErr
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[notify-assistant-block] Error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {

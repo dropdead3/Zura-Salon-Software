@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, jobId: job.id, output_md: outputMd }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (e) {
+  } catch (e: any) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("policy-draft-variants error:", msg);
     return new Response(JSON.stringify({ error: msg }), {

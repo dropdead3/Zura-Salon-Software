@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
               }
             }
           }
-        } catch (aiErr) {
+        } catch (aiErr: any) {
           console.log("AI insight generation failed, signals saved without text:", aiErr);
         }
       }
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Industry aggregator error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

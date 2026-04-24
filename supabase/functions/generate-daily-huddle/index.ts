@@ -31,7 +31,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -56,7 +56,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -236,7 +236,7 @@ Estimate reasonable sales goals based on the yesterday's data.`;
                         aiContent.match(/```\n?([\s\S]*?)\n?```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : aiContent;
       huddleContent = JSON.parse(jsonStr.trim());
-    } catch (parseError) {
+    } catch (parseError: any) {
       console.error("Failed to parse AI response:", aiContent);
       return new Response(
         JSON.stringify({ error: "Failed to parse AI response", raw: aiContent }),
@@ -253,7 +253,7 @@ Estimate reasonable sales goals based on the yesterday's data.`;
       }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating huddle:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

@@ -329,7 +329,7 @@ Deno.serve(async (req) => {
             error: "Cannot reset this account because it has already processed payments. Please contact support.",
           }, 400);
         }
-      } catch (stripeErr) {
+      } catch (stripeErr: any) {
         // Account may already be deleted or invalid — proceed with cleanup
         console.warn("Could not check charges on account, proceeding with reset:", (stripeErr as Error).message);
       }
@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
       // Attempt to delete the Stripe Express account
       try {
         await stripe.accounts.del(accountId);
-      } catch (delErr) {
+      } catch (delErr: any) {
         console.warn("Could not delete Stripe account (may already be removed):", (delErr as Error).message);
       }
 
@@ -395,7 +395,7 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
-  } catch (error) {
+  } catch (error: any) {
     console.error("connect-zura-pay error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

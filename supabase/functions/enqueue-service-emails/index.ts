@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, action: "queued", queued: queueItems.length }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[enqueue] Error:", message);
     return new Response(

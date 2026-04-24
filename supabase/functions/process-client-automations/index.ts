@@ -33,7 +33,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -47,7 +47,7 @@ serve(async (req) => {
     // Verify org access
     try {
       await requireOrgAdmin(supabaseAdmin, user.id, body.organizationId || body.organization_id);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -74,7 +74,7 @@ serve(async (req) => {
         results.skipped += ruleResults.skipped;
         results.errors += ruleResults.errors;
         results.details.push({ ruleId: rule.id, ruleName: rule.rule_name, ruleType: rule.rule_type, ...ruleResults });
-      } catch (ruleError) {
+      } catch (ruleError: any) {
         console.error(`Error processing rule ${rule.id}:`, ruleError);
         results.errors += 1;
         results.details.push({ ruleId: rule.id, ruleName: rule.rule_name, error: ruleError instanceof Error ? ruleError.message : "Unknown error" });
@@ -85,7 +85,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, ...results }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Client automations error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -139,7 +139,7 @@ async function processRule(supabase: any, rule: AutomationRule, dryRun: boolean)
       } else {
         results.skipped += 1;
       }
-    } catch (clientError) {
+    } catch (clientError: any) {
       console.error(`Error processing client ${client.id}:`, clientError);
       results.errors += 1;
     }
@@ -217,7 +217,7 @@ async function sendAutomationEmail(supabase: any, rule: AutomationRule, client: 
     });
 
     return { success: result.success, error: result.error };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Email send error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Send failed" };
   }

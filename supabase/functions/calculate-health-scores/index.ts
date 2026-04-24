@@ -614,7 +614,7 @@ Deno.serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -632,7 +632,7 @@ Deno.serve(async (req) => {
         if (body.organizationId || body.organization_id) {
           try {
             await requireOrgMember(supabaseAdmin, user.id, (body.organizationId || body.organization_id)!);
-          } catch (orgErr) {
+          } catch (orgErr: any) {
             return authErrorResponse(orgErr, getCorsHeaders(req));
           }
         }
@@ -840,7 +840,7 @@ Deno.serve(async (req) => {
           risk_level: riskLevel(orgScore),
           location_count: locationScores.length,
         });
-      } catch (orgError) {
+      } catch (orgError: any) {
         console.error(`Error processing org ${org.id}:`, orgError);
       }
     }
@@ -849,7 +849,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, processed: results.length, scores: results }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Health score calculation error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),

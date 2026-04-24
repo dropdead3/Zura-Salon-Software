@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Terminal reader display error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

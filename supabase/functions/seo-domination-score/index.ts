@@ -216,7 +216,7 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ scored }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('seo-domination-score error:', err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,

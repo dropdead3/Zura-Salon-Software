@@ -67,7 +67,7 @@ async function sendViaTwilio(
       return { success: false, error: result.message || `Twilio error ${result.code}` };
     }
     return { success: true, sid: result.sid };
-  } catch (e) {
+  } catch (e: any) {
     return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
   }
 }
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, sid: result.sid }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[send-client-sms] Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

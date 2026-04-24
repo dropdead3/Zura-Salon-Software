@@ -226,7 +226,7 @@ Deno.serve(async (req) => {
             } else {
               await aiResp.text(); // consume body
             }
-          } catch (e) {
+          } catch (e: any) {
             console.warn("[trend-digest] AI summary failed:", e);
           }
         }
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, sent: totalSent, skipped: totalSkipped }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("[stylist-trend-digest] Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

@@ -440,7 +440,7 @@ Deno.serve(async (req) => {
       200,
       corsHeaders,
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("[backfill-org-setup]", err);
     return json(
       { error: (err as Error).message ?? "Backfill failed" },

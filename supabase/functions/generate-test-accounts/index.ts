@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
 
           results.push({ email: account.email, status: 'created' });
         }
-      } catch (err) {
+      } catch (err: any) {
         results.push({ email: account.email, status: 'error', error: String(err) });
       }
     }
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

@@ -96,7 +96,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, alerts_sent: results.alerts_sent.length, expired_count: results.expired.length, details: results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error checking insurance expiry:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

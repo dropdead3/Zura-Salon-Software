@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
           });
 
           results.emailsSent++;
-        } catch (emailError) {
+        } catch (emailError: any) {
           console.error(`Failed to send onboarding email to ${org.billing_email}:`, emailError);
         }
       }
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, ...results }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Onboarding drip error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),

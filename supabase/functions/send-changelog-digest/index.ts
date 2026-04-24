@@ -106,7 +106,7 @@ serve(async (req) => {
       JSON.stringify({ message: `Sent ${sentCount} ${frequency} digests`, sent: sentCount, entries: entries.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-changelog-digest:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

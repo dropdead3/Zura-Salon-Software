@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     }
 
     return json({ success: true, scheduled: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[send-setup-confirmation] error:", err);
     return json(
       { error: err instanceof Error ? err.message : "Unknown error" },

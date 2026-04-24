@@ -177,7 +177,7 @@ Deno.serve(async (req: Request) => {
           // Update daily count for rate limiting within this run
           dailyCounts[task.template_key] = (dailyCounts[task.template_key] || 0) + 1;
           weeklyCounts[task.template_key] = (weeklyCounts[task.template_key] || 0) + 1;
-        } catch (err) {
+        } catch (err: any) {
           actionLogs.push({
             organization_id: organizationId,
             task_id: task.id,
@@ -209,7 +209,7 @@ Deno.serve(async (req: Request) => {
             executed_at: new Date().toISOString(),
           });
           assistedQueued++;
-        } catch (err) {
+        } catch (err: any) {
           // Silently skip failed assisted generations
           console.error(`Assisted generation failed for task ${task.id}:`, err);
         }
@@ -242,7 +242,7 @@ Deno.serve(async (req: Request) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Autonomous execute error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

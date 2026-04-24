@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { supabaseAdmin } = authResult;
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
           organization_name: org.name,
           metrics,
         });
-      } catch (orgError) {
+      } catch (orgError: any) {
         console.error(`Error processing org ${org.id}:`, orgError);
       }
     }
@@ -287,7 +287,7 @@ Deno.serve(async (req) => {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Benchmark calculation error:", error);
     return new Response(
       JSON.stringify({

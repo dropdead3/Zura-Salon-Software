@@ -145,7 +145,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -159,7 +159,7 @@ serve(async (req) => {
         return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
       }
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -447,7 +447,7 @@ Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, id
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Monthly AI insights error:", e);
       }
 
@@ -657,7 +657,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("AI insights error:", e);
     }
 
@@ -720,7 +720,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Accuracy backfill error:", e);
     }
 
@@ -810,7 +810,7 @@ Trend R²: ${regression.r2.toFixed(3)}`;
       }),
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error("growth-forecasting error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

@@ -114,7 +114,7 @@ async function sendViaTwilio(
 
     console.log(`[sms-sender] SMS sent via Twilio, SID: ${result.sid}`);
     return { success: true, sid: result.sid };
-  } catch (e) {
+  } catch (e: any) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     console.error("[sms-sender] Twilio request failed:", msg);
     return { success: false, error: msg };

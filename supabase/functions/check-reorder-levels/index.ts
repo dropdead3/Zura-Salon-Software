@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
                 reason: "auto_reorder",
                 notes: `Auto-reorder PO created and sent: ${suggestedQty} units to ${supplier.supplier_name}`,
               });
-            } catch (emailErr) {
+            } catch (emailErr: any) {
               console.error("Failed to send reorder email:", emailErr);
             }
           }
@@ -294,7 +294,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

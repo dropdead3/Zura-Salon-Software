@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
           organization_id
         );
         results.sms = smsResult.success;
-      } catch (e) {
+      } catch (e: any) {
         console.error("SMS send failed:", e);
         results.sms = false;
       }
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
           emailType: "transactional",
         });
         results.email = emailResult.success;
-      } catch (e) {
+      } catch (e: any) {
         console.error("Email send failed:", e);
         results.email = false;
       }
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
       success: true,
       delivery: results,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("send-payment-link error:", error);
     return jsonResponse(
       { error: error.message || "An unexpected error occurred" },

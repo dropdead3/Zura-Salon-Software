@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
           source: "wizard",
           idempotency_key: idempotency_key ?? null,
         });
-      } catch (err) {
+      } catch (err: any) {
         const reason = err instanceof Error ? err.message : String(err);
         console.error(`[commit-org-setup] step ${stepKey} failed:`, reason);
         results.push({
@@ -369,7 +369,7 @@ Deno.serve(async (req) => {
       total,
       results,
     }, 200, corsHeaders);
-  } catch (err) {
+  } catch (err: any) {
     console.error("[commit-org-setup] error:", err);
     return json(
       { error: err instanceof Error ? err.message : "Unknown error" },

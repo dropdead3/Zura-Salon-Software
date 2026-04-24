@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       publishable_key: publishableKey,
       connected_account_id: org.stripe_connect_account_id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("get-booking-stripe-config error:", error);
     return jsonResponse({ error: error.message || "An unexpected error occurred" }, 500);
   }

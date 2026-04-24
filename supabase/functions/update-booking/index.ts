@@ -131,7 +131,7 @@ serve(async (req) => {
           body: JSON.stringify({ appointmentId: updateData.appointment_id, action: emailAction }),
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Failed to update service email queue:", e);
     }
 

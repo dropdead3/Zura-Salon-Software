@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       // `amount_eligible` into terminal-reader-display when tipping on reader.
       tip_eligible_amount: collect_tip_on_reader ? amount : 0,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("create-terminal-payment-intent error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
   }

@@ -176,7 +176,7 @@ serve(async (req: Request) => {
           tag: "assistant-assignment",
         }),
       });
-    } catch (pushError) {
+    } catch (pushError: any) {
       console.error("Failed to send push notification:", pushError);
     }
 

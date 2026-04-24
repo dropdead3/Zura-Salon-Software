@@ -815,7 +815,7 @@ ENRICHMENT RULES FOR EVERY INSIGHT:
       } else {
         throw new Error("No tool call in response");
       }
-    } catch (parseErr) {
+    } catch (parseErr: any) {
       console.error("Failed to parse AI response:", parseErr, JSON.stringify(aiData));
       return new Response(
         JSON.stringify({ error: "Failed to parse AI insights" }),
@@ -917,7 +917,7 @@ ENRICHMENT RULES FOR EVERY INSIGHT:
       JSON.stringify(saved || { insights, generated_at: now, expires_at: expiresAt }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("ai-business-insights error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),

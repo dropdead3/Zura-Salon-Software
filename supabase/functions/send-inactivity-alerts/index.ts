@@ -240,7 +240,7 @@ serve(async (req: Request): Promise<Response> => {
 
         console.log(`Email sent to ${leader.email}:`, result);
         emailResults.push({ email: leader.email, success: result.success, result });
-      } catch (emailError) {
+      } catch (emailError: any) {
         console.error(`Failed to send email to ${leader.email}:`, emailError);
         emailResults.push({ email: leader.email, success: false, error: String(emailError) });
       }

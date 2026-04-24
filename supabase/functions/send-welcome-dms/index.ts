@@ -331,7 +331,7 @@ Deno.serve(async (req) => {
 
         results.push({ sender_role: rule.sender_role, sender_id: sender.user_id, success: true });
 
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error processing rule ${rule.id}:`, err);
         results.push({ 
           sender_role: rule.sender_role, 
@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in send-welcome-dms:', error);
     return new Response(
       JSON.stringify({ error: error.message }),

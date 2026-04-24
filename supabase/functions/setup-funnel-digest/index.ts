@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
       trailingAvg,
       deltaPp,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("[setup-funnel-digest] error:", err);
     return json({ error: (err as Error).message }, 500);
   }

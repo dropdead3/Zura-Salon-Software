@@ -356,7 +356,7 @@ Deno.serve(async (req) => {
       forms_required: formsRequired,
       forms_completed: formsCompleted,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("create-public-booking error:", error);
     return jsonResponse(
       { error: error.message || "An unexpected error occurred" },

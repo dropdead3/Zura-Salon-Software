@@ -505,7 +505,7 @@ Provide 3-5 NEW enhancement suggestions as a JSON array of strings.`;
     }
 
     return [];
-  } catch (err) {
+  } catch (err: any) {
     console.error("AI analysis error:", err);
     return [];
   }
@@ -558,7 +558,7 @@ serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Analysis error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

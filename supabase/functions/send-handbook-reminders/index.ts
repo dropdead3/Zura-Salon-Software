@@ -190,7 +190,7 @@ serve(async (req: Request): Promise<Response> => {
           success: result.success, 
           pendingCount: employee.pending_handbooks.length 
         });
-      } catch (emailError) {
+      } catch (emailError: any) {
         emailResults.push({ 
           email: employee.email, 
           success: false, 

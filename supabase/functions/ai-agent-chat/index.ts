@@ -443,7 +443,7 @@ serve(async (req) => {
     let authResult;
     try {
       authResult = await requireAuth(req);
-    } catch (authErr) {
+    } catch (authErr: any) {
       return authErrorResponse(authErr, getCorsHeaders(req));
     }
     const { user, supabaseAdmin } = authResult;
@@ -470,7 +470,7 @@ serve(async (req) => {
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr) {
+    } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
@@ -487,7 +487,7 @@ serve(async (req) => {
           dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
           dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`"${AI_ASSISTANT_NAME}"`, 'g'), `"${config.personality.display_name}"`);
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to load AI config:", e);
       }
     }
@@ -622,7 +622,7 @@ serve(async (req) => {
       { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
 
-  } catch (e) {
+  } catch (e: any) {
     console.error("ai-agent-chat error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),

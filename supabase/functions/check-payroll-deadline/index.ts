@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
             await supabase.functions.invoke("send-push-notification", {
               body: { user_id: user.user_id, title, body, url: "/dashboard/admin/payroll" },
             });
-          } catch (pushErr) {
+          } catch (pushErr: any) {
             console.error(`Push failed for ${user.user_id}:`, pushErr);
           }
         }
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, notificationsSent }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const msg = error instanceof Error ? error.message : "Unknown error";
     console.error("[check-payroll-deadline] Error:", msg);
     return new Response(

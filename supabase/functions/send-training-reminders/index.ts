@@ -133,7 +133,7 @@ serve(async (req: Request) => {
                 html: htmlBody,
               });
               emailsSent++;
-            } catch (emailError) { console.error("Error sending email:", emailError); }
+            } catch (emailError: any) { console.error("Error sending email:", emailError); }
           }
         }
       }
@@ -163,7 +163,7 @@ serve(async (req: Request) => {
                 html: htmlBody,
               });
               emailsSent++;
-            } catch (emailError) { console.error("Error sending email:", emailError); }
+            } catch (emailError: any) { console.error("Error sending email:", emailError); }
           }
         }
       }

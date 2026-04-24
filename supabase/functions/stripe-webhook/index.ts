@@ -63,7 +63,7 @@ async function verifyStripeSignature(
       .join('');
 
     return expectedHex === sig;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signature verification error:", error);
     return false;
   }
@@ -124,7 +124,7 @@ async function sendPaymentFailedEmail(
       `,
     });
     console.log("Payment failed email sent successfully");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to send payment failed email:", error);
   }
 }
@@ -409,7 +409,7 @@ async function handleCheckoutCompleted(
         plan_tier: 'standard',
         stylist_count: lp.stylist_count || 0,
       }));
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to parse location_plans metadata:", e);
     }
   }
@@ -983,7 +983,7 @@ async function handleSetupIntentSucceeded(
       console.error(`Failed to fetch PM ${paymentMethodId}: ${pmResponse.status}`);
       return;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error fetching payment method from Stripe:", err);
     return;
   }

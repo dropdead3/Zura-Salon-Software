@@ -120,7 +120,7 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
     const result = await response.json();
     console.log("[email-sender] Email sent successfully:", result.id);
     return { success: true, messageId: result.id };
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("[email-sender] Exception sending email:", errorMessage);
     return { success: false, error: errorMessage };
@@ -170,7 +170,7 @@ export async function sendOrgEmail(
         console.log(`[email-sender] Client ${payload.clientId} opted out - email skipped`);
         return { success: true, skipped: true, skipReason: "opted_out" };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("[email-sender] Error checking opt-out status:", e);
     }
 
@@ -190,7 +190,7 @@ export async function sendOrgEmail(
           console.log(`[email-sender] Client ${payload.clientId} received email within ${RATE_LIMIT_HOURS}h - skipping`);
           return { success: true, skipped: true, skipReason: "rate_limited" };
         }
-      } catch (e) {
+      } catch (e: any) {
         console.warn("[email-sender] Error checking rate limit:", e);
       }
     }
@@ -202,7 +202,7 @@ export async function sendOrgEmail(
         oid: organizationId,
         ts: Date.now(),
       });
-    } catch (e) {
+    } catch (e: any) {
       console.warn("[email-sender] Error building unsubscribe URL:", e);
     }
   }
@@ -222,7 +222,7 @@ export async function sendOrgEmail(
       } else {
         console.warn("[email-sender] Could not fetch org branding:", error?.message);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("[email-sender] Error fetching org branding:", e);
     }
   }
@@ -286,13 +286,13 @@ export async function sendOrgEmail(
           email_type: emailType,
           message_id: result.id,
         });
-      } catch (e) {
+      } catch (e: any) {
         console.warn("[email-sender] Error logging email send:", e);
       }
     }
 
     return { success: true, messageId: result.id };
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("[email-sender] Exception sending org email:", errorMessage);
     return { success: false, error: errorMessage };

@@ -111,7 +111,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in publish-scheduled-changelog:", error);
     return new Response(

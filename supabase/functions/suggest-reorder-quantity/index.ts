@@ -184,7 +184,7 @@ Consider: lead time coverage, safety stock, trend direction, and cost efficiency
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

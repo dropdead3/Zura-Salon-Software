@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ success: true, scored: results.length, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('calculate-zos error:', err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,

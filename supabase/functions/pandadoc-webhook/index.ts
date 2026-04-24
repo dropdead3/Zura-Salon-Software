@@ -29,7 +29,7 @@ async function verifySignature(payload: string, signature: string, secret: strin
       .join('');
     
     return computedSignature === signature.toLowerCase();
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signature verification error:", error);
     return false;
   }
