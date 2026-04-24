@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useInstantFormulaMemory } from '@/hooks/color-bar/useInstantFormulaMemory';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
+import { groupClientVisits } from '@/lib/client-visit-grouping';
 
 export interface ClientMemoryData {
   lastFormula: {
@@ -73,13 +74,20 @@ export function useClientMemory(
 
   const isLoading = formulaLoading || visitsLoading;
 
+  // Visit-level (not service-row-level) counts so contiguous services rendered
+  // as one Phorest "appointment" only count once. Mirrors the schedule grouping
+  // doctrine so frequency metrics stay truthful across surfaces.
+  const completedVisitCount = groupClientVisits(
+    visits.filter((v) => v.status === 'completed'),
+  ).length;
+
   const data: ClientMemoryData = {
     lastFormula,
     lastNotes,
     lastRetailPurchase: lastRetail || null,
     lastProcessingTimeMinutes,
-    visitCount: visits.filter(v => v.status === 'completed').length,
-    isFirstVisit: visits.filter(v => v.status === 'completed').length === 0,
+    visitCount: completedVisitCount,
+    isFirstVisit: completedVisitCount === 0,
   };
 
   return { data, isLoading };
