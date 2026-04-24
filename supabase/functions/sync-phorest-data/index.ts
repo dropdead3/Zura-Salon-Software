@@ -587,14 +587,18 @@ async function syncAppointments(
       // is the source of truth. new Date() in Deno is UTC which caused premature
       // "completed" badges for appointments still in the org's local future.
 
-      upsertBatch.push({
+      // SIGNAL PRESERVATION (R6a): if Phorest's payload doesn't carry a name,
+      // omit the client_name/client_phone keys entirely so a previously-resolved
+      // value (set by the post-sync backfill or a prior payload that did include
+      // it) is NOT clobbered to NULL on every subsequent sync. Same logic for
+      // phone. The upsert receives a row shape without those keys → Postgres
+      // leaves the existing column values alone.
+      const baseRow: Record<string, unknown> = {
         phorest_id: phorestId,
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
         phorest_client_id: phorestClientId,
-        client_name: extractedClientName,
-        client_phone: extractedClientPhone,
         appointment_date: appointmentDate,
         start_time: startTime,
         end_time: endTime,
@@ -604,15 +608,21 @@ async function syncAppointments(
         total_price: apt.totalPrice || apt.price || null,
         notes: apt.notes || null,
         is_new_client: apt.isNewClient || false,
-      });
+      };
+      if (extractedClientName) baseRow.client_name = extractedClientName;
+      if (extractedClientPhone) baseRow.client_phone = extractedClientPhone;
+      upsertBatch.push(baseRow);
     }
 
-    // Batch upsert in chunks of 200
+    // Batch upsert via RPC that COALESCEs client_name/client_phone so a
+    // missing-from-payload value never null-overwrites a previously resolved
+    // one. Chunked at 200 rows/call to keep payloads bounded.
     for (let i = 0; i < upsertBatch.length; i += 200) {
       const chunk = upsertBatch.slice(i, i + 200);
-      const { error } = await supabase
-        .from("phorest_appointments")
-        .upsert(chunk, { onConflict: 'phorest_id' });
+      const { error } = await supabase.rpc(
+        'upsert_phorest_appointments_preserve_names',
+        { p_rows: chunk },
+      );
 
       if (error) {
         console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
@@ -634,11 +644,17 @@ async function syncAppointments(
     // worse than no rows — they satisfy schema but violate purpose, and they
     // hide IDs from the next residual scan (which is keyed on "no name").
     try {
+      // R6b: prioritize current/upcoming appointments. Insertion-order LIMIT 1000
+      // was burning the on-demand budget on historical rows while today's
+      // schedule kept rendering "Walk-in". Order by appointment_date DESC then
+      // future-first so the operator-visible window resolves first.
       const { data: missingNames } = await supabase
         .from('phorest_appointments')
-        .select('id, phorest_client_id')
+        .select('id, phorest_client_id, appointment_date')
         .is('client_name', null)
         .not('phorest_client_id', 'is', null)
+        .gte('appointment_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .order('appointment_date', { ascending: true })
         .limit(1000);
 
       if (missingNames && missingNames.length > 0) {

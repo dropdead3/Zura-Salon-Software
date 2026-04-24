@@ -31492,6 +31492,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      upsert_phorest_appointments_preserve_names: {
+        Args: { p_rows: Json }
+        Returns: number
+      }
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
