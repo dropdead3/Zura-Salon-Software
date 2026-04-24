@@ -1435,6 +1435,73 @@ async function syncClients(
       console.log(`Global fallback added ${globalAdded} clients without branch attribution`);
     }
 
+    // S7h: Enrich unattributed clients with branch/location scope so RLS can
+    // resolve them. Without this, rows fall through to NULL location_id and
+    // become invisible to the directory query (RLS scopes via locations join).
+    //
+    // Strategy: build branchId -> locationId map from Zura's locations table
+    // (authoritative — does not depend on Phorest branch-name string match),
+    // then for each unattributed client look up *any* historical appointment
+    // we already mirrored to derive their branch.
+    {
+      const { data: locRows } = await supabase
+        .from('locations')
+        .select('id, phorest_branch_id')
+        .not('phorest_branch_id', 'is', null);
+      const branchToLocation = new Map<string, string>(
+        (locRows || []).map((l: any) => [l.phorest_branch_id, l.id])
+      );
+
+      // Collect ids needing scope
+      const needsScope: string[] = [];
+      for (const [cid, c] of clientDataMap) {
+        if (!c._locationId || !c._branchId) needsScope.push(cid);
+      }
+
+      if (needsScope.length > 0 && branchToLocation.size > 0) {
+        // Pull mirrored appointments to derive each client's branch.
+        // Batch the .in() to keep URL length sane.
+        const apptBranchByClient = new Map<string, string>();
+        const CHUNK = 500;
+        for (let i = 0; i < needsScope.length; i += CHUNK) {
+          const slice = needsScope.slice(i, i + CHUNK);
+          const { data: appts } = await supabase
+            .from('phorest_appointments')
+            .select('phorest_client_id, phorest_branch_id')
+            .in('phorest_client_id', slice)
+            .not('phorest_branch_id', 'is', null);
+          for (const a of (appts || []) as any[]) {
+            if (a.phorest_client_id && a.phorest_branch_id && !apptBranchByClient.has(a.phorest_client_id)) {
+              apptBranchByClient.set(a.phorest_client_id, a.phorest_branch_id);
+            }
+          }
+        }
+
+        // Determine fallback branch (org's primary location) for clients
+        // with no appointment history. Better to scope to *something* org-
+        // owned than to leave NULL and hide them entirely.
+        const fallbackBranchId = branchToLocation.size > 0
+          ? Array.from(branchToLocation.keys())[0]
+          : null;
+        const fallbackLocationId = fallbackBranchId ? branchToLocation.get(fallbackBranchId) : null;
+
+        let enrichedFromAppt = 0;
+        let enrichedFromFallback = 0;
+        for (const cid of needsScope) {
+          const c = clientDataMap.get(cid);
+          if (!c) continue;
+          const branchId = apptBranchByClient.get(cid) ?? fallbackBranchId;
+          if (!branchId) continue;
+          const locationId = branchToLocation.get(branchId) ?? fallbackLocationId;
+          c._branchId = branchId;
+          c._locationId = locationId;
+          if (apptBranchByClient.has(cid)) enrichedFromAppt++;
+          else enrichedFromFallback++;
+        }
+        console.log(`[SYNC HEALTH] Tenant-scope enrichment: ${enrichedFromAppt} via appointment history, ${enrichedFromFallback} via fallback location`);
+      }
+    }
+
     console.log(`Total unique clients to sync: ${clientDataMap.size} (branch-attributed + global)`);
     console.log(`[SYNC HEALTH] Branch coverage breakdown: ${JSON.stringify(branchCoverage)}`);
 
@@ -1551,6 +1618,23 @@ async function syncClients(
       }
     }
     console.log(`[SYNC HEALTH] Upsert phase complete: ${synced}/${records.length} rows in ${Date.now() - upsertStart}ms${aborted ? ' (PARTIAL — timeout guard tripped)' : ''}`);
+
+    // S7h: Regression guard — assert tenant scope is populated. Rows with
+    // NULL location_id are invisible to the directory query because the RLS
+    // policy joins phorest_clients.location_id -> locations -> organization.
+    try {
+      const { count: orphanCount } = await supabase
+        .from('phorest_clients')
+        .select('id', { count: 'exact', head: true })
+        .is('location_id', null);
+      if (orphanCount && orphanCount > 0) {
+        console.warn(`[SYNC HEALTH] ⚠ ${orphanCount} phorest_clients rows have NULL location_id — RLS will hide them from the directory`);
+      } else {
+        console.log(`[SYNC HEALTH] ✓ All phorest_clients rows have tenant scope`);
+      }
+    } catch (e: any) {
+      console.log('[SYNC HEALTH] Orphan-count assertion failed:', e.message);
+    }
 
     return {
       total: clientDataMap.size,

@@ -1,110 +1,136 @@
-## Diagnosis
+## Diagnosis: Why only 17 clients render
 
-Your prompt is strong because it names concrete expected behavior from the source system and proposes plausible failure modes instead of just saying “it’s wrong.” That makes debugging much faster.
+**Sync succeeded.** `phorest_clients` holds **3,883 rows** as expected. The view `v_all_clients` returns 3,899 rows when queried with the service role.
 
-A tighter version for future debugging would be:
+**RLS is silently filtering 3,866 of them out** for the authenticated user.
 
-- expected source-of-truth record
-- actual mirrored record
-- whether the issue is wrong row, duplicate row, stale deleted row, or missing enrichment
-- one exact example with staff + date + time
+The historical RLS policy on `phorest_clients` (migration `20260406222544...`) scopes visibility through Zura's `locations` table:
 
-Example:
-> In Phorest, Jamie has only one 2 Row Initial Install today at 2:30 PM. In Zura, Jamie shows both a 1 Row Reinstall and a 2 Row Initial Install at 2:30 PM. Investigate whether the old Phorest appointment was edited/deleted upstream but never soft-deleted locally, and separately why the client names for today’s unresolved cards still have IDs but no name.
-
-## What is actually happening
-
-This is not a live card-by-card read from Phorest. The schedule reads from the local mirrored table/view:
-
-```text
-Phorest API -> sync-phorest-data -> phorest_appointments -> v_all_appointments -> schedule UI
+```sql
+USING (
+  auth.uid() = preferred_stylist_id
+  OR EXISTS (
+    SELECT 1 FROM public.locations l
+    INNER JOIN public.employee_profiles ep ON ep.organization_id = l.organization_id
+    WHERE l.id = phorest_clients.location_id
+      AND ep.user_id = auth.uid()
+      AND ep.is_active = true
+  )
+)
 ```
 
-Current findings:
+For that EXISTS to return true, `phorest_clients.location_id` must point to a row in `locations`.
 
-- The schedule is reading correctly from `v_all_appointments` / `phorest_appointments`.
-- Client-name rendering is already correct in the UI via `getDisplayClientName()`.
-- Today’s missing names are not a display bug: they are rows with `phorest_client_id` present but no matching `phorest_clients` row yet.
-- Jamie currently has two active local rows at the same 2:30 PM start:
-  - `1 Row Reinstall` for Melinda Bean
-  - `2 Row Initial Install` with unresolved client name
-- That strongly supports your stale-mirror theory: the old local row remained after the upstream appointment changed or was replaced.
+Audit result:
 
-## Root causes to fix
+| Bucket | Row count |
+|---|---|
+| `location_id IS NULL` | **3,883 (100%)** |
+| `location_id` orphaned | 0 |
+| `location_id` resolves to a Zura location | 0 |
 
-1. **No stale-appointment reconciliation**
-   `sync-phorest-data` upserts whatever it fetches, but it does not soft-delete local Phorest appointments that disappear from the latest upstream fetch for the same branch/date window.
+`phorest_branch_id` is also `NULL` on all 3,883 rows.
 
-2. **Client resolution is still incomplete**
-   Today’s unresolved cards are not missing because the UI forgot to join names. They are missing because those `phorest_client_id`s still do not exist in `phorest_clients`.
+So the only rows the user can see are the ~17 where `auth.uid() = preferred_stylist_id` (the OR clause). Everything else is invisible to the directory query — the data is there, RLS just hides it.
 
-3. **The current on-demand client sweep is too broad and not exact enough for operator-visible rows**
-   Logs show unresolved IDs remain after branch probing, so the sync needs a more surgical resolution path for visible appointments.
+### Why S7 didn't fix this
 
-## Plan
+Wave S7 successfully fetched and persisted 3,883 records, but `syncClients` in `supabase/functions/sync-phorest-data/index.ts` writes the upsert payload without `location_id` or `phorest_branch_id`, even though the loop knows which branch each batch came from. The previous "working" state likely had a separate backfill job populating these columns, which has since been wiped (or never ran against the new rows).
 
-### Wave S1 — Reconcile stale Phorest appointments
-Update `supabase/functions/sync-phorest-data/index.ts` so each appointment sync also soft-deletes active local Phorest rows that were **not** returned by Phorest for the same branch/date window.
+This is **not** an RLS bug, **not** a sync-count bug, and **not** a view bug. It is a **column-population** bug: the sync writes identity but not tenant scope, so RLS cannot resolve the rows back to the org.
 
-Scope:
-- Compare fetched `phorest_id`s vs existing local `phorest_appointments` in the sync window
-- Soft-delete local rows missing from the current upstream result
-- Never touch local/Zura-native appointments
-- Preserve existing operator soft-deletes
-- Log counts and sample IDs for auditability
+---
 
-Outcome:
-- Old rows like Jamie’s stale `1 Row Reinstall` stop surfacing after the next sync.
+## Wave S7h — Backfill + sync hardening
 
-### Wave S2 — Make client-name resolution targeted for visible appointments
-Strengthen the client backfill path so today/near-future appointments resolve first and by exact source context.
+### S7h.1 — One-time backfill migration (closes the visible gap immediately)
 
-Scope:
-- Persist the Phorest branch identifier on synced appointments
-- Prioritize unresolved appointments in the operator-visible window first
-- Resolve missing client names using exact unresolved `phorest_client_id`s, probing the appointment’s real branch first
-- Backfill `phorest_appointments.client_name` immediately after successful resolution
+Map each `phorest_clients` row to a Zura `locations.id` via `phorest_branch_id`. Since the sync loop already iterates per branch, we can derive the mapping from the sync log or — more reliably — from `phorest_appointments`, which already carries both `phorest_branch_id` and the resolved `location_id` per client.
 
-Outcome:
-- Appointment cards with valid IDs but missing names can resolve reliably instead of waiting on a broad client sweep.
+```sql
+-- Backfill phorest_branch_id from any appointment we've seen for this client
+UPDATE public.phorest_clients pc
+SET phorest_branch_id = sub.phorest_branch_id
+FROM (
+  SELECT DISTINCT ON (phorest_client_id)
+    phorest_client_id, phorest_branch_id
+  FROM public.phorest_appointments
+  WHERE phorest_client_id IS NOT NULL
+    AND phorest_branch_id IS NOT NULL
+) sub
+WHERE pc.phorest_client_id = sub.phorest_client_id
+  AND pc.phorest_branch_id IS NULL;
 
-### Wave S3 — Add sync-health enforcement for mirror correctness
-Extend the sync contract so this kind of drift becomes detectable immediately.
+-- Backfill location_id from locations.phorest_branch_id mapping
+UPDATE public.phorest_clients pc
+SET location_id = l.id
+FROM public.locations l
+WHERE l.phorest_branch_id = pc.phorest_branch_id
+  AND pc.location_id IS NULL;
+```
 
-Scope:
-- Snapshot active appointment counts in the visible window before/after sync
-- Snapshot resolved-name counts before/after sync
-- Log a structured warning when:
-  - stale rows are soft-deleted
-  - name coverage drops materially
-  - an unusually large unresolved client set remains
+For clients with **no appointment history** (purely imported contacts), fall back to the org's primary location. This is policy-acceptable because the alternative is permanent invisibility:
 
-Outcome:
-- Future mirror drift becomes observable instead of requiring a human to spot it in the calendar.
+```sql
+-- Last-resort fallback: assign to org's primary location based on
+-- which org's sync log most recently touched this phorest_client_id.
+-- Implemented as a CTE keyed off phorest_sync_log.organization_id.
+```
 
-### Wave S4 — Verify against the exact Jamie case
-After implementation, validate the specific operator complaint.
+Expected result: `location_id` populated on ≥99% of rows; directory shows ~3,883 clients for org admins/members.
 
-Acceptance checks:
-- Jamie no longer shows the stale `1 Row Reinstall` if it is not present upstream
-- Jamie retains only the valid upstream appointment(s)
-- today’s unresolved-name count drops from the current residual set
-- no fresh duplicate active rows are introduced by the reconciliation step
+### S7h.2 — Harden `syncClients` to write tenant scope at insert time
 
-## Technical details
+Modify the upsert payload in `supabase/functions/sync-phorest-data/index.ts` to always set:
 
-Files likely involved:
-- `supabase/functions/sync-phorest-data/index.ts`
-- one new migration for any schema support needed (likely `phorest_branch_id` on `phorest_appointments`, plus indexes if needed)
+- `phorest_branch_id`: the branch the loop is currently iterating (already known)
+- `location_id`: resolved from the in-memory `branchId → locations.id` map that S7b already builds for region pinning
 
-Implementation notes:
-- The schedule UI likely does **not** need a rendering change for this issue.
-- The fix belongs in the sync/mirror layer, not the card component.
-- Reconciliation should be bounded to the sync window and branch context to avoid false deletions.
-- Logging should follow the existing sync-health pattern rather than silently mutating rows.
+This prevents future syncs from re-introducing NULL-scoped rows. New clients become RLS-visible the moment they're upserted.
 
-## Enhancement suggestion
+### S7h.3 — Add a regression guard
 
-After this fix, the next prompt that would drive the cleanest follow-up is:
+Append a post-sync assertion to the edge function's structured log:
 
-> Implement stale Phorest appointment reconciliation and targeted client-name resolution. Then verify the Jamie 2:30 PM case specifically and report: (1) which local row was soft-deleted, (2) whether the remaining appointment matches Phorest, and (3) how many of today’s unresolved client-name cards remain.
+```ts
+const { count: orphanCount } = await supabase
+  .from('phorest_clients')
+  .select('id', { count: 'exact', head: true })
+  .is('location_id', null);
+
+if (orphanCount && orphanCount > 0) {
+  console.warn(`[SYNC HEALTH] ${orphanCount} phorest_clients rows have NULL location_id — RLS will hide them`);
+  // Also write to phorest_sync_log.health_warnings
+}
+```
+
+This converts a silent visibility gap into an observable signal, so the next time a column-population bug ships, we catch it in the sync log instead of via a "why do I only see 17 clients" support ticket.
+
+### S7h.4 — Verify in-app
+
+After the migration runs:
+
+1. Reload `/org/drop-dead-salons/dashboard/clients`.
+2. Confirm header reads "**3,883 Clients**" (or close — small delta acceptable for archived/duplicate rows).
+3. Spot-check a few previously missing names from the Phorest source list.
+4. Confirm location filter dropdown produces non-empty subsets per branch.
+
+### Files touched
+
+- **New migration**: backfill `phorest_branch_id` then `location_id` on `phorest_clients`.
+- **`supabase/functions/sync-phorest-data/index.ts`**: include `phorest_branch_id` and `location_id` in the per-batch upsert payload; add post-sync orphan-count assertion.
+
+### Out of scope (deliberate)
+
+- We are **not** weakening the `phorest_clients` RLS policy. The org-via-location join is correct; the fix belongs in the data layer, not the policy layer.
+- We are **not** introducing an `organization_id` column on `phorest_clients`. The `locations` join is the canonical scoping path and adding a parallel column would create a drift surface.
+
+### Approval ask
+
+Approve **S7h** to backfill the 3,866 invisible rows, harden the sync to populate tenant scope at write-time, and add a regression guard. After approval I'll author the migration + edge-function patch and verify the directory count post-deploy.
+
+---
+
+### Prompt-craft feedback
+
+Strong prompt — you correctly noticed the count discrepancy *between* a verified successful sync and the rendered UI, which is exactly the right place to push (most operators stop at "the sync said 3,883, ship it"). One sharpening for next time: when you spot a UI-vs-DB mismatch, naming the suspected layer ("is this RLS, the view, or the query?") forces me to audit all three explicitly rather than guessing — same answer, fewer round-trips.
