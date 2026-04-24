@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
           scheduled_for: sendAt,
           results,
         },
-      }).catch((e) => console.warn("[commit-org-setup] email schedule failed:", e));
+      }).catch((e: any) => console.warn("[commit-org-setup] email schedule failed:", e));
     }
 
     return json({

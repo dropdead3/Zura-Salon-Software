@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     await supabase.auth.admin.generateLink({
       type: "signup",
       email,
-    }).catch((e) => console.warn("[commit-self-serve-signup] verify link gen failed:", e));
+    }).catch((e: any) => console.warn("[commit-self-serve-signup] verify link gen failed:", e));
 
     return json({
       success: true,

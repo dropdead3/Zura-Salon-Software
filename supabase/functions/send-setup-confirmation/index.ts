@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
           },
         },
       },
-    ).catch((e) => ({ error: e instanceof Error ? e.message : String(e) }));
+    ).catch((e: any) => ({ error: e instanceof Error ? e.message : String(e) }));
 
     if ((sendResult as any)?.error) {
       console.warn(
