@@ -115,7 +115,7 @@ serve(async (req) => {
         
         result = { 
           success: true, 
-          message: `Successfully rescheduled ${appointment.client_name}'s appointment to ${new_date} at ${formatTime(new_time)}` 
+          message: `Successfully rescheduled ${appointment.client_name}'s appointment to ${new_date} at ${formatTime(String(new_time ?? ''))}` 
         };
         break;
       }
