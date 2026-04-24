@@ -1006,6 +1006,28 @@ async function syncAppointments(
       if (walkInCount && walkInCount > 0) {
         console.log(`Marked ${walkInCount} appointments as walk-ins (no client ID)`);
       }
+
+      // S3: name-coverage snapshot AFTER backfill — surfaces structured warnings
+      // when residual unresolved-name count is high or coverage didn't improve.
+      const { count: visibleMissingAfter } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', visibleWindowFrom)
+        .is('deleted_at', null)
+        .is('client_name', null)
+        .not('phorest_client_id', 'is', null);
+      const totalSnap = visibleTotalBefore || 0;
+      const missingBefore = visibleMissingBefore || 0;
+      const missingAfter = visibleMissingAfter || 0;
+      const covBefore = totalSnap > 0 ? ((totalSnap - missingBefore) / totalSnap) * 100 : 100;
+      const covAfter = totalSnap > 0 ? ((totalSnap - missingAfter) / totalSnap) * 100 : 100;
+      console.log(`[SYNC HEALTH] Name coverage in visible window: before=${covBefore.toFixed(1)}% (${missingBefore} missing of ${totalSnap}), after=${covAfter.toFixed(1)}% (${missingAfter} missing of ${totalSnap})`);
+      if (missingAfter > 0 && missingAfter >= missingBefore) {
+        console.log(`[SYNC HEALTH WARN] Backfill did not reduce residual unresolved set (${missingAfter} remaining). Operator cards will render "Client #XXXX".`);
+      }
+      if (totalSnap > 0 && (missingAfter / totalSnap) > 0.05) {
+        console.log(`[SYNC HEALTH WARN] Visible-window unresolved-name share is ${(missingAfter / totalSnap * 100).toFixed(1)}% (>5%). Investigate Phorest client API access for unresolved IDs.`);
+      }
     } catch (backfillError: any) {
       console.error('Client name backfill error (non-fatal):', backfillError);
     }
