@@ -461,7 +461,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ data: order });
     }
 
-    return jsonResponse({ error: `Unknown action: ${body.action}` }, 400);
+    return jsonResponse({ error: `Unknown action: ${(body as any).action}` }, 400);
   } catch (error: any) {
     console.error("Error:", error);
     return jsonResponse({ error: (error as Error).message }, 500);
