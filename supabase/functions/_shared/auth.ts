@@ -63,7 +63,7 @@ export async function requireOrgMember(
  * Validates that the authenticated user is an admin of the given organization.
  */
 export async function requireOrgAdmin(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   userId: string,
   organizationId: string
 ): Promise<void> {
