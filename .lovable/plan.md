@@ -1,82 +1,70 @@
 
-## Prompt feedback
-Strong prompt: blunt plus a screenshot made the failure mode obvious. Even better next time: name the exact symptom, e.g. “the side stroke hard-stops instead of tapering, and the corner transition feels mechanical.” That tells me whether the problem is geometry, color, thickness, or fade behavior.
 
-## Why it still looks wrong
-The current accent is not a true corner-led accent. It is a **full rounded border with a hard vertical mask cutoff**:
+## Goal
+Make the top cap read as a **thicker continuation of the card's own stroke** — same neutral border color, just heavier at the top — instead of a saturated category/status-colored accent. Ghost UI style: structural, quiet, integrated with the card edge.
 
-- In `src/components/dashboard/schedule/AppointmentCardContent.tsx`, both accent paths use a bordered `div` plus  
-  `maskImage: linear-gradient(to bottom, black 0px, black 14px, transparent 14px)`.
-- That means the accent does follow the rounded top corners, but it **stops abruptly at exactly 14px** down the sides.
-- Because the mask is a hard cut, there is **no taper/easing**, so the corners feel clipped instead of melting into the card edge.
-- On status-colored cards, the overlay currently uses `border: 1.5px solid currentColor`, which ties the accent to the card’s text color instead of the intended border token. That makes the accent weight/color feel inconsistent across statuses.
+## Why the current version reads wrong
+In `src/components/dashboard/schedule/AppointmentCardContent.tsx`, both accent overlays currently colorize the cap to the **category color** (line 140: `border: 1.25px solid ${catColor.text}`) or the **status border class** (line 708: `statusColors.border`). That makes the cap fight the card content as a *second* color layer. You want it to feel like the card's own border just got thicker at the top.
 
 ## Fix
 File: `src/components/dashboard/schedule/AppointmentCardContent.tsx`
 
-### 1. Replace the hard-stop mask with a tapered fade
-Keep the single rounded overlay approach, but change the mask from a hard cutoff to a fade:
+### 1. Switch both accent overlays to neutral border color
+Replace the colored stroke with the card's actual border token (`hsl(var(--border))`), and bump weight to `2.5px` so it reads as deliberate edge thickness rather than a hairline.
 
+**Category-color overlay (lines 136–146):**
 ```tsx
-WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
-maskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
+{useCategoryColor && !displayGradient && !BLOCKED_CATEGORIES.includes(appointment.service_category || '') && (
+  <div
+    className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+    style={{
+      border: '2.5px solid hsl(var(--border))',
+      opacity: 0.85,
+      WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+      maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+    }}
+  />
+)}
 ```
 
-Result:
-- top edge stays crisp
-- curved corners stay intact
-- side accent **eases out** instead of ending like a chopped bracket
+**Status-color overlay (lines 703–716):**
+```tsx
+{!useCategoryColor && !displayGradient && (
+  <div
+    className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
+    style={{
+      border: '2.5px solid hsl(var(--border))',
+      opacity: 0.85,
+      WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+      maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+    }}
+  />
+)}
+```
 
-### 2. Use the correct accent color source for status cards
-For status-colored cards, stop using `currentColor` for the overlay border.  
-Instead, apply the existing `statusColors.border` class directly to the accent overlay and set only width/style inline.
+Both branches now share the **identical** treatment — neutral border token, 2.5px stroke, same tapered mask — which is the whole point of ghost UI: one quiet structural cue, repeated everywhere.
 
-That keeps:
-- checked-in = blue accent
-- confirmed = green accent
-- unconfirmed = amber accent
+### 2. Tuning rationale
+- **`hsl(var(--border))`** — matches the card's own 1px border exactly, in both light and dark mode. This is what makes it read as "edge thickening" instead of "color accent."
+- **`2.5px`** — thick enough to register as intentional weight on the top edge against the card's existing 1px border, but not so thick it competes with content.
+- **`0.85` opacity** — softens the doubling effect against the existing border underneath.
+- **Mask `0→10→14→18`** — keeps the top edge crisp through both rounded corners, then eases out down the sides over ~8px (no hard chop, no bracket feel).
 
-without accidentally inheriting white or muted text color.
-
-### 3. Slightly reduce accent dominance
-Tune the accent so it reads as a leading edge, not a second border:
-- stroke: `1.25px` or `1.5px` max
-- category opacity: around `0.6–0.68`
-- status opacity: around `0.85–0.9`
-
-This prevents the top edge from feeling doubled against the card’s real 1px border.
-
-### 4. Keep the base border and lit edge separate
-Do not change:
-- existing full card border
-- overlap gap behavior
-- inner highlight ring
-- selected / no-show / cancelled states
-
-The accent should be a **surface cue**, not structural chrome.
-
-## Implementation shape
-Update both accent branches:
-
-- **Category-color branch** in `CardOverlays`
-  - keep rounded overlay
-  - keep `catColor.text`
-  - swap hard mask for tapered mask
-  - slightly lower opacity
-
-- **Status-color branch** in the main grid card
-  - keep rounded overlay
-  - remove `currentColor` border usage
-  - apply `statusColors.border` to the overlay element
-  - use the same tapered mask so both paths behave identically
+### 3. What stays exactly the same
+- All other card chrome (sheen overlay, lit-edge inner ring, base 1px border, shadow stack, hover lift)
+- 1px overlap gap math
+- All status pills, NC/RC chips, stylist avatars, multi-service bands
+- Cancelled hatch, no-show ring/dot, selected ring
+- Category color still drives the **card fill** (pink, blue, etc.) — only the cap stops being colorized
 
 ## QA
-- Accent wraps through both top corners cleanly
-- Side stroke fades out gradually instead of stopping at one line
-- No “bracket” feeling at the top-left / top-right
-- Status cards use their true accent color, not text color
-- Overlapping cards still preserve the 1px gap
-- Selected ring, no-show marker, and cancelled hatch still render cleanly
+- Top edge of every card reads as a thicker, neutral stroke that wraps both rounded corners
+- Cap color is identical across category-colored cards and status-colored cards (ghost UI consistency)
+- Side stroke fades smoothly down ~18px, no hard bracket cutoff
+- In dark mode, cap matches the dark border token (no white bleed)
+- Card fill colors (pink/blue/sage) are untouched
+- Selected ring, no-show dot, cancelled hatch all still render cleanly
 
 ## Enhancement suggestion
-After this lands, extract the effect into a small `AppointmentAccentWrap` primitive with props like `tone`, `opacity`, and `fadeDepthPx`. That gives the schedule one canonical accent treatment and prevents this exact “one-off overlay drift” from happening again.
+Once this lands, the next move is extracting both branches into a single `<CardEdgeCap />` primitive that takes only `wrapDepthPx` and `weightPx` props (no color prop — it's always the border token). That hard-codes the ghost UI rule into the API: the cap can't drift back into being a color accent because the prop doesn't exist.
+
