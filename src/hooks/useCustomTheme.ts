@@ -301,50 +301,24 @@ function removeCSSVariable(varName: string): void {
   document.documentElement.style.removeProperty(`--${varName}`);
 }
 
+const SITE_SETTINGS_KEY = 'org_custom_theme';
+
+type OrgCustomThemeValue = { tokens?: CustomTheme } & Record<string, unknown>;
+
 export function useCustomTheme() {
-  const [customTheme, setCustomTheme] = useState<CustomTheme | null>(null);
   const [pendingChanges, setPendingChanges] = useState<CustomTheme>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
-  
-  // Fetch current user and their custom theme
-  useEffect(() => {
-    const fetchTheme = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setIsLoading(false);
-          return;
-        }
-        
-        setUserId(user.id);
-        
-        const { data, error } = await supabase
-          .from('user_preferences')
-          .select('custom_theme')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        if (error) throw error;
-        
-        if (data?.custom_theme) {
-          const theme = data.custom_theme as CustomTheme;
-          setCustomTheme(theme);
-          // Apply saved theme on load
-          applyTheme(theme);
-        }
-      } catch (error) {
-        console.error('Error fetching custom theme:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchTheme();
-  }, []);
-  
+  const orgId = useSettingsOrgId();
+  const { canEditOrgTheme } = useThemeAuthority();
+
+  // Org-scoped persistence (Theme Governance canon)
+  const { data: dbValue, isLoading: dbLoading } = useSiteSettings<OrgCustomThemeValue>(SITE_SETTINGS_KEY);
+  const updateSetting = useUpdateSiteSetting<OrgCustomThemeValue>();
+
+  const customTheme: CustomTheme | null = (dbValue?.tokens as CustomTheme | undefined) ?? null;
+  const isLoading = dbLoading;
+
   // Apply theme overrides to CSS variables
   const applyTheme = useCallback((theme: CustomTheme) => {
     Object.entries(theme).forEach(([key, value]) => {
@@ -353,7 +327,14 @@ export function useCustomTheme() {
       }
     });
   }, []);
-  
+
+  // Apply saved org theme on load whenever it changes
+  useEffect(() => {
+    if (customTheme) {
+      applyTheme(customTheme);
+    }
+  }, [customTheme, applyTheme]);
+
   // Set a single variable (for live preview)
   const setVariable = useCallback((key: string, hexValue: string) => {
     const hslValue = hexToHslString(hexValue);
@@ -362,50 +343,49 @@ export function useCustomTheme() {
       setPendingChanges(prev => ({ ...prev, [key]: hslValue }));
     }
   }, []);
-  
+
   // Check if there are unsaved changes
   const hasUnsavedChanges = Object.keys(pendingChanges).length > 0;
-  
+
   // Get merged theme (saved + pending)
   const getMergedTheme = useCallback((): CustomTheme => {
     return { ...customTheme, ...pendingChanges };
   }, [customTheme, pendingChanges]);
-  
-  // Save all pending changes to database
+
+  // Save all pending changes — owner-gated, org-scoped
   const saveTheme = useCallback(async () => {
-    if (!userId) {
+    if (!canEditOrgTheme) {
       toast({
-        title: "Error",
-        description: "You must be logged in to save theme changes",
+        title: "Permission denied",
+        description: "Only the Account Owner can change the organization theme.",
         variant: "destructive",
       });
       return false;
     }
-    
+    if (!orgId) {
+      toast({
+        title: "Error",
+        description: "No active organization context.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     setIsSaving(true);
     try {
       const mergedTheme = getMergedTheme();
-      
-      const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-          user_id: userId,
-          custom_theme: mergedTheme,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id',
-        });
-      
-      if (error) throw error;
-      
-      setCustomTheme(mergedTheme);
+      await updateSetting.mutateAsync({
+        key: SITE_SETTINGS_KEY,
+        value: { tokens: mergedTheme },
+      });
+
       setPendingChanges({});
-      
+
       toast({
         title: "Theme saved",
-        description: "Your custom theme has been saved and will persist across sessions",
+        description: "The organization theme has been updated for everyone.",
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error saving theme:', error);
@@ -418,30 +398,33 @@ export function useCustomTheme() {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, getMergedTheme, toast]);
-  
+  }, [canEditOrgTheme, orgId, getMergedTheme, updateSetting, toast]);
+
   // Discard pending changes (revert to saved theme)
   const discardChanges = useCallback(() => {
-    // Remove all CSS overrides
     Object.keys(pendingChanges).forEach(key => {
       removeCSSVariable(key);
     });
-    
-    // Re-apply saved theme
     if (customTheme) {
       applyTheme(customTheme);
     }
-    
     setPendingChanges({});
   }, [pendingChanges, customTheme, applyTheme]);
-  
-  // Reset to default theme (clear all customizations)
+
+  // Reset to default theme — owner-gated, org-scoped
   const resetToDefault = useCallback(async () => {
-    if (!userId) return false;
-    
+    if (!canEditOrgTheme) {
+      toast({
+        title: "Permission denied",
+        description: "Only the Account Owner can reset the organization theme.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (!orgId) return false;
+
     setIsSaving(true);
     try {
-      // Clear all custom CSS overrides
       const allTokens = [
         ...editableTokens.core,
         ...editableTokens.brand,
@@ -449,27 +432,20 @@ export function useCustomTheme() {
         ...editableTokens.ui,
         ...editableTokens.sidebar,
       ];
-      
-      allTokens.forEach(token => {
-        removeCSSVariable(token.key);
+      allTokens.forEach(token => removeCSSVariable(token.key));
+
+      await updateSetting.mutateAsync({
+        key: SITE_SETTINGS_KEY,
+        value: { tokens: {} },
       });
-      
-      // Clear from database
-      const { error } = await supabase
-        .from('user_preferences')
-        .update({ custom_theme: null })
-        .eq('user_id', userId);
-      
-      if (error) throw error;
-      
-      setCustomTheme(null);
+
       setPendingChanges({});
-      
+
       toast({
         title: "Theme reset",
-        description: "Your theme has been reset to the default",
+        description: "The organization theme has been reset to the default.",
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error resetting theme:', error);
@@ -482,8 +458,8 @@ export function useCustomTheme() {
     } finally {
       setIsSaving(false);
     }
-  }, [userId, toast]);
-  
+  }, [canEditOrgTheme, orgId, updateSetting, toast]);
+
   // Export theme as JSON
   const exportTheme = useCallback(() => {
     const theme = getMergedTheme();
