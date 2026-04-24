@@ -12,8 +12,8 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
+import { PlatformCheckbox as Checkbox } from '@/components/platform/ui/PlatformCheckbox';
 import {
   Select,
   SelectValue,
