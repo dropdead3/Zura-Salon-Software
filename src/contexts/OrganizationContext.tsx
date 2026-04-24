@@ -209,3 +209,15 @@ export function useOrganizationContext() {
   }
   return context;
 }
+
+/**
+ * Safe accessor for components that may render both inside and outside
+ * the OrganizationProvider tree (e.g. App-root components like
+ * ThemeInitializer that wrap public + private routes).
+ *
+ * Returns undefined when no provider is mounted instead of throwing.
+ * Strict callers should keep using `useOrganizationContext`.
+ */
+export function useOptionalOrganizationContext() {
+  return useContext(OrganizationContext);
+}
