@@ -25,7 +25,7 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Pre-checkout statuses where Stripe Connect setup is still actionable.
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, SCHEDULE_LEADING_ACCENT } from '@/lib/design-tokens';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
@@ -204,16 +204,14 @@ function useServiceBands(
 }
 
 // ─── Leading Accent Bar ───────────────────────────────────────
-// Inset rounded pill that signals appointment status. Matches the agenda
-// divider pattern (AgendaContent line ~443) — a clean canonical bar, not an
-// edge-bleed shape. Color resolves from APPOINTMENT_STATUS_COLORS so it stays
-// in lockstep with the status badge dot.
-function LeadingAccentBar({ colorClass }: { colorClass: string }) {
+// Inset rounded pill matching the canonical schedule ear accent. This is a
+// single shared purple accent across card variants, not a per-status signal.
+function LeadingAccentBar() {
   return (
     <div
       className={cn(
         'absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full pointer-events-none z-[5]',
-        colorClass
+        SCHEDULE_LEADING_ACCENT
       )}
       aria-hidden
     />
@@ -706,14 +704,9 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Leading status accent — inset rounded pill, canonical status signal */}
-      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && !displayGradient && (
-        <LeadingAccentBar
-          colorClass={
-            (APPOINTMENT_STATUS_COLORS[(appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_COLORS]?.bg) ||
-            APPOINTMENT_STATUS_COLORS.booked.bg
-          }
-        />
+      {/* Leading schedule ear accent — shared across card variants */}
+      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && (
+        <LeadingAccentBar />
       )}
 
       {/* Multi-service color bands */}
