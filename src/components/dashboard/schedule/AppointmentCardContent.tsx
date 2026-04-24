@@ -137,10 +137,10 @@ function CardOverlays({
         <div
           className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
           style={{
-            border: `1.5px solid ${catColor.text}`,
-            opacity: 0.75,
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
-            maskImage: 'linear-gradient(to bottom, black 0px, black 14px, transparent 14px)',
+            border: `1.25px solid ${catColor.text}`,
+            opacity: 0.65,
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
+            maskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
           }}
         />
       )}
