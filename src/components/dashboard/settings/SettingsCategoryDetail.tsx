@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/select';
 import {
   Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check, DollarSign as DollarSignIcon,
-  GraduationCap, Keyboard, Sparkles, Settings2, Save, Globe,
+  GraduationCap, Keyboard, Sparkles, Settings2, Save, Globe, Lock,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useColorTheme, colorThemes, COLOR_THEME_TO_CATEGORY_MAP } from '@/hooks/useColorTheme';
+import { useThemeAuthority } from '@/hooks/useThemeAuthority';
+import { Badge } from '@/components/ui/badge';
 import { useServiceCategoryThemes, useApplyCategoryTheme } from '@/hooks/useCategoryThemes';
 import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
@@ -543,6 +545,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
   const { toast } = useToast();
   const { theme, setTheme, resolvedTheme } = useDashboardTheme();
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
+  const { canEditOrgTheme } = useThemeAuthority();
   const { data: categoryThemes } = useServiceCategoryThemes();
   const applyCategoryTheme = useApplyCategoryTheme();
   const { roleOptions: dynamicRoleOptions } = useRoleUtils();
