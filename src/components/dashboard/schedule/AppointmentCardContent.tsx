@@ -654,7 +654,7 @@ export function AppointmentCardContent({
         borderRightColor: darkStyle.fill,
         borderBottomColor: darkStyle.fill,
         borderLeftColor: accentEdge,
-        borderLeftWidth: '2px',
+        borderLeftWidth: '4px',
       };
     }
     if (useCategoryColor) {
@@ -680,7 +680,7 @@ export function AppointmentCardContent({
         borderRightColor: lightTokens.stroke,
         borderBottomColor: lightTokens.stroke,
         borderLeftColor: accentEdge,
-        borderLeftWidth: '2px',
+        borderLeftWidth: '4px',
       };
     }
     return {};
