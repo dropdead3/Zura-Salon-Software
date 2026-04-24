@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, ChevronRight, ArrowRightLeft, Users } from 'lucide-react';
 
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { getDisplayClientName, getCompactDisplayClientName } from '@/lib/appointment-display';
 import { StylistBadge } from './StylistBadge';
 import { CallbackChip } from '@/components/dashboard/clients/CallbackChip';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
@@ -34,6 +35,8 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 // ─── Shared helpers ───────────────────────────────────────────
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+// Legacy compact-name kept for callers that pass a bare string.
+// New call sites should prefer getCompactDisplayClientName(appointment).
 function formatCompactName(name: string | null | undefined): string {
   if (!name?.trim()) return 'Walk-in';
   const parts = name.trim().split(/\s+/);
