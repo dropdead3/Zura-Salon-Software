@@ -1,8 +1,13 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Use a permissive admin-client type so this helper works across edge functions
+// without forcing every caller to align on the generated Database generics.
+// deno-lint-ignore no-explicit-any
+export type AdminClient = SupabaseClient<any, any, any>;
 
 export interface AuthResult {
   user: { id: string; email?: string };
-  supabaseAdmin: ReturnType<typeof createClient>;
+  supabaseAdmin: AdminClient;
 }
 
 /**
