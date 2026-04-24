@@ -517,19 +517,28 @@ const staggerItem = {
 };
 
 // ─── Status Config ──────────────────────────────────────────────
+// Derived from the canonical APPOINTMENT_STATUS_BADGE map. Only the icon
+// mapping lives locally — visual tokens (bg/text/label) come from the
+// design-tokens source of truth.
+const STATUS_ICONS: Record<AppointmentStatus, React.ElementType> = {
+  pending: Clock,
+  booked: Clock,
+  unconfirmed: Clock,
+  confirmed: CheckCircle,
+  walk_in: UserCheck,
+  checked_in: UserCheck,
+  completed: CheckCircle,
+  cancelled: XCircle,
+  no_show: AlertTriangle,
+};
+
 const STATUS_CONFIG: Record<AppointmentStatus, {
   bg: string; text: string; label: string; icon: React.ElementType;
-}> = {
-  pending:      { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Pending',      icon: Clock },
-  booked:       { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Unconfirmed',  icon: Clock },
-  unconfirmed:  { bg: 'bg-amber-100 dark:bg-amber-900/50',  text: 'text-amber-800 dark:text-amber-300',  label: 'Unconfirmed',  icon: Clock },
-  confirmed:    { bg: 'bg-green-100 dark:bg-green-900/50',   text: 'text-green-800 dark:text-green-300',  label: 'Confirmed',    icon: CheckCircle },
-  walk_in:      { bg: 'bg-teal-100 dark:bg-teal-900/50',    text: 'text-teal-800 dark:text-teal-300',    label: 'Walk-In',      icon: UserCheck },
-  checked_in:   { bg: 'bg-blue-100 dark:bg-blue-900/50',     text: 'text-blue-800 dark:text-blue-300',    label: 'Checked In',   icon: UserCheck },
-  completed:    { bg: 'bg-purple-100 dark:bg-purple-900/50', text: 'text-purple-800 dark:text-purple-300',label: 'Completed',    icon: CheckCircle },
-  cancelled:    { bg: 'bg-gray-100 dark:bg-gray-800',        text: 'text-gray-600 dark:text-gray-400',    label: 'Cancelled',    icon: XCircle },
-  no_show:      { bg: 'bg-red-100 dark:bg-red-900/50',       text: 'text-red-800 dark:text-red-300',      label: 'No Show',      icon: AlertTriangle },
-};
+}> = Object.fromEntries(
+  (Object.entries(APPOINTMENT_STATUS_BADGE) as [AppointmentStatus, typeof APPOINTMENT_STATUS_BADGE[AppointmentStatus]][]).map(
+    ([key, badge]) => [key, { bg: badge.bg, text: badge.text, label: badge.label, icon: STATUS_ICONS[key] }],
+  ),
+) as Record<AppointmentStatus, { bg: string; text: string; label: string; icon: React.ElementType }>;
 
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
   pending: ['confirmed', 'cancelled'],
