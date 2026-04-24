@@ -1071,7 +1071,8 @@ export function AppointmentDetailSheet({
   }, [appointment, serviceLookup, assignmentMap, teamMembers]);
 
   // ─── Per-service override handlers (Phorest-style row chips) ───
-  const fireAuditLog = useLogAuditEvent();
+  // Note: `fireAuditLog` (declared later in this component) is captured by closure
+  // — useCallback runs at event time, after all consts initialize.
   const persistServiceOverride = useCallback(
     async (
       serviceName: string,
