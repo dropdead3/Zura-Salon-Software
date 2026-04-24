@@ -603,27 +603,79 @@ export function DayView({
     const appointment = (active.data.current as any)?.appointment as PhorestAppointment | undefined;
     if (!appointment) return;
 
-    // Droppable ID format: "slot-{stylistId}-{HH:MM}"
     const overId = over.id as string;
     if (!overId.startsWith('slot-')) return;
 
-    const parts = overId.split('-');
-    // slot-{stylistId}-{HH}:{MM}
-    const newStylistId = parts[1];
-    const newTime = parts.slice(2).join('-').replace('-', ':');
-    // Actually: "slot-<uuid>-HH:MM" — uuid has dashes, so let's parse differently
-    // Format: `slot-${stylistId}-${hour}:${minute}`
-    // We need to extract the last part as time and everything between first "slot-" and last "-HH:MM" as stylistId
     const timeMatch = overId.match(/(\d{2}:\d{2})$/);
     if (!timeMatch) return;
     const time = timeMatch[1];
-    const stylistId = overId.slice(5, overId.length - time.length - 1); // remove "slot-" prefix and "-HH:MM" suffix
+    const stylistId = overId.slice(5, overId.length - time.length - 1);
 
     // Don't reschedule if dropped on same time and same stylist
     if (appointment.start_time.slice(0, 5) === time && appointment.stylist_user_id === stylistId) return;
 
     const previousTime = appointment.start_time;
     const previousStaff = appointment.stylist_user_id;
+
+    // Detect merged-visit drag — fan out the time delta to every member.
+    // Per-service stylist overrides are preserved; only the lead member's
+    // column changes when the visit is dragged across stylist columns.
+    const visitMembers = (appointment as any)._visit_members as PhorestAppointment[] | undefined;
+    const isMergedVisit = !!(appointment as any)._is_merged_visit && visitMembers && visitMembers.length > 1;
+
+    if (isMergedVisit) {
+      const deltaMins = parseTimeToMinutes(time) - parseTimeToMinutes(appointment.start_time);
+      const fmt = (mins: number) => {
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+      };
+
+      toast.info('Moving visit...');
+
+      Promise.allSettled(
+        visitMembers.map((member) => {
+          const newStart = fmt(parseTimeToMinutes(member.start_time) + deltaMins);
+          const isLead = member.id === appointment.id;
+          return reschedule.mutateAsync({
+            appointmentId: member.id,
+            newDate: dateStr,
+            newTime: newStart,
+            // Only the lead member follows a stylist-column change. Other
+            // members keep their per-service stylist override.
+            newStaffId: isLead && stylistId !== member.stylist_user_id ? stylistId : undefined,
+          });
+        }),
+      ).then((results) => {
+        toast.dismiss();
+        const failures = results.filter((r) => r.status === 'rejected').length;
+        if (failures === 0) {
+          toast.success(`Moved visit to ${formatTime12h(time)}`, {
+            action: {
+              label: 'Undo',
+              onClick: () => {
+                Promise.allSettled(
+                  visitMembers.map((member) => {
+                    const restoredStart = fmt(parseTimeToMinutes(member.start_time));
+                    const isLead = member.id === appointment.id;
+                    return reschedule.mutateAsync({
+                      appointmentId: member.id,
+                      newDate: dateStr,
+                      newTime: restoredStart,
+                      newStaffId: isLead ? (previousStaff || undefined) : undefined,
+                    });
+                  }),
+                );
+              },
+            },
+            duration: 5000,
+          });
+        } else {
+          toast.error(`${failures} of ${visitMembers.length} services failed to move`);
+        }
+      });
+      return;
+    }
 
     toast.info('Moving appointment...');
 

@@ -24,6 +24,7 @@ import { DraftBookingsSheet } from '@/components/dashboard/schedule/DraftBooking
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
+import { buildDisplayAppointments } from '@/lib/visit-grouping';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
@@ -304,15 +305,25 @@ export default function Schedule() {
     return filtered;
   }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
 
-  // Keep selectedAppointment in sync with latest query data
+  // Visit grouping — collapse contiguous same-client services into one display
+  // row per visit. Single-service appointments pass through unchanged.
+  // See src/lib/visit-grouping.ts for the strict-contiguity doctrine.
+  const displayAppointments = useMemo(
+    () => buildDisplayAppointments(appointments),
+    [appointments],
+  );
+
+  // Keep selectedAppointment in sync with latest query data. Match against the
+  // merged display list so a re-grouped visit (e.g. after a reschedule
+  // expanded the gap past 5 min) stays selected without flicker.
   useEffect(() => {
-    if (selectedAppointment && appointments.length > 0) {
-      const fresh = appointments.find(a => a.id === selectedAppointment.id);
+    if (selectedAppointment && displayAppointments.length > 0) {
+      const fresh = displayAppointments.find(a => a.id === selectedAppointment.id);
       if (fresh && fresh.status !== selectedAppointment.status) {
         setSelectedAppointment(fresh);
       }
     }
-  }, [appointments]);
+  }, [displayAppointments]);
 
   // Wave 22.2 — Bulk-fetch Stripe Connect status for all locations visible in
   // the current calendar slice. Builds a Set of locationIds whose Connect is
@@ -873,7 +884,7 @@ export default function Schedule() {
             return (
               <DayView
                 date={currentDate}
-                appointments={appointments}
+                appointments={displayAppointments}
                 stylists={displayedStylists}
                 hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
                 hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
@@ -904,7 +915,7 @@ export default function Schedule() {
           {view === 'day' && !selectedLocationData && (
             <DayView
               date={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               stylists={displayedStylists}
                hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
                hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
@@ -931,7 +942,7 @@ export default function Schedule() {
           {view === 'week' && (
             <WeekView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
               hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
               onAppointmentClick={handleAppointmentClick}
@@ -963,7 +974,7 @@ export default function Schedule() {
           {view === 'month' && (
             <MonthView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               onDayClick={handleDayClick}
               onAppointmentClick={handleAppointmentClick}
               locationHoursJson={selectedLocationData?.hours_json}
@@ -974,7 +985,7 @@ export default function Schedule() {
           {view === 'agenda' && (
             <AgendaView
               currentDate={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               onAppointmentClick={handleAppointmentClick}
               assistedAppointmentIds={assistedAppointmentIds}
               assistantNamesMap={assistantNamesMap}
