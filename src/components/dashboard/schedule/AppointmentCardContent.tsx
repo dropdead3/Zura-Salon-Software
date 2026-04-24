@@ -137,10 +137,10 @@ function CardOverlays({
         <div
           className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
           style={{
-            border: `1.25px solid ${catColor.text}`,
-            opacity: 0.65,
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
-            maskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
+            border: '2.5px solid hsl(var(--border))',
+            opacity: 0.85,
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+            maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
           }}
         />
       )}
@@ -700,17 +700,15 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Corner-wrapping accent — single masked bordered box, uses status border token */}
+      {/* Corner-wrapping accent — neutral border token, ghost UI edge thickening */}
       {!useCategoryColor && !displayGradient && (
         <div
-          className={cn(
-            'absolute inset-0 pointer-events-none z-[3] rounded-[10px] border-[1.25px]',
-            statusColors.border,
-          )}
+          className="absolute inset-0 pointer-events-none z-[3] rounded-[10px]"
           style={{
-            opacity: 0.9,
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
-            maskImage: 'linear-gradient(to bottom, black 0px, black 8px, rgba(0,0,0,0.85) 11px, rgba(0,0,0,0.35) 15px, transparent 19px)',
+            border: '2.5px solid hsl(var(--border))',
+            opacity: 0.85,
+            WebkitMaskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
+            maskImage: 'linear-gradient(to bottom, black 0px, black 10px, rgba(0,0,0,0.6) 14px, transparent 18px)',
           }}
         />
       )}
