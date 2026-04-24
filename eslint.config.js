@@ -80,10 +80,10 @@ export default tseslint.config(
       "src/components/platform/**/*.{ts,tsx}",
       "src/pages/dashboard/platform/**/*.{ts,tsx}",
     ],
-    // Lint fixtures intentionally violate the rule to assert it fires.
-    ignores: [
-      "src/components/platform/__lint-fixtures__/**",
-    ],
+    // Note: lint fixtures are excluded at the top-level `ignores` so
+    // `npm run lint` skips them while explicit ESLint API calls in the
+    // smoke test (src/test/lint-rule-platform-primitives.test.ts) still
+    // see them and assert the rule fires.
     rules: {
       "no-restricted-imports": ["error", {
         paths: [
