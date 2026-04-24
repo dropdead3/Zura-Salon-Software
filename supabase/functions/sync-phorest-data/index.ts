@@ -15,20 +15,39 @@ interface SyncRequest {
 
 // Phorest API configuration - Global endpoint works
 const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
+const PHOREST_BASE_URL_US = "https://platform-us.phorest.com/third-party-api-server/api";
 
-async function phorestRequest(endpoint: string, businessId: string, username: string, password: string) {
+/**
+ * GET helper. By default tries EU then US, falling through on 404 from EU.
+ * Pass `preferredBase` to skip the wrong region entirely — required for
+ * per-branch lookups, where calling the wrong region returns a misleading 404
+ * that the caller would otherwise interpret as "client doesn't exist."
+ *
+ * SIGNAL PRESERVATION: throws ONLY when every base URL has been definitively
+ * tried; the error message preserves whether we ever saw a non-404 response so
+ * the caller can distinguish "really not found" from "transient/auth/etc."
+ */
+async function phorestRequest(
+  endpoint: string,
+  businessId: string,
+  username: string,
+  password: string,
+  preferredBase?: string,
+) {
   const formattedUsername = username.startsWith('global/') ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
-  
-  const baseUrls = [
-    PHOREST_BASE_URL,
-    "https://platform-us.phorest.com/third-party-api-server/api",
-  ];
+
+  const baseUrls = preferredBase
+    ? [preferredBase]
+    : [PHOREST_BASE_URL, PHOREST_BASE_URL_US];
+
+  let lastNon404Status = 0;
+  let lastNon404Error = "";
 
   for (const base of baseUrls) {
     const url = `${base}/business/${businessId}${endpoint}`;
     console.log(`Phorest request: ${url}`);
-    
+
     const response = await fetch(url, {
       headers: {
         "Authorization": `Basic ${basicAuth}`,
@@ -42,21 +61,31 @@ async function phorestRequest(endpoint: string, businessId: string, username: st
       continue;
     }
 
+    if (response.status === 404) {
+      // Fall through to the next base — but if this is the last base, the
+      // caller still needs to know it was a 404 (not a transient error).
+      await response.text();
+      continue;
+    }
+
     if (!response.ok) {
-      // If 404 and we have another base to try, continue
-      if (response.status === 404 && base === PHOREST_BASE_URL) {
-        await response.text();
-        continue;
-      }
       const errorText = await response.text();
+      lastNon404Status = response.status;
+      lastNon404Error = errorText;
       console.error(`Phorest API error (${response.status}):`, errorText);
-      throw new Error(`Phorest API error: ${response.status} - ${errorText}`);
+      continue;
     }
 
     return response.json();
   }
-  
-  throw new Error('Phorest API GET: all base URLs failed');
+
+  // Exhausted bases. Surface a 404 only if we never saw a non-404 — otherwise
+  // the caller was experiencing a transient/auth/region failure, not a true
+  // "not found." Distinguishing these prevents the negative-cache anti-pattern.
+  if (lastNon404Status === 0) {
+    throw new Error(`Phorest API error: 404 - exhausted base URLs`);
+  }
+  throw new Error(`Phorest API error: ${lastNon404Status} - ${lastNon404Error}`);
 }
 
 // POST request helper for CSV export jobs
