@@ -1409,10 +1409,20 @@ async function syncClients(
         client, pass, staffMap, dedupByEmail, dedupByPhone,
       ));
 
+      // S7f: Dedupe within the page. Phorest occasionally returns the same
+      // clientId twice (e.g., when a record is updated mid-pagination). A
+      // single batch upsert on duplicates throws Postgres error 21000
+      // ("cannot affect row a second time") and FAILS THE WHOLE BATCH —
+      // which is exactly why pages 9-19 silently lost their 200 rows in
+      // the first verification run.
+      const dedupedMap = new Map<string, any>();
+      for (const r of records) dedupedMap.set(r.phorest_client_id, r);
+      const dedupedRecords = Array.from(dedupedMap.values());
+
       // Upsert in chunks (page is already small, but keep this for safety).
       let pageSynced = 0;
-      for (let i = 0; i < records.length; i += UPSERT_BATCH_SIZE) {
-        const batch = records.slice(i, i + UPSERT_BATCH_SIZE);
+      for (let i = 0; i < dedupedRecords.length; i += UPSERT_BATCH_SIZE) {
+        const batch = dedupedRecords.slice(i, i + UPSERT_BATCH_SIZE);
         const { error } = await supabase
           .from("phorest_clients")
           .upsert(batch, { onConflict: 'phorest_client_id' });
