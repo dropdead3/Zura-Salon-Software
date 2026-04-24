@@ -51,7 +51,11 @@ serve(async (req) => {
     const body = await validateBody(req, HuddleSchema, getCorsHeaders(req));
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      const orgId = body.organizationId || body.organization_id;
+      if (!orgId) {
+        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+      }
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
