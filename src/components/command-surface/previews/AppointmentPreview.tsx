@@ -12,7 +12,8 @@ export function AppointmentPreview({ result }: AppointmentPreviewProps) {
   const subtitleParts = result.subtitle?.split(' · ') || [];
   const time = subtitleParts[0] || '';
   const service = subtitleParts.slice(1).join(' · ') || '';
-  const status = result.metadata || 'scheduled';
+  const status = (result.metadata || 'pending') as AppointmentStatusKey;
+  const badge = APPOINTMENT_STATUS_BADGE[status] ?? APPOINTMENT_STATUS_BADGE.pending;
 
   return (
     <div className="space-y-4">
@@ -22,8 +23,8 @@ export function AppointmentPreview({ result }: AppointmentPreviewProps) {
         </div>
         <div>
           <h3 className="font-display text-sm tracking-wide text-foreground">{result.title}</h3>
-          <span className={cn('font-sans text-[10px] capitalize', STATUS_STYLES[status] || 'text-muted-foreground/70')}>
-            {status.replace(/_/g, ' ')}
+          <span className={cn('font-sans text-[10px]', badge.text)}>
+            {badge.label}
           </span>
         </div>
       </div>
