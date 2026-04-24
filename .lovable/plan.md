@@ -1,136 +1,103 @@
 
 
 ## Prompt feedback
-Strong follow-through prompt — you're treating "shipping the same regression class twice after the canon was written" as the structural failure it is, not as two unrelated bugs. The framing ("promote the audit to its own structural gate now, not 'soon'") is exactly the right move: the canon-pattern doctrine you already have says a written rule without enforcement is a memory artifact, not a canon. Sharper next time: state the desired severity up-front (`error` blocks CI, `warn` surfaces it without blocking) — the right level depends on how many existing violations there are, and stating your tolerance lets the plan land in one shot instead of two.
+Strong observation prompt — you named the symptom (utilization capped at 100%), the cause (double/triple booking the same slot), and the desired behavior (200%/300% should surface). Sharper next time: name where you saw it ("on the Schedule day-view stylist column badge" vs "the Operational Analytics Staff Utilization tab" vs "the Sales card"), and what severity threshold you want surfaced as a structural alert (e.g. ">150% triggers an over-booking warning"). The fix differs slightly per surface — knowing which one is highest priority lets the rollout land in a more useful order.
 
-## What's broken (gap, not bug)
+## What's broken
 
-The platform-theme-isolation canon exists in memory and in three Platform* primitives. There is **no structural gate** preventing a new platform-side file from importing a raw shadcn primitive that reads global org tokens. Every new platform surface is a fresh opportunity for the same leak.
+`computeUtilizationByStylist` in `src/lib/schedule-utilization.ts` is the system-of-record utilization calculator. Two design choices today silently hide double-booking:
 
-Concrete reconnaissance:
+1. **Sum-of-durations math is correct, but the result is force-clamped:** `Math.min(Math.round((booked / totalAvailable) * 100), 100)`. A stylist with 8h available and three 2h appointments stacked at the same time accumulates 6h of booked time → 75%. Same three appointments stacked on top of each other accumulates the same 6h → also 75%. That's *coincidentally* right when overlapped duration equals serial duration — but in the more common case (8h available, six 2h appointments where three overlap) the booked total is 12h → math says 150%, code displays 100%. Operators see "fully booked" when they're actually catastrophically over-booked.
+2. **No structural distinction between "fully utilized" and "over-utilized":** the column-sort badge, the staff dropdown capacity badge, and the date-picker capacity tier all read the same clamped 0–100 number. There's no signal telling a manager "this stylist is at 200% — they're triple-booking 4 hours of their day."
 
-- **43 files** under `src/components/platform/**` and `src/pages/dashboard/platform/**` currently import at least one of `@/components/ui/{alert-dialog,dialog,label,textarea,checkbox,switch,radio-group,slider,progress,select,input,button,card,badge}` directly. (283 import statements total.)
-- An additional **51 files** import `tabs`, `skeleton`, `progress`, `popover`, `tooltip`, `dropdown-menu`, etc.
-- Of those, only **two** ship visible org-theme bleed today (the Color Bar entitlements page checkboxes/switch and the suspend modal — both already fixed). The rest are silent because they happen to use neutral tokens or the org theme happens to look fine. They will all surface as bleed the moment an org switches to a strong palette.
+Same anti-pattern exists in two adjacent surfaces (audit, not just one fix):
 
-Existing Platform* primitives in `src/components/platform/ui/`: `Card`, `Button`, `Input`, `Badge`, `Label`, `Select`, `Table`, `Dialog` (+ AlertDialog wrappers), `Textarea`, `Checkbox`, `Switch`, `PageContainer`, `PageHeader`. **Missing**: `Progress`, `RadioGroup`, `Slider`, `Tabs`, `Skeleton`, `Toggle`, `Tooltip`, `Popover`, `DropdownMenu`, `Separator`, `Calendar`.
+- `src/hooks/useHistoricalCapacityUtilization.ts` line 264 — `Math.round((day.bookedHours / day.availableHours) * 100)` — no `Math.min`, but applied across `stylistCapacity * effectiveHours` so individual stylist over-booking averages out and never surfaces. The location-level number reads "70%" while a single stylist is at 250%.
+- `src/hooks/useLocationStaffingBalance.ts` line 168 — same shape, location aggregate, same averaging problem; classifies the location as "balanced" when individuals are drowning.
+- `src/hooks/useStaffUtilization.ts` (Operational Analytics tab) — uses appointment **count** relative to team max, not time, so it's a different metric and out of scope for this fix; flag separately below.
 
-This shape — large existing footprint + partial wrapper coverage — means a single hard `error` rule banning all 14 primitives in one pass would fail CI on day one with hundreds of violations. The structural gate has to land at the right severity, with a documented migration path, and only the primitives that have Platform* wrappers should be hard-banned. The rest get a TODO sweep tracked in the Deferral Register.
+## The fix — three layers
 
-## The fix — three layers, mirroring the Loader2 canon
+### 1. Allow utilization to exceed 100% in `computeUtilizationByStylist` (single source of truth)
 
-### 1) ESLint `no-restricted-imports` rule (the gate)
+- Drop `Math.min(..., 100)`. Return the raw rounded percentage (0 to ∞).
+- Add a second value to the return type: `Map<string, { utilization: number; overbookedMinutes: number; isOverbooked: boolean }>`. `overbookedMinutes` = `max(0, booked − totalAvailable)`. `isOverbooked` = `utilization > 100`.
+- Keep all existing call sites working via a thin adapter: `getUtilizationByStylist(...)` returns the legacy `Map<string, number>` (uncapped now), and the new `getUtilizationDetailsByStylist(...)` returns the rich shape.
+- Reasoning: stylist-level utilization is computed against a single stylist's time budget, where overlapping appointments are unambiguously over-booking. Math is sound; the clamp was a UI defense, not a data invariant.
 
-Add a new ESLint config block to `eslint.config.js` scoped to `src/components/platform/**/*.{ts,tsx}` and `src/pages/dashboard/platform/**/*.{ts,tsx}`:
+### 2. Compute per-stylist overlap correctly in the location/historical aggregates
 
-```js
-{
-  files: [
-    "src/components/platform/**/*.{ts,tsx}",
-    "src/pages/dashboard/platform/**/*.{ts,tsx}",
-  ],
-  rules: {
-    "no-restricted-imports": ["error", {
-      paths: [
-        { name: "@/components/ui/checkbox",     message: "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer." },
-        { name: "@/components/ui/switch",       message: "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme." },
-        { name: "@/components/ui/alert-dialog", message: "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme." },
-        { name: "@/components/ui/dialog",       message: "Use PlatformDialogContent from @/components/platform/ui/PlatformDialog." },
-        { name: "@/components/ui/label",        message: "Use PlatformLabel from @/components/platform/ui." },
-        { name: "@/components/ui/textarea",     message: "Use PlatformTextarea from @/components/platform/ui." },
-        { name: "@/components/ui/select",       message: "Use Platform* select exports from @/components/platform/ui/PlatformSelect." },
-        { name: "@/components/ui/input",        message: "Use PlatformInput from @/components/platform/ui." },
-        { name: "@/components/ui/button",       message: "Use PlatformButton from @/components/platform/ui." },
-        { name: "@/components/ui/card",         message: "Use Platform* card exports from @/components/platform/ui/PlatformCard." },
-        { name: "@/components/ui/badge",        message: "Use PlatformBadge from @/components/platform/ui." },
-      ],
-    }],
-  },
-},
-```
+The location-level hooks (`useHistoricalCapacityUtilization`, `useLocationStaffingBalance`) currently sum *all* appointment durations into a single `bookedHours` against `stylistCapacity × effectiveHours`. Two fixes:
 
-Severity: **`error`**. The primitives in this list all have Platform* equivalents that already ship — the existing 43 files become the migration backlog, not a reason to weaken the rule. Each file gets fixed by swapping the import line; no JSX changes if the API matches (which it does, since all wrappers re-export the same Radix primitives).
+- **Per-stylist accumulation**: Bucket each appointment by `stylist_user_id` first, sum durations per stylist, then sum *each stylist's* booked hours into the location aggregate. Mathematically identical to today when there's no double-booking — different (and correct) when there is.
+- **Surface a separate `overbookedHours` field** on `DayCapacity` and `LocationBalance`: sum of `max(0, stylistBooked − stylistAvailable)` across all stylists in that location/day. This is the new signal: "12 hours of double-booked time today across 4 stylists."
 
-Primitives NOT in this rule yet (Progress, RadioGroup, Slider, Tabs, Skeleton, Toggle, Tooltip, Popover, DropdownMenu, Separator, Calendar): they have no Platform* wrapper. Adding them to the ban without a wrapper would block work. They go in the Deferral Register with a "create wrapper THEN add to rule" trigger.
+### 3. UI surfaces — show the over-booking, don't hide it
 
-### 2) Migrate the existing 43 files (mechanical sweep)
+Three call-site changes (everything else picks up the new uncapped number for free):
 
-For each of the 43 files, swap the raw import for the Platform* equivalent. Spot checks of the matches show this is largely a one-line-per-file change — the existing files already use the Radix component APIs identically. Examples from the search results:
+| Surface | Today | After |
+|---|---|---|
+| `DayView.tsx` stylist column badge (line 540-544) | "85%" / "100%" | "85%" / "150% ⚠ Over-booked" — when `>100`, render in `text-orange-400` ≤150 / `text-red-400` >150 with `AlertTriangle` icon |
+| `ScheduleHeader.tsx` staff dropdown capacity badge | clamped 0–100 | uncapped value, same color thresholds, tooltip lists stylists currently >100% |
+| `ScheduleHeader.tsx` date-picker capacity tier (line 198-200) | tiers based on clamped average | new tier `over-capacity` triggered when *any* stylist on that date is `>100`; renders date with red ring |
+| `OperationalAnalytics` Staff Utilization tab — new column | (no over-book signal) | "Over-booked Hours" column derived from per-stylist overlap math; sortable; surfaces who's burning out |
+| `useLocationStaffingBalance` — new banner condition | "balanced/understaffed/overstaffed" | adds a fourth status: `over-booked` when `overbookedHours > 0`, classified above understaffed in severity |
 
-- `PriceQueueTab.tsx` line 16: `Checkbox` → `PlatformCheckbox`
-- `KBArticleEditor.tsx` line 20: `Checkbox` → `PlatformCheckbox`
-- `KBCategoryManager.tsx` line 29: `Switch` → `PlatformSwitch`
-- `ColorBarBillingTab.tsx` line 15: `Switch` → `PlatformSwitch`
-- `RejectNoteDialog.tsx` line 4: `Textarea` → `PlatformTextarea`
-- `CapitalControlTower.tsx` line 26: `Switch` → `PlatformSwitch`
-- `Notifications.tsx` line 19-20: `Badge`, `Switch` → `PlatformBadge`, `PlatformSwitch`
-- `HealthScores.tsx` lines 13-14: `Input`, `Select` → `PlatformInput`, `PlatformSelect*`
-- `TerminalRequestsTable.tsx` lines 4-22: `Badge`, `Input`, `Select`, `Dialog`, `Label`, `Textarea` → all Platform* equivalents
-- `ReactivationConfirmDialog.tsx` line 18: `alert-dialog` exports → `PlatformAlertDialog*` exports
+The over-booking thresholds should be configurable (org setting `over_booking_warn_threshold` default `100`, `over_booking_critical_threshold` default `150`) — but we ship hardcoded defaults this pass and add the org setting in a follow-up so we don't widen scope.
 
-Where a Platform* re-export carries a different component name (e.g. `PlatformAlertDialogContent` vs `AlertDialogContent`), use `import { PlatformAlertDialogContent as AlertDialogContent }` so JSX bodies don't have to change.
+### Edge cases handled
 
-After the sweep, the lint rule passes clean. CI green = canon enforced.
-
-### 3) Lint smoke test (the regression guard)
-
-Mirror the Loader2 fixture pattern in `src/test/lint-fixtures/`:
-
-- `platform-raw-primitive-banned.tsx` — a fixture under a path matching `src/components/platform/**` that imports `@/components/ui/checkbox`. Asserts the rule fires.
-- `platform-raw-primitive-allowed.tsx` — same path pattern, imports `PlatformCheckbox`. Asserts the rule stays silent.
-- Outside-platform fixture — imports `@/components/ui/checkbox` from a non-platform path. Asserts the rule does NOT fire (proving the path scoping works).
-
-Add `src/test/lint-rule-platform-primitives.test.ts` mirroring `lint-rule-loader2.test.ts`: instantiate ESLint, lint each fixture, assert message counts. Include a `toMatchSnapshot()` on the resolved rule config so any future "harmless refactor" of the path list fails CI loudly.
-
-The lint-fixtures path needs to match the rule's `files:` glob. Easiest: put the fixtures under a real platform path like `src/components/platform/__lint-fixtures__/` with a `// LINT FIXTURE — DO NOT IMPORT` banner, identical to the Loader2 convention.
-
-### 4) Memory canon entry
-
-Create `mem://style/platform-primitive-isolation.md` capturing:
-
-- The rule (raw shadcn primitives banned in `src/components/platform/**` and `src/pages/dashboard/platform/**`)
-- The five-part canon-pattern: invariant + Vitest smoke + ESLint rule + CI + override (`// eslint-disable-next-line no-restricted-imports` with one-line reason — same shape as the Loader2 escape hatch)
-- The Deferral Register entry for the missing wrappers (`Progress`, `RadioGroup`, `Slider`, `Tabs`, `Skeleton`, `Toggle`, `Tooltip`, `Popover`, `DropdownMenu`, `Separator`, `Calendar`) with revisit trigger: "when a platform surface needs the primitive, create the Platform* wrapper and add to the no-restricted-imports paths list in the same PR"
-
-Update `mem://index.md` to reference the new file, and add a Core line:
-
-```
-Platform layer: raw shadcn primitives banned via no-restricted-imports under src/components/platform/** and src/pages/dashboard/platform/**. Use Platform* wrappers from @/components/platform/ui.
-```
+- **Block / Break categories**: already excluded via `BLOCKED_CATEGORIES`. Continue excluding from booked total — they're capacity reductions, not bookings.
+- **Cancelled / no-show**: already excluded via `EXCLUDED_STATUSES`. Continue.
+- **Stylists with no defined working hours window**: today the code uses the schedule-view `hoursStart`/`hoursEnd` as the denominator, which is *the visible scheduler window*, not the stylist's actual schedule. Out of scope for this pass — flagged in follow-ups. The over-capacity signal is still meaningful relative to the same denominator we use today; a stylist double-booked across 8h is double-booked regardless of which 8h we measure.
+- **Group-service appointments** (one slot, multiple clients) — currently each row is one appointment, so no special handling needed.
+- **Assistant time blocks** — already in a separate category; not counted in stylist utilization.
 
 ## Files involved
 
-**New:**
-- `src/components/platform/__lint-fixtures__/raw-primitive-banned.tsx`
-- `src/components/platform/__lint-fixtures__/raw-primitive-allowed.tsx`
-- `src/test/lint-fixtures/platform-primitive-outside-scope.tsx`
-- `src/test/lint-rule-platform-primitives.test.ts`
-- `mem://style/platform-primitive-isolation.md`
-
 **Modified:**
-- `eslint.config.js` — add the scoped `no-restricted-imports` rule block
-- `mem://index.md` — add Core line + Memories entry
-- ~43 platform files — mechanical import swap (one line per file in most cases; a handful with multiple raw imports become a few lines)
+- `src/lib/schedule-utilization.ts` — drop the clamp; add detailed return shape; add adapter for legacy callers
+- `src/hooks/useHistoricalCapacityUtilization.ts` — per-stylist accumulation; new `overbookedHours` field on `DayCapacity` and `CapacityData`
+- `src/hooks/useLocationStaffingBalance.ts` — per-stylist accumulation; new `overbookedHours` field; new `'over-booked'` status in `classify()`
+- `src/components/dashboard/schedule/DayView.tsx` — stylist column badge color/icon when `>100`
+- `src/components/dashboard/schedule/ScheduleHeader.tsx` — staff dropdown capacity badge uncapped + tooltip; date-picker `over-capacity` tier
+- `src/components/dashboard/analytics/StaffUtilizationContent.tsx` — new "Over-booked Hours" column
+- `src/components/dashboard/analytics/CapacityUtilizationSection.tsx` — surface `overbookedHours` in the daily breakdown card
+- `src/components/dashboard/sales/CapacityUtilizationCard.tsx` — same
+
+**New:**
+- `src/lib/__tests__/schedule-utilization.test.ts` — Vitest covering: no overlap = serial sum, full overlap = double the booked total, partial overlap = correct sum, single stylist >100% surfaces uncapped, location aggregate sums per-stylist overbookedMinutes correctly
+
+**Untouched (intentionally):**
+- `src/hooks/useStaffUtilization.ts` — uses appointment count vs team max (a different "utilization"). Renaming or fixing it is a separate scope; flagged in the follow-ups section.
 
 ## What stays the same
-- All Platform* primitives in `src/components/platform/ui/` — untouched
-- `usePlatformThemeIsolation` hook — untouched
-- The Loader2 canon and its lint rule — untouched, used as the structural template
-- All non-platform code (`src/components/ui/**` consumers under `dashboard/`, `marketing/`, etc.) — untouched, the rule is path-scoped
-- Component APIs — preserved via aliased re-imports where wrapper names differ
-- Wrappers without Platform* equivalents (Progress, Tabs, Skeleton, etc.) — usable for now, tracked in Deferral Register
+
+- The signal-to-noise philosophy of the doctrine — over-booking is a *high-impact deviation* worth surfacing, exactly the kind of structural drift the lever doctrine says we *should* alert on. This change brings utilization into compliance with that doctrine.
+- All existing call sites continue to compile via the legacy adapter.
+- POS-First data integrity: utilization is still computed from `v_all_appointments`, no schema changes.
+- Block/Break exclusion, cancelled/no-show exclusion.
 
 ## QA checklist
 
-- `npm run lint` — passes clean after the sweep
-- `npm test -- lint-rule-platform-primitives` — three tests pass (banned fires, allowed silent, outside-scope silent)
-- Add a fresh raw `import { Checkbox } from '@/components/ui/checkbox'` to any platform file → CI fails with the Platform* migration message
-- Add the same import to a non-platform file (e.g. `src/components/dashboard/Foo.tsx`) → no error
-- Apply the documented inline override (`// eslint-disable-next-line no-restricted-imports` with reason) → lint passes for that single line
-- Visit `/platform/color-bar`, `/platform/accounts`, `/platform/health`, `/platform/capital-control-tower` under each org theme (Rosewood, Cream Lux, Marine, Noir, Neon) → no org bleed on any swapped primitive
-- Snapshot test for the rule config → matches; deliberately mutate the rule's path list → snapshot fails
+- Stylist with 8h available, 4× 2h sequential appointments → utilization = 100%, isOverbooked = false (regression check)
+- Stylist with 8h available, 4× 2h appointments where two overlap fully → booked = 8h, utilization = 100% (math: overlap counts as double, not single — confirms the doctrine)
+- Stylist with 8h available, 6× 2h appointments where three overlap → booked = 12h, utilization = 150%, badge shows orange + ⚠
+- Stylist triple-booked 4h on top of a normal 8h day → booked = 16h, utilization = 200%, badge shows red + ⚠
+- Location aggregate with one stylist at 200% and three at 50% → location utilization renders correctly per-stylist-summed (250% total stylist hours / 320% total available stylist hours = 78%, not artificially smoothed) AND `overbookedHours` field shows the 4h overlap
+- DayView column sort still orders by raw utilization (highest first now means most over-booked first)
+- ScheduleHeader date-picker shows red-ring tier when any stylist on that date is over-booked
+- Vitest suite passes; no other tests regress
+
+## Follow-ups (separate scope, do not bundle)
+
+1. **Configurable thresholds** — `over_booking_warn_threshold` / `over_booking_critical_threshold` org settings.
+2. **Use stylist-specific working hours** as the denominator instead of the scheduler window — requires `stylist_schedules` integration; meaningful but separate.
+3. **Reconcile `useStaffUtilization`** (count-based "utilization score") with the time-based definition — name collision is already misleading; either rename to `relativeWorkloadScore` or migrate it to the same time-based math.
+4. **Weekly Intelligence Brief lever** — once over-booking is measurable, add a recurring lever: "3 stylists averaged >120% utilization last week — service quality and retention risk."
 
 ## Enhancement suggestion
 
-Once this lands, the next compounding move is a single `mem://architecture/cross-zone-isolation-canon.md` that pulls together the three governance pillars now sharing the same shape: (1) platform theme isolation (this fix + the hook), (2) Termina typography constraint, (3) loader unification. All three are "the boundary between zones must be structurally enforced, not remembered" — and all three follow the same canon-pattern (invariant + Vitest + lint + CI + override). Naming the meta-canon makes it cheap to add the fourth and fifth (probably: chart-token isolation, and the public-vs-private route boundary already in `mem://architecture/public-vs-private-route-isolation`). Without the meta-canon, each future zone boundary will be re-invented from scratch.
+The reason this bug shipped is that `Math.min(..., 100)` looks defensive ("don't let the UI display a weird number") but is actually destructive ("erase the strongest signal in the dataset"). That's a recurring anti-pattern worth naming as its own canon: **"Clamp at the boundary of meaning, not at the boundary of comfort."** A division-by-zero clamp is at the boundary of meaning (no work day = no utilization to display). A "cap percentages at 100%" clamp is at the boundary of comfort — and erases the signal that matters most. Worth one short `mem://architecture/signal-preservation.md` entry the next time we ship a metric, before the next "looks weird, let's clamp it" decision repeats. Same shape as the alert-fatigue / silence-is-meaningful doctrine: numbers outside the comfortable range are usually the ones operators most need to see.
 
