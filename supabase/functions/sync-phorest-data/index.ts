@@ -651,11 +651,17 @@ async function syncAppointments(
     // worse than no rows — they satisfy schema but violate purpose, and they
     // hide IDs from the next residual scan (which is keyed on "no name").
     try {
+      // R6b: prioritize current/upcoming appointments. Insertion-order LIMIT 1000
+      // was burning the on-demand budget on historical rows while today's
+      // schedule kept rendering "Walk-in". Order by appointment_date DESC then
+      // future-first so the operator-visible window resolves first.
       const { data: missingNames } = await supabase
         .from('phorest_appointments')
-        .select('id, phorest_client_id')
+        .select('id, phorest_client_id, appointment_date')
         .is('client_name', null)
         .not('phorest_client_id', 'is', null)
+        .gte('appointment_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .order('appointment_date', { ascending: true })
         .limit(1000);
 
       if (missingNames && missingNames.length > 0) {
