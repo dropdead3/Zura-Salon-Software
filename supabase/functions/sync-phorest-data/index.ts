@@ -618,8 +618,109 @@ async function syncAppointments(
         if (unresolved.length > 0) {
           console.log(`On-demand resolution needed for ${unresolved.length} client IDs (${reprobeCount} re-probes of empty rows)`);
         }
-...
-        console.log(`Backfilled ${backfilled} client names (${missingNames.length} had missing names; ${unresolved.length} required on-demand fetch; ${negativelyCachedIds.size} were negatively cached)`);
+
+        // Need a branchId to call /branch/{id}/client/{clientId}.
+        let branchIds: string[] = [];
+        try {
+          const branchData = await phorestRequest('/branch', businessId, username, password);
+          const branches = branchData._embedded?.branches || branchData.branches ||
+                           (Array.isArray(branchData) ? branchData : []);
+          branchIds = branches.map((b: any) => b.branchId || b.id).filter(Boolean);
+        } catch (e: any) {
+          console.log('On-demand client fetch: failed to list branches, skipping pass 2:', e.message);
+        }
+
+        let onDemandFetched = 0;
+        let onDemandDeleted = 0;
+        let onDemandErrors = 0;
+        if (unresolved.length > 0 && branchIds.length > 0) {
+          for (let i = 0; i < unresolved.length; i += 5) {
+            const batch = unresolved.slice(i, i + 5);
+            await Promise.all(batch.map(async (clientId) => {
+              let foundClient: any = null;
+              let foundBranchId: string | null = null;
+              let nonNotFoundError: string | null = null;
+
+              for (const branchId of branchIds) {
+                try {
+                  const client: any = await phorestRequest(
+                    `/branch/${branchId}/client/${clientId}`,
+                    businessId, username, password,
+                  );
+                  foundClient = client;
+                  foundBranchId = branchId;
+                  break;
+                } catch (e: any) {
+                  const msg = String(e?.message || '');
+                  if (!msg.includes('404')) {
+                    nonNotFoundError = msg.slice(0, 200);
+                  }
+                }
+              }
+
+              if (foundClient) {
+                const first = foundClient.firstName || null;
+                const last = foundClient.lastName || null;
+                const name = `${first || ''} ${last || ''}`.trim() || foundClient.name || null;
+                // CONTRACT VALIDATION: only write when response carries a name.
+                if (!name) {
+                  onDemandErrors++;
+                  console.log(`On-demand fetch ${clientId}: response had no name fields, skipping write`);
+                  return;
+                }
+                await supabase.from('phorest_clients').upsert({
+                  phorest_client_id: clientId,
+                  name,
+                  first_name: first,
+                  last_name: last,
+                  email: foundClient.email || null,
+                  phone: foundClient.mobile || foundClient.phone || null,
+                  phorest_branch_id: foundBranchId,
+                }, { onConflict: 'phorest_client_id' });
+                clientNameMap.set(clientId, name);
+                onDemandFetched++;
+                return;
+              }
+
+              if (nonNotFoundError) {
+                onDemandErrors++;
+                console.log(`On-demand fetch ${clientId} transient error: ${nonNotFoundError}`);
+                return;
+              }
+
+              try {
+                await supabase.from('phorest_clients').upsert({
+                  phorest_client_id: clientId,
+                  name: '[Deleted Client]',
+                  notes: 'Auto-flagged: 404 from all branches on on-demand fetch',
+                }, { onConflict: 'phorest_client_id' });
+                clientNameMap.set(clientId, '[Deleted Client]');
+                onDemandDeleted++;
+              } catch (cacheErr: any) {
+                onDemandErrors++;
+                console.log(`Negative-cache write failed for ${clientId}:`, cacheErr.message);
+              }
+            }));
+          }
+        }
+
+        if (onDemandFetched > 0 || onDemandDeleted > 0 || onDemandErrors > 0) {
+          console.log(`On-demand: ${onDemandFetched} fetched, ${onDemandDeleted} flagged deleted, ${onDemandErrors} errors`);
+        }
+
+        // Bulk-update appointments with all resolved real names (skip [Deleted Client]).
+        let backfilled = 0;
+        for (const apt of missingNames) {
+          const name = clientNameMap.get(apt.phorest_client_id!);
+          if (name && name !== '[Deleted Client]') {
+            await supabase
+              .from('phorest_appointments')
+              .update({ client_name: name })
+              .eq('id', apt.id);
+            backfilled++;
+          }
+        }
+        console.log(`Backfilled ${backfilled} client names (${missingNames.length} missing; ${unresolved.length} on-demand; ${negativelyCachedIds.size} negatively cached)`);
       }
 
       // Mark true walk-ins (no client ID at all)
