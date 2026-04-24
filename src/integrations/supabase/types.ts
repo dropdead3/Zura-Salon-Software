@@ -30972,6 +30972,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_client_visit_stats: {
+        Row: {
+          completed_visit_count: number | null
+          first_visit_date: string | null
+          last_visit_date: string | null
+          phorest_client_id: string | null
+          total_spend_observed: number | null
+          visit_count_grouped: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       accept_price_recommendation: {
@@ -31374,6 +31385,12 @@ export type Database = {
       recompute_policy_status: {
         Args: { p_policy_id: string }
         Returns: undefined
+      }
+      refresh_client_visit_stats: {
+        Args: { p_organization_id?: string }
+        Returns: {
+          updated_count: number
+        }[]
       }
       refresh_org_compensation_profile: {
         Args: { p_org_id: string }

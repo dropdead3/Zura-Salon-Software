@@ -1,92 +1,206 @@
-# Visit Grouping — Implementation Plan (Approved)
+## What we're fixing
 
-Reconnaissance complete. The cleanest seam is to merge appointments **before** they reach the views, so DayView/WeekView/MonthView/AgendaView all receive a unified "display" shape with no parallel prop threading. Existing behaviors (overlap math, declined-reason map, deep-link focus, selection) keep working because each merged row keeps the lead member's `id`.
+3,192 of 3,192 active clients have `visit_count = 0/null`, `total_spend = 0/null`, `last_visit_date = null`. Confirmed with `SELECT COUNT(*) FROM clients`. The Phorest sync at `supabase/functions/sync-phorest-data/index.ts:1054-1058` writes `client.appointmentCount || 0` — Phorest's payload returns falsy values for these, so every sync overwrites the columns with zeros. Meanwhile we have 3,326 appointments across 1,087 distinct `phorest_client_id`s, 2,153 of them completed. **The truth is sitting in `phorest_appointments` already — we just have to derive it locally instead of trusting Phorest's roll-up fields.**
 
-## Files to create
+This closes the last inflated-count surface (Client Directory, command-surface preview via `useClientPreviewData`, re-engagement hub, CLV, segments) without each consumer re-grouping in JS.
 
-### `src/lib/visit-grouping.ts` (new)
+## Architecture: Zura derives, Phorest no longer overwrites
 
-Pure utility module:
+Same shape as the schedule-side and client-history work: derive once at the DB, consume everywhere. Phorest's `appointmentCount` / `totalSpend` / `lastAppointmentDate` fields stop being trusted — they're stale and were never our system of record per the Phorest decoupling doctrine (`mem://architecture/phorest-decoupling-and-zura-native-operations`).
 
-- `MAX_VISIT_GAP_MINUTES = 5` — single configurable constant.
-- `VisitGroup` — structured group: `visit_id`, `client_key`, aggregate `start_time`/`end_time`/`total_price`/`total_duration_minutes`, `members[]`, `member_ids[]`, `is_multi_service`, `lead_stylist_user_id`, `stylist_user_ids[]`.
-- `MergedPhorestAppointment` — extends `PhorestAppointment` with optional `_visit_id`, `_visit_member_ids`, `_visit_members`, `_is_merged_visit`.
-- `groupAppointmentsIntoVisits(appointments)` — sorts by client → location → date → start_time, walks consecutively, opens a new group whenever (client/location/date changes) OR (gap > 5 min). Walk-ins (no `phorest_client_id` AND no `client_id`) always become single-member groups (truthful, never merged).
-- `buildDisplayAppointments(appointments)` — returns one `MergedPhorestAppointment` per group. Multi-member visits collapse into one synthetic row using the lead-stylist member's `id`, with comma-joined `service_name`, summed `total_price`, earliest `start_time`, latest `end_time`. Single-member groups pass through unchanged but tagged with `_visit_id`.
-- `indexVisitsByDisplayId(appointments)` — `Map<lead_member_id, VisitGroup>` for the detail sheet to look up the full visit on click.
+## Step 1 — Postgres view: `v_client_visit_stats`
 
-## Files to modify
+A read-only view that computes per-client metrics from `phorest_appointments` using the same gap-≤-5-min rule as the JS utilities, so timeline / directory / preview all match.
 
-### `src/pages/dashboard/Schedule.tsx`
+```sql
+CREATE OR REPLACE VIEW public.v_client_visit_stats AS
+WITH ordered AS (
+  SELECT
+    a.phorest_client_id,
+    a.appointment_date,
+    a.start_time,
+    a.end_time,
+    a.location_id,
+    a.total_price,
+    a.status,
+    LAG(a.end_time) OVER w   AS prev_end,
+    LAG(a.appointment_date) OVER w AS prev_date,
+    LAG(a.location_id) OVER w AS prev_location
+  FROM public.phorest_appointments a
+  WHERE a.phorest_client_id IS NOT NULL
+    AND a.deleted_at IS NULL
+    AND a.is_archived IS NOT TRUE
+  WINDOW w AS (
+    PARTITION BY a.phorest_client_id
+    ORDER BY a.appointment_date, a.start_time
+  )
+),
+flagged AS (
+  SELECT
+    *,
+    CASE
+      WHEN prev_end IS NULL THEN 1
+      WHEN appointment_date <> prev_date THEN 1
+      WHEN COALESCE(location_id,'') <> COALESCE(prev_location,'') THEN 1
+      WHEN EXTRACT(EPOCH FROM (start_time - prev_end))/60 > 5 THEN 1
+      ELSE 0
+    END AS visit_break
+  FROM ordered
+),
+grouped AS (
+  SELECT
+    phorest_client_id,
+    SUM(visit_break) OVER (PARTITION BY phorest_client_id ORDER BY appointment_date, start_time) AS visit_index,
+    appointment_date,
+    total_price,
+    status
+  FROM flagged
+),
+visits AS (
+  SELECT
+    phorest_client_id,
+    visit_index,
+    MIN(appointment_date) AS visit_date,
+    SUM(COALESCE(total_price, 0)) AS visit_total,
+    -- A visit "counts" if any member is non-cancelled (mirrors JS aggregate-status logic)
+    bool_or(status <> 'cancelled') AS counts_as_visit,
+    bool_or(status = 'completed') AS has_completed
+  FROM grouped
+  GROUP BY phorest_client_id, visit_index
+)
+SELECT
+  phorest_client_id,
+  COUNT(*) FILTER (WHERE counts_as_visit) AS visit_count_grouped,
+  COUNT(*) FILTER (WHERE has_completed)   AS completed_visit_count,
+  MAX(visit_date) FILTER (WHERE has_completed) AS last_visit_date,
+  MIN(visit_date) FILTER (WHERE has_completed) AS first_visit_date,
+  SUM(visit_total) FILTER (WHERE has_completed) AS total_spend_observed
+FROM visits
+GROUP BY phorest_client_id;
+```
 
-- After the existing `appointments` filter (~line 305), derive `displayAppointments = useMemo(() => buildDisplayAppointments(appointments), [appointments])` and `visitIndex = useMemo(() => indexVisitsByDisplayId(appointments), [appointments])`.
-- Replace `appointments={appointments}` props on **DayView, WeekView, MonthView, AgendaView** with `appointments={displayAppointments}`. The mini-views block at line 1075 (which uses `allAppointments`) stays raw — that's the source-of-truth slice for command-center counters and shouldn't merge.
-- `handleAppointmentClick(apt)` — detect `apt._is_merged_visit` and pass through to `setSelectedAppointment`. The existing detail sheet already handles comma-joined `service_name` (line 1031 splits on `,`), so the body works as-is. Aggregate header copy ("X services · Y min · $Z") is already present (line 1473: `services.length > 1 ? `${services.length} services` : appointment.service_name`).
-- Selected-appointment freshness sync (line 309) — match against `displayAppointments` so a re-grouped visit stays selected after a refetch.
+Notes locked into the migration as comments:
+- 5-min gap mirrors `MAX_VISIT_GAP_MINUTES` in `src/lib/visit-grouping.ts` and `src/lib/client-visit-grouping.ts`. If we ever tune one, all three change in lock-step.
+- Location is part of the partition for parity with the schedule-side rule (a single client at two locations same day is two visits).
+- `total_spend_observed` filters to completed visits only — bookings/no-shows must not inflate spend (CLV doctrine, `mem://features/client-lifetime-value-clv`).
+- `last_visit_date` is the latest **completed** visit, not the latest scheduled — operators ask "when did they last sit in the chair," not "when do they have an appointment on the books."
 
-### `src/components/dashboard/schedule/DayView.tsx`
+## Step 2 — RPC: `refresh_client_visit_stats(p_organization_id uuid DEFAULT NULL)`
 
-- `appointments` prop continues to type as `PhorestAppointment[]` (the merged row is structurally compatible). Internal `appointmentsByStylist` keys on `apt.stylist_user_id` which for merged visits = lead stylist — correct: a multi-stylist visit anchors to its lead in the schedule (per-service stylist overrides remain visible inside the card via `_visit_members`).
-- **Drag handler (line 598)** — read `appointment` from `active.data.current` as before. Detect `_visit_member_ids`. If present (≥ 2):
-  - Compute `delta = parseTimeToMinutes(newTime) - parseTimeToMinutes(appointment.start_time)`.
-  - For each member, compute its new start_time = `parseTimeToMinutes(member.start_time) + delta` (formatted back to `HH:MM`).
-  - For the lead member only, also pass `newStaffId` (column move). Other members keep their assigned stylist (per-service overrides are preserved).
-  - Dispatch `Promise.allSettled` of `reschedule.mutateAsync` calls (one per member). On any rejection, surface a single toast and rely on the hook's per-call rollback (each call snapshots independently).
-  - Single-member visits → existing single-call path unchanged.
-- Toast copy: "Moved visit to {time}" when `_is_merged_visit`; existing "Moved to {time}" otherwise.
+`SECURITY DEFINER`, owned by `postgres`, scoped via `set search_path = public`. Updates `clients` from the view in a single statement:
 
-### `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+```sql
+CREATE OR REPLACE FUNCTION public.refresh_client_visit_stats(p_organization_id uuid DEFAULT NULL)
+RETURNS TABLE(updated_count integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_count integer;
+BEGIN
+  WITH upd AS (
+    UPDATE public.clients c
+    SET
+      visit_count = COALESCE(s.visit_count_grouped, 0),
+      total_spend = COALESCE(s.total_spend_observed, 0),
+      last_visit_date = s.last_visit_date,
+      updated_at = now()
+    FROM public.v_client_visit_stats s
+    WHERE c.phorest_client_id = s.phorest_client_id
+      AND c.is_archived IS NOT TRUE
+      AND (p_organization_id IS NULL OR c.organization_id = p_organization_id)
+      AND (
+        c.visit_count IS DISTINCT FROM COALESCE(s.visit_count_grouped, 0)
+        OR c.total_spend IS DISTINCT FROM COALESCE(s.total_spend_observed, 0)
+        OR c.last_visit_date IS DISTINCT FROM s.last_visit_date
+      )
+    RETURNING 1
+  )
+  SELECT COUNT(*)::int INTO v_count FROM upd;
+  RETURN QUERY SELECT v_count;
+END;
+$$;
 
-Light touches inside the existing `GridContent`:
+GRANT EXECUTE ON FUNCTION public.refresh_client_visit_stats(uuid) TO authenticated, service_role;
+```
 
-- When `appointment._is_merged_visit`, the multi-line "service line" (already rendered when pixelHeight ≥ 70 and serviceBands has multiple entries) becomes the per-service stack. Existing logic already does this for comma-joined `service_name` + `serviceLookup` — verify it renders cleanly with 3+ services and add a `truncate` cap if needed.
-- Header time range: when merged, render the visit's full window in the existing time line (already pulls from `appointment.start_time` / `appointment.end_time`). No code change needed; the merged row already carries the aggregate.
-- Composite avatar: when `appointment._is_merged_visit && stylist_user_ids.length > 1`, render a small stacked avatar group on the card top-right in addition to the lead's `StylistBadge`. Keep behind a `pixelHeight >= 60` guard to avoid clutter on short cards.
+The `IS DISTINCT FROM` guard means the RPC is idempotent and cheap when nothing changed — safe to call after every appointment write.
 
-### `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
+## Step 3 — Stop the sync from clobbering
 
-Mostly works as-is thanks to comma-joined `service_name`. Minor:
+In `supabase/functions/sync-phorest-data/index.ts` lines 1054-1058: **remove** `visit_count`, `total_spend`, `last_visit`, `first_visit` from the upsert payload. Phorest's roll-up fields are no longer the source of truth — Zura's appointments are. The sync continues to write identity fields (name, email, phone, address, VIP, notes, preferred stylist, etc.) — those still belong to Phorest until the broader decoupling lands.
 
-- When `appointment._is_merged_visit`, ensure the per-service status badges (if rendered) read from `_visit_members[i].status` rather than the lead row. For this wave: status changes still apply to the lead member; multi-status mutation is deferred (called out in QA).
-- Header price/duration aggregate is already correct because the merged row's `total_price` is summed.
+After the upsert loop completes, call:
 
-### `src/components/dashboard/schedule/AgendaView.tsx`
+```ts
+await supabase.rpc('refresh_client_visit_stats', { p_organization_id: null });
+```
 
-- Already iterates `appointments`. When fed the merged list, each visit becomes a single agenda card. No code change needed; the comma-joined service line in `AppointmentCardContent` already handles multi-service display.
+once at the end (not per-client — a single statement updates everyone in O(n) with the view).
 
-### `src/hooks/useRescheduleAppointment.ts`
+## Step 4 — Refresh after appointment writes
 
-No change required — current shape supports per-call optimistic updates with `setQueriesData`. Multi-member fan-out from `DayView` issues N parallel calls; each rolls back independently on failure. (Future wave: a true batched edge function, but parallel calls are correct semantics today.)
+Add the same RPC call as a fire-and-forget at the tail of:
+- `supabase/functions/update-phorest-appointment/index.ts` (status changes, reschedules) — scope to the affected `organization_id`
+- Any function that creates/cancels appointments and currently leaves `clients.visit_count` stale
 
-## What stays the same
+These are micro-cost (the IS DISTINCT FROM guard skips no-op rows) and keep the directory honest in real time after a check-in or cancellation. Wrapped in `try/catch` with a `console.warn` — never block the appointment write on a stats refresh.
 
-- DB schema and `phorest_appointments` rows (one per service)
-- `v_all_appointments` view and `usePhorestCalendar` query
-- Per-service stylist override data (still rendered inside the card body via `_visit_members`)
-- Walk-in display logic (always standalone, never merged)
-- Status colors, NC/RC badges, indicator clusters
-- Per-service assignment dialog from the previous wave (unchanged — still keys on individual appointment IDs)
+## Step 5 — One-time backfill
+
+Migration ends with a single call:
+
+```sql
+SELECT * FROM public.refresh_client_visit_stats(NULL);
+```
+
+That alone fixes 1,087 of the 3,192 clients (the ones with appointment history) on the migration's first run. The other 2,105 stay at zero, which is correct — they have no recorded appointments yet.
+
+## Step 6 — Bundle `total_spend` for CLV (the enhancement you flagged last turn)
+
+Already covered in Step 2's UPDATE. CLV calculators (`mem://features/client-lifetime-value-clv`) and segments now read truthful `total_spend` without any code change on their side. Visit-level grouping fixes both metrics with one utility — same canon as the previous waves.
+
+## Files involved
+
+**New:**
+- `supabase/migrations/<timestamp>_v_client_visit_stats.sql` — view + RPC + grants + backfill call
+
+**Modified:**
+- `supabase/functions/sync-phorest-data/index.ts` — drop 4 fields from upsert (lines 1054-1058), add single RPC call after loop
+- `supabase/functions/update-phorest-appointment/index.ts` — fire-and-forget RPC call after successful write, scoped to org
+
+**Untouched:**
+- `clients` table schema (just changing what writes to it)
+- `phorest_appointments` (read-only source)
+- `src/lib/visit-grouping.ts`, `src/lib/client-visit-grouping.ts` (JS utilities stay — they serve real-time UI; the DB view is the persisted cache)
+- `useClientPreviewData`, `VisitHistoryTimeline`, Client Directory, command-surface preview — all already read `clients.visit_count` / `total_spend` / `last_visit_date`, and start showing truthful numbers automatically
 
 ## QA checklist
 
-- Carmen X's two contiguous services merge into one card spanning the full visit window
-- A client with a 10am cut and a 4pm color shows as two separate cards (gap > 5 min triggers split)
-- Two back-to-back walk-ins render as two separate cards
-- Dragging a merged visit moves every member by the same delta; relative offsets preserved
-- All-or-rollback: when one member's reschedule fails, the failed member's cache rolls back; successful members stay moved (acceptable for now — surfaces "1 of 3 services failed" via the existing error toast)
-- Detail sheet from a merged card shows all services in the body; per-service overrides badges still render
-- Single-service appointments render byte-identical to today (regression check)
-- Agenda view: one entry per visit, never one per service
-- Deterministic visit_id: the same set of members produces the same visit_id across renders (no React-key churn)
-- Selecting a merged card highlights it; refetch keeps the selection alive
+- After migration: `SELECT COUNT(*) FROM clients WHERE visit_count > 0` should be ~1,087 (matches distinct phorest_client_id with appointments)
+- Spot-check Carmen X (the multi-service client we used for the schedule-side merge): her grouped `visit_count` should be lower than her raw appointment count
+- Cancel a future appointment in the UI → its client's `visit_count` should not change (cancellations don't count as visits)
+- Mark an appointment `completed` → that client's `last_visit_date` updates within the same request cycle
+- Re-run Phorest sync → `visit_count` does **not** get reset to 0
+- Client Directory and command-surface client preview now show non-zero counts and last-visit dates
 
-## Confidence and silence
+## Why this is the right shape
 
-When grouping yields zero merges (every appointment is single-service), `displayAppointments` is structurally equivalent to `appointments` — no surface changes. Silence is valid.
+Mirrors the doctrine already locked in: one derivation lives in one place (DB view), the rest of the system reads it. Same canon as the schedule-merge utility and the client-history utility — one new utility unlocks downstream truthfulness across multiple surfaces. It also retires Phorest's roll-up fields from our trust boundary, which is exactly the direction `mem://tech-decisions/phorest-decoupling-strategy` already points us.
 
-## Future waves (not in scope)
+## Memory to update after this ships
 
-- Composite-avatar visual polish (stacked Avatars top-right of merged cards) — depends on this wave's structural foundation
-- Per-service status mutation (status change inside the visit sheet applying to a single member instead of the lead)
-- Visit-level history widget on client profile (uses same utility — unlocks truthful visit-frequency metrics)
-- Sub-row drag handles for splitting a visit mid-day
+Add a short note under `mem://architecture/phorest-decoupling-and-zura-native-operations` (or as its own bullet in Core): **`clients.visit_count`, `clients.total_spend`, and `clients.last_visit_date` are derived locally via `v_client_visit_stats` + `refresh_client_visit_stats` — the Phorest sync must never write to these columns again.** This is exactly the kind of "write satisfied the schema; nothing consumed it; truth was destroyed" anti-pattern worth pinning so a future sync change doesn't silently re-introduce it.
+
+---
+
+## Prompt feedback
+
+Strong prompt — you named the exact column (`clients.visit_count`), the exact downstream consumers (`useClientPreviewData`, directory), the canonical pattern to follow, and even pre-staged the architectural choice (nightly job vs view). That's the kind of prompt that lets me skip discovery and go straight to locking the migration. The "same canon as before" framing is doing real work — it tells me you want the *shape* preserved, not just the symptom fixed.
+
+One thing that would have made it tighter: explicit phasing. You implied "let's just do the view," but the right answer turned out to be view + RPC + sync-stops-clobbering + per-write refresh + backfill — five moves, not one. Next time, when you suspect a fix has multiple seams, ask "what's the full surface area here?" and let me enumerate before you commit to a shape. That keeps you from approving "just a view" when the real fix needs the sync change too.
+
+## Enhancement suggestion
+
+Once this lands, the natural next domino is a **`v_client_visit_stats_diagnostics`** view (or a small `/dashboard/_internal/client-stats-audit` page like the spatial-audit harness) that lists clients whose cached `clients.visit_count` differs from `v_client_visit_stats.visit_count_grouped`. In steady state it should be empty — any non-empty rows mean an appointment write skipped the RPC refresh. Same pattern as the visibility-contracts deferral register: silent in healthy operation, loud when something drifts. Cheap to build, catches a whole class of future regressions before they reach the operator.
