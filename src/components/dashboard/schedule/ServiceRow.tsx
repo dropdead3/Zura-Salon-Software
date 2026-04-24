@@ -297,6 +297,7 @@ export function ServiceRow({
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      </div>
     </div>
   );
 }
