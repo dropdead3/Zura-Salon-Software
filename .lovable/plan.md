@@ -1,122 +1,111 @@
 
 
 ## Prompt feedback
-Excellent prompt — pairing the Phorest screenshot with the Zura screenshot is exactly the evidence pattern that lets me trace appointment-by-appointment without guessing. The two-image side-by-side means I can confirm "James (Dad) Arendell exists in Phorest, syncs as 'James (Dad) Arendell' in Zura → working" vs "Grant Carter exists in Phorest, syncs as 'Client #EBKQ' in Zura → broken." Sharper next time: include one Phorest client ID (visible if you click into Phorest) so we can confirm the mapping without database reverse-lookups. Also worth noting — your prompt yesterday said "client ID present, name missing → fetch from Phorest." That fix was implemented. The fact that you're seeing the same symptom 24 hours later means either the on-demand fetch isn't running, the fetched response is empty, or — as I now suspect — something else is going on.
+Sharp prompt — you spotted "[Deleted Client]" (which yesterday's plan introduced as the *negative-cache placeholder*) on appointments that obviously aren't deleted, and pulled the screenshot to prove it. That's exactly the right escalation rhythm: shipped a fix → it created a new symptom → flag it immediately. Sharper next time: "Deleted Client appearing on Annmarie X's 4:00pm haircut" gives me the specific row to trace. Also worth noting yesterday's pattern: each layer we've added (clamp → walk-in fallback → empty-row → negative cache) erased a different signal. We're now on the fourth iteration of the same anti-pattern. Worth promoting "writes that conform to a contract must validate the contract" from suggestion to canon *now*, before the next layer.
 
-## What's actually broken (different from yesterday's diagnosis)
+## What's actually broken — three compounding bugs
 
-I traced the four "Client #XXXX" appointments from your screenshot end-to-end. The result is a **specific, narrow bug** — not the broad sync gap we fixed yesterday.
+**231 clients** were mass-flagged as `[Deleted Client]` in a 31-second window (05:44:36–05:45:07). Many of them have **future appointments going out to July 2026** — they're definitively not deleted. They're real, active clients in Phorest. The negative-cache write fired falsely 231 times in a single sync run.
 
-The four mislabeled appointments are:
+Tracing the failure end-to-end:
 
-| Phorest Card | Zura Card | phorest_client_id | client_name in `phorest_appointments` | Matched `phorest_clients` row |
-|---|---|---|---|---|
-| Annmarie X — Pure Brazilian Express Keratin (2pm) | Client #VBPQ | `gbilM7k7EIBBoqZ6OuVBPQ` | **NULL** | ✅ exists, name = "Annmarie X" |
-| Grant Carter — Buzz Cut (2pm) | Client #EBKQ | `mQuniNJUV6CsoQ6QUUEbKQ` | **NULL** | ❌ row exists but name is empty |
-| Samantha Lyons — Signature Haircut (3pm) | Client #0H2A | `PFZxTWB0tGY4sNu4pf0h2A` | **NULL** | ❌ row exists but name is empty |
-| Angelia Sanchez — Signature Haircut (3pm) | Client #98PW | `k_YEpJ30Ib7uE8LwSb98pw` | **NULL** | ✅ exists, name = "Angelia Sanchez" |
-| Kendra Harris — Extension Consultation (4pm) | Client #FJ5G | `HLVo8X1eGKPl6vka-HFj5g` | **NULL** | ❌ row exists but name is empty |
-| Emily Rudnick — Face Frame Highlight (4pm) | Client #0N1G | `... -HFj5g` | **NULL** | ❌ name empty |
+### Bug 1 — `phorestRequest` swallows region 404s as "not found"
 
-**Two distinct failure modes are mixed together, both visible in the screenshot:**
+Lines 19–60 of `sync-phorest-data/index.ts`. The helper iterates `[platform.phorest.com, platform-us.phorest.com]` and on a 404 from EU, falls through to US. **But the fall-through condition is wrong**:
 
-### Failure mode 1 — The view is COALESCEing correctly, but `pa.client_name` is NULL and we're not falling through
-
-`v_all_appointments` defines:
-```sql
-COALESCE(pa.client_name, pc.name, NULLIF(TRIM(pc.first_name || ' ' || pc.last_name), ''))
+```ts
+if (response.status === 404 && base === PHOREST_BASE_URL) {
+  await response.text();
+  continue;  // try US
+}
 ```
 
-For **Annmarie X (2pm Pure Brazilian)** and **Angelia Sanchez (3pm)**, the join row exists, `pc.name = 'Annmarie X'` / `'Angelia Sanchez'`, and `pa.client_name IS NULL`. The COALESCE should return the name from `pc.name`. But the Zura card shows "Client #VBPQ" / "Client #98PW" — which means the frontend is **only reading `client_name`**, not the resolved-via-COALESCE value. The view is doing its job; the UI is rendering based on the raw appointment row, not the view.
+This *only* falls through on the first base. If US *also* returns 404, line 53 throws `'Phorest API error: 404 - ...'`. The on-demand fetch (line 653–658) then catches that error string and checks `if (!msg.includes('404'))` — which is **false**, so it treats it as a 404 and moves on. Net effect: a real 404 from both regions, which seems correct.
 
-Confirming: yesterday's fix to `getDisplayClientName` correctly checks `source.client_name` — but if the appointment row passed in is from a query that doesn't go through `v_all_appointments` (or transforms the data in a way that drops the resolved name), the COALESCE result never reaches the UI.
+**But here's the actual bug**: from the logs (lines 9–28), the same client ID is being requested against **both** `platform.phorest.com` AND `platform-us.phorest.com` for the *same branch ID*. That means the helper is *not throwing on the first 404* — it's looping through both base URLs *for every branch* in the outer Pass-2 loop, and on the *final* base URL's 404 it throws. The on-demand fetch at line 644–659 then iterates `branchIds` and tries each one — but since the Phorest business has branches in **both regions** (EU branch `hYztERWvOdMpLUcvRSNbSA`, US branch `6YPlWL5os-Fnj0MmifbvVA`), and `phorestRequest` itself doesn't know which region a branch lives in, it tries the wrong region first, gets a 404, falls through to the right region, succeeds — *or* gets a real 404 from the right region too because the *client* lives in the *other* branch.
 
-### Failure mode 2 — `phorest_clients` rows exist for these IDs but with empty name fields
+The flagged-deleted clients are clients that exist in Phorest, just **not in the branch the loop happened to ask about**. The 404 means "this client is not in this branch," not "this client doesn't exist." The code interprets "404 from every (branch × region) combination tried" as "deleted" — but in practice, Phorest's `/branch/{branchId}/client/{clientId}` returns 404 when the client *isn't owned by that branch*, even if they exist in another branch.
 
-For **Grant Carter**, **Samantha Lyons**, **Kendra Harris**, **Emily Rudnick**: a row exists in `phorest_clients` with the right `phorest_client_id` but `name`, `first_name`, `last_name`, `phone` are all NULL/empty. So even the COALESCE has nothing to return.
+### Bug 2 — Negative-cache fires on *any* 404, not on "definitively not found"
 
-This means **the on-demand fetch from yesterday's fix either:**
-- Wrote a row but didn't capture the name fields from the Phorest response (mapping bug), or
-- Wrote a placeholder negative-cache row (treated 200 with empty body as "deleted"), or
-- The Phorest endpoint actually returns the client with empty name fields for these IDs (unlikely — Phorest UI clearly shows the names).
+Lines 685–702: if `nonNotFoundError` is null (i.e. all attempts returned 404), the code writes `[Deleted Client]`. With Bug 1, this means a single missing branch-mapping or a transient timing window (client was just created in branch A, sync queries branch B first) writes a permanent negative cache.
 
-The most likely cause: the on-demand fetch in `sync-phorest-data/index.ts` (lines 560-680ish from yesterday's edit) is upserting the response from `GET /client/{clientId}` but the field mapping doesn't include `firstName`/`lastName` — only the top-level `name`, which the new client endpoint doesn't always populate. Or the response shape from `/branch/{branchId}/client/{clientId}` differs from `/client?id=...` and the upsert uses the wrong keys.
+**Worse**: the cache is permanent — once a client is flagged, line 597–600 of Pass 1 *always* skips them on every subsequent sync. So a temporarily-missed client stays "deleted" forever until manual intervention.
 
-## The fix — three parts, in priority order
+### Bug 3 — `phorest_clients.phorest_branch_id` is empty for **all 3,324 resolved clients**
 
-### 1. (Highest impact) Audit the `phorest_clients` rows that have a phorest_client_id but no name
+The DB query confirms: `distinct_branches = 0`. The branch-id is *never* populated on existing client rows (presumably the original `syncClients` writes it as null), so when the on-demand fetch needs to know "which branch does this client live in?" there's no hint — it just iterates blindly. If `syncClients` had populated `phorest_branch_id` correctly, the on-demand fetch could go straight to the right branch + region and never produce a false 404.
 
-Run a targeted query to find every client row with `name IS NULL` AND `first_name IS NULL` AND `last_name IS NULL`. Trace 5-10 specific phorest_client_ids back to:
-- Did the on-demand fetch run for them? (check `sync-phorest-data` edge function logs for those IDs)
-- What did Phorest return? (re-call the endpoint with the same ID via a debug edge function)
-- Was the upsert mapping correct?
+Combined effect: 231 real clients got permanent negative-cache rows on a single sync run because the per-branch fan-out failed to find them in the *first* branch tried, and the loop terminated before exhaustively proving non-existence.
 
-This tells us whether to fix:
-- (a) The endpoint URL/path the function calls
-- (b) The field-mapping logic that writes the upsert
-- (c) The negative-cache logic that may be misclassifying a successful response as a 404
+## The fix — four layers
 
-Concrete reconnaissance to run before writing any fix:
-- Count of `phorest_clients` rows with no name (estimate the size of the broken population)
-- Group those by `created_at` to see if the bug started yesterday after our deploy or has been there longer
-- Sample 3 specific phorest_client_ids and call `GET /business/{businessId}/branch/{branchId}/client/{clientId}` directly to confirm Phorest actually returns names
+### 1. Stop writing `[Deleted Client]` from on-demand fetch (immediate / safe)
 
-### 2. (Medium impact) Fix the read path so the view's COALESCE actually reaches the UI
+Remove the negative-cache write at lines 691–702 entirely. Instead:
+- If on-demand fetch can't find a client across all branches, log it and **leave the appointment's `client_name` as null**
+- The render layer (`getDisplayClientName`) already handles null gracefully — it shows "Client #ABCD" placeholder, which is the truthful answer ("we know the ID, can't resolve the name right now")
 
-For the **Annmarie X / Angelia Sanchez** case (failure mode 1), the underlying data is correct in the view but wrong in the UI. Two possible causes:
+This trades a tiny amount of repeated work (re-attempt every sync) for **never falsely marking a real client as deleted**. The cost of repeated lookups is bounded by the rate cap (200/run); the cost of false negative-cache is unbounded — a permanent permanent mislabel.
 
-- The schedule query in `useAppointments` (or whichever hook drives `DayView`) is selecting from `phorest_appointments` directly instead of `v_all_appointments`, bypassing the COALESCE
-- OR it queries the view but the Supabase response is being merged with a stale cache that has the raw NULL value
-- OR the `getDisplayClientName` helper is being passed an object where `client_name` is the raw appointment column, not the view's resolved column
+If we *do* want a negative cache later, it should be a *separate* table (`phorest_client_resolution_attempts` with `attempt_count`, `last_attempt_at`, `failure_reason`) so the resolution state is distinguishable from real client data. Out of scope for this fix.
 
-Check: which hook feeds `DayView.tsx` → confirm it queries `v_all_appointments` → confirm the resolved `client_name` field arrives in the response.
+### 2. Track region per branch + use it on lookup
 
-Once located, the fix is mechanical: switch the query to `v_all_appointments` if it isn't already, or pass the view's resolved value through to `getDisplayClientName`.
+Add `phorest_region` (or store the working `base_url`) to wherever branches are persisted (probably an in-memory cache keyed on businessId for the function's lifetime, since branches table doesn't seem to track this). Modify `phorestRequest` to accept an optional `preferredBase` parameter. When iterating branches in Pass 2, group by their region first and only call the helper with the matching base URL — eliminating the cross-region 404s that triggered the bug.
 
-### 3. (Long-tail) Re-run the reconciliation for the broken `phorest_clients` rows
+### 3. Reverse the false negative-cache rows already written
 
-Once the field-mapping bug is fixed (#1), the rows that were upserted with empty names need to be re-fetched from Phorest. Two paths:
-- Trigger the next scheduled sync and let the on-demand fetch retry them (slow — depends on whether the residual-set logic re-attempts already-existing-but-empty rows)
-- Build the **one-shot reconciliation edge function** that yesterday's plan included but didn't ship — explicitly target rows where `phorest_client_id IS NOT NULL AND COALESCE(NULLIF(TRIM(name), ''), NULLIF(TRIM(first_name || ' ' || last_name), '')) IS NULL` and re-fetch them with the corrected mapping.
+One-shot: delete the 231 rows where `name = '[Deleted Client]'` and `notes LIKE 'Auto-flagged%'`. Next sync will pick them up via Pass 2 with the corrected logic (no more false flagging) and resolve them properly. Migration runs once, idempotent (it's an exact-match delete on a specific notes string).
 
-The reconciliation function is the right move because the residual-set logic in the post-sync backfill only fetches IDs that have **no row at all** in `phorest_clients` — these IDs have rows (just empty ones), so they'll be skipped forever without an explicit re-attempt path.
+### 4. Backfill `phorest_branch_id` on existing client rows
+
+Modify `syncClients` (line 765+) to write `phorest_branch_id` when it persists each client. This isn't needed for the immediate fix but eliminates Bug 3's blind iteration on future syncs — clients learned in branch X get branch X recorded, so the on-demand fetch knows where to look next time.
 
 ## Files involved
 
-**Investigated first (no edit until reconnaissance complete):**
-- `supabase/functions/sync-phorest-data/index.ts` — the on-demand fetch block from yesterday; verify endpoint URL, response handling, and field mapping
-- Edge function logs for `sync-phorest-data` — find the actual fetch calls for the 4 broken phorest_client_ids
-- The `phorest_clients` upsert path — confirm `firstName`/`lastName` from the API response map to `first_name`/`last_name` columns
+**Modified:**
+- `supabase/functions/sync-phorest-data/index.ts` — three changes:
+  - Remove negative-cache write from on-demand fetch (lines 691–702 → just log and return)
+  - Add region-aware branch iteration in Pass 2 (group branches by working region before calling `phorestRequest`)
+  - Update `syncClients` to populate `phorest_branch_id` on upsert (separate, lower-priority change in same file)
 
-**Likely modified:**
-- `supabase/functions/sync-phorest-data/index.ts` — fix the field-mapping bug in the on-demand fetch + re-attempt logic for empty-name rows
-- The schedule query hook (likely `useAppointments` or similar) if it bypasses `v_all_appointments`
-- Possibly `src/lib/appointment-display.ts` — if a name needs to be resolved from `phorest_clients` data passed alongside
+**Migration:**
+- One-shot SQL migration to clear false `[Deleted Client]` rows: `DELETE FROM phorest_clients WHERE name = '[Deleted Client]' AND notes LIKE 'Auto-flagged%'` — the next sync re-resolves them through the corrected code path
 
-**Likely new:**
-- `supabase/functions/reconcile-phorest-client-names/index.ts` — one-shot backfill targeting the empty-name rows
-- A small admin button to trigger it (from yesterday's deferred plan)
+**Untouched:**
+- `src/lib/appointment-display.ts` — already correctly renders null `client_name` as "Client #ABCD" placeholder; no change needed
+- `phorest_clients` schema — no schema change needed
+- The reconciliation function (`reconcile-phorest-client-names`) — same fix needed there if it shares the negative-cache logic; verify and apply identical changes if so
 
 ## What stays the same
 
-- Yesterday's `getDisplayClientName` helper — the three-state contract is correct, this fix is upstream
-- `is_walk_in` logic — unchanged
-- The `v_all_appointments` view's COALESCE — unchanged; it's correct
-- Phorest sync cadence — unchanged
+- Pass 1 (local resolution) is correct — unchanged
+- Contract validation on writes (only upsert when name is present) — unchanged
+- Three-state UI rendering — unchanged
+- True walk-in detection (`is_walk_in` based on null `phorest_client_id`) — unchanged
 
 ## QA checklist
 
-- For each of the 4 broken appointments in your screenshot, after fix: card renders the real client name, not "Client #XXXX"
-- `SELECT COUNT(*) FROM phorest_clients WHERE COALESCE(NULLIF(TRIM(name),''), NULLIF(TRIM(first_name||' '||last_name),'')) IS NULL` drops to near-zero after reconciliation
-- New appointments synced after the fix never produce empty `phorest_clients` rows
-- A truly deleted Phorest client (404) still produces a `[Deleted Client]` row, not an empty one
-- Reconciliation is idempotent — running it twice doesn't duplicate rows or thrash the data
+- After deploy + one sync run: count of `[Deleted Client]` rows stays at zero (it would only grow if Phorest *actually* deleted a client)
+- Annmarie X's 4pm appointment renders her real name, not "[Deleted C." or "Client #ABCD"
+- The 6 appointments in your screenshot all render real names within one or two sync cycles
+- A truly deleted client (delete one in Phorest staging, sync) does NOT get flagged as `[Deleted Client]` in `phorest_clients` — it just stays unresolved with the appointment showing "Client #ABCD". That's the *correct* behavior under "writes must validate contract": we don't have positive evidence of deletion, only absence of evidence of existence. Different things.
+- A re-sync attempts the previously-unresolvable IDs again rather than skipping them
 
-## Why this happened (and what to learn)
+## Why this happened (and the canon to add)
 
-Yesterday's fix added on-demand fetching but **didn't validate the fetched response had the expected fields populated**. The pattern "fetch missing data → upsert response" silently writes empty rows when the response shape doesn't match expectations. This is the **same shape as yesterday's `Math.min(..., 100)` clamp and the `client_name || 'Walk-in'` fallback**: a defensive write that erases the underlying data quality signal. A row in `phorest_clients` with no name fields is *not* the same as a synced client — but our query treats them identically.
+Yesterday's diagnosis named the pattern: **"Writes that conform to a contract must validate the contract on the way in."** This bug is the *exact* shape — we wrote `[Deleted Client]` as a placeholder when we didn't have positive evidence of deletion, only absence of a successful lookup. Absence-of-evidence is not evidence-of-absence; the negative cache encoded the latter when we only had the former.
+
+This is now the **fourth iteration** of the same meta-pattern in two days:
+1. `Math.min(util, 100)` — erased over-booking signal
+2. `client_name || 'Walk-in'` — erased pending-sync signal
+3. Empty-name `phorest_clients` rows — erased "fetch incomplete" signal
+4. False `[Deleted Client]` writes — erased "not in this branch yet" signal
+
+Worth promoting to a real `mem://architecture/signal-preservation.md` canon now (not just a suggestion). Same shape as alert-fatigue and visibility-contracts: when a code path erases the difference between two materially distinct states, it's destroying operational truth — even if the surface output looks "cleaner." This canon would catch all four classes upfront.
 
 ## Enhancement suggestion
 
-Worth adding as a doctrine entry: **"Writes that conform to a contract must validate the contract on the way in."** The on-demand fetch wrote rows that satisfied the schema (NOT NULL on `phorest_client_id`) but violated the *purpose* of the table (a client row should have a name). Same shape as the alert-fatigue / signal-preservation canon: structural integrity isn't just "the row exists" — it's "the row is meaningful." A simple guard in the upsert path (`if (!response.firstName && !response.lastName && !response.name) skip and log instead of writing empty`) would have prevented this from shipping. Worth one short `mem://architecture/contract-validating-writes.md` entry the next time we add a sync path.
+Beyond the canon: yesterday's deferred reconciliation function should not be re-deployed as-is. If it shares the same per-branch fan-out + negative-cache pattern, it will hit Bug 1 + Bug 2 the moment an admin runs it manually. Verify and apply the same fixes there, or hold the function until the region-aware iteration ships. Worth adding a one-line "do not deploy until plan-XYZ ships" guard at the top of the file so we don't re-enable a known-broken path.
 
