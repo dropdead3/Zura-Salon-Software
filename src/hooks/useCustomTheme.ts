@@ -512,6 +512,7 @@ export function useCustomTheme() {
     isLoading,
     isSaving,
     hasUnsavedChanges,
+    canEditOrgTheme,
     setVariable,
     saveTheme,
     discardChanges,
