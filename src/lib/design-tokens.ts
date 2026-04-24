@@ -294,7 +294,7 @@ export const SCROLLBAR_CSS = {
 // Canonical status color definitions — import these instead of
 // defining local STATUS_COLORS / STATUS_CONFIG in view components.
 
-type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' | 'walk_in' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' | 'walk_in' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
 /**
  * Leading "ear" accent for schedule cards — matches the Top Staff card pattern.
