@@ -1,125 +1,113 @@
 
-## Prompt feedback
-Strong prompt: you gave a precise rejection test — “if it looks like a simple left border, it’s wrong” — plus concrete geometry rules. That is exactly the kind of direction that prevents shallow implementations. Even better next time: add one line that locks the rendering method, e.g. “Use one continuous shape driven by the card radius; no stacked pieces, no fake border tricks.” That removes ambiguity before implementation starts.
 
-## Why it is still incorrect
-The current implementation in `src/components/dashboard/schedule/AppointmentCardContent.tsx` is not a true structural edge accent:
+## Why prior attempts failed
+You're right to call this out — the design pattern already exists in the codebase. `AgendaContent` line 443 renders exactly what your screenshot shows:
 
-- `LeftEdgeAccent` is built from **three separate pieces**: top SVG, middle rect, bottom SVG.
-- The geometry is **hardcoded to 10px** and does not truly derive from the card radius.
-- It does **not use `pixelHeight`**, so very short cards and tall cards do not preserve the same taper behavior.
-- The status-color path uses `currentColor`, which ties the accent to text color instead of a dedicated accent color source.
-- Because the shape is assembled rather than drawn as one continuous form, it can read like an overlay or seam instead of part of the card shell.
+```tsx
+<div className={cn('w-1 self-stretch rounded-full', statusConfig.bg)} />
+```
 
-That is why this feels like a regression: it is a simplified approximation, not the radius-locked shape you described.
+A clean **inset pill** — full color, rounded ends, padded in from the card edge. No corner-wrapping, no taper, no SVG. The previous three attempts overengineered an "edge-bleed" shape when the reference was a standard inset bar that already exists in the agenda variant.
 
-## Fix
-### Files
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx`
-- `src/lib/design-tokens.ts`
+## The pattern (matches the screenshot exactly)
 
-## Implementation plan
-### 1. Replace the three-piece accent with a single continuous SVG path
-Remove the current `LeftEdgeAccent` top-cap / middle-band / bottom-cap construction.
+Looking at the screenshot:
+- Bar sits **inset** from the left edge (~6px in), not flush
+- Bar is **inset from top and bottom** (~6px), not full-height
+- Bar uses a **fully saturated status color** (mint green for confirmed, etc.)
+- Bar is `rounded-full` (pill shape)
+- Card content padding shifts right to clear the bar
+- No corner wrapping. No taper. No SVG.
 
-Replace it with one geometry-aware component that accepts:
-- `height`
-- `radius`
-- `width`
-- `color`
+## Implementation
 
-It should render a **single closed filled path** whose:
-- outer edge hugs the card’s left silhouette
-- top and bottom curve into the rounded corners
-- inner edge eases back inward so both ends taper to a point / near-point
+### File
+`src/components/dashboard/schedule/AppointmentCardContent.tsx`
 
-Shape logic:
-- use `pixelHeight` from `AppointmentCardContent`
-- compute `effectiveRadius = min(cardRadius, (height - 2) / 2)` so short cards compress correctly
-- compute a single `d` path string from those values
-- render one `<svg>` with one `<path>`, not multiple stitched elements
+### Step 1 — Add a `LeadingAccentBar` component (above `GridContent`)
 
-This gives:
-- no seams
-- no cap mismatch
-- proper taper on short and tall cards
-- one structural shape instead of an assembled overlay
+```tsx
+function LeadingAccentBar({ colorClass }: { colorClass: string }) {
+  return (
+    <div
+      className={cn(
+        'absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full pointer-events-none z-[5]',
+        colorClass
+      )}
+      aria-hidden
+    />
+  );
+}
+```
 
-### 2. Make radius a shared constant instead of hardcoding geometry in multiple places
-Right now the card uses `rounded-[10px]` while the accent separately assumes `10`.
+- `left-1.5 top-1.5 bottom-1.5` → 6px inset on left, top, bottom
+- `w-1` → 4px wide pill
+- `rounded-full` → pill ends
+- `z-[5]` → above service bands and overlays, below interactive content
+- `pointer-events-none` → no drag/click interference
 
-Introduce a shared constant near the card renderer, e.g.:
-- `const SCHEDULE_CARD_RADIUS = 10`
-- `const SCHEDULE_ACCENT_WIDTH = 3.5`
+### Step 2 — Resolve the bar color from one source
 
-Use that same radius for:
-- the card rounding
-- the inner highlight ring
-- the accent path math
+Inside the main card component, just before `gridContent`:
 
-This keeps border radius sync exact and prevents future drift.
+```tsx
+// Status-based saturated color for the leading accent bar.
+// Always uses status color regardless of category coloring — the bar is
+// the canonical status signal.
+const statusKey = (appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_COLORS;
+const accentColorClass = APPOINTMENT_STATUS_COLORS[statusKey]?.bg || APPOINTMENT_STATUS_COLORS.booked.bg;
+```
 
-### 3. Use `pixelHeight` to keep the taper correct at all card heights
-The current accent ignores the one prop that already exists for responsive geometry.
+This reuses the existing canonical status map (already imported on line 28). No new tokens, no `currentColor`, no per-card color drift.
 
-Update the accent call site so grid cards pass:
-- `height={pixelHeight}`
-- `radius={SCHEDULE_CARD_RADIUS}`
+### Step 3 — Render once inside `gridContent`
 
-Behavior:
-- tall cards: normal straight middle section
-- medium cards: shorter middle section, same corner feel
-- very short cards: top and bottom taper zones compress and meet cleanly, with no blunt cutoff
+After `<CardOverlays />`, before service bands:
 
-If `pixelHeight` is missing, use a conservative fallback height only for safety.
+```tsx
+<CardOverlays ... />
 
-### 4. Give status cards a real accent color source
-Do not use `currentColor` for the status accent.
+{!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && (
+  <LeadingAccentBar colorClass={accentColorClass} />
+)}
 
-Add an explicit accent token to the canonical appointment status map in `src/lib/design-tokens.ts`, for example:
-- `accent: 'text-amber-500 dark:text-amber-400'`
-- `accent: 'text-blue-600 dark:text-blue-300'`
-- etc.
+{/* Multi-service color bands */}
+...
+```
 
-Then render the SVG with `fill="currentColor"` and apply the accent class directly to the accent wrapper.
+Exclusions:
+- Skip on **blocked / break** cards (cross overlay reads cleanly without it)
+- Skip on **compact** cards (28px tall — bar would dominate)
 
-Category-colored cards can still use the resolved category stroke/text color.
-Status-colored cards should use the dedicated accent token, not body text color.
+### Step 4 — Shift content padding to clear the bar
 
-### 5. Keep clipping structural and clean
-The accent should remain:
-- inside the card container
-- `pointer-events-none`
-- clipped by the card’s own rounded overflow
+In `GridContent`, the wrapper currently uses `px-2 py-1`. Change to `pl-3.5 pr-2 py-1` so client name / service text doesn't overlap the bar:
 
-No layout changes:
-- no padding changes
-- no drag/resize hit-area changes
-- no interaction shift
+- `px-2` → `pl-3.5 pr-2` (12px left padding, was 8px → +4px to clear the 4px bar + 6px inset)
 
-### 6. Preserve existing exclusions and states
-Keep these rules:
-- no accent on blocked/break cards
-- no accent for gradient-display variants unless explicitly desired later
-- cancelled / no-show / selected states remain exactly as they are
-- service bands still render underneath content; accent stays above them
+Apply to all three render paths: `compact` block, `showStylistBadge` (week) block, and day-view block. Compact stays at `px-2` since no bar renders.
 
-## QA
-- Accent is a single continuous form, not visibly assembled from pieces
-- Top-left and bottom-left ends taper into the radius with no flat stop
-- Middle width stays consistent around 3–4px
-- Short cards do not show cap collisions or blunt ends
-- Tall cards do not stretch the corner geometry unnaturally
-- Status cards use dedicated accent color, not text color
-- No seams at 100%, 125%, 150%, and 200% zoom
-- No overflow outside rounded corners
-- No layout shift, drag interference, or padding changes
+## What stays the same
+- Card padding everywhere else, radius, shadow, hover lift, sheen
+- Category fill behavior (the bar overlays the category color cleanly)
+- Service bands render underneath at `z-0`/`z-[3]`; bar sits above at `z-[5]`
+- Cancelled cards inherit `opacity-60` from the parent
+- No-show ring, selected ring, gradient consultation cards — all untouched
+- Drag/resize hit area (bar is `pointer-events-none`)
+- Agenda variant (already has its own divider — no change)
+
+## QA checklist
+- Bar is inset 6px from left, top, and bottom (matches screenshot)
+- Bar is fully saturated status color (mint green for confirmed, amber for unconfirmed, etc.)
+- Bar is a clean rounded pill — no taper, no corner wrap
+- Content text starts to the right of the bar with no overlap
+- Compact cards: no bar (no room)
+- Blocked / break cards: no bar (cross overlay clean)
+- Cancelled cards: bar dims with parent opacity
+- Selected cards: primary ring renders cleanly above the bar
+- Card shadows and hover lift unchanged
+- Light mode + dark mode: status color matches the existing dot in the status badge
 
 ## Enhancement suggestion
-After this lands cleanly, extract it into a small reusable primitive like `AppointmentEdgeAccent` with props:
-- `height`
-- `radius`
-- `width`
-- `tone`
+After this lands, expose `LeadingAccentBar` as a reusable primitive in `src/components/dashboard/schedule/primitives/` with one prop (`status`). Same primitive can then power drag-preview ghosts and AI suggestion ghost cards with a single source of truth. That ends the "rebuild from scratch" cycle that caused the last three iterations.
 
-That turns this from a fragile one-off into a canonical schedule primitive and prevents future regressions where the accent quietly drifts back into “just a left border.”
