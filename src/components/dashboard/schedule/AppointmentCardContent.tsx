@@ -276,7 +276,7 @@ function GridContent({
   const statusLabel = useShortLabels ? badge.shortLabel : badge.label;
 
   return (
-    <div className="px-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
+    <div className="pl-3.5 pr-2 py-1 relative z-10 overflow-hidden h-full" style={serviceBands ? { textShadow: '0 0 3px rgba(0,0,0,0.15)' } : undefined}>
       {showStylistBadge ? (
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
