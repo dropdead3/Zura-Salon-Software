@@ -12,6 +12,7 @@ import { DockSessionTimeline } from '../mixing/DockSessionTimeline';
 import { roundWeight, roundCost } from '@/lib/color-bar/mix-calculations';
 import { cn } from '@/lib/utils';
 import { DOCK_CONTENT } from '@/components/dock/dock-ui-tokens';
+import { getDisplayClientName } from '@/lib/appointment-display';
 
 interface DockSummaryTabProps {
   appointment: DockAppointment;
@@ -48,7 +49,7 @@ export function DockSummaryTab({ appointment, staff }: DockSummaryTabProps) {
     <div className="px-7 py-4 space-y-4">
       {/* Appointment info */}
       <div className="rounded-xl bg-[hsl(var(--platform-bg-card))] border border-[hsl(var(--platform-border)/0.3)] p-5 space-y-2.5">
-        <InfoRow label="Client" value={appointment.client_name || 'Walk-in'} />
+        <InfoRow label="Client" value={getDisplayClientName(appointment).label} />
         <InfoRow label="Service" value={appointment.service_name || '—'} />
         <InfoRow label="Status" value={appointment.status || 'Pending'} />
         <InfoRow label="Stylist" value={staff.displayName} />

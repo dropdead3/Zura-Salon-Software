@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Phone, ChevronRight, ArrowRightLeft, Users } from 'lucide-react';
 
 import { getClientInitials, getAvatarColor, formatServicesWithDuration, sortServices } from '@/lib/appointment-card-utils';
+import { getDisplayClientName, getCompactDisplayClientName } from '@/lib/appointment-display';
 import { StylistBadge } from './StylistBadge';
 import { CallbackChip } from '@/components/dashboard/clients/CallbackChip';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
@@ -34,6 +35,8 @@ import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
 // ─── Shared helpers ───────────────────────────────────────────
 const BLOCKED_CATEGORIES = ['Block', 'Break'];
 
+// Legacy compact-name kept for callers that pass a bare string.
+// New call sites should prefer getCompactDisplayClientName(appointment).
 function formatCompactName(name: string | null | undefined): string {
   if (!name?.trim()) return 'Walk-in';
   const parts = name.trim().split(/\s+/);
@@ -247,8 +250,8 @@ function GridContent({
           size="compact"
           className="absolute top-0.5 right-1 z-20"
         />
-        <div className="text-xs font-medium truncate pr-8">
-          {appointment.client_name}
+        <div className={cn('text-xs font-medium truncate pr-8', getDisplayClientName(appointment).isPending && 'italic text-muted-foreground')}>
+          {getDisplayClientName(appointment).label}
         </div>
       </div>
     );
@@ -264,8 +267,8 @@ function GridContent({
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
           <div className="flex items-center justify-between gap-1 pr-0.5">
-            <span className="text-sm font-medium truncate min-w-0 flex-1">
-              {formatCompactName(appointment.client_name)}
+            <span className={cn('text-sm font-medium truncate min-w-0 flex-1', getCompactDisplayClientName(appointment).isPending && 'italic text-muted-foreground')}>
+              {getCompactDisplayClientName(appointment).label}
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
@@ -311,8 +314,8 @@ function GridContent({
         <>
           {/* Day view: top row — client name + indicators + status badge */}
           <div className="flex items-center justify-between gap-1 pr-0.5">
-            <span className="text-sm font-medium truncate min-w-0 flex-1">
-              {useShortLabels ? formatCompactName(appointment.client_name) : (appointment.client_name || 'Walk-in')}
+            <span className={cn('text-sm font-medium truncate min-w-0 flex-1', (useShortLabels ? getCompactDisplayClientName(appointment) : getDisplayClientName(appointment)).isPending && 'italic text-muted-foreground')}>
+              {(useShortLabels ? getCompactDisplayClientName(appointment) : getDisplayClientName(appointment)).label}
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
