@@ -1472,7 +1472,7 @@ export function AppointmentDetailSheet({
   // ─── Render ───────────────────────────────────────────────────
   return (
     <>
-      <PremiumFloatingPanel open={open} onOpenChange={(v) => { if (!v) handleClose(); }} maxWidth="520px">
+      <PremiumFloatingPanel open={open} onOpenChange={(v) => { if (!v) handleClose(); }} maxWidth="640px">
 
               {/* ─── Header ────────────────────────────────────── */}
               <div className="p-6 pb-4">
