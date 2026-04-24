@@ -1,127 +1,150 @@
 
 
-## Prompt feedback
-Sharp prompt — the screenshot is exactly the right evidence. Two of the cards (Annmarie X "Pure Brazilian Express Keratin" 2pm, Angelia Sanchez 3pm) actually have the correct names *in the database* now, but the schedule shows "Client #VBPQ" and a missing-name card. That's a different problem from the last three — it's a stale browser cache, not a sync gap. Sharper next time: a quick hard-reload before screenshotting separates "data wrong" from "view stale," and tells me whether to debug sync or render. Also — the API returning 404 for clients that *visibly exist in Phorest's web UI* is a Phorest quirk worth naming explicitly: their public app reads from a different endpoint than `GET /branch/{id}/client/{id}`, so a client appearing on a calendar in Phorest's UI does not guarantee the third-party client lookup will resolve them.
+## What we're building
 
-## Two distinct things going on (proven against the live DB and edge logs)
+Per-service stylist assignment that's *intelligent* about who's available — not just a long alphabetical list. Already-built pieces stay; we close three gaps so the assignment is fast, smart, and actually flows downstream.
 
-### Symptom A — "Client #VBPQ" and missing name where the data is actually correct
+## What already exists (don't rebuild)
 
-`gbilM7k7EIBBoqZ6OuVBPQ` (Annmarie X) and `k_YEpJ30Ib7uE8LwSb98pw` (Angelia Sanchez) are **fully resolved in the database**. Both `phorest_appointments.client_name` and `phorest_clients.name` hold the right names. The view returns the right names. The render layer renders whatever the query returns.
+- `appointment_service_assignments` table with RLS, unique on `(appointment_id, service_name)`
+- `useServiceAssignments` hook (read + upsert)
+- A "Reassign Stylist" dialog in `AppointmentDetailSheet.tsx` with two modes: "Entire" and "Individual Services"
+- `useAssistantConflictCheck` hook returning a `Map<userId, ConflictingAppointment[]>` for the appointment's exact time block (covers lead-stylist + assistant + time-block conflicts)
+- Per-service override badges already render on the Services list inside the detail sheet (lines 1746-1764)
 
-So why does the screenshot still show "Client #VBPQ" and a card with no name?
+## The three gaps
 
-`usePhorestCalendar` queries `v_all_appointments` with `staleTime: 30_000` and a query key that **never invalidates on sync completion**. Once the user loaded the page before the backfill finished (sync ran at 06:05 UTC, 677 names backfilled), React Query holds the pre-backfill snapshot for 30 seconds + as long as the component stays mounted without a refetch trigger.
+### Gap 1 — The picker isn't actually intelligent
 
-The user is looking at a stale snapshot. A hard reload would resolve it. The bug is that **the schedule has no observability into "sync just ran, your appointments now have names" — it just sits on the cached data**.
+Today: `teamMembers.filter(m => m.roles?.includes('stylist') || m.roles?.includes('admin')).slice(0, 8)` — first 8 alphabetically, no location filter, no day-of-week filter, no conflict-aware sorting. A stylist who doesn't work that day at that location is shown identically to one who's free for the next 90 minutes.
 
-### Symptom B — "Client #EBKQ" / "Client #0H2A" / etc. — Phorest API returns 404 for clients that exist in Phorest's UI
+### Gap 2 — No grouping signals
 
-`mQuniNJUV6CsoQ6QUUEbKQ` (Grant Carter), `PFZxTWB0tGY4sNu4pf0h2A` (Samantha Lyons), `HLVo8X1eGKPl6vka-HFj5g` (Kendra Harris) — the appointment exists, the client visibly exists in Phorest's calendar. But every call to `GET /branch/{branchId}/client/{clientId}` returns 404 from every branch in both regions. Edge logs prove it:
+Conflicts are flagged with an amber badge (good) but the list isn't *sorted* by availability. The eligible-and-free stylists should sit at the top in a "Available now" group; scheduled-but-conflicting in a second "Has conflicts" group; not-scheduled-this-day in a collapsed "Other staff at location" group; everyone else hidden behind a "Show all org staff" toggle (the stated requirement: "could technically be assigned to anyone at the location").
 
+### Gap 3 — Writes are orphaned
+
+The override is saved to `appointment_service_assignments` and rendered as a badge on the Services list. **Nothing else reads it.** Payroll, commission, schedule day-view cards, reports, and the `v_all_appointments` view all still attribute 100% of the appointment to `stylist_user_id`. So a manager can "reassign" a service today and the reassigned stylist gets zero credit. That's the highest-leverage gap — it makes the feature operationally meaningful instead of cosmetic.
+
+## The fix — three layers
+
+### Layer 1 — Intelligent eligibility hook (`useEligibleStylistsForService`)
+
+New hook in `src/hooks/useEligibleStylistsForService.ts` that returns a ranked list per appointment + service:
+
+```text
+EligibleStylist {
+  user_id, name, photo_url
+  tier: 'available' | 'conflicting' | 'off_today' | 'other_location'
+  reasons: string[]   // "Scheduled today", "Free 2:00–3:00 PM", "Performs this service"
+  conflicts: ConflictingAppointment[]   // empty for tier='available'
+}
 ```
-On-demand fetch PFZxTWB0tGY4sNu4pf0h2A: 404 from every branch; leaving unresolved
-On-demand fetch [21 more IDs]: 404 from every branch; leaving unresolved
+
+Inputs already wired:
+- `teamMembers` from `useTeamDirectory(undefined, { organizationId })` — has `location_schedules` (day-of-week per location) and roles
+- `conflictMap` from `useAssistantConflictCheck` — exact overlap detection at appointment's start/end
+- Appointment's `appointment_date`, `location_id`, `start_time`, `end_time`
+
+Logic per stylist (excluding lead + non-stylists/non-admins):
+1. **available** — assigned to this `location_id` AND `work_days[dayOfWeek]` includes today AND `conflictMap.get(user_id)` is empty
+2. **conflicting** — same location + day, but has overlap
+3. **off_today** — assigned to location but not scheduled this day-of-week
+4. **other_location** — stylist at the org but not assigned to this location
+
+Bonus signal (deferred but cheap if data exists): if `staff_service_compatibility` or similar table maps which stylists perform which services, add a `performs_service: boolean` flag — surface "Performs this service" as a reason and float performers above non-performers within each tier. Confirm during build whether that table exists; if not, skip without blocking.
+
+Sort within tiers: lead stylist first if shown, then by name.
+
+### Layer 2 — Redesigned per-service picker UI
+
+Replace the flat `teamMembers.filter(...).slice(0, 8)` block (lines 3001-3031) with grouped sections:
+
+```text
+┌─ For: Pure Brazilian Express Keratin · 2:00–2:30 PM ───┐
+│ ▼ Available now (3)                                     │
+│   ◉ Samantha Bloom    Scheduled · Free                  │
+│   ◯ Jamie Lee         Scheduled · Free · Performs this  │
+│   ◯ Alex Rivera       Scheduled · Free                  │
+│                                                         │
+│ ▼ Has conflicts (2)                                     │
+│   ◯ Annmarie X        ⚠ Busy 2:00–3:00 (Color)          │
+│   ◯ Maria Cruz        ⚠ Assisting 1:30–2:30             │
+│                                                         │
+│ ▶ Off today at this location (4)                        │
+│ ▶ Show all org staff (12)                               │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Two probable causes (not mutually exclusive):
-1. **Phorest's `/branch/{id}/client/{id}` endpoint is permissioned differently from `/branch/{id}/client?searchableName=...`** — the third-party API may require a paginated list lookup, not a direct fetch. Phorest's docs are inconsistent on this.
-2. **The calendar reads from a "global" client store** while `/branch/.../client/{id}` only resolves clients *owned* by that branch. A client booked across multiple branches may exist as one record in the calendar view but as separate per-branch records (or no record) in the third-party endpoint.
+Honors the doctrine — silence is valid: if no one in a tier, skip the section header. Conflicting stylists remain *selectable* (the manager may know something the system doesn't), but selecting one shows a yellow "This will create a double-booking" inline confirm before save. Same pattern as the existing assistant picker.
 
-Either way, the on-demand single-client fetch path doesn't work for a chunk of real clients. We need a different lookup strategy.
+Keep the existing "Default" badge on the lead, the per-service container, and the "Save Assignments" footer button. The dialog footer copy updates to count *changed* services, e.g. "Save 2 changes".
 
-### The third lurking issue — the database knows the appointment client name from Phorest's appointment payload
+### Layer 3 — Wire the override downstream (the meaningful one)
 
-Looking at `phorest_appointments` for `mQuniNJUV6CsoQ6QUUEbKQ`: `client_name` is **NULL**. But Phorest's calendar clearly shows "Grant Carter" attached to that booking. So Phorest's appointment endpoint *does* know the client's name on the appointment level — we're just not capturing it. Line 530 of the sync function does:
+Without this, layers 1+2 are decoration. Three concrete read-paths to update:
 
-```ts
-client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
+**3a. View update** — Add a new view `v_appointment_services_resolved` (or extend `v_all_appointments`) that joins `appointment_service_assignments` and exposes a per-service resolved stylist. Shape:
+```text
+appointment_id, service_name, service_price, service_duration,
+resolved_user_id  -- COALESCE(assignment.assigned_user_id, appointment.stylist_user_id)
+resolved_staff_name
 ```
+This becomes the canonical source for any read that needs "who actually did service X."
 
-If neither `apt.clientName` nor `apt.client.firstName/lastName` exists on the response shape, but Phorest's *calendar API* (the one their UI uses) returns the name as part of the appointment, we may be calling the wrong appointment endpoint or missing a query param like `include=client` or `expand=client`.
+**3b. Schedule day-view card** — When an appointment has overrides, show a small composite avatar stack (lead + overrides) on the card. If 100% of services are reassigned to one other stylist, show *that* stylist's column instead. Out of scope for this wave but called out as the next domino — tracked in the deferral register.
 
-## The fix — three layers, in order
+**3c. Payroll / commission attribution** — `payroll_calculations` (or whichever function aggregates revenue per stylist) reads from `phorest_appointments.stylist_user_id`. Update to read from the new resolved view so commission flows to the actual performer per service. This is the structural integrity payoff: reassigning a service moves the dollars, not just the label.
 
-### 1. Verify what Phorest's appointment endpoint actually returns and capture the client name there
-
-This is the **highest-leverage fix**. If the appointment-level response carries the client's name (as Phorest's UI suggests it does), we never need the per-client lookup at all — the map happens at sync time.
-
-Reconnaissance steps:
-- Add a one-time debug log in `syncAppointments` that dumps the raw shape of `apt` (including `apt.client`, any `firstName`/`lastName`/`name`/`email` fields) for the first 3 appointments per branch
-- Check if Phorest's appointment endpoint accepts `?expand=client` or `?fields=client.firstName,client.lastName` — many Phorest API endpoints support field expansion
-- If the appointment response has the name in *any* shape, broaden line 530 to read all candidate paths: `apt.clientName`, `apt.client?.firstName + lastName`, `apt.client?.name`, `apt.customer?.name`, `apt.customer?.firstName + lastName`
-
-Once this is confirmed, the per-client fetch becomes a fallback for the rare appointment that doesn't carry client info inline — not the primary resolution path.
-
-### 2. Replace per-client `/branch/{id}/client/{id}` with a paginated client search
-
-For the residual clients the appointment payload doesn't resolve, switch the on-demand fetch from `GET /branch/{id}/client/{clientId}` to a paginated search that *does* work — typically `GET /branch/{id}/client?clientId={clientId}` or `GET /branch/{id}/client?size=200&page=N` filtered on our side.
-
-The current per-client GET returns 404 for half the IDs. The list endpoint will return them all (it's how `syncClients` already works) — we just iterate larger pages or pass a filter.
-
-Approach:
-- Bundle all unresolved IDs from the current sync run
-- Call the paginated client list per branch in the right region, page through until exhausted or all unresolved IDs are found
-- Match by `phorest_client_id` and write the same upsert path
-
-This trades "200 single-fetches" for "~5 paginated-list calls per branch" — strictly better for the rate budget AND works for clients the single-fetch endpoint can't see.
-
-### 3. Add a sync-completion signal so the schedule refreshes when names land
-
-The stale-cache bug (Annmarie X showing as "Client #VBPQ") is fixable in two ways:
-
-**Option A (preferred)** — when `phorest-sync-status` query updates with a new `completed_at` for `appointments`, automatically `queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })`. This already happens in some places via the sync status listener, but `usePhorestCalendar` doesn't subscribe to it. A small `useEffect` that watches `lastSync` (already in the hook at line 264-280) and calls `refetch()` when it advances would close the gap.
-
-**Option B (fallback)** — drop `staleTime` from 30s to something like 60s for the appointment query but add a `refetchInterval: 60_000` so the schedule polls quietly while open. Higher network cost; less elegant.
-
-Option A is cleaner and respects the no-polling doctrine in `tech-decisions/high-concurrency-scalability`.
+For this wave, ship 3a + the payroll read-path swap. 3b can ship as a follow-up wave once the data layer is correct.
 
 ## Files involved
 
-**Investigated first (no edit until reconnaissance complete):**
-- `supabase/functions/sync-phorest-data/index.ts` lines 480-530 — log the actual `apt` shape for 3 appointments to confirm what fields Phorest sends
-- Phorest API docs (or a debug call from the function) for `/branch/{id}/appointment` to confirm whether `?expand=client` or similar is supported
+**New:**
+- `src/hooks/useEligibleStylistsForService.ts` — the ranking hook
+- `supabase/migrations/<timestamp>_v_appointment_services_resolved.sql` — joined view
+- One follow-up migration to update payroll RPC(s) to read from the new view (identified during build)
 
-**Likely modified:**
-- `supabase/functions/sync-phorest-data/index.ts`:
-  - Broaden line 530 to read all candidate name paths from the appointment response (low risk)
-  - Add `?expand=client` (or whatever the docs require) to the appointment fetch URL
-  - Replace the per-client GET in Pass 2 with a paginated client list lookup keyed on the unresolved IDs
-- `src/hooks/usePhorestCalendar.ts` — add a `useEffect` watching `lastSync.completed_at` that triggers `refetch()` when it advances
-
-**Migration:**
-- One-shot SQL after fix #1 ships: clear `client_name = NULL` rows so the next sync re-resolves them through the corrected appointment-level extraction (idempotent, only touches rows still missing names)
+**Modified:**
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` lines ~2980-3082 — replace flat list with grouped picker; add double-book confirm; update footer count
+- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` lines ~1745-1776 — Services list already shows override badge; verify it picks up the new view's resolved name when the lead is *also* changed via "Entire" mode (no behavior change expected, just tested)
+- Whichever payroll aggregation function reads `stylist_user_id` to credit revenue — switch to the resolved view
 
 **Untouched:**
-- `src/lib/appointment-display.ts` — three-state contract is correct
-- `v_all_appointments` view — COALESCE is correct
-- The reconciliation function — same paginated-list fix applies, but ship the sync function fix first and validate before re-deploying reconciliation
+- RLS policies (already correct)
+- `useServiceAssignments` hook (write path is fine)
+- `useAssistantConflictCheck` (perfect for this)
+- "Entire" reassign mode (unchanged)
 
 ## What stays the same
 
-- `getDisplayClientName` three-state rendering
-- "Client #ABCD" placeholder for genuinely-unresolvable IDs (correct behavior — we don't have the data, we shouldn't pretend we do)
-- `is_walk_in` detection
-- Region-aware iteration from yesterday's fix (still correct, just becomes less load-bearing)
-- POS-First doctrine — Phorest is still the source of truth, we're just asking it the right questions
+- The dialog trigger ("Reassign Stylist" in the actions menu) — unchanged
+- Audit log fires on `service_reassigned` — unchanged
+- Per-service override badges on the Services list — unchanged
+- The two-mode toggle ("Entire" / "Individual Services") — unchanged
 
 ## QA checklist
 
-- After fix #1: re-sync; raw appointment log shows the client name field that exists; `phorest_appointments.client_name` populates at sync time, not via Pass 2 backfill
-- After fix #2: previously-404 client IDs (Grant Carter, Samantha Lyons, Kendra Harris) appear in `phorest_clients` with real names within one sync cycle
-- After fix #3: open schedule; trigger a manual sync; within ~5s of sync completion, "Client #ABCD" cards refresh to real names without a hard reload
-- A sync that adds zero new names doesn't trigger a wasteful refetch (only refetch when `lastSync.completed_at` actually advances)
-- Truly missing clients (deleted in Phorest, never existed) still render "Client #ABCD" — no false `[Deleted Client]` rows
+- Open an appointment with 4 services → "Reassign Stylist" → "Individual Services" → picker shows grouped sections, "Available now" first, alphabetical within
+- A stylist scheduled at the location with no overlap appears in "Available now" with reason "Scheduled · Free"
+- A stylist with an overlapping appointment appears in "Has conflicts" with the conflict description
+- A stylist not scheduled that day-of-week sits in "Off today at this location" (collapsed)
+- "Show all org staff" reveals everyone else; selecting them works (silence is valid: we don't block, we inform)
+- Selecting a conflicting stylist shows the inline double-book warning before save
+- After save, payroll for the appointment date credits the reassigned stylist for the per-service revenue (not the lead)
+- After save, the Services list inside the detail sheet shows the override badge and the saved name (already works; regression check)
+- The "Entire" reassign mode still works as it does today (no regression)
+- No flicker / double-fetch when the dialog opens (the conflict query is gated on `showReassignDialog`, already correct)
 
-## Why this happened (and the canon to add)
+## Confidence and silence
 
-The on-demand single-client fetch was built on the assumption that Phorest's third-party API has a `GET /client/{id}` semantics that mirrors what their internal UI does. It doesn't — at least not reliably. Yesterday's fix was correct *given that assumption*; the assumption was wrong.
+Per doctrine: when no stylist is "Available now" (all are conflicting or off), the section is hidden — not shown empty. The manager sees the conflict tier first and makes an informed call. We don't fabricate availability; absence-of-availability is meaningful information.
 
-Generalizable lesson: **when an external API serves the same data through multiple endpoints, the one their public UI uses is usually a different (better-permissioned, more-expanded) endpoint than the one in their third-party docs**. We should always prefer the endpoint that returns *more* data per call (list with expansion) over the endpoint that returns *less* (single-resource fetch) — because the latter often has stricter permissioning we won't discover until production.
+## Why this matters (doctrine framing)
 
-This is adjacent to the signal-preservation canon already saved. Worth a short addition to `mem://tech-decisions/phorest-staff-integration-and-photo-sync.md` (or a new `phorest-third-party-api-quirks.md`) noting: "The single-resource client fetch (`/branch/{id}/client/{id}`) returns 404 for many clients visible in Phorest's UI. Prefer paginated list endpoints with client-side filtering."
+This feature only earns its place if it *moves money* — otherwise it's a label change. Layer 3 is what makes it real: a manager reassigns a $213 keratin from Jamie to Samantha mid-day, payroll credits Samantha, commission flows to Samantha, performance reports show Samantha's revenue. Without that, we'd be re-skinning a cosmetic toggle. The structural rule "commission models must be defined before payouts" applies in reverse here too — payouts must follow the actual performer, not the label on the appointment.
 
 ## Enhancement suggestion
 
-Once fix #1 is verified, the `useReconcilePhorestClientNames` admin button becomes mostly redundant — the next regular sync resolves the backlog. But it's still worth keeping as a one-click "force re-fetch all empty rows" button for ops, with the same paginated-list strategy. Worth adding to the integrations admin page as a deferred follow-up, not blocking the primary fix.
+Worth flagging now: this is the second time in a week we've found a feature where the *write* shipped without the *read* (the first was per-service assignment as it stands today, written in Feb 2026; the related pattern was the false `[Deleted Client]` writes erasing signal). Same shape: "the write satisfied the schema; nothing consumed it; the operational truth was destroyed." That's a *write-without-read* anti-pattern worth its own short canon at `mem://architecture/write-without-read.md`: any new write path must declare which read path consumes it, or be marked experimental and excluded from "feature complete." Pairs naturally with the signal-preservation canon already in place.
 
