@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY")!;
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(supabaseUrl, serviceKey) as any;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-04-30.basil" });
 
     // Authenticate caller

@@ -112,7 +112,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
 
     const bookingData: BookingRequest = await req.json();
     const { branch_id, client_id, staff_id, service_ids, start_time, notes, location_id: clientLocationId, staff_user_id, client_name: nativeClientName, client_email: nativeClientEmail, client_phone: nativeClientPhone, native_client_id, is_redo, redo_reason, original_appointment_id, redo_pricing_override, redo_requires_approval, redo_is_manager } = bookingData;

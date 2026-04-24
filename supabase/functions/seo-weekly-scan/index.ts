@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // ── GAP 5: Auth validation ──
     let organizationId: string | null = null;
@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
     if (authHeader?.startsWith("Bearer ")) {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
-      });
+      }) as any;
       const { data: claims, error: claimsErr } = await userClient.auth.getClaims(
         authHeader.replace("Bearer ", "")
       );
@@ -97,7 +97,7 @@ Deno.serve(async (req: Request) => {
   }
 });
 
-async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
+async function getAllActiveOrgs(supabase: any) {
   const { data } = await supabase
     .from("organizations")
     .select("id")
@@ -107,7 +107,7 @@ async function getAllActiveOrgs(supabase: ReturnType<typeof createClient>) {
 }
 
 async function runWeeklyScan(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<{ tasksGenerated: number }> {
   let tasksGenerated = 0;
@@ -125,7 +125,7 @@ async function runWeeklyScan(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectPageIssues(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const { data: lowPageScores } = await supabase
@@ -231,7 +231,7 @@ async function detectPageIssues(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectContentGaps(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const { data: services } = await supabase
@@ -404,7 +404,7 @@ async function detectContentGaps(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectConversionWeakness(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const { data: lowConversion } = await supabase
@@ -490,7 +490,7 @@ async function detectConversionWeakness(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function detectCompetitorGaps(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<number> {
   const { data: gapScores } = await supabase

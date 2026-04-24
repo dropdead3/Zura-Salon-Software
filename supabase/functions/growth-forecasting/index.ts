@@ -154,14 +154,18 @@ serve(async (req) => {
     const { organizationId, locationId, granularity, horizonMonths } = body;
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      const orgId = body.organizationId || body.organization_id;
+      if (!orgId) {
+        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+      }
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
 
     // Check cache first (only for quarterly — monthly is computed fresh, cached client-side)
     if (granularity !== 'monthly') {

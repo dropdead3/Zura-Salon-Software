@@ -459,7 +459,7 @@ serve(async (req) => {
       throw new Error("Supabase environment variables not configured");
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
     
     const body = await validateBody(req, AgentChatSchema, getCorsHeaders(req));
     const { messages, userId, organizationId, userRole } = body;

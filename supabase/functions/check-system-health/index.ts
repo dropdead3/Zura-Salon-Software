@@ -12,7 +12,7 @@ const SERVICES = [
     check: async (supabaseUrl: string, serviceKey: string) => {
       const start = Date.now();
       try {
-        const client = createClient(supabaseUrl, serviceKey);
+        const client = createClient(supabaseUrl, serviceKey) as any;
         await client.from('organizations').select('id').limit(1);
         return { healthy: true, responseTime: Date.now() - start };
       } catch (error) {
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const results: Array<{
       service_name: string;

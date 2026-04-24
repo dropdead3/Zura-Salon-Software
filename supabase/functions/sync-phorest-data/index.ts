@@ -2313,7 +2313,7 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // ── Input validation (Phase 7c) ──────────────────────────────────
     // Guard against malformed/malicious bodies before any value reaches

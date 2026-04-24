@@ -19,7 +19,7 @@ serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const supabase = createClient(supabaseUrl, serviceKey) as any;
 
   try {
     const body = await req.text();

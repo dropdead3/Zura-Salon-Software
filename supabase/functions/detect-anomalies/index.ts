@@ -38,13 +38,17 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, DetectAnomaliesSchema, getCorsHeaders(req));
     const { organizationId, locationId } = body;
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      const orgId = body.organizationId || body.organization_id;
+      if (!orgId) {
+        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+      }
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }

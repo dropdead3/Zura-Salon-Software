@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       throw new Error("Missing Supabase credentials");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
     const body: CreateClientRequest = await req.json();
     
     const { branch_id, first_name, last_name, email, phone, notes, birthday, client_since,

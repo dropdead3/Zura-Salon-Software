@@ -17,7 +17,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     let slaHours = DEFAULT_SLA_HOURS;
     try { const body = await req.json(); if (body?.sla_hours) slaHours = parseInt(body.sla_hours, 10); } catch {}

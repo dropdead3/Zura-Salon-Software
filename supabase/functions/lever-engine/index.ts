@@ -43,7 +43,7 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    ) as any;
 
     // 1. Check for fresh recommendation (< 1 hour old)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();

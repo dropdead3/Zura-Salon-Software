@@ -125,7 +125,7 @@ serve(async (req) => {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    ) as any;
 
     // Auth: require an authenticated admin to run this (it can hit Phorest hard).
     const authHeader = req.headers.get("Authorization");

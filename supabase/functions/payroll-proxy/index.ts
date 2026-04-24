@@ -53,7 +53,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'PAYROLL_ENCRYPTION_KEY is not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
     
     const body = await req.json();
     const { organizationId, action, data } = body;

@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
     // Verify auth

@@ -26,10 +26,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
 
     // Verify user
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!) as any;
     const { data: { user }, error: authError } = await anonClient.auth.getUser(
       authHeader.replace("Bearer ", "")
     );
@@ -296,10 +296,34 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
     const totalPast = pastAppointments.length;
     const rebookedCount = pastAppointments.filter((a) => a.rebooked_at_checkout).length;
 
-    const thisWeekSales = salesData.filter((s) => s.summary_date >= weekAgo);
-    const lastWeekSales = salesData.filter((s) => s.summary_date < weekAgo);
-    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
-    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+    // Sales aggregates derived inline from transaction_items rows.
+    // (Previously this read from `daily_sales_summary` which used different
+    // column names — `summary_date`, `total_revenue`, etc. After the pivot to
+    // `phorest_transaction_items` as the canonical sales source, those refs
+    // were broken. We now compute the same aggregates from the line items.)
+    interface DailyAgg { revenue: number; transactionIds: Set<string> }
+    const dailyAggs = new Map<string, DailyAgg>();
+    for (const row of salesData as Array<any>) {
+      const date = row.transaction_date as string;
+      if (!date) continue;
+      const agg = dailyAggs.get(date) ?? { revenue: 0, transactionIds: new Set<string>() };
+      agg.revenue += (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
+      if (row.transaction_id) agg.transactionIds.add(String(row.transaction_id));
+      dailyAggs.set(date, agg);
+    }
+    const dailySales = Array.from(dailyAggs.entries())
+      .map(([date, agg]) => ({
+        summary_date: date,
+        total_revenue: agg.revenue,
+        total_transactions: agg.transactionIds.size,
+        average_ticket: agg.transactionIds.size > 0 ? agg.revenue / agg.transactionIds.size : 0,
+      }))
+      .sort((a, b) => b.summary_date.localeCompare(a.summary_date));
+
+    const thisWeekSales = dailySales.filter((s) => s.summary_date >= weekAgo);
+    const lastWeekSales = dailySales.filter((s) => s.summary_date < weekAgo);
+    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
+    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
 
     // High-ticket & retail metrics (last 30 days)
     const totalCompleted30d = highTicketAppts.length;
@@ -473,8 +497,8 @@ REVENUE (Last 14 days):
 - This week total: $${thisWeekRevenue.toFixed(0)}
 - Last week total: $${lastWeekRevenue.toFixed(0)}
 - Week-over-week change: ${lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue * 100).toFixed(1) : "N/A"}%
-- Daily sales entries: ${salesData.length}
-${salesData.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue || 0} (${s.total_transactions || 0} transactions, avg ticket $${s.average_ticket || 0})`).join("\n")}
+- Daily sales entries: ${dailySales.length}
+${dailySales.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue.toFixed(0)} (${s.total_transactions} transactions, avg ticket $${s.average_ticket.toFixed(0)})`).join("\n")}
 
 APPOINTMENTS (Last 7 + Next 7 days):
 - Total past week: ${totalPast}

@@ -152,7 +152,7 @@ serve(async (req) => {
 
     // If action detected and we have all required context, save to database
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && organizationId && targetUserId) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
 
       const { data: smartAction, error: insertError } = await supabase
         .from("chat_smart_actions")

@@ -41,7 +41,7 @@ serve(async (req) => {
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const useAi = !!lovableApiKey;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, RevenueForecastSchema, getCorsHeaders(req));
     const { 
@@ -52,7 +52,11 @@ serve(async (req) => {
     } = body;
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      const orgId = body.organizationId || body.organization_id;
+      if (!orgId) {
+        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+      }
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }

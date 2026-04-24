@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
       });
     }
     const token = authHeader.replace("Bearer ", "");
-    const anonClient = createClient(supabaseUrl, anonKey);
+    const anonClient = createClient(supabaseUrl, anonKey) as any;
     const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
     if (claimsErr || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub;
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(supabaseUrl, serviceKey) as any;
 
     const { organization_id } = await req.json();
     if (!organization_id) {

@@ -264,7 +264,7 @@ serve(async (req: Request) => {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // ── Auth: require authenticated user ──
     const authHeader = req.headers.get("Authorization");

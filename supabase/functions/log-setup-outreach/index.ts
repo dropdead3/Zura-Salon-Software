@@ -42,13 +42,13 @@ Deno.serve(async (req) => {
     // Validate caller
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: auth } },
-    });
+    }) as any;
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) {
       return json({ error: "Invalid session" }, 401);
     }
 
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = createClient(supabaseUrl, serviceKey) as any;
 
     // Authorization gate — table is platform-only.
     const { data: isPlatform } = await admin.rpc("is_platform_user", {

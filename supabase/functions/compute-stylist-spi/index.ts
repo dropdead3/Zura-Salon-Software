@@ -16,8 +16,8 @@ serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
   // Use anon client for auth validation (not service-role)
-  const anonClient = createClient(supabaseUrl, anonKey);
-  const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+  const anonClient = createClient(supabaseUrl, anonKey) as any;
+  const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } }) as any;
 
   try {
     // Validate caller with anon client

@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     // Validate the JWT using anon client with user's token
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     }
 
     // Authorization: verify caller is an org admin or platform user
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const { data: isAdmin } = await supabase.rpc("is_org_admin", {
       _user_id: userId,

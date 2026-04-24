@@ -82,7 +82,7 @@ function parseDateRange(dateRange?: string): { from: string; to: string } {
 }
 
 async function fetchCardMetrics(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   cardName: string,
   dateRange: string | undefined,
   locationName: string | undefined
@@ -444,7 +444,11 @@ serve(async (req) => {
     const { cardName, metricData, dateRange, locationName } = body;
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      const orgId = body.organizationId || body.organization_id;
+      if (!orgId) {
+        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+      }
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
@@ -461,7 +465,7 @@ serve(async (req) => {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        const supabase = createClient(supabaseUrl, supabaseKey) as any;
         resolvedMetrics = await fetchCardMetrics(supabase, cardName, dateRange, locationName);
       }
     }

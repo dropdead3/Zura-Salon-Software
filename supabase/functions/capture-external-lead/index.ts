@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     }
 
     const normalizedLead = normalizeLeadData(source, data);
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!) as any;
 
     const { data: insertedLead, error } = await supabase.from('salon_inquiries').insert(normalizedLead).select('id').single();
     if (error) {

@@ -1606,7 +1606,7 @@ Deno.serve(async (req) => {
     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
     const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
     const payload = await req.text();

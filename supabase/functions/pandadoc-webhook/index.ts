@@ -91,7 +91,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const webhookSecret = Deno.env.get("PANDADOC_WEBHOOK_SECRET") || "";
     
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // Get the raw body for signature verification
     const rawBody = await req.text();

@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
 // ═══════════════════════════════════════════════════════════════════════
 
 async function ensureSEOObjects(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ) {
   // Register locations as SEO objects
@@ -193,7 +193,7 @@ interface ScoreRow {
 }
 
 async function computeHealthScores(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<ScoreRow[]> {
   const { data: seoObjects } = await supabase
@@ -572,7 +572,7 @@ function scoreConversionHealth(
 // ═══════════════════════════════════════════════════════════════════════
 
 async function computeOpportunityRisk(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string
 ): Promise<any[]> {
   // Get location-service objects
