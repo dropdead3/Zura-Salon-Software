@@ -553,8 +553,8 @@ serve(async (req) => {
           toolName, 
           toolArgs, 
           supabase, 
-          userId, 
-          organizationId
+          userId || user.id, 
+          orgId
         );
         
         toolResults.push({
