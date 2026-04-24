@@ -9,18 +9,23 @@
  * the schema but violated the table's purpose. This function is the corrective
  * sweep: it explicitly targets the empty-name rows the regular sync skips.
  *
+ * SIGNAL PRESERVATION: this function does NOT write [Deleted Client] negative-
+ * cache rows. A 404 from every (branch × region) combination is not positive
+ * evidence of deletion — it could mean a new branch we don't know about, a
+ * permission gap, or a transient region-routing failure. Unresolvable IDs are
+ * counted and surfaced to the operator; the appointment continues to render
+ * "Client #ABCD" — the truthful "we have the ID, can't resolve the name."
+ *
  * Operation:
  *   1. Find unique phorest_client_ids from `phorest_appointments` where
  *      `client_name IS NULL` and either no client row exists OR the row
  *      has no usable name (`name`, `first_name`, `last_name` all empty).
- *   2. Probe Phorest's `/branch/{branchId}/client/{clientId}` for each ID,
- *      iterating known branches until one returns a populated client.
- *   3. Upsert ONLY when the response actually carries a name (contract
- *      validation). 404 across all branches → write `[Deleted Client]`
- *      negative cache so we don't re-probe forever.
+ *   2. Enumerate branches per-region (EU + US) so each branch is queried only
+ *      against the base URL it actually lives on (cross-region queries return
+ *      misleading 404s that look like "deleted").
+ *   3. Probe Phorest's `/branch/{branchId}/client/{clientId}` per branch in its
+ *      own region; upsert ONLY when the response carries a real name.
  *   4. Backfill `phorest_appointments.client_name` from the resolved set.
- *
- * Returns granular counters so the UI can report exactly what happened.
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -31,20 +36,21 @@ const corsHeaders = {
 };
 
 const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
+const PHOREST_BASE_URL_US = "https://platform-us.phorest.com/third-party-api-server/api";
 
 async function phorestRequest(
   endpoint: string,
   businessId: string,
   username: string,
   password: string,
+  preferredBase?: string,
 ): Promise<{ ok: true; data: any } | { ok: false; status: number; error: string }> {
   const formattedUsername = username.startsWith("global/") ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
 
-  const baseUrls = [
-    PHOREST_BASE_URL,
-    "https://platform-us.phorest.com/third-party-api-server/api",
-  ];
+  const baseUrls = preferredBase
+    ? [preferredBase]
+    : [PHOREST_BASE_URL, PHOREST_BASE_URL_US];
 
   let lastStatus = 0;
   let lastError = "no attempt";
@@ -92,7 +98,7 @@ interface ReconcileResult {
   scanned_appointments: number;
   unique_client_ids: number;
   fetched: number;
-  deleted_flagged: number;
+  unresolved_404: number;
   fetch_errors: number;
   appointments_backfilled: number;
   branches_probed: number;
@@ -108,7 +114,7 @@ serve(async (req) => {
     scanned_appointments: 0,
     unique_client_ids: 0,
     fetched: 0,
-    deleted_flagged: 0,
+    unresolved_404: 0,
     fetch_errors: 0,
     appointments_backfilled: 0,
     branches_probed: 0,
@@ -219,31 +225,59 @@ serve(async (req) => {
     const targetFetch = toFetch.slice(0, maxIds);
     result.unique_client_ids = targetFetch.length;
 
-    // 3. List branches once
-    const branchResp = await phorestRequest("/branch", businessId, username, password);
-    if (!branchResp.ok) {
-      result.errors.push(`Could not list branches: ${branchResp.error}`);
-      return new Response(JSON.stringify({ success: false, ...result }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // 3. Enumerate branches per-region. Each branch is queried only against
+    //    the base URL it actually lives on — cross-region 404s are what
+    //    produced the false [Deleted Client] flagging in the prior version.
+    const branchRegion = new Map<string, string>(); // branchId -> base URL
+    const euResp = await phorestRequest("/branch", businessId, username, password, PHOREST_BASE_URL);
+    if (euResp.ok) {
+      const list = euResp.data._embedded?.branches || euResp.data.branches ||
+                   (Array.isArray(euResp.data) ? euResp.data : []);
+      for (const b of list) {
+        const id = b.branchId || b.id;
+        if (id && !branchRegion.has(id)) branchRegion.set(id, PHOREST_BASE_URL);
+      }
+    } else {
+      result.errors.push(`EU branch enumeration: ${euResp.error}`);
     }
-    const branches: any[] =
-      branchResp.data._embedded?.branches ||
-      branchResp.data.branches ||
-      (Array.isArray(branchResp.data) ? branchResp.data : []);
-    const branchIds: string[] = branches.map((b: any) => b.branchId || b.id).filter(Boolean);
+    const usResp = await phorestRequest("/branch", businessId, username, password, PHOREST_BASE_URL_US);
+    if (usResp.ok) {
+      const list = usResp.data._embedded?.branches || usResp.data.branches ||
+                   (Array.isArray(usResp.data) ? usResp.data : []);
+      for (const b of list) {
+        const id = b.branchId || b.id;
+        if (id && !branchRegion.has(id)) branchRegion.set(id, PHOREST_BASE_URL_US);
+      }
+    } else {
+      result.errors.push(`US branch enumeration: ${usResp.error}`);
+    }
+
+    const branchIds = Array.from(branchRegion.keys());
     result.branches_probed = branchIds.length;
 
     if (branchIds.length === 0) {
-      result.errors.push("No branches returned from Phorest");
+      result.errors.push("No branches returned from Phorest in either region");
       return new Response(JSON.stringify({ success: false, ...result }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 4. Probe each unresolved ID across branches.
+    // Branch-id hint: existing client rows for related IDs may already know
+    // which branch they live in — probe that one first to keep API cost low.
+    const branchHintMap = new Map<string, string>();
+    if (targetFetch.length > 0) {
+      const { data: hintRows } = await supabase
+        .from("phorest_clients")
+        .select("phorest_client_id, phorest_branch_id")
+        .in("phorest_client_id", targetFetch)
+        .not("phorest_branch_id", "is", null);
+      (hintRows || []).forEach((r: any) => {
+        if (r.phorest_branch_id) branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
+      });
+    }
+
+    // 4. Probe each unresolved ID across branches in their own regions.
     //    Concurrency cap: 5 parallel client lookups; each iterates branches serially.
     for (let i = 0; i < targetFetch.length; i += 5) {
       const batch = targetFetch.slice(i, i + 5);
@@ -251,25 +285,32 @@ serve(async (req) => {
         batch.map(async (clientId) => {
           let foundClient: any = null;
           let foundBranchId: string | null = null;
-          let nonNotFoundError: string | null = null;
+          let sawTransientError = false;
 
-          for (const branchId of branchIds) {
+          const hint = branchHintMap.get(clientId);
+          const orderedBranches = hint
+            ? [hint, ...branchIds.filter((b) => b !== hint)]
+            : branchIds;
+
+          for (const branchId of orderedBranches) {
+            const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
             const resp = await phorestRequest(
               `/branch/${branchId}/client/${clientId}`,
               businessId,
               username,
               password,
+              region, // SCOPE TO BRANCH'S OWN REGION — no cross-region 404s
             );
             if (resp.ok) {
               foundClient = resp.data;
               foundBranchId = branchId;
               break;
             }
-            // 404 across all branches is the "deleted" signal.
+            // 404 from a branch's own region just means "this client isn't
+            // in this branch" — keep probing the others. A non-404 is a
+            // transient/auth/permission issue worth noting.
             if (resp.status !== 404) {
-              nonNotFoundError = `${resp.status}: ${resp.error}`;
-              // Don't stop probing other branches on transient errors,
-              // but remember it so we can decide what to write at the end.
+              sawTransientError = true;
             }
           }
 
@@ -314,38 +355,22 @@ serve(async (req) => {
             return;
           }
 
-          // No branch returned a client. If at least one branch gave a non-404
-          // error, treat as transient (don't poison-pill with [Deleted Client]).
-          if (nonNotFoundError) {
+          // SIGNAL PRESERVATION: do NOT write [Deleted Client] here.
+          // 404 from every (branch × region) combination is not positive
+          // evidence of deletion — it could mean a new branch we don't know
+          // about, a permission gap, or a region-routing failure. Leave the
+          // appointment unresolved; the UI shows "Client #ABCD" placeholder.
+          if (sawTransientError) {
             result.fetch_errors++;
-            result.errors.push(`Client ${clientId} transient: ${nonNotFoundError}`);
-            return;
-          }
-
-          // All branches said 404 — write negative cache.
-          const { error: negErr } = await supabase
-            .from("phorest_clients")
-            .upsert(
-              {
-                phorest_client_id: clientId,
-                name: "[Deleted Client]",
-                notes: "Auto-flagged: 404 from all branches during reconciliation",
-              },
-              { onConflict: "phorest_client_id" },
-            );
-          if (!negErr) {
-            resolvedNames.set(clientId, "[Deleted Client]");
-            result.deleted_flagged++;
+            result.errors.push(`Client ${clientId}: transient errors across branches`);
           } else {
-            result.fetch_errors++;
-            result.errors.push(`Negative-cache ${clientId}: ${negErr.message}`);
+            result.unresolved_404++;
           }
         }),
       );
     }
 
-    // 5. Patch appointments. Skip [Deleted Client] — we'd rather show the
-    //    placeholder ("Client #ABCD") than the negative-cache string in UI.
+    // 5. Patch appointments with resolved real names.
     for (const apt of missingApts) {
       const name = resolvedNames.get(apt.phorest_client_id);
       if (!name || name === "[Deleted Client]") continue;
