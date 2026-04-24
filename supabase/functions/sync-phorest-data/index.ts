@@ -1269,7 +1269,7 @@ async function syncClients(
   const { data: staffMappings } = await supabase
     .from("phorest_staff_mapping")
     .select("phorest_staff_id, user_id");
-  const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
+  const staffMap = new Map<string, string>(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
 
   const { data: locations } = await supabase
     .from("locations")
