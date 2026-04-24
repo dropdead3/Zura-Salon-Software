@@ -526,12 +526,40 @@ async function syncAppointments(
         }
       }
       
-      const phorestClientId = apt.clientId || apt.client?.clientId || null;
+      const phorestClientId = apt.clientId || apt.client?.clientId || apt.customer?.clientId || null;
 
-      // Debug: log first appointment's raw keys
+      // SIGNAL PRESERVATION: read every candidate path Phorest may use for the
+      // client name. The single-resource client fetch (/branch/{id}/client/{id})
+      // returns 404 for many clients visible in Phorest's UI — but the
+      // appointment payload itself often carries the name inline. Capturing it
+      // here means we never need the per-client fallback for those cases.
+      const extractedClientName =
+        apt.clientName ||
+        apt.client_name ||
+        `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() ||
+        apt.client?.name ||
+        apt.client?.fullName ||
+        `${apt.customer?.firstName || ''} ${apt.customer?.lastName || ''}`.trim() ||
+        apt.customer?.name ||
+        apt.customer?.fullName ||
+        null;
+
+      const extractedClientPhone =
+        apt.client?.mobile || apt.client?.phone ||
+        apt.customer?.mobile || apt.customer?.phone || null;
+
+      // Debug: log first appointment's raw keys + nested client/customer shape
+      // once per sync run so we can see exactly what Phorest is sending.
       if (!debugLogged) {
         console.log(`[DEBUG] First appointment raw keys:`, Object.keys(apt));
         console.log(`[DEBUG] First appointment activationState:`, apt.activationState, `status:`, apt.status, `confirmed:`, apt.confirmed);
+        console.log(`[DEBUG] First appointment client shape:`, JSON.stringify({
+          clientId: apt.clientId,
+          clientName: apt.clientName,
+          client: apt.client,
+          customer: apt.customer,
+        }));
+        console.log(`[DEBUG] Extracted client_name="${extractedClientName}" client_id="${phorestClientId}"`);
         if (apt.services && apt.services.length > 1) {
           console.log(`[DEBUG] Multi-service appointment detected: ${apt.services.length} services in appointment ${phorestId}`);
         }
@@ -545,7 +573,7 @@ async function syncAppointments(
       if (mappedStatus === 'booked' && apt.confirmed === true) {
         mappedStatus = 'confirmed';
       }
-      
+
       // NOTE: Time-based completion inference removed — Phorest's activationState
       // is the source of truth. new Date() in Deno is UTC which caused premature
       // "completed" badges for appointments still in the org's local future.
@@ -556,8 +584,8 @@ async function syncAppointments(
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
         phorest_client_id: phorestClientId,
-        client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
-        client_phone: apt.client?.mobile || apt.client?.phone || null,
+        client_name: extractedClientName,
+        client_phone: extractedClientPhone,
         appointment_date: appointmentDate,
         start_time: startTime,
         end_time: endTime,
