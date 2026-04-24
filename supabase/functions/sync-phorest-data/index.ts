@@ -614,6 +614,25 @@ async function syncAppointments(
       upsertBatch.push(baseRow);
     }
 
+    // R7: SYNC HEALTH CONTRACT — snapshot resolved-name count for the
+    // operator-visible 14-day window BEFORE the upsert. After the upsert,
+    // re-snapshot and compare. Any drop > 5% indicates the upsert path is
+    // null-overwriting names again (the very regression R6a fixed). We log
+    // a structured warning so phorest_sync_log carries the signal even when
+    // no human is watching the schedule.
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const horizonIso = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    let preNamedCount = 0;
+    try {
+      const { count } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', todayIso)
+        .lte('appointment_date', horizonIso)
+        .not('client_name', 'is', null);
+      preNamedCount = count ?? 0;
+    } catch (_) { /* non-fatal */ }
+
     // Batch upsert via RPC that COALESCEs client_name/client_phone so a
     // missing-from-payload value never null-overwrites a previously resolved
     // one. Chunked at 200 rows/call to keep payloads bounded.
@@ -630,8 +649,37 @@ async function syncAppointments(
         synced += chunk.length;
       }
     }
-    
+
     console.log(`Synced ${synced} of ${upsertBatch.length} appointments (${allAppointments.length} fetched from API)`);
+
+    // R7: post-upsert health check. A drop in resolved names is structural
+    // damage — it means a future Phorest payload shape change (or a code
+    // regression) is null-overwriting names. We do NOT auto-rollback because
+    // the post-sync backfill below can still restore many of them; we DO
+    // emit a high-severity log so the next responder knows where to look.
+    try {
+      const { count: postCount } = await supabase
+        .from('phorest_appointments')
+        .select('id', { count: 'exact', head: true })
+        .gte('appointment_date', todayIso)
+        .lte('appointment_date', horizonIso)
+        .not('client_name', 'is', null);
+      const post = postCount ?? 0;
+      const delta = post - preNamedCount;
+      const dropPct = preNamedCount > 0 ? ((preNamedCount - post) / preNamedCount) * 100 : 0;
+      if (preNamedCount > 0 && dropPct > 5) {
+        console.error(
+          `[SYNC HEALTH] REGRESSION: resolved-name count dropped ${dropPct.toFixed(1)}% ` +
+          `(${preNamedCount} → ${post}, Δ=${delta}) over the next-14-day window. ` +
+          `Likely cause: upsert is null-overwriting client_name. Inspect the RPC path.`,
+        );
+      } else {
+        console.log(
+          `[SYNC HEALTH] OK: resolved-name count ${preNamedCount} → ${post} (Δ=${delta}) ` +
+          `over next-14-day window.`,
+        );
+      }
+    } catch (_) { /* non-fatal */ }
 
     // ── Post-sync: Backfill client names from phorest_clients ──
     // Two passes: (1) resolve from local table, (2) on-demand fetch the
