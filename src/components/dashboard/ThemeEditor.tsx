@@ -210,7 +210,16 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
           </div>
           
           <div className="flex items-center gap-2">
-            {isEditMode ? (
+            {!canEditOrgTheme ? (
+              <Button
+                variant="outline"
+                size={tokens.button.card}
+                onClick={exportTheme}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export
+              </Button>
+            ) : isEditMode ? (
               <>
                 <Button
                   variant="outline"
