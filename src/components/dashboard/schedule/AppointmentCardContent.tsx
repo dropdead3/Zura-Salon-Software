@@ -266,13 +266,10 @@ function GridContent({
       {showStylistBadge ? (
         <>
           {/* Weekly view: top row — client name + indicators + status badge */}
-          {(() => {
-            const compact = getCompactDisplayClientName(appointment);
-            return (
-              <div className="flex items-center justify-between gap-1 pr-0.5">
-                <span className={cn('text-sm font-medium truncate min-w-0 flex-1', compact.isPending && 'italic text-muted-foreground')}>
-                  {compact.label}
-                </span>
+          <div className="flex items-center justify-between gap-1 pr-0.5">
+            <span className={cn('text-sm font-medium truncate min-w-0 flex-1', getCompactDisplayClientName(appointment).isPending && 'italic text-muted-foreground')}>
+              {getCompactDisplayClientName(appointment).label}
+            </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
               {showConnectPill && <ConnectStatusPill active={false} />}
@@ -317,8 +314,8 @@ function GridContent({
         <>
           {/* Day view: top row — client name + indicators + status badge */}
           <div className="flex items-center justify-between gap-1 pr-0.5">
-            <span className="text-sm font-medium truncate min-w-0 flex-1">
-              {useShortLabels ? formatCompactName(appointment.client_name) : (appointment.client_name || 'Walk-in')}
+            <span className={cn('text-sm font-medium truncate min-w-0 flex-1', (useShortLabels ? getCompactDisplayClientName(appointment) : getDisplayClientName(appointment)).isPending && 'italic text-muted-foreground')}>
+              {(useShortLabels ? getCompactDisplayClientName(appointment) : getDisplayClientName(appointment)).label}
             </span>
             <div className="flex items-center gap-1 shrink-0">
               <IndicatorCluster flags={indicatorFlags} size={size} />
