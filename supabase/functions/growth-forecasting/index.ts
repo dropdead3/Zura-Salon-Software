@@ -151,7 +151,8 @@ serve(async (req) => {
     const { user, supabaseAdmin } = authResult;
 
     const body = await validateBody(req, GrowthForecastSchema, getCorsHeaders(req));
-    const { organizationId, locationId, granularity, horizonMonths } = body;
+    const { organizationId, locationId, granularity, horizonMonths: horizonMonthsRaw } = body;
+    const horizonMonths: number = horizonMonthsRaw ?? 12;
     // Verify org access
     try {
       const orgId = body.organizationId || body.organization_id;
