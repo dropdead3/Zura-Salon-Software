@@ -614,27 +614,20 @@ async function syncAppointments(
       upsertBatch.push(baseRow);
     }
 
-    // Batch upsert in chunks of 200. Group rows by their key shape so the
-    // PostgREST upsert preserves omitted columns instead of inferring NULL.
-    const groupedByShape = new Map<string, Record<string, unknown>[]>();
-    for (const row of upsertBatch) {
-      const shapeKey = Object.keys(row).sort().join('|');
-      const bucket = groupedByShape.get(shapeKey) ?? [];
-      bucket.push(row);
-      groupedByShape.set(shapeKey, bucket);
-    }
-    for (const bucket of groupedByShape.values()) {
-      for (let i = 0; i < bucket.length; i += 200) {
-        const chunk = bucket.slice(i, i + 200);
-        const { error } = await supabase
-          .from("phorest_appointments")
-          .upsert(chunk, { onConflict: 'phorest_id' });
+    // Batch upsert via RPC that COALESCEs client_name/client_phone so a
+    // missing-from-payload value never null-overwrites a previously resolved
+    // one. Chunked at 200 rows/call to keep payloads bounded.
+    for (let i = 0; i < upsertBatch.length; i += 200) {
+      const chunk = upsertBatch.slice(i, i + 200);
+      const { error } = await supabase.rpc(
+        'upsert_phorest_appointments_preserve_names',
+        { p_rows: chunk },
+      );
 
-        if (error) {
-          console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
-        } else {
-          synced += chunk.length;
-        }
+      if (error) {
+        console.log(`Failed to batch upsert appointments (batch ${Math.floor(i/200)+1}):`, error.message);
+      } else {
+        synced += chunk.length;
       }
     }
     
