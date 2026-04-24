@@ -229,6 +229,7 @@ export function useHistoricalCapacityUtilization(
         appointmentCount: 0,
         revenue: 0,
         gapHours: dayAvailableHours,
+        overbookedHours: 0,
         isClosed: allClosed,
       });
 
@@ -328,6 +329,7 @@ export function useHistoricalCapacityUtilization(
       gapHours: Math.round(gapHours),
       gapRevenue,
       avgHourlyRevenue,
+      totalOverbookedHours: 0,
       dailyCapacity,
       serviceMix: Array.from(serviceMixMap.values()).sort((a, b) => b.hours - a.hours),
       totalAppointments,
