@@ -1566,7 +1566,13 @@ async function upsertCursor(
   status: 'in_progress' | 'complete' | 'failed',
   lastError: string | null,
 ) {
-  const row: Record<string, any> = {
+  // S7f: Cannot use Postgrest .upsert() because the unique index on
+  // (sync_type, COALESCE(branch_id, 'GLOBAL')) is a functional index and
+  // PostgREST's onConflict only accepts plain column names. NULL branch_id
+  // would be treated as distinct by Postgres' default unique constraint,
+  // creating a duplicate row per page. We do an explicit select → update
+  // or insert keyed by COALESCE behavior in the SELECT.
+  const baseRow: Record<string, any> = {
     sync_type: 'clients',
     branch_id: pass.branchId,
     branch_name: pass.branchName,
@@ -1579,13 +1585,33 @@ async function upsertCursor(
     last_error: lastError,
     updated_at: new Date().toISOString(),
   };
-  if (status === 'complete') row.completed_at = new Date().toISOString();
+  if (status === 'complete') baseRow.completed_at = new Date().toISOString();
 
-  const { error } = await supabase
+  // Find existing cursor for this pass.
+  const existingQuery = supabase
     .from('phorest_sync_cursor')
-    .upsert(row, { onConflict: 'sync_type,branch_id' });
-  if (error) {
-    console.log(`[S7f] Cursor upsert failed for pass ${pass.key}:`, error.message);
+    .select('id')
+    .eq('sync_type', 'clients');
+  const { data: existing, error: selErr } = pass.branchId
+    ? await existingQuery.eq('branch_id', pass.branchId).maybeSingle()
+    : await existingQuery.is('branch_id', null).maybeSingle();
+
+  if (selErr) {
+    console.log(`[S7f] Cursor select failed for pass ${pass.key}:`, selErr.message);
+    return;
+  }
+
+  if (existing?.id) {
+    const { error } = await supabase
+      .from('phorest_sync_cursor')
+      .update(baseRow)
+      .eq('id', existing.id);
+    if (error) console.log(`[S7f] Cursor update failed for pass ${pass.key}:`, error.message);
+  } else {
+    const { error } = await supabase
+      .from('phorest_sync_cursor')
+      .insert(baseRow);
+    if (error) console.log(`[S7f] Cursor insert failed for pass ${pass.key}:`, error.message);
   }
 }
 
