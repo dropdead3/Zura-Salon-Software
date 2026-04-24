@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useThemeAuthority } from '@/hooks/useThemeAuthority';
 
 // All editable CSS variable tokens organized by category
 export const editableTokens = {
