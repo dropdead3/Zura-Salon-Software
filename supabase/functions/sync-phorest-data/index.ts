@@ -1619,6 +1619,23 @@ async function syncClients(
     }
     console.log(`[SYNC HEALTH] Upsert phase complete: ${synced}/${records.length} rows in ${Date.now() - upsertStart}ms${aborted ? ' (PARTIAL — timeout guard tripped)' : ''}`);
 
+    // S7h: Regression guard — assert tenant scope is populated. Rows with
+    // NULL location_id are invisible to the directory query because the RLS
+    // policy joins phorest_clients.location_id -> locations -> organization.
+    try {
+      const { count: orphanCount } = await supabase
+        .from('phorest_clients')
+        .select('id', { count: 'exact', head: true })
+        .is('location_id', null);
+      if (orphanCount && orphanCount > 0) {
+        console.warn(`[SYNC HEALTH] ⚠ ${orphanCount} phorest_clients rows have NULL location_id — RLS will hide them from the directory`);
+      } else {
+        console.log(`[SYNC HEALTH] ✓ All phorest_clients rows have tenant scope`);
+      }
+    } catch (e: any) {
+      console.log('[SYNC HEALTH] Orphan-count assertion failed:', e.message);
+    }
+
     return {
       total: clientDataMap.size,
       synced,
