@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { ColorWheelPicker } from '@/components/ui/color-wheel-picker';
 import { 
@@ -13,6 +14,7 @@ import {
   themePresets,
   type ThemePresetKey,
 } from '@/hooks/useCustomTheme';
+import { useThemeAuthority } from '@/hooks/useThemeAuthority';
 import { 
   Palette, 
   Save, 
@@ -23,6 +25,7 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -129,6 +132,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
     importTheme,
     applyPreset,
   } = useCustomTheme();
+  const { canEditOrgTheme } = useThemeAuthority();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeCategory, setActiveCategory] = useState('presets');
@@ -191,7 +195,13 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
           <div className="flex items-center gap-2">
             <Palette className="w-5 h-5 text-gold" />
             <CardTitle className="text-lg">Theme Editor</CardTitle>
-            {hasUnsavedChanges && (
+            {!canEditOrgTheme && (
+              <Badge variant="outline" className="gap-1.5">
+                <Lock className="w-3 h-3" />
+                Account Owner only
+              </Badge>
+            )}
+            {canEditOrgTheme && hasUnsavedChanges && (
               <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <AlertCircle className="w-3 h-3" />
                 Unsaved changes
@@ -200,7 +210,16 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
           </div>
           
           <div className="flex items-center gap-2">
-            {isEditMode ? (
+            {!canEditOrgTheme ? (
+              <Button
+                variant="outline"
+                size={tokens.button.card}
+                onClick={exportTheme}
+              >
+                <Download className="w-4 h-4 mr-1" />
+                Export
+              </Button>
+            ) : isEditMode ? (
               <>
                 <Button
                   variant="outline"
@@ -291,7 +310,19 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
       </CardHeader>
       
       <CardContent>
-        {isEditMode ? (
+        {!canEditOrgTheme && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3">
+            <Lock className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Theme Editor is read-only</p>
+              <p className="text-xs text-muted-foreground">
+                Brand colors and typography are organization-wide. Only the Account
+                Owner can edit them. You can still export the current palette.
+              </p>
+            </div>
+          </div>
+        )}
+        {canEditOrgTheme && isEditMode ? (
           <Tabs value={activeCategory} onValueChange={setActiveCategory}>
             <TabsList className="mb-4 flex-wrap h-auto gap-1">
               {categories.map(cat => (
