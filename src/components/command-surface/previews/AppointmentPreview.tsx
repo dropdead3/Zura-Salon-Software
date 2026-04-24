@@ -1,13 +1,8 @@
 import { Calendar, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RankedResult } from '@/lib/searchRanker';
-
-const STATUS_STYLES: Record<string, string> = {
-  confirmed: 'text-emerald-500',
-  checked_in: 'text-blue-500',
-  in_progress: 'text-amber-500',
-  completed: 'text-muted-foreground',
-};
+import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
+import type { AppointmentStatusKey } from '@/lib/design-tokens';
 
 interface AppointmentPreviewProps {
   result: RankedResult;
