@@ -557,7 +557,7 @@ export function WeekView({
                   {/* Past-time overlay — pixel-aligned to the current-time indicator (today only) */}
                   {isCurrentDay && currentTimeOverlayPx > 0 && (
                     <div
-                      className="absolute inset-x-0 top-0 bg-muted/40 pointer-events-none z-[1]"
+                      className="absolute inset-x-0 top-0 bg-foreground/[0.07] dark:bg-muted/40 pointer-events-none z-[1]"
                       style={{ height: `${currentTimeOverlayPx}px` }}
                     />
                   )}
