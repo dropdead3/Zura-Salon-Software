@@ -310,7 +310,19 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
       </CardHeader>
       
       <CardContent>
-        {isEditMode ? (
+        {!canEditOrgTheme && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3">
+            <Lock className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Theme Editor is read-only</p>
+              <p className="text-xs text-muted-foreground">
+                Brand colors and typography are organization-wide. Only the Account
+                Owner can edit them. You can still export the current palette.
+              </p>
+            </div>
+          </div>
+        )}
+        {canEditOrgTheme && isEditMode ? (
           <Tabs value={activeCategory} onValueChange={setActiveCategory}>
             <TabsList className="mb-4 flex-wrap h-auto gap-1">
               {categories.map(cat => (
