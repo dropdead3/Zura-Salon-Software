@@ -884,7 +884,7 @@ export default function Schedule() {
             return (
               <DayView
                 date={currentDate}
-                appointments={appointments}
+                appointments={displayAppointments}
                 stylists={displayedStylists}
                 hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
                 hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
@@ -915,7 +915,7 @@ export default function Schedule() {
           {view === 'day' && !selectedLocationData && (
             <DayView
               date={currentDate}
-              appointments={appointments}
+              appointments={displayAppointments}
               stylists={displayedStylists}
                hoursStart={zoomLevel <= -3 ? 6 : zoomLevel === -2 ? 6 : zoomLevel === -1 ? 7 : preferences.hours_start}
                hoursEnd={zoomLevel <= -3 ? 24 : zoomLevel === -2 ? 22 : zoomLevel === -1 ? 21 : preferences.hours_end}
