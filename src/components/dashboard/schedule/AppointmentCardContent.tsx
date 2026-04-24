@@ -612,6 +612,12 @@ export function AppointmentCardContent({
   // Every card keeps a full 1px stroke on all four sides. Overlap flush
   // is achieved by column-width "kiss" math in the views, not by edge
   // suppression here.
+  // When the leading ear accent is enabled, we set per-side border colors
+  // (top/right/bottom only) so the LEADING_ACCENT_BORDER class can own the
+  // left edge without being overridden by inline `borderColor`.
+  const willShowLeadingAccent =
+    !BLOCKED_CATEGORIES.includes(appointment.service_category || '') &&
+    size !== 'compact';
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
     if (displayGradient) {
@@ -621,32 +627,46 @@ export function AppointmentCardContent({
       };
     }
     if (useCategoryColor && isDark && darkStyle) {
-      return {
+      const base = {
         backgroundColor: darkStyle.fill,
         color: darkStyle.text,
-        borderColor: darkStyle.fill,
         borderWidth: '1px',
         borderStyle: 'solid' as const,
         transition: 'background-color 150ms ease, box-shadow 150ms ease',
       };
+      return willShowLeadingAccent
+        ? {
+            ...base,
+            borderTopColor: darkStyle.fill,
+            borderRightColor: darkStyle.fill,
+            borderBottomColor: darkStyle.fill,
+          }
+        : { ...base, borderColor: darkStyle.fill };
     }
     if (useCategoryColor) {
       const boostedBg = boostPaleCategoryColor(catColor.bg);
       const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
       const lightTokens = deriveLightModeColor(boostedBg);
-      return {
+      const base = {
         backgroundColor: boostedBg,
         color: boostedText,
-        borderColor: lightTokens.stroke,
         borderWidth: '1px',
         borderStyle: 'solid' as const,
         boxShadow: 'none',
         opacity: 1,
         backdropFilter: 'none',
       };
+      return willShowLeadingAccent
+        ? {
+            ...base,
+            borderTopColor: lightTokens.stroke,
+            borderRightColor: lightTokens.stroke,
+            borderBottomColor: lightTokens.stroke,
+          }
+        : { ...base, borderColor: lightTokens.stroke };
     }
     return {};
-  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact]);
+  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, willShowLeadingAccent]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
