@@ -1,65 +1,78 @@
 
 
 ## Prompt feedback
-"need to debug" + a screenshot is fine for an obvious crash, but it forces me to derive the failure mode from the stack trace. Sharper next time: paste or quote the error line ("useOrganizationContext must be used within an OrganizationProvider — happens on /login") and name where it surfaces. That cuts one round-trip.
+Strong observation prompt — you named the surface, the symptom, and the doctrine being violated ("no cross pollinations or leaks from organizations") in one sentence. Sharper next time: name the specific UI elements that look wrong (e.g. "the checkbox borders, the master switch, and the 'No card' underline are showing my org's pink"). That removes the "is this the violet platform accent or the org's brand" ambiguity and lets the fix go straight to the leaking primitive instead of the page.
 
 ## What's broken
 
-The runtime error is a direct regression from the Theme Governance refactor:
+This is a Theme Governance regression with a specific shape:
 
-- `ThemeInitializer` is mounted at the **App root** (`src/App.tsx` line 472), wrapping every route — public marketing pages, `/login`, `/signup`, org public booking, etc.
-- The refactor added `useOrganizationContext()` inside `ThemeInitializer`.
-- `OrganizationProvider` only wraps the **private dashboard shell** (`PrivateAppShell` line 272).
-- On every public route — including `/login` where the screenshot was taken — the hook throws because it's outside the provider, and the ErrorBoundary surfaces "Unexpected Interruption."
+- The platform admin layer (`/platform/*`) renders inside `PlatformLayout`, which sets `--platform-*` CSS vars under a scoped `.platform-theme` class.
+- `PlatformLayout` does **not** strip the org's `theme-*` class or the dark class from `<html>` on entry. Those classes were applied by `useColorTheme.applyTheme()` while the user was inside `/dashboard/*`, and they persist on `<html>` across navigation.
+- That means while you're on `/platform/color-bar`, `<html>` still carries `theme-rosewood` (or whichever palette your org uses), which is still defining `--primary`, `--muted`, `--border`, etc. globally.
+- Almost every component in `ColorBarEntitlementsTab` is correctly using the platform-scoped primitives (`PlatformCard`, `PlatformBadge`, `PlatformInput`, `PlatformTable`, `PlatformButton`). But two raw primitives slipped through:
+  - `<Checkbox>` from `@/components/ui/checkbox` — uses `border-primary` and `data-[state=checked]:bg-primary`
+  - `<Switch>` from `@/components/ui/switch` — uses `data-[state=checked]:bg-primary` and `data-[state=unchecked]:bg-muted`
+- Both read `--primary` / `--muted` from the global org theme, not from `--platform-primary`. That's the pink/magenta you see on the checkboxes and the master switch trail.
+- The "No card" pill underline reads `border-slate-600` directly, but the surrounding parent inherits link-style colors from the org palette in a few places — secondary visible bleed.
 
-The `zone !== 'org-dashboard'` guard inside `ThemeInitializer` was supposed to make custom-theme application a no-op outside the dashboard, but the hook call itself happens before the guard, so the throw fires unconditionally.
+The architectural rule is already in place (`platform-theme isolation` canon, `mem://tech-decisions/platform-theme-isolation`). It's enforced for components that explicitly use `--platform-*`. It's silently broken for any raw shadcn primitive that reads `--primary` or `--muted`.
 
-## The fix
+## The fix — three layers, each closing a different leak class
 
-### 1) Add a safe accessor for OrganizationContext
+### 1) Strip org theme classes from `<html>` on platform-zone entry
 
-Export a sibling hook from `src/contexts/OrganizationContext.tsx`:
+Add a sibling to `useOrgThemeReset` — `usePlatformThemeIsolation()` — mounted inside `PlatformLayoutInner`. On mount and whenever the route stays in the platform zone, it:
+- Removes every `theme-*` class from `documentElement.classList`
+- Removes the `dark` class (platform layer manages its own light/dark via `.platform-light` / `.platform-dark` on body)
+- Strips every inline non-`--platform-*` CSS var from `documentElement.style` (same logic as `clearOrgThemeVars` already in `ThemeInitializer`)
 
-```ts
-export function useOptionalOrganizationContext() {
-  return useContext(OrganizationContext); // undefined if no provider
-}
-```
+On unmount (user navigates back to `/dashboard/*`), it does nothing — `useColorTheme` will re-apply the org's theme class on its next paint. `useOrgThemeReset` is already wired in `DashboardLayout`, so the inverse direction is covered.
 
-This is the canonical pattern for components that may render both inside and outside a provider tree. It does not change `useOrganizationContext` — strict callers keep their throw.
+### 2) Create platform-scoped Checkbox + Switch and swap them in
 
-### 2) Switch `ThemeInitializer` to the safe accessor
+Add two new primitives mirroring the existing `Platform*` family:
+- `src/components/platform/ui/PlatformCheckbox.tsx` — same shape as `Checkbox` but reads `border-[hsl(var(--platform-primary))]` and `data-[state=checked]:bg-[hsl(var(--platform-primary))]`
+- `src/components/platform/ui/PlatformSwitch.tsx` — same shape as `Switch` but reads `data-[state=checked]:bg-[hsl(var(--platform-primary))]` and `data-[state=unchecked]:bg-[hsl(var(--platform-border)/0.5)]`
 
-Replace the hook call:
-- From: `const { effectiveOrganization } = useOrganizationContext();`
-- To: `const orgCtx = useOptionalOrganizationContext();`
-- Then: `const orgId = orgCtx?.effectiveOrganization?.id;`
+Then in `ColorBarEntitlementsTab.tsx`:
+- Replace the two raw imports with the platform versions
+- Same JSX — the API is identical
 
-Behavior on public routes: `orgId` is `undefined`, the existing `zone !== 'org-dashboard' || !orgId` guard fires, `clearAppliedVars()` runs, and the component renders nothing. No crash.
+These primitives become the canonical platform versions that all `/platform/*` surfaces should use, paralleling `PlatformCard`, `PlatformBadge`, etc.
 
-Behavior on dashboard routes: identical to today (provider exists, full org-scoped theme load runs).
+### 3) Audit the rest of `/platform/*` for raw primitive leaks
 
-### 3) Verify `useOrgThemeReset` doesn't have the same trap
+Same regression class can hide in any platform page that imports a raw shadcn primitive that reads `--primary`, `--muted`, `--accent`, `--ring`, etc. Run a grep over `src/components/platform/**` and `src/pages/dashboard/platform/**` for direct imports from `@/components/ui/{checkbox,switch,radio-group,slider,toggle,tabs,progress}` and either swap them for `Platform*` versions (creating new ones if missing) or wrap the usage in a node that locally pins `--primary` to `--platform-primary` via inline style.
 
-It's only mounted in `DashboardLayout`, which lives inside `PrivateAppShell` → `OrganizationProvider`. Safe as-is. No change needed.
+Lightweight first pass — fix the visible bleed (checkbox + switch), file a list of remaining raw imports as a follow-up audit. Don't over-rotate the codebase in one pass.
 
 ## Files involved
-- `src/contexts/OrganizationContext.tsx` — add `useOptionalOrganizationContext`
-- `src/components/ThemeInitializer.tsx` — switch to the optional accessor + null-safe orgId
+- New: `src/hooks/usePlatformThemeIsolation.ts` — strips org theme classes + inline vars from `<html>` while the platform layer is mounted
+- `src/components/platform/layout/PlatformLayout.tsx` — mount the new hook inside `PlatformLayoutInner`
+- New: `src/components/platform/ui/PlatformCheckbox.tsx` — platform-scoped checkbox
+- New: `src/components/platform/ui/PlatformSwitch.tsx` — platform-scoped switch
+- `src/components/platform/color-bar/ColorBarEntitlementsTab.tsx` — swap two imports
 
 ## What stays the same
-- All Theme Governance behavior on the dashboard (org-scoped persistence, owner gating, custom theme application, sign-out cleanup)
-- All public-route theme behavior (light/dark via `next-themes` `data-public-theme`, untouched)
-- `useOrganizationContext` strict throw — still the right default for dashboard-only consumers
+- `ThemeInitializer` org-scoped read path — already correct
+- `useColorTheme` apply/clear logic for org dashboard — untouched; only platform layer adds its own cleanup
+- `PlatformThemeContext` and `--platform-*` token system — untouched
+- All existing `Platform*` UI primitives — untouched
+- Org-scoped persistence and owner gating — untouched
 
 ## QA checklist
-- `/login` loads cleanly with no error boundary
-- `/` (marketing landing), `/pricing`, `/org/:slug` public booking — all load with no error
-- Sign in → dashboard paints with the correct org's brand colors
-- Sign out → returns to `/login` with no flash of previous brand
-- Org switch in same browser session — still clean (handled by `useOrgThemeReset`)
-- No new console warnings about provider misuse
+- Sign in as a user whose org uses Rosewood → navigate to `/platform/color-bar` → checkboxes and master switch render in violet (`--platform-primary`), not pink
+- Switch org-side theme to Cream Lux, Marine, Noir, Neon (each picks a distinctly different `--primary`) → re-enter platform → still violet
+- Navigate `/platform → /dashboard` → org's brand re-applies cleanly
+- Navigate `/dashboard → /platform → /dashboard` repeatedly → no flash, no stuck state, no leaked classes on `<html>`
+- Inspect `<html>` while on `/platform/*` → no `theme-*` class, no `dark` class, no inline `--primary` / `--muted` / `--border`
+- Other platform pages (Accounts, Health, Capital Control Tower) — verify no regression on existing surfaces
 
 ## Enhancement suggestion
-Add a one-line lint rule (or a Vitest file-pattern check) banning `useOrganizationContext` inside any component imported by `App.tsx` *above* `<PrivateAppShell />`. The boundary between "App-root scope" and "dashboard-shell scope" is a real seam and currently invisible at the call site. A grep-style test that fails CI when a root-level component pulls a dashboard-scoped hook would have caught this regression before it shipped — same shape as the Loader2 lint canon.
+After this lands, file two follow-ups:
+1. **Lint rule**: ban direct imports of raw primitives `(checkbox|switch|radio-group|slider|toggle|progress)` inside `src/components/platform/**` and `src/pages/dashboard/platform/**`. Same shape as the Loader2 lint canon — a one-line file-pattern check that fails CI for the regression class. The current bug shipped because the rule "platform pages must use Platform-scoped primitives" only existed in human memory.
+2. **Vitest smoke**: a single test that mounts `PlatformLayout` with a fake org context whose theme is Rosewood, asserts `<html>.classList.contains('theme-rosewood')` is **false** after mount, and asserts a snapshot of `getComputedStyle(checkbox).borderColor` resolves from `--platform-primary`. That converts "we hardened the boundary" into "the boundary is structurally enforced."
+
+Together with the typography Termina constraint and the org-side Theme Governance, this becomes the third pillar of a single canon: `mem://brand/cross-zone-theme-isolation.md`.
 
