@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
         // Find existing DM between these two users
         if (existingChannels) {
           for (const channel of existingChannels) {
-            const memberIds = (channel.chat_channel_members as any[]).map(m => m.user_id);
+            const memberIds = (channel.chat_channel_members as any[]).map((m: any) => m.user_id);
             if (memberIds.length === 2 && 
                 memberIds.includes(sender.user_id) && 
                 memberIds.includes(new_member_user_id)) {

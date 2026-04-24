@@ -93,8 +93,8 @@ serve(async (req) => {
 
       const totalRevenue = (appts ?? []).reduce((s: any, a: any) => s + (Number(a.total_price) || 0), 0);
       const totalAppts = (appts ?? []).length;
-      const completedAppts = (appts ?? []).filter(a => a.status === "completed").length;
-      const rebookedAppts = (appts ?? []).filter(a => a.rebooked_at_checkout === true).length;
+      const completedAppts = (appts ?? []).filter((a: any) => a.status === "completed").length;
+      const rebookedAppts = (appts ?? []).filter((a: any) => a.rebooked_at_checkout === true).length;
 
       const revenueScore = Math.min(100, Math.round((totalRevenue / 10000) * 100));
       const retentionScore = totalAppts > 0 ? Math.round((completedAppts / totalAppts) * 100) : 50;
@@ -146,7 +146,7 @@ serve(async (req) => {
         .order("scored_at", { ascending: false })
         .limit(12);
 
-      const scores = (spiHistory ?? []).map(s => Number(s.spi_score));
+      const scores = (spiHistory ?? []).map((s: any) => Number(s.spi_score));
       const spiAvg = scores.length > 0 ? scores.reduce((a: any, b: any) => a + b, 0) / scores.length : spiScore;
 
       let consistency = 50;

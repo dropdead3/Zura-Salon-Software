@@ -136,18 +136,18 @@ Deno.serve(async (req) => {
         });
     }
 
-    const hasDown = results.some(r => r.status === 'down');
-    const hasDegraded = results.some(r => r.status === 'degraded');
+    const hasDown = results.some((r: any) => r.status === 'down');
+    const hasDegraded = results.some((r: any) => r.status === 'degraded');
     const overallStatus = hasDown ? 'down' : hasDegraded ? 'degraded' : 'healthy';
 
     // If there are critical issues, create a platform notification
     if (hasDown) {
-      const downServices = results.filter(r => r.status === 'down');
+      const downServices = results.filter((r: any) => r.status === 'down');
       await adminClient.from('platform_notifications').insert({
         type: 'critical_error',
         severity: 'critical',
         title: 'Service Outage Detected',
-        message: `The following services are down: ${downServices.map(s => s.service_name).join(', ')}`,
+        message: `The following services are down: ${downServices.map((s: any) => s.service_name).join(', ')}`,
         metadata: { services: downServices },
       });
     }
@@ -164,8 +164,8 @@ Deno.serve(async (req) => {
 
     if (hasDown && !activeAutoIncident) {
       // Auto-create a new incident
-      const downServices = results.filter(r => r.status === 'down');
-      const serviceNames = downServices.map(s => s.service_name).join(', ');
+      const downServices = results.filter((r: any) => r.status === 'down');
+      const serviceNames = downServices.map((s: any) => s.service_name).join(', ');
       await adminClient.from('platform_incidents').insert({
         status: 'active',
         severity: 'critical',

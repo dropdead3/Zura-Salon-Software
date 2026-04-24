@@ -75,7 +75,7 @@ serve(async (req) => {
 
     // Store detected anomalies
     if (anomalies.length > 0) {
-      const anomaliesToInsert = anomalies.map(a => ({
+      const anomaliesToInsert = anomalies.map((a: any) => ({
         organization_id: organizationId,
         location_id: locationId || null,
         anomaly_type: a.type,
@@ -89,7 +89,7 @@ serve(async (req) => {
       await supabase.from("detected_anomalies").insert(anomaliesToInsert);
 
       // Send push notifications for critical anomalies
-      const criticalAnomalies = anomalies.filter(a => a.severity === 'critical');
+      const criticalAnomalies = anomalies.filter((a: any) => a.severity === 'critical');
       if (criticalAnomalies.length > 0) {
         await sendAnomalyAlerts(supabase, organizationId, criticalAnomalies);
       }

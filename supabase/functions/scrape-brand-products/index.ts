@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     const productKeywords = ['product', 'color', 'shade', 'catalog', 'professional', 'range', 'collection', 'hair-color', 'haircolor', 'developer', 'lightener', 'treatment'];
     const relevantLinks = allLinks.filter((link: string) => {
       const lower = link.toLowerCase();
-      return productKeywords.some(kw => lower.includes(kw));
+      return productKeywords.some((kw: any) => lower.includes(kw));
     });
 
     // Take the top N pages
@@ -241,7 +241,7 @@ Rules:
 
     // Deduplicate by name
     const seen = new Set<string>();
-    products = products.filter(p => {
+    products = products.filter((p: any) => {
       const key = p.name.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);

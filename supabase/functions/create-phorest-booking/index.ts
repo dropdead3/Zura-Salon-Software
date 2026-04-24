@@ -212,7 +212,7 @@ serve(async (req) => {
       clientId: client_id,
       staffId: staff_id,
       startTime: start_time,
-      services: service_ids.map(id => ({ serviceId: id })),
+      services: service_ids.map((id: any) => ({ serviceId: id })),
       notes: notes || undefined,
       status: 'CONFIRMED',
     };

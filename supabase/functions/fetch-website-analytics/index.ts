@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     // If we have cached data from today, return it
     const today = formatDate(new Date())
-    const hasFreshData = cachedData?.some(d => d.date === today)
+    const hasFreshData = cachedData?.some((d: any) => d.date === today)
 
     if (hasFreshData && cachedData && cachedData.length > 0) {
       console.log('Returning cached analytics data')

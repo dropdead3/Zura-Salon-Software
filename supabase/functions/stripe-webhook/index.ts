@@ -26,8 +26,8 @@ async function verifyStripeSignature(
   }
 
   const elements = signature.split(',');
-  const timestamp = elements.find(e => e.startsWith('t='))?.slice(2);
-  const sig = elements.find(e => e.startsWith('v1='))?.slice(3);
+  const timestamp = elements.find((e: any) => e.startsWith('t='))?.slice(2);
+  const sig = elements.find((e: any) => e.startsWith('v1='))?.slice(3);
 
   if (!timestamp || !sig) {
     console.error("Invalid signature format");
@@ -59,7 +59,7 @@ async function verifyStripeSignature(
     );
 
     const expectedHex = Array.from(new Uint8Array(expected))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b: any) => b.toString(16).padStart(2, '0'))
       .join('');
 
     return expectedHex === sig;
@@ -686,7 +686,7 @@ async function handlePaymentIntentSucceeded(
   }
 
   // Remove undefined keys
-  Object.keys(updatePayload).forEach(k => updatePayload[k] === undefined && delete updatePayload[k]);
+  Object.keys(updatePayload).forEach((k: any) => updatePayload[k] === undefined && delete updatePayload[k]);
 
   // Online booking deposit reconciliation
   if (metadata?.source === 'online_booking' && metadata?.fee_type === 'deposit') {

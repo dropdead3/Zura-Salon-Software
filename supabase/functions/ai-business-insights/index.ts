@@ -284,7 +284,7 @@ serve(async (req) => {
     const adoptionContext = `
 UNUSED FEATURES & INTEGRATIONS:
 ${unusedFeatures.length > 0 ? unusedFeatures.map((f: any) => `  - ${f.name} (key: feature:${f.feature_key}): ${f.description}`).join("\n") : "All available features are enabled."}
-${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrations.map(i => `  - ${i}`).join("\n")}` : "\nAll key integrations are connected."}
+${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrations.map((i: any) => `  - ${i}`).join("\n")}` : "\nAll key integrations are connected."}
 `;
 
     // Pre-compute key metrics
@@ -412,7 +412,7 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         if (apt.rebooked_at_checkout) staffMetrics[userId].rebooked++;
       }
     }
-    const staffList = Object.values(staffMetrics).filter(s => s.completed > 0);
+    const staffList = Object.values(staffMetrics).filter((s: any) => s.completed > 0);
     staffList.sort((a: any, b: any) => b.revenue - a.revenue);
     const top3Staff = staffList.slice(0, 3);
     const bottom3Staff = staffList.length > 3 ? staffList.slice(-3).reverse() : [];
@@ -436,10 +436,10 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
 
     const wowMetrics = (appts: any[]) => {
       const total = appts.length;
-      const cancelled = appts.filter(a => a.status === 'cancelled').length;
-      const noShow = appts.filter(a => a.status === 'no_show').length;
-      const completed = appts.filter(a => a.status === 'completed').length;
-      const rebooked = appts.filter(a => a.rebooked_at_checkout).length;
+      const cancelled = appts.filter((a: any) => a.status === 'cancelled').length;
+      const noShow = appts.filter((a: any) => a.status === 'no_show').length;
+      const completed = appts.filter((a: any) => a.status === 'completed').length;
+      const rebooked = appts.filter((a: any) => a.rebooked_at_checkout).length;
       return {
         total,
         cancelRate: total > 0 ? (cancelled / total * 100) : 0,
@@ -482,7 +482,7 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
         }
 
         locationComparisonContext = `\nCROSS-LOCATION COMPARISON (Last 30 days):\n` +
-          Object.values(locMap).map(l =>
+          Object.values(locMap).map((l: any) =>
             `  ${l.name}: ${l.completed} completed, $${l.revenue.toFixed(0)} revenue, ` +
             `rebook ${l.completed > 0 ? (l.rebooked / l.completed * 100).toFixed(1) : '0'}%, ` +
             `cancel ${l.total > 0 ? (l.cancelled / l.total * 100).toFixed(1) : '0'}%`
@@ -519,8 +519,8 @@ STAFF:
 
 STAFF PERFORMANCE BREAKDOWN (Last 30 days):
 - Team average rebook rate: ${teamAvgRebook.toFixed(1)}%
-${top3Staff.length > 0 ? `Top performers:\n${top3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : 'Insufficient staff data for rankings.'}
-${bottom3Staff.length > 0 ? `\nNeeds attention:\n${bottom3Staff.map(s => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : ''}
+${top3Staff.length > 0 ? `Top performers:\n${top3Staff.map((s: any) => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : 'Insufficient staff data for rankings.'}
+${bottom3Staff.length > 0 ? `\nNeeds attention:\n${bottom3Staff.map((s: any) => `  ${s.name}: ${s.completed} completed, $${s.revenue.toFixed(0)} revenue, ${s.completed > 0 ? (s.rebooked / s.completed * 100).toFixed(1) : '0'}% rebook`).join('\n')}` : ''}
 
 CLIENT RETENTION HEALTH:
 - At-risk clients (45-90 days since last visit): ${atRiskCount} (avg lifetime spend: $${atRiskAvgSpend.toFixed(0)})

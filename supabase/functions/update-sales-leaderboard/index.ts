@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     // Get employee names
-    const userIds = [...new Set(txnItems.map(r => r.stylist_user_id).filter(Boolean))];
+    const userIds = [...new Set(txnItems.map((r: any) => r.stylist_user_id).filter(Boolean))];
     const { data: profiles } = userIds.length > 0
       ? await supabase.from('employee_profiles').select('user_id, full_name, display_name').in('user_id', userIds)
       : { data: [] };

@@ -171,8 +171,8 @@ Deno.serve(async (req) => {
       const mainData = exportData[request.export_type] || exportData.users || [];
       if (Array.isArray(mainData) && mainData.length > 0) {
         const headers = Object.keys(mainData[0]).join(',');
-        const rows = mainData.map(row => 
-          Object.values(row).map(v => 
+        const rows = mainData.map((row: any) => 
+          Object.values(row).map((v: any) => 
             typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : v
           ).join(',')
         ).join('\n');

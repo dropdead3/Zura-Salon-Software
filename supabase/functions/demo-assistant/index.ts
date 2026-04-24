@@ -156,15 +156,15 @@ async function searchFeatures(supabase: any, keywords: string[], category?: stri
 
   const scoredFeatures = features.map((feature: any) => {
     let score = 0;
-    const lowerKeywords = keywords.map(k => k.toLowerCase());
+    const lowerKeywords = keywords.map((k: any) => k.toLowerCase());
     
     feature.problem_keywords?.forEach((pk: string) => {
-      if (lowerKeywords.some(k => pk.toLowerCase().includes(k) || k.includes(pk.toLowerCase()))) {
+      if (lowerKeywords.some((k: any) => pk.toLowerCase().includes(k) || k.includes(pk.toLowerCase()))) {
         score += 3;
       }
     });
 
-    lowerKeywords.forEach(keyword => {
+    lowerKeywords.forEach((keyword: any) => {
       if (feature.name?.toLowerCase().includes(keyword)) score += 2;
       if (feature.tagline?.toLowerCase().includes(keyword)) score += 1;
       if (feature.description?.toLowerCase().includes(keyword)) score += 1;
@@ -231,7 +231,7 @@ serve(async (req) => {
     const supabaseService = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!) as any;
 
     // Extract user query for logging
-    const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";
+    const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
 
     // First call to AI with tool definition
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

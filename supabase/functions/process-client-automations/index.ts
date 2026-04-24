@@ -168,7 +168,7 @@ async function findClientsNeedingRebooking(supabase: any, orgId: string, targetD
     .select("phorest_client_id").in("phorest_client_id", clientIds).gte("appointment_date", today)
     .not("status", "in", '("cancelled","no_show")');
   const clientsWithFuture = new Set((futureAppointments || []).map((a: any) => a.phorest_client_id));
-  const needRebooking = clientIds.filter(id => !clientsWithFuture.has(id));
+  const needRebooking = clientIds.filter((id: any) => !clientsWithFuture.has(id));
   if (needRebooking.length === 0) return [];
   const { data: clients } = await supabase.from("phorest_clients")
     .select("id, phorest_client_id, first_name, last_name, email").in("phorest_client_id", needRebooking);

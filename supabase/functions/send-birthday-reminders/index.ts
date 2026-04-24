@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
         .select("user_id")
         .in("role", ["admin", "manager"]);
 
-      const leadershipUserIds = [...new Set((leadershipRoles || []).map(r => r.user_id))];
+      const leadershipUserIds = [...new Set((leadershipRoles || []).map((r: any) => r.user_id))];
       if (leadershipUserIds.length === 0) continue;
 
       const { data: leadershipProfiles } = await supabase
@@ -126,14 +126,14 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("is_active", true)
         .not("email", "is", null);
 
-      const leadershipEmails = (leadershipProfiles || []).map(p => p.email).filter(Boolean);
+      const leadershipEmails = (leadershipProfiles || []).map((p: any) => p.email).filter(Boolean);
       if (leadershipEmails.length === 0) continue;
 
       const birthdayList = orgBirthdays
-        .map(emp => `<li style="margin-bottom: 8px;">🎂 <strong>${emp.display_name || emp.full_name}</strong></li>`)
+        .map((emp: any) => `<li style="margin-bottom: 8px;">🎂 <strong>${emp.display_name || emp.full_name}</strong></li>`)
         .join("");
 
-      const birthdayNames = orgBirthdays.map(emp => emp.display_name || emp.full_name).join(", ");
+      const birthdayNames = orgBirthdays.map((emp: any) => emp.display_name || emp.full_name).join(", ");
 
       const dateFormatted = targetDate.toLocaleDateString("en-US", {
         weekday: "long", month: "long", day: "numeric",

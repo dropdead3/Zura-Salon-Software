@@ -572,7 +572,7 @@ serve(async (req) => {
       const followUpMessages = [
         ...aiMessages,
         choice.message,
-        ...toolResults.map(tr => ({
+        ...toolResults.map((tr: any) => ({
           role: "tool" as const,
           tool_call_id: (tr as { tool_call_id: string }).tool_call_id,
           content: JSON.stringify((tr as { result: unknown }).result)
@@ -607,7 +607,7 @@ serve(async (req) => {
         JSON.stringify({
           message: finalMessage,
           action,
-          toolsUsed: toolResults.map(tr => (tr as { name: string }).name)
+          toolsUsed: toolResults.map((tr: any) => (tr as { name: string }).name)
         }),
         { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );

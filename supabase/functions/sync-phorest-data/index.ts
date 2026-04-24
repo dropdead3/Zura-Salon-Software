@@ -638,7 +638,7 @@ async function syncAppointments(
         .limit(1000);
 
       if (missingNames && missingNames.length > 0) {
-        const clientIds = [...new Set(missingNames.map(a => a.phorest_client_id).filter(Boolean))] as string[];
+        const clientIds = [...new Set(missingNames.map((a: any) => a.phorest_client_id).filter(Boolean))] as string[];
         const clientNameMap = new Map<string, string>();
         // IDs whose existing client row is empty (no name) and must be re-probed
         // even though a row exists. The original logic skipped these.
@@ -674,9 +674,9 @@ async function syncAppointments(
         // Includes both "no row at all" and "row exists but empty" cases.
         // Cap at 200/run to protect rate budget; remainder picks up next sync.
         const unresolved = clientIds
-          .filter(id => !clientNameMap.has(id) && !negativelyCachedIds.has(id))
+          .filter((id: any) => !clientNameMap.has(id) && !negativelyCachedIds.has(id))
           .slice(0, 200);
-        const reprobeCount = unresolved.filter(id => emptyExistingIds.has(id)).length;
+        const reprobeCount = unresolved.filter((id: any) => emptyExistingIds.has(id)).length;
         if (unresolved.length > 0) {
           console.log(`On-demand resolution needed for ${unresolved.length} client IDs (${reprobeCount} re-probes of empty rows)`);
         }
@@ -1395,7 +1395,7 @@ async function syncSalesTransactions(
                   .is('payment_method', null);
               });
               const results = await Promise.all(updates);
-              pmUpdated += results.filter(r => !r.error).length;
+              pmUpdated += results.filter((r: any) => !r.error).length;
             }
             console.log(`Propagated payment method to ${pmUpdated} appointments for ${branchName}`);
           }
@@ -1412,7 +1412,7 @@ async function syncSalesTransactions(
             purchases
               .filter((p: any) => p.clientId && p.purchaseDate)
               .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
-          )].filter(key => {
+          )].filter((key: any) => {
             const txDate = key.split('|')[1];
             return txDate && txDate < todayStr; // strictly past dates only
           });
@@ -1421,7 +1421,7 @@ async function syncSalesTransactions(
             let reconciled = 0;
             for (let i = 0; i < uniqueClientDates.length; i += 50) {
               const batch = uniqueClientDates.slice(i, i + 50);
-              const updates = batch.map(key => {
+              const updates = batch.map((key: any) => {
                 const [clientId, txDate] = key.split('|');
                 if (!clientId || !txDate) return Promise.resolve({ data: null });
                 return supabase
@@ -1606,7 +1606,7 @@ async function syncSalesTransactions(
 
     // Batch upsert daily summaries
     let summariesSynced = 0;
-    const summaryRecords = Array.from(dailySummaries.values()).map(s => ({
+    const summaryRecords = Array.from(dailySummaries.values()).map((s: any) => ({
       ...s,
       average_ticket: s.total_transactions > 0 ? s.total_revenue / s.total_transactions : 0,
     }));
@@ -1679,7 +1679,7 @@ async function syncSalesTransactions(
               return query;
             });
             const results = await Promise.all(updates);
-            tipsBackfilled += results.filter(r => !r.error).length;
+            tipsBackfilled += results.filter((r: any) => !r.error).length;
           }
           console.log(`Backfilled tips to ${tipsBackfilled} appointments`);
         }
@@ -1882,7 +1882,7 @@ async function fetchSalesViaCsvExport(
 
 // Parse CSV text into transaction records with exact Phorest column mapping
 function parseSalesCsv(csvText: string, branchId: string): any[] {
-  const lines = csvText.split('\n').filter(line => line.trim());
+  const lines = csvText.split('\n').filter((line: any) => line.trim());
   if (lines.length < 2) {
     console.log(`[CSV Parser] Not enough lines in CSV: ${lines.length}`);
     return [];
@@ -1890,7 +1890,7 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
   
   // Parse header to get column indices
   const headerLine = lines[0];
-  const headers = parseCSVLine(headerLine).map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
+  const headers = parseCSVLine(headerLine).map((h: any) => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
   
   console.log(`[CSV Parser] Headers found (${headers.length}): ${headers.join(', ')}`);
   
@@ -1900,19 +1900,19 @@ function parseSalesCsv(csvText: string, branchId: string): any[] {
     for (const name of possibleNames) {
       const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       // Priority 1: Exact match
-      const exact = headers.findIndex(h => h === norm);
+      const exact = headers.findIndex((h: any) => h === norm);
       if (exact !== -1) return exact;
     }
     for (const name of possibleNames) {
       const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       // Priority 2: Header starts with search term
-      const startsWith = headers.findIndex(h => h.startsWith(norm));
+      const startsWith = headers.findIndex((h: any) => h.startsWith(norm));
       if (startsWith !== -1) return startsWith;
     }
     for (const name of possibleNames) {
       const norm = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       // Priority 3: Search term starts with header (header is substring prefix)
-      const reverseStartsWith = headers.findIndex(h => norm.startsWith(h));
+      const reverseStartsWith = headers.findIndex((h: any) => norm.startsWith(h));
       if (reverseStartsWith !== -1) return reverseStartsWith;
     }
     return -1;

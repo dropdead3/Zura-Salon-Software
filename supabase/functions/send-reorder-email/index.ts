@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       bySupplier.set(po.supplier_email, list);
     }
 
-    const noEmailPOs = purchaseOrders.filter(po => !po.supplier_email);
+    const noEmailPOs = purchaseOrders.filter((po: any) => !po.supplier_email);
     if (noEmailPOs.length > 0 && bySupplier.size === 0) {
       return new Response(JSON.stringify({ error: "No supplier email configured on any PO" }), {
         status: 400,
@@ -79,17 +79,17 @@ Deno.serve(async (req) => {
 
     for (const [supplierEmail, supplierPOs] of bySupplier) {
       // Fetch product details for all POs in this group
-      const productIds = supplierPOs.map(po => po.product_id);
+      const productIds = supplierPOs.map((po: any) => po.product_id);
       const { data: products } = await supabase
         .from("products")
         .select("id, name, sku, barcode")
         .in("id", productIds);
 
-      const productMap = new Map((products || []).map(p => [p.id, p]));
+      const productMap = new Map((products || []).map((p: any) => [p.id, p]));
       const supplierName = supplierPOs[0].supplier_name || "Supplier";
 
       // Build multi-row product table
-      const productRows = supplierPOs.map(po => {
+      const productRows = supplierPOs.map((po: any) => {
         const prod = productMap.get(po.product_id);
         const name = prod?.name || "Product";
         const sku = prod?.sku ? ` (SKU: ${prod.sku})` : "";
@@ -102,13 +102,13 @@ Deno.serve(async (req) => {
           </tr>`;
       }).join("");
 
-      const hasUnitCost = supplierPOs.some(po => po.unit_cost != null);
-      const hasTotalCost = supplierPOs.some(po => po.total_cost != null);
+      const hasUnitCost = supplierPOs.some((po: any) => po.unit_cost != null);
+      const hasTotalCost = supplierPOs.some((po: any) => po.total_cost != null);
       const grandTotal = supplierPOs.reduce((sum: any, po: any) => sum + (Number(po.total_cost) || 0), 0);
 
-      const allNotes = supplierPOs.filter(po => po.notes).map(po => po.notes).join("; ");
+      const allNotes = supplierPOs.filter((po: any) => po.notes).map((po: any) => po.notes).join("; ");
 
-      const poNumbers = supplierPOs.map(po => po.po_number || po.id.slice(0, 8).toUpperCase()).join(', ');
+      const poNumbers = supplierPOs.map((po: any) => po.po_number || po.id.slice(0, 8).toUpperCase()).join(', ');
       
       const emailHtml = is_followup ? `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
         to: [supplierEmail],
         subject: emailSubject,
         html: emailHtml,
-        attachments: supplierAttachments.map(att => ({
+        attachments: supplierAttachments.map((att: any) => ({
           filename: att.filename,
           content: att.content,
           type: 'application/pdf',
@@ -186,18 +186,18 @@ Deno.serve(async (req) => {
       results.push({ supplier: supplierEmail, success: true, messageId: emailResult.messageId });
 
       // Update all POs in this group to 'sent'
-      const sentIds = supplierPOs.map(po => po.id);
+      const sentIds = supplierPOs.map((po: any) => po.id);
       await supabase
         .from("purchase_orders")
         .update({ status: "sent", sent_at: new Date().toISOString() })
         .in("id", sentIds);
     }
 
-    const allSuccess = results.every(r => r.success);
+    const allSuccess = results.every((r: any) => r.success);
     return new Response(JSON.stringify({ 
       success: allSuccess, 
       results,
-      sent_count: results.filter(r => r.success).length,
+      sent_count: results.filter((r: any) => r.success).length,
       skipped_no_email: noEmailPOs.length,
     }), {
       status: allSuccess ? 200 : 207,

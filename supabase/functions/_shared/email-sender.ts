@@ -243,7 +243,7 @@ export async function sendOrgEmail(
 
   // Attach files if provided
   if (payload.attachments && payload.attachments.length > 0) {
-    resendBody.attachments = payload.attachments.map(att => ({
+    resendBody.attachments = payload.attachments.map((att: any) => ({
       filename: att.filename,
       content: att.content,
       type: att.type || 'application/pdf',

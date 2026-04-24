@@ -143,7 +143,7 @@ serve(async (req) => {
             const slotEnd = `${slotEndHour.toString().padStart(2, '0')}:${slotEndMin.toString().padStart(2, '0')}`;
 
             // Check if this slot overlaps with any existing appointment
-            const hasConflict = appointments?.some(apt => {
+            const hasConflict = appointments?.some((apt: any) => {
               const aptStart = apt.start_time;
               const aptEnd = apt.end_time;
               return !(slotEnd <= aptStart || slotStart >= aptEnd);

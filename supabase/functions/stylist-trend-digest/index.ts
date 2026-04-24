@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const currentLevel = sortedLevels.find(l => l.slug === stylist.stylist_level);
+        const currentLevel = sortedLevels.find((l: any) => l.slug === stylist.stylist_level);
         if (!currentLevel) continue;
 
         const currentIdx = sortedLevels.indexOf(currentLevel);
@@ -317,7 +317,7 @@ function computeWindowKpis(
 
   // Avg ticket
   const uniqueVisits = new Set(
-    windowAppts.filter(a => a.client_id).map(a => `${a.client_id}_${a.appointment_date}`)
+    windowAppts.filter((a: any) => a.client_id).map((a: any) => `${a.client_id}_${a.appointment_date}`)
   ).size || windowAppts.length;
   const avgTicket = uniqueVisits > 0 ? totalRev / uniqueVisits : 0;
 
@@ -329,18 +329,18 @@ function computeWindowKpis(
   // of appointment data which we don't fetch. We only compute retention for the
   // current (eval) window and set prior retention to 0, skipping retention velocity
   // in digest emails.
-  const windowClients = new Set(windowAppts.filter(a => a.client_id).map(a => a.client_id));
+  const windowClients = new Set(windowAppts.filter((a: any) => a.client_id).map((a: any) => a.client_id));
   const priorAppts = (appts || []).filter((a: any) => a.appointment_date < startStr && a.status !== "no_show" && a.client_id
   );
-  const priorClients = new Set(priorAppts.map(a => a.client_id));
+  const priorClients = new Set(priorAppts.map((a: any) => a.client_id));
   let retentionRate = 0;
   if (priorClients.size > 0) {
-    const returning = [...windowClients].filter(id => priorClients.has(id)).length;
+    const returning = [...windowClients].filter((id: any) => priorClients.has(id)).length;
     retentionRate = (returning / priorClients.size) * 100;
   }
 
   // New clients
-  const newClients = windowAppts.filter(a => a.is_new_client).length;
+  const newClients = windowAppts.filter((a: any) => a.is_new_client).length;
 
   return {
     monthlyRevenue: evalDays > 0 ? (totalRev / evalDays) * 30 : 0,

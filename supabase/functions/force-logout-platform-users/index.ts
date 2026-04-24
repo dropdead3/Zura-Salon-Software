@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       throw usersError;
     }
 
-    const userIds = [...new Set(platformUsers?.map(u => u.user_id) || [])];
+    const userIds = [...new Set(platformUsers?.map((u: any) => u.user_id) || [])];
     console.log(`Logging out ${userIds.length} platform users`);
 
     // Sign out each platform user globally

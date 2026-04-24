@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', caller.id);
 
-    const isAdmin = callerRoles?.some(r => ['admin', 'manager', 'super_admin'].includes(r.role));
+    const isAdmin = callerRoles?.some((r: any) => ['admin', 'manager', 'super_admin'].includes(r.role));
     const { data: callerProfile } = await supabaseAdmin
       .from('employee_profiles')
       .select('is_super_admin, organization_id')
@@ -188,7 +188,7 @@ Deno.serve(async (req) => {
         .eq('is_active', true);
 
       if (tasks) {
-        const visibleTasks = tasks.filter(t => 
+        const visibleTasks = tasks.filter((t: any) => 
           t.visible_to_roles && t.visible_to_roles.includes(role)
         );
 

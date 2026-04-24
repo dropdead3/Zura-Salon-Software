@@ -150,7 +150,7 @@ serve(async (req: Request): Promise<Response> => {
       throw rolesError;
     }
 
-    const leadershipUserIds = [...new Set(leadershipRoles?.map(r => r.user_id) || [])];
+    const leadershipUserIds = [...new Set(leadershipRoles?.map((r: any) => r.user_id) || [])];
 
     const leadershipUsers: LeadershipUser[] = [];
     for (const userId of leadershipUserIds) {
@@ -192,7 +192,7 @@ serve(async (req: Request): Promise<Response> => {
     // Build participant list HTML
     const participantListHtml = inactiveParticipants
       .sort((a: any, b: any) => b.days_inactive - a.days_inactive)
-      .map(p => `
+      .map((p: any) => `
         <tr style="border-bottom: 1px solid #e5e5e5;">
           <td style="padding: 12px; font-weight: 500;">${p.display_name || p.full_name}</td>
           <td style="padding: 12px; text-align: center;">${p.current_day}/75</td>
@@ -252,7 +252,7 @@ serve(async (req: Request): Promise<Response> => {
         threshold_days: inactivityThreshold,
         inactive_count: inactiveParticipants.length,
         leadership_notified: leadershipUsers.length,
-        inactive_participants: inactiveParticipants.map(p => ({
+        inactive_participants: inactiveParticipants.map((p: any) => ({
           name: p.display_name || p.full_name,
           days_inactive: p.days_inactive,
           current_day: p.current_day,

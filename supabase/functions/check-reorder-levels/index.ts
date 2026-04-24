@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     }
 
     // ── LOW STOCK ALERTS ──
-    const lowStockProducts = (allProducts || []).filter(p => p.reorder_level != null);
+    const lowStockProducts = (allProducts || []).filter((p: any) => p.reorder_level != null);
 
     const belowThreshold = lowStockProducts.filter((p: any) => {
       const settings = settingsMap.get(p.organization_id);
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
       const cutoffIso = cutoffDate.toISOString();
 
       // Get products that have had sales in the period (via appointments or stock_movements with reason 'sale')
-      const productIds = orgProds.map(p => p.id);
+      const productIds = orgProds.map((p: any) => p.id);
 
       const { data: recentMovements } = await supabase
         .from("stock_movements")
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
         .gte("created_at", cutoffIso)
         .in("product_id", productIds.slice(0, 100));
 
-      const soldProductIds = new Set((recentMovements || []).map(m => m.product_id));
+      const soldProductIds = new Set((recentMovements || []).map((m: any) => m.product_id));
 
       // Also check POs received recently (product is moving)
       const { data: recentPOs } = await supabase
@@ -265,10 +265,10 @@ Deno.serve(async (req) => {
         soldProductIds.add(po.product_id);
       }
 
-      const deadProducts = orgProds.filter(p => !soldProductIds.has(p.id));
+      const deadProducts = orgProds.filter((p: any) => !soldProductIds.has(p.id));
 
       if (deadProducts.length > 0) {
-        const names = deadProducts.slice(0, 8).map(p => p.name).join(", ");
+        const names = deadProducts.slice(0, 8).map((p: any) => p.name).join(", ");
         const more = deadProducts.length > 8 ? ` and ${deadProducts.length - 8} more` : "";
 
         const result = await createNotification(supabase, {

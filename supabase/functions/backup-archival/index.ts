@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
       // Store in archive table
       if (!config.dry_run) {
         await adminClient.from('archived_appointments').insert(
-          oldAppointments.map(apt => ({
+          oldAppointments.map((apt: any) => ({
             ...apt,
             archived_at: now.toISOString(),
           }))
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     if (oldNotifications && oldNotifications.length > 0) {
       if (!config.dry_run) {
         await adminClient.from('archived_notifications').insert(
-          oldNotifications.map(n => ({
+          oldNotifications.map((n: any) => ({
             ...n,
             archived_at: now.toISOString(),
           }))

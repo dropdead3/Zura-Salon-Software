@@ -496,7 +496,7 @@ serve(async (req) => {
 
     // Resolve staff names for inserts
     if (!dryRun && apptsToInsert.length > 0) {
-      const staffUserIds = [...new Set(apptsToInsert.map(a => a.staff_user_id).filter(Boolean))];
+      const staffUserIds = [...new Set(apptsToInsert.map((a: any) => a.staff_user_id).filter(Boolean))];
       if (staffUserIds.length > 0) {
         const { data: profiles } = await supabase
           .from("employee_profiles")

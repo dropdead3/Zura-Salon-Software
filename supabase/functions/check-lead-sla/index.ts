@@ -37,11 +37,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: "No overdue leads", count: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const leadIds = overdueLeads.map(l => l.id);
+    const leadIds = overdueLeads.map((l: any) => l.id);
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const { data: recentAlerts } = await supabase.from("notifications").select("metadata").eq("type", "lead_sla_breach").gte("created_at", oneDayAgo.toISOString());
     const recentlyAlertedLeadIds = new Set((recentAlerts || []).map((n: any) => n.metadata?.lead_id).filter(Boolean));
-    const newOverdueLeads = overdueLeads.filter(l => !recentlyAlertedLeadIds.has(l.id));
+    const newOverdueLeads = overdueLeads.filter((l: any) => !recentlyAlertedLeadIds.has(l.id));
 
     if (newOverdueLeads.length === 0) {
       return new Response(JSON.stringify({ success: true, message: "Already alerted", count: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -52,15 +52,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: true, message: "No managers to notify", count: newOverdueLeads.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const managerUserIds = [...new Set(managers.map(m => m.user_id))];
+    const managerUserIds = [...new Set(managers.map((m: any) => m.user_id))];
     const { data: locations } = await supabase.from("locations").select("id, name");
-    const locationMap = new Map((locations || []).map(l => [l.id, l.name]));
+    const locationMap = new Map((locations || []).map((l: any) => [l.id, l.name]));
 
     const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace(".supabase.co", ".lovable.app")}`;
 
     // Create in-app notifications
-    const notifications = managerUserIds.flatMap(userId =>
-      newOverdueLeads.map(lead => {
+    const notifications = managerUserIds.flatMap((userId: any) =>
+      newOverdueLeads.map((lead: any) => {
         const ageHours = Math.round((now.getTime() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60));
         const locationName = lead.preferred_location ? locationMap.get(lead.preferred_location) : null;
         return {
@@ -81,11 +81,11 @@ serve(async (req) => {
     const { data: managerProfiles } = await supabase.from("employee_profiles")
       .select("email, organization_id").in("user_id", managerUserIds).not("email", "is", null);
 
-    const managerEmails = (managerProfiles || []).map(p => p.email).filter(Boolean);
+    const managerEmails = (managerProfiles || []).map((p: any) => p.email).filter(Boolean);
     const orgId = managerProfiles?.[0]?.organization_id || newOverdueLeads[0]?.organization_id;
 
     if (managerEmails.length > 0) {
-      const leadRows = newOverdueLeads.map(lead => {
+      const leadRows = newOverdueLeads.map((lead: any) => {
         const ageHours = Math.round((now.getTime() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60));
         const locationName = lead.preferred_location ? locationMap.get(lead.preferred_location) : "—";
         return `<tr><td style="padding:12px;border-bottom:1px solid #e5e5e5;">${lead.name}</td><td style="padding:12px;border-bottom:1px solid #e5e5e5;">${lead.phone || lead.email || "—"}</td><td style="padding:12px;border-bottom:1px solid #e5e5e5;">${locationName}</td><td style="padding:12px;border-bottom:1px solid #e5e5e5;color:#dc2626;font-weight:600;">${ageHours}h</td></tr>`;

@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     // Filter to only available slots
-    const availableSlots = (data as AvailableSlot[])?.filter(slot => slot.is_available) || [];
+    const availableSlots = (data as AvailableSlot[])?.filter((slot: any) => slot.is_available) || [];
 
     console.log(`Found ${availableSlots.length} available slots`);
 

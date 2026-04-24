@@ -138,7 +138,7 @@ serve(async (req) => {
 
     // Build scheduled totals by date
     const scheduledByDate: Record<string, number> = {};
-    (scheduledAppointments || []).forEach(apt => {
+    (scheduledAppointments || []).forEach((apt: any) => {
       const d = apt.appointment_date;
       if (!scheduledByDate[d]) scheduledByDate[d] = 0;
       scheduledByDate[d] += Number(apt.total_price) || 0;
@@ -146,7 +146,7 @@ serve(async (req) => {
 
     // Build actual totals by date from historical sales (filter to 30-day window)
     const actualByDate: Record<string, number> = {};
-    (historicalSales || []).forEach(day => {
+    (historicalSales || []).forEach((day: any) => {
       if (day.summary_date >= thirtyDaysAgoStr && day.summary_date <= yesterdayStr) {
         if (!actualByDate[day.summary_date]) actualByDate[day.summary_date] = 0;
         actualByDate[day.summary_date] += Number(day.total_revenue) || 0;
@@ -197,7 +197,7 @@ serve(async (req) => {
 
     // Aggregate historical data by day of week
     const dayOfWeekAverages: Record<number, { total: number; count: number; services: number; products: number }> = {};
-    (historicalSales || []).forEach(day => {
+    (historicalSales || []).forEach((day: any) => {
       const date = new Date(day.summary_date);
       const dow = date.getDay();
       if (!dayOfWeekAverages[dow]) {
@@ -211,7 +211,7 @@ serve(async (req) => {
 
     // Calculate booked revenue per day
     const bookedByDate: Record<string, number> = {};
-    (upcomingAppointments || []).forEach(apt => {
+    (upcomingAppointments || []).forEach((apt: any) => {
       const date = apt.appointment_date;
       if (!bookedByDate[date]) bookedByDate[date] = 0;
       bookedByDate[date] += Number(apt.total_price) || 0;
@@ -356,7 +356,7 @@ Return ONLY valid JSON, no markdown or explanation.`
 
     // Store forecasts in database
     if (forecasts.length > 0) {
-      const forecastsToUpsert = forecasts.map(f => ({
+      const forecastsToUpsert = forecasts.map((f: any) => ({
         organization_id: organizationId,
         location_id: locationId || null,
         forecast_date: f.date,

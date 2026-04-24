@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       const createdAt = new Date(org.created_at);
       const daysSinceCreation = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
 
-      const applicableStep = DRIP_SEQUENCE.find(step => {
+      const applicableStep = DRIP_SEQUENCE.find((step: any) => {
         if (step.day !== daysSinceCreation) return false;
         if (step.condition && !step.condition(org)) return false;
         return true;

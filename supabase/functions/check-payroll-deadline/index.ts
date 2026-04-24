@@ -189,12 +189,12 @@ Deno.serve(async (req) => {
 
       const { data: rolePerms } = await supabase
         .from("role_permissions").select("role").eq("permission_id", payrollPermission.id);
-      const roles = rolePerms?.map(rp => rp.role) || [];
+      const roles = rolePerms?.map((rp: any) => rp.role) || [];
       if (roles.length === 0) continue;
 
       const { data: userRoles } = await supabase
         .from("user_roles").select("user_id").in("role", roles);
-      const userIds = [...new Set(userRoles?.map(ur => ur.user_id) || [])];
+      const userIds = [...new Set(userRoles?.map((ur: any) => ur.user_id) || [])];
       if (userIds.length === 0) continue;
 
       const { data: orgUsers } = await supabase
@@ -209,8 +209,8 @@ Deno.serve(async (req) => {
       const { data: prefs } = await supabase
         .from("notification_preferences")
         .select("user_id, payroll_deadline_enabled")
-        .in("user_id", orgUsers.map(u => u.user_id));
-      const prefsMap = new Map(prefs?.map(p => [p.user_id, p]) || []);
+        .in("user_id", orgUsers.map((u: any) => u.user_id));
+      const prefsMap = new Map(prefs?.map((p: any) => [p.user_id, p]) || []);
 
       const periodRange = `${formatDisplayDate(periodStart)} – ${formatDisplayDate(periodEnd)}`;
       const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace(".supabase.co", ".lovable.app")}`;

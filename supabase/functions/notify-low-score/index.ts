@@ -65,14 +65,14 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Get manager emails
-    const managerIds = managers.map(m => m.user_id);
+    const managerIds = managers.map((m: any) => m.user_id);
     const { data: profiles } = await supabase
       .from("employee_profiles")
       .select("email")
       .in("user_id", managerIds)
       .not("email", "is", null);
 
-    const managerEmails = profiles?.map(p => p.email).filter(Boolean) || [];
+    const managerEmails = profiles?.map((p: any) => p.email).filter(Boolean) || [];
 
     if (managerEmails.length === 0) {
       return new Response(

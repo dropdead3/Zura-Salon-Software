@@ -79,8 +79,8 @@ const handler = async (req: Request): Promise<Response> => {
         .select('client_id')
         .eq('campaign_id', campaign.id);
 
-      const contactedClientIds = new Set((existingOutreach || []).map(o => o.client_id));
-      const clientsToContact = inactiveClients.filter(c => !contactedClientIds.has(c.id));
+      const contactedClientIds = new Set((existingOutreach || []).map((o: any) => o.client_id));
+      const clientsToContact = inactiveClients.filter((c: any) => !contactedClientIds.has(c.id));
 
       if (clientsToContact.length === 0) {
         results.push({ campaignId: campaign.id, clientsContacted: 0 });

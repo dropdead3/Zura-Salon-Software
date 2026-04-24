@@ -61,7 +61,7 @@ serve(async (req) => {
       const userName = profile.display_name || profile.full_name || "Team Member";
       const periodLabel = frequency === "weekly" ? "This Week" : "This Month";
 
-      const updatesHtml = entries.map(e => `
+      const updatesHtml = entries.map((e: any) => `
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee;">
           <div style="font-weight: 600;">${e.title}</div>
           <div style="color: #666; font-size: 14px; margin-top: 4px;">${e.content.substring(0, 100)}${e.content.length > 100 ? '...' : ''}</div>
@@ -72,7 +72,7 @@ serve(async (req) => {
       const comingSoonHtml = comingSoon?.length ? `
         <h3 style="margin: 24px 0 12px; color: #7c3aed;">Coming Soon</h3>
         <ul style="margin: 0; padding-left: 20px;">
-          ${comingSoon.map(c => `<li style="margin: 8px 0; color: #444;">${c.title}</li>`).join("")}
+          ${comingSoon.map((c: any) => `<li style="margin: 8px 0; color: #444;">${c.title}</li>`).join("")}
         </ul>` : "";
 
       const result = await sendEmail({
@@ -98,7 +98,7 @@ serve(async (req) => {
       if (result.success) sentCount++;
 
       await supabase.from("email_digest_log").insert({
-        user_id: pref.user_id, digest_type: `changelog_${frequency}`, entries_included: entries.map(e => e.id),
+        user_id: pref.user_id, digest_type: `changelog_${frequency}`, entries_included: entries.map((e: any) => e.id),
       });
     }
 

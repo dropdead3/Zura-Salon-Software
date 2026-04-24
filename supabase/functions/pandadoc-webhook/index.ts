@@ -25,7 +25,7 @@ async function verifySignature(payload: string, signature: string, secret: strin
     
     const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
     const computedSignature = Array.from(new Uint8Array(signatureBytes))
-      .map(b => b.toString(16).padStart(2, '0'))
+      .map((b: any) => b.toString(16).padStart(2, '0'))
       .join('');
     
     return computedSignature === signature.toLowerCase();
@@ -153,7 +153,7 @@ serve(async (req) => {
     }
 
     // Get signer info from recipients
-    const signer = data.recipients?.find(r => r.completed);
+    const signer = data.recipients?.find((r: any) => r.completed);
     const signedByName = signer ? `${signer.first_name} ${signer.last_name}` : null;
     const signedByEmail = signer?.email || null;
 

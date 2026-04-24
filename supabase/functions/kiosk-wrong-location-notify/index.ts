@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
       .select('id, name')
       .in('id', [scheduled_location_id, arrived_location_id]);
 
-    const scheduledLocation = locations?.find(l => l.id === scheduled_location_id);
-    const arrivedLocation = locations?.find(l => l.id === arrived_location_id);
+    const scheduledLocation = locations?.find((l: any) => l.id === scheduled_location_id);
+    const arrivedLocation = locations?.find((l: any) => l.id === arrived_location_id);
 
     await supabase.from('user_notifications').insert({
       user_id: stylist_user_id,

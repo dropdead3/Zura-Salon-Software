@@ -168,7 +168,7 @@ serve(async (req) => {
           deviation: 0.3,
           dataCompleteness: 1,
           estimatedImpact: lowMarginUpsellers.length * 300,
-          drivers: lowMarginUpsellers.map(s =>
+          drivers: lowMarginUpsellers.map((s: any) =>
             `Stylist (${s.staff_user_id.slice(0, 8)}) sold ${s.count} add-ons at avg ${s.avg_margin}% margin — coach toward higher-margin add-ons`
           ),
           evidence: { stylist_addon_quality: lowMarginUpsellers },
