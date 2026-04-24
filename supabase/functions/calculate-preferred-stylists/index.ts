@@ -26,7 +26,7 @@ serve(async (req) => {
       throw new Error("Missing Supabase environment variables");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     console.log("Calculating preferred stylists from appointment history...");
 

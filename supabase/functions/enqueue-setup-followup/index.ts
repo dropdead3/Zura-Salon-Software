@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       supabaseUrl,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: auth } } },
-    );
+    ) as any;
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) {
       return json({ error: "Invalid session" }, 401);
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     }
 
     // Use service role for the write (RLS denies direct inserts).
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = createClient(supabaseUrl, serviceKey) as any;
 
     // Authorize: caller must be org admin.
     const { data: isAdmin } = await admin.rpc("is_org_admin", {

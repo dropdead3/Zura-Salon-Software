@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
     const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(
       authHeader.replace("Bearer ", ""),
     );
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = createClient(supabaseUrl, serviceKey) as any;
 
     // Load version + policy + blocks
     const { data: version, error: vErr } = await admin

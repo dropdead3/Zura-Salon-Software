@@ -227,8 +227,8 @@ serve(async (req) => {
     }
 
     // Use anon key for feature queries, service role for logging
-    const supabaseAnon = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
-    const supabaseService = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const supabaseAnon = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!) as any;
+    const supabaseService = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!) as any;
 
     // Extract user query for logging
     const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";

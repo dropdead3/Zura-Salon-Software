@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
     const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: authError } = await anonClient.auth.getClaims(token);
@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     } = parsed.data;
 
     // Service-role client for DB writes
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // Fetch the dispute record — include status for fallback
     const { data: disputeRecord, error: fetchError } = await supabase

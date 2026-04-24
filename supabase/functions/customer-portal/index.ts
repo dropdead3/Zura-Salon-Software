@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
     const authHeader = req.headers.get("Authorization");

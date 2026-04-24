@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Stripe not configured" }, 500);
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // Auth
     const authHeader = req.headers.get("Authorization");

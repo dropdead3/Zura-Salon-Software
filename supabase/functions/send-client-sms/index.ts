@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
     // Validate user
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
     if (claimsErr || !claimsData?.claims?.sub) {
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = createClient(supabaseUrl, serviceKey) as any;
 
     // Verify org membership
     const { data: isMember } = await admin.rpc("is_org_member", {

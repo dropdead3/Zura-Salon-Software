@@ -54,7 +54,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, SchedulingCopilotSchema, getCorsHeaders(req));
     const { 

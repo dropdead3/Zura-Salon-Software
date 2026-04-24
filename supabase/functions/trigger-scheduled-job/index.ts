@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // Create client with user's auth
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
 
     // Verify user is a platform user
     const token = authHeader.replace('Bearer ', '');
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
     // Create admin client for logging
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // Log the start of the job
     const { data: logEntry, error: logError } = await adminClient

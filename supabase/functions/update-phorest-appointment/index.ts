@@ -107,7 +107,7 @@ serve(async (req) => {
     // Use service-role client for admin-level writes (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
-    });
+    }) as any;
 
     const updateData: UpdateRequest = await req.json();
     const { appointment_id, status, notes, rebooked_at_checkout, tip_amount, rebook_declined_reason, services } = updateData;

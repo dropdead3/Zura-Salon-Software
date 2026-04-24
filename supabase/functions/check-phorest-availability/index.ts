@@ -102,7 +102,7 @@ serve(async (req) => {
       // Fallback: Get existing appointments and calculate gaps
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      const supabase = createClient(supabaseUrl, supabaseKey) as any;
 
       // Get staff mapping to find user_id
       const { data: mapping } = await supabase

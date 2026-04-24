@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       throw new Error("STRIPE_SECRET_KEY not configured");
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const supabase = createClient(supabaseUrl, serviceKey) as any;
 
     // Auth: verify caller is platform user
     const authHeader = req.headers.get("Authorization");

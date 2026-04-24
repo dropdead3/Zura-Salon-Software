@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       throw new Error("Phorest credentials not configured");
     }
 
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!) as any;
     const body: RescheduleRequest = await req.json();
     const { appointment_id, new_date, new_time, new_staff_id } = body;
 

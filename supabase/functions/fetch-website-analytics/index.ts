@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
     const projectId = Deno.env.get('SUPABASE_PROJECT_ID') || 'vciqmwzgfjxtzagaxgnh'
 
     // Create admin client for cache operations
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey) as any
 
     // Get date range (last 8 weeks)
     const endDate = new Date()

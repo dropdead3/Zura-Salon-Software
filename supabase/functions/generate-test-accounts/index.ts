@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false }
-    });
+    }) as any;
 
     // Verify caller is super admin
     const authHeader = req.headers.get('Authorization');

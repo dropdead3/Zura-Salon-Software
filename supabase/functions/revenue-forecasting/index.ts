@@ -41,7 +41,7 @@ serve(async (req) => {
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
     const useAi = !!lovableApiKey;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, RevenueForecastSchema, getCorsHeaders(req));
     const { 

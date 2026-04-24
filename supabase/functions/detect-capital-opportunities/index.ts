@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey) as any;
 
     // 1. Get all organizations with capital_enabled = true
     const { data: enabledFlags, error: flagError } = await supabase

@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
     const payload: CheckInactivityPayload = await req.json().catch(() => ({}));
     const { organizationId, dryRun = false } = payload;
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     let campaignsQuery = supabase
       .from('reengagement_campaigns')

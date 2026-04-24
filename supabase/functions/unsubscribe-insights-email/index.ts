@@ -50,7 +50,7 @@ serve(async (req: Request): Promise<Response> => {
     // Disable insights email
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     await supabase
       .from("notification_preferences")

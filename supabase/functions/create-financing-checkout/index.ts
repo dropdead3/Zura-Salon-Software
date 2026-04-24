@@ -21,8 +21,8 @@ serve(async (req) => {
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 
-  const anonClient = createClient(supabaseUrl, anonKey);
-  const serviceClient = createClient(supabaseUrl, serviceKey);
+  const anonClient = createClient(supabaseUrl, anonKey) as any;
+  const serviceClient = createClient(supabaseUrl, serviceKey) as any;
 
   try {
     // Authenticate

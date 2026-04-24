@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     // Verify caller via anon-with-token, then act with service role.
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
-    });
+    }) as any;
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsErr } =
       await userClient.auth.getClaims(token);
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       return json({ error: "confirm must equal 'RESET'" }, 400);
     }
 
-    const admin = createClient(supabaseUrl, serviceKey);
+    const admin = createClient(supabaseUrl, serviceKey) as any;
 
     // Authorize: caller must be an org admin
     const { data: isAdmin, error: roleErr } = await admin.rpc("is_org_admin", {

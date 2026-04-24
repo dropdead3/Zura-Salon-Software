@@ -24,7 +24,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     // ── GAP 5: Auth validation ──
     let organizationId: string | null = null;
@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
       // Authenticated call — validate org membership
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
-      });
+      }) as any;
       const { data: claims, error: claimsErr } = await userClient.auth.getClaims(
         authHeader.replace("Bearer ", "")
       );

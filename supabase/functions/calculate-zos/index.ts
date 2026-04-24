@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    ) as any;
 
     // Get all active organizations
     const { data: orgs, error: orgError } = await supabase
