@@ -649,18 +649,60 @@ async function syncAppointments(
         }
 
         // Need a branchId to call /branch/{id}/client/{clientId}.
+        // Resolve the working REGION for each branch up-front so per-client
+        // lookups never cross-region (cross-region 404s are what produced the
+        // false [Deleted Client] flagging — same client, wrong base URL).
         let branchIds: string[] = [];
+        const branchRegion = new Map<string, string>(); // branchId -> base URL that works
         try {
-          const branchData = await phorestRequest('/branch', businessId, username, password);
-          const branches = branchData._embedded?.branches || branchData.branches ||
-                           (Array.isArray(branchData) ? branchData : []);
-          branchIds = branches.map((b: any) => b.branchId || b.id).filter(Boolean);
+          // Try EU first to enumerate branches.
+          let euBranches: any[] = [];
+          let usBranches: any[] = [];
+          try {
+            const euData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL);
+            euBranches = euData._embedded?.branches || euData.branches ||
+                         (Array.isArray(euData) ? euData : []);
+          } catch (e: any) {
+            console.log('On-demand: EU /branch enumeration failed:', e.message);
+          }
+          try {
+            const usData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL_US);
+            usBranches = usData._embedded?.branches || usData.branches ||
+                         (Array.isArray(usData) ? usData : []);
+          } catch (e: any) {
+            console.log('On-demand: US /branch enumeration failed:', e.message);
+          }
+
+          for (const b of euBranches) {
+            const id = b.branchId || b.id;
+            if (id && !branchRegion.has(id)) branchRegion.set(id, PHOREST_BASE_URL);
+          }
+          for (const b of usBranches) {
+            const id = b.branchId || b.id;
+            if (id && !branchRegion.has(id)) branchRegion.set(id, PHOREST_BASE_URL_US);
+          }
+          branchIds = Array.from(branchRegion.keys());
         } catch (e: any) {
           console.log('On-demand client fetch: failed to list branches, skipping pass 2:', e.message);
         }
 
+        // Build a hint: existing phorest_clients rows tell us which branch a
+        // sibling client lives in. We use this only as a probe-order hint —
+        // the per-region lookup is still authoritative.
+        const branchHintMap = new Map<string, string>(); // clientId -> branchId hint
+        if (unresolved.length > 0) {
+          const { data: hintRows } = await supabase
+            .from('phorest_clients')
+            .select('phorest_client_id, phorest_branch_id')
+            .in('phorest_client_id', unresolved)
+            .not('phorest_branch_id', 'is', null);
+          (hintRows || []).forEach((r: any) => {
+            if (r.phorest_branch_id) branchHintMap.set(r.phorest_client_id, r.phorest_branch_id);
+          });
+        }
+
         let onDemandFetched = 0;
-        let onDemandDeleted = 0;
+        let onDemandUnresolved = 0;
         let onDemandErrors = 0;
         if (unresolved.length > 0 && branchIds.length > 0) {
           for (let i = 0; i < unresolved.length; i += 5) {
@@ -668,21 +710,31 @@ async function syncAppointments(
             await Promise.all(batch.map(async (clientId) => {
               let foundClient: any = null;
               let foundBranchId: string | null = null;
-              let nonNotFoundError: string | null = null;
+              let sawTransientError = false;
 
-              for (const branchId of branchIds) {
+              // Probe order: hinted branch first (if any), then the rest.
+              const hint = branchHintMap.get(clientId);
+              const orderedBranches = hint
+                ? [hint, ...branchIds.filter((b) => b !== hint)]
+                : branchIds;
+
+              for (const branchId of orderedBranches) {
+                const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
                 try {
                   const client: any = await phorestRequest(
                     `/branch/${branchId}/client/${clientId}`,
                     businessId, username, password,
+                    region, // SCOPE TO THE BRANCH'S OWN REGION — no cross-region 404s
                   );
                   foundClient = client;
                   foundBranchId = branchId;
                   break;
                 } catch (e: any) {
                   const msg = String(e?.message || '');
+                  // 404 from a branch's own region just means "this client
+                  // isn't in this branch" — keep probing the others.
                   if (!msg.includes('404')) {
-                    nonNotFoundError = msg.slice(0, 200);
+                    sawTransientError = true;
                   }
                 }
               }
@@ -711,30 +763,25 @@ async function syncAppointments(
                 return;
               }
 
-              if (nonNotFoundError) {
+              // SIGNAL PRESERVATION: do NOT write [Deleted Client] here.
+              // Absence of a successful lookup is not evidence of deletion —
+              // it could mean a new branch we don't know about, a transient
+              // outage, or a permission gap. Leave the row absent and let the
+              // appointment render the "Client #ABCD" placeholder, which
+              // truthfully says "we know the ID; we can't resolve the name."
+              if (sawTransientError) {
                 onDemandErrors++;
-                console.log(`On-demand fetch ${clientId} transient error: ${nonNotFoundError}`);
-                return;
-              }
-
-              try {
-                await supabase.from('phorest_clients').upsert({
-                  phorest_client_id: clientId,
-                  name: '[Deleted Client]',
-                  notes: 'Auto-flagged: 404 from all branches on on-demand fetch',
-                }, { onConflict: 'phorest_client_id' });
-                clientNameMap.set(clientId, '[Deleted Client]');
-                onDemandDeleted++;
-              } catch (cacheErr: any) {
-                onDemandErrors++;
-                console.log(`Negative-cache write failed for ${clientId}:`, cacheErr.message);
+                console.log(`On-demand fetch ${clientId}: transient error across branches; will retry next sync`);
+              } else {
+                onDemandUnresolved++;
+                console.log(`On-demand fetch ${clientId}: 404 from every branch; leaving unresolved`);
               }
             }));
           }
         }
 
-        if (onDemandFetched > 0 || onDemandDeleted > 0 || onDemandErrors > 0) {
-          console.log(`On-demand: ${onDemandFetched} fetched, ${onDemandDeleted} flagged deleted, ${onDemandErrors} errors`);
+        if (onDemandFetched > 0 || onDemandUnresolved > 0 || onDemandErrors > 0) {
+          console.log(`On-demand: ${onDemandFetched} fetched, ${onDemandUnresolved} unresolved-404, ${onDemandErrors} transient errors (NO negative-cache writes)`);
         }
 
         // Bulk-update appointments with all resolved real names (skip [Deleted Client]).
