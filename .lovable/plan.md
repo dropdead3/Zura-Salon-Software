@@ -1,119 +1,180 @@
 
 ## Prompt feedback
-Good prompt. You gave the most useful possible symptom: "it's only visible on the New Client Consultation card." That isolates the bug from "accent rendering is broken" to "accent appears only on one rendering path," which is a much stronger debugging signal. Even better next time: pair that observation with one short structural hint like "compare the consultation card path to standard service-colored cards." That would point directly to the actual split in the code.
+Strong correction. You finally stated the actual invariant clearly: the left edge should be the **same card color family**, just **deeper / more vibrant**. That is the missing requirement prior prompts did not force. The mistake was treating “match Top Staff” as a literal color recipe instead of a **shape reference only**. Better prompt framing next time:
 
-## What the problem actually is
-The accent is not missing randomly.
+- “Match the Top Staff geometry only”
+- “Do not use purple/global primary”
+- “Accent must be derived from each card’s own category color”
+- “Top/right/bottom stroke must remain category stroke”
 
-It only shows on the consultation card because that card goes through the `displayGradient` path, while most other schedule cards go through the `useCategoryColor` path.
+That wording separates **shape** from **color logic** and prevents this exact failure mode.
 
-In `AppointmentCardContent.tsx`:
+## What went wrong
+I anchored on the Top Staff example too literally.
 
-- `showLeadingAccent` is true for most non-compact, non-blocked cards
-- `LEADING_ACCENT_BORDER` is being applied to the card root
-- but `cardStyle` sets an inline `borderColor` whenever `useCategoryColor` is true
+Top Staff gave the correct **border-left shape**, but I incorrectly copied its **purple/global token mindset**. Your schedule cards are different: their color system is category-driven. So the accent cannot be a single shared color token like `primary`. It must be computed per card from that card’s category color.
 
-That inline `borderColor` overrides the class-based `border-l-primary/70`, so the left accent gets replaced by the same stroke color as the rest of the card border.
-
-Why consultation is different:
-- consultation cards use `displayGradient`
-- the `displayGradient` style path sets `background` and `color`, but not `borderColor`
-- because no inline `borderColor` is applied there, the left accent survives and becomes visible
-
-So the issue is not visibility logic. The issue is CSS precedence:
-- class-based left border accent
-- overridden by inline full-border color on service-colored cards
+Current bug sources:
+- `LEADING_ACCENT_BORDER` is hardcoded to `border-l-primary/70`
+- that makes every accent purple
+- on service-colored cards, the accent should instead be a derived version of the card’s own category hue
 
 ## Files involved
 - `src/components/dashboard/schedule/AppointmentCardContent.tsx`
+- `src/utils/categoryColors.ts`
 - `src/lib/design-tokens.ts`
 
 ## Implementation plan
 
-### 1) Keep the accent token, but stop letting inline borderColor wipe it out
-Update the service-colored `cardStyle` branches in `AppointmentCardContent.tsx` so they do not override the left border when `showLeadingAccent` is enabled.
+### 1) Stop using a global purple accent token
+Retire `LEADING_ACCENT_BORDER` as a color token.
 
-Current problematic behavior:
-- `borderColor` is applied inline for all sides
-- inline style wins over `border-l-*` utility class
+A static Tailwind class cannot express:
+- blonding card → deeper blonding accent
+- teal card → deeper teal accent
+- lavender card → deeper lavender accent
 
-### 2) Split border styling into two cases
-In the `useCategoryColor` branches, compute border styling conditionally:
+So the accent color must move to inline, per-card style computation.
 
-#### Case A — accent enabled
-For non-compact, non-blocked cards:
-- preserve top/right/bottom border color from category styling
-- do not set the left border color inline
-- allow `LEADING_ACCENT_BORDER` to control the left edge
+Replace the token with a geometry-only helper if needed, e.g.:
+```ts
+export const LEADING_ACCENT_EDGE = 'border-l-2';
+```
+
+Or remove the token entirely if the border width is handled inline.
+
+### 2) Add a real “derived accent color” helper in `categoryColors.ts`
+Create a helper specifically for schedule accent edges, for example:
+
+```ts
+export function deriveAccentEdgeColor(hexColor: string, isDark: boolean): string
+```
+
+Behavior:
+- preserve the same hue family as the card
+- increase saturation modestly
+- reduce lightness enough to read as a stronger leading edge
+- never drift to a different hue
+- for grays / low-saturation colors, return a darker neutral accent instead of inventing color
 
 Implementation direction:
-- either move full-border coloring out of inline styles and into class/style composition that supports side-specific borders
-- or set side-specific inline values:
-  - `borderTopColor`
-  - `borderRightColor`
-  - `borderBottomColor`
-  - omit `borderLeftColor`
+- For light mode:
+  - start from the effective light fill color
+  - decrease lightness ~12–18
+  - increase saturation ~8–14
+- For dark mode:
+  - use `darkStyle.accent` as the base source of truth, or slightly deepen it if needed
+- For pale consultation/champagne tones:
+  - force enough contrast so the edge visibly reads against the fill
 
-#### Case B — accent disabled
-For compact or blocked cards:
-- keep the existing full border behavior unchanged
+This helper should become the canonical source for the appointment leading edge color.
 
-### 3) Apply the same fix to both category-color branches
-There are two style branches that can override the accent:
-- dark themed category cards
-- light themed category cards
+### 3) Move the accent fully into `cardStyle`
+In `AppointmentCardContent.tsx`, stop relying on class-based accent color.
 
-Both need the same side-aware border treatment.
+When `showLeadingAccent` is true, compute all four border sides explicitly:
 
-### 4) Keep the existing accent visibility rules
+#### Light themed category cards
+- `borderTopColor = lightTokens.stroke`
+- `borderRightColor = lightTokens.stroke`
+- `borderBottomColor = lightTokens.stroke`
+- `borderLeftColor = derivedAccent`
+- `borderLeftWidth = '2px'`
+
+#### Dark themed category cards
+- `borderTopColor = darkStyle.stroke`
+- `borderRightColor = darkStyle.stroke`
+- `borderBottomColor = darkStyle.stroke`
+- `borderLeftColor = darkStyle.accent` (or the new helper result)
+- `borderLeftWidth = '2px'`
+
+#### Gradient / consultation cards
+Gradient cards currently skip border coloring entirely. Add explicit border treatment there too:
+- preserve gradient background/text
+- set `borderTop/Right/Bottom` to a subtle consultation/category stroke
+- set `borderLeftColor` to the derived consultation accent
+- keep the same native rounded-border geometry
+
+That ensures consultation still works, but now with the correct category-derived edge instead of a special accidental path.
+
+### 4) Remove the purple halo entirely
+Do not use `ring-primary` inside the accent token.
+
+The accent is an edge treatment, not a glow treatment. A ring wraps the full perimeter and visually contaminates the other sides. The left edge should be the only differentiated side.
+
+Selection ring / no-show ring stays as-is because those are separate interaction states.
+
+### 5) Keep the shape, change only the color logic
 Do not change:
-- compact cards: no accent
-- blocked/break cards: no accent
-- agenda variant: unchanged
+- rounded card geometry
+- native border-left implementation
+- compact cards hidden accent
+- blocked / break cards hidden accent
+- agenda variant unchanged
+- shadows / hover / selection / no-show behavior
 
-The bug is not in the visibility gate; it is in the border-color override.
+Only the accent color source changes:
+- from global purple
+- to per-card derived category accent
 
-### 5) Keep the token source stable
-No need to change the org-scoped token choice unless visual tuning is needed. `LEADING_ACCENT_BORDER` can remain the canonical accent token.
-
-If visual parity with Top Staff still needs refinement after the fix, tune only these values in `src/lib/design-tokens.ts`:
-- border width
-- opacity
-- ring opacity
-
-## Expected result after fix
-- consultation cards still show the accent
-- standard service-colored cards also show the accent
-- the accent follows the rounded corners because it remains a native left border
-- top/right/bottom border still match the card’s category stroke
-- no extra overlay, no inset pill, no SVG, no padding hacks
+## Expected result
+- Blonding cards: left edge is deeper blonding, not purple
+- Teal cards: left edge is deeper teal, not purple
+- Lavender cards: left edge is deeper lavender, not purple
+- Consultation cards: left edge is deeper consultation gold, not purple
+- Top/right/bottom borders remain their existing category stroke
+- The left edge still curves naturally into the rounded corners because it remains a native border-left
 
 ## Technical detail
-The root cause is this combination:
+The correct mental model is:
 
-```tsx
-showLeadingAccent && LEADING_ACCENT_BORDER
-style={cardStyle}
+```text
+Top Staff reference = geometry reference
+Schedule cards = category-derived color system
 ```
 
-with `cardStyle` containing:
+So the schedule accent must be:
 
-```tsx
-borderColor: ...
+```text
+accentColor = f(cardColor)
 ```
 
-Because inline styles outrank Tailwind utility classes, the category stroke replaces the accent on the left side. Gradient consultation cards avoid this because their style object does not include `borderColor`.
+not:
+
+```text
+accentColor = primary
+```
+
+That is the actual mismatch between your request and the prior implementations.
 
 ## QA checklist
-- Confirmed and completed standard appointment cards show the leading accent
-- Unconfirmed/service-colored cards show the leading accent
-- Consultation gradient cards still show the leading accent
-- Compact cards still do not show it
-- Block/Break cards still do not show it
-- Left edge uses accent color, while top/right/bottom retain category stroke
-- Rounded corner wrap remains clean at 100%, 125%, 150%, and 200% zoom
+- No schedule card shows a purple left edge unless the card itself is purple-toned
+- Each accent clearly belongs to the card’s own hue family
+- Accent is visually deeper / richer than the card fill
+- Top/right/bottom remain category stroke, unchanged
+- Consultation gradient card uses a deeper consultation-toned left edge
+- Compact cards still have no accent
+- Block / Break cards still have no accent
 - Selected ring and no-show ring still render correctly
-- No layout shift or content overlap introduced
+- Corner wrap remains clean at 100%, 125%, 150%, and 200% zoom
 
 ## Enhancement suggestion
-After this fix, extract the card stroke decision into a small helper such as `getAppointmentBorderStyle({ useCategoryColor, isDark, showLeadingAccent, catColor, darkStyle })`. That turns the bug-prone style precedence into one canonical decision point and prevents future regressions where a new inline `borderColor` silently kills the accent again.
+After this fix, extract the border decision into one helper such as:
+
+```ts
+getAppointmentBorderStyle({
+  catColor,
+  isDark,
+  displayGradient,
+  showLeadingAccent,
+})
+```
+
+and have it return:
+- fill
+- text
+- stroke colors
+- accent edge color
+- border widths
+
+That prevents this from regressing again through mixed class-vs-inline logic or by reintroducing a global accent token where a per-card derived color is required.
