@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Database, Plus, Trash2, ArrowRight, Copy, Loader2 } from 'lucide-react';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { Skeleton } from '@/components/ui/skeleton';
 import {

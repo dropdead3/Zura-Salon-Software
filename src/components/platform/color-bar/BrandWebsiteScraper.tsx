@@ -14,7 +14,7 @@ import {
 import { Loader2, Globe, Search, CheckCircle2, AlertTriangle, RotateCcw, Sparkles, Filter } from 'lucide-react';
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { useBrandWebsiteScrape, type ScrapedProduct } from '@/hooks/platform/useBrandWebsiteScrape';
-import { Checkbox } from '@/components/ui/checkbox';
+import { PlatformCheckbox as Checkbox } from '@/components/platform/ui/PlatformCheckbox';
 
 interface BrandWebsiteScraperProps {
   websiteUrl: string;

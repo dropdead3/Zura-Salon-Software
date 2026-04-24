@@ -17,7 +17,7 @@ import {
   PlatformSelectItem as SelectItem,
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
-import { Checkbox } from '@/components/ui/checkbox';
+import { PlatformCheckbox as Checkbox } from '@/components/platform/ui/PlatformCheckbox';
 import { PlatformTextarea } from '@/components/platform/ui/PlatformTextarea';
 import {
   useAdminKBCategories,

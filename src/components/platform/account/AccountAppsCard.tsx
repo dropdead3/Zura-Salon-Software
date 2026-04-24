@@ -1,6 +1,6 @@
 import { Package, Play, MessageSquare, DollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import {
   PlatformCard,
   PlatformCardContent,

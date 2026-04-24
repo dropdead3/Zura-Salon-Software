@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter, PlatformDialogDescription as DialogDescription } from '@/components/platform/ui/PlatformDialog';
 import { PlatformButton as Button } from '@/components/platform/ui/PlatformButton';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea as Textarea } from '@/components/platform/ui/PlatformTextarea';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { X, Loader2 } from 'lucide-react';
 

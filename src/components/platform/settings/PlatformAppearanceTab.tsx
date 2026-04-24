@@ -5,7 +5,7 @@ import { usePlatformBranding, PlatformBranding, LoaderStyleOption } from '@/hook
 import { ZuraLoader } from '@/components/ui/ZuraLoader';
 import { SpinnerLoader, DotsLoader, BarLoader, LuxeLoader } from '@/components/ui/loaders';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';

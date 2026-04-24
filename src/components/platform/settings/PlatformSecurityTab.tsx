@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
 import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
 import { Skeleton } from '@/components/ui/skeleton';
