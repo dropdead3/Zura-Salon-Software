@@ -1,111 +1,127 @@
 
 
 ## Prompt feedback
-Sharp prompt — you spotted "[Deleted Client]" (which yesterday's plan introduced as the *negative-cache placeholder*) on appointments that obviously aren't deleted, and pulled the screenshot to prove it. That's exactly the right escalation rhythm: shipped a fix → it created a new symptom → flag it immediately. Sharper next time: "Deleted Client appearing on Annmarie X's 4:00pm haircut" gives me the specific row to trace. Also worth noting yesterday's pattern: each layer we've added (clamp → walk-in fallback → empty-row → negative cache) erased a different signal. We're now on the fourth iteration of the same anti-pattern. Worth promoting "writes that conform to a contract must validate the contract" from suggestion to canon *now*, before the next layer.
+Sharp prompt — the screenshot is exactly the right evidence. Two of the cards (Annmarie X "Pure Brazilian Express Keratin" 2pm, Angelia Sanchez 3pm) actually have the correct names *in the database* now, but the schedule shows "Client #VBPQ" and a missing-name card. That's a different problem from the last three — it's a stale browser cache, not a sync gap. Sharper next time: a quick hard-reload before screenshotting separates "data wrong" from "view stale," and tells me whether to debug sync or render. Also — the API returning 404 for clients that *visibly exist in Phorest's web UI* is a Phorest quirk worth naming explicitly: their public app reads from a different endpoint than `GET /branch/{id}/client/{id}`, so a client appearing on a calendar in Phorest's UI does not guarantee the third-party client lookup will resolve them.
 
-## What's actually broken — three compounding bugs
+## Two distinct things going on (proven against the live DB and edge logs)
 
-**231 clients** were mass-flagged as `[Deleted Client]` in a 31-second window (05:44:36–05:45:07). Many of them have **future appointments going out to July 2026** — they're definitively not deleted. They're real, active clients in Phorest. The negative-cache write fired falsely 231 times in a single sync run.
+### Symptom A — "Client #VBPQ" and missing name where the data is actually correct
 
-Tracing the failure end-to-end:
+`gbilM7k7EIBBoqZ6OuVBPQ` (Annmarie X) and `k_YEpJ30Ib7uE8LwSb98pw` (Angelia Sanchez) are **fully resolved in the database**. Both `phorest_appointments.client_name` and `phorest_clients.name` hold the right names. The view returns the right names. The render layer renders whatever the query returns.
 
-### Bug 1 — `phorestRequest` swallows region 404s as "not found"
+So why does the screenshot still show "Client #VBPQ" and a card with no name?
 
-Lines 19–60 of `sync-phorest-data/index.ts`. The helper iterates `[platform.phorest.com, platform-us.phorest.com]` and on a 404 from EU, falls through to US. **But the fall-through condition is wrong**:
+`usePhorestCalendar` queries `v_all_appointments` with `staleTime: 30_000` and a query key that **never invalidates on sync completion**. Once the user loaded the page before the backfill finished (sync ran at 06:05 UTC, 677 names backfilled), React Query holds the pre-backfill snapshot for 30 seconds + as long as the component stays mounted without a refetch trigger.
 
-```ts
-if (response.status === 404 && base === PHOREST_BASE_URL) {
-  await response.text();
-  continue;  // try US
-}
+The user is looking at a stale snapshot. A hard reload would resolve it. The bug is that **the schedule has no observability into "sync just ran, your appointments now have names" — it just sits on the cached data**.
+
+### Symptom B — "Client #EBKQ" / "Client #0H2A" / etc. — Phorest API returns 404 for clients that exist in Phorest's UI
+
+`mQuniNJUV6CsoQ6QUUEbKQ` (Grant Carter), `PFZxTWB0tGY4sNu4pf0h2A` (Samantha Lyons), `HLVo8X1eGKPl6vka-HFj5g` (Kendra Harris) — the appointment exists, the client visibly exists in Phorest's calendar. But every call to `GET /branch/{branchId}/client/{clientId}` returns 404 from every branch in both regions. Edge logs prove it:
+
+```
+On-demand fetch PFZxTWB0tGY4sNu4pf0h2A: 404 from every branch; leaving unresolved
+On-demand fetch [21 more IDs]: 404 from every branch; leaving unresolved
 ```
 
-This *only* falls through on the first base. If US *also* returns 404, line 53 throws `'Phorest API error: 404 - ...'`. The on-demand fetch (line 653–658) then catches that error string and checks `if (!msg.includes('404'))` — which is **false**, so it treats it as a 404 and moves on. Net effect: a real 404 from both regions, which seems correct.
+Two probable causes (not mutually exclusive):
+1. **Phorest's `/branch/{id}/client/{id}` endpoint is permissioned differently from `/branch/{id}/client?searchableName=...`** — the third-party API may require a paginated list lookup, not a direct fetch. Phorest's docs are inconsistent on this.
+2. **The calendar reads from a "global" client store** while `/branch/.../client/{id}` only resolves clients *owned* by that branch. A client booked across multiple branches may exist as one record in the calendar view but as separate per-branch records (or no record) in the third-party endpoint.
 
-**But here's the actual bug**: from the logs (lines 9–28), the same client ID is being requested against **both** `platform.phorest.com` AND `platform-us.phorest.com` for the *same branch ID*. That means the helper is *not throwing on the first 404* — it's looping through both base URLs *for every branch* in the outer Pass-2 loop, and on the *final* base URL's 404 it throws. The on-demand fetch at line 644–659 then iterates `branchIds` and tries each one — but since the Phorest business has branches in **both regions** (EU branch `hYztERWvOdMpLUcvRSNbSA`, US branch `6YPlWL5os-Fnj0MmifbvVA`), and `phorestRequest` itself doesn't know which region a branch lives in, it tries the wrong region first, gets a 404, falls through to the right region, succeeds — *or* gets a real 404 from the right region too because the *client* lives in the *other* branch.
+Either way, the on-demand single-client fetch path doesn't work for a chunk of real clients. We need a different lookup strategy.
 
-The flagged-deleted clients are clients that exist in Phorest, just **not in the branch the loop happened to ask about**. The 404 means "this client is not in this branch," not "this client doesn't exist." The code interprets "404 from every (branch × region) combination tried" as "deleted" — but in practice, Phorest's `/branch/{branchId}/client/{clientId}` returns 404 when the client *isn't owned by that branch*, even if they exist in another branch.
+### The third lurking issue — the database knows the appointment client name from Phorest's appointment payload
 
-### Bug 2 — Negative-cache fires on *any* 404, not on "definitively not found"
+Looking at `phorest_appointments` for `mQuniNJUV6CsoQ6QUUEbKQ`: `client_name` is **NULL**. But Phorest's calendar clearly shows "Grant Carter" attached to that booking. So Phorest's appointment endpoint *does* know the client's name on the appointment level — we're just not capturing it. Line 530 of the sync function does:
 
-Lines 685–702: if `nonNotFoundError` is null (i.e. all attempts returned 404), the code writes `[Deleted Client]`. With Bug 1, this means a single missing branch-mapping or a transient timing window (client was just created in branch A, sync queries branch B first) writes a permanent negative cache.
+```ts
+client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
+```
 
-**Worse**: the cache is permanent — once a client is flagged, line 597–600 of Pass 1 *always* skips them on every subsequent sync. So a temporarily-missed client stays "deleted" forever until manual intervention.
+If neither `apt.clientName` nor `apt.client.firstName/lastName` exists on the response shape, but Phorest's *calendar API* (the one their UI uses) returns the name as part of the appointment, we may be calling the wrong appointment endpoint or missing a query param like `include=client` or `expand=client`.
 
-### Bug 3 — `phorest_clients.phorest_branch_id` is empty for **all 3,324 resolved clients**
+## The fix — three layers, in order
 
-The DB query confirms: `distinct_branches = 0`. The branch-id is *never* populated on existing client rows (presumably the original `syncClients` writes it as null), so when the on-demand fetch needs to know "which branch does this client live in?" there's no hint — it just iterates blindly. If `syncClients` had populated `phorest_branch_id` correctly, the on-demand fetch could go straight to the right branch + region and never produce a false 404.
+### 1. Verify what Phorest's appointment endpoint actually returns and capture the client name there
 
-Combined effect: 231 real clients got permanent negative-cache rows on a single sync run because the per-branch fan-out failed to find them in the *first* branch tried, and the loop terminated before exhaustively proving non-existence.
+This is the **highest-leverage fix**. If the appointment-level response carries the client's name (as Phorest's UI suggests it does), we never need the per-client lookup at all — the map happens at sync time.
 
-## The fix — four layers
+Reconnaissance steps:
+- Add a one-time debug log in `syncAppointments` that dumps the raw shape of `apt` (including `apt.client`, any `firstName`/`lastName`/`name`/`email` fields) for the first 3 appointments per branch
+- Check if Phorest's appointment endpoint accepts `?expand=client` or `?fields=client.firstName,client.lastName` — many Phorest API endpoints support field expansion
+- If the appointment response has the name in *any* shape, broaden line 530 to read all candidate paths: `apt.clientName`, `apt.client?.firstName + lastName`, `apt.client?.name`, `apt.customer?.name`, `apt.customer?.firstName + lastName`
 
-### 1. Stop writing `[Deleted Client]` from on-demand fetch (immediate / safe)
+Once this is confirmed, the per-client fetch becomes a fallback for the rare appointment that doesn't carry client info inline — not the primary resolution path.
 
-Remove the negative-cache write at lines 691–702 entirely. Instead:
-- If on-demand fetch can't find a client across all branches, log it and **leave the appointment's `client_name` as null**
-- The render layer (`getDisplayClientName`) already handles null gracefully — it shows "Client #ABCD" placeholder, which is the truthful answer ("we know the ID, can't resolve the name right now")
+### 2. Replace per-client `/branch/{id}/client/{id}` with a paginated client search
 
-This trades a tiny amount of repeated work (re-attempt every sync) for **never falsely marking a real client as deleted**. The cost of repeated lookups is bounded by the rate cap (200/run); the cost of false negative-cache is unbounded — a permanent permanent mislabel.
+For the residual clients the appointment payload doesn't resolve, switch the on-demand fetch from `GET /branch/{id}/client/{clientId}` to a paginated search that *does* work — typically `GET /branch/{id}/client?clientId={clientId}` or `GET /branch/{id}/client?size=200&page=N` filtered on our side.
 
-If we *do* want a negative cache later, it should be a *separate* table (`phorest_client_resolution_attempts` with `attempt_count`, `last_attempt_at`, `failure_reason`) so the resolution state is distinguishable from real client data. Out of scope for this fix.
+The current per-client GET returns 404 for half the IDs. The list endpoint will return them all (it's how `syncClients` already works) — we just iterate larger pages or pass a filter.
 
-### 2. Track region per branch + use it on lookup
+Approach:
+- Bundle all unresolved IDs from the current sync run
+- Call the paginated client list per branch in the right region, page through until exhausted or all unresolved IDs are found
+- Match by `phorest_client_id` and write the same upsert path
 
-Add `phorest_region` (or store the working `base_url`) to wherever branches are persisted (probably an in-memory cache keyed on businessId for the function's lifetime, since branches table doesn't seem to track this). Modify `phorestRequest` to accept an optional `preferredBase` parameter. When iterating branches in Pass 2, group by their region first and only call the helper with the matching base URL — eliminating the cross-region 404s that triggered the bug.
+This trades "200 single-fetches" for "~5 paginated-list calls per branch" — strictly better for the rate budget AND works for clients the single-fetch endpoint can't see.
 
-### 3. Reverse the false negative-cache rows already written
+### 3. Add a sync-completion signal so the schedule refreshes when names land
 
-One-shot: delete the 231 rows where `name = '[Deleted Client]'` and `notes LIKE 'Auto-flagged%'`. Next sync will pick them up via Pass 2 with the corrected logic (no more false flagging) and resolve them properly. Migration runs once, idempotent (it's an exact-match delete on a specific notes string).
+The stale-cache bug (Annmarie X showing as "Client #VBPQ") is fixable in two ways:
 
-### 4. Backfill `phorest_branch_id` on existing client rows
+**Option A (preferred)** — when `phorest-sync-status` query updates with a new `completed_at` for `appointments`, automatically `queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })`. This already happens in some places via the sync status listener, but `usePhorestCalendar` doesn't subscribe to it. A small `useEffect` that watches `lastSync` (already in the hook at line 264-280) and calls `refetch()` when it advances would close the gap.
 
-Modify `syncClients` (line 765+) to write `phorest_branch_id` when it persists each client. This isn't needed for the immediate fix but eliminates Bug 3's blind iteration on future syncs — clients learned in branch X get branch X recorded, so the on-demand fetch knows where to look next time.
+**Option B (fallback)** — drop `staleTime` from 30s to something like 60s for the appointment query but add a `refetchInterval: 60_000` so the schedule polls quietly while open. Higher network cost; less elegant.
+
+Option A is cleaner and respects the no-polling doctrine in `tech-decisions/high-concurrency-scalability`.
 
 ## Files involved
 
-**Modified:**
-- `supabase/functions/sync-phorest-data/index.ts` — three changes:
-  - Remove negative-cache write from on-demand fetch (lines 691–702 → just log and return)
-  - Add region-aware branch iteration in Pass 2 (group branches by working region before calling `phorestRequest`)
-  - Update `syncClients` to populate `phorest_branch_id` on upsert (separate, lower-priority change in same file)
+**Investigated first (no edit until reconnaissance complete):**
+- `supabase/functions/sync-phorest-data/index.ts` lines 480-530 — log the actual `apt` shape for 3 appointments to confirm what fields Phorest sends
+- Phorest API docs (or a debug call from the function) for `/branch/{id}/appointment` to confirm whether `?expand=client` or similar is supported
+
+**Likely modified:**
+- `supabase/functions/sync-phorest-data/index.ts`:
+  - Broaden line 530 to read all candidate name paths from the appointment response (low risk)
+  - Add `?expand=client` (or whatever the docs require) to the appointment fetch URL
+  - Replace the per-client GET in Pass 2 with a paginated client list lookup keyed on the unresolved IDs
+- `src/hooks/usePhorestCalendar.ts` — add a `useEffect` watching `lastSync.completed_at` that triggers `refetch()` when it advances
 
 **Migration:**
-- One-shot SQL migration to clear false `[Deleted Client]` rows: `DELETE FROM phorest_clients WHERE name = '[Deleted Client]' AND notes LIKE 'Auto-flagged%'` — the next sync re-resolves them through the corrected code path
+- One-shot SQL after fix #1 ships: clear `client_name = NULL` rows so the next sync re-resolves them through the corrected appointment-level extraction (idempotent, only touches rows still missing names)
 
 **Untouched:**
-- `src/lib/appointment-display.ts` — already correctly renders null `client_name` as "Client #ABCD" placeholder; no change needed
-- `phorest_clients` schema — no schema change needed
-- The reconciliation function (`reconcile-phorest-client-names`) — same fix needed there if it shares the negative-cache logic; verify and apply identical changes if so
+- `src/lib/appointment-display.ts` — three-state contract is correct
+- `v_all_appointments` view — COALESCE is correct
+- The reconciliation function — same paginated-list fix applies, but ship the sync function fix first and validate before re-deploying reconciliation
 
 ## What stays the same
 
-- Pass 1 (local resolution) is correct — unchanged
-- Contract validation on writes (only upsert when name is present) — unchanged
-- Three-state UI rendering — unchanged
-- True walk-in detection (`is_walk_in` based on null `phorest_client_id`) — unchanged
+- `getDisplayClientName` three-state rendering
+- "Client #ABCD" placeholder for genuinely-unresolvable IDs (correct behavior — we don't have the data, we shouldn't pretend we do)
+- `is_walk_in` detection
+- Region-aware iteration from yesterday's fix (still correct, just becomes less load-bearing)
+- POS-First doctrine — Phorest is still the source of truth, we're just asking it the right questions
 
 ## QA checklist
 
-- After deploy + one sync run: count of `[Deleted Client]` rows stays at zero (it would only grow if Phorest *actually* deleted a client)
-- Annmarie X's 4pm appointment renders her real name, not "[Deleted C." or "Client #ABCD"
-- The 6 appointments in your screenshot all render real names within one or two sync cycles
-- A truly deleted client (delete one in Phorest staging, sync) does NOT get flagged as `[Deleted Client]` in `phorest_clients` — it just stays unresolved with the appointment showing "Client #ABCD". That's the *correct* behavior under "writes must validate contract": we don't have positive evidence of deletion, only absence of evidence of existence. Different things.
-- A re-sync attempts the previously-unresolvable IDs again rather than skipping them
+- After fix #1: re-sync; raw appointment log shows the client name field that exists; `phorest_appointments.client_name` populates at sync time, not via Pass 2 backfill
+- After fix #2: previously-404 client IDs (Grant Carter, Samantha Lyons, Kendra Harris) appear in `phorest_clients` with real names within one sync cycle
+- After fix #3: open schedule; trigger a manual sync; within ~5s of sync completion, "Client #ABCD" cards refresh to real names without a hard reload
+- A sync that adds zero new names doesn't trigger a wasteful refetch (only refetch when `lastSync.completed_at` actually advances)
+- Truly missing clients (deleted in Phorest, never existed) still render "Client #ABCD" — no false `[Deleted Client]` rows
 
 ## Why this happened (and the canon to add)
 
-Yesterday's diagnosis named the pattern: **"Writes that conform to a contract must validate the contract on the way in."** This bug is the *exact* shape — we wrote `[Deleted Client]` as a placeholder when we didn't have positive evidence of deletion, only absence of a successful lookup. Absence-of-evidence is not evidence-of-absence; the negative cache encoded the latter when we only had the former.
+The on-demand single-client fetch was built on the assumption that Phorest's third-party API has a `GET /client/{id}` semantics that mirrors what their internal UI does. It doesn't — at least not reliably. Yesterday's fix was correct *given that assumption*; the assumption was wrong.
 
-This is now the **fourth iteration** of the same meta-pattern in two days:
-1. `Math.min(util, 100)` — erased over-booking signal
-2. `client_name || 'Walk-in'` — erased pending-sync signal
-3. Empty-name `phorest_clients` rows — erased "fetch incomplete" signal
-4. False `[Deleted Client]` writes — erased "not in this branch yet" signal
+Generalizable lesson: **when an external API serves the same data through multiple endpoints, the one their public UI uses is usually a different (better-permissioned, more-expanded) endpoint than the one in their third-party docs**. We should always prefer the endpoint that returns *more* data per call (list with expansion) over the endpoint that returns *less* (single-resource fetch) — because the latter often has stricter permissioning we won't discover until production.
 
-Worth promoting to a real `mem://architecture/signal-preservation.md` canon now (not just a suggestion). Same shape as alert-fatigue and visibility-contracts: when a code path erases the difference between two materially distinct states, it's destroying operational truth — even if the surface output looks "cleaner." This canon would catch all four classes upfront.
+This is adjacent to the signal-preservation canon already saved. Worth a short addition to `mem://tech-decisions/phorest-staff-integration-and-photo-sync.md` (or a new `phorest-third-party-api-quirks.md`) noting: "The single-resource client fetch (`/branch/{id}/client/{id}`) returns 404 for many clients visible in Phorest's UI. Prefer paginated list endpoints with client-side filtering."
 
 ## Enhancement suggestion
 
-Beyond the canon: yesterday's deferred reconciliation function should not be re-deployed as-is. If it shares the same per-branch fan-out + negative-cache pattern, it will hit Bug 1 + Bug 2 the moment an admin runs it manually. Verify and apply the same fixes there, or hold the function until the region-aware iteration ships. Worth adding a one-line "do not deploy until plan-XYZ ships" guard at the top of the file so we don't re-enable a known-broken path.
+Once fix #1 is verified, the `useReconcilePhorestClientNames` admin button becomes mostly redundant — the next regular sync resolves the backlog. But it's still worth keeping as a one-click "force re-fetch all empty rows" button for ops, with the same paginated-list strategy. Worth adding to the integrations admin page as a deferred follow-up, not blocking the primary fix.
 
