@@ -562,6 +562,11 @@ async function syncAppointments(
     // residual set directly from Phorest. Doctrine: a phorest_client_id
     // with no name is a sync gap, not a walk-in — closing it is the whole
     // point of this block.
+    //
+    // CONTRACT-VALIDATING WRITES: only upsert client rows when the Phorest
+    // response actually carries a name. Empty rows in `phorest_clients` are
+    // worse than no rows — they satisfy schema but violate purpose, and they
+    // hide IDs from the next residual scan (which is keyed on "no name").
     try {
       const { data: missingNames } = await supabase
         .from('phorest_appointments')
@@ -573,6 +578,12 @@ async function syncAppointments(
       if (missingNames && missingNames.length > 0) {
         const clientIds = [...new Set(missingNames.map(a => a.phorest_client_id).filter(Boolean))] as string[];
         const clientNameMap = new Map<string, string>();
+        // IDs whose existing client row is empty (no name) and must be re-probed
+        // even though a row exists. The original logic skipped these.
+        const emptyExistingIds = new Set<string>();
+        // IDs whose existing row is the negative-cache `[Deleted Client]` placeholder.
+        // Don't re-probe; treat as resolved-deleted so we don't keep retrying.
+        const negativelyCachedIds = new Set<string>();
 
         // Pass 1: batch-fetch from local phorest_clients
         for (let i = 0; i < clientIds.length; i += 100) {
@@ -583,99 +594,32 @@ async function syncAppointments(
             .in('phorest_client_id', chunk);
 
           (clients ?? []).forEach((c: any) => {
-            const resolvedName = c.name || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
-            if (resolvedName) clientNameMap.set(c.phorest_client_id, resolvedName);
+            if (c.name === '[Deleted Client]') {
+              negativelyCachedIds.add(c.phorest_client_id);
+              return;
+            }
+            const resolvedName = (c.name && c.name.trim()) || [c.first_name, c.last_name].filter(Boolean).join(' ').trim();
+            if (resolvedName) {
+              clientNameMap.set(c.phorest_client_id, resolvedName);
+            } else {
+              // Row exists but has no usable name — flag for re-probe.
+              emptyExistingIds.add(c.phorest_client_id);
+            }
           });
         }
 
         // Pass 2: identify still-unresolved IDs and fetch on-demand from Phorest.
+        // Includes both "no row at all" and "row exists but empty" cases.
         // Cap at 200/run to protect rate budget; remainder picks up next sync.
-        const unresolved = clientIds.filter(id => !clientNameMap.has(id)).slice(0, 200);
-
-        // Need a branchId to call /branch/{id}/client/{clientId}. Phorest
-        // requires the branch context; we try each known branch until one hits.
-        let branchIds: string[] = [];
-        try {
-          const branchData = await phorestRequest('/branch', businessId, username, password);
-          const branches = branchData._embedded?.branches || branchData.branches ||
-                           (Array.isArray(branchData) ? branchData : []);
-          branchIds = branches.map((b: any) => b.branchId || b.id).filter(Boolean);
-        } catch (e: any) {
-          console.log('On-demand client fetch: failed to list branches, skipping pass 2:', e.message);
+        const unresolved = clientIds
+          .filter(id => !clientNameMap.has(id) && !negativelyCachedIds.has(id))
+          .slice(0, 200);
+        const reprobeCount = unresolved.filter(id => emptyExistingIds.has(id)).length;
+        if (unresolved.length > 0) {
+          console.log(`On-demand resolution needed for ${unresolved.length} client IDs (${reprobeCount} re-probes of empty rows)`);
         }
-
-        let onDemandFetched = 0;
-        let onDemandDeleted = 0;
-        if (unresolved.length > 0 && branchIds.length > 0) {
-          // Concurrency cap: 5 parallel fetches per batch
-          for (let i = 0; i < unresolved.length; i += 5) {
-            const batch = unresolved.slice(i, i + 5);
-            await Promise.all(batch.map(async (clientId) => {
-              for (const branchId of branchIds) {
-                try {
-                  const client: any = await phorestRequest(
-                    `/branch/${branchId}/client/${clientId}`,
-                    businessId, username, password,
-                  );
-                  const name = `${client.firstName || ''} ${client.lastName || ''}`.trim() || client.name || null;
-                  if (name) {
-                    clientNameMap.set(clientId, name);
-                    // Upsert minimal record so future appointments + COALESCE chain pick it up
-                    await supabase.from('phorest_clients').upsert({
-                      phorest_client_id: clientId,
-                      name,
-                      first_name: client.firstName || null,
-                      last_name: client.lastName || null,
-                      email: client.email || null,
-                      phone: client.mobile || client.phone || null,
-                      phorest_branch_id: branchId,
-                    }, { onConflict: 'phorest_client_id' });
-                    onDemandFetched++;
-                  }
-                  return; // found in this branch, stop probing
-                } catch (e: any) {
-                  // 404 in this branch is normal if client lives in another branch.
-                  // Continue probing; final 404 across all branches handled below.
-                  if (!String(e?.message || '').includes('404')) {
-                    console.log(`On-demand fetch error for ${clientId} in branch ${branchId}:`, e.message);
-                    return; // non-404 error: don't burn through other branches
-                  }
-                }
-              }
-              // Negative cache: client not found in any branch. Write placeholder
-              // so future syncs don't re-probe every 15 minutes.
-              try {
-                await supabase.from('phorest_clients').upsert({
-                  phorest_client_id: clientId,
-                  name: '[Deleted Client]',
-                  notes: 'Auto-flagged: not found in any Phorest branch on on-demand fetch',
-                }, { onConflict: 'phorest_client_id' });
-                clientNameMap.set(clientId, '[Deleted Client]');
-                onDemandDeleted++;
-              } catch (cacheErr: any) {
-                console.log(`Negative-cache write failed for ${clientId}:`, cacheErr.message);
-              }
-            }));
-          }
-        }
-
-        if (onDemandFetched > 0 || onDemandDeleted > 0) {
-          console.log(`On-demand fetched ${onDemandFetched} missing clients from Phorest (${onDemandDeleted} flagged as deleted)`);
-        }
-
-        // Bulk-update appointments with all resolved names (from both passes)
-        let backfilled = 0;
-        for (const apt of missingNames) {
-          const name = clientNameMap.get(apt.phorest_client_id!);
-          if (name) {
-            await supabase
-              .from('phorest_appointments')
-              .update({ client_name: name })
-              .eq('id', apt.id);
-            backfilled++;
-          }
-        }
-        console.log(`Backfilled ${backfilled} client names (${missingNames.length} had missing names; ${unresolved.length} required on-demand fetch)`);
+...
+        console.log(`Backfilled ${backfilled} client names (${missingNames.length} had missing names; ${unresolved.length} required on-demand fetch; ${negativelyCachedIds.size} were negatively cached)`);
       }
 
       // Mark true walk-ins (no client ID at all)
