@@ -51,6 +51,13 @@ export const ENFORCEMENT_GATES: Record<string, EnforcementGateConfig> = {
     ctaLabel: 'Set Margin Baselines',
     ctaPath: '/dashboard/admin/settings',
   },
+  gate_phorest_disconnect_ready: {
+    key: 'gate_phorest_disconnect_ready',
+    label: 'Phorest Disconnect Readiness',
+    description: 'Before disconnecting from Phorest, every client must exist in Zura\'s native directory. The next sync will materialize any missing records and validate drift is zero.',
+    ctaLabel: 'Run Sync to Validate',
+    ctaPath: '/dashboard/admin/settings',
+  },
 };
 
 export function useEnforcementGate(gateKey: string) {
