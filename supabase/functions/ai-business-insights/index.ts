@@ -296,10 +296,34 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
     const totalPast = pastAppointments.length;
     const rebookedCount = pastAppointments.filter((a) => a.rebooked_at_checkout).length;
 
-    const thisWeekSales = salesData.filter((s) => s.summary_date >= weekAgo);
-    const lastWeekSales = salesData.filter((s) => s.summary_date < weekAgo);
-    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
-    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+    // Sales aggregates derived inline from transaction_items rows.
+    // (Previously this read from `daily_sales_summary` which used different
+    // column names — `summary_date`, `total_revenue`, etc. After the pivot to
+    // `phorest_transaction_items` as the canonical sales source, those refs
+    // were broken. We now compute the same aggregates from the line items.)
+    interface DailyAgg { revenue: number; transactionIds: Set<string> }
+    const dailyAggs = new Map<string, DailyAgg>();
+    for (const row of salesData as Array<any>) {
+      const date = row.transaction_date as string;
+      if (!date) continue;
+      const agg = dailyAggs.get(date) ?? { revenue: 0, transactionIds: new Set<string>() };
+      agg.revenue += (Number(row.total_amount) || 0) + (Number(row.tax_amount) || 0);
+      if (row.transaction_id) agg.transactionIds.add(String(row.transaction_id));
+      dailyAggs.set(date, agg);
+    }
+    const dailySales = Array.from(dailyAggs.entries())
+      .map(([date, agg]) => ({
+        summary_date: date,
+        total_revenue: agg.revenue,
+        total_transactions: agg.transactionIds.size,
+        average_ticket: agg.transactionIds.size > 0 ? agg.revenue / agg.transactionIds.size : 0,
+      }))
+      .sort((a, b) => b.summary_date.localeCompare(a.summary_date));
+
+    const thisWeekSales = dailySales.filter((s) => s.summary_date >= weekAgo);
+    const lastWeekSales = dailySales.filter((s) => s.summary_date < weekAgo);
+    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
+    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + s.total_revenue, 0);
 
     // High-ticket & retail metrics (last 30 days)
     const totalCompleted30d = highTicketAppts.length;
