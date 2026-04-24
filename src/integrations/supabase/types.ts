@@ -16200,6 +16200,7 @@ export type Database = {
           payment_failure_reason: string | null
           payment_method: string | null
           payment_status: string
+          phorest_branch_id: string | null
           phorest_client_id: string | null
           phorest_id: string
           phorest_staff_id: string | null
@@ -16257,6 +16258,7 @@ export type Database = {
           payment_failure_reason?: string | null
           payment_method?: string | null
           payment_status?: string
+          phorest_branch_id?: string | null
           phorest_client_id?: string | null
           phorest_id: string
           phorest_staff_id?: string | null
@@ -16314,6 +16316,7 @@ export type Database = {
           payment_failure_reason?: string | null
           payment_method?: string | null
           payment_status?: string
+          phorest_branch_id?: string | null
           phorest_client_id?: string | null
           phorest_id?: string
           phorest_staff_id?: string | null
@@ -31397,6 +31400,18 @@ export type Database = {
       recompute_policy_status: {
         Args: { p_policy_id: string }
         Returns: undefined
+      }
+      reconcile_phorest_appointments: {
+        Args: {
+          p_branch_id: string
+          p_date_from: string
+          p_date_to: string
+          p_seen_phorest_ids: string[]
+        }
+        Returns: {
+          sample_ids: string[]
+          soft_deleted_count: number
+        }[]
       }
       refresh_client_visit_stats: {
         Args: { p_organization_id?: string }
