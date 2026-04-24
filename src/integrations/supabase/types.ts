@@ -31340,6 +31340,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_org_primary_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_platform_user: { Args: { _user_id: string }; Returns: boolean }
       kiosk_heartbeat_update: {
         Args: { p_device_token: string; p_is_active?: boolean }
