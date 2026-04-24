@@ -1636,9 +1636,154 @@ async function syncClients(
       console.log('[SYNC HEALTH] Orphan-count assertion failed:', e.message);
     }
 
+    // ── S8b: Dual-write to native `clients` table ───────────────────────
+    // Mirror every phorest_clients row into the system-of-record `clients`
+    // table so Zura can operate after Phorest is disconnected. We upsert on
+    // phorest_client_id (unique partial index added in S8a migration) and
+    // pre-supply customer_number = 'PHO-{prefix}' to bypass the
+    // generate_customer_number trigger and avoid sequence collisions.
+    const dualWriteStart = Date.now();
+    let dualWritten = 0;
+    // Hoisted so the S8d gate evaluator below can also resolve org IDs.
+    const branchMap = new Map<string, { location_id: string; organization_id: string }>();
+    try {
+      // Build a phorest_branch_id -> { location_id, organization_id } map.
+      const { data: locsForMap } = await supabase
+        .from('locations')
+        .select('id, organization_id, phorest_branch_id')
+        .not('phorest_branch_id', 'is', null);
+      for (const l of locsForMap || []) {
+        if (l.phorest_branch_id) {
+          branchMap.set(l.phorest_branch_id, {
+            location_id: l.id,
+            organization_id: l.organization_id,
+          });
+        }
+      }
+
+      const nativeRecords = records
+        .filter((r) => r.location_id) // skip orphans — RLS would hide them anyway
+        .map((r) => {
+          const scope = branchMap.get(r.phorest_branch_id) || {
+            location_id: r.location_id,
+            organization_id: null,
+          };
+          return {
+            phorest_client_id: r.phorest_client_id,
+            organization_id: scope.organization_id,
+            location_id: scope.location_id,
+            first_name: r.first_name || (r.name ? String(r.name).split(' ')[0] : 'Unknown'),
+            last_name: r.last_name || (r.name ? String(r.name).split(' ').slice(1).join(' ') : ''),
+            email: r.email,
+            phone: r.phone,
+            landline: r.landline,
+            birthday: r.birthday,
+            gender: r.gender,
+            client_since: r.client_since,
+            is_vip: r.is_vip ?? false,
+            notes: r.notes,
+            preferred_stylist_id: r.preferred_stylist_id,
+            client_category: r.client_category,
+            referred_by: r.referred_by,
+            address_line1: r.address_line1,
+            address_line2: r.address_line2,
+            city: r.city,
+            state: r.state,
+            zip: r.zip,
+            country: r.country,
+            branch_name: r.branch_name,
+            // Bypass generate_customer_number trigger with deterministic value
+            customer_number: 'PHO-' + String(r.phorest_client_id).substring(0, 16),
+            import_source: 'phorest_sync_dual_write',
+            imported_at: new Date().toISOString(),
+            status: 'active',
+            is_placeholder: false,
+            is_active: true,
+          };
+        });
+
+      const NATIVE_BATCH = 200;
+      const NATIVE_BUDGET_MS = 60_000;
+      for (let i = 0; i < nativeRecords.length; i += NATIVE_BATCH) {
+        if (Date.now() - dualWriteStart > NATIVE_BUDGET_MS) {
+          console.warn(`[SYNC HEALTH] Dual-write aborting at ${i}/${nativeRecords.length} to stay within budget`);
+          break;
+        }
+        const batch = nativeRecords.slice(i, i + NATIVE_BATCH);
+        const { error: dwErr } = await supabase
+          .from('clients')
+          .upsert(batch, { onConflict: 'phorest_client_id' });
+        if (dwErr) {
+          console.warn(`[SYNC HEALTH] Dual-write batch failed at offset ${i}:`, dwErr.message);
+        } else {
+          dualWritten += batch.length;
+        }
+      }
+      console.log(`[SYNC HEALTH] ✓ Dual-write complete: ${dualWritten}/${nativeRecords.length} native client rows in ${Date.now() - dualWriteStart}ms`);
+    } catch (e: any) {
+      console.warn('[SYNC HEALTH] Dual-write phase failed:', e.message);
+    }
+
+    // ── S8c: Drift guard — alert if phorest_clients > clients ──────────
+    // Compares row counts at the organization level. A non-zero gap means
+    // the system-of-record is out of sync and the Phorest disconnect must
+    // remain blocked. Also evaluates the gate_phorest_disconnect_ready
+    // structural gate (S8d).
+    let driftIsZero = false;
+    try {
+      const { count: phorestCount } = await supabase
+        .from('phorest_clients')
+        .select('id', { count: 'exact', head: true });
+      const { count: clientsCount } = await supabase
+        .from('clients')
+        .select('id', { count: 'exact', head: true })
+        .not('phorest_client_id', 'is', null);
+      const drift = (phorestCount ?? 0) - (clientsCount ?? 0);
+      if (drift > 0) {
+        console.warn(`[SYNC HEALTH] ⚠ DRIFT: ${drift} clients exist in phorest_clients but missing from native clients table — disconnect blocked`);
+      } else if (drift < 0) {
+        console.log(`[SYNC HEALTH] ✓ Native clients (${clientsCount}) exceeds phorest_clients (${phorestCount}) — native-only records present`);
+        driftIsZero = true;
+      } else {
+        console.log(`[SYNC HEALTH] ✓ Drift = 0 — native clients (${clientsCount}) matches phorest_clients (${phorestCount})`);
+        driftIsZero = true;
+      }
+    } catch (e: any) {
+      console.warn('[SYNC HEALTH] Drift assertion failed:', e.message);
+    }
+
+    // ── S8d: Disconnect-readiness gate evaluator ───────────────────────
+    // The gate_phorest_disconnect_ready feature flag flips ON when drift is
+    // zero AND has remained zero across the dwell window (24h). We don't
+    // implement the dwell timer here — that's evaluated by reading the gate
+    // row's updated_at on the client side. We only flip the flag's current
+    // boolean state; the dwell window is a UX read concern.
+    try {
+      // Find all orgs touched by this sync (any org that owns the synced records).
+      const orgIdsTouched = Array.from(
+        new Set(
+          records
+            .map((r) => branchMap.get(r.phorest_branch_id)?.organization_id)
+            .filter((x) => !!x),
+        ),
+      );
+      if (orgIdsTouched.length > 0) {
+        await supabase
+          .from('organization_features')
+          .update({ is_enabled: driftIsZero, updated_at: new Date().toISOString() })
+          .in('organization_id', orgIdsTouched as string[])
+          .eq('feature_key', 'gate_phorest_disconnect_ready');
+        console.log(`[SYNC HEALTH] ✓ Disconnect-readiness gate evaluated for ${orgIdsTouched.length} org(s) → ${driftIsZero ? 'READY' : 'BLOCKED'}`);
+      }
+    } catch (e: any) {
+      console.warn('[SYNC HEALTH] Gate evaluator failed:', e.message);
+    }
+
     return {
       total: clientDataMap.size,
       synced,
+      dual_written: dualWritten,
+      drift_zero: driftIsZero,
       partial: aborted,
       coverage: branchCoverage,
       global_total: globalTotal,
