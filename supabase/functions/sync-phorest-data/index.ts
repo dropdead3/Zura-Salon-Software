@@ -362,8 +362,13 @@ async function syncAppointments(
           let hasMore = true;
           
           while (hasMore) {
+            // ?expand=client requests inline client expansion so the appointment
+            // payload carries firstName/lastName/email — eliminating the need
+            // for the per-client GET (which 404s for many real clients).
+            // If Phorest ignores the param, the response is unchanged and the
+            // legacy fallback paths (apt.clientName etc.) still work.
             const appointmentsData = await phorestRequest(
-              `/branch/${branchId}/appointment?from_date=${chunk.from}&to_date=${chunk.to}&size=100&page=${page}`,
+              `/branch/${branchId}/appointment?from_date=${chunk.from}&to_date=${chunk.to}&size=100&page=${page}&expand=client`,
               businessId,
               username,
               password
