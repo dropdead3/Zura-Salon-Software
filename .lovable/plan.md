@@ -1,103 +1,125 @@
 
 
 ## Prompt feedback
-Strong observation prompt — you named the symptom (utilization capped at 100%), the cause (double/triple booking the same slot), and the desired behavior (200%/300% should surface). Sharper next time: name where you saw it ("on the Schedule day-view stylist column badge" vs "the Operational Analytics Staff Utilization tab" vs "the Sales card"), and what severity threshold you want surfaced as a structural alert (e.g. ">150% triggers an over-booking warning"). The fix differs slightly per surface — knowing which one is highest priority lets the rollout land in a more useful order.
+Solid prompt — you named the symptom ("cards say walk-in but aren't walk-ins") and the desired fix path ("wire from Phorest properly"). Sharper next time: name the surface ("the day-view schedule cards on /dashboard/schedule") and whether you've seen this happen for new bookings, old bookings, or both — that distinction maps to two different sync gaps. Also useful: state whether the underlying Phorest client *actually has a name in Phorest* (you can verify by clicking through to the client in Phorest), so we know whether to fix our sync vs flag a Phorest data quality issue. The screenshot is great evidence — pair it with one or two specific appointments next time so we can trace them end-to-end without database queries.
 
 ## What's broken
 
-`computeUtilizationByStylist` in `src/lib/schedule-utilization.ts` is the system-of-record utilization calculator. Two design choices today silently hide double-booking:
+Concrete reconnaissance against your live database:
 
-1. **Sum-of-durations math is correct, but the result is force-clamped:** `Math.min(Math.round((booked / totalAvailable) * 100), 100)`. A stylist with 8h available and three 2h appointments stacked at the same time accumulates 6h of booked time → 75%. Same three appointments stacked on top of each other accumulates the same 6h → also 75%. That's *coincidentally* right when overlapped duration equals serial duration — but in the more common case (8h available, six 2h appointments where three overlap) the booked total is 12h → math says 150%, code displays 100%. Operators see "fully booked" when they're actually catastrophically over-booked.
-2. **No structural distinction between "fully utilized" and "over-utilized":** the column-sort badge, the staff dropdown capacity badge, and the date-picker capacity tier all read the same clamped 0–100 number. There's no signal telling a manager "this stylist is at 200% — they're triple-booking 4 hours of their day."
+- **445 of 1,656 recent appointments (27%)** render as "Walk-in" on the schedule despite having a `phorest_client_id`
+- Of those 445:
+  - **356 (80%)**: the `phorest_client_id` references a client that has **no row in `phorest_clients` at all** — these are real clients with bookings, but the client sync never persisted them
+  - **89 (20%)**: have a matched client row that *does* have a name (`pc.name`, `first_name`, `last_name`) and *do* resolve correctly through `v_all_appointments`. These are NOT broken.
 
-Same anti-pattern exists in two adjacent surfaces (audit, not just one fix):
+So the actual bug is **356 appointments with valid Phorest client IDs but no synced client record**. The view-level COALESCE chain can't help — it has no row to read from.
 
-- `src/hooks/useHistoricalCapacityUtilization.ts` line 264 — `Math.round((day.bookedHours / day.availableHours) * 100)` — no `Math.min`, but applied across `stylistCapacity * effectiveHours` so individual stylist over-booking averages out and never surfaces. The location-level number reads "70%" while a single stylist is at 250%.
-- `src/hooks/useLocationStaffingBalance.ts` line 168 — same shape, location aggregate, same averaging problem; classifies the location as "balanced" when individuals are drowning.
-- `src/hooks/useStaffUtilization.ts` (Operational Analytics tab) — uses appointment **count** relative to team max, not time, so it's a different metric and out of scope for this fix; flag separately below.
+Tracing the cause to `supabase/functions/sync-phorest-data/index.ts`:
 
-## The fix — three layers
+**Line 530 (appointment sync):**
+```ts
+client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
+```
+The Phorest appointment endpoint returns `clientId` but not `clientName` (the embedded `client` object is sparse or absent). So `client_name` is written as `NULL` for nearly every appointment at sync time.
 
-### 1. Allow utilization to exceed 100% in `computeUtilizationByStylist` (single source of truth)
+**Lines 560-602 (post-sync name backfill):**
+This block tries to recover by reading `phorest_clients` and patching `client_name`. But it only works *if the client already exists in `phorest_clients`* — and the 356 missing ones don't.
 
-- Drop `Math.min(..., 100)`. Return the raw rounded percentage (0 to ∞).
-- Add a second value to the return type: `Map<string, { utilization: number; overbookedMinutes: number; isOverbooked: boolean }>`. `overbookedMinutes` = `max(0, booked − totalAvailable)`. `isOverbooked` = `utilization > 100`.
-- Keep all existing call sites working via a thin adapter: `getUtilizationByStylist(...)` returns the legacy `Map<string, number>` (uncapped now), and the new `getUtilizationDetailsByStylist(...)` returns the rich shape.
-- Reasoning: stylist-level utilization is computed against a single stylist's time budget, where overlapping appointments are unambiguously over-booking. Math is sound; the clamp was a UI defense, not a data invariant.
+**Lines 605-614 (walk-in tagging):**
+```ts
+.update({ is_walk_in: true })
+.is('phorest_client_id', null)
+```
+This correctly marks *true* walk-ins (no client ID at all). It does NOT mistakenly tag the 356 — they keep `is_walk_in = false`. The cards just visually look like walk-ins because the rendering fallback is `appointment.client_name || 'Walk-in'`.
 
-### 2. Compute per-stylist overlap correctly in the location/historical aggregates
+**The structural gap:** the sync flow assumes every appointment's referenced client has already been synced through `syncClients`. But:
+- `syncClients` paginates Phorest's client list (newest-first or by index) and may stop before reaching every referenced client
+- New clients booked between client syncs reference IDs that don't exist locally yet
+- The post-sync backfill only patches what's already in `phorest_clients` — it never *fetches* the missing client from Phorest
 
-The location-level hooks (`useHistoricalCapacityUtilization`, `useLocationStaffingBalance`) currently sum *all* appointment durations into a single `bookedHours` against `stylistCapacity × effectiveHours`. Two fixes:
+## The fix — three layers, ordered by impact
 
-- **Per-stylist accumulation**: Bucket each appointment by `stylist_user_id` first, sum durations per stylist, then sum *each stylist's* booked hours into the location aggregate. Mathematically identical to today when there's no double-booking — different (and correct) when there is.
-- **Surface a separate `overbookedHours` field** on `DayCapacity` and `LocationBalance`: sum of `max(0, stylistBooked − stylistAvailable)` across all stylists in that location/day. This is the new signal: "12 hours of double-booked time today across 4 stylists."
+### 1. (Highest impact) On-demand client fetch during appointment sync
 
-### 3. UI surfaces — show the over-booking, don't hide it
+Modify the post-sync backfill block (lines 560-602 of `sync-phorest-data/index.ts`):
 
-Three call-site changes (everything else picks up the new uncapped number for free):
+- After resolving names from local `phorest_clients`, identify the residual set of `phorest_client_id`s that *still* have no name (the 356 case)
+- For each unresolved ID, call Phorest's `GET /business/{businessId}/branch/{branchId}/client/{clientId}` endpoint directly
+- Upsert the response into `phorest_clients` (so future appointments and the COALESCE chain pick it up)
+- Update the appointment's `client_name` from the freshly fetched name
 
-| Surface | Today | After |
+Constraints:
+- **Concurrency cap**: process in batches of ~5 parallel requests (Phorest rate limits are tight; current scrape patterns suggest 5 concurrent is safe)
+- **Per-run cap**: max 200 on-demand fetches per sync run, so a sudden surge doesn't exhaust the rate budget for the rest of the sync
+- **Negative cache**: if a client fetch returns 404 (deleted in Phorest), write a placeholder row (`name = '[Deleted Client]'`, `phorest_client_id` set, `notes` flagged) so we don't keep retrying every 15 minutes
+- **Graceful degradation**: any fetch error logs but does not fail the sync run — appointment names just stay null until next attempt
+
+### 2. (Medium impact) Render fallback for "has client ID, no name yet"
+
+In `src/components/dashboard/schedule/AppointmentCardContent.tsx` (line 313-315) and the compact-name helper (line 38), distinguish three states:
+
+| State | Today | After |
 |---|---|---|
-| `DayView.tsx` stylist column badge (line 540-544) | "85%" / "100%" | "85%" / "150% ⚠ Over-booked" — when `>100`, render in `text-orange-400` ≤150 / `text-red-400` >150 with `AlertTriangle` icon |
-| `ScheduleHeader.tsx` staff dropdown capacity badge | clamped 0–100 | uncapped value, same color thresholds, tooltip lists stylists currently >100% |
-| `ScheduleHeader.tsx` date-picker capacity tier (line 198-200) | tiers based on clamped average | new tier `over-capacity` triggered when *any* stylist on that date is `>100`; renders date with red ring |
-| `OperationalAnalytics` Staff Utilization tab — new column | (no over-book signal) | "Over-booked Hours" column derived from per-stylist overlap math; sortable; surfaces who's burning out |
-| `useLocationStaffingBalance` — new banner condition | "balanced/understaffed/overstaffed" | adds a fourth status: `over-booked` when `overbookedHours > 0`, classified above understaffed in severity |
+| `client_name` present | Renders the name | unchanged |
+| `client_name` null AND `phorest_client_id` null AND `is_walk_in = true` | "Walk-in" | "Walk-in" (correct) |
+| `client_name` null AND `phorest_client_id` present | "Walk-in" (wrong) | "Loading…" with a small spinner icon, OR a short ID-derived placeholder like "Client #ABC1" using last 4 chars of the Phorest ID |
 
-The over-booking thresholds should be configurable (org setting `over_booking_warn_threshold` default `100`, `over_booking_critical_threshold` default `150`) — but we ship hardcoded defaults this pass and add the org setting in a follow-up so we don't widen scope.
+This is purely cosmetic but it stops mislabeling 356 appointments as walk-ins until the sync catches up. The "Loading…" treatment also signals to the operator "we know there's a client here, the name just hasn't synced yet" — which is the truthful answer.
 
-### Edge cases handled
+Same fallback applied to `src/components/dock/appointment/DockSummaryTab.tsx` (line 51), `src/components/dock/schedule/DockAppointmentCard.tsx` (line 193), and `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` (line 800).
 
-- **Block / Break categories**: already excluded via `BLOCKED_CATEGORIES`. Continue excluding from booked total — they're capacity reductions, not bookings.
-- **Cancelled / no-show**: already excluded via `EXCLUDED_STATUSES`. Continue.
-- **Stylists with no defined working hours window**: today the code uses the schedule-view `hoursStart`/`hoursEnd` as the denominator, which is *the visible scheduler window*, not the stylist's actual schedule. Out of scope for this pass — flagged in follow-ups. The over-capacity signal is still meaningful relative to the same denominator we use today; a stylist double-booked across 8h is double-booked regardless of which 8h we measure.
-- **Group-service appointments** (one slot, multiple clients) — currently each row is one appointment, so no special handling needed.
-- **Assistant time blocks** — already in a separate category; not counted in stylist utilization.
+### 3. (Long-tail) One-time backfill migration for the existing 356
+
+A focused edge function (or one-shot SQL through the migration tool) that:
+- Selects all `phorest_appointments` rows with `client_name IS NULL` and `phorest_client_id IS NOT NULL` and no matching `phorest_clients` row
+- Calls the on-demand fetcher (same code path as fix #1) to populate `phorest_clients` and patch `client_name`
+- Run it once to clear the existing backlog; future drift is handled by fix #1
+
+Triggered from `/dashboard/admin/integrations` as a one-click "Reconcile missing client names" button so it's user-initiated, not buried in cron.
 
 ## Files involved
 
 **Modified:**
-- `src/lib/schedule-utilization.ts` — drop the clamp; add detailed return shape; add adapter for legacy callers
-- `src/hooks/useHistoricalCapacityUtilization.ts` — per-stylist accumulation; new `overbookedHours` field on `DayCapacity` and `CapacityData`
-- `src/hooks/useLocationStaffingBalance.ts` — per-stylist accumulation; new `overbookedHours` field; new `'over-booked'` status in `classify()`
-- `src/components/dashboard/schedule/DayView.tsx` — stylist column badge color/icon when `>100`
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` — staff dropdown capacity badge uncapped + tooltip; date-picker `over-capacity` tier
-- `src/components/dashboard/analytics/StaffUtilizationContent.tsx` — new "Over-booked Hours" column
-- `src/components/dashboard/analytics/CapacityUtilizationSection.tsx` — surface `overbookedHours` in the daily breakdown card
-- `src/components/dashboard/sales/CapacityUtilizationCard.tsx` — same
+- `supabase/functions/sync-phorest-data/index.ts` — extend the post-sync backfill (lines 560-618) with on-demand client fetch + negative cache; add a small Phorest client-fetch helper
+- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — three-state render fallback in `formatCompactName` and the inline name span (lines 38, 315)
+- `src/components/dock/appointment/DockSummaryTab.tsx` — same three-state fallback
+- `src/components/dock/schedule/DockAppointmentCard.tsx` — same
+- `src/components/dashboard/schedule/CheckoutSummarySheet.tsx` — same
+- `src/lib/appointment-display.ts` — **new** helper `getDisplayClientName(appointment)` returning `{ label, isResolved, isWalkIn }` so the three-state logic is centralized; all four render sites import this instead of inlining `client_name || 'Walk-in'`
 
 **New:**
-- `src/lib/__tests__/schedule-utilization.test.ts` — Vitest covering: no overlap = serial sum, full overlap = double the booked total, partial overlap = correct sum, single stylist >100% surfaces uncapped, location aggregate sums per-stylist overbookedMinutes correctly
+- `supabase/functions/reconcile-phorest-client-names/index.ts` — one-shot reconciliation function for the existing backlog
+- `src/components/dashboard/admin/integrations/ReconcileClientNamesButton.tsx` — admin trigger UI
 
 **Untouched (intentionally):**
-- `src/hooks/useStaffUtilization.ts` — uses appointment count vs team max (a different "utilization"). Renaming or fixing it is a separate scope; flagged in the follow-ups section.
+- `v_all_appointments` view — its COALESCE is correct; the bug is upstream of it
+- `phorest_clients` table schema — no changes needed
+- `is_walk_in` column logic — already correct, just visually conflated with the null-name case
 
 ## What stays the same
 
-- The signal-to-noise philosophy of the doctrine — over-booking is a *high-impact deviation* worth surfacing, exactly the kind of structural drift the lever doctrine says we *should* alert on. This change brings utilization into compliance with that doctrine.
-- All existing call sites continue to compile via the legacy adapter.
-- POS-First data integrity: utilization is still computed from `v_all_appointments`, no schema changes.
-- Block/Break exclusion, cancelled/no-show exclusion.
+- `client_name || 'Walk-in'` semantics for *true* walk-ins (`phorest_client_id IS NULL`) — unchanged
+- All read paths through `v_all_appointments` — unchanged
+- Phorest sync cadence (every 15 minutes) — unchanged
+- POS-First doctrine: Phorest is still the source of truth for client identity; we're just syncing it more completely
 
 ## QA checklist
 
-- Stylist with 8h available, 4× 2h sequential appointments → utilization = 100%, isOverbooked = false (regression check)
-- Stylist with 8h available, 4× 2h appointments where two overlap fully → booked = 8h, utilization = 100% (math: overlap counts as double, not single — confirms the doctrine)
-- Stylist with 8h available, 6× 2h appointments where three overlap → booked = 12h, utilization = 150%, badge shows orange + ⚠
-- Stylist triple-booked 4h on top of a normal 8h day → booked = 16h, utilization = 200%, badge shows red + ⚠
-- Location aggregate with one stylist at 200% and three at 50% → location utilization renders correctly per-stylist-summed (250% total stylist hours / 320% total available stylist hours = 78%, not artificially smoothed) AND `overbookedHours` field shows the 4h overlap
-- DayView column sort still orders by raw utilization (highest first now means most over-booked first)
-- ScheduleHeader date-picker shows red-ring tier when any stylist on that date is over-booked
-- Vitest suite passes; no other tests regress
+- Run `sync-phorest-data` once → confirm log line shows new "On-demand fetched N missing clients" entry and the `pc.phorest_client_id` count grows
+- Re-query: `SELECT COUNT(*) FROM phorest_appointments pa LEFT JOIN phorest_clients pc ON pc.phorest_client_id = pa.phorest_client_id WHERE pa.client_name IS NULL AND pa.phorest_client_id IS NOT NULL AND pc.phorest_client_id IS NULL AND pa.appointment_date >= CURRENT_DATE - INTERVAL '30 days'` → drops from 356 → near-zero after reconciliation function runs
+- Open `/dashboard/schedule` → cards previously showing "Walk-in" now show real names
+- Cards with truly null `phorest_client_id` (`is_walk_in = true`) still show "Walk-in" with the existing badge
+- Appointments mid-flight (synced this minute, client fetch pending) show "Loading…" rather than "Walk-in"
+- Phorest 404 on client fetch → row written as "[Deleted Client]"; on next sync, no retry storm
+- Rate-limit safety: simulate a sync where 500 client IDs are missing → only 200 fetched per run, remainder picked up next run
 
-## Follow-ups (separate scope, do not bundle)
+## Follow-ups (separate scope)
 
-1. **Configurable thresholds** — `over_booking_warn_threshold` / `over_booking_critical_threshold` org settings.
-2. **Use stylist-specific working hours** as the denominator instead of the scheduler window — requires `stylist_schedules` integration; meaningful but separate.
-3. **Reconcile `useStaffUtilization`** (count-based "utilization score") with the time-based definition — name collision is already misleading; either rename to `relativeWorkloadScore` or migrate it to the same time-based math.
-4. **Weekly Intelligence Brief lever** — once over-booking is measurable, add a recurring lever: "3 stylists averaged >120% utilization last week — service quality and retention risk."
+1. **Move client fetch into appointment sync directly** instead of as a post-sync pass — would eliminate the two-pass pattern entirely. Worth it once we trust the rate limits.
+2. **Webhook subscription** for Phorest client created/updated events (if available) — push model beats poll model for the freshness gap.
+3. **Visibility lever**: surface "X% of appointments missing client names" as an integration health metric on the Operations Hub so future regressions are noticed in days, not months.
 
 ## Enhancement suggestion
 
-The reason this bug shipped is that `Math.min(..., 100)` looks defensive ("don't let the UI display a weird number") but is actually destructive ("erase the strongest signal in the dataset"). That's a recurring anti-pattern worth naming as its own canon: **"Clamp at the boundary of meaning, not at the boundary of comfort."** A division-by-zero clamp is at the boundary of meaning (no work day = no utilization to display). A "cap percentages at 100%" clamp is at the boundary of comfort — and erases the signal that matters most. Worth one short `mem://architecture/signal-preservation.md` entry the next time we ship a metric, before the next "looks weird, let's clamp it" decision repeats. Same shape as the alert-fatigue / silence-is-meaningful doctrine: numbers outside the comfortable range are usually the ones operators most need to see.
+The reason this bug shipped is the same shape as the utilization clamp from earlier today: a UI fallback (`|| 'Walk-in'`) **swallowed a data-quality signal** instead of surfacing it. "Client ID present, name missing" is meaningful information — it tells operators their integration is drifting. We rendered it as if it were the same as a true walk-in, hiding the drift. Worth one short canon entry: **"Fallback values must be distinguishable from real values when the underlying state differs."** Examples this would catch in advance: `client_name || 'Walk-in'` (this bug), `utilization > 100 ? 100 : utilization` (the clamp), `staff_name || 'Unassigned'` (similar pattern in payroll). The pattern is "default-on-null is fine when null and the default mean the same thing; otherwise you're erasing a signal." Same shape as the alert-fatigue and signal-preservation doctrines — naming it once gives us one more lens to catch this class before it ships.
 
