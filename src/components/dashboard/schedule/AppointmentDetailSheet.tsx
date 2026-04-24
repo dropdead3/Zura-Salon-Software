@@ -963,7 +963,7 @@ export function AppointmentDetailSheet({
     onError: (e: Error) => toast.error('Failed to decline redo', { description: e.message }),
   });
 
-  // Team for assistant picker
+  // Team for assistant picker + per-service reassignment
   const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: resolvedOrgId || undefined });
   const conflictMap = useAssistantConflictCheck(
     appointment?.appointment_date || null,
@@ -972,6 +972,14 @@ export function AppointmentDetailSheet({
     appointment?.id || null,
     showAssistantPicker || showReassignDialog,
   );
+  const eligibleStylists = useEligibleStylistsForService({
+    teamMembers,
+    conflictMap,
+    appointmentDate: appointment?.appointment_date || null,
+    locationId: appointment?.location_id || null,
+    leadStylistUserId: appointment?.stylist_user_id || null,
+  });
+  const eligibilityGroups = useMemo(() => bucketByTier(eligibleStylists), [eligibleStylists]);
 
   // Reassign stylist mutation
   const reassignStylist = useMutation({
