@@ -529,7 +529,7 @@ serve(async (req) => {
                 user_id: m.user_id,
                 type: 'redo_booking',
                 title: 'Redo Appointment Booked',
-                message: `Redo for ${client?.name || 'Client'}: ${redo_reason || 'No reason'}. Service: ${serviceName}.`,
+                message: `Redo for ${resolvedClientName}: ${redo_reason || 'No reason'}. Service: ${serviceName}.`,
                 severity: 'info',
                 metadata: { appointment_id: appointmentId, redo_reason, original_appointment_id },
               }));
