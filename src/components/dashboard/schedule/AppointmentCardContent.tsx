@@ -632,7 +632,7 @@ export function AppointmentCardContent({
       return {
         ...base,
         borderLeftColor: accentEdge,
-        borderLeftWidth: '2px',
+        borderLeftWidth: '4px',
         borderLeftStyle: 'solid' as const,
       };
     }
