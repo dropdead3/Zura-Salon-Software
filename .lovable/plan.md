@@ -1,114 +1,51 @@
 
 
 ## Prompt feedback
-Excellent prompt. You're proposing a structural refactor that closes a regression class — not a visual tweak. That's the highest-leverage kind of follow-up: it converts "we fixed the bug" into "this bug shape can no longer exist." Even sharper next time: name the canon you want this helper to live under (e.g. "make this a Schedule canon per the canon-pattern memory") so the fix lands inside an enforcement gate, not just as a tidier file. That's the difference between cleaner code and architectural protection.
+Strong, surgical prompt. You named the surface (scheduler stylist sticky header), the symptom (low opacity on alternating columns), and the desired outcome (clearer visual mapping via alternation). Sharper next time: include the target weight (e.g. "double the contrast" or "match the divider weight") and specify whether the alternation should also extend down the column body or stay in the header only — that removes one round-trip on scope.
 
 ## What's changing
-Extract the per-card border styling decision into one canonical helper. Today, `AppointmentCardContent.tsx` recomputes border + accent inline across three branches (light category, dark category, gradient/consultation). Each branch independently decides:
-- fill / background
-- text color
-- top/right/bottom stroke
-- left accent color
-- left border width
+Today, alternating stylist columns use `bg-muted/15` — too faint to register as alternation, especially on top of the gradient header. Bump opacity AND shift to a darker token so the stripe reads as a deliberate column band, not a rendering artifact.
 
-That repetition is the seam where the original "purple accent only on consultation" bug entered, and where a future inline `borderColor` could silently overwrite the accent again. One helper, one decision point, no drift.
+## Current state
+In `src/components/dashboard/schedule/DayView.tsx`, three call sites apply alternation via `idx % 2 === 1 && "bg-muted/15"`:
+1. Line 821 — header, condensed (<120px) layout
+2. Line 839 — header, normal/medium layout
+3. Line 889 — column body (time grid)
+
+All three use the same fragile inline class. The bug shape: any future tweak risks drifting between header and body.
+
+## The fix
+
+### 1) Replace the alternation token at all three sites
+- From: `bg-muted/15`
+- To: `bg-foreground/[0.06]` in light mode, with dark-mode override `dark:bg-foreground/[0.04]`
+
+Why `foreground` instead of `muted`:
+- `muted` is already a low-contrast neutral; `/15` against the gradient header reads as ~3% effective contrast
+- `foreground` gives a true darker-than-surface tint, which is what alternation needs to read as alternation
+- `[0.06]` light / `[0.04]` dark balances visibility on both gradient header and time-grid body without dominating content
+
+### 2) Keep header + body alternation in sync
+Apply the same exact class string to all three sites so the column band is continuous from header into the time grid (no visible seam where the header ends).
+
+### 3) Preserve everything else
+- `bg-[hsl(var(--sidebar-background))]` base + gradient — unchanged
+- Column dividers `border-r-2 border-r-[hsl(var(--sidebar-border))]` — unchanged
+- Past-time overlay (`bg-muted/40`) — unchanged
+- Avatar, status dot, level pill, utilization % — unchanged
+- Sticky header behavior + frosted blur — unchanged
 
 ## Files involved
-- `src/utils/categoryColors.ts` — add new helper `getAppointmentBorderStyle`
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` — replace three inline branches with one helper call
-
-## Implementation plan
-
-### 1) Add `getAppointmentBorderStyle` to `categoryColors.ts`
-
-Signature:
-```ts
-export function getAppointmentBorderStyle(input: {
-  catColor: { bg: string; text: string; stroke: string } | null;
-  darkStyle: { bg: string; text: string; stroke: string; accent: string } | null;
-  isDark: boolean;
-  displayGradient: string | null;
-  willShowLeadingAccent: boolean;
-}): {
-  background: string;
-  color: string;
-  borderTopColor: string;
-  borderRightColor: string;
-  borderBottomColor: string;
-  borderLeftColor: string;
-  borderTopWidth: string;
-  borderRightWidth: string;
-  borderBottomWidth: string;
-  borderLeftWidth: string;
-  borderStyle: 'solid';
-}
-```
-
-Internal branching (one place, three cases):
-- **Gradient/consultation**: `background = displayGradient`, neutral text, derived accent on left
-- **Dark category**: pull from `darkStyle`, derived (or `darkStyle.accent`) on left
-- **Light category**: pull from `catColor`, `deriveAccentEdgeColor(catColor.bg, false)` on left
-
-Width logic (centralized):
-- `borderLeftWidth`: `'4px'` when `willShowLeadingAccent`, else `'1px'`
-- All other sides: `'1px'`
-
-This becomes the **only** place that decides "what color is the left edge of an appointment card."
-
-### 2) Replace inline branches in `AppointmentCardContent.tsx`
-
-Current shape inside `cardStyle` useMemo: three sibling `if/else` blocks, each returning a style object with hand-rolled border properties.
-
-New shape:
-```ts
-const borderStyle = getAppointmentBorderStyle({
-  catColor,
-  darkStyle,
-  isDark,
-  displayGradient,
-  willShowLeadingAccent,
-});
-
-return { ...base, ...borderStyle };
-```
-
-The `LEADING_ACCENT_BORDER` Tailwind class becomes redundant (width is now inline) — remove it from the className composition to eliminate the dual source of truth that caused the original specificity bug.
-
-### 3) Preserve every existing visibility rule
-- `willShowLeadingAccent` calculation stays in the component (it depends on `size`, `appointment.service_category`, `BLOCKED_CATEGORIES`)
-- Compact / blocked / break / agenda variants behave identically
-- Selection ring, no-show ring, cancelled opacity unchanged
-
-### 4) Lock the helper as the canonical seam
-
-Add a comment block above `getAppointmentBorderStyle`:
-```ts
-// CANON: Single source of truth for appointment card border + accent edge.
-// Do NOT set borderColor / borderLeftColor inline anywhere else in
-// AppointmentCardContent or sibling components. The leading accent is
-// derived per-category from the card's own hue — it is never `primary`.
-// History: this helper exists because three inline branches drifted
-// (consultation-only accent bug, then global purple bug). One helper,
-// one decision, no drift.
-```
-
-That comment converts tribal knowledge into an authoring-time signal.
-
-## What stays the same
-- Per-category derived accent (gold→deeper gold, teal→deeper teal)
-- 4px left edge weight
-- All visibility gates (compact, blocked, break, agenda)
-- `deriveAccentEdgeColor` behavior — unchanged, just called from one place now
-- Top/right/bottom retain category stroke
-- Selection / no-show / cancelled visual states
+- `src/components/dashboard/schedule/DayView.tsx` — three className swaps (lines 821, 839, 889)
 
 ## QA checklist
-- All four card types render identically to current state (light category, dark category, gradient consultation, blocked)
-- Left edge color matches each card's hue family (no purple unless card is purple-toned)
-- Left edge is 4px on all service-colored cards, missing on compact/blocked
-- No regression in selection ring or no-show ring
-- Grep `borderLeftColor` in `src/components/dashboard/schedule/**` returns only the helper file — no inline overrides
+- Alternating columns read as clearly distinguishable in light mode at 100% zoom
+- Alternation also reads in dark mode without becoming muddy
+- Header band visually continues into the time grid (no seam at header boundary)
+- Past-time overlay still reads correctly on both odd and even columns
+- Appointment cards remain legible against both even and odd column backgrounds
+- No change to single-column view (one stylist) since `idx % 2 === 1` skips the first column
 
 ## Enhancement suggestion
-After this lands, promote it to a true canon under `mem://style/appointment-border-canon.md` following the five-part canon-pattern (invariant + Vitest + Stylelint + CI + override doc). The Vitest piece is easy: snapshot the helper's output for each branch with fixed inputs, so any future change to border logic forces an explicit test update rather than a silent visual regression. That's how you turn "we fixed it three times" into "it cannot break a fourth time."
+Promote the alternation class to a named constant in the same file (or `design-tokens.ts`) — e.g. `STYLIST_COLUMN_ALT = 'bg-foreground/[0.06] dark:bg-foreground/[0.04]'` — and reference it in all three sites. That converts "three matching strings" into "one canonical band token" and prevents the header/body from drifting apart on a future visual tweak. Same pattern as the appointment border canon: one decision, one place, no drift.
 
