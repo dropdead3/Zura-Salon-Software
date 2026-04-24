@@ -1405,19 +1405,65 @@ async function syncClients(
     console.log(`Total unique clients to sync: ${clientDataMap.size} (branch-attributed + global)`);
     console.log(`[SYNC HEALTH] Branch coverage breakdown: ${JSON.stringify(branchCoverage)}`);
 
-    let synced = 0;
+    // S7d: Bulk dedup pre-pass.
+    // Old code called the find_duplicate_phorest_clients RPC once per client
+    // (3,881 sequential round-trips on a full sync), which alone consumed
+    // most of the 150s gateway budget and prevented the upsert phase from
+    // ever running. We now hydrate the dedup map in a single query.
+    const dedupStart = Date.now();
+    const dedupByEmail = new Map<string, { id: string; phorest_client_id: string; name: string }>();
+    const dedupByPhone = new Map<string, { id: string; phorest_client_id: string; name: string }>();
+    try {
+      const existing = await fetchAllPhorestClientsForDedup(supabase);
+      for (const row of existing) {
+        if (row.email) {
+          const k = row.email.trim().toLowerCase();
+          if (k && !dedupByEmail.has(k)) dedupByEmail.set(k, row);
+        }
+        if (row.phone) {
+          const k = normalizePhoneForDedup(row.phone);
+          if (k && !dedupByPhone.has(k)) dedupByPhone.set(k, row);
+        }
+      }
+      console.log(`[SYNC HEALTH] Dedup map built in ${Date.now() - dedupStart}ms (${existing.length} existing rows; ${dedupByEmail.size} emails, ${dedupByPhone.size} phones)`);
+    } catch (e: any) {
+      console.log(`[SYNC HEALTH] Dedup pre-pass failed, proceeding without dedup flags:`, e.message);
+    }
+
+    // S7d: Build all client records in memory, then batch-upsert.
+    const records: Record<string, any>[] = [];
     for (const [clientId, client] of clientDataMap) {
-      const preferredStylistId = client.preferredStaffId 
-        ? staffMap.get(client.preferredStaffId) 
+      const preferredStylistId = client.preferredStaffId
+        ? staffMap.get(client.preferredStaffId)
         : null;
 
-      const clientRecord: Record<string, any> = {
+      const email = client.email || null;
+      const phone = client.mobile || client.phone || null;
+
+      // In-memory dedup lookup (replaces per-client RPC).
+      let isDuplicate = false;
+      let canonicalClientId: string | null = null;
+      const emailKey = email ? email.trim().toLowerCase() : null;
+      const phoneKey = phone ? normalizePhoneForDedup(phone) : null;
+      const emailMatch = emailKey ? dedupByEmail.get(emailKey) : null;
+      const phoneMatch = phoneKey ? dedupByPhone.get(phoneKey) : null;
+      const match = (emailMatch && emailMatch.phorest_client_id !== clientId)
+        ? emailMatch
+        : (phoneMatch && phoneMatch.phorest_client_id !== clientId)
+          ? phoneMatch
+          : null;
+      if (match) {
+        isDuplicate = true;
+        canonicalClientId = match.id;
+      }
+
+      records.push({
         phorest_client_id: clientId,
         name: `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown',
         first_name: client.firstName || null,
         last_name: client.lastName || null,
-        email: client.email || null,
-        phone: client.mobile || client.phone || null,
+        email,
+        phone,
         gender: client.gender || null,
         landline: client.landline || null,
         birthday: client.dateOfBirth || client.birthday || null,
@@ -1426,10 +1472,6 @@ async function syncClients(
         // intentionally NOT written here. Zura derives them locally from
         // phorest_appointments via v_client_visit_stats and writes them via
         // refresh_client_visit_stats() at the end of this sync run.
-        // Phorest's appointmentCount/totalSpend/lastAppointmentDate fields
-        // were always returning falsy for this org, which silently zeroed
-        // out every client. See plan: derive at the source, mirror at the
-        // consumer.
         preferred_stylist_id: preferredStylistId,
         is_vip: client.isVip || client.vipStatus === 'VIP' || false,
         notes: client.notes || null,
@@ -1441,48 +1483,80 @@ async function syncClients(
         state: client.address?.state || client.state || null,
         zip: client.address?.zip || client.zip || null,
         country: client.address?.country || client.country || null,
-        // Location fields
         location_id: client._locationId || null,
         phorest_branch_id: client._branchId || null,
         branch_name: client._branchName || null,
-      };
-
-      // Check for duplicates before upserting
-      try {
-        const { data: dupes } = await supabase.rpc('find_duplicate_phorest_clients', {
-          p_email: clientRecord.email || null,
-          p_phone: clientRecord.phone || null,
-          p_exclude_phorest_client_id: clientId,
-        });
-
-        if (dupes && dupes.length > 0) {
-          // This is a duplicate — flag it and link to canonical
-          clientRecord.is_duplicate = true;
-          clientRecord.canonical_client_id = dupes[0].id;
-          console.log(`Duplicate detected: ${clientRecord.name} matches ${dupes[0].name} (${dupes[0].match_type})`);
-        } else {
-          clientRecord.is_duplicate = false;
-          clientRecord.canonical_client_id = null;
-        }
-      } catch (dupErr: any) {
-        console.log(`Dedup check failed for ${clientId}, proceeding without flag:`, dupErr.message);
-        clientRecord.is_duplicate = false;
-        clientRecord.canonical_client_id = null;
-      }
-
-      const { error } = await supabase
-        .from("phorest_clients")
-        .upsert(clientRecord, { onConflict: 'phorest_client_id' });
-
-      if (!error) synced++;
-      else console.log(`Failed to upsert client ${clientId}:`, error.message);
+        is_duplicate: isDuplicate,
+        canonical_client_id: canonicalClientId,
+      });
     }
 
-    return { total: clientDataMap.size, synced };
+    // S7d: Batch upsert in chunks of 200. With checkpoint guard so we
+    // persist whatever we managed to insert before the gateway timeout
+    // rather than losing the entire run.
+    const upsertStart = Date.now();
+    const BATCH_SIZE = 200;
+    // Keep ~25s headroom under the 150s gateway timeout for tail work
+    // (preferred-stylist recompute, log write, response serialization).
+    const TIMEOUT_BUDGET_MS = 125_000;
+    let synced = 0;
+    let aborted = false;
+    for (let i = 0; i < records.length; i += BATCH_SIZE) {
+      if (Date.now() - upsertStart > TIMEOUT_BUDGET_MS) {
+        console.log(`[SYNC HEALTH] Upsert phase aborting at batch ${i}/${records.length} to stay under gateway timeout (will resume next run)`);
+        aborted = true;
+        break;
+      }
+      const batch = records.slice(i, i + BATCH_SIZE);
+      const { error } = await supabase
+        .from("phorest_clients")
+        .upsert(batch, { onConflict: 'phorest_client_id' });
+      if (error) {
+        console.log(`Batch upsert failed at offset ${i}:`, error.message);
+      } else {
+        synced += batch.length;
+      }
+    }
+    console.log(`[SYNC HEALTH] Upsert phase complete: ${synced}/${records.length} rows in ${Date.now() - upsertStart}ms${aborted ? ' (PARTIAL — timeout guard tripped)' : ''}`);
+
+    return {
+      total: clientDataMap.size,
+      synced,
+      partial: aborted,
+      coverage: branchCoverage,
+      global_total: globalTotal,
+    };
   } catch (error: any) {
     console.error("Clients sync error:", error);
     throw error;
   }
+}
+
+// S7d: Helper — paginate phorest_clients (>1000 row default) for dedup map.
+async function fetchAllPhorestClientsForDedup(supabase: any) {
+  const all: { id: string; phorest_client_id: string; email: string | null; phone: string | null; name: string }[] = [];
+  const PAGE = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('phorest_clients')
+      .select('id, phorest_client_id, email, phone, name')
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
+// S7d: Phone normalization for in-memory dedup. Keep digits only; strip
+// leading country code 1 to match find_duplicate_phorest_clients semantics.
+function normalizePhoneForDedup(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+  return digits;
 }
 
 async function syncPerformanceReports(
