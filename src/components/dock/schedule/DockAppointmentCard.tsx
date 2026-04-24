@@ -19,6 +19,7 @@ import type { DockAppointment } from '@/hooks/dock/useDockAppointments';
 import { formatTime } from './DockScheduleTab';
 import { formatMinutesToDuration } from '@/lib/formatDuration';
 import { DOCK_SHEET, DOCK_BADGE } from '@/components/dock/dock-ui-tokens';
+import { getDisplayClientName } from '@/lib/appointment-display';
 
 function formatAssistantLabel(names: string[]): string {
   if (names.length === 1) return `Assisted by ${names[0]}`;
@@ -188,9 +189,10 @@ export function DockAppointmentCard({ appointment, accentColor, isChemical = tru
             } else if (services.length > 2) {
               serviceDisplay = `${services[0]} + ${services[1]} +${services.length - 2} more`;
             }
+            const display = getDisplayClientName(appointment);
             return (
-              <p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '')}>
-                {appointment.client_name || 'Walk-in'}
+              <p className={cn('text-lg truncate', visible ? 'font-medium text-[hsl(var(--platform-foreground))]' : '', display.isPending && 'italic')}>
+                {display.label}
                 {serviceDisplay && (
                   <span className={cn('font-normal', visible ? 'text-[hsl(var(--platform-foreground-muted))]' : '')}>
                     {' · '}{serviceDisplay}

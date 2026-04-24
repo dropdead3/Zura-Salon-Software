@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { toast } from 'sonner';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
+import { getDisplayClientName } from '@/lib/appointment-display';
 import type { BusinessSettings } from '@/hooks/useBusinessSettings';
 import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
@@ -796,8 +797,8 @@ export function CheckoutSummarySheet({
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="font-medium text-lg">
-                {appointment.client_name || 'Walk-in'}
+              <p className={cn('font-medium text-lg', getDisplayClientName(appointment).isPending && 'italic text-muted-foreground')}>
+                {getDisplayClientName(appointment).label}
               </p>
               {appointment.client_phone && (
                 <div className="flex items-center gap-2">
