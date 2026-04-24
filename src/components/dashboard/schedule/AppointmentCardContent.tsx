@@ -110,31 +110,43 @@ function CardOverlays({
   displayGradient,
   useCategoryColor,
   catColor,
+  isDark,
 }: {
   appointment: PhorestAppointment;
   displayGradient: ReturnType<typeof getGradientFromMarker>;
   useCategoryColor: boolean;
   catColor: { bg: string; text: string };
+  isDark: boolean;
 }) {
   const isNoShow = appointment.status === 'no_show';
   const isCancelled = appointment.status === 'cancelled';
 
+  // Light-mode ghost cards have translucent fills — the white sheen and
+  // inner highlight ring (designed for solid dark fills) muddy them.
+  // Suppress both decorative overlays in light mode unless a saturated
+  // gradient surface is in play.
+  const showSheen = isDark || !!displayGradient;
+
   return (
     <>
-      {/* Subtle top-down sheen — adds depth without shifting category color */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[1]"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
-        }}
-      />
-      {/* Inner highlight ring — "lit edge" for premium dimension */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
-        style={{
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
-        }}
-      />
+      {showSheen && (
+        <>
+          {/* Subtle top-down sheen — adds depth without shifting category color */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[1]"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 40%)',
+            }}
+          />
+          {/* Inner highlight ring — "lit edge" for premium dimension */}
+          <div
+            className="absolute inset-0 pointer-events-none z-[2] rounded-[10px]"
+            style={{
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+            }}
+          />
+        </>
+      )}
       {/* Corner accent removed */}
       {isNoShow && (
         <>
@@ -278,7 +290,7 @@ function GridContent({
               )}
               <span className={cn(
                 'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
-                'bg-white/55 dark:bg-black/25',
+                'bg-white/85 dark:bg-black/25',
                 badge.text, badge.border, 'border-opacity-40'
               )}>
                 <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
@@ -325,7 +337,7 @@ function GridContent({
               )}
               <span className={cn(
                 'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
-                'bg-white/55 dark:bg-black/25',
+                'bg-white/85 dark:bg-black/25',
                 badge.text, badge.border, 'border-opacity-40'
               )}>
                 <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
@@ -672,6 +684,7 @@ export function AppointmentCardContent({
         displayGradient={displayGradient}
         useCategoryColor={useCategoryColor}
         catColor={catColor}
+        isDark={isDark}
       />
 
 
