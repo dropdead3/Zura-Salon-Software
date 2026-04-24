@@ -296,8 +296,13 @@ export const SCROLLBAR_CSS = {
 
 type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' | 'walk_in' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 
-/** Shared leading ear accent for schedule cards — a single purple signal across card variants. */
-export const SCHEDULE_LEADING_ACCENT = 'bg-[hsl(var(--platform-primary))]';
+/**
+ * Leading "ear" accent for schedule cards — matches the Top Staff card pattern.
+ * Native left border on the rounded card root so the accent follows the corner
+ * radius automatically. Use as a className token on the card itself.
+ */
+export const LEADING_ACCENT_BORDER =
+  'border-l-[3px] border-l-[hsl(var(--platform-primary)/0.7)] ring-1 ring-[hsl(var(--platform-primary)/0.08)]';
 
 /** Day / Week view appointment card colors (saturated for calendar cells, with dark mode variants) */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
