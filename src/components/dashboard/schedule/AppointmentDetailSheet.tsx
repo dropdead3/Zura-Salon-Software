@@ -1857,39 +1857,68 @@ export function AppointmentDetailSheet({
                           </Button>
                         )}
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-0 divide-y divide-border/40">
                         {services.map((svc, i) => {
-                          const override = assignmentMap.get(svc.name);
+                          const isLocked = ['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase());
                           return (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="truncate">{svc.name}</span>
-                                {svc.category && (
-                                  <Badge variant="outline" className="text-[10px] shrink-0">{svc.category}</Badge>
-                                )}
-                                {override && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <Avatar className="h-4 w-4">
-                                      <AvatarFallback className="text-[7px]">
-                                        {override.assigned_staff_name.slice(0, 2).toUpperCase()}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[11px] text-muted-foreground">{override.assigned_staff_name}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
-                                {svc.duration && (
-                                  <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
-                                )}
-                                {svc.price != null && (
-                                  <span className="text-xs whitespace-nowrap tabular-nums"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
-                                )}
-                              </div>
-                            </div>
+                            <ServiceRow
+                              key={`${svc.name}-${i}`}
+                              service={{
+                                name: svc.name,
+                                category: svc.category,
+                                startTime: svc.startTime,
+                                duration: svc.duration,
+                                price: svc.price,
+                                assignedStylist: svc.assignedStylist,
+                                requiresConsultation: svc.requiresConsultation,
+                              }}
+                              stylistOptions={stylistOptions}
+                              readOnly={isLocked}
+                              onChangeTime={(newStart) => {
+                                const [h, m] = newStart.split(':').map(Number);
+                                const apptStartMin = (() => {
+                                  const [ah, am] = (appointment.start_time || '00:00:00').split(':').map(Number);
+                                  return ah * 60 + am;
+                                })();
+                                const newOffset = (h * 60 + m) - apptStartMin;
+                                persistServiceOverride(svc.name,
+                                  { startTimeOffsetMinutes: newOffset },
+                                  'SERVICE_TIME_ADJUSTED', svc.startTime, newStart);
+                              }}
+                              onChangeDuration={(mins) => {
+                                persistServiceOverride(svc.name,
+                                  { durationMinutesOverride: mins },
+                                  'SERVICE_DURATION_ADJUSTED', svc.duration, mins);
+                              }}
+                              onChangePrice={(p) => {
+                                persistServiceOverride(svc.name,
+                                  { priceOverride: p },
+                                  'SERVICE_PRICE_OVERRIDDEN', svc.price, p);
+                              }}
+                              onChangeStylist={(userId, name) => {
+                                persistServiceOverride(svc.name,
+                                  { userId, staffName: name },
+                                  'SERVICE_REASSIGNED', svc.assignedStylist.name, name);
+                              }}
+                              onToggleRq={(next) => {
+                                persistServiceOverride(svc.name,
+                                  { requiresConsultation: next },
+                                  'SERVICE_RQ_TOGGLED', svc.requiresConsultation, next);
+                              }}
+                            />
                           );
                         })}
                       </div>
+                      {!['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase()) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setEditServicesOpen(true)}
+                        >
+                          + Add or edit services
+                        </Button>
+                      )}
                       {appointment.total_price != null && (() => {
                         const subtotal = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
                         const total = appointment.total_price ?? 0;
