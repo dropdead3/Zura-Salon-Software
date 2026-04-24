@@ -74,7 +74,7 @@ export function ServiceRow({
   onToggleRq,
   onRemove,
 }: ServiceRowProps) {
-  const formatCurrency = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
 
   // Time popover state
   const [timeOpen, setTimeOpen] = useState(false);
