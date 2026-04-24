@@ -302,7 +302,7 @@ type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' |
  * radius automatically. Use as a className token on the card itself.
  */
 export const LEADING_ACCENT_BORDER =
-  'border-l-[3px] border-l-[hsl(var(--platform-primary)/0.7)] ring-1 ring-[hsl(var(--platform-primary)/0.08)]';
+  'border-l-[3px] border-l-primary/70 ring-1 ring-primary/10';
 
 /** Day / Week view appointment card colors (saturated for calendar cells, with dark mode variants) */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
