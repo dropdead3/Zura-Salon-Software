@@ -1644,13 +1644,14 @@ async function syncClients(
     // generate_customer_number trigger and avoid sequence collisions.
     const dualWriteStart = Date.now();
     let dualWritten = 0;
+    // Hoisted so the S8d gate evaluator below can also resolve org IDs.
+    const branchMap = new Map<string, { location_id: string; organization_id: string }>();
     try {
       // Build a phorest_branch_id -> { location_id, organization_id } map.
       const { data: locsForMap } = await supabase
         .from('locations')
         .select('id, organization_id, phorest_branch_id')
         .not('phorest_branch_id', 'is', null);
-      const branchMap = new Map<string, { location_id: string; organization_id: string }>();
       for (const l of locsForMap || []) {
         if (l.phorest_branch_id) {
           branchMap.set(l.phorest_branch_id, {
