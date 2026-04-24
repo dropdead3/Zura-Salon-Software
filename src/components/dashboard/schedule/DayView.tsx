@@ -479,20 +479,41 @@ export function DayView({
         ref.scrollTo({ top: Math.max(0, newTop), behavior: 'instant' });
       });
     } else {
-      // Date change or initial mount — scroll to opening time
+      // Date change or initial mount
       let openHour = hoursStart;
+      let closeHour = hoursEnd;
       if (locationHours?.open) {
         const [h] = locationHours.open.split(':').map(Number);
         openHour = h;
       }
-      const scrollToHour = Math.max(openHour - 1, hoursStart);
-      const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
-      const top = slotsOffset * ROW_HEIGHT;
+      if (locationHours?.close) {
+        const [h] = locationHours.close.split(':').map(Number);
+        closeHour = h;
+      }
+
+      // If viewing today AND current time is within business hours,
+      // scroll so the now-line sits ~1/3 down the viewport.
+      const isToday = isOrgTodayCheck(date);
+      const nowHour = orgNowMins / 60;
+      const withinBusinessHours = nowHour >= openHour && nowHour < closeHour;
+
+      let top: number;
+      if (isToday && withinBusinessHours) {
+        const slotsFromStart = (orgNowMins - hoursStart * 60) / slotInterval;
+        const nowTopPx = slotsFromStart * ROW_HEIGHT;
+        top = Math.max(0, nowTopPx - ref.clientHeight / 3);
+      } else {
+        // Fallback: opening hour − 1
+        const scrollToHour = Math.max(openHour - 1, hoursStart);
+        const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
+        top = slotsOffset * ROW_HEIGHT;
+      }
+
       requestAnimationFrame(() => {
         ref.scrollTo({ top, behavior: 'instant' });
       });
     }
-  }, [date.toDateString(), locationHours?.open, hoursStart, slotInterval, ROW_HEIGHT, hoursEnd]);
+  }, [date.toDateString(), locationHours?.open, locationHours?.close, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, isOrgTodayCheck, orgNowMins]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
