@@ -84,7 +84,7 @@ serve(async (req: Request) => {
     const { data: templates } = await supabase
       .from("email_templates").select("template_key, subject, html_body").in("template_key", ["training_reminder", "training_overdue"]);
 
-    const templateMap = new Map((templates || []).map((t: any) => [t.template_key, t]));
+    const templateMap = new Map<string, any>((templates || []).map((t: any) => [t.template_key, t] as [string, any]));
 
     let notificationsSent = 0;
     let emailsSent = 0;
