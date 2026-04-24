@@ -100,6 +100,31 @@ function getIndicatorFlags(
   };
 }
 
+// ─── Left Edge Accent (tapered ribbon hugging the card's rounded corners) ─
+function LeftEdgeAccent({ color }: { color: string }) {
+  return (
+    <div
+      className="absolute inset-y-0 left-0 pointer-events-none z-[4]"
+      style={{ width: 10 }}
+      aria-hidden
+    >
+      {/* Top corner cap — tapered point inside top-left radius */}
+      <svg width="10" height="10" viewBox="0 0 10 10" className="absolute top-0 left-0 block">
+        <path d="M 3,3 Q 0,5 0,10 L 3.5,10 Z" fill={color} />
+      </svg>
+      {/* Middle band */}
+      <div
+        className="absolute left-0"
+        style={{ top: 10, bottom: 10, width: 3.5, backgroundColor: color }}
+      />
+      {/* Bottom corner cap — tapered point inside bottom-left radius */}
+      <svg width="10" height="10" viewBox="0 0 10 10" className="absolute bottom-0 left-0 block">
+        <path d="M 0,0 L 3.5,0 L 3,7 Q 0,5 0,0 Z" fill={color} />
+      </svg>
+    </div>
+  );
+}
+
 // ─── Grid Overlays (Block/Break, Gradient, No-Show, Cancelled) ─
 function CardOverlays({
   appointment,
