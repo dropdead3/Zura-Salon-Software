@@ -109,6 +109,8 @@ import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpda
 import { ServiceRow } from '@/components/dashboard/schedule/ServiceRow';
 import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 import { Pencil, Send } from 'lucide-react';
+import { SpatialRow, OverflowActions } from '@/components/spatial';
+import { useSpatialState } from '@/lib/responsive/useSpatialState';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
