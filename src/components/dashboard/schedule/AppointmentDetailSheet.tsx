@@ -23,6 +23,8 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useServiceAssignments } from '@/hooks/useServiceAssignments';
+import { useEligibleStylistsForService, bucketByTier, type EligibleStylist } from '@/hooks/useEligibleStylistsForService';
+import { ServiceAssignmentPicker } from '@/components/dashboard/schedule/ServiceAssignmentPicker';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
@@ -962,7 +964,7 @@ export function AppointmentDetailSheet({
     onError: (e: Error) => toast.error('Failed to decline redo', { description: e.message }),
   });
 
-  // Team for assistant picker
+  // Team for assistant picker + per-service reassignment
   const { data: teamMembers = [] } = useTeamDirectory(undefined, { organizationId: resolvedOrgId || undefined });
   const conflictMap = useAssistantConflictCheck(
     appointment?.appointment_date || null,
@@ -971,6 +973,14 @@ export function AppointmentDetailSheet({
     appointment?.id || null,
     showAssistantPicker || showReassignDialog,
   );
+  const eligibleStylists = useEligibleStylistsForService({
+    teamMembers,
+    conflictMap,
+    appointmentDate: appointment?.appointment_date || null,
+    locationId: appointment?.location_id || null,
+    leadStylistUserId: appointment?.stylist_user_id || null,
+  });
+  const eligibilityGroups = useMemo(() => bucketByTier(eligibleStylists), [eligibleStylists]);
 
   // Reassign stylist mutation
   const reassignStylist = useMutation({
@@ -2980,7 +2990,7 @@ export function AppointmentDetailSheet({
           ) : (
             <>
               {/* Individual Services mode */}
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea className="max-h-[480px]">
                 <div className="space-y-3 p-1">
                   {services.map((svc, si) => {
                     const currentOverride = assignmentMap.get(svc.name);
@@ -2988,49 +2998,20 @@ export function AppointmentDetailSheet({
                     const isDefault = selectedId === appointment.stylist_user_id && !perServiceSelections[svc.name] && !currentOverride;
 
                     return (
-                      <div key={si} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">{svc.name}</span>
-                            {svc.category && <Badge variant="outline" className="text-[10px]">{svc.category}</Badge>}
-                            {svc.duration && <span className="text-xs text-muted-foreground">{formatMinutesToDuration(svc.duration)}</span>}
-                          </div>
-                          {isDefault && <Badge variant="secondary" className="text-[10px]">Default</Badge>}
-                        </div>
-                        <div className="space-y-0.5">
-                          {teamMembers
-                            .filter(m => m.roles?.includes('stylist') || m.roles?.includes('admin'))
-                            .slice(0, 8)
-                            .map(member => {
-                              const conflicts = conflictMap.get(member.user_id) || [];
-                              const isActive = selectedId === member.user_id;
-                              return (
-                                <button
-                                  key={member.user_id}
-                                  className={cn(
-                                    'flex items-center gap-2 w-full p-2 rounded-md text-left text-sm transition-colors',
-                                    isActive ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted',
-                                  )}
-                                  onClick={() => setPerServiceSelections(prev => ({ ...prev, [svc.name]: member.user_id }))}
-                                >
-                                  <Avatar className="h-6 w-6">
-                                    <AvatarImage src={member.photo_url || undefined} />
-                                    <AvatarFallback className="text-[8px]">{(formatName(member) || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-sm">{formatName(member)}</span>
-                                  {member.user_id === appointment.stylist_user_id && (
-                                    <Badge variant="outline" className="text-[9px] ml-auto">Lead</Badge>
-                                  )}
-                                  {conflicts.length > 0 && (
-                                    <Badge variant="outline" className="text-[9px] text-amber-700 dark:text-amber-300 border-amber-300 ml-auto shrink-0">
-                                      <AlertTriangle className="h-2 w-2 mr-0.5" />{conflicts.length}
-                                    </Badge>
-                                  )}
-                                </button>
-                              );
-                            })}
-                        </div>
-                      </div>
+                      <ServiceAssignmentPicker
+                        key={si}
+                        service={svc}
+                        groups={eligibilityGroups}
+                        selectedId={selectedId}
+                        leadStylistId={appointment.stylist_user_id}
+                        isDefault={isDefault}
+                        onSelect={(userId) => setPerServiceSelections(prev => ({ ...prev, [svc.name]: userId }))}
+                        onClearOverride={() => setPerServiceSelections(prev => {
+                          const next = { ...prev };
+                          delete next[svc.name];
+                          return next;
+                        })}
+                      />
                     );
                   })}
                 </div>
@@ -3072,11 +3053,14 @@ export function AppointmentDetailSheet({
                       toast.error('Failed to save service assignments', { description: err.message });
                     }
                   }}
-                  disabled={Object.keys(perServiceSelections).length === 0 || upsertAssignments.isPending}
+                  disabled={Object.entries(perServiceSelections).filter(([n, u]) => u !== (assignmentMap.get(n)?.assigned_user_id || appointment.stylist_user_id)).length === 0 || upsertAssignments.isPending}
                 >
                   {upsertAssignments.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                   <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
-                  Save Assignments
+                  {(() => {
+                    const n = Object.entries(perServiceSelections).filter(([name, u]) => u !== (assignmentMap.get(name)?.assigned_user_id || appointment.stylist_user_id)).length;
+                    return n > 0 ? `Save ${n} change${n > 1 ? 's' : ''}` : 'Save Assignments';
+                  })()}
                 </Button>
               </DialogFooter>
             </>
