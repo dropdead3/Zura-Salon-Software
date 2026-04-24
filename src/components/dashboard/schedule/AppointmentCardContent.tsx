@@ -663,6 +663,10 @@ export function AppointmentCardContent({
     );
   }
 
+  const showLeadingAccent =
+    !BLOCKED_CATEGORIES.includes(appointment.service_category || '') &&
+    size !== 'compact';
+
   const gridContent = (
     <div
       className={cn(
@@ -673,6 +677,8 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
+        // ── Leading ear accent (matches Top Staff card pattern) ──
+        showLeadingAccent && LEADING_ACCENT_BORDER,
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',
@@ -689,10 +695,6 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
-      {/* Leading schedule ear accent — shared across card variants */}
-      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && (
-        <LeadingAccentBar />
-      )}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
