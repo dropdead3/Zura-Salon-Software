@@ -181,7 +181,8 @@ interface Message {
 async function executeToolCall(
   toolName: string, 
   args: Record<string, unknown>,
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   userId: string,
   organizationId: string
 ): Promise<{ result: unknown; action?: unknown }> {
