@@ -304,15 +304,25 @@ export default function Schedule() {
     return filtered;
   }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
 
-  // Keep selectedAppointment in sync with latest query data
+  // Visit grouping — collapse contiguous same-client services into one display
+  // row per visit. Single-service appointments pass through unchanged.
+  // See src/lib/visit-grouping.ts for the strict-contiguity doctrine.
+  const displayAppointments = useMemo(
+    () => buildDisplayAppointments(appointments),
+    [appointments],
+  );
+
+  // Keep selectedAppointment in sync with latest query data. Match against the
+  // merged display list so a re-grouped visit (e.g. after a reschedule
+  // expanded the gap past 5 min) stays selected without flicker.
   useEffect(() => {
-    if (selectedAppointment && appointments.length > 0) {
-      const fresh = appointments.find(a => a.id === selectedAppointment.id);
+    if (selectedAppointment && displayAppointments.length > 0) {
+      const fresh = displayAppointments.find(a => a.id === selectedAppointment.id);
       if (fresh && fresh.status !== selectedAppointment.status) {
         setSelectedAppointment(fresh);
       }
     }
-  }, [appointments]);
+  }, [displayAppointments]);
 
   // Wave 22.2 — Bulk-fetch Stripe Connect status for all locations visible in
   // the current calendar slice. Builds a Set of locationIds whose Connect is
