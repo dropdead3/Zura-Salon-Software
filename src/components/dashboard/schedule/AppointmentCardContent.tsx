@@ -621,13 +621,13 @@ export function AppointmentCardContent({
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
     return getAppointmentBorderStyle({
-      catColor,
+      catColor: useCategoryColor ? catColor : null,
       darkStyle,
       isDark,
       displayGradient,
       willShowLeadingAccent,
     });
-  }, [variant, displayGradient, isDark, darkStyle, catColor, willShowLeadingAccent]);
+  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, willShowLeadingAccent]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
