@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -24,17 +25,13 @@ interface MonthViewProps {
   locationHolidayClosures?: HolidayClosure[] | null;
 }
 
-const STATUS_DOT_COLORS: Record<AppointmentStatus, string> = {
-  pending: 'bg-amber-500',
-  booked: 'bg-amber-400',
-  unconfirmed: 'bg-amber-400',
-  confirmed: 'bg-green-500',
-  walk_in: 'bg-teal-500',
-  checked_in: 'bg-blue-500',
-  completed: 'bg-purple-500',
-  cancelled: 'bg-gray-300',
-  no_show: 'bg-red-500',
-};
+// Derived from the canonical APPOINTMENT_STATUS_COLORS map — extracts the
+// saturated `bg-*` class (first token, light-mode) for the day-cell dot.
+const STATUS_DOT_COLORS: Record<AppointmentStatus, string> = Object.fromEntries(
+  (Object.entries(APPOINTMENT_STATUS_COLORS) as [AppointmentStatus, { bg: string }][]).map(
+    ([key, { bg }]) => [key, bg.split(' ').find((c) => c.startsWith('bg-')) ?? 'bg-muted'],
+  ),
+) as Record<AppointmentStatus, string>;
 
 export function MonthView({
   currentDate,
