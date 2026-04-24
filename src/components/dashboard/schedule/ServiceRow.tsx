@@ -215,7 +215,7 @@ export function ServiceRow({
               <Avatar className="h-4 w-4">
                 <AvatarFallback className="text-[7px]">{getInitials(stylistName)}</AvatarFallback>
               </Avatar>
-              <span className="text-[11px] max-w-[90px] truncate">{stylistName}</span>
+              <span className="text-[11px] max-w-[120px] truncate">{stylistName}</span>
             </ChipBtn>
           </span>
         </PopoverTrigger>
