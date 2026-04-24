@@ -30,16 +30,25 @@ export function useClientMemory(
   const { data: formulaMemory, isLoading: formulaLoading } = useInstantFormulaMemory(clientId, serviceName);
   const { data: visits = [], isLoading: visitsLoading } = useClientVisitHistory(clientId);
 
-  // Last notes from most recent completed visit
-  const lastVisit = visits.find(v => v.status === 'completed');
-  const lastNotes = lastVisit?.notes || null;
+  // Most-recent completed visit (grouped) — used for last notes + true visit
+  // duration. Visits in the hook arrive newest-first; grouping preserves the
+  // ordering, so groups[0] is the latest completed visit.
+  const completedGroups = groupClientVisits(visits.filter((v) => v.status === 'completed'))
+    .sort((a, b) => {
+      if (a.appointment_date !== b.appointment_date) {
+        return b.appointment_date.localeCompare(a.appointment_date);
+      }
+      return b.start_time.localeCompare(a.start_time);
+    });
+  const lastVisitGroup = completedGroups[0] ?? null;
+  const lastNotes = lastVisitGroup?.combined_notes ?? null;
 
-  // Processing time from most recent visit
+  // Processing time = full visit window (start of first service → end of last).
   const lastProcessingTimeMinutes = (() => {
-    if (!lastVisit) return null;
+    if (!lastVisitGroup) return null;
     try {
-      const [sh, sm] = lastVisit.start_time.split(':').map(Number);
-      const [eh, em] = lastVisit.end_time.split(':').map(Number);
+      const [sh, sm] = lastVisitGroup.start_time.split(':').map(Number);
+      const [eh, em] = lastVisitGroup.end_time.split(':').map(Number);
       const mins = (eh * 60 + em) - (sh * 60 + sm);
       return mins > 0 ? mins : null;
     } catch {
