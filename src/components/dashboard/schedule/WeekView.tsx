@@ -375,11 +375,6 @@ export function WeekView({
     });
   }, [currentDate.toDateString(), locationHoursJson, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, weekDays, isOrgToday, wkNowMins, locationHolidayClosures]);
 
-  // Week starts with currentDate, followed by 6 future days
-  const weekDays = useMemo(() => 
-    Array.from({ length: 7 }, (_, i) => addDays(currentDate, i)),
-    [currentDate.toDateString()]
-  );
   
   // Generate time slots based on zoom interval
   const timeSlots = useMemo(() => {
