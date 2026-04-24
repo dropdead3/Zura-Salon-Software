@@ -644,10 +644,6 @@ export function AppointmentCardContent({
     );
   }
 
-  const showLeadingAccent =
-    !BLOCKED_CATEGORIES.includes(appointment.service_category || '') &&
-    size !== 'compact';
-
   const gridContent = (
     <div
       className={cn(
