@@ -1,0 +1,55 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`no-restricted-imports: platform-primitive isolation > selector config matches snapshot (regression guard) 1`] = `
+[
+  2,
+  {
+    "paths": [
+      {
+        "message": "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer.",
+        "name": "@/components/ui/checkbox",
+      },
+      {
+        "message": "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme.",
+        "name": "@/components/ui/switch",
+      },
+      {
+        "message": "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme.",
+        "name": "@/components/ui/alert-dialog",
+      },
+      {
+        "message": "Use PlatformDialogContent from @/components/platform/ui/PlatformDialog — raw dialog reads --background/--popover from the org theme.",
+        "name": "@/components/ui/dialog",
+      },
+      {
+        "message": "Use PlatformLabel from @/components/platform/ui — raw label reads --foreground from the org theme.",
+        "name": "@/components/ui/label",
+      },
+      {
+        "message": "Use PlatformTextarea from @/components/platform/ui — raw textarea reads --input/--border from the org theme.",
+        "name": "@/components/ui/textarea",
+      },
+      {
+        "message": "Use Platform* select exports from @/components/platform/ui/PlatformSelect — raw select reads --popover/--primary from the org theme.",
+        "name": "@/components/ui/select",
+      },
+      {
+        "message": "Use PlatformInput from @/components/platform/ui — raw input reads --input/--ring from the org theme.",
+        "name": "@/components/ui/input",
+      },
+      {
+        "message": "Use PlatformButton from @/components/platform/ui — raw button reads --primary/--secondary from the org theme.",
+        "name": "@/components/ui/button",
+      },
+      {
+        "message": "Use Platform* card exports from @/components/platform/ui/PlatformCard — raw card reads --card/--card-foreground from the org theme.",
+        "name": "@/components/ui/card",
+      },
+      {
+        "message": "Use PlatformBadge from @/components/platform/ui — raw badge reads --primary/--secondary from the org theme.",
+        "name": "@/components/ui/badge",
+      },
+    ],
+  },
+]
+`;
