@@ -1070,6 +1070,73 @@ export function AppointmentDetailSheet({
       });
   }, [appointment, serviceLookup, assignmentMap, teamMembers]);
 
+  // ─── Per-service override handlers (Phorest-style row chips) ───
+  const fireAuditLog = useLogAuditEvent();
+  const persistServiceOverride = useCallback(
+    async (
+      serviceName: string,
+      patch: {
+        startTimeOffsetMinutes?: number | null;
+        durationMinutesOverride?: number | null;
+        priceOverride?: number | null;
+        requiresConsultation?: boolean;
+        userId?: string;
+        staffName?: string;
+      },
+      auditEvent: keyof typeof AUDIT_EVENTS,
+      previousValue: any,
+      newValue: any,
+    ) => {
+      if (!appointment?.id || !resolvedOrgId) return;
+      const svc = services.find(s => s.name === serviceName);
+      const userId = patch.userId ?? svc?.assignedStylist.userId ?? appointment.stylist_user_id ?? null;
+      const staffName = patch.staffName ?? svc?.assignedStylist.name ?? '';
+      if (!userId || !staffName) {
+        toast.error('Cannot save override — stylist context missing');
+        return;
+      }
+      try {
+        await upsertAssignments.mutateAsync({
+          appointmentId: appointment.id,
+          organizationId: resolvedOrgId,
+          assignments: [{
+            serviceName,
+            userId,
+            staffName,
+            startTimeOffsetMinutes: patch.startTimeOffsetMinutes
+              ?? svc?.startTimeOffsetMinutes ?? null,
+            durationMinutesOverride: patch.durationMinutesOverride
+              ?? (svc ? svc.duration : null),
+            priceOverride: patch.priceOverride
+              ?? svc?.price ?? null,
+            requiresConsultation: patch.requiresConsultation
+              ?? svc?.requiresConsultation ?? false,
+          }],
+        });
+        fireAuditLog.mutate({
+          appointmentId: appointment.id,
+          organizationId: resolvedOrgId,
+          eventType: AUDIT_EVENTS[auditEvent],
+          previousValue: { service: serviceName, value: previousValue },
+          newValue: { service: serviceName, value: newValue },
+        });
+      } catch (err: any) {
+        toast.error('Failed to save change', { description: err?.message });
+      }
+    },
+    [appointment, resolvedOrgId, services, upsertAssignments, fireAuditLog],
+  );
+
+  const stylistOptions = useMemo(
+    () => teamMembers.map(m => ({
+      user_id: m.user_id,
+      display_name: m.display_name ?? null,
+      full_name: m.full_name ?? null,
+      photo_url: (m as any).photo_url ?? null,
+    })),
+    [teamMembers],
+  );
+
   const durationMinutes = appointment ? getDurationMinutes(appointment.start_time, appointment.end_time) : 0;
 
   const visitStats = useMemo(() => {
