@@ -16934,6 +16934,57 @@ export type Database = {
         }
         Relationships: []
       }
+      phorest_sync_cursor: {
+        Row: {
+          branch_id: string | null
+          branch_name: string | null
+          completed_at: string | null
+          id: string
+          last_completed_page: number
+          last_error: string | null
+          records_pulled: number
+          region: string | null
+          started_at: string
+          status: string
+          sync_type: string
+          total_elements: number | null
+          total_pages: number | null
+          updated_at: string
+        }
+        Insert: {
+          branch_id?: string | null
+          branch_name?: string | null
+          completed_at?: string | null
+          id?: string
+          last_completed_page?: number
+          last_error?: string | null
+          records_pulled?: number
+          region?: string | null
+          started_at?: string
+          status?: string
+          sync_type: string
+          total_elements?: number | null
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string | null
+          branch_name?: string | null
+          completed_at?: string | null
+          id?: string
+          last_completed_page?: number
+          last_error?: string | null
+          records_pulled?: number
+          region?: string | null
+          started_at?: string
+          status?: string
+          sync_type?: string
+          total_elements?: number | null
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       phorest_sync_log: {
         Row: {
           api_endpoint: string | null

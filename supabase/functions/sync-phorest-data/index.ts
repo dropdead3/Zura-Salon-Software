@@ -1193,342 +1193,425 @@ function mapPhorestStatus(phorestStatus: string): string {
   return statusMap[phorestStatus] || phorestStatus?.toLowerCase() || 'unknown';
 }
 
+// S7f: Resumable client sync.
+//
+// Earlier waves removed three big bottlenecks (region pinning, per-client
+// dedup RPC, sequential single-row upserts) but the *fetch phase itself*
+// — ~20 paginated Phorest /client pages at ~600–800ms each, multiplied by
+// per-branch + global passes — still consumed the entire 150s gateway
+// budget for large tenants and the run was discarded.
+//
+// This implementation is a single-pass-per-invocation worker:
+//   1. Resolve all branches (EU + US) up front.
+//   2. Build a unified "pass" plan: one entry per branch (oldest cursor
+//      first) plus a final GLOBAL pass.
+//   3. For each pass, look up the saved cursor in phorest_sync_cursor and
+//      resume from `last_completed_page + 1`.
+//   4. After every page: dedup-tag, batched upsert, persist cursor.
+//   5. Check the wall-clock budget after every page. If we're past the
+//      threshold, persist progress, exit gracefully, and report `partial`.
+//
+// The next sync invocation (the existing 15-minute appointment cron also
+// triggers a `clients` sweep, or it can be called directly) reads the same
+// cursors and picks up exactly where this one stopped. A pass is marked
+// `complete` only when its last page has been written.
 async function syncClients(
-  supabase: any, 
-  businessId: string, 
+  supabase: any,
+  businessId: string,
   username: string,
-  password: string
+  password: string,
 ) {
-  console.log("Syncing client data with branch/location info...");
+  const runStart = Date.now();
+  // Stay well under the 150s gateway timeout. We keep ~30s of headroom for
+  // the post-sync preferred-stylist recompute and log writes that the
+  // caller performs after we return.
+  const TIMEOUT_BUDGET_MS = 120_000;
+  const PAGE_SIZE = 200;
+  const UPSERT_BATCH_SIZE = 200;
 
+  console.log("[S7f] Resumable client sync starting...");
+
+  // --- 1. Branch enumeration (EU + US) ---
+  const branchRegion = new Map<string, string>();
+  const branchMeta = new Map<string, { name: string; region: string }>();
+  let euBranches: any[] = [];
+  let usBranches: any[] = [];
   try {
-    // S7b: Resolve per-branch REGION up-front. Phorest tenants can have
-    // branches split across EU (platform.phorest.com) and US
-    // (platform-us.phorest.com). The per-branch /client endpoint returns
-    // HTTP 200 with an empty array when called against the wrong region —
-    // it does NOT 404 — so the default EU-first fallback in phorestRequest()
-    // never kicks in and the branch silently appears empty. We must pin
-    // each branch to its working base URL.
-    const branchRegion = new Map<string, string>(); // branchId -> base URL
-    const branchMeta = new Map<string, { name: string; region: string }>();
-
-    let euBranches: any[] = [];
-    let usBranches: any[] = [];
-    try {
-      const euData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL);
-      euBranches = euData._embedded?.branches || euData.branches ||
-                   (Array.isArray(euData) ? euData : []);
-    } catch (e: any) {
-      console.log('syncClients: EU /branch enumeration failed:', e.message);
+    const euData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL);
+    euBranches = euData._embedded?.branches || euData.branches ||
+                 (Array.isArray(euData) ? euData : []);
+  } catch (e: any) {
+    console.log('[S7f] EU /branch enumeration failed:', e.message);
+  }
+  try {
+    const usData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL_US);
+    usBranches = usData._embedded?.branches || usData.branches ||
+                 (Array.isArray(usData) ? usData : []);
+  } catch (e: any) {
+    console.log('[S7f] US /branch enumeration failed:', e.message);
+  }
+  for (const b of euBranches) {
+    const id = b.branchId || b.id;
+    if (id && !branchRegion.has(id)) {
+      branchRegion.set(id, PHOREST_BASE_URL);
+      branchMeta.set(id, { name: b.name || 'Unknown', region: 'EU' });
     }
-    try {
-      const usData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL_US);
-      usBranches = usData._embedded?.branches || usData.branches ||
-                   (Array.isArray(usData) ? usData : []);
-    } catch (e: any) {
-      console.log('syncClients: US /branch enumeration failed:', e.message);
+  }
+  for (const b of usBranches) {
+    const id = b.branchId || b.id;
+    if (id && !branchRegion.has(id)) {
+      branchRegion.set(id, PHOREST_BASE_URL_US);
+      branchMeta.set(id, { name: b.name || 'Unknown', region: 'US' });
     }
+  }
 
-    for (const b of euBranches) {
-      const id = b.branchId || b.id;
-      if (id && !branchRegion.has(id)) {
-        branchRegion.set(id, PHOREST_BASE_URL);
-        branchMeta.set(id, { name: b.name || 'Unknown', region: 'EU' });
+  // --- 2. Lookup tables (staff, locations, dedup) ---
+  const { data: staffMappings } = await supabase
+    .from("phorest_staff_mapping")
+    .select("phorest_staff_id, user_id");
+  const staffMap = new Map<string, string>(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
+
+  const { data: locations } = await supabase
+    .from("locations")
+    .select("id, name");
+  const locationMap = new Map<string, string>();
+  locations?.forEach((loc: any) => locationMap.set(loc.name.toLowerCase(), loc.id));
+
+  // S7d dedup pre-pass — single bulk read instead of per-row RPC.
+  const dedupByEmail = new Map<string, { id: string; phorest_client_id: string }>();
+  const dedupByPhone = new Map<string, { id: string; phorest_client_id: string }>();
+  try {
+    const existing = await fetchAllPhorestClientsForDedup(supabase);
+    for (const row of existing) {
+      if (row.email) {
+        const k = row.email.trim().toLowerCase();
+        if (k && !dedupByEmail.has(k)) dedupByEmail.set(k, row);
+      }
+      if (row.phone) {
+        const k = normalizePhoneForDedup(row.phone);
+        if (k && !dedupByPhone.has(k)) dedupByPhone.set(k, row);
       }
     }
-    for (const b of usBranches) {
-      const id = b.branchId || b.id;
-      if (id && !branchRegion.has(id)) {
-        branchRegion.set(id, PHOREST_BASE_URL_US);
-        branchMeta.set(id, { name: b.name || 'Unknown', region: 'US' });
-      }
-    }
+    console.log(`[S7f] Dedup map: ${existing.length} existing rows (${dedupByEmail.size} emails, ${dedupByPhone.size} phones)`);
+  } catch (e: any) {
+    console.log('[S7f] Dedup pre-pass failed (continuing without dedup):', e.message);
+  }
 
-    const branches = Array.from(branchRegion.entries()).map(([id, base]) => ({
+  // --- 3. Plan passes: per-branch first, GLOBAL last ---
+  type Pass = {
+    key: string;            // unique cursor key — branchId or 'GLOBAL'
+    branchId: string | null;
+    branchName: string;
+    region: string;
+    base: string;
+    pathPrefix: string;     // /branch/<id>/client OR /client
+    locationId: string | null;
+  };
+  const passes: Pass[] = [];
+  for (const [id, base] of branchRegion.entries()) {
+    const meta = branchMeta.get(id)!;
+    passes.push({
+      key: id,
       branchId: id,
-      name: branchMeta.get(id)?.name || 'Unknown',
-      _base: base,
-      _region: branchMeta.get(id)?.region || 'EU',
-    }));
-    console.log(`Found ${branches.length} branches for client sync (EU+US enumerated)`);
-
-    // Get staff mappings for preferred stylist
-    const { data: staffMappings } = await supabase
-      .from("phorest_staff_mapping")
-      .select("phorest_staff_id, user_id");
-
-    const staffMap = new Map(staffMappings?.map((m: any) => [m.phorest_staff_id, m.user_id]) || []);
-
-    // Fetch locations to map branch IDs to our location IDs
-    const { data: locations } = await supabase
-      .from("locations")
-      .select("id, name");
-    
-    // Create a map of branch names to location IDs (case-insensitive matching)
-    const locationMap = new Map<string, string>();
-    locations?.forEach((loc: any) => {
-      locationMap.set(loc.name.toLowerCase(), loc.id);
+      branchName: meta.name,
+      region: meta.region,
+      base,
+      pathPrefix: `/branch/${id}/client`,
+      locationId: locationMap.get(meta.name.toLowerCase()) || null,
     });
+  }
+  // Global fallback pass — always planned; cursor will mark it complete on
+  // first run if branch coverage already hit 100%.
+  passes.push({
+    key: 'GLOBAL',
+    branchId: null,
+    branchName: 'GLOBAL',
+    region: 'GLOBAL',
+    base: PHOREST_BASE_URL,
+    pathPrefix: `/client`,
+    locationId: null,
+  });
 
-    // Track all clients across branches (client may visit multiple branches)
-    const clientDataMap = new Map<string, any>();
-    const branchCoverage: Array<{ branch: string; region: string; fetched: number; expected: number }> = [];
+  // Load existing cursors for this sync_type=clients.
+  const { data: cursorRows } = await supabase
+    .from('phorest_sync_cursor')
+    .select('*')
+    .eq('sync_type', 'clients');
+  const cursorMap = new Map<string, any>();
+  for (const row of cursorRows || []) {
+    cursorMap.set(row.branch_id || 'GLOBAL', row);
+  }
 
-    // Fetch clients from each branch using its resolved region.
-    for (const branch of branches) {
-      const branchId = branch.branchId;
-      const branchName = branch.name;
-      const branchBase = branch._base;
-      const branchRegionLabel = branch._region;
-      
-      // Try to match branch to our locations table
-      const locationId = locationMap.get(branchName.toLowerCase()) || null;
-      
-      console.log(`Fetching clients for branch: ${branchName} [${branchRegionLabel}] (${branchId}), mapped location: ${locationId}`);
+  // Skip already-complete passes; resume incomplete ones in their stored order.
+  const incompletePasses = passes.filter(p => {
+    const c = cursorMap.get(p.key);
+    return !c || c.status !== 'complete';
+  });
+  console.log(`[S7f] ${incompletePasses.length}/${passes.length} passes outstanding (${passes.length - incompletePasses.length} already complete)`);
 
-      try {
-        // Fetch clients for this branch with pagination — pinned to its region.
-        let page = 0;
-        let hasMore = true;
-        let branchClientCount = 0;
-        let totalExpected = 0;
+  let totalSyncedThisRun = 0;
+  let aborted = false;
+  let abortedAt: string | null = null;
 
-        while (hasMore) {
-          const clientsData = await phorestRequest(
-            `/branch/${branchId}/client?size=200&page=${page}`, 
-            businessId, 
-            username, 
-            password,
-            branchBase, // S7b: pin region per branch
-          );
-          const clients = clientsData._embedded?.clients || clientsData.clients || [];
-          const pageInfo = clientsData.page || {};
-          const totalPages = pageInfo.totalPages || 1;
-          totalExpected = pageInfo.totalElements || totalExpected;
-
-          branchClientCount += clients.length;
-          console.log(`Branch ${branchName} [${branchRegionLabel}]: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
-
-          for (const client of clients) {
-            const clientId = client.clientId || client.id;
-            
-            if (clientDataMap.has(clientId)) {
-              const existing = clientDataMap.get(clientId);
-              const existingLastVisit = existing.lastAppointmentDate ? new Date(existing.lastAppointmentDate) : null;
-              const newLastVisit = client.lastAppointmentDate ? new Date(client.lastAppointmentDate) : null;
-              
-              if (newLastVisit && (!existingLastVisit || newLastVisit > existingLastVisit)) {
-                clientDataMap.set(clientId, {
-                  ...client,
-                  _branchId: branchId,
-                  _branchName: branchName,
-                  _locationId: locationId,
-                });
-              }
-            } else {
-              clientDataMap.set(clientId, {
-                ...client,
-                _branchId: branchId,
-                _branchName: branchName,
-                _locationId: locationId,
-              });
-            }
-          }
-
-          // Check if there are more pages
-          if (clients.length === 0 || page + 1 >= totalPages || page >= 100) {
-            hasMore = false;
-          } else {
-            page++;
-          }
-        }
-
-        console.log(`Branch ${branchName}: ${branchClientCount} clients fetched (expected ${totalExpected})`);
-        branchCoverage.push({ branch: branchName, region: branchRegionLabel, fetched: branchClientCount, expected: totalExpected });
-      } catch (e: any) {
-        console.log(`Failed to fetch clients for branch ${branchId}:`, e.message);
-        branchCoverage.push({ branch: branchName, region: branchRegionLabel, fetched: 0, expected: 0 });
-      }
+  // --- 4. Execute passes until budget exhausted ---
+  for (const pass of incompletePasses) {
+    if (Date.now() - runStart > TIMEOUT_BUDGET_MS) {
+      aborted = true;
+      abortedAt = `before pass ${pass.key}`;
+      break;
     }
 
-    // S7b: Coverage-gated global fallback. Probe global tenant size and
-    // fall back if per-branch coverage is materially incomplete (was: only
-    // fired when clientDataMap was completely empty, which silently masked
-    // partial-branch failures like Val Vista Lakes returning 1 of ~1500).
-    let globalTotal = 0;
-    try {
-      const probe = await phorestRequest(`/client?size=1&page=0`, businessId, username, password);
-      globalTotal = probe.page?.totalElements || 0;
-    } catch (e: any) {
-      console.log('syncClients: global tenant probe failed:', e.message);
-    }
+    const cursor = cursorMap.get(pass.key);
+    let resumeFromPage = cursor ? (cursor.last_completed_page + 1) : 0;
+    let totalPages: number | null = cursor?.total_pages ?? null;
+    let totalElements: number | null = cursor?.total_elements ?? null;
+    let recordsPulled = cursor?.records_pulled ?? 0;
 
-    const branchCoveragePct = globalTotal > 0
-      ? (clientDataMap.size / globalTotal) * 100
-      : 0;
-    console.log(`[SYNC HEALTH] Per-branch coverage: ${clientDataMap.size}/${globalTotal} (${branchCoveragePct.toFixed(1)}%)`);
+    console.log(`[S7f] Pass ${pass.key} (${pass.branchName}/${pass.region}) — resuming at page ${resumeFromPage}${totalPages ? ` of ${totalPages}` : ''}`);
 
-    // Run global fallback whenever branch coverage < 95% OR map is empty.
-    // Per-branch attribution wins (set first); global pass only fills gaps.
-    if (clientDataMap.size === 0 || (globalTotal > 0 && branchCoveragePct < 95)) {
-      console.log(`Running global client endpoint to fill ${globalTotal - clientDataMap.size} unattributed clients...`);
-      let page = 0;
-      let hasMore = true;
-      let globalAdded = 0;
+    let page = resumeFromPage;
+    let passSyncedThisRun = 0;
+    let passComplete = false;
 
-      while (hasMore) {
-        const clientsData = await phorestRequest(`/client?size=200&page=${page}`, businessId, username, password);
-        const clients = clientsData._embedded?.clients || clientsData.clients || [];
-        const pageInfo = clientsData.page || {};
-        const totalPages = pageInfo.totalPages || 1;
-
-        console.log(`Global endpoint: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
-
-        for (const client of clients) {
-          const cid = client.clientId || client.id;
-          if (!clientDataMap.has(cid)) {
-            // No branch attribution available — record without branch.
-            clientDataMap.set(cid, client);
-            globalAdded++;
-          }
-        }
-
-        if (clients.length === 0 || page + 1 >= totalPages || page >= 100) {
-          hasMore = false;
-        } else {
-          page++;
-        }
-      }
-      console.log(`Global fallback added ${globalAdded} clients without branch attribution`);
-    }
-
-    console.log(`Total unique clients to sync: ${clientDataMap.size} (branch-attributed + global)`);
-    console.log(`[SYNC HEALTH] Branch coverage breakdown: ${JSON.stringify(branchCoverage)}`);
-
-    // S7d: Bulk dedup pre-pass.
-    // Old code called the find_duplicate_phorest_clients RPC once per client
-    // (3,881 sequential round-trips on a full sync), which alone consumed
-    // most of the 150s gateway budget and prevented the upsert phase from
-    // ever running. We now hydrate the dedup map in a single query.
-    const dedupStart = Date.now();
-    const dedupByEmail = new Map<string, { id: string; phorest_client_id: string; name: string }>();
-    const dedupByPhone = new Map<string, { id: string; phorest_client_id: string; name: string }>();
-    try {
-      const existing = await fetchAllPhorestClientsForDedup(supabase);
-      for (const row of existing) {
-        if (row.email) {
-          const k = row.email.trim().toLowerCase();
-          if (k && !dedupByEmail.has(k)) dedupByEmail.set(k, row);
-        }
-        if (row.phone) {
-          const k = normalizePhoneForDedup(row.phone);
-          if (k && !dedupByPhone.has(k)) dedupByPhone.set(k, row);
-        }
-      }
-      console.log(`[SYNC HEALTH] Dedup map built in ${Date.now() - dedupStart}ms (${existing.length} existing rows; ${dedupByEmail.size} emails, ${dedupByPhone.size} phones)`);
-    } catch (e: any) {
-      console.log(`[SYNC HEALTH] Dedup pre-pass failed, proceeding without dedup flags:`, e.message);
-    }
-
-    // S7d: Build all client records in memory, then batch-upsert.
-    const records: Record<string, any>[] = [];
-    for (const [clientId, client] of clientDataMap) {
-      const preferredStylistId = client.preferredStaffId
-        ? staffMap.get(client.preferredStaffId)
-        : null;
-
-      const email = client.email || null;
-      const phone = client.mobile || client.phone || null;
-
-      // In-memory dedup lookup (replaces per-client RPC).
-      let isDuplicate = false;
-      let canonicalClientId: string | null = null;
-      const emailKey = email ? email.trim().toLowerCase() : null;
-      const phoneKey = phone ? normalizePhoneForDedup(phone) : null;
-      const emailMatch = emailKey ? dedupByEmail.get(emailKey) : null;
-      const phoneMatch = phoneKey ? dedupByPhone.get(phoneKey) : null;
-      const match = (emailMatch && emailMatch.phorest_client_id !== clientId)
-        ? emailMatch
-        : (phoneMatch && phoneMatch.phorest_client_id !== clientId)
-          ? phoneMatch
-          : null;
-      if (match) {
-        isDuplicate = true;
-        canonicalClientId = match.id;
-      }
-
-      records.push({
-        phorest_client_id: clientId,
-        name: `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown',
-        first_name: client.firstName || null,
-        last_name: client.lastName || null,
-        email,
-        phone,
-        gender: client.gender || null,
-        landline: client.landline || null,
-        birthday: client.dateOfBirth || client.birthday || null,
-        client_since: client.createdAt || null,
-        // NOTE: visit_count, total_spend, last_visit, first_visit are
-        // intentionally NOT written here. Zura derives them locally from
-        // phorest_appointments via v_client_visit_stats and writes them via
-        // refresh_client_visit_stats() at the end of this sync run.
-        preferred_stylist_id: preferredStylistId,
-        is_vip: client.isVip || client.vipStatus === 'VIP' || false,
-        notes: client.notes || null,
-        client_category: client.clientCategory || null,
-        referred_by: client.referredBy || null,
-        address_line1: client.address?.streetAddress1 || client.streetAddress1 || null,
-        address_line2: client.address?.streetAddress2 || client.streetAddress2 || null,
-        city: client.address?.city || client.city || null,
-        state: client.address?.state || client.state || null,
-        zip: client.address?.zip || client.zip || null,
-        country: client.address?.country || client.country || null,
-        location_id: client._locationId || null,
-        phorest_branch_id: client._branchId || null,
-        branch_name: client._branchName || null,
-        is_duplicate: isDuplicate,
-        canonical_client_id: canonicalClientId,
-      });
-    }
-
-    // S7d: Batch upsert in chunks of 200. With checkpoint guard so we
-    // persist whatever we managed to insert before the gateway timeout
-    // rather than losing the entire run.
-    const upsertStart = Date.now();
-    const BATCH_SIZE = 200;
-    // Keep ~25s headroom under the 150s gateway timeout for tail work
-    // (preferred-stylist recompute, log write, response serialization).
-    const TIMEOUT_BUDGET_MS = 125_000;
-    let synced = 0;
-    let aborted = false;
-    for (let i = 0; i < records.length; i += BATCH_SIZE) {
-      if (Date.now() - upsertStart > TIMEOUT_BUDGET_MS) {
-        console.log(`[SYNC HEALTH] Upsert phase aborting at batch ${i}/${records.length} to stay under gateway timeout (will resume next run)`);
+    while (true) {
+      // Budget check BEFORE each page fetch.
+      if (Date.now() - runStart > TIMEOUT_BUDGET_MS) {
         aborted = true;
+        abortedAt = `pass ${pass.key} page ${page}`;
         break;
       }
-      const batch = records.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase
-        .from("phorest_clients")
-        .upsert(batch, { onConflict: 'phorest_client_id' });
-      if (error) {
-        console.log(`Batch upsert failed at offset ${i}:`, error.message);
-      } else {
-        synced += batch.length;
-      }
-    }
-    console.log(`[SYNC HEALTH] Upsert phase complete: ${synced}/${records.length} rows in ${Date.now() - upsertStart}ms${aborted ? ' (PARTIAL — timeout guard tripped)' : ''}`);
 
-    return {
-      total: clientDataMap.size,
-      synced,
-      partial: aborted,
-      coverage: branchCoverage,
-      global_total: globalTotal,
-    };
-  } catch (error: any) {
-    console.error("Clients sync error:", error);
-    throw error;
+      let clientsData: any;
+      try {
+        clientsData = await phorestRequest(
+          `${pass.pathPrefix}?size=${PAGE_SIZE}&page=${page}`,
+          businessId, username, password, pass.base,
+        );
+      } catch (e: any) {
+        console.log(`[S7f] Pass ${pass.key} page ${page} fetch failed:`, e.message);
+        await upsertCursor(supabase, pass, page - 1, totalPages, totalElements, recordsPulled, 'in_progress', e.message);
+        break;
+      }
+
+      const clients = clientsData._embedded?.clients || clientsData.clients || [];
+      const pageInfo = clientsData.page || {};
+      totalPages = pageInfo.totalPages ?? totalPages ?? 1;
+      totalElements = pageInfo.totalElements ?? totalElements;
+
+      // If first page comes back empty AND there's no totalPages, treat as complete.
+      if (clients.length === 0) {
+        passComplete = true;
+        break;
+      }
+
+      // Build records for this page and upsert immediately.
+      const records = clients.map((client: any) => buildClientRecord(
+        client, pass, staffMap, dedupByEmail, dedupByPhone,
+      ));
+
+      // S7f: Dedupe within the page. Phorest occasionally returns the same
+      // clientId twice (e.g., when a record is updated mid-pagination). A
+      // single batch upsert on duplicates throws Postgres error 21000
+      // ("cannot affect row a second time") and FAILS THE WHOLE BATCH —
+      // which is exactly why pages 9-19 silently lost their 200 rows in
+      // the first verification run.
+      const dedupedMap = new Map<string, any>();
+      for (const r of records) dedupedMap.set(r.phorest_client_id, r);
+      const dedupedRecords = Array.from(dedupedMap.values());
+
+      // Upsert in chunks (page is already small, but keep this for safety).
+      let pageSynced = 0;
+      for (let i = 0; i < dedupedRecords.length; i += UPSERT_BATCH_SIZE) {
+        const batch = dedupedRecords.slice(i, i + UPSERT_BATCH_SIZE);
+        const { error } = await supabase
+          .from("phorest_clients")
+          .upsert(batch, { onConflict: 'phorest_client_id' });
+        if (error) {
+          console.log(`[S7f] Upsert error pass=${pass.key} page=${page} offset=${i}: ${error.message}`);
+        } else {
+          pageSynced += batch.length;
+        }
+      }
+      recordsPulled += pageSynced;
+      passSyncedThisRun += pageSynced;
+      totalSyncedThisRun += pageSynced;
+
+      // Persist cursor after every successful page.
+      await upsertCursor(supabase, pass, page, totalPages, totalElements, recordsPulled, 'in_progress', null);
+
+      console.log(`[S7f] Pass ${pass.key} page ${page + 1}/${totalPages}: ${pageSynced} upserted (pass total: ${recordsPulled}/${totalElements ?? '?'})`);
+
+      // End-of-pass detection.
+      if (page + 1 >= (totalPages ?? 1)) {
+        passComplete = true;
+        break;
+      }
+      page++;
+    }
+
+    if (passComplete) {
+      await upsertCursor(supabase, pass, page, totalPages, totalElements, recordsPulled, 'complete', null);
+      console.log(`[S7f] Pass ${pass.key} COMPLETE — ${recordsPulled}/${totalElements ?? '?'} clients`);
+    }
+
+    if (aborted) break;
+  }
+
+  // --- 5. Aggregate result for caller ---
+  // Re-read cursor state for accurate tenant-wide reporting.
+  const { data: finalCursors } = await supabase
+    .from('phorest_sync_cursor')
+    .select('branch_id, branch_name, region, status, records_pulled, total_elements')
+    .eq('sync_type', 'clients');
+
+  const completePasses = (finalCursors || []).filter((c: any) => c.status === 'complete').length;
+  const totalPasses = passes.length;
+  const allComplete = completePasses === totalPasses && !aborted;
+
+  // Coverage = current actual row count in phorest_clients vs upstream global total.
+  const globalCursor = (finalCursors || []).find((c: any) => !c.branch_id);
+  const globalTotal = globalCursor?.total_elements ?? 0;
+  const { count: currentDbCount } = await supabase
+    .from('phorest_clients')
+    .select('*', { count: 'exact', head: true });
+
+  console.log(`[S7f] Run complete: synced ${totalSyncedThisRun} this invocation; ${completePasses}/${totalPasses} passes done; DB now has ${currentDbCount}/${globalTotal} clients${aborted ? ` (ABORTED at ${abortedAt})` : ''}`);
+
+  return {
+    total: currentDbCount ?? 0,
+    synced: totalSyncedThisRun,
+    partial: !allComplete,
+    aborted_at: abortedAt,
+    passes_complete: completePasses,
+    passes_total: totalPasses,
+    global_total: globalTotal,
+    coverage: finalCursors,
+  };
+}
+
+// S7f: Build a phorest_clients row from a Phorest /client API entity.
+function buildClientRecord(
+  client: any,
+  pass: { branchId: string | null; branchName: string; locationId: string | null },
+  staffMap: Map<string, string>,
+  dedupByEmail: Map<string, { id: string; phorest_client_id: string }>,
+  dedupByPhone: Map<string, { id: string; phorest_client_id: string }>,
+) {
+  const clientId = client.clientId || client.id;
+  const preferredStylistId = client.preferredStaffId
+    ? staffMap.get(client.preferredStaffId)
+    : null;
+
+  const email = client.email || null;
+  const phone = client.mobile || client.phone || null;
+
+  let isDuplicate = false;
+  let canonicalClientId: string | null = null;
+  const emailKey = email ? email.trim().toLowerCase() : null;
+  const phoneKey = phone ? normalizePhoneForDedup(phone) : null;
+  const emailMatch = emailKey ? dedupByEmail.get(emailKey) : null;
+  const phoneMatch = phoneKey ? dedupByPhone.get(phoneKey) : null;
+  const match = (emailMatch && emailMatch.phorest_client_id !== clientId)
+    ? emailMatch
+    : (phoneMatch && phoneMatch.phorest_client_id !== clientId)
+      ? phoneMatch
+      : null;
+  if (match) {
+    isDuplicate = true;
+    canonicalClientId = match.id;
+  }
+
+  return {
+    phorest_client_id: clientId,
+    name: `${client.firstName || ''} ${client.lastName || ''}`.trim() || 'Unknown',
+    first_name: client.firstName || null,
+    last_name: client.lastName || null,
+    email,
+    phone,
+    gender: client.gender || null,
+    landline: client.landline || null,
+    birthday: client.dateOfBirth || client.birthday || null,
+    client_since: client.createdAt || null,
+    // visit_count/total_spend/last_visit/first_visit derived locally — see S7d note.
+    preferred_stylist_id: preferredStylistId,
+    is_vip: client.isVip || client.vipStatus === 'VIP' || false,
+    notes: client.notes || null,
+    client_category: client.clientCategory || null,
+    referred_by: client.referredBy || null,
+    address_line1: client.address?.streetAddress1 || client.streetAddress1 || null,
+    address_line2: client.address?.streetAddress2 || client.streetAddress2 || null,
+    city: client.address?.city || client.city || null,
+    state: client.address?.state || client.state || null,
+    zip: client.address?.zip || client.zip || null,
+    country: client.address?.country || client.country || null,
+    // Per-branch passes attribute; GLOBAL pass leaves these NULL so a later
+    // branch pass can claim attribution (upsert won't downgrade because
+    // global runs LAST in the plan).
+    location_id: pass.locationId,
+    phorest_branch_id: pass.branchId,
+    branch_name: pass.branchId ? pass.branchName : null,
+    is_duplicate: isDuplicate,
+    canonical_client_id: canonicalClientId,
+  };
+}
+
+// S7f: Upsert (or create) a cursor row for this pass.
+async function upsertCursor(
+  supabase: any,
+  pass: { key: string; branchId: string | null; branchName: string; region: string },
+  lastCompletedPage: number,
+  totalPages: number | null,
+  totalElements: number | null,
+  recordsPulled: number,
+  status: 'in_progress' | 'complete' | 'failed',
+  lastError: string | null,
+) {
+  // S7f: Cannot use Postgrest .upsert() because the unique index on
+  // (sync_type, COALESCE(branch_id, 'GLOBAL')) is a functional index and
+  // PostgREST's onConflict only accepts plain column names. NULL branch_id
+  // would be treated as distinct by Postgres' default unique constraint,
+  // creating a duplicate row per page. We do an explicit select → update
+  // or insert keyed by COALESCE behavior in the SELECT.
+  const baseRow: Record<string, any> = {
+    sync_type: 'clients',
+    branch_id: pass.branchId,
+    branch_name: pass.branchName,
+    region: pass.region,
+    last_completed_page: lastCompletedPage,
+    total_pages: totalPages,
+    total_elements: totalElements,
+    records_pulled: recordsPulled,
+    status,
+    last_error: lastError,
+    updated_at: new Date().toISOString(),
+  };
+  if (status === 'complete') baseRow.completed_at = new Date().toISOString();
+
+  // Find existing cursor for this pass.
+  const existingQuery = supabase
+    .from('phorest_sync_cursor')
+    .select('id')
+    .eq('sync_type', 'clients');
+  const { data: existing, error: selErr } = pass.branchId
+    ? await existingQuery.eq('branch_id', pass.branchId).maybeSingle()
+    : await existingQuery.is('branch_id', null).maybeSingle();
+
+  if (selErr) {
+    console.log(`[S7f] Cursor select failed for pass ${pass.key}:`, selErr.message);
+    return;
+  }
+
+  if (existing?.id) {
+    const { error } = await supabase
+      .from('phorest_sync_cursor')
+      .update(baseRow)
+      .eq('id', existing.id);
+    if (error) console.log(`[S7f] Cursor update failed for pass ${pass.key}:`, error.message);
+  } else {
+    const { error } = await supabase
+      .from('phorest_sync_cursor')
+      .insert(baseRow);
+    if (error) console.log(`[S7f] Cursor insert failed for pass ${pass.key}:`, error.message);
   }
 }
 
