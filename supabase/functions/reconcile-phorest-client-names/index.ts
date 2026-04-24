@@ -9,18 +9,23 @@
  * the schema but violated the table's purpose. This function is the corrective
  * sweep: it explicitly targets the empty-name rows the regular sync skips.
  *
+ * SIGNAL PRESERVATION: this function does NOT write [Deleted Client] negative-
+ * cache rows. A 404 from every (branch × region) combination is not positive
+ * evidence of deletion — it could mean a new branch we don't know about, a
+ * permission gap, or a transient region-routing failure. Unresolvable IDs are
+ * counted and surfaced to the operator; the appointment continues to render
+ * "Client #ABCD" — the truthful "we have the ID, can't resolve the name."
+ *
  * Operation:
  *   1. Find unique phorest_client_ids from `phorest_appointments` where
  *      `client_name IS NULL` and either no client row exists OR the row
  *      has no usable name (`name`, `first_name`, `last_name` all empty).
- *   2. Probe Phorest's `/branch/{branchId}/client/{clientId}` for each ID,
- *      iterating known branches until one returns a populated client.
- *   3. Upsert ONLY when the response actually carries a name (contract
- *      validation). 404 across all branches → write `[Deleted Client]`
- *      negative cache so we don't re-probe forever.
+ *   2. Enumerate branches per-region (EU + US) so each branch is queried only
+ *      against the base URL it actually lives on (cross-region queries return
+ *      misleading 404s that look like "deleted").
+ *   3. Probe Phorest's `/branch/{branchId}/client/{clientId}` per branch in its
+ *      own region; upsert ONLY when the response carries a real name.
  *   4. Backfill `phorest_appointments.client_name` from the resolved set.
- *
- * Returns granular counters so the UI can report exactly what happened.
  */
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -31,20 +36,21 @@ const corsHeaders = {
 };
 
 const PHOREST_BASE_URL = "https://platform.phorest.com/third-party-api-server/api";
+const PHOREST_BASE_URL_US = "https://platform-us.phorest.com/third-party-api-server/api";
 
 async function phorestRequest(
   endpoint: string,
   businessId: string,
   username: string,
   password: string,
+  preferredBase?: string,
 ): Promise<{ ok: true; data: any } | { ok: false; status: number; error: string }> {
   const formattedUsername = username.startsWith("global/") ? username : `global/${username}`;
   const basicAuth = btoa(`${formattedUsername}:${password}`);
 
-  const baseUrls = [
-    PHOREST_BASE_URL,
-    "https://platform-us.phorest.com/third-party-api-server/api",
-  ];
+  const baseUrls = preferredBase
+    ? [preferredBase]
+    : [PHOREST_BASE_URL, PHOREST_BASE_URL_US];
 
   let lastStatus = 0;
   let lastError = "no attempt";
@@ -92,7 +98,7 @@ interface ReconcileResult {
   scanned_appointments: number;
   unique_client_ids: number;
   fetched: number;
-  deleted_flagged: number;
+  unresolved_404: number;
   fetch_errors: number;
   appointments_backfilled: number;
   branches_probed: number;
