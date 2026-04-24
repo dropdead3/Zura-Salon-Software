@@ -23,6 +23,7 @@ import { usePreferredStylist, getStylistDisplayName } from '@/hooks/usePreferred
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useServiceLookup } from '@/hooks/useServiceLookup';
 import { useServiceAssignments } from '@/hooks/useServiceAssignments';
+import { useEligibleStylistsForService, bucketByTier, type EligibleStylist } from '@/hooks/useEligibleStylistsForService';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
