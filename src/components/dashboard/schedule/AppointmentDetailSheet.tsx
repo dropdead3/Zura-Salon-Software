@@ -1028,11 +1028,41 @@ export function AppointmentDetailSheet({
   // ─── Derived Data ─────────────────────────────────────────────
   const services = useMemo(() => {
     if (!appointment?.service_name) return [];
-    return appointment.service_name.split(',').map(s => s.trim()).filter(Boolean).map(name => {
-      const info = serviceLookup?.get(name);
-      return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info?.price ?? null };
-    });
-  }, [appointment?.service_name, serviceLookup]);
+    const apptStart = appointment.start_time || '00:00:00';
+    const [sh, sm] = apptStart.split(':').map(Number);
+    const apptStartMin = sh * 60 + sm;
+    let cursorMin = apptStartMin;
+    return appointment.service_name
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(name => {
+        const info = serviceLookup?.get(name);
+        const override = assignmentMap.get(name);
+        const baseDuration = info?.duration_minutes || 0;
+        const duration = override?.duration_minutes_override ?? baseDuration;
+        const startMin = override?.start_time_offset_minutes != null
+          ? apptStartMin + override.start_time_offset_minutes
+          : cursorMin;
+        cursorMin = startMin + duration;
+        const startHH = Math.floor(startMin / 60).toString().padStart(2, '0');
+        const startMM = (startMin % 60).toString().padStart(2, '0');
+        const startTime = `${startHH}:${startMM}:00`;
+        return {
+          name,
+          duration,
+          category: info?.category || null,
+          price: override?.price_override ?? info?.price ?? null,
+          startTime,
+          startTimeOffsetMinutes: startMin - apptStartMin,
+          assignedStylist: {
+            userId: override?.assigned_user_id ?? appointment.stylist_user_id ?? null,
+            name: override?.assigned_staff_name ?? appointment.staff_name ?? null,
+          },
+          requiresConsultation: !!override?.requires_consultation,
+        };
+      });
+  }, [appointment, serviceLookup, assignmentMap]);
 
   const durationMinutes = appointment ? getDurationMinutes(appointment.start_time, appointment.end_time) : 0;
 
