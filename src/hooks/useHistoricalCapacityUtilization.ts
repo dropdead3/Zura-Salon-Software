@@ -229,6 +229,7 @@ export function useHistoricalCapacityUtilization(
         appointmentCount: 0,
         revenue: 0,
         gapHours: dayAvailableHours,
+        overbookedHours: 0,
         isClosed: allClosed,
       });
 
