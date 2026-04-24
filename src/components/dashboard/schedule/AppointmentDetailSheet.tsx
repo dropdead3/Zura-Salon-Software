@@ -1833,7 +1833,7 @@ export function AppointmentDetailSheet({
                                   </TooltipProvider>
                                 )}
                               </div>
-                              <span className="font-display text-sm font-medium">
+                              <span className="font-display text-sm font-medium whitespace-nowrap tabular-nums">
                                 <BlurredAmount>{formatCurrency(total)}</BlurredAmount>
                               </span>
                             </div>
