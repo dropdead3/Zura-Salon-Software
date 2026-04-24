@@ -398,7 +398,7 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
       .from("phorest_staff_mapping")
       .select("phorest_staff_id, user_id")
       .eq("is_active", true);
-    const phorestToUser = new Map((staffMappings || []).map((m: any) => [m.phorest_staff_id, m.user_id]));
+    const phorestToUser = new Map<string, string>((staffMappings || []).map((m: any) => [m.phorest_staff_id, m.user_id] as [string, string]));
 
     for (const apt of staffAppts) {
       const userId = phorestToUser.get(apt.phorest_staff_id);
