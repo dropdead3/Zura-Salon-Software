@@ -1202,11 +1202,55 @@ async function syncClients(
   console.log("Syncing client data with branch/location info...");
 
   try {
-    // Get branches first to fetch clients per-branch for location tracking
-    const branchData = await phorestRequest("/branch", businessId, username, password);
-    const branches = branchData._embedded?.branches || branchData.branches || 
-                     (Array.isArray(branchData) ? branchData : []);
-    console.log(`Found ${branches.length} branches for client sync`);
+    // S7b: Resolve per-branch REGION up-front. Phorest tenants can have
+    // branches split across EU (platform.phorest.com) and US
+    // (platform-us.phorest.com). The per-branch /client endpoint returns
+    // HTTP 200 with an empty array when called against the wrong region —
+    // it does NOT 404 — so the default EU-first fallback in phorestRequest()
+    // never kicks in and the branch silently appears empty. We must pin
+    // each branch to its working base URL.
+    const branchRegion = new Map<string, string>(); // branchId -> base URL
+    const branchMeta = new Map<string, { name: string; region: string }>();
+
+    let euBranches: any[] = [];
+    let usBranches: any[] = [];
+    try {
+      const euData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL);
+      euBranches = euData._embedded?.branches || euData.branches ||
+                   (Array.isArray(euData) ? euData : []);
+    } catch (e: any) {
+      console.log('syncClients: EU /branch enumeration failed:', e.message);
+    }
+    try {
+      const usData = await phorestRequest('/branch', businessId, username, password, PHOREST_BASE_URL_US);
+      usBranches = usData._embedded?.branches || usData.branches ||
+                   (Array.isArray(usData) ? usData : []);
+    } catch (e: any) {
+      console.log('syncClients: US /branch enumeration failed:', e.message);
+    }
+
+    for (const b of euBranches) {
+      const id = b.branchId || b.id;
+      if (id && !branchRegion.has(id)) {
+        branchRegion.set(id, PHOREST_BASE_URL);
+        branchMeta.set(id, { name: b.name || 'Unknown', region: 'EU' });
+      }
+    }
+    for (const b of usBranches) {
+      const id = b.branchId || b.id;
+      if (id && !branchRegion.has(id)) {
+        branchRegion.set(id, PHOREST_BASE_URL_US);
+        branchMeta.set(id, { name: b.name || 'Unknown', region: 'US' });
+      }
+    }
+
+    const branches = Array.from(branchRegion.entries()).map(([id, base]) => ({
+      branchId: id,
+      name: branchMeta.get(id)?.name || 'Unknown',
+      _base: base,
+      _region: branchMeta.get(id)?.region || 'EU',
+    }));
+    console.log(`Found ${branches.length} branches for client sync (EU+US enumerated)`);
 
     // Get staff mappings for preferred stylist
     const { data: staffMappings } = await supabase
@@ -1228,19 +1272,22 @@ async function syncClients(
 
     // Track all clients across branches (client may visit multiple branches)
     const clientDataMap = new Map<string, any>();
+    const branchCoverage: Array<{ branch: string; region: string; fetched: number; expected: number }> = [];
 
-    // Fetch clients from each branch to get branch-specific data
+    // Fetch clients from each branch using its resolved region.
     for (const branch of branches) {
-      const branchId = branch.branchId || branch.id;
-      const branchName = branch.name || 'Unknown';
+      const branchId = branch.branchId;
+      const branchName = branch.name;
+      const branchBase = branch._base;
+      const branchRegionLabel = branch._region;
       
       // Try to match branch to our locations table
       const locationId = locationMap.get(branchName.toLowerCase()) || null;
       
-      console.log(`Fetching clients for branch: ${branchName} (${branchId}), mapped location: ${locationId}`);
+      console.log(`Fetching clients for branch: ${branchName} [${branchRegionLabel}] (${branchId}), mapped location: ${locationId}`);
 
       try {
-        // Fetch clients for this branch with pagination
+        // Fetch clients for this branch with pagination — pinned to its region.
         let page = 0;
         let hasMore = true;
         let branchClientCount = 0;
@@ -1251,7 +1298,8 @@ async function syncClients(
             `/branch/${branchId}/client?size=200&page=${page}`, 
             businessId, 
             username, 
-            password
+            password,
+            branchBase, // S7b: pin region per branch
           );
           const clients = clientsData._embedded?.clients || clientsData.clients || [];
           const pageInfo = clientsData.page || {};
@@ -1259,7 +1307,7 @@ async function syncClients(
           totalExpected = pageInfo.totalElements || totalExpected;
 
           branchClientCount += clients.length;
-          console.log(`Branch ${branchName}: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
+          console.log(`Branch ${branchName} [${branchRegionLabel}]: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
 
           for (const client of clients) {
             const clientId = client.clientId || client.id;
@@ -1296,16 +1344,37 @@ async function syncClients(
         }
 
         console.log(`Branch ${branchName}: ${branchClientCount} clients fetched (expected ${totalExpected})`);
+        branchCoverage.push({ branch: branchName, region: branchRegionLabel, fetched: branchClientCount, expected: totalExpected });
       } catch (e: any) {
         console.log(`Failed to fetch clients for branch ${branchId}:`, e.message);
+        branchCoverage.push({ branch: branchName, region: branchRegionLabel, fetched: 0, expected: 0 });
       }
     }
 
-    // If no clients found via branch endpoints, fall back to global endpoint
-    if (clientDataMap.size === 0) {
-      console.log("Falling back to global client endpoint with pagination...");
+    // S7b: Coverage-gated global fallback. Probe global tenant size and
+    // fall back if per-branch coverage is materially incomplete (was: only
+    // fired when clientDataMap was completely empty, which silently masked
+    // partial-branch failures like Val Vista Lakes returning 1 of ~1500).
+    let globalTotal = 0;
+    try {
+      const probe = await phorestRequest(`/client?size=1&page=0`, businessId, username, password);
+      globalTotal = probe.page?.totalElements || 0;
+    } catch (e: any) {
+      console.log('syncClients: global tenant probe failed:', e.message);
+    }
+
+    const branchCoveragePct = globalTotal > 0
+      ? (clientDataMap.size / globalTotal) * 100
+      : 0;
+    console.log(`[SYNC HEALTH] Per-branch coverage: ${clientDataMap.size}/${globalTotal} (${branchCoveragePct.toFixed(1)}%)`);
+
+    // Run global fallback whenever branch coverage < 95% OR map is empty.
+    // Per-branch attribution wins (set first); global pass only fills gaps.
+    if (clientDataMap.size === 0 || (globalTotal > 0 && branchCoveragePct < 95)) {
+      console.log(`Running global client endpoint to fill ${globalTotal - clientDataMap.size} unattributed clients...`);
       let page = 0;
       let hasMore = true;
+      let globalAdded = 0;
 
       while (hasMore) {
         const clientsData = await phorestRequest(`/client?size=200&page=${page}`, businessId, username, password);
@@ -1316,7 +1385,12 @@ async function syncClients(
         console.log(`Global endpoint: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
 
         for (const client of clients) {
-          clientDataMap.set(client.clientId || client.id, client);
+          const cid = client.clientId || client.id;
+          if (!clientDataMap.has(cid)) {
+            // No branch attribution available — record without branch.
+            clientDataMap.set(cid, client);
+            globalAdded++;
+          }
         }
 
         if (clients.length === 0 || page + 1 >= totalPages || page >= 100) {
@@ -1325,9 +1399,11 @@ async function syncClients(
           page++;
         }
       }
+      console.log(`Global fallback added ${globalAdded} clients without branch attribution`);
     }
 
-    console.log(`Total unique clients to sync: ${clientDataMap.size}`);
+    console.log(`Total unique clients to sync: ${clientDataMap.size} (branch-attributed + global)`);
+    console.log(`[SYNC HEALTH] Branch coverage breakdown: ${JSON.stringify(branchCoverage)}`);
 
     let synced = 0;
     for (const [clientId, client] of clientDataMap) {
