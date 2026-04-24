@@ -757,7 +757,21 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                   </CardHeader>
                   <CardContent className="space-y-8">
                     <div className="space-y-4">
-                      <Label className="text-sm font-medium">Color Theme</Label>
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <Label className="text-sm font-medium">Color Theme</Label>
+                        {!canEditOrgTheme && (
+                          <Badge variant="outline" className="gap-1.5">
+                            <Lock className="w-3 h-3" />
+                            Account Owner only
+                          </Badge>
+                        )}
+                      </div>
+                      {!canEditOrgTheme && (
+                        <p className="text-xs text-muted-foreground">
+                          Brand colors are organization-wide. Only the Account Owner can change them.
+                          Light/dark mode below is per user and stays available to you.
+                        </p>
+                      )}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {colorThemes.map((themeOption) => {
                           const isSelected = colorMounted && colorTheme === themeOption.id;
@@ -765,6 +779,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                           const preview = isDark ? themeOption.darkPreview : themeOption.lightPreview;
                           return (
                             <button key={themeOption.id} onClick={() => {
+                              if (!canEditOrgTheme) return;
                               setColorTheme(themeOption.id);
                               const mappedName = COLOR_THEME_TO_CATEGORY_MAP[themeOption.id];
                               const matched = categoryThemes?.find(t => t.name === mappedName);
@@ -774,8 +789,11 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                               }
                               syncSplashToTheme(themeOption.id);
                             }}
+                              disabled={!canEditOrgTheme}
+                              aria-disabled={!canEditOrgTheme}
                               className={cn("relative flex flex-col items-start gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                                isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50")}>
+                                isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/50",
+                                !canEditOrgTheme && "opacity-60 cursor-not-allowed hover:border-border")}>
                               <div className="flex items-center gap-1.5 w-full">
                                 <div
                                   className="w-8 h-8 rounded-lg border border-border"
