@@ -468,6 +468,48 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   };
 }
 
+/**
+ * Derive a deeper, more vibrant accent edge color from a card's own hue.
+ * Used by the schedule appointment leading-edge accent so each card's left
+ * border belongs to the card's own color family (no global purple/primary).
+ *
+ * Rules:
+ * - Preserve hue (never drift to a different color).
+ * - Reduce lightness so the edge reads deeper than the fill.
+ * - Modestly increase saturation for vibrance.
+ * - Grays stay neutral but darker (no invented hue).
+ * - Pale fills (consultation/champagne) get a stronger lightness drop so
+ *   the edge visibly contrasts the soft body.
+ */
+export function deriveAccentEdgeColor(hexColor: string, isDark: boolean): string {
+  const hslStr = hexToHsl(hexColor);
+  const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));
+  const [h, s, l] = parts;
+  const isGray = s < 8;
+
+  if (isDark) {
+    // Dark mode: brighten + saturate so the edge pops against the dark fill.
+    if (isGray) {
+      return hslToHex(`${Math.round(h)} ${Math.round(Math.min(s + 4, 14))}% ${Math.round(Math.min(l + 18, 62))}%`);
+    }
+    const accentS = Math.min(s + 12, 92);
+    const accentL = Math.min(Math.max(l + 8, 48), 62);
+    return hslToHex(`${Math.round(h)} ${Math.round(accentS)}% ${Math.round(accentL)}%`);
+  }
+
+  // Light mode: deeper + slightly more saturated than the fill.
+  if (isGray) {
+    const accentL = Math.max(l - 22, 18);
+    return hslToHex(`${Math.round(h)} ${Math.round(s)}% ${Math.round(accentL)}%`);
+  }
+
+  // Pale fills (l > 78) need a bigger drop to be visible against the body.
+  const drop = l > 78 ? 22 : l > 65 ? 18 : 14;
+  const accentL = Math.max(l - drop, 18);
+  const accentS = Math.min(s + 10, 92);
+  return hslToHex(`${Math.round(h)} ${Math.round(accentS)}% ${Math.round(accentL)}%`);
+}
+
 export function getDarkCategoryStyle(hexColor: string): DarkCategoryStyle {
   const hslStr = hexToHsl(hexColor);
   const parts = hslStr.split(/[\s%]+/).map(v => parseFloat(v));

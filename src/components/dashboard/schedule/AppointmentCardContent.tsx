@@ -25,8 +25,8 @@ import { ConnectStatusPill } from './ConnectStatusPill';
 // Pre-checkout statuses where Stripe Connect setup is still actionable.
 // Once an appointment is completed/cancelled/no-show, the pill has no value.
 const PRE_CHECKOUT_STATUSES = new Set(['booked', 'unconfirmed', 'confirmed', 'checked_in', 'arrived', 'started', 'in_progress']);
-import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_BORDER } from '@/lib/design-tokens';
-import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor } from '@/utils/categoryColors';
+import { APPOINTMENT_STATUS_COLORS, APPOINTMENT_STATUS_BADGE, LEADING_ACCENT_EDGE } from '@/lib/design-tokens';
+import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker, getDarkCategoryStyle, boostPaleCategoryColor, getContrastingTextColor, deriveLightModeColor, deriveAccentEdgeColor } from '@/utils/categoryColors';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { ServiceLookupEntry } from '@/hooks/useServiceLookup';
@@ -621,9 +621,19 @@ export function AppointmentCardContent({
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
     if (displayGradient) {
-      return {
+      const base: React.CSSProperties = {
         background: displayGradient.background,
         color: displayGradient.textColor,
+      };
+      if (!willShowLeadingAccent) return base;
+      // Derive the accent from the gradient's textColor so the left edge
+      // stays in the same hue family as the gradient (e.g. consultation gold).
+      const accentEdge = deriveAccentEdgeColor(displayGradient.textColor, isDark);
+      return {
+        ...base,
+        borderLeftColor: accentEdge,
+        borderLeftWidth: '2px',
+        borderLeftStyle: 'solid' as const,
       };
     }
     if (useCategoryColor && isDark && darkStyle) {
@@ -634,14 +644,18 @@ export function AppointmentCardContent({
         borderStyle: 'solid' as const,
         transition: 'background-color 150ms ease, box-shadow 150ms ease',
       };
-      return willShowLeadingAccent
-        ? {
-            ...base,
-            borderTopColor: darkStyle.fill,
-            borderRightColor: darkStyle.fill,
-            borderBottomColor: darkStyle.fill,
-          }
-        : { ...base, borderColor: darkStyle.fill };
+      if (!willShowLeadingAccent) {
+        return { ...base, borderColor: darkStyle.fill };
+      }
+      const accentEdge = deriveAccentEdgeColor(catColor.bg, true);
+      return {
+        ...base,
+        borderTopColor: darkStyle.fill,
+        borderRightColor: darkStyle.fill,
+        borderBottomColor: darkStyle.fill,
+        borderLeftColor: accentEdge,
+        borderLeftWidth: '2px',
+      };
     }
     if (useCategoryColor) {
       const boostedBg = boostPaleCategoryColor(catColor.bg);
@@ -656,14 +670,18 @@ export function AppointmentCardContent({
         opacity: 1,
         backdropFilter: 'none',
       };
-      return willShowLeadingAccent
-        ? {
-            ...base,
-            borderTopColor: lightTokens.stroke,
-            borderRightColor: lightTokens.stroke,
-            borderBottomColor: lightTokens.stroke,
-          }
-        : { ...base, borderColor: lightTokens.stroke };
+      if (!willShowLeadingAccent) {
+        return { ...base, borderColor: lightTokens.stroke };
+      }
+      const accentEdge = deriveAccentEdgeColor(boostedBg, false);
+      return {
+        ...base,
+        borderTopColor: lightTokens.stroke,
+        borderRightColor: lightTokens.stroke,
+        borderBottomColor: lightTokens.stroke,
+        borderLeftColor: accentEdge,
+        borderLeftWidth: '2px',
+      };
     }
     return {};
   }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, willShowLeadingAccent]);
@@ -697,8 +715,8 @@ export function AppointmentCardContent({
         !useCategoryColor && !displayGradient && statusColors.bg,
         !useCategoryColor && !displayGradient && statusColors.border,
         !useCategoryColor && !displayGradient && statusColors.text,
-        // ── Leading ear accent (matches Top Staff card pattern) ──
-        showLeadingAccent && LEADING_ACCENT_BORDER,
+        // ── Leading edge accent (per-card, color set inline via borderLeftColor) ──
+        showLeadingAccent && LEADING_ACCENT_EDGE,
         isCancelled && 'opacity-60',
         isNoShow && 'ring-[1.5px] ring-destructive ring-inset',
         isSelected && 'ring-[1.5px] ring-primary ring-inset shadow-[0_0_0_3px_hsl(var(--primary)/0.18),0_2px_4px_rgba(15,23,42,0.08),0_8px_20px_-8px_rgba(15,23,42,0.18)]',

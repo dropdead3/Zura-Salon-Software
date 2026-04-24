@@ -301,8 +301,17 @@ type AppointmentStatusKey = 'pending' | 'booked' | 'unconfirmed' | 'confirmed' |
  * Native left border on the rounded card root so the accent follows the corner
  * radius automatically. Use as a className token on the card itself.
  */
-export const LEADING_ACCENT_BORDER =
-  'border-l-[3px] border-l-primary/70 ring-1 ring-primary/10';
+// LEADING_ACCENT_EDGE — geometry only (left border width).
+// Color MUST be supplied per-card via inline `borderLeftColor` derived from
+// the card's own category hue (see `deriveAccentEdgeColor` in
+// `@/utils/categoryColors`). Do NOT add color tokens (`border-l-primary`,
+// `ring-*`, etc.) here — schedule cards have per-category body colors and a
+// global accent color would override the category stroke visually.
+export const LEADING_ACCENT_EDGE = 'border-l-2';
+
+// Deprecated alias — kept for backwards compatibility during migration.
+// @deprecated Use `LEADING_ACCENT_EDGE` + inline `borderLeftColor`.
+export const LEADING_ACCENT_BORDER = LEADING_ACCENT_EDGE;
 
 /** Day / Week view appointment card colors (saturated for calendar cells, with dark mode variants) */
 export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
