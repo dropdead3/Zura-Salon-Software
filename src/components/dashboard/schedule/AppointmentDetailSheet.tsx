@@ -1066,7 +1066,7 @@ export function AppointmentDetailSheet({
           requiresConsultation: !!override?.requires_consultation,
         };
       });
-  }, [appointment, serviceLookup, assignmentMap]);
+  }, [appointment, serviceLookup, assignmentMap, teamMembers]);
 
   const durationMinutes = appointment ? getDurationMinutes(appointment.start_time, appointment.end_time) : 0;
 
