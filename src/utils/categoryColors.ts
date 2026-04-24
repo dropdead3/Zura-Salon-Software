@@ -613,29 +613,32 @@ export function getAppointmentBorderStyle(input: AppointmentBorderStyleInput): R
     };
   }
 
-  // Branch 3: light category fill
+  // Branch 3: light category ghost fill
+  // Translucent rgba tint over the white canvas, crisp saturated stroke,
+  // category-toned readable text. Mirrors Branch 2's ghost treatment so
+  // light/dark stay symmetric. The leading-ear accent (when present) is
+  // the single fully-saturated surface carrying categorical identity.
   if (catColor) {
-    const boostedBg = boostPaleCategoryColor(catColor.bg);
-    const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
-    const lightTokens = deriveLightModeColor(boostedBg);
+    const lightStyle = getLightCategoryStyle(catColor.bg);
     const base: React.CSSProperties = {
-      backgroundColor: boostedBg,
-      color: boostedText,
+      backgroundColor: lightStyle.fill,
+      color: lightStyle.text,
       borderWidth: '1px',
       borderStyle: 'solid',
       boxShadow: 'none',
       opacity: 1,
       backdropFilter: 'none',
+      transition: 'background-color 150ms ease, box-shadow 150ms ease',
     };
     if (!willShowLeadingAccent) {
-      return { ...base, borderColor: lightTokens.stroke };
+      return { ...base, borderColor: lightStyle.stroke };
     }
-    const accentEdge = deriveAccentEdgeColor(boostedBg, false);
+    const accentEdge = deriveAccentEdgeColor(catColor.bg, false);
     return {
       ...base,
-      borderTopColor: lightTokens.stroke,
-      borderRightColor: lightTokens.stroke,
-      borderBottomColor: lightTokens.stroke,
+      borderTopColor: lightStyle.stroke,
+      borderRightColor: lightStyle.stroke,
+      borderBottomColor: lightStyle.stroke,
       borderLeftColor: accentEdge,
       borderLeftWidth: accentLeftWidth,
     };
