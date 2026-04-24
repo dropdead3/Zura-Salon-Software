@@ -1778,7 +1778,7 @@ export function AppointmentDetailSheet({
                                   <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
                                 )}
                                 {svc.price != null && (
-                                  <span className="text-xs"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
+                                  <span className="text-xs whitespace-nowrap tabular-nums"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
                                 )}
                               </div>
                             </div>
