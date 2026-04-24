@@ -10,6 +10,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
 import { useAutoLock } from '@/hooks/useAutoLock';
 import { useColorTheme } from '@/hooks/useColorTheme';
+import { useOrgThemeReset } from '@/hooks/useOrgThemeReset';
 import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
@@ -241,6 +242,9 @@ function NavHistoryArrows() {
 function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }: DashboardLayoutProps) {
   // Global color theme sync — ensures saved theme is applied on every dashboard route
   useColorTheme();
+  // Theme Governance — clear stale brand vars/classes on org switch so the
+  // next org's identity paints cleanly with no flash of the previous tenant.
+  useOrgThemeReset();
   // Silently backfill setup for legacy orgs (idempotent, runs once per browser)
   useBackfillTrigger();
 
