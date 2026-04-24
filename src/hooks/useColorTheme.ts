@@ -1,8 +1,9 @@
 import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useThemeAuthority } from './useThemeAuthority';
 
 export type ColorTheme =
   | 'zura'
@@ -18,9 +19,19 @@ export type ColorTheme =
   | 'noir'
   | 'marine';
 
-const THEME_STORAGE_KEY = 'dd-color-theme';
+const THEME_STORAGE_KEY_BASE = 'dd-color-theme';
+const LEGACY_GLOBAL_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
+
+/**
+ * Theme Governance: localStorage is now keyed per-org so switching orgs
+ * in the same browser doesn't briefly paint the previous org's brand.
+ * The legacy global key is read once for migration only.
+ */
+function themeStorageKeyFor(orgId: string | null | undefined): string {
+  return orgId ? `${THEME_STORAGE_KEY_BASE}:${orgId}` : THEME_STORAGE_KEY_BASE;
+}
 
 // Canonical display order: Zura, Cream Lux, Neon, Rosewood, Rose Gold,
 // Peach, Cognac, Jade, Sage, Matrix, Noir, Marine (appended).
