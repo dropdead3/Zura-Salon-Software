@@ -17,6 +17,10 @@ export const AUDIT_EVENTS = {
   
   // Service assignments
   SERVICE_REASSIGNED: 'service_reassigned',
+  SERVICE_TIME_ADJUSTED: 'service_time_adjusted',
+  SERVICE_DURATION_ADJUSTED: 'service_duration_adjusted',
+  SERVICE_PRICE_OVERRIDDEN: 'service_price_overridden',
+  SERVICE_RQ_TOGGLED: 'service_rq_toggled',
   
   // Notes
   NOTE_ADDED: 'note_added',
