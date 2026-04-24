@@ -5,11 +5,17 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { PlatformThemeProvider, usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { PlatformPresenceProvider } from '@/contexts/PlatformPresenceContext';
+import { usePlatformThemeIsolation } from '@/hooks/usePlatformThemeIsolation';
 
 const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
 function PlatformLayoutInner() {
   const { resolvedTheme } = usePlatformTheme();
+
+  // Theme Governance: strip any org-side theme classes/inline vars
+  // left on <html> by useColorTheme so platform chrome cannot inherit
+  // tenant brand colors via raw shadcn primitives reading --primary.
+  usePlatformThemeIsolation();
 
   // Mirror platform theme classes onto <body> so Radix portaled elements
   // (Select, Dialog, Popover) inherit --platform-* CSS variables.

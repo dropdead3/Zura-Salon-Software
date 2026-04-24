@@ -9,3 +9,5 @@ export * from './PlatformSelect';
 export * from './PlatformTable';
 export * from './PlatformDialog';
 export * from './PlatformTextarea';
+export * from './PlatformCheckbox';
+export * from './PlatformSwitch';
