@@ -181,7 +181,8 @@ interface Message {
 async function executeToolCall(
   toolName: string, 
   args: Record<string, unknown>,
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   userId: string,
   organizationId: string
 ): Promise<{ result: unknown; action?: unknown }> {
@@ -462,9 +463,13 @@ serve(async (req) => {
     
     const body = await validateBody(req, AgentChatSchema, getCorsHeaders(req));
     const { messages, userId, organizationId, userRole } = body;
+    const orgId = body.organizationId || body.organization_id;
+    if (!orgId) {
+      return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+    }
     // Verify org access
     try {
-      await requireOrgMember(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      await requireOrgMember(supabaseAdmin, user.id, orgId);
     } catch (orgErr) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }
@@ -548,8 +553,8 @@ serve(async (req) => {
           toolName, 
           toolArgs, 
           supabase, 
-          userId, 
-          organizationId
+          userId || user.id, 
+          orgId
         );
         
         toolResults.push({
