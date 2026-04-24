@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
         .from("notification_preferences")
         .select("user_id, payroll_deadline_enabled")
         .in("user_id", orgUsers.map((u: any) => u.user_id));
-      const prefsMap = new Map(prefs?.map((p: any) => [p.user_id, p]) || []);
+      const prefsMap = new Map<string, any>(prefs?.map((p: any) => [p.user_id, p] as [string, any]) || []);
 
       const periodRange = `${formatDisplayDate(periodStart)} – ${formatDisplayDate(periodEnd)}`;
       const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace(".supabase.co", ".lovable.app")}`;
