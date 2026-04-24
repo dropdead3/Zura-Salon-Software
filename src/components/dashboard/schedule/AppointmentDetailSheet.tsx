@@ -3053,11 +3053,14 @@ export function AppointmentDetailSheet({
                       toast.error('Failed to save service assignments', { description: err.message });
                     }
                   }}
-                  disabled={Object.keys(perServiceSelections).length === 0 || upsertAssignments.isPending}
+                  disabled={Object.entries(perServiceSelections).filter(([n, u]) => u !== (assignmentMap.get(n)?.assigned_user_id || appointment.stylist_user_id)).length === 0 || upsertAssignments.isPending}
                 >
                   {upsertAssignments.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
                   <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
-                  Save Assignments
+                  {(() => {
+                    const n = Object.entries(perServiceSelections).filter(([name, u]) => u !== (assignmentMap.get(name)?.assigned_user_id || appointment.stylist_user_id)).length;
+                    return n > 0 ? `Save ${n} change${n > 1 ? 's' : ''}` : 'Save Assignments';
+                  })()}
                 </Button>
               </DialogFooter>
             </>
