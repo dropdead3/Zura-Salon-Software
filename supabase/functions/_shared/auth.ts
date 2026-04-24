@@ -41,7 +41,7 @@ export async function requireAuth(req: Request): Promise<AuthResult> {
  * Validates that the authenticated user is a member of the given organization.
  */
 export async function requireOrgMember(
-  supabaseAdmin: ReturnType<typeof createClient>,
+  supabaseAdmin: AdminClient,
   userId: string,
   organizationId: string
 ): Promise<void> {
