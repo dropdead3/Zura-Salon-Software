@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useRouteZone } from '@/lib/route-utils';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOptionalOrganizationContext } from '@/contexts/OrganizationContext';
 
 const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
 
@@ -36,8 +36,11 @@ function clearOrgThemeVars() {
  */
 export function ThemeInitializer() {
   const zone = useRouteZone();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  // Safe accessor: ThemeInitializer is mounted at the App root and renders
+  // on public routes (/login, /, /org/:slug) where OrganizationProvider is
+  // not in the tree. Strict useOrganizationContext would throw there.
+  const orgCtx = useOptionalOrganizationContext();
+  const orgId = orgCtx?.effectiveOrganization?.id;
   const appliedVarsRef = useRef<string[]>([]);
   const loadTokenRef = useRef(0);
 
