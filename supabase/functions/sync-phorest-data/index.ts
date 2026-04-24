@@ -967,17 +967,108 @@ async function syncAppointments(
             }
           }
 
+          // PASS 3 (S4b): Targeted single-client probe for IDs the paginated
+          // sweep couldn't find. The paginated /branch/{id}/client list only
+          // returns clients indexed to that branch in Phorest's own roster —
+          // archived/anonymized/cross-branch clients are excluded from the
+          // list endpoint but reachable via /branch/{id}/client/{clientId}.
+          // We use the appointment's OWN branch (now reliably populated post
+          // S4a backfill) as the probe target, with regional pinning.
+          let s4bResolved = 0;
+          let s4b404 = 0;
+          let s4bErrors = 0;
+          if (remainingIds.size > 0) {
+            const stillUnresolved = Array.from(remainingIds);
+            // Cap at 150 per run to bound API budget. Remaining IDs roll into
+            // the next sync cycle automatically.
+            const probeBudget = stillUnresolved.slice(0, 150);
+            const negativeUpserts: any[] = [];
+
+            for (const cid of probeBudget) {
+              // Choose target branch: appointment's own branch first, then any
+              // sibling-client hint, then fall back to all branches in order.
+              const primaryBranch = branchHintMap.get(cid);
+              const probeBranchOrder = primaryBranch
+                ? [primaryBranch, ...branchIds.filter(b => b !== primaryBranch)]
+                : branchIds;
+
+              let resolved = false;
+              let allReturned404 = true;
+
+              for (const branchId of probeBranchOrder) {
+                const region = branchRegion.get(branchId) || PHOREST_BASE_URL;
+                try {
+                  const c: any = await phorestRequest(
+                    `/branch/${branchId}/client/${cid}`,
+                    businessId, username, password,
+                    region,
+                  );
+                  // Phorest may return 200 with the client object directly.
+                  const first = c?.firstName || null;
+                  const last = c?.lastName || null;
+                  const name = `${first || ''} ${last || ''}`.trim() || c?.name || null;
+                  if (!name) {
+                    allReturned404 = false; // got a response, just empty
+                    continue;
+                  }
+
+                  await supabase.from('phorest_clients').upsert({
+                    phorest_client_id: cid,
+                    name,
+                    first_name: first,
+                    last_name: last,
+                    email: c.email || null,
+                    phone: c.mobile || c.phone || null,
+                    phorest_branch_id: branchId,
+                  }, { onConflict: 'phorest_client_id' });
+
+                  clientNameMap.set(cid, name);
+                  remainingIds.delete(cid);
+                  s4bResolved++;
+                  resolved = true;
+                  break; // found in this branch; stop probing other branches
+                } catch (e: any) {
+                  const msg = String(e?.message || '');
+                  // Only treat genuine 404 (not transient/auth/network) as
+                  // "not in this branch" — keep allReturned404 honest.
+                  if (msg.includes('404') || msg.toLowerCase().includes('not found')) {
+                    continue;
+                  }
+                  allReturned404 = false;
+                  s4bErrors++;
+                  break; // transient — bail and retry next sync cycle
+                }
+              }
+
+              // If EVERY probed branch returned 404, this client truly does
+              // not exist in any per-branch roster — write a negative cache
+              // so we stop probing it next sync. Renders as "Client #XXXX".
+              if (!resolved && allReturned404) {
+                s4b404++;
+                negativeUpserts.push({
+                  phorest_client_id: cid,
+                  name: '[Deleted Client]',
+                  first_name: null,
+                  last_name: null,
+                });
+              }
+            }
+
+            if (negativeUpserts.length > 0) {
+              await supabase
+                .from('phorest_clients')
+                .upsert(negativeUpserts, { onConflict: 'phorest_client_id' });
+            }
+          }
+
           onDemandUnresolved = remainingIds.size;
-          if (onDemandUnresolved > 0) {
-            // SIGNAL PRESERVATION: log IDs that remain unresolved after the
-            // paginated sweep — they will render as "Client #ABCD" in the UI.
-            // Do NOT write any placeholder row.
-            console.log(`On-demand paginated sweep: ${onDemandUnresolved} IDs still unresolved after probing ${orderedBranchProbe.length} branches`);
+          if (onDemandUnresolved > 0 || s4bResolved > 0 || s4b404 > 0) {
+            console.log(`[S4b TARGETED] resolved=${s4bResolved} confirmed-deleted=${s4b404} transient-errors=${s4bErrors} still-unresolved=${onDemandUnresolved}`);
           }
         }
 
         if (onDemandFetched > 0 || onDemandUnresolved > 0 || onDemandErrors > 0) {
-          console.log(`On-demand (paginated): ${onDemandFetched} resolved, ${onDemandUnresolved} unresolved, ${onDemandErrors} transient errors (NO negative-cache writes)`);
+          console.log(`On-demand (paginated): ${onDemandFetched} resolved, ${onDemandUnresolved} unresolved, ${onDemandErrors} transient errors`);
         }
 
         // Bulk-update appointments with all resolved real names (skip [Deleted Client]).
