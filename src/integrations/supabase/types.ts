@@ -1168,9 +1168,13 @@ export type Database = {
           assigned_user_id: string
           created_at: string
           created_by: string | null
+          duration_minutes_override: number | null
           id: string
           organization_id: string
+          price_override: number | null
+          requires_consultation: boolean
           service_name: string
+          start_time_offset_minutes: number | null
         }
         Insert: {
           appointment_id: string
@@ -1178,9 +1182,13 @@ export type Database = {
           assigned_user_id: string
           created_at?: string
           created_by?: string | null
+          duration_minutes_override?: number | null
           id?: string
           organization_id: string
+          price_override?: number | null
+          requires_consultation?: boolean
           service_name: string
+          start_time_offset_minutes?: number | null
         }
         Update: {
           appointment_id?: string
@@ -1188,9 +1196,13 @@ export type Database = {
           assigned_user_id?: string
           created_at?: string
           created_by?: string | null
+          duration_minutes_override?: number | null
           id?: string
           organization_id?: string
+          price_override?: number | null
+          requires_consultation?: boolean
           service_name?: string
+          start_time_offset_minutes?: number | null
         }
         Relationships: [
           {

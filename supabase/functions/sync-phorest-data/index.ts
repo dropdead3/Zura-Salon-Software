@@ -239,7 +239,7 @@ async function syncStaff(supabase: any, businessId: string, username: string, pa
       .from("phorest_staff_mapping")
       .select("phorest_staff_id, user_id, phorest_photo_url");
 
-    const mappingsByPhorestId = new Map(
+    const mappingsByPhorestId = new Map<string, any>(
       (existingMappings || []).map((m: any) => [m.phorest_staff_id, m])
     );
 
@@ -2149,10 +2149,12 @@ async function syncRoster(supabase: any, businessId: string, username: string, p
     : { data: [] };
   const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p.organization_id]));
 
-  const staffMap = new Map((staffMappings || []).map((m: any) => [
-    m.phorest_staff_id,
-    { user_id: m.user_id, organization_id: profileMap.get(m.user_id) || null }
-  ]));
+  const staffMap = new Map<string, { user_id: string; organization_id: string | null }>(
+    (staffMappings || []).map((m: any) => [
+      m.phorest_staff_id,
+      { user_id: m.user_id, organization_id: profileMap.get(m.user_id) || null },
+    ])
+  );
   console.log(`Staff mapping has ${staffMap.size} entries (${profileMap.size} with org). Keys: ${[...staffMap.keys()].slice(0, 5).join(', ')}...`);
 
   // Build branch-to-location map: phorest_branch_id -> app location id

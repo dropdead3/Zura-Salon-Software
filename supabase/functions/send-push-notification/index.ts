@@ -49,7 +49,7 @@ async function hkdf(
 ): Promise<Uint8Array> {
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    ikm,
+    ikm as BufferSource,
     { name: 'HKDF' },
     false,
     ['deriveBits']
@@ -58,8 +58,8 @@ async function hkdf(
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'HKDF',
-      salt: salt,
-      info: info,
+      salt: salt as BufferSource,
+      info: info as BufferSource,
       hash: 'SHA-256',
     },
     keyMaterial,
@@ -147,11 +147,11 @@ async function encryptPayload(
   paddedPayload.set(payloadBytes, 2 + paddingLength);
   
   // Encrypt with AES-GCM
-  const key = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const key = await crypto.subtle.importKey('raw', cek as BufferSource, { name: 'AES-GCM' }, false, ['encrypt']);
   const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv: nonce },
+    { name: 'AES-GCM', iv: nonce as BufferSource },
     key,
-    paddedPayload
+    paddedPayload as BufferSource,
   );
   
   return {

@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
       .select("id, subject, html_body, timing_type, timing_value, flow_id")
       .in("id", stepIds);
 
-    const stepMap = new Map(steps?.map((s: any) => [s.id, s]) || []);
+    const stepMap = new Map<string, any>(steps?.map((s: any) => [s.id, s]) || []);
 
     // Fetch location overrides
     const locationIds = [...new Set(

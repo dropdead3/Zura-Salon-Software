@@ -44,12 +44,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, RevenueForecastSchema, getCorsHeaders(req));
-    const { 
-      organizationId,
-      locationId,
-      forecastDays,
-      forecastType
-    } = body;
+    const organizationId: string = body.organizationId;
+    const locationId: string | undefined = body.locationId;
+    const forecastDays: number = body.forecastDays ?? 7;
+    const forecastType: "daily" | "weekly" | "monthly" = body.forecastType ?? "daily";
     // Verify org access
     try {
       const orgId = body.organizationId || body.organization_id;

@@ -43,10 +43,14 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey) as any;
 
     const body = await validateBody(req, ClientAutomationsSchema, getCorsHeaders(req));
-    const { organizationId, dryRun } = body;
+    const organizationId: string | undefined = body.organizationId ?? body.organization_id;
+    const dryRun: boolean = body.dryRun ?? false;
+    if (!organizationId) {
+      return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+    }
     // Verify org access
     try {
-      await requireOrgAdmin(supabaseAdmin, user.id, body.organizationId || body.organization_id);
+      await requireOrgAdmin(supabaseAdmin, user.id, organizationId);
     } catch (orgErr: any) {
       return authErrorResponse(orgErr, getCorsHeaders(req));
     }

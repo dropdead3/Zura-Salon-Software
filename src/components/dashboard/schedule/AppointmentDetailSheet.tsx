@@ -106,6 +106,8 @@ import { Users as UsersIcon, Home } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EditServicesDialog } from '@/components/shared/EditServicesDialog';
 import { useUpdateAppointmentServices, type ServiceEntry } from '@/hooks/useUpdateAppointmentServices';
+import { ServiceRow } from '@/components/dashboard/schedule/ServiceRow';
+import { AUDIT_EVENTS } from '@/lib/audit-event-types';
 import { Pencil, Send } from 'lucide-react';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
@@ -1028,11 +1030,114 @@ export function AppointmentDetailSheet({
   // ─── Derived Data ─────────────────────────────────────────────
   const services = useMemo(() => {
     if (!appointment?.service_name) return [];
-    return appointment.service_name.split(',').map(s => s.trim()).filter(Boolean).map(name => {
-      const info = serviceLookup?.get(name);
-      return { name, duration: info?.duration_minutes || null, category: info?.category || null, price: info?.price ?? null };
-    });
-  }, [appointment?.service_name, serviceLookup]);
+    const apptStart = appointment.start_time || '00:00:00';
+    const [sh, sm] = apptStart.split(':').map(Number);
+    const apptStartMin = sh * 60 + sm;
+    let cursorMin = apptStartMin;
+    return appointment.service_name
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(name => {
+        const info = serviceLookup?.get(name);
+        const override = assignmentMap.get(name);
+        const baseDuration = info?.duration_minutes || 0;
+        const duration = override?.duration_minutes_override ?? baseDuration;
+        const startMin = override?.start_time_offset_minutes != null
+          ? apptStartMin + override.start_time_offset_minutes
+          : cursorMin;
+        cursorMin = startMin + duration;
+        const startHH = Math.floor(startMin / 60).toString().padStart(2, '0');
+        const startMM = (startMin % 60).toString().padStart(2, '0');
+        const startTime = `${startHH}:${startMM}:00`;
+        return {
+          name,
+          duration,
+          category: info?.category || null,
+          price: override?.price_override ?? info?.price ?? null,
+          startTime,
+          startTimeOffsetMinutes: startMin - apptStartMin,
+          assignedStylist: {
+            userId: override?.assigned_user_id ?? appointment.stylist_user_id ?? null,
+            name: override?.assigned_staff_name ?? (
+              teamMembers.find(m => m.user_id === appointment.stylist_user_id)?.display_name
+              || teamMembers.find(m => m.user_id === appointment.stylist_user_id)?.full_name
+              || null
+            ),
+          },
+          requiresConsultation: !!override?.requires_consultation,
+        };
+      });
+  }, [appointment, serviceLookup, assignmentMap, teamMembers]);
+
+  // ─── Per-service override handlers (Phorest-style row chips) ───
+  // Note: `fireAuditLog` (declared later in this component) is captured by closure
+  // — useCallback runs at event time, after all consts initialize.
+  const persistServiceOverride = useCallback(
+    async (
+      serviceName: string,
+      patch: {
+        startTimeOffsetMinutes?: number | null;
+        durationMinutesOverride?: number | null;
+        priceOverride?: number | null;
+        requiresConsultation?: boolean;
+        userId?: string;
+        staffName?: string;
+      },
+      auditEvent: keyof typeof AUDIT_EVENTS,
+      previousValue: any,
+      newValue: any,
+    ) => {
+      if (!appointment?.id || !resolvedOrgId) return;
+      const svc = services.find(s => s.name === serviceName);
+      const userId = patch.userId ?? svc?.assignedStylist.userId ?? appointment.stylist_user_id ?? null;
+      const staffName = patch.staffName ?? svc?.assignedStylist.name ?? '';
+      if (!userId || !staffName) {
+        toast.error('Cannot save override — stylist context missing');
+        return;
+      }
+      try {
+        await upsertAssignments.mutateAsync({
+          appointmentId: appointment.id,
+          organizationId: resolvedOrgId,
+          assignments: [{
+            serviceName,
+            userId,
+            staffName,
+            startTimeOffsetMinutes: patch.startTimeOffsetMinutes
+              ?? svc?.startTimeOffsetMinutes ?? null,
+            durationMinutesOverride: patch.durationMinutesOverride
+              ?? (svc ? svc.duration : null),
+            priceOverride: patch.priceOverride
+              ?? svc?.price ?? null,
+            requiresConsultation: patch.requiresConsultation
+              ?? svc?.requiresConsultation ?? false,
+          }],
+        });
+        fireAuditLog(
+          AUDIT_EVENTS[auditEvent],
+          { service: serviceName, value: previousValue },
+          { service: serviceName, value: newValue },
+        );
+      } catch (err: any) {
+        toast.error('Failed to save change', { description: err?.message });
+      }
+    },
+    // fireAuditLog is declared later in this component; we intentionally omit it
+    // from deps — it has stable identity per render and reads from closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [appointment, resolvedOrgId, services, upsertAssignments],
+  );
+
+  const stylistOptions = useMemo(
+    () => teamMembers.map(m => ({
+      user_id: m.user_id,
+      display_name: m.display_name ?? null,
+      full_name: m.full_name ?? null,
+      photo_url: (m as any).photo_url ?? null,
+    })),
+    [teamMembers],
+  );
 
   const durationMinutes = appointment ? getDurationMinutes(appointment.start_time, appointment.end_time) : 0;
 
@@ -1752,39 +1857,68 @@ export function AppointmentDetailSheet({
                           </Button>
                         )}
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="space-y-0 divide-y divide-border/40">
                         {services.map((svc, i) => {
-                          const override = assignmentMap.get(svc.name);
+                          const isLocked = ['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase());
                           return (
-                            <div key={i} className="flex items-center justify-between text-sm">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <span className="truncate">{svc.name}</span>
-                                {svc.category && (
-                                  <Badge variant="outline" className="text-[10px] shrink-0">{svc.category}</Badge>
-                                )}
-                                {override && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <Avatar className="h-4 w-4">
-                                      <AvatarFallback className="text-[7px]">
-                                        {override.assigned_staff_name.slice(0, 2).toUpperCase()}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[11px] text-muted-foreground">{override.assigned_staff_name}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
-                                {svc.duration && (
-                                  <span className="text-muted-foreground text-xs">{formatMinutesToDuration(svc.duration)}</span>
-                                )}
-                                {svc.price != null && (
-                                  <span className="text-xs whitespace-nowrap tabular-nums"><BlurredAmount>{formatCurrency(svc.price)}</BlurredAmount></span>
-                                )}
-                              </div>
-                            </div>
+                            <ServiceRow
+                              key={`${svc.name}-${i}`}
+                              service={{
+                                name: svc.name,
+                                category: svc.category,
+                                startTime: svc.startTime,
+                                duration: svc.duration,
+                                price: svc.price,
+                                assignedStylist: svc.assignedStylist,
+                                requiresConsultation: svc.requiresConsultation,
+                              }}
+                              stylistOptions={stylistOptions}
+                              readOnly={isLocked}
+                              onChangeTime={(newStart) => {
+                                const [h, m] = newStart.split(':').map(Number);
+                                const apptStartMin = (() => {
+                                  const [ah, am] = (appointment.start_time || '00:00:00').split(':').map(Number);
+                                  return ah * 60 + am;
+                                })();
+                                const newOffset = (h * 60 + m) - apptStartMin;
+                                persistServiceOverride(svc.name,
+                                  { startTimeOffsetMinutes: newOffset },
+                                  'SERVICE_TIME_ADJUSTED', svc.startTime, newStart);
+                              }}
+                              onChangeDuration={(mins) => {
+                                persistServiceOverride(svc.name,
+                                  { durationMinutesOverride: mins },
+                                  'SERVICE_DURATION_ADJUSTED', svc.duration, mins);
+                              }}
+                              onChangePrice={(p) => {
+                                persistServiceOverride(svc.name,
+                                  { priceOverride: p },
+                                  'SERVICE_PRICE_OVERRIDDEN', svc.price, p);
+                              }}
+                              onChangeStylist={(userId, name) => {
+                                persistServiceOverride(svc.name,
+                                  { userId, staffName: name },
+                                  'SERVICE_REASSIGNED', svc.assignedStylist.name, name);
+                              }}
+                              onToggleRq={(next) => {
+                                persistServiceOverride(svc.name,
+                                  { requiresConsultation: next },
+                                  'SERVICE_RQ_TOGGLED', svc.requiresConsultation, next);
+                              }}
+                            />
                           );
                         })}
                       </div>
+                      {!['completed', 'cancelled', 'no_show'].includes((appointment.status || '').toLowerCase()) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => setEditServicesOpen(true)}
+                        >
+                          + Add or edit services
+                        </Button>
+                      )}
                       {appointment.total_price != null && (() => {
                         const subtotal = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
                         const total = appointment.total_price ?? 0;
