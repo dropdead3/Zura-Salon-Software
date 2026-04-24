@@ -11,11 +11,11 @@ import {
 } from '@/components/ui/table';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/platform/ui/PlatformSelect';
 import { 
   Building2, 
   Plus, 

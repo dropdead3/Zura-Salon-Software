@@ -12,7 +12,7 @@ import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformTable as Table, PlatformTableBody as TableBody, PlatformTableCell as TableCell, PlatformTableHead as TableHead, PlatformTableHeader as TableHeader, PlatformTableRow as TableRow } from '@/components/platform/ui/PlatformTable';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import {
   CreditCard,
   DollarSign,

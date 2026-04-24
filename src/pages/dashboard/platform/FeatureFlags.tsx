@@ -4,37 +4,37 @@ import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader'
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformCard } from '@/components/platform/ui/PlatformCard';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
 import { Slider } from '@/components/ui/slider';
-import { Textarea } from '@/components/ui/textarea';
+import { PlatformTextarea as Textarea } from '@/components/platform/ui/PlatformTextarea';
 import {
   Dialog,
-  DialogContent,
-  DialogDescription,
+  PlatformDialogContent as DialogContent,
+  PlatformDialogDescription as DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  PlatformDialogTitle as DialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
+  PlatformAlertDialogCancel as AlertDialogCancel,
+  PlatformAlertDialogContent as AlertDialogContent,
+  PlatformAlertDialogDescription as AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  PlatformAlertDialogTitle as AlertDialogTitle,
+} from '@/components/platform/ui/PlatformDialog';
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
+  PlatformSelectContent as SelectContent,
+  PlatformSelectItem as SelectItem,
+  PlatformSelectTrigger as SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/components/platform/ui/PlatformSelect';
 import {
   Collapsible,
   CollapsibleContent,

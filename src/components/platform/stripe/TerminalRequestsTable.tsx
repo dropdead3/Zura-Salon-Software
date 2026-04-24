@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { formatCurrency } from '@/lib/format';
 import { Package, Truck, CheckCircle2, XCircle, Clock, ChevronDown, Search } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformInput as Input } from '@/components/platform/ui/PlatformInput';
+import { Select, PlatformSelectContent as SelectContent, PlatformSelectItem as SelectItem, PlatformSelectTrigger as SelectTrigger, SelectValue } from '@/components/platform/ui/PlatformSelect';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   PlatformTable, PlatformTableBody, PlatformTableCell,
@@ -16,10 +16,10 @@ import {
   type TerminalHardwareRequest,
 } from '@/hooks/useTerminalRequests';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+  Dialog, PlatformDialogContent as DialogContent, DialogHeader, PlatformDialogTitle as DialogTitle, DialogFooter,
+} from '@/components/platform/ui/PlatformDialog';
+import { PlatformLabel as Label } from '@/components/platform/ui/PlatformLabel';
+import { PlatformTextarea as Textarea } from '@/components/platform/ui/PlatformTextarea';
 import { format } from 'date-fns';
 
 const STATUS_CONFIG: Record<string, { label: string; variant: string; icon: React.ElementType }> = {

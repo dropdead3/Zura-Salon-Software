@@ -39,7 +39,7 @@ import { useSupplyLibraryBrands } from '@/hooks/platform/useSupplyLibrary';
 import { BrandWebsiteScraper } from './BrandWebsiteScraper';
 import type { ScrapedProduct } from '@/hooks/platform/useBrandWebsiteScrape';
 import { extractProductLine } from '@/lib/supply-line-parser';
-import { Checkbox } from '@/components/ui/checkbox';
+import { PlatformCheckbox as Checkbox } from '@/components/platform/ui/PlatformCheckbox';
 
 const CATEGORIES = ['color', 'lightener', 'developer', 'toner', 'semi-permanent', 'bond builder', 'treatment', 'additive'];
 const CATEGORY_LABELS: Record<string, string> = {

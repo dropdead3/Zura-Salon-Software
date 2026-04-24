@@ -16,8 +16,8 @@ import {
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { PlatformBadge as Badge } from '@/components/platform/ui/PlatformBadge';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 

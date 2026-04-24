@@ -23,7 +23,7 @@ import {
   PlatformTableCell,
 } from '@/components/platform/ui/PlatformTable';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 import { useUpdateOrgFeatureFlag } from '@/hooks/useOrganizationFeatureFlags';
 import {
   useOrgCapitalDiagnostics,

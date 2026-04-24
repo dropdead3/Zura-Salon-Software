@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { platformBento } from '@/lib/platform-bento-tokens';
+// eslint-disable-next-line no-restricted-imports -- Platform* wrapper file legitimately re-styles raw Dialog primitives.
 import {
   Dialog,
   DialogClose,
@@ -11,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+// eslint-disable-next-line no-restricted-imports -- Platform* wrapper file legitimately re-styles raw AlertDialog primitives.
 import {
   AlertDialog,
   AlertDialogAction,

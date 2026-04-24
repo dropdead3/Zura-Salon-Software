@@ -19,12 +19,12 @@ import { buildCsvString } from "@/utils/csvExport";
 const OUTREACH_COOLDOWN_DAYS = 7;
 const OUTREACH_COOLDOWN_MS = OUTREACH_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  PlatformCard as Card,
+  PlatformCardContent as CardContent,
+  PlatformCardDescription as CardDescription,
+  PlatformCardHeader as CardHeader,
+  PlatformCardTitle as CardTitle,
+} from "@/components/platform/ui/PlatformCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tokens } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";

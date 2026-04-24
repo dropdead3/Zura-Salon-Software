@@ -26,7 +26,7 @@ import {
   PlatformSelectItem as SelectItem,
   PlatformSelectTrigger as SelectTrigger,
 } from '@/components/platform/ui/PlatformSelect';
-import { Switch } from '@/components/ui/switch';
+import { PlatformSwitch as Switch } from '@/components/platform/ui/PlatformSwitch';
 
 const ICON_OPTIONS = [
   'BookOpen', 'Rocket', 'CreditCard', 'Users', 'BarChart3', 
