@@ -636,6 +636,88 @@ async function syncAppointments(
     
     console.log(`Synced ${synced} of ${upsertBatch.length} appointments (${allAppointments.length} fetched from API)`);
 
+    // ── S1: Stale-appointment reconciliation ──
+    // For each branch we just fetched, soft-delete any active local Phorest
+    // rows in the same date window that were NOT returned by the upstream
+    // fetch. This closes the drift gap that produced "ghost" appointments
+    // (e.g. an upstream edit replaced the row but the old local row stayed
+    // active and kept rendering on the schedule).
+    //
+    // Bounded to (branch × window) so a partial fetch failure for one branch
+    // can't false-delete rows from another branch.
+    try {
+      const seenByBranch = new Map<string, Set<string>>();
+      for (const apt of allAppointments) {
+        const bId = apt.branchId;
+        const phId = apt.appointmentId || apt.id || apt.appointmentid;
+        if (!bId || !phId) continue;
+        if (!seenByBranch.has(bId)) seenByBranch.set(bId, new Set());
+        seenByBranch.get(bId)!.add(phId);
+      }
+
+      // Only reconcile branches we actually attempted to fetch (i.e. we have
+      // an entry in seenByBranch OR the branch was in the original branches
+      // list and the fetch returned zero rows — empty Set is correct here).
+      const branchIdsToReconcile = new Set<string>();
+      for (const branch of branches) {
+        const id = branch.branchId || branch.id;
+        if (id) branchIdsToReconcile.add(id);
+      }
+
+      let totalSoftDeleted = 0;
+      const allSampleIds: string[] = [];
+      for (const bId of branchIdsToReconcile) {
+        const seen = Array.from(seenByBranch.get(bId) || []);
+
+        // SAFETY: if the branch returned zero rows AND we have a meaningful
+        // count of existing local rows in the window, skip reconciliation
+        // for this branch. A truly-empty calendar is rare; an empty fetch
+        // is more likely an upstream error than a real wipe.
+        if (seen.length === 0) {
+          const { count: existingCount } = await supabase
+            .from('phorest_appointments')
+            .select('id', { count: 'exact', head: true })
+            .eq('phorest_branch_id', bId)
+            .gte('appointment_date', dateFrom)
+            .lte('appointment_date', dateTo)
+            .is('deleted_at', null);
+          if ((existingCount || 0) > 5) {
+            console.log(`[RECONCILE] Skip branch ${bId}: 0 fetched but ${existingCount} active locally — treating as transient fetch failure`);
+            continue;
+          }
+        }
+
+        const { data: rec, error: recErr } = await supabase.rpc(
+          'reconcile_phorest_appointments',
+          {
+            p_branch_id: bId,
+            p_date_from: dateFrom,
+            p_date_to: dateTo,
+            p_seen_phorest_ids: seen,
+          },
+        );
+        if (recErr) {
+          console.log(`[RECONCILE] branch ${bId} failed:`, recErr.message);
+          continue;
+        }
+        const row = Array.isArray(rec) ? rec[0] : rec;
+        const cnt = row?.soft_deleted_count || 0;
+        const samples = (row?.sample_ids || []) as string[];
+        if (cnt > 0) {
+          totalSoftDeleted += cnt;
+          allSampleIds.push(...samples);
+          console.log(`[RECONCILE] branch ${bId}: soft-deleted ${cnt} stale rows. Samples: ${samples.join(',')}`);
+        }
+      }
+      if (totalSoftDeleted > 0) {
+        console.log(`[SYNC HEALTH] Stale reconciliation removed ${totalSoftDeleted} mirrored appointments across ${branchIdsToReconcile.size} branches.`);
+      } else {
+        console.log(`[SYNC HEALTH] Stale reconciliation: 0 stale rows across ${branchIdsToReconcile.size} branches.`);
+      }
+    } catch (reconErr: any) {
+      console.error('Stale reconciliation error (non-fatal):', reconErr?.message || reconErr);
+    }
+
     // ── Post-sync: Backfill client names from phorest_clients ──
     // Two passes: (1) resolve from local table, (2) on-demand fetch the
     // residual set directly from Phorest. Doctrine: a phorest_client_id
