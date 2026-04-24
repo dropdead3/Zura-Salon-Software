@@ -132,6 +132,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
     importTheme,
     applyPreset,
   } = useCustomTheme();
+  const { canEditOrgTheme } = useThemeAuthority();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeCategory, setActiveCategory] = useState('presets');
@@ -194,7 +195,13 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
           <div className="flex items-center gap-2">
             <Palette className="w-5 h-5 text-gold" />
             <CardTitle className="text-lg">Theme Editor</CardTitle>
-            {hasUnsavedChanges && (
+            {!canEditOrgTheme && (
+              <Badge variant="outline" className="gap-1.5">
+                <Lock className="w-3 h-3" />
+                Account Owner only
+              </Badge>
+            )}
+            {canEditOrgTheme && hasUnsavedChanges && (
               <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <AlertCircle className="w-3 h-3" />
                 Unsaved changes
