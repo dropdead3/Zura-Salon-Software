@@ -93,6 +93,13 @@ const TIME_GUTTER_WIDTH = 70;
 const COLUMN_MIN_WIDTH = 160;
 const MIN_COL_WIDTH = COLUMN_MIN_WIDTH;
 
+// CANON: Single source of truth for stylist column alternation tint.
+// Applied identically to header (condensed + normal) AND time-grid body
+// so the alternating band is continuous across the sticky boundary.
+// Do NOT introduce a second tint class anywhere in this file — drift here
+// reintroduces the "header stripe doesn't match body stripe" seam.
+const STYLIST_COLUMN_ALT = "bg-foreground/[0.06] dark:bg-foreground/[0.04]";
+
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -818,7 +825,7 @@ export function DayView({
                   return (
                     <div
                       key={stylist.user_id}
-                      className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                      className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex flex-col items-center text-center gap-1 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                     >
                       {avatar}
                       <span className="text-xs font-medium leading-tight">{condensedName}</span>
@@ -836,7 +843,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                   >
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
@@ -886,7 +893,7 @@ export function DayView({
                  return (
                     <div 
                       key={stylist.user_id} 
-                      className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                      className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                       style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
                     >
                       {/* Past-time overlay — pixel-aligned to the current-time indicator */}
