@@ -290,7 +290,7 @@ function GridContent({
               )}
               <span className={cn(
                 'inline-flex items-center gap-1 text-[10px] px-1.5 py-[1px] rounded-full font-medium whitespace-nowrap border backdrop-blur-[2px]',
-                'bg-white/55 dark:bg-black/25',
+                'bg-white/85 dark:bg-black/25',
                 badge.text, badge.border, 'border-opacity-40'
               )}>
                 <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
