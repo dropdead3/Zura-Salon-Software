@@ -206,22 +206,6 @@ export function ServiceRow({
         </PopoverContent>
       </Popover>
 
-      {/* Service name + category + RQ */}
-      <div className="flex items-center gap-2 min-w-0 flex-1">
-        <span className="text-sm truncate">{service.name}</span>
-        {service.category && (
-          <Badge variant="outline" className="text-[10px] shrink-0">{service.category}</Badge>
-        )}
-        <label className="inline-flex items-center gap-1 shrink-0 cursor-pointer select-none">
-          <Checkbox
-            checked={service.requiresConsultation}
-            onCheckedChange={(v) => onToggleRq?.(!!v)}
-            disabled={readOnly}
-            className="h-3.5 w-3.5"
-          />
-          <span className="text-[10px] text-muted-foreground tracking-wide">RQ</span>
-        </label>
-      </div>
 
       {/* Stylist chip */}
       <Popover open={stylistOpen} onOpenChange={setStylistOpen}>
