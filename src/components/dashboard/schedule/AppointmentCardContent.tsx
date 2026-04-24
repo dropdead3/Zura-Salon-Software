@@ -620,71 +620,14 @@ export function AppointmentCardContent({
     size !== 'compact';
   const cardStyle = useMemo(() => {
     if (variant === 'agenda') return {};
-    if (displayGradient) {
-      const base: React.CSSProperties = {
-        background: displayGradient.background,
-        color: displayGradient.textColor,
-      };
-      if (!willShowLeadingAccent) return base;
-      // Derive the accent from the gradient's textColor so the left edge
-      // stays in the same hue family as the gradient (e.g. consultation gold).
-      const accentEdge = deriveAccentEdgeColor(displayGradient.textColor, isDark);
-      return {
-        ...base,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-        borderLeftStyle: 'solid' as const,
-      };
-    }
-    if (useCategoryColor && isDark && darkStyle) {
-      const base = {
-        backgroundColor: darkStyle.fill,
-        color: darkStyle.text,
-        borderWidth: '1px',
-        borderStyle: 'solid' as const,
-        transition: 'background-color 150ms ease, box-shadow 150ms ease',
-      };
-      if (!willShowLeadingAccent) {
-        return { ...base, borderColor: darkStyle.fill };
-      }
-      const accentEdge = deriveAccentEdgeColor(catColor.bg, true);
-      return {
-        ...base,
-        borderTopColor: darkStyle.fill,
-        borderRightColor: darkStyle.fill,
-        borderBottomColor: darkStyle.fill,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-      };
-    }
-    if (useCategoryColor) {
-      const boostedBg = boostPaleCategoryColor(catColor.bg);
-      const boostedText = boostedBg !== catColor.bg ? getContrastingTextColor(boostedBg) : catColor.text;
-      const lightTokens = deriveLightModeColor(boostedBg);
-      const base = {
-        backgroundColor: boostedBg,
-        color: boostedText,
-        borderWidth: '1px',
-        borderStyle: 'solid' as const,
-        boxShadow: 'none',
-        opacity: 1,
-        backdropFilter: 'none',
-      };
-      if (!willShowLeadingAccent) {
-        return { ...base, borderColor: lightTokens.stroke };
-      }
-      const accentEdge = deriveAccentEdgeColor(boostedBg, false);
-      return {
-        ...base,
-        borderTopColor: lightTokens.stroke,
-        borderRightColor: lightTokens.stroke,
-        borderBottomColor: lightTokens.stroke,
-        borderLeftColor: accentEdge,
-        borderLeftWidth: '4px',
-      };
-    }
-    return {};
-  }, [variant, displayGradient, useCategoryColor, isDark, darkStyle, catColor, isCompact, willShowLeadingAccent]);
+    return getAppointmentBorderStyle({
+      catColor,
+      darkStyle,
+      isDark,
+      displayGradient,
+      willShowLeadingAccent,
+    });
+  }, [variant, displayGradient, isDark, darkStyle, catColor, willShowLeadingAccent]);
 
   // ─── Agenda variant ─────────────────────────────────────────
   if (variant === 'agenda') {
