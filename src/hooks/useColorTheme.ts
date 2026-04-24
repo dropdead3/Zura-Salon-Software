@@ -1,8 +1,9 @@
 import { useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useThemeAuthority } from './useThemeAuthority';
 
 export type ColorTheme =
   | 'zura'
@@ -18,9 +19,19 @@ export type ColorTheme =
   | 'noir'
   | 'marine';
 
-const THEME_STORAGE_KEY = 'dd-color-theme';
+const THEME_STORAGE_KEY_BASE = 'dd-color-theme';
+const LEGACY_GLOBAL_KEY = 'dd-color-theme';
 const SITE_SETTINGS_KEY = 'org_color_theme';
 const CLEAR_CUSTOM_THEME_EVENT = 'dashboard-theme:clear-custom-overrides';
+
+/**
+ * Theme Governance: localStorage is now keyed per-org so switching orgs
+ * in the same browser doesn't briefly paint the previous org's brand.
+ * The legacy global key is read once for migration only.
+ */
+function themeStorageKeyFor(orgId: string | null | undefined): string {
+  return orgId ? `${THEME_STORAGE_KEY_BASE}:${orgId}` : THEME_STORAGE_KEY_BASE;
+}
 
 // Canonical display order: Zura, Cream Lux, Neon, Rosewood, Rose Gold,
 // Peach, Cognac, Jade, Sage, Matrix, Noir, Marine (appended).
@@ -134,48 +145,67 @@ function applyTheme(theme: ColorTheme) {
   html.classList.add(`theme-${theme}`);
 }
 
-function getLocalTheme(): ColorTheme {
-  const saved = localStorage.getItem(THEME_STORAGE_KEY);
-  const migrated = migrateLegacyTheme(saved);
-  if (migrated) {
-    // Persist the migrated value so we don't pay this cost again
-    if (saved !== migrated) {
-      try { localStorage.setItem(THEME_STORAGE_KEY, migrated); } catch { /* ignore */ }
+/**
+ * Read the cached theme for an org (or the legacy global key as a one-time
+ * fallback during migration). Used at module load and on org switch to
+ * avoid a flash before the DB query resolves.
+ */
+function getLocalTheme(orgId?: string | null): ColorTheme {
+  // Prefer org-scoped key
+  const orgKey = themeStorageKeyFor(orgId);
+  const orgSaved = orgId ? localStorage.getItem(orgKey) : null;
+  const orgMigrated = migrateLegacyTheme(orgSaved);
+  if (orgMigrated) {
+    if (orgSaved !== orgMigrated) {
+      try { localStorage.setItem(orgKey, orgMigrated); } catch { /* ignore */ }
     }
-    return migrated;
+    return orgMigrated;
   }
+
+  // Fallback: legacy global key (pre-migration). Don't promote to org-key
+  // here — that happens once the DB resolves, to avoid leaking another
+  // org's brand into a fresh org cache.
+  const legacySaved = localStorage.getItem(LEGACY_GLOBAL_KEY);
+  const legacyMigrated = migrateLegacyTheme(legacySaved);
+  if (legacyMigrated) return legacyMigrated;
+
   return 'zura';
 }
 
-// Apply localStorage theme immediately on module load (prevents flash)
-applyTheme(getLocalTheme());
+// Apply localStorage theme immediately on module load (prevents flash).
+// At module load we don't know the orgId yet, so we use the legacy global
+// key purely as an early hint. The hook will reconcile once orgId resolves.
+applyTheme(getLocalTheme(null));
 
 export function useColorTheme() {
   const orgId = useSettingsOrgId();
   const queryClient = useQueryClient();
   const queryKey = ['site-settings', orgId, SITE_SETTINGS_KEY];
+  const { canEditOrgTheme } = useThemeAuthority();
 
   // DB-backed query (source of truth when available)
   const { data: dbSettings, isSuccess: dbLoaded } = useSiteSettings<ColorThemeSettings>(SITE_SETTINGS_KEY);
 
   const updateSetting = useUpdateSiteSetting<ColorThemeSettings>();
 
-  // Derive current theme: DB > localStorage fallback, with legacy migration
+  // Derive current theme: DB > org-scoped localStorage fallback, with legacy migration
   const dbTheme = migrateLegacyTheme(dbSettings?.theme as string | undefined);
-  const colorTheme: ColorTheme = dbTheme ?? getLocalTheme();
+  const colorTheme: ColorTheme = dbTheme ?? getLocalTheme(orgId);
 
-  // Sync from DB to localStorage + DOM when DB data arrives
+  // Sync from DB to org-scoped localStorage + DOM when DB data arrives
   useEffect(() => {
-    if (dbLoaded && dbTheme) {
-      localStorage.setItem(THEME_STORAGE_KEY, dbTheme);
+    if (dbLoaded && dbTheme && orgId) {
+      const orgKey = themeStorageKeyFor(orgId);
+      localStorage.setItem(orgKey, dbTheme);
 
       // If the DB row still holds a legacy key, transparently rewrite it
+      // (only the owner is allowed to write — silent no-op otherwise)
       const raw = dbSettings?.theme as string | undefined;
-      if (raw && raw !== dbTheme && orgId) {
+      if (raw && raw !== dbTheme && canEditOrgTheme) {
         updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme: dbTheme } });
       }
     }
-  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId, updateSetting]);
+  }, [dbLoaded, dbTheme, dbSettings?.theme, orgId, updateSetting, canEditOrgTheme]);
 
   // Always apply the resolved theme to DOM
   useEffect(() => {
@@ -183,39 +213,32 @@ export function useColorTheme() {
   }, [colorTheme]);
 
   const setColorTheme = useCallback((theme: ColorTheme) => {
-    // 1. Instant DOM + localStorage update
+    // Owner gate (mirror of RLS policy on site_settings theme keys)
+    if (!canEditOrgTheme) {
+      toast.error('Only the Account Owner can change the organization theme.');
+      return;
+    }
+
+    // 1. Instant DOM + org-scoped localStorage update
     clearCustomThemeSources();
     applyTheme(theme);
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    if (orgId) {
+      localStorage.setItem(themeStorageKeyFor(orgId), theme);
+    }
 
     // 2. Optimistic query cache update (all consumers reactively get new value)
     queryClient.setQueryData(queryKey, { theme });
 
-    // 3. Persist to DB
+    // 3. Persist to DB (org-scoped, owner-gated by RLS)
     if (orgId) {
       updateSetting.mutate({ key: SITE_SETTINGS_KEY, value: { theme } });
     }
-
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase
-        .from('user_preferences')
-        .upsert(
-          {
-            user_id: user.id,
-            custom_theme: null,
-            updated_at: new Date().toISOString(),
-          } as never,
-          { onConflict: 'user_id' }
-        );
-    })();
-  }, [orgId, queryClient, queryKey, updateSetting]);
+  }, [orgId, queryClient, queryKey, updateSetting, canEditOrgTheme]);
 
   return {
     colorTheme,
     setColorTheme,
+    canEditOrgTheme,
     mounted: true, // Always true — localStorage applies synchronously on module load
   };
 }
