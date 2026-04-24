@@ -1763,7 +1763,7 @@ async function syncClients(
       const orgIdsTouched = Array.from(
         new Set(
           records
-            .map((r) => branchMap?.get?.(r.phorest_branch_id)?.organization_id)
+            .map((r) => branchMap.get(r.phorest_branch_id)?.organization_id)
             .filter((x) => !!x),
         ),
       );
