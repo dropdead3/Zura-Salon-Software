@@ -203,6 +203,23 @@ function useServiceBands(
   }, [appointment.service_name, appointment.service_category, serviceLookup, categoryColors, useCategoryColor, displayGradient, skipForCompact]);
 }
 
+// ─── Leading Accent Bar ───────────────────────────────────────
+// Inset rounded pill that signals appointment status. Matches the agenda
+// divider pattern (AgendaContent line ~443) — a clean canonical bar, not an
+// edge-bleed shape. Color resolves from APPOINTMENT_STATUS_COLORS so it stays
+// in lockstep with the status badge dot.
+function LeadingAccentBar({ colorClass }: { colorClass: string }) {
+  return (
+    <div
+      className={cn(
+        'absolute left-1.5 top-1.5 bottom-1.5 w-1 rounded-full pointer-events-none z-[5]',
+        colorClass
+      )}
+      aria-hidden
+    />
+  );
+}
+
 // ─── Grid Content (compact / medium / full) ───────────────────
 function GridContent({
   appointment,
