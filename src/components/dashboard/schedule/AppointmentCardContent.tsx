@@ -706,6 +706,15 @@ export function AppointmentCardContent({
         catColor={catColor}
       />
 
+      {/* Leading status accent — inset rounded pill, canonical status signal */}
+      {!BLOCKED_CATEGORIES.includes(appointment.service_category || '') && size !== 'compact' && !displayGradient && (
+        <LeadingAccentBar
+          colorClass={
+            (APPOINTMENT_STATUS_COLORS[(appointment.status || 'booked') as keyof typeof APPOINTMENT_STATUS_COLORS]?.bg) ||
+            APPOINTMENT_STATUS_COLORS.booked.bg
+          }
+        />
+      )}
 
       {/* Multi-service color bands */}
       {serviceBands && useCategoryColor && (
