@@ -843,7 +843,7 @@ export function DayView({
                 return (
                   <div
                     key={stylist.user_id}
-                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && "bg-muted/15")}
+                    className={cn("relative flex-1 min-w-[160px] bg-[hsl(var(--sidebar-background))] bg-gradient-to-b from-[hsl(var(--sidebar-primary))]/10 to-[hsl(var(--sidebar-primary))]/5 text-[hsl(var(--sidebar-foreground))] p-2 flex items-center gap-2 border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                   >
                     {avatar}
                     <div className="flex flex-col min-w-0 flex-1">
