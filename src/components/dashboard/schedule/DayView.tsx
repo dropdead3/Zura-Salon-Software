@@ -93,6 +93,13 @@ const TIME_GUTTER_WIDTH = 70;
 const COLUMN_MIN_WIDTH = 160;
 const MIN_COL_WIDTH = COLUMN_MIN_WIDTH;
 
+// CANON: Single source of truth for stylist column alternation tint.
+// Applied identically to header (condensed + normal) AND time-grid body
+// so the alternating band is continuous across the sticky boundary.
+// Do NOT introduce a second tint class anywhere in this file — drift here
+// reintroduces the "header stripe doesn't match body stripe" seam.
+const STYLIST_COLUMN_ALT = "bg-foreground/[0.06] dark:bg-foreground/[0.04]";
+
 // ─── Droppable Time Slot ───────────────────────────────────────────
 function formatSlotTime(hour: number, minute: number): string {
   const ampm = hour >= 12 ? 'PM' : 'AM';
