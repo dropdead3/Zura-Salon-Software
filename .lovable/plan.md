@@ -1,150 +1,92 @@
+# Visit Grouping — Implementation Plan (Approved)
 
+Reconnaissance complete. The cleanest seam is to merge appointments **before** they reach the views, so DayView/WeekView/MonthView/AgendaView all receive a unified "display" shape with no parallel prop threading. Existing behaviors (overlap math, declined-reason map, deep-link focus, selection) keep working because each merged row keeps the lead member's `id`.
 
-## What we're building
+## Files to create
 
-Per-service stylist assignment that's *intelligent* about who's available — not just a long alphabetical list. Already-built pieces stay; we close three gaps so the assignment is fast, smart, and actually flows downstream.
+### `src/lib/visit-grouping.ts` (new)
 
-## What already exists (don't rebuild)
+Pure utility module:
 
-- `appointment_service_assignments` table with RLS, unique on `(appointment_id, service_name)`
-- `useServiceAssignments` hook (read + upsert)
-- A "Reassign Stylist" dialog in `AppointmentDetailSheet.tsx` with two modes: "Entire" and "Individual Services"
-- `useAssistantConflictCheck` hook returning a `Map<userId, ConflictingAppointment[]>` for the appointment's exact time block (covers lead-stylist + assistant + time-block conflicts)
-- Per-service override badges already render on the Services list inside the detail sheet (lines 1746-1764)
+- `MAX_VISIT_GAP_MINUTES = 5` — single configurable constant.
+- `VisitGroup` — structured group: `visit_id`, `client_key`, aggregate `start_time`/`end_time`/`total_price`/`total_duration_minutes`, `members[]`, `member_ids[]`, `is_multi_service`, `lead_stylist_user_id`, `stylist_user_ids[]`.
+- `MergedPhorestAppointment` — extends `PhorestAppointment` with optional `_visit_id`, `_visit_member_ids`, `_visit_members`, `_is_merged_visit`.
+- `groupAppointmentsIntoVisits(appointments)` — sorts by client → location → date → start_time, walks consecutively, opens a new group whenever (client/location/date changes) OR (gap > 5 min). Walk-ins (no `phorest_client_id` AND no `client_id`) always become single-member groups (truthful, never merged).
+- `buildDisplayAppointments(appointments)` — returns one `MergedPhorestAppointment` per group. Multi-member visits collapse into one synthetic row using the lead-stylist member's `id`, with comma-joined `service_name`, summed `total_price`, earliest `start_time`, latest `end_time`. Single-member groups pass through unchanged but tagged with `_visit_id`.
+- `indexVisitsByDisplayId(appointments)` — `Map<lead_member_id, VisitGroup>` for the detail sheet to look up the full visit on click.
 
-## The three gaps
+## Files to modify
 
-### Gap 1 — The picker isn't actually intelligent
+### `src/pages/dashboard/Schedule.tsx`
 
-Today: `teamMembers.filter(m => m.roles?.includes('stylist') || m.roles?.includes('admin')).slice(0, 8)` — first 8 alphabetically, no location filter, no day-of-week filter, no conflict-aware sorting. A stylist who doesn't work that day at that location is shown identically to one who's free for the next 90 minutes.
+- After the existing `appointments` filter (~line 305), derive `displayAppointments = useMemo(() => buildDisplayAppointments(appointments), [appointments])` and `visitIndex = useMemo(() => indexVisitsByDisplayId(appointments), [appointments])`.
+- Replace `appointments={appointments}` props on **DayView, WeekView, MonthView, AgendaView** with `appointments={displayAppointments}`. The mini-views block at line 1075 (which uses `allAppointments`) stays raw — that's the source-of-truth slice for command-center counters and shouldn't merge.
+- `handleAppointmentClick(apt)` — detect `apt._is_merged_visit` and pass through to `setSelectedAppointment`. The existing detail sheet already handles comma-joined `service_name` (line 1031 splits on `,`), so the body works as-is. Aggregate header copy ("X services · Y min · $Z") is already present (line 1473: `services.length > 1 ? `${services.length} services` : appointment.service_name`).
+- Selected-appointment freshness sync (line 309) — match against `displayAppointments` so a re-grouped visit stays selected after a refetch.
 
-### Gap 2 — No grouping signals
+### `src/components/dashboard/schedule/DayView.tsx`
 
-Conflicts are flagged with an amber badge (good) but the list isn't *sorted* by availability. The eligible-and-free stylists should sit at the top in a "Available now" group; scheduled-but-conflicting in a second "Has conflicts" group; not-scheduled-this-day in a collapsed "Other staff at location" group; everyone else hidden behind a "Show all org staff" toggle (the stated requirement: "could technically be assigned to anyone at the location").
+- `appointments` prop continues to type as `PhorestAppointment[]` (the merged row is structurally compatible). Internal `appointmentsByStylist` keys on `apt.stylist_user_id` which for merged visits = lead stylist — correct: a multi-stylist visit anchors to its lead in the schedule (per-service stylist overrides remain visible inside the card via `_visit_members`).
+- **Drag handler (line 598)** — read `appointment` from `active.data.current` as before. Detect `_visit_member_ids`. If present (≥ 2):
+  - Compute `delta = parseTimeToMinutes(newTime) - parseTimeToMinutes(appointment.start_time)`.
+  - For each member, compute its new start_time = `parseTimeToMinutes(member.start_time) + delta` (formatted back to `HH:MM`).
+  - For the lead member only, also pass `newStaffId` (column move). Other members keep their assigned stylist (per-service overrides are preserved).
+  - Dispatch `Promise.allSettled` of `reschedule.mutateAsync` calls (one per member). On any rejection, surface a single toast and rely on the hook's per-call rollback (each call snapshots independently).
+  - Single-member visits → existing single-call path unchanged.
+- Toast copy: "Moved visit to {time}" when `_is_merged_visit`; existing "Moved to {time}" otherwise.
 
-### Gap 3 — Writes are orphaned
+### `src/components/dashboard/schedule/AppointmentCardContent.tsx`
 
-The override is saved to `appointment_service_assignments` and rendered as a badge on the Services list. **Nothing else reads it.** Payroll, commission, schedule day-view cards, reports, and the `v_all_appointments` view all still attribute 100% of the appointment to `stylist_user_id`. So a manager can "reassign" a service today and the reassigned stylist gets zero credit. That's the highest-leverage gap — it makes the feature operationally meaningful instead of cosmetic.
+Light touches inside the existing `GridContent`:
 
-## The fix — three layers
+- When `appointment._is_merged_visit`, the multi-line "service line" (already rendered when pixelHeight ≥ 70 and serviceBands has multiple entries) becomes the per-service stack. Existing logic already does this for comma-joined `service_name` + `serviceLookup` — verify it renders cleanly with 3+ services and add a `truncate` cap if needed.
+- Header time range: when merged, render the visit's full window in the existing time line (already pulls from `appointment.start_time` / `appointment.end_time`). No code change needed; the merged row already carries the aggregate.
+- Composite avatar: when `appointment._is_merged_visit && stylist_user_ids.length > 1`, render a small stacked avatar group on the card top-right in addition to the lead's `StylistBadge`. Keep behind a `pixelHeight >= 60` guard to avoid clutter on short cards.
 
-### Layer 1 — Intelligent eligibility hook (`useEligibleStylistsForService`)
+### `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`
 
-New hook in `src/hooks/useEligibleStylistsForService.ts` that returns a ranked list per appointment + service:
+Mostly works as-is thanks to comma-joined `service_name`. Minor:
 
-```text
-EligibleStylist {
-  user_id, name, photo_url
-  tier: 'available' | 'conflicting' | 'off_today' | 'other_location'
-  reasons: string[]   // "Scheduled today", "Free 2:00–3:00 PM", "Performs this service"
-  conflicts: ConflictingAppointment[]   // empty for tier='available'
-}
-```
+- When `appointment._is_merged_visit`, ensure the per-service status badges (if rendered) read from `_visit_members[i].status` rather than the lead row. For this wave: status changes still apply to the lead member; multi-status mutation is deferred (called out in QA).
+- Header price/duration aggregate is already correct because the merged row's `total_price` is summed.
 
-Inputs already wired:
-- `teamMembers` from `useTeamDirectory(undefined, { organizationId })` — has `location_schedules` (day-of-week per location) and roles
-- `conflictMap` from `useAssistantConflictCheck` — exact overlap detection at appointment's start/end
-- Appointment's `appointment_date`, `location_id`, `start_time`, `end_time`
+### `src/components/dashboard/schedule/AgendaView.tsx`
 
-Logic per stylist (excluding lead + non-stylists/non-admins):
-1. **available** — assigned to this `location_id` AND `work_days[dayOfWeek]` includes today AND `conflictMap.get(user_id)` is empty
-2. **conflicting** — same location + day, but has overlap
-3. **off_today** — assigned to location but not scheduled this day-of-week
-4. **other_location** — stylist at the org but not assigned to this location
+- Already iterates `appointments`. When fed the merged list, each visit becomes a single agenda card. No code change needed; the comma-joined service line in `AppointmentCardContent` already handles multi-service display.
 
-Bonus signal (deferred but cheap if data exists): if `staff_service_compatibility` or similar table maps which stylists perform which services, add a `performs_service: boolean` flag — surface "Performs this service" as a reason and float performers above non-performers within each tier. Confirm during build whether that table exists; if not, skip without blocking.
+### `src/hooks/useRescheduleAppointment.ts`
 
-Sort within tiers: lead stylist first if shown, then by name.
-
-### Layer 2 — Redesigned per-service picker UI
-
-Replace the flat `teamMembers.filter(...).slice(0, 8)` block (lines 3001-3031) with grouped sections:
-
-```text
-┌─ For: Pure Brazilian Express Keratin · 2:00–2:30 PM ───┐
-│ ▼ Available now (3)                                     │
-│   ◉ Samantha Bloom    Scheduled · Free                  │
-│   ◯ Jamie Lee         Scheduled · Free · Performs this  │
-│   ◯ Alex Rivera       Scheduled · Free                  │
-│                                                         │
-│ ▼ Has conflicts (2)                                     │
-│   ◯ Annmarie X        ⚠ Busy 2:00–3:00 (Color)          │
-│   ◯ Maria Cruz        ⚠ Assisting 1:30–2:30             │
-│                                                         │
-│ ▶ Off today at this location (4)                        │
-│ ▶ Show all org staff (12)                               │
-└─────────────────────────────────────────────────────────┘
-```
-
-Honors the doctrine — silence is valid: if no one in a tier, skip the section header. Conflicting stylists remain *selectable* (the manager may know something the system doesn't), but selecting one shows a yellow "This will create a double-booking" inline confirm before save. Same pattern as the existing assistant picker.
-
-Keep the existing "Default" badge on the lead, the per-service container, and the "Save Assignments" footer button. The dialog footer copy updates to count *changed* services, e.g. "Save 2 changes".
-
-### Layer 3 — Wire the override downstream (the meaningful one)
-
-Without this, layers 1+2 are decoration. Three concrete read-paths to update:
-
-**3a. View update** — Add a new view `v_appointment_services_resolved` (or extend `v_all_appointments`) that joins `appointment_service_assignments` and exposes a per-service resolved stylist. Shape:
-```text
-appointment_id, service_name, service_price, service_duration,
-resolved_user_id  -- COALESCE(assignment.assigned_user_id, appointment.stylist_user_id)
-resolved_staff_name
-```
-This becomes the canonical source for any read that needs "who actually did service X."
-
-**3b. Schedule day-view card** — When an appointment has overrides, show a small composite avatar stack (lead + overrides) on the card. If 100% of services are reassigned to one other stylist, show *that* stylist's column instead. Out of scope for this wave but called out as the next domino — tracked in the deferral register.
-
-**3c. Payroll / commission attribution** — `payroll_calculations` (or whichever function aggregates revenue per stylist) reads from `phorest_appointments.stylist_user_id`. Update to read from the new resolved view so commission flows to the actual performer per service. This is the structural integrity payoff: reassigning a service moves the dollars, not just the label.
-
-For this wave, ship 3a + the payroll read-path swap. 3b can ship as a follow-up wave once the data layer is correct.
-
-## Files involved
-
-**New:**
-- `src/hooks/useEligibleStylistsForService.ts` — the ranking hook
-- `supabase/migrations/<timestamp>_v_appointment_services_resolved.sql` — joined view
-- One follow-up migration to update payroll RPC(s) to read from the new view (identified during build)
-
-**Modified:**
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` lines ~2980-3082 — replace flat list with grouped picker; add double-book confirm; update footer count
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` lines ~1745-1776 — Services list already shows override badge; verify it picks up the new view's resolved name when the lead is *also* changed via "Entire" mode (no behavior change expected, just tested)
-- Whichever payroll aggregation function reads `stylist_user_id` to credit revenue — switch to the resolved view
-
-**Untouched:**
-- RLS policies (already correct)
-- `useServiceAssignments` hook (write path is fine)
-- `useAssistantConflictCheck` (perfect for this)
-- "Entire" reassign mode (unchanged)
+No change required — current shape supports per-call optimistic updates with `setQueriesData`. Multi-member fan-out from `DayView` issues N parallel calls; each rolls back independently on failure. (Future wave: a true batched edge function, but parallel calls are correct semantics today.)
 
 ## What stays the same
 
-- The dialog trigger ("Reassign Stylist" in the actions menu) — unchanged
-- Audit log fires on `service_reassigned` — unchanged
-- Per-service override badges on the Services list — unchanged
-- The two-mode toggle ("Entire" / "Individual Services") — unchanged
+- DB schema and `phorest_appointments` rows (one per service)
+- `v_all_appointments` view and `usePhorestCalendar` query
+- Per-service stylist override data (still rendered inside the card body via `_visit_members`)
+- Walk-in display logic (always standalone, never merged)
+- Status colors, NC/RC badges, indicator clusters
+- Per-service assignment dialog from the previous wave (unchanged — still keys on individual appointment IDs)
 
 ## QA checklist
 
-- Open an appointment with 4 services → "Reassign Stylist" → "Individual Services" → picker shows grouped sections, "Available now" first, alphabetical within
-- A stylist scheduled at the location with no overlap appears in "Available now" with reason "Scheduled · Free"
-- A stylist with an overlapping appointment appears in "Has conflicts" with the conflict description
-- A stylist not scheduled that day-of-week sits in "Off today at this location" (collapsed)
-- "Show all org staff" reveals everyone else; selecting them works (silence is valid: we don't block, we inform)
-- Selecting a conflicting stylist shows the inline double-book warning before save
-- After save, payroll for the appointment date credits the reassigned stylist for the per-service revenue (not the lead)
-- After save, the Services list inside the detail sheet shows the override badge and the saved name (already works; regression check)
-- The "Entire" reassign mode still works as it does today (no regression)
-- No flicker / double-fetch when the dialog opens (the conflict query is gated on `showReassignDialog`, already correct)
+- Carmen X's two contiguous services merge into one card spanning the full visit window
+- A client with a 10am cut and a 4pm color shows as two separate cards (gap > 5 min triggers split)
+- Two back-to-back walk-ins render as two separate cards
+- Dragging a merged visit moves every member by the same delta; relative offsets preserved
+- All-or-rollback: when one member's reschedule fails, the failed member's cache rolls back; successful members stay moved (acceptable for now — surfaces "1 of 3 services failed" via the existing error toast)
+- Detail sheet from a merged card shows all services in the body; per-service overrides badges still render
+- Single-service appointments render byte-identical to today (regression check)
+- Agenda view: one entry per visit, never one per service
+- Deterministic visit_id: the same set of members produces the same visit_id across renders (no React-key churn)
+- Selecting a merged card highlights it; refetch keeps the selection alive
 
 ## Confidence and silence
 
-Per doctrine: when no stylist is "Available now" (all are conflicting or off), the section is hidden — not shown empty. The manager sees the conflict tier first and makes an informed call. We don't fabricate availability; absence-of-availability is meaningful information.
+When grouping yields zero merges (every appointment is single-service), `displayAppointments` is structurally equivalent to `appointments` — no surface changes. Silence is valid.
 
-## Why this matters (doctrine framing)
+## Future waves (not in scope)
 
-This feature only earns its place if it *moves money* — otherwise it's a label change. Layer 3 is what makes it real: a manager reassigns a $213 keratin from Jamie to Samantha mid-day, payroll credits Samantha, commission flows to Samantha, performance reports show Samantha's revenue. Without that, we'd be re-skinning a cosmetic toggle. The structural rule "commission models must be defined before payouts" applies in reverse here too — payouts must follow the actual performer, not the label on the appointment.
-
-## Enhancement suggestion
-
-Worth flagging now: this is the second time in a week we've found a feature where the *write* shipped without the *read* (the first was per-service assignment as it stands today, written in Feb 2026; the related pattern was the false `[Deleted Client]` writes erasing signal). Same shape: "the write satisfied the schema; nothing consumed it; the operational truth was destroyed." That's a *write-without-read* anti-pattern worth its own short canon at `mem://architecture/write-without-read.md`: any new write path must declare which read path consumes it, or be marked experimental and excluded from "feature complete." Pairs naturally with the signal-preservation canon already in place.
-
+- Composite-avatar visual polish (stacked Avatars top-right of merged cards) — depends on this wave's structural foundation
+- Per-service status mutation (status change inside the visit sheet applying to a single member instead of the lead)
+- Visit-level history widget on client profile (uses same utility — unlocks truthful visit-frequency metrics)
+- Sub-row drag handles for splitting a visit mid-day
