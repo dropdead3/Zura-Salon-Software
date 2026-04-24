@@ -598,6 +598,9 @@ async function syncAppointments(
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
+        // S2: persist the upstream branch on every synced row so reconciliation
+        // and on-demand client probes can target the appointment's real branch.
+        phorest_branch_id: apt.branchId || null,
         phorest_client_id: phorestClientId,
         appointment_date: appointmentDate,
         start_time: startTime,
