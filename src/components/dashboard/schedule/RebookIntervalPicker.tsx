@@ -144,6 +144,26 @@ export function RebookIntervalPicker({
     { stylistUserId },
   );
 
+  // Stylist's standing weekly schedule — used for "Off this week" detection.
+  const { workDays, hasSchedule } = useStylistWorkDays(stylistUserId);
+
+  // Derive the client's preferred time-of-day band from the source appointment.
+  // A "calm" day with no opening in the preferred band isn't actually a calm rebook.
+  const preferredBand = useMemo<TimeBand | null>(() => {
+    const t = appointment?.start_time;
+    if (!t) return null;
+    const h = parseInt(t.split(':')[0] ?? '0', 10);
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
+  }, [appointment?.start_time]);
+
+  const isStylistOff = (date: Date): boolean => {
+    if (!hasSchedule) return false; // unknown → don't flag
+    const token = WEEKDAY_TOKENS[date.getDay()];
+    return !workDays.has(token);
+  };
+
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
   useEffect(() => {
