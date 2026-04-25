@@ -89,6 +89,15 @@ const LOAD_DOT_CLASS: Record<DayLoad, string> = {
   full: 'bg-rose-500',
 };
 
+/** Left-edge stroke colors for the calmest-pick chips — reads as a structural
+ *  classification rather than a decorative dot. */
+const LOAD_BORDER_CLASS: Record<DayLoad, string> = {
+  light: 'border-l-emerald-500',
+  moderate: 'border-l-amber-500',
+  heavy: 'border-l-orange-500',
+  full: 'border-l-rose-500',
+};
+
 const LOAD_LABEL: Record<DayLoad, string> = {
   light: 'Light',
   moderate: 'Moderate',
