@@ -90,6 +90,19 @@ const LOAD_LABEL: Record<DayLoad, string> = {
   full: 'Full',
 };
 
+// Day-of-week tokens used by employee_location_schedules.work_days
+const WEEKDAY_TOKENS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+// A band is "full" for a single stylist when ~3+ appointments already sit in it.
+// Bands are roughly 4–5 hours, so 3 chemical/cut appts typically saturate them.
+const BAND_FULL_THRESHOLD = 3;
+
+const BAND_LABEL: Record<TimeBand, string> = {
+  morning: 'AM',
+  afternoon: 'PM',
+  evening: 'PM',
+};
+
 export function RebookIntervalPicker({
   open,
   appointment,
