@@ -6,6 +6,8 @@ import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { getOrgDayOffset } from '@/lib/orgTime';
+import { toast } from 'sonner';
+import { CalendarOff } from 'lucide-react';
 
 function getRelativeDayLabel(offset: number): string {
   if (offset === 0) return 'Today';
@@ -169,12 +171,79 @@ export function ScheduleHeader({
   // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
   const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
 
-  const goToToday = () => setCurrentDate(orgToday);
-  
+  // Resolve the active location's hours + holiday closures for closure-aware UX.
+  const selectedLocationData = useMemo(
+    () => locations.find((l) => l.id === selectedLocation) ?? null,
+    [locations, selectedLocation],
+  );
+  const locHours = selectedLocationData?.hours_json ?? null;
+  const locHolidays = selectedLocationData?.holiday_closures ?? null;
+
+  /**
+   * Compute the next operating day after `from`. Walks forward up to 60 days
+   * (covers any reasonable closure streak) and returns the first open date.
+   * Falls back to `from + 1` if everything in the window is closed.
+   */
+  const nextOpenDay = (from: Date): Date => {
+    for (let i = 1; i <= 60; i++) {
+      const d = addDays(from, i);
+      if (!isClosedOnDate(locHours, locHolidays, d).isClosed) return d;
+    }
+    return addDays(from, 1);
+  };
+
+  // Holiday-aware Today: if the salon is closed today, jump to next open day
+  // and surface the reason via a toast so the operator isn't silently bumped.
+  const goToToday = () => {
+    const closure = isClosedOnDate(locHours, locHolidays, orgToday);
+    if (closure.isClosed) {
+      const next = nextOpenDay(orgToday);
+      setCurrentDate(next);
+      toast.info(`Closed today (${closure.reason ?? 'closed'}) — jumped to ${format(next, 'EEE, MMM d')}`);
+      return;
+    }
+    setCurrentDate(orgToday);
+  };
+
   const goToPrevDay = () => setCurrentDate(addDays(currentDate, -1));
   const goToNextDay = () => setCurrentDate(addDays(currentDate, 1));
   const goToPrevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
+
+  // Closure modifiers — categorize dates in the picker window into routine
+  // weekly closures (e.g. Mondays off) vs specific holiday closures so each
+  // can be styled distinctly in the calendar.
+  const closureModifiers = useMemo(() => {
+    const weeklyClosed: Date[] = [];
+    const holidayClosed: Date[] = [];
+    if (!locHours && (!locHolidays || locHolidays.length === 0)) {
+      return { weeklyClosed, holidayClosed };
+    }
+    // Window: 6 months back through 12 months forward — covers any visible
+    // calendar navigation without unbounded growth.
+    const start = addDays(orgToday, -180);
+    for (let i = 0; i <= 540; i++) {
+      const d = addDays(start, i);
+      const closure = isClosedOnDate(locHours, locHolidays, d);
+      if (!closure.isClosed) continue;
+      if (closure.reason === 'Regular hours') weeklyClosed.push(d);
+      else holidayClosed.push(d);
+    }
+    return { weeklyClosed, holidayClosed };
+  }, [locHours, locHolidays, orgToday]);
+
+  // Closed-tomorrow chip: surface a calm warning when the next operating day
+  // is itself a closure (e.g. tomorrow is Christmas) so the operator can plan.
+  const tomorrowClosure = useMemo(() => {
+    const tomorrow = addDays(orgToday, 1);
+    const closure = isClosedOnDate(locHours, locHolidays, tomorrow);
+    if (!closure.isClosed) return null;
+    return {
+      reason: closure.reason ?? 'Closed',
+      nextOpen: nextOpenDay(orgToday),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locHours, locHolidays, orgToday]);
 
   // Capacity tiers per date for the date picker — org-wide utilization signal.
   // Uses the shared computeUtilizationByStylist (single source of truth) and
@@ -359,6 +428,8 @@ export function ScheduleHeader({
                 moderate: capacityModifiers.moderate,
                 low: capacityModifiers.low,
                 critical: capacityModifiers.critical,
+                weeklyClosed: closureModifiers.weeklyClosed,
+                holidayClosed: closureModifiers.holidayClosed,
               }}
               modifiersClassNames={{
                 moderate:
@@ -367,10 +438,32 @@ export function ScheduleHeader({
                   "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-orange-500",
                 critical:
                   "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-red-500",
+                // Routine weekly closures — muted, line-through. Not selectable.
+                weeklyClosed:
+                  "text-muted-foreground/40 line-through",
+                // Holiday closures — rose tint + dashed ring so they read as
+                // intentional/exceptional, not just "off". Not selectable.
+                holidayClosed:
+                  "relative text-rose-300/80 line-through before:content-[''] before:absolute before:inset-1 before:rounded-full before:border before:border-dashed before:border-rose-400/40 before:pointer-events-none",
               }}
+              disabled={[
+                ...closureModifiers.weeklyClosed,
+                ...closureModifiers.holidayClosed,
+              ]}
             />
-            {/* Capacity legend strip */}
-            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-1 text-[11px] text-muted-foreground border-t border-border/50">
+            {/* Closed-tomorrow chip — surfaces an upcoming closure inline so
+                operators can plan rebookings without leaving the picker. */}
+            {tomorrowClosure && (
+              <div className="mx-3 mt-2 flex items-center gap-2 rounded-md border border-rose-400/30 bg-rose-500/[0.06] px-2.5 py-1.5 text-[11px] text-rose-200/90">
+                <CalendarOff className="h-3 w-3 shrink-0" />
+                <span className="truncate">
+                  Closed tomorrow ({tomorrowClosure.reason}). Next open:{' '}
+                  <span className="font-medium">{format(tomorrowClosure.nextOpen, 'EEE, MMM d')}</span>
+                </span>
+              </div>
+            )}
+            {/* Capacity + closure legend strip */}
+            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-2 text-[11px] text-muted-foreground border-t border-border/50">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Filling
@@ -383,9 +476,17 @@ export function ScheduleHeader({
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 Booked
               </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-[1px] bg-muted-foreground/40" />
+                Closed
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full border border-dashed border-rose-400/60" />
+                Holiday
+              </span>
               <MetricInfoTooltip
-                title="Capacity signal"
-                description="Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%."
+                title="Calendar signals"
+                description="Dots under dates reflect org-wide capacity (Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%). Strikethrough days are closed (regular hours); dashed rose ring marks holiday closures."
                 side="top"
               />
             </div>
