@@ -93,13 +93,16 @@ export default function OrgBrandedLogin() {
   const [pinLockoutUntil, setPinLockoutUntil] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
+  const [recents, setRecents] = useState<RememberedDeviceUser[]>([]);
+  const [recentsBypassed, setRecentsBypassed] = useState(false);
 
   const validatePin = useOrgValidatePin(organization?.id);
   const { data: teamMembers = [] } = useOrgTeamForLogin(
     organization?.id && deviceMode === 'shared' ? organization.id : null,
+    locationSlug ?? null,
   );
 
-  // Load device mode + remembered user from localStorage once org resolves
+  // Load device mode + remembered user + recents from localStorage once org resolves
   useEffect(() => {
     if (!organization?.id) return;
     const mode = localStorage.getItem(getDeviceModeKey(organization.id)) as DeviceMode | null;
@@ -114,7 +117,8 @@ export default function OrgBrandedLogin() {
         // ignore malformed
       }
     }
-  }, [organization?.id]);
+    if (orgSlug) setRecents(getRecentUsers(orgSlug));
+  }, [organization?.id, orgSlug]);
 
   // First time on this device → ask shared vs personal (only if a user is signed in,
   // since cold-start doesn't need the choice yet)
