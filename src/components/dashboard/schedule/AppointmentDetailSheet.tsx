@@ -90,6 +90,7 @@ import {
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
   UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
   MessageCircle, Info,
+  FileText, History as HistoryIcon, Image as ImageIcon, StickyNote,
 } from 'lucide-react';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -116,6 +117,82 @@ import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/Payme
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
+
+
+// ─── Container-aware appointment tabs (Zone B) ──────────────────
+// Measures its own width and collapses labels → icons when compact.
+interface ApptTabsProps {
+  activeTab: string;
+  unviewedPhotosCount: number;
+  unviewedNotesCount: number;
+  isWorkingThisAppointment: boolean;
+}
+function ResponsiveAppointmentTabs({
+  activeTab,
+  unviewedPhotosCount,
+  unviewedNotesCount,
+  isWorkingThisAppointment,
+}: ApptTabsProps) {
+  const { ref, state } = useSpatialState<HTMLDivElement>('standard');
+  const iconOnly = state === 'compact' || state === 'stacked';
+  const compressed = state === 'compressed';
+
+  const triggerCls = cn(
+    'font-sans w-full relative gap-1.5',
+    iconOnly && 'px-1',
+    compressed && 'px-2 text-xs',
+  );
+
+  const tabs = [
+    { value: 'details', label: 'Details', Icon: FileText, badge: 0 },
+    { value: 'history', label: 'History', Icon: HistoryIcon, badge: 0 },
+    {
+      value: 'photos',
+      label: 'Photos',
+      Icon: ImageIcon,
+      badge: activeTab !== 'photos' ? unviewedPhotosCount : 0,
+    },
+    {
+      value: 'notes',
+      label: 'Notes',
+      Icon: StickyNote,
+      badge:
+        activeTab !== 'notes' && isWorkingThisAppointment ? unviewedNotesCount : 0,
+    },
+    { value: 'color-bar', label: 'Color Bar', Icon: Beaker, badge: 0 },
+  ];
+
+  return (
+    <div ref={ref} data-spatial-state={state}>
+      <TabsList className={cn('mb-0 shrink-0 w-full grid grid-cols-5', iconOnly ? 'gap-0.5' : 'gap-1')}>
+        {tabs.map(({ value, label, Icon, badge }) => (
+          <TabsTrigger
+            key={value}
+            value={value}
+            className={triggerCls}
+            aria-label={label}
+            title={iconOnly ? label : undefined}
+          >
+            {iconOnly ? (
+              <>
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                <span className="sr-only">{label}</span>
+              </>
+            ) : value === 'color-bar' ? (
+              <>
+                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{label}</span>
+              </>
+            ) : (
+              <span>{label}</span>
+            )}
+            {badge > 0 && <NavBadge count={badge} />}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </div>
+  );
+}
 
 
 // ─── Cancellation Fee Section sub-component ─────────────────────
@@ -1706,69 +1783,15 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Quick Actions Row (SendPay only — Rebook moved to overflow menu, Call/Text in Client Contact row) ──────────────── */}
-              {(() => {
-                const phone = appointment.client_phone?.trim();
-                const rawEmail = clientRecord?.email?.trim();
-                const isPlaceholderEmail = rawEmail
-                  ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
-                  : true;
-                const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
-                const showSendPay =
-                  !!appointment.id &&
-                  !!resolvedOrgId &&
-                  appointment.total_price != null &&
-                  appointment.total_price > 0;
-
-                if (!showSendPay) {
-                  return null;
-                }
-
-                return (
-                  <div className="px-6 pb-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <SendToPayButton
-                        appointmentId={appointment.id}
-                        organizationId={resolvedOrgId!}
-                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
-                        serviceName={appointment.service_name}
-                        clientName={appointment.client_name}
-                        clientEmail={email}
-                        clientPhone={phone}
-                        phorestClientId={appointment.phorest_client_id}
-                        afterpayEnabled={orgAfterpayEnabled}
-                        afterpaySurchargeEnabled={orgSurchargeEnabled}
-                        afterpaySurchargeRate={orgSurchargeRate}
-                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <div className="mx-6">
-                  <TabsList className="mb-0 shrink-0 w-full grid grid-cols-5 gap-1">
-                    <TabsTrigger value="details" className="font-sans w-full">Details</TabsTrigger>
-                    <TabsTrigger value="history" className="font-sans w-full">History</TabsTrigger>
-                    <TabsTrigger value="photos" className="font-sans w-full relative gap-1.5">
-                      <span>Photos</span>
-                      {unviewedPhotosCount > 0 && activeTab !== 'photos' && (
-                        <NavBadge count={unviewedPhotosCount} />
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="notes" className="font-sans w-full relative gap-1.5">
-                      <span>Notes</span>
-                      {unviewedNotesCount > 0 && activeTab !== 'notes' && isWorkingThisAppointment && (
-                        <NavBadge count={unviewedNotesCount} />
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="color-bar" className="font-sans gap-1.5 w-full">
-                      <Beaker className="w-3.5 h-3.5" />
-                      Color Bar
-                    </TabsTrigger>
-                  </TabsList>
+                  <ResponsiveAppointmentTabs
+                    activeTab={activeTab}
+                    unviewedPhotosCount={unviewedPhotosCount}
+                    unviewedNotesCount={unviewedNotesCount}
+                    isWorkingThisAppointment={isWorkingThisAppointment}
+                  />
                 </div>
 
                 <ScrollArea className="flex-1">
@@ -2846,37 +2869,140 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Footer Action Bar (Lifecycle Only) ────────── */}
-              {(availableTransitions.includes('confirmed') || availableTransitions.includes('checked_in') || availableTransitions.includes('completed')) && (
-                <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
-                  <div className="flex items-center gap-2">
-                    {/* Confirm */}
-                    {availableTransitions.includes('confirmed') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating} className="flex-1">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+              {/* ─── Unified Action Shelf (Zone C) ──────────────
+                  Status-aware: one primary lever, optional secondary, rest in overflow.
+                  Always rendered so the next-best action is predictable. */}
+              {(() => {
+                const status = appointment.status;
+                const isTerminal = status === 'completed' || status === 'cancelled' || status === 'no_show';
+
+                // SendToPay availability (secondary lever)
+                const phone = appointment.client_phone?.trim();
+                const rawEmail = clientRecord?.email?.trim();
+                const isPlaceholderEmail = rawEmail
+                  ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
+                  : true;
+                const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
+                const showSendPay =
+                  !isTerminal &&
+                  !!appointment.id &&
+                  !!resolvedOrgId &&
+                  appointment.total_price != null &&
+                  appointment.total_price > 0;
+
+                // Build overflow actions (P1 = collapse to kebab on compact)
+                const overflowActions: Array<{ key: string; label: string; onClick: () => void; icon: React.ReactNode; priority: 'P1' | 'P2' }> = [];
+                if (!isTerminal && onReschedule) {
+                  overflowActions.push({
+                    key: 'reschedule',
+                    label: 'Reschedule',
+                    icon: <CalendarClock className="h-3.5 w-3.5" />,
+                    onClick: () => onReschedule(appointment),
+                    priority: 'P1',
+                  });
+                }
+                if (!isTerminal && onRebook) {
+                  overflowActions.push({
+                    key: 'rebook',
+                    label: 'Rebook',
+                    icon: <Repeat className="h-3.5 w-3.5" />,
+                    onClick: () => onRebook(appointment),
+                    priority: 'P2',
+                  });
+                }
+
+                // Determine primary lever
+                let primary: React.ReactNode = null;
+                if (status === 'completed' || status === 'cancelled' || status === 'no_show') {
+                  // Terminal → Rebook is the next best action
+                  if (onRebook) {
+                    primary = (
+                      <Button
+                        size={tokens.button.card}
+                        onClick={() => onRebook(appointment)}
+                        disabled={isUpdating}
+                        className="flex-1"
+                      >
+                        <Repeat className="h-3.5 w-3.5 mr-1" /> Rebook
                       </Button>
-                    )}
-                    {/* Check In */}
-                    {availableTransitions.includes('checked_in') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating} className="flex-1">
-                        <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
-                      </Button>
-                    )}
-                    {/* Checkout */}
-                    {availableTransitions.includes('completed') && onPay && (
-                      <Button size={tokens.button.card} onClick={() => onPay(appointment)} disabled={isUpdating} className="flex-1">
-                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Checkout
-                      </Button>
-                    )}
-                    {/* Complete (if no pay handler) */}
-                    {availableTransitions.includes('completed') && !onPay && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating} className="flex-1">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
-                      </Button>
-                    )}
+                    );
+                  }
+                } else if (availableTransitions.includes('confirmed')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('confirmed')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('checked_in')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('checked_in')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('completed') && onPay) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => onPay(appointment)}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CreditCard className="h-3.5 w-3.5 mr-1" /> Checkout
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('completed')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('completed')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
+                    </Button>
+                  );
+                }
+
+                // If nothing to show at all, suppress (silence is valid output)
+                if (!primary && !showSendPay && overflowActions.length === 0) return null;
+
+                return (
+                  <div className="p-4 border-t border-border/60 bg-card/85 backdrop-blur-xl shrink-0">
+                    <div className="flex items-center gap-2">
+                      {primary}
+                      {showSendPay && (
+                        <SendToPayButton
+                          appointmentId={appointment.id}
+                          organizationId={resolvedOrgId!}
+                          totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                          serviceName={appointment.service_name}
+                          clientName={appointment.client_name}
+                          clientEmail={email}
+                          clientPhone={phone}
+                          phorestClientId={appointment.phorest_client_id}
+                          afterpayEnabled={orgAfterpayEnabled}
+                          afterpaySurchargeEnabled={orgSurchargeEnabled}
+                          afterpaySurchargeRate={orgSurchargeRate}
+                          onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                        />
+                      )}
+                      {overflowActions.length > 0 && (
+                        <OverflowActions actions={overflowActions} />
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </PremiumFloatingPanel>
 
       {/* Wave 22.5 — Zura-native call/text dialogs */}

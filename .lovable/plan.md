@@ -1,84 +1,104 @@
 
-## Goal
-Refactor `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` into three discrete zones inside the existing 640px `PremiumFloatingPanel`, verifying each zone with browser screenshots at default (1119px viewport, panel ≈640px), compressed (~520px), and mobile (414px) before advancing to the next.
+## Prompt feedback
 
-## Doctrine anchors
-- `mem://style/drawer-canon` — keeps `PremiumFloatingPanel` (no Sheet)
-- `mem://style/container-aware-responsiveness` — uses `useSpatialState` for tabs/actions, not viewport queries
-- Container-aware primitives in `src/components/spatial/*` (`OverflowActions`, `SpatialRow`)
-- Lever Doctrine — one primary lever, optional secondary, status-derived
+**Strong elements**
+- You set an explicit verification cadence ("screenshot after each zone at 1280px and 414px") — exactly the discipline this kind of layout work requires.
+- Invoking the Apple-level critique frame raises the bar for hierarchy and rhythm, not just "does it fit."
 
----
-
-## Zone A — Identity Header (sticky top, structurally compacted)
-**Lines targeted:** 1477–1676
-
-1. **Remove dev/legacy noise**
-   - Delete the two `Source: Native` / `Source: Synced (legacy)` badges (lines 1640–1648). They are platform-internal telemetry, not operator signal.
-2. **Promote View Profile**
-   - Replace the inline text+icon "View Profile" link (lines 1599–1608) with a `Button variant="ghost" size="icon"` carrying a `User` icon, placed inline next to the client name in the title row (1577–1585). Tooltip: "View client profile".
-3. **Prioritize the chip strip**
-   - Single horizontal `SpatialRow` directly below the name containing, in this order: Status badge, Walk-In, Redo, Recurrence, New, confirmation method (text-muted span). Drop the standalone "Status + Dropdown" container (1612–1649) and consolidate into one row that wraps gracefully via `SpatialRow`'s built-in `compact → flex-wrap` and `stacked → flex-col` behavior.
-4. **Lifecycle stepper redesign**
-   - Replace the current "only-current-label" stepper (1652–1675) with a 4-segment stepper that always renders all four labels (`Unconfirmed → Confirmed → Checked In → Completed`) using `tokens.label` styles. Active steps fill `bg-primary`, future steps `bg-muted`, current step gains a subtle ring. At `compact` state collapse labels to first letter only; at `stacked` keep the bar but hide labels.
-   - Terminal states (cancelled / no_show) keep the existing destructive bar but add the terminal label inline.
-
-**Zone A QA gate (screenshots required):**
-- 1119px viewport → header should fit without scroll
-- Resize panel mentally (we cannot resize the panel itself, but we can resize viewport to 414px → panel goes full-width per `PremiumFloatingPanel`) and screenshot
-- Verify: no overflow, chips wrap, View Profile button reachable, lifecycle labels readable
+**How to make the next prompt even sharper**
+- Specify the **failure modes you care most about** ("no horizontal clipping," "primary lever always above the fold," "no double-emphasis on tabs"). It lets me self-grade against your priorities instead of mine.
+- Name the **terminal-state behavior** explicitly (what should the shelf show for `completed`/`cancelled`/`no_show`?). Right now those statuses render no shelf at all — easy to overlook in a "continue" prompt.
+- Optional: pin a **breakpoint matrix** (e.g., 1280 / 1024 / 640 / 414) so verification gates are reproducible across future surfaces.
 
 ---
 
-## Zone B — Container-aware Tabs
-**Lines targeted:** 1742–1764
+## Current state (audit findings)
 
-1. Wrap the `<TabsList>` block in a `useSpatialState` measurement (or place it inside a `SpatialRow`-style wrapper).
-2. At `default`/`compressed`: keep current text labels.
-3. At `compact`/`stacked`: render icon-only triggers with `aria-label` for each (Details=`Info`, History=`History`, Photos=`Image`, Notes=`StickyNote`, Color Bar=`Beaker`). Preserve the unread count badges.
-4. Keep `grid grid-cols-5` so tabs remain equal-width; switch label visibility, not layout.
+After reading `AppointmentDetailSheet.tsx`:
 
-**Zone B QA gate:**
-- Screenshot at 1119px (full labels) and 414px (icon-only)
-- Verify badges still float, no clipping, active state visible in both modes
+1. **Tabs (lines 1750–1772)** — `grid grid-cols-5 gap-1` with full text labels. At 414px the labels truncate ungracefully; "Color Bar" already squeezes its icon. Not container-aware — uses CSS grid math, not measured width.
+2. **SendToPay row (lines 1709–1747)** — lives *above* the tabs as a separate band. Eats vertical space and visually competes with the tab strip.
+3. **Footer shelf (lines 2849–2879)** — already exists, status-aware for `booked → confirmed → checked_in → completed`. **But** it renders nothing for terminal states (`completed`, `cancelled`, `no_show`) — those states should expose **Rebook** as the primary lever (Lever Doctrine: silence is valid, but Rebook is a clear margin-protective next action post-completion).
+4. **Reschedule/Rebook** — buried in a `DropdownMenu` (lines 1498–1507). High-frequency operator action sitting two clicks deep.
 
 ---
 
-## Zone C — Sticky Action Shelf (status-aware lever)
-**Lines targeted:** replace 2842–2872 (existing footer) and consume the orphaned SendToPay block (1702–1740)
+## Plan
 
-1. **One sticky shelf** at panel bottom: `sticky bottom-0 p-4 border-t border-border/60 bg-card/85 backdrop-blur-xl shrink-0 z-20`.
-2. **Status-derived primary lever** (single `Button` with `flex-1`):
-   - `pending` / `booked` / `unconfirmed` → **Confirm** (`handleStatusChange('confirmed')`)
-   - `confirmed` / `walk_in` → **Check In** (`handleStatusChange('checked_in')`)
-   - `checked_in` → **Checkout** (`onPay(appointment)` if available, else **Complete**)
-   - `completed` → **Rebook** (`onRebook(appointment)`) when handler exists
-   - `cancelled` / `no_show` → **Reschedule** (`onReschedule(appointment)`) when handler exists
-   - If no lever applies, hide the primary button (silence is valid output).
-3. **Secondary lever:** `SendToPayButton` rendered inline in the shelf (keep its existing eligibility check) — moved out of the orphaned 1702–1740 block, which gets deleted.
-4. **Overflow:** Add an `OverflowActions` instance carrying `Reschedule` (P1), `Rebook` (P1), `Reassign Stylist` (P2), `Transactions` (P2). The header's existing kebab keeps Status Override + Admin (Delete) only — splits high-frequency vs. governance actions.
+### Zone B — Container-aware tabs
 
-**Zone C QA gate:**
-- Open three appointments in three statuses (booked/checked_in/completed) via the schedule
-- Screenshot each: confirm primary lever changes, sticky shelf stays pinned while scrolling tab body
-- 414px screenshot to confirm shelf doesn't clip primary CTA
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (lines 1750–1772)
+
+- Wrap the `TabsList` in a `useSpatialState` measurement (density: `'standard'`, expected width 560px).
+- At `state === 'default'` (≥560px container): full text labels as today.
+- At `state === 'compressed'` (≈480–560px): keep labels but reduce horizontal padding and gap from `gap-1` → `gap-0.5`; allow text to use `tokens.label` size.
+- At `state === 'compact'` or `'stacked'` (<480px): switch to **icon + sr-only label** triggers. Each tab gets a Lucide glyph (`FileText` Details, `History` History, `Image` Photos, `StickyNote` Notes, `Beaker` Color Bar). Badges (`NavBadge`) remain visible as dot indicators.
+- Preserve `grid grid-cols-5` always — equal touch targets ≥44px (per `SPATIAL_TAP_TARGET_MIN`).
+
+**Acceptance**
+- 1280px: identical to today (full labels).
+- 414px: 5 evenly-spaced icon tabs, no clipping, badges visible as dots in the top-right of each tile.
 
 ---
 
-## Verification methodology (per your directive)
-After each zone is implemented in default mode:
-1. `browser--navigate_to_sandbox` to `/org/drop-dead-salons/dashboard/schedule`
-2. Click an appointment to open the panel
-3. `browser--screenshot` at 1119×849 (current), then `browser--set_viewport_size` to 414×896 and screenshot again
-4. If the screenshot reveals overflow, clipping, or hierarchy issues, fix in-place before advancing to the next zone
+### Zone C — Status-aware sticky action shelf
 
-I will pause and report screenshots between zones so you can approve before I move on.
+**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (lines 1709–1747 and 2849–2879)
 
-## Files touched
-- `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (only file)
+**Restructure into a single shelf**:
+1. **Remove** the standalone SendToPay band (lines 1709–1747). SendToPay becomes a **secondary lever** in the sticky shelf.
+2. **Always render** the footer shelf (remove the `availableTransitions.includes(...)` gate that hides it for terminal states).
+3. **Status → primary lever** mapping:
 
-## Out of scope (deliberate)
-- Tab body layouts (Details / History / Photos / Notes / Color Bar) — separate follow-up
-- Photo grid 3-column reflow at 640px — separate enhancement
-- "Show More" toggle for 5+ services — separate enhancement
-- Any backend or status-machine logic changes — purely presentational
+   | Status | Primary lever | Secondary (in shelf) | Overflow (kebab) |
+   |---|---|---|---|
+   | `booked` | **Confirm** | Send to Pay (if amt>0) | Reschedule, Rebook |
+   | `confirmed` | **Check In** | Send to Pay (if amt>0) | Reschedule, Rebook |
+   | `checked_in` | **Checkout** (or Complete) | Send to Pay (if amt>0) | Reschedule |
+   | `completed` | **Rebook** | — | — |
+   | `cancelled` / `no_show` | **Rebook** | — | (cancellation-fee tools stay where they are) |
+
+4. **Layout** (`SpatialRow` with `density='standard'`):
+   - Primary `Button` (default size, `flex-1`) → always first.
+   - Secondary as `Button variant="outline" size="sm"` — collapses into overflow at `compact`.
+   - `OverflowActions` (P1/P2 priorities) for Reschedule/Rebook on non-terminal states.
+5. Container is already `sticky` via the `flex-col` + `shrink-0` pattern in `PremiumFloatingPanel` — keep `border-t border-border/60 bg-card/85 backdrop-blur-xl p-4`.
+
+**Why this matters (doctrine)**
+- *Lever Doctrine*: one primary, optional secondary, rest in overflow.
+- *No alert fatigue*: terminal-state Rebook is a single button, not a banner.
+- *Container-aware*: shelf reflows the same way tabs do, using the same `useSpatialState` hook.
+
+---
+
+### Verification gates (mandatory between zones)
+
+After **Zone B**:
+1. `browser--navigate_to_sandbox` → `/org/drop-dead-salons/dashboard/schedule`
+2. `browser--set_viewport_size` 1280×800 → open an appointment → screenshot
+3. `browser--set_viewport_size` 414×896 → screenshot
+4. **Critique pass** (Apple-design-head frame): tab clipping? icon weight balanced? badge collisions? rhythm with header?
+5. Fix any issues before starting Zone C.
+
+After **Zone C**:
+1. Repeat 1280 / 414 screenshots for each of: `booked`, `confirmed`, `checked_in`, `completed` appointments (or simulate via the available test data).
+2. Verify primary lever is above the fold on 414px.
+3. Verify shelf doesn't overlap the bottom safe-area on mobile.
+
+If any pass fails, fix in-place and re-screenshot before declaring done.
+
+---
+
+### Risks & trade-offs
+
+- **Removing SendToPay band**: it's currently visually prominent. Moving it to a secondary slot in the shelf is the right call (it's not the *next* action — Confirm/Check-in is). Operators will need to learn the new location once.
+- **Always-render shelf**: adds ~64px of permanent chrome. Acceptable trade for predictability + consistent CTA placement (matches platform shelf patterns elsewhere).
+- **Icon-only tabs at <480px**: trades label clarity for tap-target size. Mitigated by `aria-label` + tooltip on long-press.
+
+---
+
+## Enhancement suggestions (post-shipment)
+
+1. **Keyboard-first lever**: bind `⌘↵` to the shelf's primary button. Power-users will love it.
+2. **Lever animation**: when status transitions (e.g., `booked → confirmed`), morph the primary button label with a 180ms crossfade — reinforces the lifecycle metaphor.
+3. **Telemetry hook**: emit `appointment.lever.clicked` with `{from_status, lever, time_to_click_ms}` so we can measure whether the shelf is actually reducing clicks-to-checkout. That's the real ROI signal.
