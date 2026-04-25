@@ -32,6 +32,7 @@ import PlatformLanding from "./pages/PlatformLanding";
 import Ecosystem from "./pages/Ecosystem";
 import Product from "./pages/Product";
 import UnifiedLogin from "./pages/UnifiedLogin";
+import OrgBrandedLogin from "./pages/OrgBrandedLogin";
 import NoOrganization from "./pages/NoOrganization";
 import NotFound from "./pages/NotFound";
 const PricingPage = lazyWithRetry(() => import("./pages/Pricing"));
@@ -483,6 +484,7 @@ const App = () => (
                     <Route path="/product" element={<Product />} />
                     <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
+                    <Route path="/org/:orgSlug/login" element={<OrgBrandedLogin />} />
                     <Route path="/no-organization" element={<NoOrganization />} />
                     <Route path="/signup" element={<Suspense fallback={<RouteFallback />}><Signup /></Suspense>} />
                     <Route path="/auth/verify-email" element={<Suspense fallback={<RouteFallback />}><VerifyEmail /></Suspense>} />
