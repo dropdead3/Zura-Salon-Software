@@ -1,36 +1,82 @@
-## Goal
-Eliminate the two-hop `/dashboard` → `/org/:slug/dashboard` redirect from the marketing nav and make the CTA reflect *which* organization the user will land in. Aligns with the canonical multi-tenant URL hierarchy doctrine (`mem://architecture/multi-tenant-url-hierarchy`).
+## Diagnosis
 
-## Current behavior
-- `MarketingNav.tsx` renders `<Link to="/dashboard">Go to Dashboard</Link>` whenever `useAuth().user` is truthy.
-- `/dashboard` is caught by `LegacyDashboardRedirect`, which waits for `OrganizationContext` to hydrate, then `<Navigate>`s to `/org/:slug/dashboard`.
-- Cost: a brief loader flash, an extra navigation entry in history, and a generic label that doesn't reveal *which* org the user is about to enter.
+The marketing route `/` lives **outside** `OrganizationProvider` (per the Public vs Private Route Isolation canon — `mem://architecture/public-vs-private-route-isolation`). My previous edit added `useOrganizationContext()` and `useOrgDashboardPath()` to `MarketingNav`, both of which throw when no provider is mounted above them. Result: the entire marketing site error-boundaries into "Unexpected Interruption."
 
-## Proposed behavior
+## Root Cause
 
-### Phase 1 — Direct org-scoped link (correctness fix)
-- Use `useOrgDashboardPath()` inside `MarketingNav` to compute the canonical URL.
-- Fall back to `/dashboard` (current behavior) only when the slug hasn't resolved yet — preserves correctness during the brief org-context hydration window.
-- Apply to both desktop (line 104) and mobile (line 161) link targets.
+`src/components/marketing/MarketingNav.tsx` lines 6–7, 14–18:
+```ts
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+// ...
+const { effectiveOrganization } = useOrganizationContext(); // ← throws on /
+const { dashPath, orgSlug } = useOrgDashboardPath();        // ← also throws
+```
 
-### Phase 2 — Org-aware label (clarity fix)
-- Pull `effectiveOrganization?.name` from `OrganizationContext`.
-- Render label as `Open {OrgName}` when name is known, falling back to `Go to Dashboard` otherwise.
-- Truncate gracefully past ~22 chars with `truncate max-w-[180px]` so the pill doesn't deform on long org names ("Salon Capelli & Company of Westside" etc.).
-- Add `aria-label="Open {OrgName} dashboard"` for clarity.
+Both hooks call `useContext(OrganizationContext)` and throw if the value is `null`. They are dashboard-only hooks.
 
-### Phase 3 — Multi-org safeguard (deferred, not in this change)
-- For users with multiple org memberships, surface a tiny dropdown chevron next to the pill that opens an org switcher. **Deferred** until we have a real signal that multi-org operators are getting wrong-org bounces; tracked here so we don't forget.
+## Fix Plan
 
-## Files
-- `src/components/marketing/MarketingNav.tsx` — swap hardcoded `/dashboard` for `dashPath('/')`, swap label for `Open {orgName}` with truncation.
+### 1. Create a lightweight, provider-free hook: `useUserPrimaryOrgSlug`
 
-## Non-goals
-- No change to session persistence (`localStorage` + `autoRefreshToken`) — that behavior is correct and matches operator-tool norms (Slack, Stripe, Linear).
-- No change to `LegacyDashboardRedirect` — it remains as the safety net for any other inbound `/dashboard` link (old bookmarks, emails, external referrers).
-- No change to the signed-out branch (`Sign In` / `Get a Demo`) — already correct.
+New file: `src/hooks/useUserPrimaryOrgSlug.ts`
 
-## Further enhancement suggestions
-1. **Last-visited-page memory.** Persist the last dashboard URL the user was on into `localStorage` (e.g. `zura:lastDashboardPath`) and resolve the marketing CTA to that, not just `/dashboard`. Lets an operator pick up exactly where they left off when they hop back from the marketing site.
-2. **Session-age telemetry.** Log a lightweight event when the marketing CTA is clicked with session age >7 days. Gives us empirical data on how long sessions actually live in the wild — useful before we ever consider tightening refresh-token TTL.
-3. **Org switcher in marketing nav.** For users with `is_super_admin` or multi-org membership, render a tiny chevron next to "Open {OrgName}" that opens the same org switcher used in the dashboard sidebar. Deferred until we see real demand, but worth scoping now so the layout already accounts for the affordance.
+- Uses `useAuth()` (which IS available globally — `AuthProvider` wraps the app)
+- Uses `useQuery` to fetch the user's first org membership directly from `organization_members` joined to `organizations(slug, name)`
+- Returns `{ slug, name, isLoading }` — never throws, safe on any route
+- `enabled: !!user?.id` so anonymous visitors skip the query entirely
+- Cache key includes `user.id`; `staleTime: 5 min`
+- Honors multi-tenant isolation (RLS on `organization_members` already scopes to `auth.uid()`)
+
+### 2. Refactor `MarketingNav.tsx`
+
+- **Remove** imports of `useOrganizationContext` and `useOrgDashboardPath`
+- **Add** import of `useUserPrimaryOrgSlug`
+- Build `dashboardHref` inline:
+  ```ts
+  const { slug, name } = useUserPrimaryOrgSlug();
+  const dashboardHref = slug ? `/org/${slug}/dashboard/` : '/dashboard';
+  const ctaLabel = name ? `Open ${name}` : 'Go to Dashboard';
+  ```
+- Keep the `truncate max-w-[180px]` styling and mobile parity
+- Anonymous visitors: hook returns `{ slug: null, name: null }` → falls through to "Sign In / Get a Demo" branch (unchanged behavior)
+
+### 3. No changes needed elsewhere
+
+- `OrgDashboardRoute`, `LegacyDashboardRedirect`, `AuthContext` from the prior wave remain correct
+- Public route isolation canon is preserved (we never mount `OrganizationProvider` on `/`)
+
+## Files to Edit
+
+- **New:** `src/hooks/useUserPrimaryOrgSlug.ts`
+- **Edit:** `src/components/marketing/MarketingNav.tsx` (swap hooks, ~10 lines changed)
+
+## Why This Is The Right Fix
+
+- **Respects the Public vs Private Route Isolation canon** — marketing surfaces never reach into dashboard providers
+- **No two-hop redirect** — the CTA still resolves directly to `/org/:slug/dashboard/` for authenticated users
+- **Safe for anonymous visitors** — the membership query is gated on `user?.id`
+- **Tenant-isolated** — RLS on `organization_members` enforces that users only see their own memberships
+- **Recoverable** — even if the query fails, we fall back to `/dashboard`, which `LegacyDashboardRedirect` resolves correctly
+
+## Edge Cases Handled
+
+- **Anonymous visitor:** Hook disabled, CTA hidden (Sign In / Demo shown instead) ✓
+- **Authenticated user, no org:** `slug` is null, falls back to `/dashboard` → `LegacyDashboardRedirect` → `/no-organization` (Phase C from prior wave) ✓
+- **Authenticated user, multiple orgs:** Returns the first membership; matches current `LegacyDashboardRedirect` behavior ✓
+- **Query in flight:** Shows generic "Go to Dashboard" until resolved (no flash, no crash) ✓
+
+## Further Enhancement Suggestions
+
+1. **Multi-org switcher in marketing nav** — for users with >1 org membership, surface a dropdown directly in the marketing CTA (defer until we have telemetry showing this matters).
+2. **Cross-tab cache hydration** — share the org-slug query result via a `BroadcastChannel` so newly opened marketing tabs don't re-query.
+3. **Lint rule: `no-org-context-in-marketing`** — add `no-restricted-imports` under `src/components/marketing/**` banning `useOrganizationContext` and `useOrgDashboardPath`. Mirrors the platform-primitive-isolation canon and prevents this regression class permanently.
+
+## Prompt Coaching (per project doctrine)
+
+Your prompt — *"im stuck here"* + screenshot — was efficient because the screenshot carried the full error message and stack trace. That's the highest-signal, lowest-effort way to unblock me.
+
+A slightly stronger framing for next time:
+> *"This crash appeared after the last MarketingNav change. Confirm the fix doesn't violate the public-route-isolation canon."*
+
+That single sentence would have anchored my diagnosis to the canon up front and pre-empted any temptation to "just wrap MarketingNav in OrganizationProvider" (which would silently violate the isolation rule).
