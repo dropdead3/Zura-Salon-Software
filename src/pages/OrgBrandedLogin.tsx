@@ -133,6 +133,11 @@ export default function OrgBrandedLogin() {
     localStorage.setItem(getDeviceModeKey(organization.id), mode);
     setDeviceMode(mode);
     setShowDeviceModeDialog(false);
+    // If the chooser was opened immediately after a cold-start signin, the
+    // navigation was deferred — complete it now that the choice is recorded.
+    if (user) {
+      navigate(redirectTarget, { replace: true });
+    }
   };
 
   const handleResetDeviceMode = () => {
@@ -160,11 +165,14 @@ export default function OrgBrandedLogin() {
         toast({ variant: 'destructive', title: 'Sign in failed', description: error.message });
         return;
       }
-      // After login, prompt for device mode if not chosen yet
+      sonnerToast.success(`Welcome to ${organization?.name ?? 'your dashboard'}`);
+      // If device mode hasn't been chosen yet, surface the dialog and let the
+      // user pick before navigating away — otherwise the page unmounts and the
+      // chooser is never seen. Navigation happens on dialog close.
       if (organization?.id && !localStorage.getItem(getDeviceModeKey(organization.id))) {
         setShowDeviceModeDialog(true);
+        return;
       }
-      sonnerToast.success(`Welcome to ${organization?.name ?? 'your dashboard'}`);
       navigate(redirectTarget, { replace: true });
     } finally {
       setLoading(false);
