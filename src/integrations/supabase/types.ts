@@ -28517,6 +28517,42 @@ export type Database = {
           },
         ]
       }
+      tip_attribution_drift: {
+        Row: {
+          appointment_id: string
+          detected_at: string
+          expected_tip: number
+          id: string
+          linked_tip_sum: number
+          location_id: string
+          notes: string | null
+          resolved_at: string | null
+          variance: number | null
+        }
+        Insert: {
+          appointment_id: string
+          detected_at?: string
+          expected_tip: number
+          id?: string
+          linked_tip_sum: number
+          location_id: string
+          notes?: string | null
+          resolved_at?: string | null
+          variance?: number | null
+        }
+        Update: {
+          appointment_id?: string
+          detected_at?: string
+          expected_tip?: number
+          id?: string
+          linked_tip_sum?: number
+          location_id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          variance?: number | null
+        }
+        Relationships: []
+      }
       tip_distributions: {
         Row: {
           card_tips: number
@@ -31082,6 +31118,16 @@ export type Database = {
         }
         Relationships: []
       }
+      v_linkage_coverage_30d: {
+        Row: {
+          coverage_pct: number | null
+          last_sync_at: string | null
+          linked_items: number | null
+          location_id: string | null
+          service_items: number | null
+        }
+        Relationships: []
+      }
       v_phorest_source_duplicates: {
         Row: {
           canonical_phorest_id: string | null
@@ -31506,6 +31552,13 @@ export type Database = {
       recompute_policy_status: {
         Args: { p_policy_id: string }
         Returns: undefined
+      }
+      reconcile_appointment_status_via_linkage: {
+        Args: { p_date_from: string; p_date_to: string; p_location_id: string }
+        Returns: {
+          candidate_count: number
+          reconciled_count: number
+        }[]
       }
       reconcile_phorest_appointments: {
         Args: {
