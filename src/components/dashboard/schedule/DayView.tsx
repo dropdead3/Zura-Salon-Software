@@ -172,7 +172,8 @@ function DroppableSlot({
         } : {}),
       }}
       onClick={() => {
-        if (isPastSlot || isAvailable || isOutsideHours) onClick();
+        // Past slots are read-only — no phantom click action.
+        if (isAvailable || isOutsideHours) onClick();
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
