@@ -171,12 +171,79 @@ export function ScheduleHeader({
   // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
   const quickDays = Array.from({ length: 7 }, (_, i) => addDays(orgToday, i + 1));
 
-  const goToToday = () => setCurrentDate(orgToday);
-  
+  // Resolve the active location's hours + holiday closures for closure-aware UX.
+  const selectedLocationData = useMemo(
+    () => locations.find((l) => l.id === selectedLocation) ?? null,
+    [locations, selectedLocation],
+  );
+  const locHours = selectedLocationData?.hours_json ?? null;
+  const locHolidays = selectedLocationData?.holiday_closures ?? null;
+
+  /**
+   * Compute the next operating day after `from`. Walks forward up to 60 days
+   * (covers any reasonable closure streak) and returns the first open date.
+   * Falls back to `from + 1` if everything in the window is closed.
+   */
+  const nextOpenDay = (from: Date): Date => {
+    for (let i = 1; i <= 60; i++) {
+      const d = addDays(from, i);
+      if (!isClosedOnDate(locHours, locHolidays, d).isClosed) return d;
+    }
+    return addDays(from, 1);
+  };
+
+  // Holiday-aware Today: if the salon is closed today, jump to next open day
+  // and surface the reason via a toast so the operator isn't silently bumped.
+  const goToToday = () => {
+    const closure = isClosedOnDate(locHours, locHolidays, orgToday);
+    if (closure.isClosed) {
+      const next = nextOpenDay(orgToday);
+      setCurrentDate(next);
+      toast.info(`Closed today (${closure.reason ?? 'closed'}) — jumped to ${format(next, 'EEE, MMM d')}`);
+      return;
+    }
+    setCurrentDate(orgToday);
+  };
+
   const goToPrevDay = () => setCurrentDate(addDays(currentDate, -1));
   const goToNextDay = () => setCurrentDate(addDays(currentDate, 1));
   const goToPrevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
+
+  // Closure modifiers — categorize dates in the picker window into routine
+  // weekly closures (e.g. Mondays off) vs specific holiday closures so each
+  // can be styled distinctly in the calendar.
+  const closureModifiers = useMemo(() => {
+    const weeklyClosed: Date[] = [];
+    const holidayClosed: Date[] = [];
+    if (!locHours && (!locHolidays || locHolidays.length === 0)) {
+      return { weeklyClosed, holidayClosed };
+    }
+    // Window: 6 months back through 12 months forward — covers any visible
+    // calendar navigation without unbounded growth.
+    const start = addDays(orgToday, -180);
+    for (let i = 0; i <= 540; i++) {
+      const d = addDays(start, i);
+      const closure = isClosedOnDate(locHours, locHolidays, d);
+      if (!closure.isClosed) continue;
+      if (closure.reason === 'Regular hours') weeklyClosed.push(d);
+      else holidayClosed.push(d);
+    }
+    return { weeklyClosed, holidayClosed };
+  }, [locHours, locHolidays, orgToday]);
+
+  // Closed-tomorrow chip: surface a calm warning when the next operating day
+  // is itself a closure (e.g. tomorrow is Christmas) so the operator can plan.
+  const tomorrowClosure = useMemo(() => {
+    const tomorrow = addDays(orgToday, 1);
+    const closure = isClosedOnDate(locHours, locHolidays, tomorrow);
+    if (!closure.isClosed) return null;
+    return {
+      reason: closure.reason ?? 'Closed',
+      nextOpen: nextOpenDay(orgToday),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locHours, locHolidays, orgToday]);
 
   // Capacity tiers per date for the date picker — org-wide utilization signal.
   // Uses the shared computeUtilizationByStylist (single source of truth) and
