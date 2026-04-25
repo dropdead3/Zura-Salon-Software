@@ -282,8 +282,18 @@ export default function OrgBrandedLogin() {
   const manifestSrc = useMemo(() => {
     const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
     if (!supaUrl) return undefined;
-    return `${supaUrl}/functions/v1/org-manifest?slug=${encodeURIComponent(orgSlug)}`;
-  }, [orgSlug]);
+    const params = new URLSearchParams({ slug: orgSlug });
+    if (locationSlug) params.set('loc', locationSlug);
+    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
+  }, [orgSlug, locationSlug]);
+
+  const splashSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug });
+    if (locationSlug) params.set('loc', locationSlug);
+    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
+  }, [orgSlug, locationSlug]);
 
   const orgName = organization.name;
   const themeColor = '#0a0a0a';
@@ -300,6 +310,8 @@ export default function OrgBrandedLogin() {
         {organization.logo_url && (
           <link rel="apple-touch-icon" href={organization.logo_url} />
         )}
+        {/* iOS PWA branded splash — single high-res image, iOS scales as needed */}
+        {splashSrc && <link rel="apple-touch-startup-image" href={splashSrc} />}
       </Helmet>
 
       {/* Atmospheric backdrop */}
