@@ -862,7 +862,7 @@ export function AppointmentDetailSheet({
 
   // ─── Data Hooks (Wave 18: lazy-gated by activeTab) ────────────
   const notesEnabled = activeTab === 'notes' || activeTab === 'details';
-  const historyEnabled = activeTab === 'history' || activeTab === 'details';
+  const historyEnabled = activeTab === 'history';
   const auditEnabled = activeTab === 'history' || activeTab === 'details';
 
   const notesAppointmentId = appointment?.phorest_id || appointment?.id || null;
