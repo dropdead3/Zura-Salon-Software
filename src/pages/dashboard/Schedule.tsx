@@ -1151,6 +1151,31 @@ export default function Schedule() {
         onOpenClientProfile={handleOpenClientProfile}
       />
 
+      <RebookIntervalPicker
+        open={rebookPickerOpen}
+        appointment={rebookPickerAppt}
+        onCancel={() => {
+          setRebookPickerOpen(false);
+          setRebookPickerAppt(null);
+        }}
+        onConfirm={({ date }) => {
+          const apt = rebookPickerAppt;
+          setRebookPickerOpen(false);
+          if (!apt) return;
+          setBookingDefaults({ date, stylistId: apt.stylist_user_id || undefined });
+          setActiveDraft(null);
+          setRebookData({
+            clientId: apt.phorest_client_id || undefined,
+            clientName: apt.client_name || undefined,
+            staffUserId: apt.stylist_user_id || undefined,
+            staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
+            selectedServices: [],
+          });
+          setRebookPickerAppt(null);
+          setBookingOpen(true);
+        }}
+      />
+
       <CheckoutSummarySheet
         appointment={selectedAppointment}
         open={checkoutOpen}
