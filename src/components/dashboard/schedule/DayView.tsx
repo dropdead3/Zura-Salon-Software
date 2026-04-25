@@ -870,11 +870,8 @@ export function DayView({
           >
             <ArrowUp className="h-3 w-3" />
             <span>{formatTime12h(earliestAbove.appt.start_time)}</span>
-            {(earliestAbove.appt.client_first_name || earliestAbove.appt.client_last_name) && (
-              <span className="opacity-90">
-                · {earliestAbove.appt.client_first_name ?? ''}
-                {earliestAbove.appt.client_last_name ? ` ${earliestAbove.appt.client_last_name[0]}.` : ''}
-              </span>
+            {earliestAbove.appt.client_name && (
+              <span className="opacity-90">· {earliestAbove.appt.client_name}</span>
             )}
             {hiddenAboveCount > 1 && (
               <span className="opacity-70">+{hiddenAboveCount - 1}</span>
