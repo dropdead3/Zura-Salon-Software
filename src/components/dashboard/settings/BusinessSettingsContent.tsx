@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { TeamLoginUrlCard } from './TeamLoginUrlCard';
 
 const ALLOWED_TYPES = ['image/svg+xml', 'image/png'];
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -348,7 +349,7 @@ export function BusinessSettingsContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="brand">
+        <TabsContent value="brand" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="font-display text-lg">BRAND LOGOS</CardTitle>
