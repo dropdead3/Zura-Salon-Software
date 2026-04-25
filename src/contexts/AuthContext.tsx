@@ -186,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setPermissions([]);
         setPlatformRoles([]);
         setLoading(false);
+        setAuthReady(true);
         return;
       }
 
@@ -206,11 +207,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setPlatformRoles(userPlatformRoles);
           setPermissions(userPermissions);
           setLoading(false);
+          setAuthReady(true);
         })
         .catch(() => {
           if (!mountedRef.current) return;
           if (v !== requestVersionRef.current) return;
           setLoading(false);
+          setAuthReady(true);
         });
     },
     []
@@ -218,20 +221,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true;
+    let initialResolved = false;
 
     // Set up auth state listener FIRST (Supabase recommended order)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, !!session);
         if (!mountedRef.current) return;
+        initialResolved = true;
         processSession(session);
       }
     );
 
-    // THEN check for existing session
+    // THEN check for existing session — but skip if onAuthStateChange already fired.
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session check:', !!session);
       if (!mountedRef.current) return;
+      if (initialResolved) return; // dedupe: listener already handled it
+      initialResolved = true;
       processSession(session);
     });
 
