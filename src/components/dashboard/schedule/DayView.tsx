@@ -884,9 +884,15 @@ export function DayView({
             onClick={() => {
               const ref = scrollRef.current;
               if (!ref) return;
+              setChipDimmed(false);
               ref.scrollTo({ top: Math.max(0, earliestAbove.topPx - 40), behavior: 'smooth' });
             }}
-            className="absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-colors"
+            onMouseEnter={() => setChipDimmed(false)}
+            onFocus={() => setChipDimmed(false)}
+            className={cn(
+              'absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-[opacity,background-color,color] duration-500 motion-reduce:transition-none',
+              chipDimmed ? 'opacity-50 hover:opacity-100 focus-visible:opacity-100' : 'opacity-100',
+            )}
             aria-label="Scroll to earlier appointment"
           >
             <ArrowUp className="h-3 w-3" />
