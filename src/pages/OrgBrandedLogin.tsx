@@ -233,6 +233,13 @@ export default function OrgBrandedLogin() {
         localStorage.setItem(getRememberedUserKey(organization.id), JSON.stringify(remembered));
       }
 
+      // Always push to per-device recents (used by the household tile picker)
+      pushRecentUser(orgSlug, {
+        user_id: result.user_id,
+        display_name: result.display_name,
+        photo_url: result.photo_url,
+      });
+
       sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
       sonnerToast.success(`Welcome, ${result.display_name.split(' ')[0]}`);
       navigate(redirectTarget, { replace: true });
