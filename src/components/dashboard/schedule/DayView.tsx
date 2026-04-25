@@ -473,6 +473,39 @@ export function DayView({
   // Track previous zoom config to detect zoom changes vs date changes
   const prevSlotIntervalRef = useRef(slotInterval);
   const prevRowHeightRef = useRef(ROW_HEIGHT);
+  const prevDateRef = useRef<string | null>(null);
+  const hasLandedRef = useRef(false);
+
+  // Reset landing state when the date changes — a new day deserves a fresh
+  // instant land, not a smooth pan from yesterday's anchor.
+  useEffect(() => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (prevDateRef.current !== dateStr) {
+      hasLandedRef.current = false;
+      prevDateRef.current = dateStr;
+    }
+  }, [date]);
+
+  // Track scrollTop (rAF-throttled) for the "earlier appointments" sentinel chip.
+  const [scrollTop, setScrollTop] = useState(0);
+  useEffect(() => {
+    const ref = scrollRef.current;
+    if (!ref) return;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        setScrollTop(ref.scrollTop);
+        frame = 0;
+      });
+    };
+    ref.addEventListener('scroll', onScroll, { passive: true });
+    setScrollTop(ref.scrollTop);
+    return () => {
+      ref.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   // Auto-scroll: preserve viewport center on zoom, scroll to opening on date change
   useEffect(() => {
