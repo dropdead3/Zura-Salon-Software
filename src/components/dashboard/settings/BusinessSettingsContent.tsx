@@ -380,6 +380,8 @@ export function BusinessSettingsContent() {
               </div>
             </CardContent>
           </Card>
+
+          <TeamLoginUrlCard />
         </TabsContent>
 
         <TabsContent value="address">
