@@ -326,6 +326,7 @@ export function RebookIntervalPicker({
             >
               {intervals.map((interval) => {
                 const isRecommended = interval.weeks === recommendedWeeks;
+                const offThatDay = isStylistOff(interval.date);
                 return (
                   <Tooltip key={interval.weeks}>
                     <TooltipTrigger asChild>
@@ -333,22 +334,38 @@ export function RebookIntervalPicker({
                         value={String(interval.weeks)}
                         aria-label={`${interval.weeks} weeks`}
                         className={cn(
-                          'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border bg-background',
-                          'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary',
-                          'hover:bg-muted/60 transition-colors relative',
+                          'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
+                          'border-border hover:bg-muted/60 transition-colors relative',
+                          // Purple ghost selected — primary tint + thick stroke + soft ring
+                          'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
+                          'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
+                          'data-[state=on]:text-foreground',
+                          offThatDay && 'opacity-60',
                         )}
                       >
-                        <span className="font-sans text-sm font-medium leading-none">
+                        <span className="font-sans text-sm leading-none">
                           {interval.weeks}w
                         </span>
-                        <span className="font-sans text-[10px] opacity-70 leading-none mt-1">
+                        <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
                           {interval.dateLabel}
                         </span>
+                        {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
                         {isRecommended && (
                           <span
-                            className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary data-[state=on]:bg-primary-foreground"
+                            className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
                             aria-label="Recommended"
-                          />
+                          >
+                            Rec
+                          </span>
+                        )}
+                        {/* Off-day marker (small, top-right) */}
+                        {offThatDay && (
+                          <span
+                            className="absolute top-1 right-1 inline-flex items-center"
+                            aria-label="Stylist off"
+                          >
+                            <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
+                          </span>
                         )}
                         {interval.load && (
                           <span
@@ -360,12 +377,17 @@ export function RebookIntervalPicker({
                         )}
                       </ToggleGroupItem>
                     </TooltipTrigger>
-                    {interval.load && (
-                      <TooltipContent>
-                        {interval.apptCount} booked · {LOAD_LABEL[interval.load]}
-                        {isRecommended ? ' · Recommended' : ''}
-                      </TooltipContent>
-                    )}
+                    <TooltipContent>
+                      {offThatDay
+                        ? "Stylist isn't scheduled this day"
+                        : interval.load
+                        ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
+                            isRecommended ? ' · Recommended' : ''
+                          }`
+                        : isRecommended
+                        ? 'Recommended'
+                        : ''}
+                    </TooltipContent>
                   </Tooltip>
                 );
               })}
