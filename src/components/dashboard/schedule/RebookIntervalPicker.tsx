@@ -50,6 +50,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { getRecommendedWeeks } from '@/lib/scheduling/rebook-recommender';
 import {
@@ -58,6 +59,7 @@ import {
   type TimeBand,
 } from '@/hooks/useScheduleDayCapacity';
 import { useStylistWorkDays } from '@/hooks/useStylistWorkDays';
+import { getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 
 const INTERVAL_WEEKS = [2, 4, 6, 8, 12] as const;
 const CAPACITY_HORIZON_DAYS = 100;
@@ -65,6 +67,10 @@ const CAPACITY_HORIZON_DAYS = 100;
 interface RebookIntervalPickerProps {
   open: boolean;
   appointment: PhorestAppointment | null;
+  /** Location hours used to detect salon-closed days on the calendar. */
+  locationHoursJson?: HoursJson | null;
+  /** Holiday/manual closures used alongside hours_json. */
+  locationHolidayClosures?: HolidayClosure[] | null;
   onCancel: () => void;
   onConfirm: (result: { date: Date; weeks?: number }) => void;
 }
