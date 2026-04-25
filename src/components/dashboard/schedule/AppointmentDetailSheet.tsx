@@ -862,7 +862,7 @@ export function AppointmentDetailSheet({
 
   // ─── Data Hooks (Wave 18: lazy-gated by activeTab) ────────────
   const notesEnabled = activeTab === 'notes' || activeTab === 'details';
-  const historyEnabled = activeTab === 'history' || activeTab === 'details';
+  const historyEnabled = activeTab === 'history';
   const auditEnabled = activeTab === 'history' || activeTab === 'details';
 
   const notesAppointmentId = appointment?.phorest_id || appointment?.id || null;
@@ -1673,16 +1673,8 @@ export function AppointmentDetailSheet({
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
-                    {/* Last visit date */}
-                    {historyLoading && !lastVisitDate && (
-                      <Skeleton className="h-3 w-24 mt-1" />
-                    )}
-                    {lastVisitDate && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
-                      </p>
-                    )}
                   </div>
+
                 </div>
 
                 {/* Consolidated chip strip — wraps gracefully via SpatialRow */}
@@ -2327,22 +2319,8 @@ export function AppointmentDetailSheet({
                           />
                         ) : null}
 
-                        {!isWalkIn && (lastVisitDate || visitStats.visitCount > 0) && (
-                          <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
-                            {lastVisitDate && (
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3 w-3" />
-                                Last visit {formatDate(parseISO(lastVisitDate), 'MMM d, yyyy')}
-                              </span>
-                            )}
-                            {visitStats.visitCount > 0 && (
-                              <span className="flex items-center gap-1.5">
-                                <TrendingUp className="h-3 w-3" />
-                                {visitStats.visitCount} visit{visitStats.visitCount === 1 ? '' : 's'}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {/* Visit history summary moved to History tab to avoid blocking the Details tab on a slow query. */}
+
                         {isWalkIn && !clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground pt-1">
                             No contact info — Add details in client profile
