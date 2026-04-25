@@ -542,7 +542,12 @@ export default function OrgBrandedLogin() {
           {showPinFlow && deviceMode === 'shared' && (
             <div className="space-y-6">
               {!selectedUserId ? (
-                <OrgLoginUserGrid members={teamMembers} onSelect={setSelectedUserId} />
+                <OrgLoginUserGrid
+                  members={teamMembers}
+                  recentUserIds={recents.map((r) => r.user_id)}
+                  onSelect={setSelectedUserId}
+                />
+
               ) : (
                 <div className="flex flex-col items-center gap-6">
                   {(() => {
