@@ -1,96 +1,104 @@
-# Schedule Sentinel & Scroll Refinements
+# Why Suzy's card says "Unconfirmed"
 
-Three enhancements proposed; **shipping #1 and #3 now**, **deferring #2** behind a usage signal as you suggested. All changes scoped to `src/components/dashboard/schedule/DayView.tsx`.
+## Diagnosis (confirmed against the live database)
 
----
+Suzy Imel's April 24, 2026 appointment is row `bf16250a-ded7-4c83-b280-546b07876acf` in `phorest_appointments` with `status = 'booked'`. Status determines the badge — `booked` maps to the label **"Unconfirmed"** in `src/lib/design-tokens.ts` (lines 336/354).
 
-## #1 — Sentinel chip dwell-fade (Ship)
+Suzy *was* checked out at the POS — there are five `phorest_transaction_items` rows on April 24 for her `phorest_client_id = woN5X2F8OXyyilQKuNFvew`, including the `Natural Root Retouch` service line for $152.00 that matches her appointment exactly.
 
-**Doctrine fit:** Calm UX, alert-fatigue prevention. The chip is protective context, not an interrupt — once seen, it should recede.
+So the data is in the system. The reconciliation step simply isn't flipping `booked → completed`.
 
-**Logic:**
-- Track a `chipShownAt` timestamp keyed on the earliest-above appointment id. Reset whenever the identity of the chip's primary appointment changes (so a *new* off-screen appointment re-asserts at full opacity).
-- 8s after the chip appears with no interaction (hover, focus, click), fade to `opacity-50`.
-- Any interaction (hover/focus/click) restores full opacity and restarts the dwell timer.
-- Use a `setTimeout` cleared on unmount and on identity change. No re-render storm.
+This is **not isolated to Suzy**. On April 24 (yesterday), the schedule has:
+- 21 `confirmed`, 3 `completed`, **18 `booked`**
+- Of those 18 `booked` rows, **15 already have a matching transaction in `phorest_transaction_items`** for the same `phorest_client_id` + same date
 
-**Snippet:**
-```tsx
-const [chipDimmed, setChipDimmed] = useState(false);
-const chipKey = earliestAbove?.appt.id ?? null;
+Every one of those 15 should have been auto-completed.
 
-useEffect(() => {
-  setChipDimmed(false);
-  if (!chipKey) return;
-  const t = setTimeout(() => setChipDimmed(true), 8000);
-  return () => clearTimeout(t);
-}, [chipKey]);
+## Root cause
 
-// On the chip:
-className={cn(
-  '... transition-opacity duration-500',
-  chipDimmed ? 'opacity-50 hover:opacity-100 focus-visible:opacity-100' : 'opacity-100'
-)}
-onMouseEnter={() => setChipDimmed(false)}
-onFocus={() => setChipDimmed(false)}
+`supabase/functions/sync-phorest-data/index.ts` lines 2113-2151 contains the reconciler that flips appointments to `completed` when a same-day transaction exists. It iterates the **in-memory `purchases` array fetched from Phorest**, not the persisted rows in `phorest_transaction_items`. The filter is:
+
+```ts
+const uniqueClientDates = [...new Set(
+  purchases
+    .filter((p: any) => p.clientId && p.purchaseDate)   // ← strict field names
+    .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
+)].filter(...);
 ```
 
-**Edge case:** If multiple early appointments exist and one is consumed (status → completed), `chipKey` shifts to the next-earliest and the timer restarts — correct behavior.
+Three fragility points, in priority order:
 
----
+1. **Field-name drift between writer and reconciler.** Twenty lines below (the transaction-record builder), the same `purchase` object is read with multiple fallbacks: `purchase.purchaseDate || purchase.createdAt || purchase.date` and `purchase.clientId || purchase.client?.clientId`. The reconciler uses neither fallback. Phorest returns slightly different shapes across endpoints (`/sales`, `/staffperformance`, etc.), so `purchases` can have populated `client.clientId`/`createdAt` but empty `clientId`/`purchaseDate` — and the entire reconciliation silently no-ops.
 
-## #2 — Symmetric "Later" chip (Defer)
+2. **Reconciliation depends on the API payload, not the database.** `phorest_transaction_items` already proves the sale exists, but the reconciler ignores it. If a sale was synced in an earlier run and the current run returns it differently shaped (or skips that branch's date range), the appointment never gets flipped — even though the truth is sitting in our own table.
 
-**Decision:** Hold per your direction. Document as a deferred enhancement so we revisit only after we have evidence the top chip is valued.
+3. **Status updates only, no audit linkage.** The reconciler updates `status` in bulk by `(client_id, date)` but never writes the `appointment_id` back onto the matched `phorest_transaction_items`. That's why every transaction row in our DB has `appointment_id = NULL`. Long-term this blocks per-appointment revenue, tip distribution, and dock-to-checkout reconciliation.
 
-**Revisit trigger condition** (per Deferral Register doctrine):
-> Ship the bottom-of-viewport "Later" chip only after analytics show the top sentinel chip is clicked on ≥15% of day-views where it renders, OR an operator explicitly requests it. Until then, the bottom chip would add visual weight without proven leverage.
+## Plan
 
-I'll add a one-line comment near `earliestAbove` referencing this deferral so the next agent doesn't re-propose it cold.
+### Phase 1 — Fix the reconciler (P0, ships this turn)
 
----
+**`supabase/functions/sync-phorest-data/index.ts`** — replace the `purchases`-based reconciler block (lines 2113-2151) with a **DB-driven reconciler** that runs once per branch, immediately after the transaction items are upserted:
 
-## #3 — Delta-gated smooth scroll (Ship)
+- Query `phorest_transaction_items` for this branch where `transaction_date >= salesFrom AND transaction_date < today` (strictly past).
+- Project to unique `(phorest_client_id, transaction_date)` keys.
+- For each batch of 50, run the same `phorest_appointments` update (`status='completed'` where status IN booked/confirmed/checked_in).
+- Add structured logging: `[Reconcile] branch=… past_dates=N candidates=K reconciled=R`.
 
-**Doctrine fit:** UX discipline — micro-shifts read as jitter. Smooth animation should signal *meaningful* movement.
+This eliminates the field-name fragility and makes reconciliation correct against any prior sync's data, not just the current payload.
 
-**Logic:**
-- Before calling `ref.scrollTo`, compute `delta = Math.abs(top - ref.scrollTop)`.
-- If `delta < ROW_HEIGHT * 2` (~two slots), force `behavior: 'instant'` even on post-hydration recompute.
-- Reduced-motion and initial-land paths already force instant; this adds a third gate without reordering the existing logic.
+### Phase 2 — One-time backfill for existing drift (P0, ships this turn)
 
-**Snippet (replaces lines 583–588):**
-```tsx
-const prefersReducedMotion =
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+After deploying Phase 1, run a one-shot migration to repair the historical drift:
 
-const delta = Math.abs(top - ref.scrollTop);
-const isMicroShift = delta < ROW_HEIGHT * 2;
-
-const behavior: ScrollBehavior =
-  hasLandedRef.current && !isZoomChange && !prefersReducedMotion && !isMicroShift
-    ? 'smooth'
-    : 'instant';
-
-requestAnimationFrame(() => {
-  ref.scrollTo({ top, behavior });
-  hasLandedRef.current = true;
-});
+```sql
+UPDATE phorest_appointments a
+   SET status = 'completed'
+  FROM (
+    SELECT DISTINCT phorest_client_id, transaction_date
+      FROM phorest_transaction_items
+     WHERE transaction_date < CURRENT_DATE
+  ) t
+ WHERE a.phorest_client_id = t.phorest_client_id
+   AND a.appointment_date  = t.transaction_date
+   AND a.status IN ('booked','confirmed','checked_in')
+   AND a.is_archived = false;
 ```
 
+This will heal Suzy and the other 14 affected April-24 appointments, plus any older drift not caught above. Will be wrapped in a migration the user approves before execution.
+
+### Phase 3 — Appointment ↔ transaction linkage (P1, deferred)
+
+`phorest_transaction_items.appointment_id` is currently always NULL. After Phase 1 lands, add a follow-up backfill + sync-time write that links each transaction line to the closest matching `phorest_appointments` row by `(phorest_client_id, date, phorest_staff_id, item_name~service_name)`. This unlocks per-appointment payout accuracy and removes the "fuzzy by date+client" reconciliation pattern entirely.
+
+**Deferred** — not required to fix the user-visible "Unconfirmed" bug. Will be planned separately once Phase 1 is verified.
+
+## Files to be edited
+
+- `supabase/functions/sync-phorest-data/index.ts` — replace lines 2113-2151 with DB-driven reconciler
+- New SQL migration — one-time backfill (Phase 2)
+
+## Verification after deploy
+
+1. Trigger a sales sync.
+2. Re-query `phorest_appointments` for `id='bf16250a-ded7-4c83-b280-546b07876acf'` → expect `status='completed'`.
+3. Re-open Suzy's card on `/dashboard/schedule` → progression bar should show **COMPLETED** filled.
+4. Spot-check the other 14 affected April-24 clients (Ava Freiling, Emily Hanratty, Jessica Stiner, Jordyn White, Kendra Harris, Mel Baeza, Olivia Self, Shea Helmstetter).
+
 ---
 
-## Files Edited
-- `src/components/dashboard/schedule/DayView.tsx` (chip dwell state + timer, micro-shift gate, deferral comment)
+## On your prompt (positive feedback + how to sharpen it)
 
-## Out of Scope
-- Pre-open booking flag in daily brief (still pending from prior turn — flag if you want it bundled).
-- "Later" chip (deferred with explicit revisit trigger).
+**What worked well:** You gave me three perfectly aligned signals — the **client name** (lookup target), the **observed UI state** ("Unconfirmed"), and the **expected reality** ("completed yesterday, checked out at POS"). That triangulation is exactly what makes a bug report debuggable in one pass instead of three. I went straight to the data, didn't have to guess.
 
----
+**One sharpening move for next time:** Add the **scope question** alongside the symptom. Something like: *"Is this just Suzy or are other April 24 appointments also stuck on Unconfirmed?"* That single question would have cued me to query the day-wide status distribution **first**, which is what surfaced the real story (15 of 18 affected, not 1 of 1). Symptom + scope together turns a single-bug report into a systemic-bug report — and the fix scope changes accordingly.
 
-## Further Enhancement Suggestions
-1. **Per-session dwell memory.** If the operator dismissed/dimmed the chip earlier today, start dimmed on subsequent renders for the same appointment id. Avoids re-asserting attention on a known signal across navigations.
-2. **Chip click telemetry.** Emit a lightweight `schedule.sentinel_chip.clicked` event so the deferral trigger for #2 is data-driven, not anecdotal.
-3. **Respect `prefers-reduced-motion` on the chip transition.** The `transition-opacity` should also collapse to instant under reduced-motion to stay consistent with the scroll behavior.
+A reusable pattern: **Subject + Symptom + Expected + "Is this isolated?"**
+
+## Further enhancement suggestions
+
+1. **Sync health surface in the morning brief.** When ≥3 past-day appointments still show `booked` while matching transactions exist, surface a "Status drift detected — N appointments need reconciliation" line in `{{EXECUTIVE_BRIEF_NAME}}`. Operators should never discover this by spotting one card.
+
+2. **Reconciler observability.** Emit a `phorest.reconciliation.completed` event row to `phorest_sync_log` with `{ branch, candidates, reconciled, skipped_reason }` so silent no-ops become visible in the sync log instead of dying in console.
+
+3. **Status-stuck audit query as a saved Report.** Add a Reports entry: "Appointments with sales but no completion" — same join we used to diagnose Suzy. Makes drift continuously inspectable, not just reactively diagnosed.
