@@ -20,11 +20,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export type DayLoad = 'light' | 'moderate' | 'heavy' | 'full';
+export type TimeBand = 'morning' | 'afternoon' | 'evening';
 
 export interface DayCapacity {
   date: string;            // yyyy-MM-dd
   apptCount: number;       // total non-cancelled appointments
   load: DayLoad;
+  /**
+   * Per-band appointment counts. Present only when the query is stylist-scoped
+   * (i.e. options.stylistUserId is set) — that's the only context where bands
+   * carry meaningful signal for the rebook UI.
+   */
+  bands?: Record<TimeBand, number>;
+}
+
+function bandOf(startTime: string): TimeBand {
+  const h = parseInt(startTime.split(':')[0] ?? '0', 10);
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
 }
 
 interface CapacityOptions {
@@ -68,9 +82,14 @@ export function useScheduleDayCapacity(
       stylistUserId ?? 'org',
     ],
     queryFn: async () => {
+      // Pull start_time too when stylist-scoped so we can bucket per band.
+      const selectCols = stylistUserId
+        ? 'appointment_date, status, stylist_user_id, start_time'
+        : 'appointment_date, status, stylist_user_id';
+
       let query = supabase
         .from('v_all_appointments' as any)
-        .select('appointment_date, status, stylist_user_id')
+        .select(selectCols)
         .eq('organization_id', orgId!)
         .gte('appointment_date', startStr)
         .lte('appointment_date', endStr)
@@ -86,15 +105,26 @@ export function useScheduleDayCapacity(
       if (error) throw error;
 
       const counts = new Map<string, number>();
+      const bandCounts = new Map<string, Record<TimeBand, number>>();
       (rows || []).forEach((r: any) => {
         const d = r.appointment_date as string;
         counts.set(d, (counts.get(d) || 0) + 1);
+        if (stylistUserId && r.start_time) {
+          const b = bandOf(r.start_time as string);
+          const cur = bandCounts.get(d) || { morning: 0, afternoon: 0, evening: 0 };
+          cur[b]++;
+          bandCounts.set(d, cur);
+        }
       });
 
       const classify = stylistUserId ? classifyStylist : classifyOrg;
       const map = new Map<string, DayCapacity>();
       counts.forEach((count, date) => {
-        map.set(date, { date, apptCount: count, load: classify(count) });
+        const entry: DayCapacity = { date, apptCount: count, load: classify(count) };
+        if (stylistUserId) {
+          entry.bands = bandCounts.get(date) || { morning: 0, afternoon: 0, evening: 0 };
+        }
+        map.set(date, entry);
       });
       return map;
     },

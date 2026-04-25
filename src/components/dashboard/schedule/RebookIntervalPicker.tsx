@@ -35,6 +35,8 @@ import {
   AlertTriangle,
   Wand2,
   User,
+  Clock,
+  CalendarOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -53,7 +55,9 @@ import { getRecommendedWeeks } from '@/lib/scheduling/rebook-recommender';
 import {
   useScheduleDayCapacity,
   type DayLoad,
+  type TimeBand,
 } from '@/hooks/useScheduleDayCapacity';
+import { useStylistWorkDays } from '@/hooks/useStylistWorkDays';
 
 const INTERVAL_WEEKS = [2, 4, 6, 8, 12] as const;
 const CAPACITY_HORIZON_DAYS = 100;
@@ -84,6 +88,19 @@ const LOAD_LABEL: Record<DayLoad, string> = {
   moderate: 'Moderate',
   heavy: 'Heavy',
   full: 'Full',
+};
+
+// Day-of-week tokens used by employee_location_schedules.work_days
+const WEEKDAY_TOKENS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+// A band is "full" for a single stylist when ~3+ appointments already sit in it.
+// Bands are roughly 4–5 hours, so 3 chemical/cut appts typically saturate them.
+const BAND_FULL_THRESHOLD = 3;
+
+const BAND_LABEL: Record<TimeBand, string> = {
+  morning: 'AM',
+  afternoon: 'PM',
+  evening: 'PM',
 };
 
 export function RebookIntervalPicker({
@@ -127,6 +144,26 @@ export function RebookIntervalPicker({
     { stylistUserId },
   );
 
+  // Stylist's standing weekly schedule — used for "Off this week" detection.
+  const { workDays, hasSchedule } = useStylistWorkDays(stylistUserId);
+
+  // Derive the client's preferred time-of-day band from the source appointment.
+  // A "calm" day with no opening in the preferred band isn't actually a calm rebook.
+  const preferredBand = useMemo<TimeBand | null>(() => {
+    const t = appointment?.start_time;
+    if (!t) return null;
+    const h = parseInt(t.split(':')[0] ?? '0', 10);
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
+  }, [appointment?.start_time]);
+
+  const isStylistOff = (date: Date): boolean => {
+    if (!hasSchedule) return false; // unknown → don't flag
+    const token = WEEKDAY_TOKENS[date.getDay()];
+    return !workDays.has(token);
+  };
+
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
   useEffect(() => {
@@ -164,22 +201,35 @@ export function RebookIntervalPicker({
 
   // "Calmest day this week" — a quick-pick chip per interval row that finds
   // the lightest day in the same week as the interval target, so the operator
-  // can nudge the rebook off a heavy day in one tap.
+  // can nudge the rebook off a heavy day in one tap. Days when the stylist
+  // isn't working are excluded from the search (we never recommend an Off day).
   const calmestPicks = useMemo(() => {
     return intervals.map((interval) => {
       const weekStart = startOfWeek(interval.date, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(interval.date, { weekStartsOn: 1 });
       const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
         .filter((d) => !isBefore(startOfDay(d), today))
+        .filter((d) => !isStylistOff(d)) // honor schedule
         .map((d) => {
           const cap = capacityMap.get(format(d, 'yyyy-MM-dd'));
-          return { date: d, count: cap?.apptCount ?? 0, load: cap?.load };
+          const bandCount = preferredBand
+            ? cap?.bands?.[preferredBand] ?? 0
+            : 0;
+          return {
+            date: d,
+            count: cap?.apptCount ?? 0,
+            load: cap?.load,
+            bandFull: !!preferredBand && bandCount >= BAND_FULL_THRESHOLD,
+            bandCount,
+          };
         });
       if (!days.length) return null;
-      // Lightest by count, with a small bias toward the interval's own day on ties.
+      // Lightest by count, then prefer days where the preferred band is open,
+      // then bias toward the interval's own day on ties.
       const targetKey = format(interval.date, 'yyyy-MM-dd');
       const best = [...days].sort((a, b) => {
         if (a.count !== b.count) return a.count - b.count;
+        if (a.bandFull !== b.bandFull) return a.bandFull ? 1 : -1;
         const aIsTarget = format(a.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
         const bIsTarget = format(b.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
         return aIsTarget - bIsTarget;
@@ -188,7 +238,7 @@ export function RebookIntervalPicker({
       if (format(best.date, 'yyyy-MM-dd') === targetKey) return null;
       return best;
     });
-  }, [intervals, capacityMap, today]);
+  }, [intervals, capacityMap, today, hasSchedule, workDays, preferredBand]);
 
   // Smart nudge: when the active target lands on a heavy/full day, suggest a
   // calmer alternative from the interval grid.
@@ -276,6 +326,7 @@ export function RebookIntervalPicker({
             >
               {intervals.map((interval) => {
                 const isRecommended = interval.weeks === recommendedWeeks;
+                const offThatDay = isStylistOff(interval.date);
                 return (
                   <Tooltip key={interval.weeks}>
                     <TooltipTrigger asChild>
@@ -283,22 +334,38 @@ export function RebookIntervalPicker({
                         value={String(interval.weeks)}
                         aria-label={`${interval.weeks} weeks`}
                         className={cn(
-                          'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-border bg-background',
-                          'data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary',
-                          'hover:bg-muted/60 transition-colors relative',
+                          'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
+                          'border-border hover:bg-muted/60 transition-colors relative',
+                          // Purple ghost selected — primary tint + thick stroke + soft ring
+                          'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
+                          'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
+                          'data-[state=on]:text-foreground',
+                          offThatDay && 'opacity-60',
                         )}
                       >
-                        <span className="font-sans text-sm font-medium leading-none">
+                        <span className="font-sans text-sm leading-none">
                           {interval.weeks}w
                         </span>
-                        <span className="font-sans text-[10px] opacity-70 leading-none mt-1">
+                        <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
                           {interval.dateLabel}
                         </span>
+                        {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
                         {isRecommended && (
                           <span
-                            className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-primary data-[state=on]:bg-primary-foreground"
+                            className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
                             aria-label="Recommended"
-                          />
+                          >
+                            Rec
+                          </span>
+                        )}
+                        {/* Off-day marker (small, top-right) */}
+                        {offThatDay && (
+                          <span
+                            className="absolute top-1 right-1 inline-flex items-center"
+                            aria-label="Stylist off"
+                          >
+                            <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
+                          </span>
                         )}
                         {interval.load && (
                           <span
@@ -310,12 +377,17 @@ export function RebookIntervalPicker({
                         )}
                       </ToggleGroupItem>
                     </TooltipTrigger>
-                    {interval.load && (
-                      <TooltipContent>
-                        {interval.apptCount} booked · {LOAD_LABEL[interval.load]}
-                        {isRecommended ? ' · Recommended' : ''}
-                      </TooltipContent>
-                    )}
+                    <TooltipContent>
+                      {offThatDay
+                        ? "Stylist isn't scheduled this day"
+                        : interval.load
+                        ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
+                            isRecommended ? ' · Recommended' : ''
+                          }`
+                        : isRecommended
+                        ? 'Recommended'
+                        : ''}
+                    </TooltipContent>
                   </Tooltip>
                 );
               })}
@@ -343,7 +415,8 @@ export function RebookIntervalPicker({
                           }}
                           className={cn(
                             'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
-                            isActive && 'border-primary bg-primary/5',
+                            // Purple ghost when this calmest-pick is the active selection
+                            isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
                           )}
                           aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
                         >
@@ -351,6 +424,15 @@ export function RebookIntervalPicker({
                           <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
                             {format(pick.date, 'EEE d')}
                           </span>
+                          {pick.bandFull && preferredBand && (
+                            <span
+                              className="inline-flex items-center gap-0.5 font-display text-[8px] uppercase tracking-wider text-amber-500 leading-none"
+                              aria-label={`${BAND_LABEL[preferredBand]} full`}
+                            >
+                              <Clock className="h-2 w-2" />
+                              {BAND_LABEL[preferredBand]} full
+                            </span>
+                          )}
                           {pick.load && (
                             <span
                               className={cn(
@@ -364,6 +446,9 @@ export function RebookIntervalPicker({
                       <TooltipContent>
                         Calmest day this week · {pick.count} booked ·{' '}
                         {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
+                        {pick.bandFull && preferredBand && (
+                          <> · {BAND_LABEL[preferredBand]} band tight</>
+                        )}
                       </TooltipContent>
                     </Tooltip>
                   );
@@ -492,16 +577,24 @@ export function RebookIntervalPicker({
                           'text-muted-foreground font-normal text-[0.7rem] uppercase tracking-wider h-8 flex items-center justify-center',
                         row: 'grid grid-cols-7 mt-1',
                         cell: 'h-10 w-full text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
+                        // Purple ghost selected — replaces the default solid fill
+                        day_selected:
+                          'bg-primary/[0.08] text-foreground border-2 border-primary rounded-md hover:bg-primary/[0.12] focus:bg-primary/[0.12] aria-selected:bg-primary/[0.08] aria-selected:text-foreground',
+                        // Demote today so it doesn't fight the selection ring
+                        day_today: 'font-medium text-primary',
                       }}
                       components={{
                         DayContent: ({ date }) => {
                           const key = format(date, 'yyyy-MM-dd');
                           const cap = capacityMap.get(key);
+                          const off = isStylistOff(date);
                           return (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
-                                  <span>{date.getDate()}</span>
+                                  <span className={cn(off && 'text-muted-foreground/70')}>
+                                    {date.getDate()}
+                                  </span>
                                   {cap && (
                                     <span
                                       className={cn(
@@ -510,11 +603,21 @@ export function RebookIntervalPicker({
                                       )}
                                     />
                                   )}
+                                  {off && (
+                                    <span className="absolute -bottom-0.5 right-0 font-display text-[7px] uppercase tracking-wider text-muted-foreground/60 leading-none">
+                                      Off
+                                    </span>
+                                  )}
                                 </div>
                               </TooltipTrigger>
-                              {cap && (
+                              {(cap || off) && (
                                 <TooltipContent side="top">
-                                  {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
+                                  {off && <>Stylist not scheduled{cap ? ' · ' : ''}</>}
+                                  {cap && (
+                                    <>
+                                      {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
+                                    </>
+                                  )}
                                 </TooltipContent>
                               )}
                             </Tooltip>
@@ -552,7 +655,7 @@ export function RebookIntervalPicker({
 
           {/* Selected summary */}
           {targetDate && (
-            <div className="rounded-lg bg-muted/40 border border-border px-4 py-3 flex items-center justify-between">
+            <div className="rounded-lg bg-primary/[0.04] border-2 border-primary/40 px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
                   Target date
