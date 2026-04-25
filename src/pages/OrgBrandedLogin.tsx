@@ -17,6 +17,7 @@ import { OrgLoginUserGrid } from '@/components/auth/OrgLoginUserGrid';
 import { OrgLoginRecentTiles } from '@/components/auth/OrgLoginRecentTiles';
 import { LockoutCountdown } from '@/components/auth/LockoutCountdown';
 import { useOrgValidatePin, useOrgTeamForLogin } from '@/hooks/useOrgPinValidation';
+import { useSessionLockout } from '@/hooks/useSessionLockout';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,7 +92,10 @@ export default function OrgBrandedLogin() {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [pinAttempts, setPinAttempts] = useState(0);
-  const [pinLockoutUntil, setPinLockoutUntil] = useState<number | null>(null);
+  // Lockout window survives refresh / iPad sleep via sessionStorage so a
+  // staffer can't bypass the rate limit by reloading the PWA.
+  const { lockoutUntil: pinLockoutUntil, setLockoutUntil: setPinLockoutUntil } =
+    useSessionLockout(organization?.id);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
   const [recents, setRecents] = useState<RememberedDeviceUser[]>([]);
@@ -319,8 +323,16 @@ export default function OrgBrandedLogin() {
 
   // Determine which sub-flow to render
   const sessionUserHere = !!user && !forceFullForm;
+  // Wave 4: Recents picker is gated behind a device-mode choice. On a cold
+  // install the chooser dialog must resolve first — otherwise the picker
+  // can race ahead of the user's intent and surface stale faces before
+  // they've decided whether this is a personal or shared device.
   const showRecentsPicker =
-    !sessionUserHere && recents.length > 0 && !recentsBypassed && !recentSelected;
+    deviceMode !== null &&
+    !sessionUserHere &&
+    recents.length > 0 &&
+    !recentsBypassed &&
+    !recentSelected;
   const showRecentsPin = !!recentSelected;
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
   const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;

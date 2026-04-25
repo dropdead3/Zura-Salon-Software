@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { DockLocationPicker } from './DockLocationPicker';
+import { LockoutCountdown } from '@/components/auth/LockoutCountdown';
+import { useSessionLockout } from '@/hooks/useSessionLockout';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockPinGateProps {
@@ -37,6 +40,15 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const { data: settings } = useBusinessSettings();
   const { data: locations = [] } = useLocations();
 
+  // Dock-scoped lockout window — survives refresh/sleep so a fat-fingered
+  // staffer can't bypass the rate limit by reloading the iPad.
+  const dockOrgId = (() => {
+    try { return localStorage.getItem('dock-organization-id'); } catch { return null; }
+  })();
+  const { lockoutUntil, setLockoutUntil } = useSessionLockout(
+    dockOrgId ? `dock:${dockOrgId}` : 'dock:unbound',
+  );
+
   const businessName = settings?.business_name || '';
   const logoDarkUrl = settings?.logo_dark_url;
 
@@ -54,6 +66,8 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
+    // Hard-block during lockout — countdown is the dominant signal.
+    if (lockoutUntil && lockoutUntil > Date.now()) return;
 
     if (key === 'delete') {
       setPin('');
@@ -77,10 +91,19 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           .rpc('validate_dock_pin', {
             _pin: next,
             _organization_id: storedOrgId,
+            _device_fingerprint: getDeviceFingerprint(),
           })
           .maybeSingle();
 
-        if (dbError || !data) {
+        // ── Server-side rate limit (per-device or org-wide window) ──
+        if (data && (data as { lockout_until: string | null }).lockout_until) {
+          const until = new Date((data as { lockout_until: string }).lockout_until).getTime();
+          setLockoutUntil(until);
+          setPin('');
+          return;
+        }
+
+        if (dbError || !data || !data.user_id) {
           setError(true);
           setPin('');
           toast.error('Invalid PIN');
@@ -126,7 +149,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         setLoading(false);
       }
     }
-  }, [pin, loading, completeSession]);
+  }, [pin, loading, lockoutUntil, setLockoutUntil, completeSession]);
 
   // Show location picker if multi-location staff needs to choose
   if (pendingSession) {
@@ -169,6 +192,13 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           Enter your PIN to begin
         </p>
       </div>
+
+      {/* Lockout countdown — dominant signal during rate-limit window */}
+      {lockoutUntil && lockoutUntil > Date.now() && (
+        <div className="mb-6 max-w-xs w-full px-6">
+          <LockoutCountdown until={lockoutUntil} onExpire={() => setLockoutUntil(null)} />
+        </div>
+      )}
 
       {/* PIN dots */}
       <div className="flex gap-4 mb-10">

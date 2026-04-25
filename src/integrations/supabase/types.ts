@@ -17136,6 +17136,7 @@ export type Database = {
           device_fingerprint: string | null
           id: string
           ip_address: string | null
+          surface: string
           target_org_id: string | null
         }
         Insert: {
@@ -17143,6 +17144,7 @@ export type Database = {
           device_fingerprint?: string | null
           id?: string
           ip_address?: string | null
+          surface?: string
           target_org_id?: string | null
         }
         Update: {
@@ -17150,6 +17152,7 @@ export type Database = {
           device_fingerprint?: string | null
           id?: string
           ip_address?: string | null
+          surface?: string
           target_org_id?: string | null
         }
         Relationships: []
@@ -31703,6 +31706,7 @@ export type Database = {
               display_name: string
               location_id: string
               location_ids: string[]
+              lockout_until: string
               organization_id: string
               photo_url: string
               user_id: string
@@ -31725,6 +31729,7 @@ export type Database = {
               _ip_address?: string
               _organization_id: string
               _pin: string
+              _surface?: string
             }
             Returns: {
               display_name: string
