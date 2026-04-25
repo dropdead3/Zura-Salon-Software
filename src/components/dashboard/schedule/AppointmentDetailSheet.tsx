@@ -90,7 +90,9 @@ import {
   CreditCard, CalendarClock, RefreshCw, Star, TrendingUp, ExternalLink,
   UserX, ArrowRightLeft, Receipt, MoreHorizontal, Sparkles, Camera, Beaker,
   MessageCircle, Info,
+  FileText, History as HistoryIcon, Image as ImageIcon, StickyNote,
 } from 'lucide-react';
+import { useSpatialState } from '@/lib/responsive/useSpatialState';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
 import { toast } from 'sonner';
 import { isCardExpired } from '@/lib/card-utils';
