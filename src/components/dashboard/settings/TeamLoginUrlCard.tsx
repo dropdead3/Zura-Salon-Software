@@ -139,6 +139,45 @@ export function TeamLoginUrlCard() {
             </ol>
           </div>
         </div>
+
+        <div className="pt-4 border-t border-border space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-sans text-foreground flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                Branded PWA splash (Android & Chrome)
+              </p>
+              <p className="text-xs text-muted-foreground font-sans">
+                iOS Safari already shows a branded splash from your logo. Generate a raster version for staff installing on Android, Chrome, Edge, or Firefox so they get the same launch experience.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => generateSplash.mutate()}
+              disabled={generateSplash.isPending || !effectiveOrganization?.logo_url}
+              className="shrink-0 font-sans"
+            >
+              {generateSplash.isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  {generateSplash.isSuccess ? 'Regenerate splash' : 'Generate splash'}
+                </>
+              )}
+            </Button>
+          </div>
+          {!effectiveOrganization?.logo_url && (
+            <p className="text-xs text-muted-foreground font-sans italic">
+              Upload an organization logo first — the splash uses it as the centerpiece.
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
