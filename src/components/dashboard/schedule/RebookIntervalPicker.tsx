@@ -415,7 +415,8 @@ export function RebookIntervalPicker({
                           }}
                           className={cn(
                             'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
-                            isActive && 'border-primary bg-primary/5',
+                            // Purple ghost when this calmest-pick is the active selection
+                            isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
                           )}
                           aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
                         >
@@ -423,6 +424,15 @@ export function RebookIntervalPicker({
                           <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
                             {format(pick.date, 'EEE d')}
                           </span>
+                          {pick.bandFull && preferredBand && (
+                            <span
+                              className="inline-flex items-center gap-0.5 font-display text-[8px] uppercase tracking-wider text-amber-500 leading-none"
+                              aria-label={`${BAND_LABEL[preferredBand]} full`}
+                            >
+                              <Clock className="h-2 w-2" />
+                              {BAND_LABEL[preferredBand]} full
+                            </span>
+                          )}
                           {pick.load && (
                             <span
                               className={cn(
@@ -436,6 +446,9 @@ export function RebookIntervalPicker({
                       <TooltipContent>
                         Calmest day this week · {pick.count} booked ·{' '}
                         {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
+                        {pick.bandFull && preferredBand && (
+                          <> · {BAND_LABEL[preferredBand]} band tight</>
+                        )}
                       </TooltipContent>
                     </Tooltip>
                   );
