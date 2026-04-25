@@ -66,6 +66,8 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
 
   const handleKey = useCallback(async (key: string) => {
     if (loading) return;
+    // Hard-block during lockout — countdown is the dominant signal.
+    if (lockoutUntil && lockoutUntil > Date.now()) return;
 
     if (key === 'delete') {
       setPin('');
@@ -89,10 +91,19 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
           .rpc('validate_dock_pin', {
             _pin: next,
             _organization_id: storedOrgId,
+            _device_fingerprint: getDeviceFingerprint(),
           })
           .maybeSingle();
 
-        if (dbError || !data) {
+        // ── Server-side rate limit (per-device or org-wide window) ──
+        if (data && (data as { lockout_until: string | null }).lockout_until) {
+          const until = new Date((data as { lockout_until: string }).lockout_until).getTime();
+          setLockoutUntil(until);
+          setPin('');
+          return;
+        }
+
+        if (dbError || !data || !data.user_id) {
           setError(true);
           setPin('');
           toast.error('Invalid PIN');
@@ -138,7 +149,7 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         setLoading(false);
       }
     }
-  }, [pin, loading, completeSession]);
+  }, [pin, loading, lockoutUntil, setLockoutUntil, completeSession]);
 
   // Show location picker if multi-location staff needs to choose
   if (pendingSession) {
