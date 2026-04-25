@@ -1295,6 +1295,7 @@ export function DayView({
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {/* Drag Overlay */}
