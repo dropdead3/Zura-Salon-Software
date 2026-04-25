@@ -466,6 +466,30 @@ export function ScheduleHeader({
                 ...closureModifiers.weeklyClosed,
                 ...closureModifiers.holidayClosed,
               ]}
+              components={{
+                // Wrap holiday-closed cells in a tooltip so hovering reveals
+                // the closure name (e.g. "Christmas Day"). Other days render
+                // unchanged. Uses the day-picker default content for parity.
+                DayContent: ({ date: cellDate }: { date: Date }) => {
+                  const key = format(cellDate, 'yyyy-MM-dd');
+                  const holidayName = closureModifiers.holidayNameByKey.get(key);
+                  const label = <>{cellDate.getDate()}</>;
+                  if (!holidayName) return label;
+                  return (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="pointer-events-auto">{label}</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-xs">
+                        <span className="font-medium">{holidayName}</span>
+                        <span className="block text-[10px] text-muted-foreground">
+                          {format(cellDate, 'EEE, MMM d')} · Closed
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                },
+              }}
             />
             {/* Closed-tomorrow chip — surfaces an upcoming closure inline so
                 operators can plan rebookings without leaving the picker. */}
@@ -478,34 +502,78 @@ export function ScheduleHeader({
                 </span>
               </div>
             )}
-            {/* Capacity + closure legend strip */}
-            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-2 text-[11px] text-muted-foreground border-t border-border/50">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                Filling
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                Tight
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                Booked
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-[1px] bg-muted-foreground/40" />
-                Closed
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full border border-dashed border-rose-400/60" />
-                Holiday
-              </span>
-              <MetricInfoTooltip
-                title="Calendar signals"
-                description="Dots under dates reflect org-wide capacity (Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%). Strikethrough days are closed (regular hours); dashed rose ring marks holiday closures."
-                side="top"
-              />
+            {/* Calendar legend — compact mode = single info icon, expanded = full swatch row.
+                Density toggle persisted in localStorage so the operator's
+                preference sticks across sessions. */}
+            <div className="flex items-center justify-between gap-2 px-3 pb-3 pt-2 text-[11px] text-muted-foreground border-t border-border/50">
+              {legendCompact ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-md px-1.5 py-0.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <Info className="h-3 w-3" />
+                      <span>Calendar signals</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[260px] text-xs">
+                    <div className="space-y-1.5">
+                      <div className="font-medium">Calendar signals</div>
+                      <div className="grid grid-cols-1 gap-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Filling (≥ 50%)
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Tight (≥ 70%)
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Booked (≥ 90%)
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-[1px] bg-muted-foreground/40" /> Closed (regular hours)
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full border border-dashed border-rose-400/60" /> Holiday closure
+                        </span>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className="flex items-center justify-center gap-3 flex-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    Filling
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                    Tight
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    Booked
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-[1px] bg-muted-foreground/40" />
+                    Closed
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full border border-dashed border-rose-400/60" />
+                    Holiday
+                  </span>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setLegendCompact((v) => !v)}
+                className="text-[10px] text-muted-foreground/70 hover:text-foreground transition-colors px-1.5 py-0.5 rounded-md"
+                title={legendCompact ? 'Show full legend' : 'Hide legend'}
+              >
+                {legendCompact ? 'Expand' : 'Compact'}
+              </button>
             </div>
+
           </PopoverContent>
         </Popover>
         </div>
