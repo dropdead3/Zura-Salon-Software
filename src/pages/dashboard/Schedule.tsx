@@ -212,6 +212,8 @@ export default function Schedule() {
     staffName?: string;
     selectedServices: string[];
   } | null>(null);
+  const [rebookPickerOpen, setRebookPickerOpen] = useState(false);
+  const [rebookPickerAppt, setRebookPickerAppt] = useState<PhorestAppointment | null>(null);
   const [draftsSheetOpen, setDraftsSheetOpen] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
