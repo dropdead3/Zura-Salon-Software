@@ -741,11 +741,30 @@ export function DayView({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex h-full min-h-0 flex-col bg-card rounded-lg border border-border overflow-hidden">
-        {/* Closed day banner */}
+        {/* Closed day banner — when a next-open date is available, surfaces a
+            one-click jump so the operator never lands on an empty schedule
+            without a clear next move. */}
         {isLocationClosed && (
-          <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2">
+          <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2 flex-wrap">
             <ClosedBadge reason={closureReason} />
-            <span className="text-xs text-muted-foreground">All time slots are outside regular hours</span>
+            <span className="text-xs text-muted-foreground">
+              All time slots are outside regular hours
+              {nextOpenDate && (
+                <>
+                  {' · Next open '}
+                  <span className="text-foreground font-medium">{format(nextOpenDate, 'EEE, MMM d')}</span>
+                </>
+              )}
+            </span>
+            {nextOpenDate && onJumpToNextOpen && (
+              <button
+                type="button"
+                onClick={onJumpToNextOpen}
+                className="ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full bg-foreground/5 hover:bg-foreground/10 text-foreground transition-colors border border-border/60"
+              >
+                Jump to next open day
+              </button>
+            )}
           </div>
         )}
         {/* Calendar Grid */}
