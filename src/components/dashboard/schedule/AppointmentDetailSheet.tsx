@@ -40,7 +40,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, SubTabsList, SubTabsTrigger }
 import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
-import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
