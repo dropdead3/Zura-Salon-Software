@@ -61,7 +61,7 @@ interface RememberedUser {
  * canon — uses provider-free hooks only.
  */
 export default function OrgBrandedLogin() {
-  const { orgSlug, locationSlug } = useParams<{ orgSlug: string; locationSlug?: string }>();
+  const { orgSlug, locationId } = useParams<{ orgSlug: string; locationId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -100,7 +100,7 @@ export default function OrgBrandedLogin() {
   const validatePin = useOrgValidatePin(organization?.id);
   const { data: teamMembers = [] } = useOrgTeamForLogin(
     organization?.id && deviceMode === 'shared' ? organization.id : null,
-    locationSlug ?? null,
+    locationId ?? null,
   );
 
   // Load device mode + remembered user + recents from localStorage once org resolves
@@ -133,6 +133,11 @@ export default function OrgBrandedLogin() {
     localStorage.setItem(getDeviceModeKey(organization.id), mode);
     setDeviceMode(mode);
     setShowDeviceModeDialog(false);
+    // If the chooser was opened immediately after a cold-start signin, the
+    // navigation was deferred — complete it now that the choice is recorded.
+    if (user) {
+      navigate(redirectTarget, { replace: true });
+    }
   };
 
   const handleResetDeviceMode = () => {
@@ -160,11 +165,14 @@ export default function OrgBrandedLogin() {
         toast({ variant: 'destructive', title: 'Sign in failed', description: error.message });
         return;
       }
-      // After login, prompt for device mode if not chosen yet
+      sonnerToast.success(`Welcome to ${organization?.name ?? 'your dashboard'}`);
+      // If device mode hasn't been chosen yet, surface the dialog and let the
+      // user pick before navigating away — otherwise the page unmounts and the
+      // chooser is never seen. Navigation happens on dialog close.
       if (organization?.id && !localStorage.getItem(getDeviceModeKey(organization.id))) {
         setShowDeviceModeDialog(true);
+        return;
       }
-      sonnerToast.success(`Welcome to ${organization?.name ?? 'your dashboard'}`);
       navigate(redirectTarget, { replace: true });
     } finally {
       setLoading(false);
@@ -262,6 +270,35 @@ export default function OrgBrandedLogin() {
     }
   };
 
+  // ─────────────────────────── Derived (hooks BEFORE early returns) ─────
+  // Cache-bust on logo/name change so iOS/CDN don't hold the prior asset.
+  // organization is undefined on first render — guard with optional chaining.
+  const assetVersion = organization?.updated_at
+    ? new Date(organization.updated_at).getTime().toString(36)
+    : 'v0';
+
+  const manifestSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl || !orgSlug) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug, v: assetVersion });
+    if (locationId) params.set('loc', locationId);
+    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
+  }, [orgSlug, locationId, assetVersion]);
+
+  const splashSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl || !orgSlug) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug, v: assetVersion });
+    if (locationId) params.set('loc', locationId);
+    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
+  }, [orgSlug, locationId, assetVersion]);
+
+  const versionedLogoUrl = useMemo(() => {
+    if (!organization?.logo_url) return null;
+    const sep = organization.logo_url.includes('?') ? '&' : '?';
+    return `${organization.logo_url}${sep}v=${assetVersion}`;
+  }, [organization?.logo_url, assetVersion]);
+
   // ─────────────────────────── Render gates ───────────────────────────
 
   if (orgLoading || !authReady) {
@@ -284,24 +321,6 @@ export default function OrgBrandedLogin() {
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
   const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;
 
-  // ─────────────────────────── Markup ───────────────────────────
-
-  const manifestSrc = useMemo(() => {
-    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
-    if (!supaUrl) return undefined;
-    const params = new URLSearchParams({ slug: orgSlug });
-    if (locationSlug) params.set('loc', locationSlug);
-    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
-  }, [orgSlug, locationSlug]);
-
-  const splashSrc = useMemo(() => {
-    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
-    if (!supaUrl) return undefined;
-    const params = new URLSearchParams({ slug: orgSlug });
-    if (locationSlug) params.set('loc', locationSlug);
-    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
-  }, [orgSlug, locationSlug]);
-
   const orgName = organization.name;
   const themeColor = '#0a0a0a';
 
@@ -314,8 +333,8 @@ export default function OrgBrandedLogin() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={orgName} />
         {manifestSrc && <link rel="manifest" href={manifestSrc} />}
-        {organization.logo_url && (
-          <link rel="apple-touch-icon" href={organization.logo_url} />
+        {versionedLogoUrl && (
+          <link rel="apple-touch-icon" href={versionedLogoUrl} />
         )}
         {/* iOS PWA branded splash — single high-res image, iOS scales as needed */}
         {splashSrc && <link rel="apple-touch-startup-image" href={splashSrc} />}
@@ -523,7 +542,12 @@ export default function OrgBrandedLogin() {
           {showPinFlow && deviceMode === 'shared' && (
             <div className="space-y-6">
               {!selectedUserId ? (
-                <OrgLoginUserGrid members={teamMembers} onSelect={setSelectedUserId} />
+                <OrgLoginUserGrid
+                  members={teamMembers}
+                  recentUserIds={recents.map((r) => r.user_id)}
+                  onSelect={setSelectedUserId}
+                />
+
               ) : (
                 <div className="flex flex-col items-center gap-6">
                   {(() => {

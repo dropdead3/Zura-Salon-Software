@@ -63,7 +63,10 @@ export function useOrgTeamForLogin(
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .eq('is_approved', true)
-        .order('full_name');
+        .order('full_name')
+        // Defensive cap — at enterprise scale we surface a roster cap rather
+        // than render 1k+ avatars or hit Supabase's default 1k row limit silently.
+        .limit(500);
 
       if (locationId) {
         // Match either the primary location_id or membership in location_ids[]

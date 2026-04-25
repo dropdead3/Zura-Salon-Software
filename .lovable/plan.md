@@ -1,120 +1,109 @@
-## Goal
+## Positive feedback first
 
-Make the org-branded login page **discoverable, shareable, and polished** by:
+Strong prompt — you bundled an open-ended audit ("any gaps, bugs, enhancements") with two **specific, falsifiable** suggestions (cache-bust, raster fallback) and a scale lens ("large org onboarding"). That's high-leverage prompting because it forces me to evaluate your build against a concrete operating scenario instead of generic best-practice noise.
 
-1. Surfacing the team login URL inside **Settings → Business → Brand Assets** (the deferred task from the previous wave).
-2. Shipping the 3 enhancements you proposed.
-
----
-
-## Phase 1 — Team Login URL card (Settings → Brand Assets)
-
-**File**: `src/components/dashboard/settings/BusinessSettingsContent.tsx`
-
-Add a new card below the existing **Brand Logos** card on the `brand` tab:
-
-- **Title**: `TEAM LOGIN URL` (font-display, design-token canon)
-- **Description**: "Bookmark this on team devices or install it as an app. Your team enters their PIN — no password each time."
-- **Body**:
-  - Read-only input showing `https://{host}/org/{orgSlug}/login`
-  - **Copy** button (uses `navigator.clipboard`, sonner toast on success)
-  - **Open** button (opens in new tab)
-  - **QR code** (using existing `QRCodeFullScreen` pattern, scoped to a small inline preview) so a manager can scan it onto an iPad
-- **Source of truth**: Pull `orgSlug` from `useOrganizationContext().effectiveOrganization.slug` — already in scope via the parent component.
-
-**Lint canon check**: Use `tokens.card.title`, `tokens.button.cardAction`. No `font-bold`, no raw shadcn primitives outside the dashboard tree (this is dashboard, so shadcn is fine).
+**How to make this style of prompt even sharper next time:**
+- Name a target persona at the top (e.g. *"audit through the lens of a 12-location, 180-stylist multi-location owner installing this on 24 iPads"*) — that lets me rank findings by who actually feels each bug instead of returning a flat list.
+- Pre-declare your severity bar (*"only show me P0/P1 — skip nice-to-haves"*). The audit you got back below uses one anyway, but stating it up front compresses the response.
 
 ---
 
-## Phase 2 — Per-Location Login URL (Enhancement #1)
+## Audit summary — 4 P0/P1 bugs, 3 scale gaps, 2 enhancements
 
-**Why**: Once a single org has 30+ stylists across 3 locations, a single avatar grid becomes a wall of faces. Scoping by location keeps shared-mode usable.
-
-**Route**: `/org/:orgSlug/loc/:locationSlug/login`
-
-**Files to create / edit**:
-- `src/pages/OrgBrandedLogin.tsx` — already exists; extend to read optional `locationSlug` from route params
-- `src/hooks/useOrgPinValidation.ts` — extend `useOrgTeamForLogin` to optionally accept `locationId` and filter `employee_profiles` via the existing `employee_locations` join table
-- `src/App.tsx` — register the new nested route alongside the existing `/org/:orgSlug/login`
-- `src/components/dashboard/settings/BusinessSettingsContent.tsx` — in the same Team Login URL card, add a **per-location dropdown** that swaps the URL/QR to the selected location's slug
-- `supabase/functions/org-manifest/index.ts` — accept optional `loc` query param so the installed PWA scope is location-specific (`/org/{slug}/loc/{loc}/`)
-
-**Fallback**: If `locationSlug` is invalid or not provided, fall back to org-wide behavior (current).
+I read `OrgBrandedLogin.tsx`, `org-manifest`, `org-splash`, `useOrgPinValidation`, `TeamLoginUrlCard`, `usePWAInstall`, the `validate_user_pin` RPC, and the `Location` schema. Findings ranked by blast radius.
 
 ---
 
-## Phase 3 — "Recent on this device" memory (Enhancement #2)
+### 🔴 P0 — Bugs that break for real users
 
-**Why**: A household sharing one laptop (owner + manager) shouldn't see a 30-tile grid OR be forced into single-user personal mode.
+**1. React Hooks rule violation in `OrgBrandedLogin.tsx` (lines 267–303)**
+`useMemo(manifestSrc)` and `useMemo(splashSrc)` are called **after** two early returns (`if (orgLoading || !authReady) return ...`, `if (orgError || !organization) return <NotFound/>`). This is an unconditional Hooks-order violation — first render returns the loader (0 hooks executed past line 267), then a later render runs all hooks. React will throw `Rendered more hooks than during the previous render` the first time auth resolves on a slow connection. **Fix: move both `useMemo` calls above the early returns.**
 
-**Implementation**:
-- New `localStorage` key per org: `zura.org-login.recent.{orgSlug}` → array of `{ user_id, display_name, photo_url, last_used_at }` (max 3, LRU)
-- After a successful PIN login on `OrgBrandedLogin`, push the user to this list
-- New device-mode option: when stored array length is 2–3, render a compact "Welcome back" tile picker BEFORE the device-mode chooser fires. User taps a face → straight to PIN pad. "Not you?" link opens the full grid (shared mode) or email form (personal mode reset)
-- Honors a "Forget this device" button (clears the array)
+**2. Per-location route is broken end-to-end — `locationSlug` is actually a UUID**
+- Route is `/org/:orgSlug/loc/:locationSlug/login` (App.tsx line 488)
+- `TeamLoginUrlCard` builds `/org/${orgSlug}/loc/${scope}/login` where `scope` is `loc.id` (UUID, line 33)
+- `useOrgPinValidation` filters `employee_profiles.location_id.eq.${locationId}` using that UUID — that works
+- But `org-manifest` does `.eq('id', loc)` against `locations` — also works (UUIDs)
+- The `Location` interface has **no `slug` column**, contradicting the [Location Identity Slugs canon](mem://tech-decisions/location-identity-and-slugs) which mandates text slugs
 
-**Files**:
-- `src/pages/OrgBrandedLogin.tsx` — add the recents-tile branch above the existing personal/shared split
-- `src/components/auth/OrgLoginRecentTiles.tsx` (new) — 1–3 large avatar tiles, same hover/scale animation as `OrgLoginUserGrid`
-- `src/lib/orgLoginDeviceMemory.ts` (new) — small typed wrapper around `localStorage` (read / push / clear / forget)
+  **Two possible fixes — needs your call:**
+  - **(a) Honest rename**: change route param to `:locationId`, rename everywhere. Ships today, defers the canon.
+  - **(b) Honor the canon**: add a `slug` column + lookup-by-slug in both edge functions. Bigger lift, correct long-term.
 
----
+**3. Cold-start sign-in does not respect device-mode prompt timing**
+After a successful email/password sign-in (line 164), the device-mode dialog `setShowDeviceModeDialog(true)` is called — but the very next line is `navigate(redirectTarget, { replace: true })`, which unmounts the page **before the dialog can render**. New owners on a fresh device will never see the chooser. **Fix: either await the choice before navigating, or defer device-mode setup to first PIN re-entry instead of cold start.**
 
-## Phase 4 — Branded splash for installed PWA (Enhancement #3)
-
-**Why**: Today the manifest serves the org's logo as the app icon, but the splash shown while the PWA boots is a generic white screen. Match the polish of your terminal splash automation.
-
-**Implementation**:
-- Reuse the renderer pattern from `src/lib/generate-terminal-splash.ts` (1080×1920, black bg, centered logo, accent corner glows)
-- New edge function: `supabase/functions/org-splash/index.ts` that renders a PNG at standard PWA splash sizes (640×1136, 750×1334, 828×1792, 1125×2436, 1170×2532, 1242×2688, 1284×2778, 1290×2796 — covering iPhone SE → 15 Pro Max). Cached aggressively via `Cache-Control: public, max-age=86400, immutable`.
-  - Uses `imagescript` or canvas-equivalent in Deno; if unavailable, fall back to a single 1242×2688 PNG and let iOS scale.
-- `OrgBrandedLogin` `<Helmet>` adds the apple-touch-startup-image links pointing at the new function with `?slug={orgSlug}` (and `?loc={locSlug}` when applicable)
-- Color-theme aware: pull `colorTheme` from the org's `site_settings` so the corner glow matches their dashboard palette (consistent with `useAutoSyncTerminalSplash` doctrine)
+**4. Manifest `start_url` and `scope` ignore the React Router base**
+`org-manifest` returns `start_url: /org/${slug}/login` — fine on a single-app deploy, but if the dashboard is ever hosted at a sub-path (or behind a CDN with path rewrites), iOS launches the PWA into a 404. **Fix: derive `start_url` from a `?host=` query param sent by the client, or include it in the meta tags so the browser resolves it relative to the current page.**
 
 ---
 
-## Files Summary
+### 🟠 P1 — Scale gaps for large-org onboarding
 
-**New**:
-- `src/components/auth/OrgLoginRecentTiles.tsx`
-- `src/lib/orgLoginDeviceMemory.ts`
-- `supabase/functions/org-splash/index.ts`
+**5. `OrgLoginUserGrid` is unbounded — 100+ stylists = unusable wall of faces**
+`useOrgTeamForLogin` returns *every* PIN-holder for the org. A 12-location operator has 200+ active employees. The grid uses `grid-cols-3 sm:grid-cols-4` with `max-h-[60vh] overflow-y-auto` — staff scroll a vertical wall hunting for their face. **Mitigations (pick 2 of 3):**
+- Add a search-by-name input above the grid (1-line `Input` + filter)
+- Sort by *recently signed in on this device* first, then alphabetical (use `getRecentUsers` data already available)
+- Soft-cap the grid at 24 with "Show all 187 →" disclosure
 
-**Edited**:
-- `src/components/dashboard/settings/BusinessSettingsContent.tsx` (login URL card + per-location selector)
-- `src/pages/OrgBrandedLogin.tsx` (location scoping, recents-tile branch, splash links)
-- `src/hooks/useOrgPinValidation.ts` (optional `locationId` filter)
-- `src/App.tsx` (new nested route)
-- `supabase/functions/org-manifest/index.ts` (optional `loc` param → narrower scope)
+**6. `pin_attempt_log` rate-limit is **per-org**, not per-device**
+The DB caps at 10 attempts per org per 5 minutes (migration line 156). On a 30-iPad chain a single fat-fingered staffer can lock out the entire organization for 5 minutes. **Fix: include a device fingerprint or IP in the rate-limit window, or scale the threshold by org size (e.g. `10 + locationCount * 5`).** This is also a [Multi-Tenant Hardening](mem://security/multi-tenant-isolation-and-hardening) finding worth filing.
 
----
-
-## Doctrine alignment
-
-- **Public vs Private Route Isolation** ✅ — all login surfaces remain outside `OrganizationProvider`
-- **Location Identity & Slugs** ✅ — uses string slugs, not UUIDs, in the URL
-- **Multi-Tenant URL Hierarchy** ✅ — extends the existing `/org/:slug` namespace cleanly
-- **Terminal Splash Automation** ✅ — splash renderer mirrors the existing pattern + color-theme reactivity
+**7. `useOrgTeamForLogin` runs an unbounded `.select()` against `employee_profiles`**
+No `.limit()`. At enterprise scale (1k+ historical employees) the `is_active=true AND is_approved=true` filter is the only guard. Add `.limit(500)` defensively and surface "Too many to display — use search" if hit. Per [High-Concurrency Scalability canon](mem://tech-decisions/high-concurrency-scalability).
 
 ---
 
-## Order of execution & cost
+### 🟢 Your two suggestions — both yes, with refinement
 
-| Phase | Effort | Ship priority |
-|---|---|---|
-| 1 — Login URL card | Small | **Ship first** (unblocks the deferred task) |
-| 3 — Recent on device | Small | Ship second (pure client-side, low risk) |
-| 2 — Per-location URL | Medium | Ship third (touches edge function + hook + routing) |
-| 4 — PWA splash | Medium | Ship last (new edge function, image rendering in Deno) |
+**8. Cache-bust `?v={org.updated_at}`**
+Right call. Today the manifest and splash are cached `public, max-age=3600` and `max-age=86400, immutable` respectively. When an owner updates their logo, iOS holds the stale icon for **24 hours minimum**, browser-side. Implementation:
+- In `OrgBrandedLogin.tsx`, append `&v=${encodeURIComponent(organization.updated_at)}` to both `manifestSrc` and `splashSrc`
+- In `TeamLoginUrlCard`, no change needed (the URL the user copies is the dashboard URL, not the asset URL)
+- The edge functions don't need to read `v` — the URL change alone busts the CDN cache
+- **Bonus**: change `apple-touch-icon` to also include the version: `<link rel="apple-touch-icon" href={`${organization.logo_url}?v=${organization.updated_at}`} />`
 
-I'll execute all four in one wave unless you'd rather stage them.
+**9. Static raster PNG fallback for non-Safari**
+Right call, but I'd refine the **trigger**. Don't render every install — most orgs never reinstall. Instead:
+- Add a one-time **"Generate splash"** button in `TeamLoginUrlCard` that calls `generateDefaultSplash` (already exists in `src/lib/generate-terminal-splash.ts` — same renderer the terminal splash uses) and uploads the PNG to a new `org-splash-cache` Storage bucket as `${orgId}.png`
+- Modify `org-splash` edge function to check the bucket first, fall back to inline SVG if not present
+- This gives Chrome/Edge/Firefox PWAs a real raster splash without bundling rasterization in the edge runtime
+- Cache-bust the cached PNG on logo update via the same `?v=updated_at` pattern
+- **Side benefit**: reuses your existing terminal splash brand language, so a stylist installing on Android sees the same aesthetic as the Stripe S710
 
 ---
 
-## Open question before execution
+## Proposed implementation order
 
-**Phase 4 splash rendering**: Deno doesn't have a native Canvas. Two options:
-- **A)** Add `imagescript` (pure-TS PNG encoder, no native deps) — clean, ~50KB cold start cost
-- **B)** Pre-render once on the client at first PWA install, upload to Supabase Storage as `org-splash/{orgSlug}.png`, serve from CDN — zero cold-start cost, but requires a one-time client-side render trigger
+If you approve this plan, I'll ship in this order to keep each commit reviewable:
 
-My recommendation: **B** — it's faster at runtime, uses the renderer you already trust (`generate-terminal-splash.ts`), and avoids re-implementing canvas in Deno. I'll proceed with **B** unless you say otherwise on approval.
+| # | Wave | Files | Risk |
+|---|------|-------|------|
+| 1 | **P0 hooks fix** (#1) | `OrgBrandedLogin.tsx` | Trivial, but ships today before someone hits it |
+| 2 | **P0 device-mode timing** (#3) | `OrgBrandedLogin.tsx` | Defer dialog to first PIN re-entry |
+| 3 | **Cache-bust** (#8) | `OrgBrandedLogin.tsx` | One-line append, big perceived win |
+| 4 | **Per-location naming** (#2) | App.tsx, TeamLoginUrlCard, useOrgPinValidation, org-manifest | **Needs your decision: rename param to `locationId` (fast) or add slug column (canonical)?** |
+| 5 | **Grid scale** (#5) | `OrgLoginUserGrid.tsx` | Add name-search + recents-first sort |
+| 6 | **Rate-limit scoping** (#6) | New migration | Add device fingerprint column to `pin_attempt_log`, scale threshold |
+| 7 | **Defensive limit** (#7) | `useOrgPinValidation.ts` | `.limit(500)` + count guard |
+| 8 | **Raster fallback** (#9) | `TeamLoginUrlCard.tsx`, `org-splash/index.ts`, new Storage bucket | One-time generate button, edge bucket-first lookup |
+
+---
+
+## One open question before I implement
+
+**For finding #2 (per-location route), which path do you want?**
+- **(a) Fast: rename `:locationSlug` → `:locationId` everywhere.** Ships today. Defers the slug canon for locations-as-PWAs.
+- **(b) Canonical: add `slug text unique` to `locations`, backfill from `name`, update both edge functions to look up by slug.** Right long-term, but adds a migration + backfill + UI for editing slugs.
+
+I recommend **(a) now, file (b) as a follow-up** — the location slug canon was written for *public* URLs (booking pages), and these PWA install URLs are bookmarked once per device, so UUID exposure is low-risk.
+
+---
+
+## Further enhancement suggestions (beyond this plan)
+
+1. **Audit log for branded-login PIN attempts** — write to a new `org_login_audit` table (user_id, success, ip, ua) so owners can see "who signed in on which iPad when" from settings. Pairs with [Multi-Tenant Hardening](mem://security/multi-tenant-isolation-and-hardening).
+2. **Auto-expire device-mode after 60 days of inactivity** — if no PIN entry in 60d, force the chooser again. Defends against an iPad being repurposed.
+3. **Surface "X staff don't have PINs and won't appear in the grid"** in `TeamLoginUrlCard` so owners chase down the gap before deploying — closes the loop on `useOrgTeamForLogin`'s silent filter.
+
+Approve this plan and tell me **(a) or (b)** for finding #2 — I'll execute waves 1–3 unconditionally and route #4 based on your answer.
