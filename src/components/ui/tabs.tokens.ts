@@ -1,9 +1,9 @@
 export const TABS_CLASSES = {
-  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted/70 rounded-[9px]",
+  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted ring-1 ring-border/70 dark:bg-muted/70 dark:ring-transparent rounded-[9px]",
   trigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium transition-all",
-    "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
-    "data-[state=inactive]:hover:ring-1 data-[state=inactive]:hover:ring-black/[0.06] dark:data-[state=inactive]:hover:ring-white/[0.08] data-[state=inactive]:hover:text-foreground/80",
+    "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border dark:data-[state=active]:bg-white/[0.08] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
+    "data-[state=inactive]:hover:ring-1 data-[state=inactive]:hover:ring-border/60 dark:data-[state=inactive]:hover:ring-white/[0.08] data-[state=inactive]:hover:text-foreground/80",
     "focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
   content:
