@@ -856,6 +856,31 @@ export function DayView({
           </div>
         )}
         {/* Calendar Grid */}
+        <div className="relative flex-1 min-h-0 flex flex-col">
+        {earliestAbove && (
+          <button
+            type="button"
+            onClick={() => {
+              const ref = scrollRef.current;
+              if (!ref) return;
+              ref.scrollTo({ top: Math.max(0, earliestAbove.topPx - 40), behavior: 'smooth' });
+            }}
+            className="absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-colors"
+            aria-label="Scroll to earlier appointment"
+          >
+            <ArrowUp className="h-3 w-3" />
+            <span>{formatTime12h(earliestAbove.appt.start_time)}</span>
+            {(earliestAbove.appt.client_first_name || earliestAbove.appt.client_last_name) && (
+              <span className="opacity-90">
+                · {earliestAbove.appt.client_first_name ?? ''}
+                {earliestAbove.appt.client_last_name ? ` ${earliestAbove.appt.client_last_name[0]}.` : ''}
+              </span>
+            )}
+            {hiddenAboveCount > 1 && (
+              <span className="opacity-70">+{hiddenAboveCount - 1}</span>
+            )}
+          </button>
+        )}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <div style={{ width: needsHorizontalScroll ? requiredGridWidth : '100%' }}>
             {/* Stylist Headers - frosted glass sticky header */}
