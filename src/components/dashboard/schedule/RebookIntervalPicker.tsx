@@ -112,6 +112,8 @@ const BAND_LABEL: Record<TimeBand, string> = {
 export function RebookIntervalPicker({
   open,
   appointment,
+  locationHoursJson = null,
+  locationHolidayClosures = null,
   onCancel,
   onConfirm,
 }: RebookIntervalPickerProps) {
