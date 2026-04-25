@@ -384,6 +384,8 @@ export function DayView({
   locationHours,
   isLocationClosed,
   closureReason,
+  nextOpenDate,
+  onJumpToNextOpen,
   assistedAppointmentIds,
   appointmentsWithAssistants,
   colorBy = 'service',
