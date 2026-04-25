@@ -63,6 +63,12 @@ export function useSystemHealth() {
         .in('status', ['error', 'timeout'])
         .gte('started_at', oneDayAgo.toISOString());
 
+      // Fetch linkage coverage (Phase 4 Visibility Contract).
+      // Worst-coverage location across the caller's RLS scope drives the gauge.
+      const { data: coverageRows } = await supabase
+        .from('v_linkage_coverage_30d' as never)
+        .select('location_id, coverage_pct, service_items, linked_items, last_sync_at');
+
       // Transform services
       const servicesList: ServiceHealth[] = (services || []).map(s => ({
         service_name: s.service_name,
@@ -72,6 +78,38 @@ export function useSystemHealth() {
         error_message: s.error_message,
         metadata: (s.metadata as Record<string, unknown>) || {},
       }));
+
+      // Linkage drift gauge: silent above 90%, advisory below.
+      // Surfaced as a synthetic service entry so existing System Health UI renders it.
+      const LINKAGE_HEALTHY_THRESHOLD = 90;
+      type CoverageRow = {
+        location_id: string;
+        coverage_pct: number;
+        service_items: number;
+        linked_items: number;
+        last_sync_at: string | null;
+      };
+      const rows = (coverageRows ?? []) as unknown as CoverageRow[];
+      const worstCoverage = rows.reduce<CoverageRow | null>((acc, row) => {
+        if (acc === null) return row;
+        return row.coverage_pct < acc.coverage_pct ? row : acc;
+      }, null);
+
+      if (worstCoverage && worstCoverage.coverage_pct < LINKAGE_HEALTHY_THRESHOLD) {
+        const missing = worstCoverage.service_items - worstCoverage.linked_items;
+        servicesList.push({
+          service_name: 'phorest-linkage',
+          status: worstCoverage.coverage_pct < 75 ? 'down' : 'degraded',
+          response_time_ms: null,
+          last_checked_at: worstCoverage.last_sync_at ?? new Date().toISOString(),
+          error_message: `Transaction-line linkage at ${worstCoverage.coverage_pct}% (${missing} unlinked)`,
+          metadata: {
+            coverage_pct: worstCoverage.coverage_pct,
+            service_items: worstCoverage.service_items,
+            linked_items: worstCoverage.linked_items,
+          },
+        });
+      }
 
       // Calculate overall status
       let overallStatus: 'healthy' | 'degraded' | 'down' = 'healthy';
