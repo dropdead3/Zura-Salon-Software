@@ -333,8 +333,8 @@ export default function OrgBrandedLogin() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={orgName} />
         {manifestSrc && <link rel="manifest" href={manifestSrc} />}
-        {organization.logo_url && (
-          <link rel="apple-touch-icon" href={organization.logo_url} />
+        {versionedLogoUrl && (
+          <link rel="apple-touch-icon" href={versionedLogoUrl} />
         )}
         {/* iOS PWA branded splash — single high-res image, iOS scales as needed */}
         {splashSrc && <link rel="apple-touch-startup-image" href={splashSrc} />}
