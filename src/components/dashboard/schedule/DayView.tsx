@@ -1142,7 +1142,8 @@ export function DayView({
                            zoomLevel={zoomLevel}
                            useShortLabels={sortedStylists.length >= 3}
                            declinedReasonLabel={declinedReasonMap?.get(apt.id)?.label ?? null}
-                           connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                            connectInactive={!!(apt.location_id && inactiveConnectLocationIds?.has(apt.location_id))}
+                            isPastAppointment={isPastAppointment}
                          />
                          );
                        });
