@@ -660,6 +660,21 @@ export function DayView({
   const earliestAbove = earlierAppointments[0] ?? null;
   const hiddenAboveCount = earlierAppointments.length;
 
+  // Sentinel chip dwell-fade: protective context, not an alert. After 8s
+  // without interaction the chip dims to 50% so it stops competing for
+  // attention. A new earliest-above appointment resets the timer.
+  // NOTE: Symmetric "Later" chip at viewport bottom is intentionally
+  // deferred — revisit only when telemetry shows this top chip is clicked
+  // on ≥15% of day-views where it renders, or on explicit operator request.
+  const [chipDimmed, setChipDimmed] = useState(false);
+  const chipKey = earliestAbove?.appt.id ?? null;
+  useEffect(() => {
+    setChipDimmed(false);
+    if (!chipKey) return;
+    const t = setTimeout(() => setChipDimmed(true), 8000);
+    return () => clearTimeout(t);
+  }, [chipKey]);
+
   // Per-stylist utilization: booked client minutes / available minutes
   // Uses the shared helper so the dropdown badge and column sort stay in sync.
   const utilizationByStylist = useMemo(
