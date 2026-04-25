@@ -193,6 +193,13 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         </p>
       </div>
 
+      {/* Lockout countdown — dominant signal during rate-limit window */}
+      {lockoutUntil && lockoutUntil > Date.now() && (
+        <div className="mb-6 max-w-xs w-full px-6">
+          <LockoutCountdown until={lockoutUntil} onExpire={() => setLockoutUntil(null)} />
+        </div>
+      )}
+
       {/* PIN dots */}
       <div className="flex gap-4 mb-10">
         {Array.from({ length: PIN_LENGTH }).map((_, i) => (
