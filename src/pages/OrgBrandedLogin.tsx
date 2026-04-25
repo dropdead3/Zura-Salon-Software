@@ -323,8 +323,16 @@ export default function OrgBrandedLogin() {
 
   // Determine which sub-flow to render
   const sessionUserHere = !!user && !forceFullForm;
+  // Wave 4: Recents picker is gated behind a device-mode choice. On a cold
+  // install the chooser dialog must resolve first — otherwise the picker
+  // can race ahead of the user's intent and surface stale faces before
+  // they've decided whether this is a personal or shared device.
   const showRecentsPicker =
-    !sessionUserHere && recents.length > 0 && !recentsBypassed && !recentSelected;
+    deviceMode !== null &&
+    !sessionUserHere &&
+    recents.length > 0 &&
+    !recentsBypassed &&
+    !recentSelected;
   const showRecentsPin = !!recentSelected;
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
   const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;
