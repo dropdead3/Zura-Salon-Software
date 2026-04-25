@@ -50,6 +50,7 @@ function makeAuthMock(overrides: Partial<AuthMock> = {}): AuthMock {
     user: { id: 'user-1' } as AuthMock['user'],
     session: null,
     loading: false,
+    authReady: true,
     roles: ['stylist'],
     permissions: ['view_command_center'],
     platformRoles: [],

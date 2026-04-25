@@ -1,46 +1,97 @@
-## Diagnosis
+# Fix Refresh-To-Marketing-Page Bug
 
-The status pill ("Conf" / "Unconf") on appointment cards in `src/components/dashboard/schedule/AppointmentCardContent.tsx` (lines 284 and 331) renders a tiny indicator dot using `badge.bg` from `APPOINTMENT_STATUS_BADGE`.
+## Root Cause
 
-That `bg` token is a heavily desaturated pastel meant for **pill backgrounds**, not foreground marks:
-- light: `bg-amber-100`, `bg-green-100`, `bg-purple-100`
-- dark: `bg-amber-900/30`, `bg-green-900/30`, `bg-purple-900/30`
+On hard refresh of `/org/:slug/dashboard/*`, three races collide:
 
-Against the pill's own translucent background (`bg-white/55 dark:bg-black/25`), a 3×3px swatch of `amber-900/30` collapses into the noise — exactly what the screenshot shows. The dot is technically rendered, just optically dead.
+1. **Double session processing** — `onAuthStateChange` and `getSession()` both fire `processSession`, with the second call cancelling the first's role/permission fetch via `requestVersionRef`. The `loading` flag drops to `false` only after the second pass completes.
+2. **`LegacyDashboardRedirect` fall-through** — when `effectiveOrganization` is null but `isOrgLoading` is briefly `false` (between query mount and hydration), it bounces the user to `/login` with an "advisory" message, losing their dashboard URL.
+3. **`OrgDashboardRoute` membership check** — the `enabled` flag flips on/off as `orgId` and `userId` resolve out of order, so the membership query briefly reports `isMember = false` before refetching.
 
-## Fix (single, minimal)
+The cumulative effect: a user on `/org/redken/dashboard/admin/analytics` refreshes, the app spends ~200ms in a "no auth, no org, no membership" state, and one of the guards wins and ships them to `/login` (which on production lands at the marketing site).
 
-Switch the dot's color from `badge.bg` → `bg-current`. `currentColor` inherits the pill's already-set `badge.text` (e.g. `text-amber-300` / `text-green-300`), which is the same visible color as the "Conf"/"Unconf" label. The dot will read as a small confident leading mark on the same hue/contrast as the text — no new tokens, no token mutations, no impact on the pill background.
+## Phase A — Auth Gate Hardening (`src/contexts/AuthContext.tsx`)
 
-Apply to both occurrences:
+Add an explicit **`authReady`** signal separate from `loading`:
 
-```tsx
-// Before
-<span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
+- `loading` = something is in flight (current behaviour)
+- `authReady` = the FIRST session resolution has completed (success or null), regardless of subsequent revalidations
 
-// After
-<span className={cn('h-[3px] w-[3px] rounded-full bg-current')} />
+```ts
+const [authReady, setAuthReady] = useState(false);
+
+// Inside processSession's .then() and the empty-session branch:
+setAuthReady(true);
+setLoading(false);
 ```
 
-Optionally bump to `h-[5px] w-[5px]` for slightly stronger presence at typical card density — happy to do that as part of the same change if you want a touch more weight.
+- Deduplicate the initial double-call: track whether `processSession` has been invoked since mount; the `getSession()` follow-up becomes a no-op if `onAuthStateChange` already fired with the same session token.
+- Expose `authReady` on the context value.
 
-## Why not modify `APPOINTMENT_STATUS_BADGE`
+## Phase B — Harden Redirect Guards
 
-The `bg` token is correctly authored for its primary use (pill backgrounds across `AppointmentPreview`, `AgendaView`, `ScheduleLegend`, etc.). Adding a separate `dot` field would be the principled long-term move, but is overkill for a single-component cosmetic miss — `bg-current` is the canon-clean shortcut and correctly couples the dot to whatever the label color resolves to.
+### `src/components/OrgDashboardRoute.tsx` (`LegacyDashboardRedirect`)
 
-## Files touched
-- `src/components/dashboard/schedule/AppointmentCardContent.tsx` (2 lines: 284, 331)
+Replace the current early-exit ladder with strict ordering:
 
-## Prompt feedback
+```
+1. if (!authReady) → spinner
+2. if (!user) → /login with from:location preserved
+3. if (orgContext.isLoading || !userOrganizations resolved) → spinner
+4. if (effectiveOrganization?.slug) → Navigate to /org/:slug/dashboard/*
+5. else → Navigate to /no-organization (NEW page, see Phase C)
+```
 
-Strong prompt — you pointed at the symptom ("dots are too dark"), the surface ("status badges in the top right of the cards"), and gave a screenshot. That's the right shape: visual artifact + location + screenshot. One refinement that would sharpen future visual prompts:
+The key change: **never redirect on a transient null org**. Only decide once `userOrganizations` has actually returned (length 0 vs length ≥ 1).
 
-> "On the day-view appointment cards, the leading dot inside the status pill (Conf/Unconf) is invisible — it's using the pill background color instead of the label color. Match it to the label text."
+### `src/components/OrgDashboardRoute.tsx` (`OrgDashboardRoute`)
 
-The added precision ("inside the status pill" + "should match the label color") shortcuts the diagnosis step entirely. You're already 90% of the way there — calling out the *expected* color relationship, not just that it's wrong, lets me skip straight to the patch.
+- Wait for `authReady` AND organization query resolution before evaluating membership.
+- Treat `isMembershipLoading || !orgId || !userId` as "still resolving" (spinner), not "denied".
+- Only render `<OrgAccessDenied />` once the membership query has actually returned `false` for a real, resolved `(orgId, userId)` pair.
 
-## Further enhancement suggestions
+### `src/components/auth/ProtectedRoute.tsx`
 
-1. **Promote a `dot` token in `APPOINTMENT_STATUS_BADGE`.** Right now `bg-current` works because the dot is inside a colored-text element, but it silently couples dot styling to text color. If a future variant ever needs a different dot color (e.g. a saturated dot inside a neutral pill for a "warning" treatment), you'd want `APPOINTMENT_STATUS_BADGE[k].dot` as a first-class field. Cheap to add; pays off the next time you reach for it.
-2. **Audit other 3px dots for the same pattern.** I found these two are the only `badge.bg`-driven dots in the codebase, but a `rg "rounded-full.*badge\.bg"` lint check in CI would prevent regression — same anti-pattern is easy to copy-paste into a new view.
-3. **Contrast smoke test for status pills.** A tiny Vitest snapshot rendering each `APPOINTMENT_STATUS_BADGE` entry over both light and dark card backdrops, asserting min relative luminance delta on the dot, would catch this class of issue automatically. Optional, but cheap insurance for a surface operators stare at all day.
+Swap `loading` for `authReady` in the spinner gate so a background revalidation doesn't trigger a redirect cascade:
+
+```ts
+const authOrPermissionsLoading = !authReady || ...;
+```
+
+## Phase C — Dedicated `/no-organization` Page (Option B)
+
+Create `src/pages/NoOrganization.tsx`:
+
+- Calm, advisory copy following the doctrine: *"Your account isn't linked to an organization yet. Reach out to your account owner or administrator to be added."*
+- Shows the signed-in email (so they know which account they're on).
+- Two actions: **Contact your administrator** (mailto / copy-email helper) and **Sign out**.
+- Uses `tokens.empty.*` and `font-display` heading per the UI canon. No marketing chrome, no sidebar.
+
+Register the route in `src/App.tsx` as a public-but-authenticated route (renders only when `user` exists but no org resolves). Keep it outside the `OrganizationProvider`-dependent dashboard tree so it can't recursively trigger the same redirect.
+
+## Phase D — Preserve URL Through Login Bounce
+
+When a genuinely unauthenticated user hits a dashboard URL, ensure `state.from.pathname` carries the full org-scoped path (already done in `LegacyDashboardRedirect`, verify in `OrgDashboardRoute` and `ProtectedRoute`). After login, `LoginPage` should honour `from.pathname` instead of defaulting to `/dashboard`.
+
+## Files Touched
+
+- `src/contexts/AuthContext.tsx` — add `authReady`, dedupe double-init
+- `src/components/OrgDashboardRoute.tsx` — strict gate ordering in both components
+- `src/components/auth/ProtectedRoute.tsx` — gate on `authReady`
+- `src/pages/NoOrganization.tsx` — **new** dedicated dead-end page
+- `src/App.tsx` — register `/no-organization` route
+- `src/pages/LoginPage.tsx` (or equivalent) — verify `from.pathname` honoured
+
+## Verification
+
+1. Sign in, navigate to `/org/:slug/dashboard/admin/analytics`, hard refresh → stays on the same page (no marketing flash).
+2. Sign in as a user with no org → lands on `/no-organization` (not `/login`).
+3. Sign out from any dashboard URL → goes to `/login` cleanly, then back to the original URL after sign-in.
+4. Slow network throttling (Fast 3G) → spinner persists, no premature redirect.
+
+## Doctrine Anchors
+
+- **Loader Unification** — all transient states use `BootLuxeLoader` (boot/auth gate) per `mem://style/loader-unification`.
+- **Multi-tenant URL Hierarchy** — preserves `/org/:slug/dashboard/*` shape per `mem://architecture/multi-tenant-url-hierarchy`.
+- **Public/Private Route Isolation** — `/no-organization` lives outside the dashboard provider tree per `mem://architecture/public-vs-private-route-isolation`.
+- **Copy Governance** — advisory tone on the dead-end page, no shame language.

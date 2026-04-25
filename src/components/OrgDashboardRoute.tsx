@@ -1,9 +1,9 @@
-import { useParams, Outlet, Navigate } from 'react-router-dom';
+import { useParams, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
-import { PLATFORM_NAME } from '@/lib/brand';
+import { BootLuxeLoader } from '@/components/ui/BootLuxeLoader';
 import NotFound from '@/pages/NotFound';
 import { OrgAccessDenied } from '@/components/auth/OrgAccessDenied';
 import { useEffect } from 'react';
@@ -14,12 +14,18 @@ import { supabase } from '@/integrations/supabase/client';
  * Route wrapper for /org/:orgSlug/dashboard/*.
  * Resolves the organization from the URL slug and syncs it into OrganizationContext.
  * Verifies the authenticated user is a member before rendering <Outlet />.
+ *
+ * Refresh-safety doctrine:
+ *   - Never render OrgAccessDenied on a transient null. Wait for authReady
+ *     AND a real, resolved (orgId, userId) pair before evaluating membership.
+ *   - Treat unresolved membership as "still loading", not "denied".
  */
 export function OrgDashboardRoute() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  const location = useLocation();
   const { data: organization, isLoading, error } = useOrganizationBySlug(orgSlug);
   const { setSelectedOrganization, effectiveOrganization } = useOrganizationContext();
-  const { user, isPlatformUser } = useAuth();
+  const { user, authReady, isPlatformUser } = useAuth();
 
   // Sync the URL-resolved org into context so all downstream hooks work
   useEffect(() => {
@@ -31,7 +37,8 @@ export function OrgDashboardRoute() {
   // Check membership: user must have a row in employee_profiles or organization_admins
   const orgId = organization?.id;
   const userId = user?.id;
-  const { data: isMember, isLoading: isMembershipLoading } = useQuery({
+  const membershipReady = !!orgId && !!userId;
+  const { data: isMember, isLoading: isMembershipLoading, isFetched: isMembershipFetched } = useQuery({
     queryKey: ['org-membership', orgId, userId],
     queryFn: async () => {
       const [profileRes, adminRes] = await Promise.all([
@@ -40,27 +47,50 @@ export function OrgDashboardRoute() {
       ]);
       return !!(profileRes.data || adminRes.data);
     },
-    enabled: !!orgId && !!userId && !isPlatformUser,
+    enabled: membershipReady && !isPlatformUser,
     staleTime: 5 * 60 * 1000,
   });
 
+  // 1) Wait for first session resolution before any redirect decision.
+  if (!authReady) {
+    return <BootLuxeLoader fullScreen />;
+  }
+
+  // 2) No user → bounce to /login, preserving the intended URL.
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location, message: 'Please sign in to access your dashboard.' }}
+        replace
+      />
+    );
+  }
+
+  // 3) Org slug still resolving.
   if (isLoading) {
     return <DashboardLoader fullPage />;
   }
 
+  // 4) Slug genuinely doesn't resolve to an org.
   if (error || !organization || !orgSlug) {
     return <NotFound />;
   }
 
-  // Platform users bypass membership check
-  if (!isPlatformUser) {
-    if (isMembershipLoading) {
-      return <DashboardLoader fullPage />;
-    }
+  // 5) Platform users bypass membership entirely.
+  if (isPlatformUser) {
+    return <Outlet />;
+  }
 
-    if (!isMember) {
-      return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
-    }
+  // 6) Membership query not yet resolvable (orgId / userId still pairing) OR
+  //    in flight OR not yet fetched once. Treat as loading, NEVER as denied.
+  if (!membershipReady || isMembershipLoading || !isMembershipFetched) {
+    return <DashboardLoader fullPage />;
+  }
+
+  // 7) Only now — with a real resolved pair and a completed query — can we deny.
+  if (!isMember) {
+    return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
   }
 
   return <Outlet />;
@@ -70,11 +100,15 @@ export function OrgDashboardRoute() {
  * Legacy redirect component.
  * Catches /dashboard/* and redirects to /org/:slug/dashboard/*.
  * Catches /dashboard/platform/* and redirects to /platform/*.
+ *
+ * Refresh-safety doctrine:
+ *   - Never decide on a transient null. Wait until the org-list query is
+ *     actually resolved before choosing between dashboard and /no-organization.
  */
 export function LegacyDashboardRedirect() {
   const { '*': splat } = useParams();
   const { effectiveOrganization, isLoading: isOrgLoading } = useOrganizationContext();
-  const { user, loading } = useAuth();
+  const { user, authReady } = useAuth();
   const path = splat || '';
 
   // /dashboard/platform/* → /platform/*
@@ -83,26 +117,37 @@ export function LegacyDashboardRedirect() {
     return <Navigate to={`/platform/${rest}`} replace />;
   }
 
-  // Auth still resolving — show spinner
-  if (loading) {
-    return <DashboardLoader fullPage />;
+  // 1) Auth still resolving — show spinner.
+  if (!authReady) {
+    return <BootLuxeLoader fullScreen />;
   }
 
-  // Not authenticated — redirect to login
+  // 2) Not authenticated — redirect to login, preserving destination.
   if (!user) {
-    return <Navigate to="/login" state={{ from: { pathname: `/dashboard/${path}` }, message: 'Please sign in to access your dashboard.' }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{
+          from: { pathname: `/dashboard/${path}` },
+          message: 'Please sign in to access your dashboard.',
+        }}
+        replace
+      />
+    );
   }
 
-  // /dashboard/* → /org/:slug/dashboard/*
-  if (effectiveOrganization?.slug) {
-    return <Navigate to={`/org/${effectiveOrganization.slug}/dashboard/${path}`} replace />;
-  }
-
-  // Org context still loading — show spinner
+  // 3) Org context still hydrating — wait. Never redirect on a transient null.
   if (isOrgLoading) {
     return <DashboardLoader fullPage />;
   }
 
-  // Authenticated but no organization found — redirect to login with message
-  return <Navigate to="/login" state={{ from: { pathname: `/dashboard/${path}` }, message: 'No organization found for your account. Please contact your administrator.' }} replace />;
+  // 4) Org resolved → forward to canonical org-scoped URL.
+  if (effectiveOrganization?.slug) {
+    return <Navigate to={`/org/${effectiveOrganization.slug}/dashboard/${path}`} replace />;
+  }
+
+  // 5) Authenticated, org query resolved, but no org for this account.
+  //    Send to dedicated dead-end page (NOT back to /login, which on production
+  //    lands on the marketing site and feels like the app dropped them).
+  return <Navigate to="/no-organization" replace />;
 }

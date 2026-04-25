@@ -28,14 +28,17 @@ export function ProtectedRoute({
   requireAnyPlatformRole = false,
 }: ProtectedRouteProps) {
   const { dashPath } = useOrgDashboardPath();
-  const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
+  const { user, loading, authReady, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
   const { isViewingAs, viewAsRole, clearViewAs } = useViewAs();
   const { permissions: effectivePermissions, isLoading: effectivePermissionsLoading } = useEffectivePermissions();
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const location = useLocation();
 
-  // Spinner-first: wait for auth, roles, effective permissions (View As), and profile (super admin)
+  // Spinner-first: gate on authReady (first session resolution complete) so
+  // a background revalidation doesn't trigger a redirect cascade. Also wait
+  // for roles, effective permissions (View As), and profile (super admin).
   const authOrPermissionsLoading =
+    !authReady ||
     loading ||
     (requireSuperAdmin && profileLoading) ||
     (requiredPermission && !isPlatformUser && effectivePermissionsLoading);
