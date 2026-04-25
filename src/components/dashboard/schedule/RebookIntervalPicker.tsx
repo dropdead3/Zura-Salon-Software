@@ -162,6 +162,34 @@ export function RebookIntervalPicker({
 
   const canContinue = !!targetDate && !isBefore(startOfDay(targetDate), today);
 
+  // "Calmest day this week" — a quick-pick chip per interval row that finds
+  // the lightest day in the same week as the interval target, so the operator
+  // can nudge the rebook off a heavy day in one tap.
+  const calmestPicks = useMemo(() => {
+    return intervals.map((interval) => {
+      const weekStart = startOfWeek(interval.date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(interval.date, { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        .filter((d) => !isBefore(startOfDay(d), today))
+        .map((d) => {
+          const cap = capacityMap.get(format(d, 'yyyy-MM-dd'));
+          return { date: d, count: cap?.apptCount ?? 0, load: cap?.load };
+        });
+      if (!days.length) return null;
+      // Lightest by count, with a small bias toward the interval's own day on ties.
+      const targetKey = format(interval.date, 'yyyy-MM-dd');
+      const best = [...days].sort((a, b) => {
+        if (a.count !== b.count) return a.count - b.count;
+        const aIsTarget = format(a.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
+        const bIsTarget = format(b.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
+        return aIsTarget - bIsTarget;
+      })[0];
+      // Don't surface a chip if the interval's own day is already the calmest.
+      if (format(best.date, 'yyyy-MM-dd') === targetKey) return null;
+      return best;
+    });
+  }, [intervals, capacityMap, today]);
+
   // Smart nudge: when the active target lands on a heavy/full day, suggest a
   // calmer alternative from the interval grid.
   const nudge = useMemo(() => {
