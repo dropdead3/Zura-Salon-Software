@@ -278,8 +278,11 @@ export default function OrgBrandedLogin() {
 
   // Determine which sub-flow to render
   const sessionUserHere = !!user && !forceFullForm;
+  const showRecentsPicker =
+    !sessionUserHere && recents.length > 0 && !recentsBypassed && !recentSelected;
+  const showRecentsPin = !!recentSelected;
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
-  const showColdForm = !showPinFlow;
+  const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;
 
   // ─────────────────────────── Markup ───────────────────────────
 
