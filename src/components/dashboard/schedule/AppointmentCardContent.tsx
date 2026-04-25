@@ -281,7 +281,7 @@ function GridContent({
                 'bg-white/55 dark:bg-black/25',
                 badge.text, badge.border, 'border-opacity-40'
               )}>
-                <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
+                <span className={cn('h-[5px] w-[5px] rounded-full bg-current')} />
                 {statusLabel}
               </span>
             </div>
@@ -328,7 +328,7 @@ function GridContent({
                 'bg-white/55 dark:bg-black/25',
                 badge.text, badge.border, 'border-opacity-40'
               )}>
-                <span className={cn('h-[3px] w-[3px] rounded-full', badge.bg)} />
+                <span className={cn('h-[5px] w-[5px] rounded-full bg-current')} />
                 {statusLabel}
               </span>
             </div>
