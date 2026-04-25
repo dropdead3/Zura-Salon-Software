@@ -17,8 +17,25 @@
  */
 
 import { useMemo, useState, useEffect } from 'react';
-import { addDays, addWeeks, format, isBefore, startOfDay } from 'date-fns';
-import { CalendarCheck, CalendarIcon, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
+import {
+  addDays,
+  addWeeks,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isBefore,
+  startOfDay,
+  startOfWeek,
+} from 'date-fns';
+import {
+  CalendarCheck,
+  CalendarIcon,
+  ArrowRight,
+  Sparkles,
+  AlertTriangle,
+  Wand2,
+  User,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
