@@ -1783,46 +1783,6 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Quick Actions Row (SendPay only — Rebook moved to overflow menu, Call/Text in Client Contact row) ──────────────── */}
-              {(() => {
-                const phone = appointment.client_phone?.trim();
-                const rawEmail = clientRecord?.email?.trim();
-                const isPlaceholderEmail = rawEmail
-                  ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
-                  : true;
-                const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
-                const showSendPay =
-                  !!appointment.id &&
-                  !!resolvedOrgId &&
-                  appointment.total_price != null &&
-                  appointment.total_price > 0;
-
-                if (!showSendPay) {
-                  return null;
-                }
-
-                return (
-                  <div className="px-6 pb-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <SendToPayButton
-                        appointmentId={appointment.id}
-                        organizationId={resolvedOrgId!}
-                        totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
-                        serviceName={appointment.service_name}
-                        clientName={appointment.client_name}
-                        clientEmail={email}
-                        clientPhone={phone}
-                        phorestClientId={appointment.phorest_client_id}
-                        afterpayEnabled={orgAfterpayEnabled}
-                        afterpaySurchargeEnabled={orgSurchargeEnabled}
-                        afterpaySurchargeRate={orgSurchargeRate}
-                        onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <div className="mx-6">
