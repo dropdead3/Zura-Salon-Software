@@ -487,14 +487,25 @@ export function RebookIntervalPicker({
                                     setCalendarRevealed(false);
                                   }}
                                   className={cn(
-                                    'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
-                                    // Purple ghost when this calmest-pick is the active selection
-                                    isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
+                                    // Base — left border slot reserved (border-l-2 transparent)
+                                    // so the load color slots in without layout shift.
+                                    'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 border-l-2 border-l-transparent bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
+                                    // Load classification → left-edge stroke (replaces decorative dot).
+                                    pick.load && LOAD_BORDER_CLASS[pick.load],
+                                    pick.load && 'border-l-solid',
+                                    // Selected state — purple ghost token (thick stroke + tint).
+                                    isActive && cn('border-solid', tokens.button.selectedGhost),
                                   )}
                                   aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
                                 >
-                                  <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
-                                  <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
+                                  <Wand2 className={cn(
+                                    'h-2.5 w-2.5 text-muted-foreground group-hover:text-primary',
+                                    isActive && 'text-primary',
+                                  )} />
+                                  <span className={cn(
+                                    'font-sans text-[10px] text-muted-foreground group-hover:text-foreground',
+                                    isActive && 'text-foreground',
+                                  )}>
                                     {format(pick.date, 'EEE d')}
                                   </span>
                                   {pick.bandFull && preferredBand && (
@@ -505,14 +516,6 @@ export function RebookIntervalPicker({
                                       <Clock className="h-2 w-2" />
                                       {BAND_LABEL[preferredBand]} full
                                     </span>
-                                  )}
-                                  {pick.load && (
-                                    <span
-                                      className={cn(
-                                        'h-1 w-1 rounded-full',
-                                        LOAD_DOT_CLASS[pick.load],
-                                      )}
-                                    />
                                   )}
                                 </button>
                               </TooltipTrigger>
