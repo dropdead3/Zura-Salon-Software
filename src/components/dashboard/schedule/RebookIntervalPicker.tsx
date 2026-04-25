@@ -254,10 +254,10 @@ export function RebookIntervalPicker({
               <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
                 From last visit
               </p>
-              {isStylistScoped && appointment?.staff_name && (
+              {isStylistScoped && (
                 <span className="inline-flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
                   <User className="h-3 w-3" />
-                  {appointment.staff_name}'s book
+                  Stylist's book
                 </span>
               )}
             </div>
