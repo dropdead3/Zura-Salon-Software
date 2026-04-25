@@ -33,6 +33,7 @@ export function useOrgValidatePin(organizationId: string | null | undefined) {
         _organization_id: organizationId,
         _pin: pin,
         _device_fingerprint: getDeviceFingerprint(),
+        _surface: 'login',
       });
 
       if (error) throw error;
