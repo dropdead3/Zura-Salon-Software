@@ -50,6 +50,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { getRecommendedWeeks } from '@/lib/scheduling/rebook-recommender';
 import {
@@ -58,6 +59,7 @@ import {
   type TimeBand,
 } from '@/hooks/useScheduleDayCapacity';
 import { useStylistWorkDays } from '@/hooks/useStylistWorkDays';
+import { getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 
 const INTERVAL_WEEKS = [2, 4, 6, 8, 12] as const;
 const CAPACITY_HORIZON_DAYS = 100;
@@ -65,6 +67,10 @@ const CAPACITY_HORIZON_DAYS = 100;
 interface RebookIntervalPickerProps {
   open: boolean;
   appointment: PhorestAppointment | null;
+  /** Location hours used to detect salon-closed days on the calendar. */
+  locationHoursJson?: HoursJson | null;
+  /** Holiday/manual closures used alongside hours_json. */
+  locationHolidayClosures?: HolidayClosure[] | null;
   onCancel: () => void;
   onConfirm: (result: { date: Date; weeks?: number }) => void;
 }
@@ -81,6 +87,15 @@ const LOAD_DOT_CLASS: Record<DayLoad, string> = {
   moderate: 'bg-amber-500',
   heavy: 'bg-orange-500',
   full: 'bg-rose-500',
+};
+
+/** Left-edge stroke colors for the calmest-pick chips — reads as a structural
+ *  classification rather than a decorative dot. */
+const LOAD_BORDER_CLASS: Record<DayLoad, string> = {
+  light: 'border-l-emerald-500',
+  moderate: 'border-l-amber-500',
+  heavy: 'border-l-orange-500',
+  full: 'border-l-rose-500',
 };
 
 const LOAD_LABEL: Record<DayLoad, string> = {
@@ -106,6 +121,8 @@ const BAND_LABEL: Record<TimeBand, string> = {
 export function RebookIntervalPicker({
   open,
   appointment,
+  locationHoursJson = null,
+  locationHolidayClosures = null,
   onCancel,
   onConfirm,
 }: RebookIntervalPickerProps) {
@@ -164,6 +181,18 @@ export function RebookIntervalPicker({
     return !workDays.has(token);
   };
 
+  // Salon-closed detection — combines weekly hours_json + ad-hoc holiday_closures.
+  // Returns reason text when known so we can label the chip/calendar tooltip.
+  const getSalonClosure = (date: Date): { closed: boolean; reason?: string } => {
+    if (!locationHoursJson && !locationHolidayClosures) return { closed: false };
+    const info = getLocationHoursForDate(
+      locationHoursJson,
+      locationHolidayClosures,
+      date,
+    );
+    return { closed: info.isClosed, reason: info.closureReason };
+  };
+
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
   useEffect(() => {
@@ -180,15 +209,20 @@ export function RebookIntervalPicker({
         const date = addWeeks(fromDate, weeks);
         const key = format(date, 'yyyy-MM-dd');
         const cap = capacityMap.get(key);
+        const closure = getSalonClosure(date);
         return {
           weeks,
           date,
           dateLabel: format(date, 'MMM d'),
           load: cap?.load,
           apptCount: cap?.apptCount ?? 0,
+          salonClosed: closure.closed,
+          closureReason: closure.reason,
         };
       }),
-    [fromDate, capacityMap],
+    // getSalonClosure depends on locationHoursJson + locationHolidayClosures
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fromDate, capacityMap, locationHoursJson, locationHolidayClosures],
   );
 
   const targetDate: Date | null = customDate
@@ -210,6 +244,7 @@ export function RebookIntervalPicker({
       const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
         .filter((d) => !isBefore(startOfDay(d), today))
         .filter((d) => !isStylistOff(d)) // honor schedule
+        .filter((d) => !getSalonClosure(d).closed) // never recommend a closed day
         .map((d) => {
           const cap = capacityMap.get(format(d, 'yyyy-MM-dd'));
           const bandCount = preferredBand
@@ -340,67 +375,92 @@ export function RebookIntervalPicker({
                       {intervals.map((interval) => {
                         const isRecommended = interval.weeks === recommendedWeeks;
                         const offThatDay = isStylistOff(interval.date);
+                        const closed = interval.salonClosed;
+                        // Compose tooltip text once. Empty string ⇒ no Tooltip
+                        // wrapper at all (kills the empty hover bubble).
+                        const tooltipText = closed
+                          ? interval.closureReason
+                            ? `Salon closed · ${interval.closureReason}`
+                            : 'Salon closed this day'
+                          : offThatDay
+                          ? "Stylist isn't scheduled this day"
+                          : interval.load
+                          ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
+                              isRecommended ? ' · Recommended' : ''
+                            }`
+                          : isRecommended
+                          ? 'Recommended'
+                          : '';
+
+                        const disabled = closed;
+
+                        const chip = (
+                          <ToggleGroupItem
+                            value={String(interval.weeks)}
+                            aria-label={`${interval.weeks} weeks`}
+                            disabled={disabled}
+                            className={cn(
+                              // Base — border-2 transparent so selected state
+                              // swaps color without 1px layout shift.
+                              'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-transparent ring-1 ring-border bg-background',
+                              'hover:bg-muted/60 transition-colors relative',
+                              // Selected = thick purple stroke + ghost fill (token).
+                              'data-[state=on]:border-primary data-[state=on]:bg-primary/[0.06] data-[state=on]:text-foreground data-[state=on]:ring-0',
+                              offThatDay && !closed && 'opacity-60',
+                              closed && 'opacity-50 cursor-not-allowed border-dashed ring-border/60',
+                            )}
+                          >
+                            <span className="font-sans text-sm leading-none">
+                              {interval.weeks}w
+                            </span>
+                            <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
+                              {interval.dateLabel}
+                            </span>
+                            {/* Recommended → top-edge label pill */}
+                            {isRecommended && !closed && (
+                              <span
+                                className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
+                                aria-label="Recommended"
+                              >
+                                Rec
+                              </span>
+                            )}
+                            {/* Salon-closed marker takes precedence over off-day */}
+                            {closed ? (
+                              <span
+                                className="absolute top-1 right-1 inline-flex items-center"
+                                aria-label="Salon closed"
+                              >
+                                <CalendarOff className="h-2.5 w-2.5 text-rose-500/70" />
+                              </span>
+                            ) : offThatDay ? (
+                              <span
+                                className="absolute top-1 right-1 inline-flex items-center"
+                                aria-label="Stylist off"
+                              >
+                                <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
+                              </span>
+                            ) : null}
+                            {!closed && interval.load && (
+                              <span
+                                className={cn(
+                                  'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
+                                  LOAD_DOT_CLASS[interval.load],
+                                )}
+                              />
+                            )}
+                          </ToggleGroupItem>
+                        );
+
+                        // No tooltip wrapper when there's nothing to say —
+                        // prevents Radix from rendering an empty popover bubble.
+                        if (!tooltipText) {
+                          return <span key={interval.weeks}>{chip}</span>;
+                        }
                         return (
                           <Tooltip key={interval.weeks}>
-                            <TooltipTrigger asChild>
-                              <ToggleGroupItem
-                                value={String(interval.weeks)}
-                                aria-label={`${interval.weeks} weeks`}
-                                className={cn(
-                                  'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
-                                  'border-border hover:bg-muted/60 transition-colors relative',
-                                  // Purple ghost selected — primary tint + thick stroke + soft ring
-                                  'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
-                                  'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
-                                  'data-[state=on]:text-foreground',
-                                  offThatDay && 'opacity-60',
-                                )}
-                              >
-                                <span className="font-sans text-sm leading-none">
-                                  {interval.weeks}w
-                                </span>
-                                <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
-                                  {interval.dateLabel}
-                                </span>
-                                {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
-                                {isRecommended && (
-                                  <span
-                                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
-                                    aria-label="Recommended"
-                                  >
-                                    Rec
-                                  </span>
-                                )}
-                                {/* Off-day marker (small, top-right) */}
-                                {offThatDay && (
-                                  <span
-                                    className="absolute top-1 right-1 inline-flex items-center"
-                                    aria-label="Stylist off"
-                                  >
-                                    <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
-                                  </span>
-                                )}
-                                {interval.load && (
-                                  <span
-                                    className={cn(
-                                      'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
-                                      LOAD_DOT_CLASS[interval.load],
-                                    )}
-                                  />
-                                )}
-                              </ToggleGroupItem>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {offThatDay
-                                ? "Stylist isn't scheduled this day"
-                                : interval.load
-                                ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
-                                    isRecommended ? ' · Recommended' : ''
-                                  }`
-                                : isRecommended
-                                ? 'Recommended'
-                                : ''}
-                            </TooltipContent>
+                            <TooltipTrigger asChild>{chip}</TooltipTrigger>
+                            <TooltipContent>{tooltipText}</TooltipContent>
                           </Tooltip>
                         );
                       })}
@@ -427,14 +487,25 @@ export function RebookIntervalPicker({
                                     setCalendarRevealed(false);
                                   }}
                                   className={cn(
-                                    'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
-                                    // Purple ghost when this calmest-pick is the active selection
-                                    isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
+                                    // Base — left border slot reserved (border-l-2 transparent)
+                                    // so the load color slots in without layout shift.
+                                    'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 border-l-2 border-l-transparent bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
+                                    // Load classification → left-edge stroke (replaces decorative dot).
+                                    pick.load && LOAD_BORDER_CLASS[pick.load],
+                                    pick.load && 'border-l-solid',
+                                    // Selected state — purple ghost token (thick stroke + tint).
+                                    isActive && cn('border-solid', tokens.button.selectedGhost),
                                   )}
                                   aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
                                 >
-                                  <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
-                                  <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
+                                  <Wand2 className={cn(
+                                    'h-2.5 w-2.5 text-muted-foreground group-hover:text-primary',
+                                    isActive && 'text-primary',
+                                  )} />
+                                  <span className={cn(
+                                    'font-sans text-[10px] text-muted-foreground group-hover:text-foreground',
+                                    isActive && 'text-foreground',
+                                  )}>
                                     {format(pick.date, 'EEE d')}
                                   </span>
                                   {pick.bandFull && preferredBand && (
@@ -445,14 +516,6 @@ export function RebookIntervalPicker({
                                       <Clock className="h-2 w-2" />
                                       {BAND_LABEL[preferredBand]} full
                                     </span>
-                                  )}
-                                  {pick.load && (
-                                    <span
-                                      className={cn(
-                                        'h-1 w-1 rounded-full',
-                                        LOAD_DOT_CLASS[pick.load],
-                                      )}
-                                    />
                                   )}
                                 </button>
                               </TooltipTrigger>
@@ -574,7 +637,10 @@ export function RebookIntervalPicker({
                         setCustomDate(date);
                         setSelectedWeeks(null);
                       }}
-                      disabled={(date) => isBefore(startOfDay(date), today)}
+                      disabled={(date) =>
+                        isBefore(startOfDay(date), today) ||
+                        getSalonClosure(date).closed
+                      }
                       defaultMonth={targetDate ?? today}
                       initialFocus
                       className="p-2 pointer-events-auto w-full"
@@ -592,19 +658,54 @@ export function RebookIntervalPicker({
                           'bg-primary/[0.08] text-foreground border-2 border-primary rounded-md hover:bg-primary/[0.12] focus:bg-primary/[0.12] aria-selected:bg-primary/[0.08] aria-selected:text-foreground',
                         // Demote today so it doesn't fight the selection ring
                         day_today: 'font-medium text-primary',
+                        // Disabled (past + salon-closed) — strike-through with muted ink
+                        day_disabled: 'text-muted-foreground/40 line-through cursor-not-allowed',
                       }}
                       components={{
                         DayContent: ({ date }) => {
                           const key = format(date, 'yyyy-MM-dd');
                           const cap = capacityMap.get(key);
                           const off = isStylistOff(date);
-                          return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
-                                  <span className={cn(off && 'text-muted-foreground/70')}>
-                                    {date.getDate()}
-                                  </span>
+                          const closure = getSalonClosure(date);
+                          const closed = closure.closed;
+                          // Build tooltip text once; if empty, skip the wrapper
+                          // (kills the empty hover bubble inside the calendar too).
+                          const tipParts: string[] = [];
+                          if (closed) {
+                            tipParts.push(
+                              closure.reason
+                                ? `Salon closed · ${closure.reason}`
+                                : 'Salon closed',
+                            );
+                          } else {
+                            if (off) tipParts.push('Stylist not scheduled');
+                            if (cap)
+                              tipParts.push(
+                                `${cap.apptCount} booked · ${LOAD_LABEL[cap.load]}`,
+                              );
+                          }
+                          const tip = tipParts.join(' · ');
+
+                          const cell = (
+                            <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
+                              <span
+                                className={cn(
+                                  closed && 'text-muted-foreground/40',
+                                  !closed && off && 'text-muted-foreground/70',
+                                )}
+                              >
+                                {date.getDate()}
+                              </span>
+                              {/* Salon-closed glyph wins over capacity dot / off label */}
+                              {closed ? (
+                                <span
+                                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 inline-flex items-center"
+                                  aria-label="Salon closed"
+                                >
+                                  <CalendarOff className="h-2 w-2 text-rose-500/70" />
+                                </span>
+                              ) : (
+                                <>
                                   {cap && (
                                     <span
                                       className={cn(
@@ -618,18 +719,16 @@ export function RebookIntervalPicker({
                                       Off
                                     </span>
                                   )}
-                                </div>
-                              </TooltipTrigger>
-                              {(cap || off) && (
-                                <TooltipContent side="top">
-                                  {off && <>Stylist not scheduled{cap ? ' · ' : ''}</>}
-                                  {cap && (
-                                    <>
-                                      {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
-                                    </>
-                                  )}
-                                </TooltipContent>
+                                </>
                               )}
+                            </div>
+                          );
+
+                          if (!tip) return cell;
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>{cell}</TooltipTrigger>
+                              <TooltipContent side="top">{tip}</TooltipContent>
                             </Tooltip>
                           );
                         },
