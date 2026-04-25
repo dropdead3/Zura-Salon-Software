@@ -2319,22 +2319,8 @@ export function AppointmentDetailSheet({
                           />
                         ) : null}
 
-                        {!isWalkIn && (lastVisitDate || visitStats.visitCount > 0) && (
-                          <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
-                            {lastVisitDate && (
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3 w-3" />
-                                Last visit {formatDate(parseISO(lastVisitDate), 'MMM d, yyyy')}
-                              </span>
-                            )}
-                            {visitStats.visitCount > 0 && (
-                              <span className="flex items-center gap-1.5">
-                                <TrendingUp className="h-3 w-3" />
-                                {visitStats.visitCount} visit{visitStats.visitCount === 1 ? '' : 's'}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {/* Visit history summary moved to History tab to avoid blocking the Details tab on a slow query. */}
+
                         {isWalkIn && !clientRecordLoading && !appointment.client_phone && !clientRecord?.email && (
                           <p className="text-xs text-muted-foreground pt-1">
                             No contact info — Add details in client profile
