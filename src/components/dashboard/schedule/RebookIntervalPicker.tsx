@@ -250,9 +250,17 @@ export function RebookIntervalPicker({
         <div className="px-6 py-5 space-y-5 overflow-y-auto">
           {/* Interval grid */}
           <div className="space-y-2">
-            <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
-              From last visit
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
+                From last visit
+              </p>
+              {isStylistScoped && appointment?.staff_name && (
+                <span className="inline-flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  {appointment.staff_name}'s book
+                </span>
+              )}
+            </div>
             <ToggleGroup
               type="single"
               value={
