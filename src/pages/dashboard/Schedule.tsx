@@ -1133,18 +1133,11 @@ export default function Schedule() {
         }}
         isUpdating={isUpdating}
         onRebook={(apt) => {
+          // Step 1 of rebook: pick interval/date. The booking popover opens
+          // afterward via the picker's onConfirm with the chosen date pre-filled.
           setDetailOpen(false);
-          // FIX #15/A: Pre-fill client data for rebook via rebookData state
-          setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
-          setActiveDraft(null);
-          setRebookData({
-            clientId: apt.phorest_client_id || undefined,
-            clientName: apt.client_name || undefined,
-            staffUserId: apt.stylist_user_id || undefined,
-            staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
-            selectedServices: [],
-          });
-          setBookingOpen(true);
+          setRebookPickerAppt(apt);
+          setRebookPickerOpen(true);
         }}
         onReschedule={(apt) => {
           setDetailOpen(false);
