@@ -2110,21 +2110,40 @@ async function syncSalesTransactions(
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
 
-        // Batch appointment status reconciliation — only for PAST dates
-        // Today's appointments are excluded to prevent premature "completed" marking
-        // when a client has a transaction but other appointments are still in progress.
+        // Batch appointment status reconciliation — DB-driven, only for PAST dates.
+        //
+        // Rationale: We previously read field names directly off the in-memory
+        // `purchases` payload (`p.clientId`, `p.purchaseDate`). Phorest returns
+        // slightly different shapes across endpoints (`/sales`,
+        // `/staffperformance`, etc.), so when those exact field names were
+        // missing the entire reconciliation silently no-op'd — leaving past
+        // appointments stuck on `booked` even though the matching POS sale was
+        // already persisted. We now drive reconciliation off
+        // `phorest_transaction_items` (the truth we already wrote to disk),
+        // which makes it correct against any prior sync's data, not just the
+        // current API payload.
         try {
           const todayStr = new Date().toISOString().split('T')[0];
-          const uniqueClientDates = [...new Set(
-            purchases
-              .filter((p: any) => p.clientId && p.purchaseDate)
-              .map((p: any) => `${p.clientId}|${p.purchaseDate?.split('T')[0]}`)
-          )].filter((key: any) => {
-            const txDate = key.split('|')[1];
-            return txDate && txDate < todayStr; // strictly past dates only
-          });
 
-          if (uniqueClientDates.length > 0) {
+          // Pull persisted transaction items for this branch within the sync
+          // window. We constrain to past dates only — same-day entries are
+          // excluded so a mid-day transaction on a multi-appointment client
+          // doesn't prematurely complete still-in-progress appointments.
+          const { data: txRows, error: txErr } = await supabase
+            .from('phorest_transaction_items')
+            .select('phorest_client_id, transaction_date')
+            .eq('location_id', branchId)
+            .gte('transaction_date', dateFrom)
+            .lt('transaction_date', todayStr)
+            .not('phorest_client_id', 'is', null);
+
+          if (txErr) {
+            console.error(`[Reconcile] Failed to read transaction items for ${branchName}:`, txErr.message);
+          } else if (txRows && txRows.length > 0) {
+            const uniqueClientDates = [...new Set(
+              txRows.map((r: any) => `${r.phorest_client_id}|${r.transaction_date}`)
+            )];
+
             let reconciled = 0;
             for (let i = 0; i < uniqueClientDates.length; i += 50) {
               const batch = uniqueClientDates.slice(i, i + 50);
@@ -2142,12 +2161,14 @@ async function syncSalesTransactions(
               const results = await Promise.all(updates);
               reconciled += results.reduce((sum: any, r: any) => sum + (r.data?.length || 0), 0);
             }
-            if (reconciled > 0) {
-              console.log(`Reconciled ${reconciled} appointments to completed via transaction match for ${branchName}`);
-            }
+            console.log(
+              `[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=${uniqueClientDates.length} reconciled=${reconciled}`
+            );
+          } else {
+            console.log(`[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=0 (no past transactions persisted)`);
           }
         } catch (reconErr: any) {
-          console.error(`Transaction-based status reconciliation failed for ${branchName}:`, reconErr.message);
+          console.error(`[Reconcile] Transaction-based status reconciliation failed for ${branchName}:`, reconErr.message);
         }
       }
 
