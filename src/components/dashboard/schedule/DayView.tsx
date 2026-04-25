@@ -574,8 +574,16 @@ export function DayView({
         top = slotsOffset * ROW_HEIGHT;
       }
 
+      // Smooth on post-hydration recompute (e.g., React Query fills appointments
+      // after mount); instant on initial land or zoom. Honor reduced-motion.
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const behavior: ScrollBehavior =
+        hasLandedRef.current && !isZoomChange && !prefersReducedMotion ? 'smooth' : 'instant';
       requestAnimationFrame(() => {
-        ref.scrollTo({ top, behavior: 'instant' });
+        ref.scrollTo({ top, behavior });
+        hasLandedRef.current = true;
       });
     }
   }, [date, appointments, locationHours?.open, locationHours?.close, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, isOrgTodayCheck, orgNowMins]);
