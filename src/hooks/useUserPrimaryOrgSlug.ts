@@ -13,10 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
  *   1. employee_profiles.organization_id (primary employment)
  *   2. organization_admins (first owner/admin membership)
  *
- * Returns nulls when:
- *   - no authenticated user
- *   - user has no org membership (falls through to /no-organization)
- *   - query in flight
+ * Two-step queries (no PostgREST embeds) to avoid FK-ambiguity
+ * compile errors on tables with multiple relationships to `organizations`.
  */
 export function useUserPrimaryOrgSlug() {
   const { user } = useAuth();
@@ -29,29 +27,35 @@ export function useUserPrimaryOrgSlug() {
       // 1. Primary employment org
       const { data: profile } = await supabase
         .from('employee_profiles')
-        .select('organizations!employee_profiles_organization_id_fkey (slug, name)')
+        .select('organization_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const primary = (profile as any)?.organizations as { slug: string | null; name: string | null } | null;
-      if (primary?.slug) {
-        return { slug: primary.slug, name: primary.name ?? null };
+      let orgId: string | null = profile?.organization_id ?? null;
+
+      // 2. Fallback: first admin/owner membership
+      if (!orgId) {
+        const { data: adminRow } = await supabase
+          .from('organization_admins')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        orgId = adminRow?.organization_id ?? null;
       }
 
-      // 2. First admin/owner membership
-      const { data: adminRow } = await supabase
-        .from('organization_admins')
-        .select('organizations!organization_admins_organization_id_fkey (slug, name)')
-        .eq('user_id', user.id)
-        .limit(1)
+      if (!orgId) return { slug: null, name: null };
+
+      const { data: org } = await supabase
+        .from('organizations')
+        .select('slug, name')
+        .eq('id', orgId)
         .maybeSingle();
 
-      const adminOrg = (adminRow as any)?.organizations as { slug: string | null; name: string | null } | null;
-      if (adminOrg?.slug) {
-        return { slug: adminOrg.slug, name: adminOrg.name ?? null };
-      }
-
-      return { slug: null, name: null };
+      return {
+        slug: org?.slug ?? null,
+        name: org?.name ?? null,
+      };
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
