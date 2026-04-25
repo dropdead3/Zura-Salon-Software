@@ -270,6 +270,35 @@ export default function OrgBrandedLogin() {
     }
   };
 
+  // ─────────────────────────── Derived (hooks BEFORE early returns) ─────
+  // Cache-bust on logo/name change so iOS/CDN don't hold the prior asset.
+  // organization is undefined on first render — guard with optional chaining.
+  const assetVersion = organization?.updated_at
+    ? new Date(organization.updated_at).getTime().toString(36)
+    : 'v0';
+
+  const manifestSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl || !orgSlug) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug, v: assetVersion });
+    if (locationId) params.set('loc', locationId);
+    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
+  }, [orgSlug, locationId, assetVersion]);
+
+  const splashSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl || !orgSlug) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug, v: assetVersion });
+    if (locationId) params.set('loc', locationId);
+    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
+  }, [orgSlug, locationId, assetVersion]);
+
+  const versionedLogoUrl = useMemo(() => {
+    if (!organization?.logo_url) return null;
+    const sep = organization.logo_url.includes('?') ? '&' : '?';
+    return `${organization.logo_url}${sep}v=${assetVersion}`;
+  }, [organization?.logo_url, assetVersion]);
+
   // ─────────────────────────── Render gates ───────────────────────────
 
   if (orgLoading || !authReady) {
@@ -291,24 +320,6 @@ export default function OrgBrandedLogin() {
   const showRecentsPin = !!recentSelected;
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
   const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;
-
-  // ─────────────────────────── Markup ───────────────────────────
-
-  const manifestSrc = useMemo(() => {
-    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
-    if (!supaUrl) return undefined;
-    const params = new URLSearchParams({ slug: orgSlug });
-    if (locationSlug) params.set('loc', locationSlug);
-    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
-  }, [orgSlug, locationSlug]);
-
-  const splashSrc = useMemo(() => {
-    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
-    if (!supaUrl) return undefined;
-    const params = new URLSearchParams({ slug: orgSlug });
-    if (locationSlug) params.set('loc', locationSlug);
-    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
-  }, [orgSlug, locationSlug]);
 
   const orgName = organization.name;
   const themeColor = '#0a0a0a';
