@@ -2846,11 +2846,39 @@ async function saveTransactionItems(
     const { error } = await supabase
       .from('phorest_transaction_items')
       .upsert(batch, { onConflict: 'transaction_id,item_name,item_type' });
-    
+
     if (!error) savedCount += batch.length;
     else console.error(`Transaction items batch upsert error: ${error.message}`);
   }
-  
+
+  // Phase 3: deterministic appointment linkage. Fill `appointment_id` on the
+  // service line items we just upserted, scoped to this branch + the date
+  // window we touched. Three-tier resolver lives in the SQL function so the
+  // same logic powers both backfill and live sync. Ambiguous matches stay
+  // NULL by design — never guess.
+  if (savedCount > 0 && allRecords.length > 0) {
+    try {
+      const dates = allRecords.map((r) => r.transaction_date).filter(Boolean).sort();
+      const dateFrom = dates[0];
+      const dateTo = dates[dates.length - 1];
+      const { data: linkRes, error: linkErr } = await supabase.rpc(
+        'link_transaction_items_to_appointments',
+        { p_location_id: branchId, p_date_from: dateFrom, p_date_to: dateTo }
+      );
+      if (linkErr) {
+        console.error(`[Linkage] branch=${branchName} RPC failed: ${linkErr.message}`);
+      } else {
+        const r = Array.isArray(linkRes) ? linkRes[0] : linkRes;
+        console.log(
+          `[Linkage] branch=${branchName} window=${dateFrom}..${dateTo} ` +
+          `tier1=${r?.tier1 ?? 0} tier2=${r?.tier2 ?? 0} tier3=${r?.tier3 ?? 0}`
+        );
+      }
+    } catch (e: any) {
+      console.error(`[Linkage] branch=${branchName} unexpected error: ${e.message}`);
+    }
+  }
+
   return savedCount;
 }
 
