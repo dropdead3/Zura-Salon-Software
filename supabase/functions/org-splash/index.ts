@@ -42,16 +42,37 @@ Deno.serve(async (req) => {
       return new Response('Invalid slug', { status: 400, headers: corsHeaders });
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
     const { data: org } = await supabase
       .from('organizations')
-      .select('logo_url, name')
+      .select('id, logo_url, name')
       .eq('slug', slug)
       .maybeSingle();
+
+    // ─── 1. Cached raster fallback (Chrome/Edge/Firefox PWAs) ──────
+    if (org?.id) {
+      for (const ext of ['jpg', 'png']) {
+        const cachedUrl = `${supabaseUrl}/storage/v1/object/public/org-splash-cache/${org.id}.${ext}`;
+        const headRes = await fetch(cachedUrl, { method: 'HEAD' });
+        if (headRes.ok) {
+          const v = url.searchParams.get('v') ?? '';
+          const target = v ? `${cachedUrl}?v=${encodeURIComponent(v)}` : cachedUrl;
+          return new Response(null, {
+            status: 302,
+            headers: {
+              ...corsHeaders,
+              Location: target,
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        }
+      }
+    }
 
     const cx = SPLASH_W / 2;
     const cy = SPLASH_H / 2;
