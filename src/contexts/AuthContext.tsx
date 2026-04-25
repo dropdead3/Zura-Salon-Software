@@ -294,6 +294,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user,
           session,
           loading,
+          authReady,
           roles,
           permissions,
           platformRoles,
