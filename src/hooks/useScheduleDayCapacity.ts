@@ -20,11 +20,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export type DayLoad = 'light' | 'moderate' | 'heavy' | 'full';
+export type TimeBand = 'morning' | 'afternoon' | 'evening';
 
 export interface DayCapacity {
   date: string;            // yyyy-MM-dd
   apptCount: number;       // total non-cancelled appointments
   load: DayLoad;
+  /**
+   * Per-band appointment counts. Present only when the query is stylist-scoped
+   * (i.e. options.stylistUserId is set) — that's the only context where bands
+   * carry meaningful signal for the rebook UI.
+   */
+  bands?: Record<TimeBand, number>;
+}
+
+function bandOf(startTime: string): TimeBand {
+  const h = parseInt(startTime.split(':')[0] ?? '0', 10);
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
 }
 
 interface CapacityOptions {
