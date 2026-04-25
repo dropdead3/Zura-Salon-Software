@@ -49,23 +49,22 @@ export function HospitalityBlock({
   // Collapsed empty state (no data and user hasn't asked to expand)
   if (isEmpty && !userExpanded) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3">
+      <button
+        type="button"
+        onClick={() => setUserExpanded(true)}
+        className="group flex w-full items-center justify-between gap-2 rounded-lg border border-dashed border-border bg-muted/60 px-4 py-3 text-left transition-colors hover:border-primary/50 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-primary/70" />
           <span>
             Capture personal details to make {firstName || 'this client'} feel known next visit.
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setUserExpanded(true)}
-          className="h-7 shrink-0 px-2 text-xs"
-        >
+        <div className="flex h-7 shrink-0 items-center px-2 text-xs font-medium text-foreground">
           <Plus className="mr-1 h-3 w-3" />
           Add personal context
-        </Button>
-      </div>
+        </div>
+      </button>
     );
   }
 
