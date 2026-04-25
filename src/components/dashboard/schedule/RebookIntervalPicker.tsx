@@ -235,6 +235,7 @@ export function RebookIntervalPicker({
       const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
         .filter((d) => !isBefore(startOfDay(d), today))
         .filter((d) => !isStylistOff(d)) // honor schedule
+        .filter((d) => !getSalonClosure(d).closed) // never recommend a closed day
         .map((d) => {
           const cap = capacityMap.get(format(d, 'yyyy-MM-dd'));
           const bandCount = preferredBand
