@@ -1037,12 +1037,13 @@ export function DayView({
                       )}
                       {/* Time slot backgrounds (droppable) */}
                      {timeSlots.map(({ hour, minute }) => {
-                      // "Fully past" — slot is unavailable only after its END time has elapsed,
-                      // so the slot the indicator line is currently inside remains bookable.
-                      const isPastSlot = showCurrentTime && (() => {
-                        const slotMins = hour * 60 + minute;
-                        return slotMins + slotInterval <= dayNowMins;
-                      })();
+                       // "Fully past" — slot is unavailable when the entire viewed
+                       // day is before today, OR (today only) the slot's end time
+                       // has elapsed. Mirrors the appointment-side past check below.
+                       const isPastSlot = (date < todayDate) || (showCurrentTime && (() => {
+                         const slotMins = hour * 60 + minute;
+                         return slotMins + slotInterval <= dayNowMins;
+                       })());
                        
                        const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
                        
