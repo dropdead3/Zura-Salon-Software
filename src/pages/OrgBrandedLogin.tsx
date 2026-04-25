@@ -61,7 +61,7 @@ interface RememberedUser {
  * canon — uses provider-free hooks only.
  */
 export default function OrgBrandedLogin() {
-  const { orgSlug, locationSlug } = useParams<{ orgSlug: string; locationSlug?: string }>();
+  const { orgSlug, locationId } = useParams<{ orgSlug: string; locationId?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -100,7 +100,7 @@ export default function OrgBrandedLogin() {
   const validatePin = useOrgValidatePin(organization?.id);
   const { data: teamMembers = [] } = useOrgTeamForLogin(
     organization?.id && deviceMode === 'shared' ? organization.id : null,
-    locationSlug ?? null,
+    locationId ?? null,
   );
 
   // Load device mode + remembered user + recents from localStorage once org resolves
