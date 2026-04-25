@@ -33,6 +33,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
+import { ArrowUp } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStylistExclusionSummaries } from '@/hooks/useStylistExclusions';
