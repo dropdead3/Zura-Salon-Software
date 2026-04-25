@@ -1,5 +1,5 @@
 export const TABS_CLASSES = {
-  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted ring-1 ring-border/70 dark:bg-muted/70 dark:ring-transparent rounded-[9px]",
+  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted border border-border/70 dark:bg-muted/70 dark:border-transparent rounded-[9px]",
   trigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium transition-all",
     "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-border dark:data-[state=active]:bg-white/[0.08] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
