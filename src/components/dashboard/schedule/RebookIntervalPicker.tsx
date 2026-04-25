@@ -637,7 +637,10 @@ export function RebookIntervalPicker({
                         setCustomDate(date);
                         setSelectedWeeks(null);
                       }}
-                      disabled={(date) => isBefore(startOfDay(date), today)}
+                      disabled={(date) =>
+                        isBefore(startOfDay(date), today) ||
+                        getSalonClosure(date).closed
+                      }
                       defaultMonth={targetDate ?? today}
                       initialFocus
                       className="p-2 pointer-events-auto w-full"
@@ -655,19 +658,54 @@ export function RebookIntervalPicker({
                           'bg-primary/[0.08] text-foreground border-2 border-primary rounded-md hover:bg-primary/[0.12] focus:bg-primary/[0.12] aria-selected:bg-primary/[0.08] aria-selected:text-foreground',
                         // Demote today so it doesn't fight the selection ring
                         day_today: 'font-medium text-primary',
+                        // Disabled (past + salon-closed) — strike-through with muted ink
+                        day_disabled: 'text-muted-foreground/40 line-through cursor-not-allowed',
                       }}
                       components={{
                         DayContent: ({ date }) => {
                           const key = format(date, 'yyyy-MM-dd');
                           const cap = capacityMap.get(key);
                           const off = isStylistOff(date);
-                          return (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
-                                  <span className={cn(off && 'text-muted-foreground/70')}>
-                                    {date.getDate()}
-                                  </span>
+                          const closure = getSalonClosure(date);
+                          const closed = closure.closed;
+                          // Build tooltip text once; if empty, skip the wrapper
+                          // (kills the empty hover bubble inside the calendar too).
+                          const tipParts: string[] = [];
+                          if (closed) {
+                            tipParts.push(
+                              closure.reason
+                                ? `Salon closed · ${closure.reason}`
+                                : 'Salon closed',
+                            );
+                          } else {
+                            if (off) tipParts.push('Stylist not scheduled');
+                            if (cap)
+                              tipParts.push(
+                                `${cap.apptCount} booked · ${LOAD_LABEL[cap.load]}`,
+                              );
+                          }
+                          const tip = tipParts.join(' · ');
+
+                          const cell = (
+                            <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
+                              <span
+                                className={cn(
+                                  closed && 'text-muted-foreground/40',
+                                  !closed && off && 'text-muted-foreground/70',
+                                )}
+                              >
+                                {date.getDate()}
+                              </span>
+                              {/* Salon-closed glyph wins over capacity dot / off label */}
+                              {closed ? (
+                                <span
+                                  className="absolute bottom-0.5 left-1/2 -translate-x-1/2 inline-flex items-center"
+                                  aria-label="Salon closed"
+                                >
+                                  <CalendarOff className="h-2 w-2 text-rose-500/70" />
+                                </span>
+                              ) : (
+                                <>
                                   {cap && (
                                     <span
                                       className={cn(
@@ -681,18 +719,16 @@ export function RebookIntervalPicker({
                                       Off
                                     </span>
                                   )}
-                                </div>
-                              </TooltipTrigger>
-                              {(cap || off) && (
-                                <TooltipContent side="top">
-                                  {off && <>Stylist not scheduled{cap ? ' · ' : ''}</>}
-                                  {cap && (
-                                    <>
-                                      {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
-                                    </>
-                                  )}
-                                </TooltipContent>
+                                </>
                               )}
+                            </div>
+                          );
+
+                          if (!tip) return cell;
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>{cell}</TooltipTrigger>
+                              <TooltipContent side="top">{tip}</TooltipContent>
                             </Tooltip>
                           );
                         },
