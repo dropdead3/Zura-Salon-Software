@@ -35,6 +35,8 @@ import {
   AlertTriangle,
   Wand2,
   User,
+  Clock,
+  CalendarOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -53,7 +55,9 @@ import { getRecommendedWeeks } from '@/lib/scheduling/rebook-recommender';
 import {
   useScheduleDayCapacity,
   type DayLoad,
+  type TimeBand,
 } from '@/hooks/useScheduleDayCapacity';
+import { useStylistWorkDays } from '@/hooks/useStylistWorkDays';
 
 const INTERVAL_WEEKS = [2, 4, 6, 8, 12] as const;
 const CAPACITY_HORIZON_DAYS = 100;
