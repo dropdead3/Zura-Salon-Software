@@ -418,11 +418,15 @@ export default function OrgBrandedLogin() {
                 <p className="text-base text-white font-sans">{recentSelected.display_name}</p>
               </div>
 
+              {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+                <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+              )}
+
               <OrgLoginPinPad
                 value={pin}
                 onChange={setPin}
                 onSubmit={handlePinSubmit}
-                disabled={validatePin.isPending}
+                disabled={validatePin.isPending || (!!pinLockoutUntil && pinLockoutUntil > Date.now())}
                 errorShake={pinError}
               />
 
@@ -524,11 +528,15 @@ export default function OrgBrandedLogin() {
                 </p>
               </div>
 
+              {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+                <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+              )}
+
               <OrgLoginPinPad
                 value={pin}
                 onChange={setPin}
                 onSubmit={handlePinSubmit}
-                disabled={validatePin.isPending}
+                disabled={validatePin.isPending || (!!pinLockoutUntil && pinLockoutUntil > Date.now())}
                 errorShake={pinError}
               />
 
@@ -572,11 +580,15 @@ export default function OrgBrandedLogin() {
                     );
                   })()}
 
+                  {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+                    <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+                  )}
+
                   <OrgLoginPinPad
                     value={pin}
                     onChange={setPin}
                     onSubmit={handlePinSubmit}
-                    disabled={validatePin.isPending}
+                    disabled={validatePin.isPending || (!!pinLockoutUntil && pinLockoutUntil > Date.now())}
                     errorShake={pinError}
                   />
 
