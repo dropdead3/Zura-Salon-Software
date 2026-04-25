@@ -78,13 +78,13 @@ html, body, #root {
   :root,
   .theme-cream-lux {
     /* Luxury-light: bone-warm near-neutral. Lightness ladder per shared spec. */
-    --background: 35 12% 97%;
+    --background: 35 12% 95%;
     --foreground: 30 18% 8%;
 
-    --card: 35 12% 99%;
+    --card: 35 12% 100%;
     --card-foreground: 30 18% 8%;
 
-    --popover: 35 12% 99%;
+    --popover: 35 12% 100%;
     --popover-foreground: 30 18% 8%;
 
     --primary: 30 14% 45%;
@@ -93,7 +93,7 @@ html, body, #root {
     --secondary: 32 12% 93%;
     --secondary-foreground: 30 18% 8%;
 
-    --muted: 32 10% 94%;
+    --muted: 32 10% 91%;
     --muted-strong: 32 10% 88%;
     --muted-foreground: 30 8% 42%;
 
@@ -126,7 +126,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 40 30% 96%;
 
-    --border: 32 12% 88%;
+    --border: 32 12% 82%;
     --input: 32 10% 94%;
     --ring: 30 14% 45%;
 
@@ -178,13 +178,13 @@ html, body, #root {
 
   /* ===== THEME: ROSEWOOD (Dusty rose & warm pink — light) ===== */
   .theme-rosewood {
-    --background: 350 22% 97%;
+    --background: 350 22% 95%;
     --foreground: 350 30% 10%;
 
-    --card: 350 22% 99%;
+    --card: 350 22% 100%;
     --card-foreground: 350 30% 10%;
 
-    --popover: 350 22% 99%;
+    --popover: 350 22% 100%;
     --popover-foreground: 350 30% 10%;
 
     --primary: 345 60% 48%;
@@ -193,7 +193,7 @@ html, body, #root {
     --secondary: 350 22% 93%;
     --secondary-foreground: 350 30% 10%;
 
-    --muted: 350 18% 94%;
+    --muted: 350 18% 91%;
     --muted-strong: 350 18% 88%;
     --muted-foreground: 350 14% 42%;
 
@@ -221,7 +221,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 350 18% 88%;
+    --border: 350 18% 82%;
     --input: 350 18% 94%;
     --ring: 345 60% 48%;
 
@@ -366,13 +366,13 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 22% 97%;
+    --background: 145 22% 95%;
     --foreground: 145 30% 8%;
 
-    --card: 145 22% 99%;
+    --card: 145 22% 100%;
     --card-foreground: 145 30% 8%;
 
-    --popover: 145 22% 99%;
+    --popover: 145 22% 100%;
     --popover-foreground: 145 30% 8%;
 
     --primary: 145 45% 38%;
@@ -381,7 +381,7 @@ html, body, #root {
     --secondary: 145 18% 93%;
     --secondary-foreground: 145 30% 8%;
 
-    --muted: 145 16% 94%;
+    --muted: 145 16% 91%;
     --muted-strong: 145 16% 88%;
     --muted-foreground: 145 12% 42%;
 
@@ -410,7 +410,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 145 16% 88%;
+    --border: 145 16% 82%;
     --input: 145 16% 94%;
     --ring: 145 45% 38%;
 
@@ -491,13 +491,13 @@ html, body, #root {
 
   /* ===== THEME: JADE (Premium teal jewel-tone & gold) ===== */
   .theme-jade {
-    --background: 180 22% 97%;
+    --background: 180 22% 95%;
     --foreground: 180 30% 8%;
 
-    --card: 180 22% 99%;
+    --card: 180 22% 100%;
     --card-foreground: 180 30% 8%;
 
-    --popover: 180 22% 99%;
+    --popover: 180 22% 100%;
     --popover-foreground: 180 30% 8%;
 
     --primary: 175 65% 32%;
@@ -506,7 +506,7 @@ html, body, #root {
     --secondary: 178 20% 93%;
     --secondary-foreground: 180 30% 8%;
 
-    --muted: 178 18% 94%;
+    --muted: 178 18% 91%;
     --muted-strong: 178 18% 88%;
     --muted-foreground: 180 14% 42%;
 
@@ -534,7 +534,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 178 18% 88%;
+    --border: 178 18% 82%;
     --input: 178 18% 94%;
     --ring: 175 65% 32%;
 
@@ -614,13 +614,13 @@ html, body, #root {
 
   /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
-    --background: 218 30% 97%;
+    --background: 218 30% 95%;
     --foreground: 220 40% 10%;
 
-    --card: 218 30% 99%;
+    --card: 218 30% 100%;
     --card-foreground: 220 40% 10%;
 
-    --popover: 218 30% 99%;
+    --popover: 218 30% 100%;
     --popover-foreground: 220 40% 10%;
 
     --primary: 218 100% 56%;
@@ -629,7 +629,7 @@ html, body, #root {
     --secondary: 218 28% 93%;
     --secondary-foreground: 220 40% 10%;
 
-    --muted: 218 25% 94%;
+    --muted: 218 25% 91%;
     --muted-strong: 218 25% 88%;
     --muted-foreground: 220 18% 42%;
 
@@ -658,7 +658,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 218 25% 88%;
+    --border: 218 25% 82%;
     --input: 218 25% 94%;
     --ring: 218 100% 56%;
 
@@ -739,13 +739,13 @@ html, body, #root {
 
   /* ===== THEME: ZURA (Brand Violet/Purple) ===== */
   .theme-zura {
-    --background: 260 22% 97%;
+    --background: 260 22% 95%;
     --foreground: 260 25% 8%;
 
-    --card: 260 22% 99%;
+    --card: 260 22% 100%;
     --card-foreground: 260 25% 8%;
 
-    --popover: 260 22% 99%;
+    --popover: 260 22% 100%;
     --popover-foreground: 260 25% 8%;
 
     --primary: 270 70% 55%;
@@ -754,7 +754,7 @@ html, body, #root {
     --secondary: 260 20% 93%;
     --secondary-foreground: 260 25% 8%;
 
-    --muted: 260 18% 94%;
+    --muted: 260 18% 91%;
     --muted-strong: 260 18% 88%;
     --muted-foreground: 260 12% 42%;
 
@@ -783,7 +783,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 18% 88%;
+    --border: 260 18% 82%;
     --input: 260 18% 94%;
     --ring: 270 70% 55%;
 
@@ -864,13 +864,13 @@ html, body, #root {
 
   /* ===== THEME: COGNAC (Bourbon amber & leather) ===== */
   .theme-cognac {
-    --background: 25 25% 97%;
+    --background: 25 25% 95%;
     --foreground: 20 28% 8%;
 
-    --card: 25 25% 99%;
+    --card: 25 25% 100%;
     --card-foreground: 20 28% 8%;
 
-    --popover: 25 25% 99%;
+    --popover: 25 25% 100%;
     --popover-foreground: 20 28% 8%;
 
     --primary: 28 70% 42%;
@@ -879,7 +879,7 @@ html, body, #root {
     --secondary: 25 22% 93%;
     --secondary-foreground: 20 28% 8%;
 
-    --muted: 25 18% 94%;
+    --muted: 25 18% 91%;
     --muted-strong: 25 18% 88%;
     --muted-foreground: 20 14% 42%;
 
@@ -907,7 +907,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 18% 88%;
+    --border: 25 18% 82%;
     --input: 25 18% 94%;
     --ring: 28 70% 42%;
 
@@ -987,13 +987,13 @@ html, body, #root {
 
   /* ===== THEME: NOIR (Pure Monochrome) ===== */
   .theme-noir {
-    --background: 0 0% 97%;
+    --background: 0 0% 95%;
     --foreground: 0 0% 8%;
 
-    --card: 0 0% 99%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 8%;
 
-    --popover: 0 0% 99%;
+    --popover: 0 0% 100%;
     --popover-foreground: 0 0% 8%;
 
     --primary: 0 0% 8%;
@@ -1002,7 +1002,7 @@ html, body, #root {
     --secondary: 0 0% 93%;
     --secondary-foreground: 0 0% 8%;
 
-    --muted: 0 0% 94%;
+    --muted: 0 0% 91%;
     --muted-strong: 0 0% 88%;
     --muted-foreground: 0 0% 42%;
 
@@ -1030,7 +1030,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
+    --border: 0 0% 82%;
     --input: 0 0% 94%;
     --ring: 0 0% 8%;
 
@@ -1109,13 +1109,13 @@ html, body, #root {
   }
 
   .theme-neon {
-    --background: 330 22% 97%;
+    --background: 330 22% 95%;
     --foreground: 330 30% 8%;
 
-    --card: 330 22% 99%;
+    --card: 330 22% 100%;
     --card-foreground: 330 30% 8%;
 
-    --popover: 330 22% 99%;
+    --popover: 330 22% 100%;
     --popover-foreground: 330 30% 8%;
 
     --primary: 330 95% 55%;
@@ -1124,7 +1124,7 @@ html, body, #root {
     --secondary: 330 22% 93%;
     --secondary-foreground: 330 30% 8%;
 
-    --muted: 330 18% 94%;
+    --muted: 330 18% 91%;
     --muted-strong: 330 18% 88%;
     --muted-foreground: 330 12% 42%;
 
@@ -1152,7 +1152,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 330 22% 88%;
+    --border: 330 22% 82%;
     --input: 330 18% 94%;
     --ring: 330 95% 55%;
 
@@ -1232,13 +1232,13 @@ html, body, #root {
 
   /* ===== THEME: MATRIX (Neon emerald on deep navy — cyberpunk terminal) ===== */
   .theme-matrix {
-    --background: 220 22% 97%;
+    --background: 220 22% 95%;
     --foreground: 220 40% 8%;
 
-    --card: 220 22% 99%;
+    --card: 220 22% 100%;
     --card-foreground: 220 40% 8%;
 
-    --popover: 220 22% 99%;
+    --popover: 220 22% 100%;
     --popover-foreground: 220 40% 8%;
 
     --primary: 145 75% 32%;
@@ -1247,7 +1247,7 @@ html, body, #root {
     --secondary: 220 22% 93%;
     --secondary-foreground: 220 40% 8%;
 
-    --muted: 220 18% 94%;
+    --muted: 220 18% 91%;
     --muted-strong: 220 18% 88%;
     --muted-foreground: 220 18% 42%;
 
@@ -1275,7 +1275,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 88%;
+    --border: 220 18% 82%;
     --input: 220 18% 94%;
     --ring: 145 75% 32%;
 
@@ -1355,13 +1355,13 @@ html, body, #root {
 
   /* ===== THEME: PEACH (Coral peach on warm cream — sorbet) ===== */
   .theme-peach {
-    --background: 25 35% 97%;
+    --background: 25 35% 95%;
     --foreground: 18 35% 10%;
 
-    --card: 25 35% 99%;
+    --card: 25 35% 100%;
     --card-foreground: 18 35% 10%;
 
-    --popover: 25 35% 99%;
+    --popover: 25 35% 100%;
     --popover-foreground: 18 35% 10%;
 
     --primary: 18 75% 58%;
@@ -1370,7 +1370,7 @@ html, body, #root {
     --secondary: 22 28% 93%;
     --secondary-foreground: 18 35% 10%;
 
-    --muted: 22 22% 94%;
+    --muted: 22 22% 91%;
     --muted-strong: 22 22% 88%;
     --muted-foreground: 18 18% 42%;
 
@@ -1398,7 +1398,7 @@ html, body, #root {
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 22 22% 88%;
+    --border: 22 22% 82%;
     --input: 22 22% 94%;
     --ring: 18 75% 58%;
 
@@ -1479,13 +1479,13 @@ html, body, #root {
   /* ===== THEME: ROSE GOLD (Rose gold + dusty pink duotone) ===== */
   /* Class key remains theme-orchid to avoid migration of stored prefs */
   .theme-orchid {
-    --background: 40 30% 97%;
+    --background: 40 30% 95%;
     --foreground: 30 30% 14%;
 
-    --card: 40 28% 99%;
+    --card: 40 28% 100%;
     --card-foreground: 30 30% 14%;
 
-    --popover: 40 28% 99%;
+    --popover: 40 28% 100%;
     --popover-foreground: 30 30% 14%;
 
     --primary: 38 55% 58%;
@@ -1494,7 +1494,7 @@ html, body, #root {
     --secondary: 345 38% 72%;
     --secondary-foreground: 30 30% 14%;
 
-    --muted: 40 18% 94%;
+    --muted: 40 18% 91%;
     --muted-strong: 40 18% 88%;
     --muted-foreground: 30 18% 42%;
 
@@ -1522,7 +1522,7 @@ html, body, #root {
     --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
+    --border: 40 20% 82%;
     --input: 40 18% 94%;
     --ring: 38 55% 58%;
 
@@ -1743,12 +1743,15 @@ html, body, #root {
      read as a real material instead of a flat div. Composes with `bg-card`
      and works in both light + dark themes. */
   .premium-surface {
-    background-color: hsl(var(--card) / 0.96);
+    background-color: hsl(var(--card) / 0.98);
     backdrop-filter: blur(12px) saturate(1.05);
     -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    /* Light-mode: outer hairline + inner specular + soft drop shadow for edge definition */
     box-shadow:
-      inset 0 1px 0 0 hsl(var(--foreground) / 0.04),
-      0 1px 2px 0 hsl(var(--foreground) / 0.04);
+      0 0 0 1px hsl(var(--border) / 0.6),
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+      0 2px 6px -2px hsl(var(--foreground) / 0.08),
+      0 8px 24px -12px hsl(var(--foreground) / 0.06);
     position: relative;
   }
   .premium-surface::before {
