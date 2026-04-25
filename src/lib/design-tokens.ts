@@ -116,6 +116,10 @@ export const tokens = {
     cardAction: 'h-9 px-4 rounded-full text-sm font-sans font-medium',
     /** Inline ghost action — muted text, high-contrast on hover */
     inlineGhost: 'h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-primary-foreground hover:bg-primary/90 rounded-md transition-colors',
+    /** Selected ghost state — purple ghost fill + thick primary stroke.
+     *  Use on chips, quick-picks, and small toggles where the selected state
+     *  should read as a deliberate stroke rather than a soft halo. */
+    selectedGhost: 'border-2 border-primary bg-primary/[0.06] text-foreground',
   },
 
   // ========================================
