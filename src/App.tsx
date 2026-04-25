@@ -485,7 +485,7 @@ const App = () => (
                     <Route path="/ecosystem" element={<Ecosystem />} />
                     <Route path="/login" element={<UnifiedLogin />} />
                     <Route path="/org/:orgSlug/login" element={<OrgBrandedLogin />} />
-                    <Route path="/org/:orgSlug/loc/:locationSlug/login" element={<OrgBrandedLogin />} />
+                    <Route path="/org/:orgSlug/loc/:locationId/login" element={<OrgBrandedLogin />} />
                     <Route path="/no-organization" element={<NoOrganization />} />
                     <Route path="/signup" element={<Suspense fallback={<RouteFallback />}><Signup /></Suspense>} />
                     <Route path="/auth/verify-email" element={<Suspense fallback={<RouteFallback />}><VerifyEmail /></Suspense>} />
