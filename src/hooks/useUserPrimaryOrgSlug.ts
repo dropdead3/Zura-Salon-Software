@@ -29,11 +29,11 @@ export function useUserPrimaryOrgSlug() {
       // 1. Primary employment org
       const { data: profile } = await supabase
         .from('employee_profiles')
-        .select('organizations:organization_id (slug, name)')
+        .select('organizations!employee_profiles_organization_id_fkey (slug, name)')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const primary = profile?.organizations as { slug: string | null; name: string | null } | null;
+      const primary = (profile as any)?.organizations as { slug: string | null; name: string | null } | null;
       if (primary?.slug) {
         return { slug: primary.slug, name: primary.name ?? null };
       }
@@ -41,12 +41,12 @@ export function useUserPrimaryOrgSlug() {
       // 2. First admin/owner membership
       const { data: adminRow } = await supabase
         .from('organization_admins')
-        .select('organizations:organization_id (slug, name)')
+        .select('organizations!organization_admins_organization_id_fkey (slug, name)')
         .eq('user_id', user.id)
         .limit(1)
         .maybeSingle();
 
-      const adminOrg = adminRow?.organizations as { slug: string | null; name: string | null } | null;
+      const adminOrg = (adminRow as any)?.organizations as { slug: string | null; name: string | null } | null;
       if (adminOrg?.slug) {
         return { slug: adminOrg.slug, name: adminOrg.name ?? null };
       }
