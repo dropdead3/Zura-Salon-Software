@@ -1,85 +1,95 @@
-# Phase 3 — Deterministic Appointment ↔ Transaction Linkage
 
-## Prompt feedback
-Strong prompt: scope ("appointment ↔ transaction"), mechanism ("backfill + sync-time write"), key columns ("client, date, staff, item~service"), and the **value unlocked** (payouts, tips, dock-to-checkout). The "removes fuzzy by date+client" framing is exactly the doctrinal anchor I needed.
+## Phase 4 — Reconciliation Hardening
 
-One sharpening idea for next time: name the **collision policy upfront** ("on ambiguity prefer earliest unmatched, else leave NULL") so I don't have to infer it. I'll propose one below — flag if you want different semantics.
+Three protective layers on top of Phase 3 linkage. Each anchored to an existing doctrine and shipped with an explicit deferral trigger so we don't over-build.
 
-## Diagnosis (verified against live data)
+---
 
-- `phorest_transaction_items.appointment_id uuid` already exists with `FK → phorest_appointments(id)` and an index. Currently **0 of 2,709 rows populated**.
-- Item type values are lowercase (`service`, `product`, `sale_fee`, …). Linkage is meaningful only for `service` (1,969 rows). Products/fees/deposits intentionally stay NULL.
-- Match-rate analysis on (client_id, date, staff_id, normalized service_name):
-  - **94% unique** (1,845 / 1,969)
-  - **1.2% ambiguous** (24)
-  - **5% no-match** (100, dominated by walk-ins / employee comps / "Complementary Adjustment Service" with no booked appointment — correctly should stay NULL)
-- The current reconciler in `sync-phorest-data` flips status using a fuzzy `client_id + date` join. Once linkage is written, we can switch it to a deterministic `EXISTS (… WHERE appointment_id = a.id)` — no more bulk over-completion risk.
+### 1. Atomic Reconciler RPC (ship now)
 
-## Linkage doctrine
+**Anchor:** *Edge Function Execution Context* + *Multi-Tenant Hardening* (eliminate read/write race windows in operational writes).
 
-Three-tier resolver — strictest first, fall through on no match. Ambiguity (>1 candidate at the same tier) → leave NULL and log; never guess.
+Today the reconciler in `sync-phorest-data` does:
+1. `SELECT appointment_id FROM phorest_transaction_items` (filtered)
+2. Chunked `UPDATE phorest_appointments ... WHERE id IN (batch)`
 
-| Tier | Match keys | Confidence |
-|---|---|---|
-| 1 | `client_id` + `date` + `staff_id` + normalized `service_name` (exact or prefix) | High |
-| 2 | `client_id` + `date` + `staff_id` (single appt only) | Medium |
-| 3 | `client_id` + `date` (single appt only) | Medium-low |
+Race window: between (1) and (2), a stylist can edit an appointment's status in the dashboard. The TS reconciler will then overwrite it.
 
-Service-name normalization: `lower(regexp_replace(name, '\s+', ' ', 'g'))` then exact / prefix match.
+**Change:** Create `public.reconcile_appointment_status_via_linkage(p_location_id uuid, p_date_from date, p_date_to date)` as `SECURITY DEFINER`. Single SQL statement:
 
-Only `item_type = 'service'` is eligible. Products/sale_fees/deposits stay NULL by contract (Vish-classified-as-service edge cases already fall under `item_type='service'`).
+```sql
+WITH candidates AS (
+  SELECT DISTINCT t.appointment_id
+  FROM phorest_transaction_items t
+  WHERE t.location_id = p_location_id
+    AND t.item_type = 'service'
+    AND t.transaction_date >= p_date_from
+    AND t.transaction_date < p_date_to
+    AND t.appointment_id IS NOT NULL
+)
+UPDATE phorest_appointments a
+SET status = 'completed', updated_at = now()
+FROM candidates c
+WHERE a.id = c.appointment_id
+  AND a.status IN ('booked','confirmed','checked_in')
+RETURNING a.id;
+```
 
-## Implementation plan
+Returns `{ reconciled_count int, candidate_count int }` for log parity. Wrap the existing TS branch in a single `supabase.rpc('reconcile_appointment_status_via_linkage', ...)` call.
 
-### 1. SQL migration — backfill historical linkage
-New migration `link_transaction_items_to_appointments.sql` (idempotent — only writes where `appointment_id IS NULL`). Three sequential `UPDATE … FROM (… subquery picking the unique candidate)` passes, one per tier. Each pass:
-- Filters candidate rows: `appointment_id IS NULL AND item_type = 'service'`
-- Joins against non-archived, non-deleted `phorest_appointments`
-- Uses a `HAVING COUNT(*) = 1` gate inside the subquery so ambiguous matches are skipped
-- Writes a single `appointment_id`
+**Deferral trigger:** none — ship now, race risk is real today.
 
-After all three passes, log linkage coverage via a `RAISE NOTICE` so it's visible in migration output.
+---
 
-### 2. Edge function — sync-time linkage write
-Update `supabase/functions/sync-phorest-data/index.ts`:
+### 2. Linkage Drift Gauge (ship now, as a Visibility Contract)
 
-- **`saveTransactionItems`** (line ~2799): after the upsert, run a per-branch resolver pass for the rows we just touched. Done in-function rather than via DB trigger so the same code path serves both backfill and live sync, and so we can log per-branch metrics.
-- **Reconciler refactor** (lines ~2125–2172): once linkage exists, replace the fuzzy `client_id + date` reconciler with:
-  ```ts
-  // Promote appointments to 'completed' only when a linked service line exists
-  UPDATE phorest_appointments a
-     SET status = 'completed'
-   WHERE status IN ('booked','confirmed','checked_in')
-     AND appointment_date < CURRENT_DATE
-     AND EXISTS (
-       SELECT 1 FROM phorest_transaction_items t
-       WHERE t.appointment_id = a.id AND t.item_type = 'service'
-     );
-  ```
-  Keep the legacy fuzzy fallback behind a feature flag `USE_LEGACY_FUZZY_RECONCILE = false` for one release in case linkage coverage drops on a new branch.
+**Anchor:** *Visibility Contracts* + *Alert Governance and Throttling* (silent above 90%, advisory below — no alert fatigue).
 
-### 3. Observability
-- Add `[Linkage]` log lines: per-branch `candidates / tier1 / tier2 / tier3 / ambiguous / no_match`.
-- Insert a `sync_health_metrics` row (or the existing equivalent — I'll grep first) with linkage coverage % so drift surfaces in the morning brief later.
+Currently coverage is 96.2% globally over the last 30 days. Phorest has changed payload shape once before; we want early warning, not a dashboard alarm.
 
-### 4. Verification queries (run post-deploy)
-- Coverage: `SELECT COUNT(*) FILTER (WHERE appointment_id IS NOT NULL)::float / COUNT(*) FROM phorest_transaction_items WHERE item_type='service';` — target ≥ 90%.
-- Suzy-style audit: appointments with status='booked' but `EXISTS (linked service item)` — must be 0 after reconciler runs.
-- Tip-routing sanity: `SUM(tip_amount)` grouped by `appointment_id` matches `phorest_appointments.tip_amount` to within rounding for completed appts.
+**Change:**
+- Add a Postgres view `v_linkage_coverage_30d` exposing per-location: `service_items`, `linked_items`, `coverage_pct`, `last_sync_at`.
+- New hook `useLinkageCoverage(locationId)` returns `null` when `coverage_pct >= 90` (silence is valid output) and an advisory payload `{ coverage_pct, missing_count }` when below.
+- Surface inside `SystemHealthSummary.services` as a synthetic service entry `phorest-linkage` with status `healthy | degraded` mapped at the 90% threshold. Reuses existing `useSystemHealth` plumbing — no new alert channel, no new badge.
+- Suppression reason `linkage-coverage-healthy` logged via `reportVisibilitySuppression` (kebab-case taxonomy compliance).
 
-## Files to edit
-- **New** `supabase/migrations/<ts>_link_transaction_items_to_appointments.sql` — three-tier backfill
-- `supabase/functions/sync-phorest-data/index.ts` — sync-time linkage write + reconciler refactor
+**Deferral trigger:** none — ship now. Dirt cheap, exactly the kind of asymmetric early-warning Visibility Contracts exist for.
 
-## Out of scope (intentional)
-- Changing `phorest_transaction_items` PK or unique key shape — current `(transaction_id, item_name, item_type)` stays.
-- Touching Zura-native `transaction_items` (already linked per the April migration `idx_transaction_items_appointment_zura`).
-- Any Phorest write-back — global write-back gate remains enforced.
+---
 
-## Open question (one)
-Default policy on **tier-2/3 ambiguous matches** (multiple appts same client+date+staff): I'm proposing **leave NULL + log**, never auto-pick. Alternative is "pick earliest start_time." Confirm before I ship — this is a one-line diff but materially changes payout determinism for clients with same-day re-services.
+### 3. Tip Attribution Audit Job (defer; declare trigger)
 
-## Further enhancement suggestions
-1. **Linkage coverage gauge in Sync Health.** Surface tier-1/2/3 coverage % per branch as a Visibility Contract (`COVERAGE_THRESHOLD = 90`); silent above, advisory below — protects against silent regression when Phorest changes payload shapes.
-2. **Tip reattribution audit.** Once linkage exists, add a one-shot script `audit-tip-attribution` that flags appointments where `phorest_appointments.tip_amount` ≠ `SUM(linked_items.tip_amount)`. Tips are the most operator-visible payroll line; a single mis-link gets noticed immediately.
-3. **Trigger-based linkage as the long-term home.** Function-level resolver is right for now (visibility + iteration speed), but the doctrinal endpoint is a `BEFORE INSERT` trigger so any writer (sync, manual import, future POS adapters per `src/types/pos.ts`) inherits the contract for free. Defer until POS adapter #2 ships — premature otherwise.
+**Anchor:** *Staff Tip Distribution* + *Analytics Data Integrity Standards* (operator trust erodes fastest at the payroll line).
+
+Want a nightly job that flags appointments where `phorest_appointments.tip_amount ≠ SUM(linked_items.tip_amount)`.
+
+**Why defer:** Right now linkage is 96.2%. The remaining 3.8% will produce false-positive drift (sum of linked tips ≠ recorded tip simply because not every line is linked yet). Shipping the audit before coverage is solid will burn operator trust on the *audit itself*.
+
+**Deferral Register entry:**
+- **Trigger condition:** `coverage_pct ≥ 99% sustained for 14 consecutive days` AND `linked-tip vs recorded-tip variance < 0.5% on a manual spot check`.
+- **Until then:** Skeleton migration created (table `tip_attribution_drift` with `appointment_id, expected_tip, linked_tip_sum, variance, detected_at`) but no scheduled job, no UI surface.
+- **Revisit signal:** Wire the gauge from #2 to flip a flag when the trigger condition holds; future loop ships the cron + surface.
+
+---
+
+### Files to be Created/Edited
+
+- `supabase/migrations/<timestamp>_reconcile_status_rpc_and_linkage_gauge.sql` — new RPC + view + skeleton drift table
+- `supabase/functions/sync-phorest-data/index.ts` — replace TS reconciler block (lines ~2126–2174) with single RPC call
+- `src/hooks/useSystemHealth.ts` — fold linkage coverage into `SystemHealthSummary.services`
+- `src/hooks/useLinkageCoverage.ts` — new Visibility-Contract hook (returns null above threshold)
+- `mem://architecture/visibility-contracts.md` — append Deferral Register entry for the tip audit job
+
+---
+
+### Open Question for User
+
+**Threshold for the linkage gauge: 90% (proposed) vs 95%.**
+- 90%: catches the Phorest-payload-shape-change scenario decisively, low false-positive rate.
+- 95%: tighter, but right now we'd be sitting at ~96% — small daily fluctuations could flap the gauge in/out of advisory state.
+
+I'm proposing **90%** for stability. Confirm or override before I ship — this is a one-line constant but governs whether the gauge stays calm or chatters.
+
+---
+
+**Approve this plan?** (Tip audit job is explicitly deferred per the trigger above — only #1 and #2 ship in this loop.)
