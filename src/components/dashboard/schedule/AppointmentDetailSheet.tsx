@@ -1736,7 +1736,7 @@ export function AppointmentDetailSheet({
                         <div key={step} className="flex flex-col gap-1.5 min-w-0">
                           <div className={cn(
                             'h-1 rounded-full transition-colors',
-                            isActive ? 'bg-primary' : 'bg-muted',
+                            isActive ? 'bg-primary' : 'bg-border dark:bg-muted',
                             isCurrent && 'ring-2 ring-primary/30 ring-offset-1 ring-offset-background',
                           )} />
                           <span className={cn(
