@@ -23,13 +23,20 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const slug = url.searchParams.get('slug');
     const loc = url.searchParams.get('loc');
-    if (!slug || !/^[a-z0-9-]+$/i.test(slug)) {
+
+    // Slug: org subdomain shape (lowercase alphanumeric + hyphen).
+    if (!slug || !/^[a-z0-9-]{1,64}$/i.test(slug)) {
       return new Response(JSON.stringify({ error: 'Invalid slug' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    if (loc && !/^[a-z0-9-]+$/i.test(loc)) {
+
+    // `loc` is a UUID by contract — matches App.tsx route param :locationId
+    // which is the locations.id PK. Strict regex prevents loose params from
+    // hitting Postgres and documents the contract explicitly.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (loc && !UUID_RE.test(loc)) {
       return new Response(JSON.stringify({ error: 'Invalid loc' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
