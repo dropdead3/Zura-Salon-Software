@@ -15,12 +15,22 @@ export interface ClientVisit {
   notes: string | null;
 }
 
+/**
+ * Per-client visit history.
+ *
+ * Capped at `limit` (default 20) rows to keep the History tab snappy — the
+ * underlying `v_all_appointments` view UNIONs phorest_appointments + appointments
+ * and joining staff names on every row gets expensive for long-tenured clients.
+ * Composite indexes `idx_phorest_appointments_client_date` /
+ * `idx_appointments_phorest_client_date` back the (client, date desc) lookup.
+ */
 export function useClientVisitHistory(
   phorestClientId: string | null | undefined,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; limit?: number },
 ) {
+  const limit = options?.limit ?? 20;
   return useQuery({
-    queryKey: ['client-visit-history', phorestClientId],
+    queryKey: ['client-visit-history', phorestClientId, limit],
     queryFn: async () => {
       if (!phorestClientId) return [];
       if (phorestClientId.startsWith('demo-')) {
@@ -48,7 +58,8 @@ export function useClientVisitHistory(
         `)
         .eq('phorest_client_id', phorestClientId)
         .order('appointment_date', { ascending: false })
-        .order('start_time', { ascending: false });
+        .order('start_time', { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
       
