@@ -341,13 +341,80 @@ export default function OrgBrandedLogin() {
               />
             </div>
             <p className="text-sm text-white/60 font-sans text-center">
-              {showColdForm
-                ? `Sign in to ${orgName}`
-                : sessionUserHere
+              {showRecentsPicker
+                ? 'Welcome back — tap your photo'
+                : showRecentsPin
                   ? 'Enter your PIN to continue'
-                  : 'Tap your photo to sign in'}
+                  : showColdForm
+                    ? `Sign in to ${orgName}`
+                    : sessionUserHere
+                      ? 'Enter your PIN to continue'
+                      : 'Tap your photo to sign in'}
             </p>
           </div>
+
+          {/* RECENT-ON-DEVICE TILE PICKER (1–3 faces) */}
+          {showRecentsPicker && (
+            <div className="space-y-5">
+              <OrgLoginRecentTiles
+                users={recents}
+                onSelect={(u) => {
+                  setRecentSelected(u);
+                  setPin('');
+                }}
+                onForget={(uid) => {
+                  forgetRecentUser(orgSlug, uid);
+                  const next = getRecentUsers(orgSlug);
+                  setRecents(next);
+                  if (next.length === 0) setRecentsBypassed(true);
+                }}
+              />
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setRecentsBypassed(true)}
+                  className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans"
+                >
+                  Not you? Sign in with email
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* RECENTS → PIN ENTRY for the picked face */}
+          {showRecentsPin && recentSelected && (
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                  {recentSelected.photo_url ? (
+                    <img src={recentSelected.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-white/60" />
+                  )}
+                </div>
+                <p className="text-base text-white font-sans">{recentSelected.display_name}</p>
+              </div>
+
+              <OrgLoginPinPad
+                value={pin}
+                onChange={setPin}
+                onSubmit={handlePinSubmit}
+                disabled={validatePin.isPending}
+                errorShake={pinError}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRecentSelected(null);
+                  setPin('');
+                }}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3 h-3" /> Back
+              </button>
+            </div>
+          )}
 
           {/* COLD-START EMAIL + PASSWORD */}
           {showColdForm && (
