@@ -632,6 +632,28 @@ export function DayView({
     return map;
   }, [appointments, stylists, dateStr]);
 
+  // "Earlier appointments" sentinel — surfaces when active appointments exist
+  // entirely above the current viewport so an operator can't miss pre-open work
+  // after manually scrolling/zooming past it.
+  const earlierAppointments = useMemo(() => {
+    if (!hasLandedRef.current) return [];
+    const items: { appt: PhorestAppointment; topPx: number }[] = [];
+    for (const apt of appointments) {
+      if (apt.appointment_date !== dateStr) continue;
+      if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
+      if (!apt.start_time) continue;
+      const mins = parseTimeToMinutes(apt.start_time);
+      const slotsFromStart = (mins - hoursStart * 60) / slotInterval;
+      const topPx = slotsFromStart * ROW_HEIGHT;
+      if (topPx + ROW_HEIGHT < scrollTop) items.push({ appt: apt, topPx });
+    }
+    items.sort((a, b) => a.topPx - b.topPx);
+    return items;
+  }, [appointments, dateStr, hoursStart, slotInterval, ROW_HEIGHT, scrollTop]);
+
+  const earliestAbove = earlierAppointments[0] ?? null;
+  const hiddenAboveCount = earlierAppointments.length;
+
   // Per-stylist utilization: booked client minutes / available minutes
   // Uses the shared helper so the dropdown badge and column sort stay in sync.
   const utilizationByStylist = useMemo(
