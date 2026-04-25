@@ -532,7 +532,7 @@ export function RebookIntervalPicker({
                   }}
                   className="font-sans text-[11px] text-muted-foreground hover:text-foreground"
                 >
-                  Hide
+                  ← Back to quick picks
                 </button>
               )}
             </div>
