@@ -320,6 +320,56 @@ export function RebookIntervalPicker({
                 );
               })}
             </ToggleGroup>
+
+            {/* Calmest-day quick picks (one per interval week) */}
+            {calmestPicks.some((p) => p) && (
+              <div className="grid grid-cols-5 gap-2 pt-1">
+                {calmestPicks.map((pick, idx) => {
+                  const interval = intervals[idx];
+                  if (!pick) return <div key={interval.weeks} aria-hidden />;
+                  const isActive =
+                    customDate &&
+                    format(customDate, 'yyyy-MM-dd') ===
+                      format(pick.date, 'yyyy-MM-dd');
+                  return (
+                    <Tooltip key={interval.weeks}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomDate(pick.date);
+                            setSelectedWeeks(null);
+                            setCalendarRevealed(false);
+                          }}
+                          className={cn(
+                            'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
+                            isActive && 'border-primary bg-primary/5',
+                          )}
+                          aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
+                        >
+                          <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
+                          <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
+                            {format(pick.date, 'EEE d')}
+                          </span>
+                          {pick.load && (
+                            <span
+                              className={cn(
+                                'h-1 w-1 rounded-full',
+                                LOAD_DOT_CLASS[pick.load],
+                              )}
+                            />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Calmest day this week · {pick.count} booked ·{' '}
+                        {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Smart nudge */}
