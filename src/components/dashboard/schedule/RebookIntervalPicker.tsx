@@ -298,213 +298,223 @@ export function RebookIntervalPicker({
 
         {/* Body */}
         <div className="px-6 py-5 space-y-5 overflow-y-auto">
-          {/* Interval grid */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
-                From last visit
-              </p>
-              {isStylistScoped && (
-                <span className="inline-flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  Stylist's book
-                </span>
-              )}
-            </div>
-            <ToggleGroup
-              type="single"
-              value={
-                selectedWeeks != null && !customDate ? String(selectedWeeks) : ''
-              }
-              onValueChange={(v) => {
-                if (!v) return;
-                setSelectedWeeks(Number(v));
-                setCustomDate(null);
-                setCalendarRevealed(false);
-              }}
-              className="grid grid-cols-5 gap-2"
-            >
-              {intervals.map((interval) => {
-                const isRecommended = interval.weeks === recommendedWeeks;
-                const offThatDay = isStylistOff(interval.date);
-                return (
-                  <Tooltip key={interval.weeks}>
-                    <TooltipTrigger asChild>
-                      <ToggleGroupItem
-                        value={String(interval.weeks)}
-                        aria-label={`${interval.weeks} weeks`}
-                        className={cn(
-                          'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
-                          'border-border hover:bg-muted/60 transition-colors relative',
-                          // Purple ghost selected — primary tint + thick stroke + soft ring
-                          'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
-                          'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
-                          'data-[state=on]:text-foreground',
-                          offThatDay && 'opacity-60',
-                        )}
-                      >
-                        <span className="font-sans text-sm leading-none">
-                          {interval.weeks}w
-                        </span>
-                        <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
-                          {interval.dateLabel}
-                        </span>
-                        {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
-                        {isRecommended && (
-                          <span
-                            className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
-                            aria-label="Recommended"
-                          >
-                            Rec
-                          </span>
-                        )}
-                        {/* Off-day marker (small, top-right) */}
-                        {offThatDay && (
-                          <span
-                            className="absolute top-1 right-1 inline-flex items-center"
-                            aria-label="Stylist off"
-                          >
-                            <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
-                          </span>
-                        )}
-                        {interval.load && (
-                          <span
-                            className={cn(
-                              'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
-                              LOAD_DOT_CLASS[interval.load],
-                            )}
-                          />
-                        )}
-                      </ToggleGroupItem>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {offThatDay
-                        ? "Stylist isn't scheduled this day"
-                        : interval.load
-                        ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
-                            isRecommended ? ' · Recommended' : ''
-                          }`
-                        : isRecommended
-                        ? 'Recommended'
-                        : ''}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </ToggleGroup>
-
-            {/* Calmest-day quick picks (one per interval week) */}
-            {calmestPicks.some((p) => p) && (
-              <div className="grid grid-cols-5 gap-2 pt-1">
-                {calmestPicks.map((pick, idx) => {
-                  const interval = intervals[idx];
-                  if (!pick) return <div key={interval.weeks} aria-hidden />;
-                  const isActive =
-                    customDate &&
-                    format(customDate, 'yyyy-MM-dd') ===
-                      format(pick.date, 'yyyy-MM-dd');
-                  return (
-                    <Tooltip key={interval.weeks}>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCustomDate(pick.date);
-                            setSelectedWeeks(null);
-                            setCalendarRevealed(false);
-                          }}
-                          className={cn(
-                            'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
-                            // Purple ghost when this calmest-pick is the active selection
-                            isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
-                          )}
-                          aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
-                        >
-                          <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
-                          <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
-                            {format(pick.date, 'EEE d')}
-                          </span>
-                          {pick.bandFull && preferredBand && (
-                            <span
-                              className="inline-flex items-center gap-0.5 font-display text-[8px] uppercase tracking-wider text-amber-500 leading-none"
-                              aria-label={`${BAND_LABEL[preferredBand]} full`}
-                            >
-                              <Clock className="h-2 w-2" />
-                              {BAND_LABEL[preferredBand]} full
-                            </span>
-                          )}
-                          {pick.load && (
-                            <span
-                              className={cn(
-                                'h-1 w-1 rounded-full',
-                                LOAD_DOT_CLASS[pick.load],
-                              )}
-                            />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Calmest day this week · {pick.count} booked ·{' '}
-                        {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
-                        {pick.bandFull && preferredBand && (
-                          <> · {BAND_LABEL[preferredBand]} band tight</>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Smart nudge */}
-          <AnimatePresence>
-            {nudge && (
+          {/* Interval presets + smart nudge + "or" divider — hidden when the
+              calendar is revealed so the date picker has the full panel. */}
+          <AnimatePresence initial={false}>
+            {!calendarRevealed && (
               <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2"
+                key="rebook-presets"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
               >
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-sans text-xs text-foreground">
-                    That day is{' '}
-                    <span className="font-medium">
-                      {LOAD_LABEL[nudge.load].toLowerCase()}
-                    </span>
-                    .
-                    {nudge.alt && (
-                      <>
-                        {' '}Consider{' '}
-                        <button
-                          type="button"
-                          className="underline underline-offset-2 hover:text-primary"
-                          onClick={() => {
-                            setSelectedWeeks(nudge.alt!.weeks);
-                            setCustomDate(null);
-                            setCalendarRevealed(false);
-                          }}
-                        >
-                          {nudge.alt.weeks}w ({nudge.alt.dateLabel})
-                        </button>
-                        {' '}instead — calmer book.
-                      </>
+                <div className="space-y-5">
+                  {/* Interval grid */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
+                        From last visit
+                      </p>
+                      {isStylistScoped && (
+                        <span className="inline-flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
+                          <User className="h-3 w-3" />
+                          Stylist's book
+                        </span>
+                      )}
+                    </div>
+                    <ToggleGroup
+                      type="single"
+                      value={
+                        selectedWeeks != null && !customDate ? String(selectedWeeks) : ''
+                      }
+                      onValueChange={(v) => {
+                        if (!v) return;
+                        setSelectedWeeks(Number(v));
+                        setCustomDate(null);
+                        setCalendarRevealed(false);
+                      }}
+                      className="grid grid-cols-5 gap-2"
+                    >
+                      {intervals.map((interval) => {
+                        const isRecommended = interval.weeks === recommendedWeeks;
+                        const offThatDay = isStylistOff(interval.date);
+                        return (
+                          <Tooltip key={interval.weeks}>
+                            <TooltipTrigger asChild>
+                              <ToggleGroupItem
+                                value={String(interval.weeks)}
+                                aria-label={`${interval.weeks} weeks`}
+                                className={cn(
+                                  'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
+                                  'border-border hover:bg-muted/60 transition-colors relative',
+                                  // Purple ghost selected — primary tint + thick stroke + soft ring
+                                  'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
+                                  'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
+                                  'data-[state=on]:text-foreground',
+                                  offThatDay && 'opacity-60',
+                                )}
+                              >
+                                <span className="font-sans text-sm leading-none">
+                                  {interval.weeks}w
+                                </span>
+                                <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
+                                  {interval.dateLabel}
+                                </span>
+                                {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
+                                {isRecommended && (
+                                  <span
+                                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
+                                    aria-label="Recommended"
+                                  >
+                                    Rec
+                                  </span>
+                                )}
+                                {/* Off-day marker (small, top-right) */}
+                                {offThatDay && (
+                                  <span
+                                    className="absolute top-1 right-1 inline-flex items-center"
+                                    aria-label="Stylist off"
+                                  >
+                                    <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
+                                  </span>
+                                )}
+                                {interval.load && (
+                                  <span
+                                    className={cn(
+                                      'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
+                                      LOAD_DOT_CLASS[interval.load],
+                                    )}
+                                  />
+                                )}
+                              </ToggleGroupItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {offThatDay
+                                ? "Stylist isn't scheduled this day"
+                                : interval.load
+                                ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
+                                    isRecommended ? ' · Recommended' : ''
+                                  }`
+                                : isRecommended
+                                ? 'Recommended'
+                                : ''}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </ToggleGroup>
+
+                    {/* Calmest-day quick picks (one per interval week) */}
+                    {calmestPicks.some((p) => p) && (
+                      <div className="grid grid-cols-5 gap-2 pt-1">
+                        {calmestPicks.map((pick, idx) => {
+                          const interval = intervals[idx];
+                          if (!pick) return <div key={interval.weeks} aria-hidden />;
+                          const isActive =
+                            customDate &&
+                            format(customDate, 'yyyy-MM-dd') ===
+                              format(pick.date, 'yyyy-MM-dd');
+                          return (
+                            <Tooltip key={interval.weeks}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCustomDate(pick.date);
+                                    setSelectedWeeks(null);
+                                    setCalendarRevealed(false);
+                                  }}
+                                  className={cn(
+                                    'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
+                                    // Purple ghost when this calmest-pick is the active selection
+                                    isActive && 'border-solid border-primary border-2 bg-primary/[0.06] ring-2 ring-primary/20',
+                                  )}
+                                  aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
+                                >
+                                  <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
+                                  <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
+                                    {format(pick.date, 'EEE d')}
+                                  </span>
+                                  {pick.bandFull && preferredBand && (
+                                    <span
+                                      className="inline-flex items-center gap-0.5 font-display text-[8px] uppercase tracking-wider text-amber-500 leading-none"
+                                      aria-label={`${BAND_LABEL[preferredBand]} full`}
+                                    >
+                                      <Clock className="h-2 w-2" />
+                                      {BAND_LABEL[preferredBand]} full
+                                    </span>
+                                  )}
+                                  {pick.load && (
+                                    <span
+                                      className={cn(
+                                        'h-1 w-1 rounded-full',
+                                        LOAD_DOT_CLASS[pick.load],
+                                      )}
+                                    />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                Calmest day this week · {pick.count} booked ·{' '}
+                                {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
+                                {pick.bandFull && preferredBand && (
+                                  <> · {BAND_LABEL[preferredBand]} band tight</>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
                     )}
-                  </p>
+                  </div>
+
+                  {/* Smart nudge */}
+                  {nudge && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-sans text-xs text-foreground">
+                          That day is{' '}
+                          <span className="font-medium">
+                            {LOAD_LABEL[nudge.load].toLowerCase()}
+                          </span>
+                          .
+                          {nudge.alt && (
+                            <>
+                              {' '}Consider{' '}
+                              <button
+                                type="button"
+                                className="underline underline-offset-2 hover:text-primary"
+                                onClick={() => {
+                                  setSelectedWeeks(nudge.alt!.weeks);
+                                  setCustomDate(null);
+                                  setCalendarRevealed(false);
+                                }}
+                              >
+                                {nudge.alt.weeks}w ({nudge.alt.dateLabel})
+                              </button>
+                              {' '}instead — calmer book.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Divider with "or" */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
+                      or
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Divider with "or" */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
-              or
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
 
           {/* Inline calendar reveal */}
           <div className="space-y-2">
