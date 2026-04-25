@@ -50,6 +50,7 @@ import type { CalendarFilterState } from '@/components/dashboard/schedule/Calend
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
 import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
 import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
+import { RebookIntervalPicker } from '@/components/dashboard/schedule/RebookIntervalPicker';
 import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useScheduleHotkeys } from '@/hooks/useScheduleHotkeys';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
@@ -211,6 +212,8 @@ export default function Schedule() {
     staffName?: string;
     selectedServices: string[];
   } | null>(null);
+  const [rebookPickerOpen, setRebookPickerOpen] = useState(false);
+  const [rebookPickerAppt, setRebookPickerAppt] = useState<PhorestAppointment | null>(null);
   const [draftsSheetOpen, setDraftsSheetOpen] = useState(false);
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
@@ -1130,18 +1133,11 @@ export default function Schedule() {
         }}
         isUpdating={isUpdating}
         onRebook={(apt) => {
+          // Step 1 of rebook: pick interval/date. The booking popover opens
+          // afterward via the picker's onConfirm with the chosen date pre-filled.
           setDetailOpen(false);
-          // FIX #15/A: Pre-fill client data for rebook via rebookData state
-          setBookingDefaults({ date: currentDate, stylistId: apt.stylist_user_id || undefined });
-          setActiveDraft(null);
-          setRebookData({
-            clientId: apt.phorest_client_id || undefined,
-            clientName: apt.client_name || undefined,
-            staffUserId: apt.stylist_user_id || undefined,
-            staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
-            selectedServices: [],
-          });
-          setBookingOpen(true);
+          setRebookPickerAppt(apt);
+          setRebookPickerOpen(true);
         }}
         onReschedule={(apt) => {
           setDetailOpen(false);
@@ -1153,6 +1149,31 @@ export default function Schedule() {
           setCheckoutOpen(true);
         }}
         onOpenClientProfile={handleOpenClientProfile}
+      />
+
+      <RebookIntervalPicker
+        open={rebookPickerOpen}
+        appointment={rebookPickerAppt}
+        onCancel={() => {
+          setRebookPickerOpen(false);
+          setRebookPickerAppt(null);
+        }}
+        onConfirm={({ date }) => {
+          const apt = rebookPickerAppt;
+          setRebookPickerOpen(false);
+          if (!apt) return;
+          setBookingDefaults({ date, stylistId: apt.stylist_user_id || undefined });
+          setActiveDraft(null);
+          setRebookData({
+            clientId: apt.phorest_client_id || undefined,
+            clientName: apt.client_name || undefined,
+            staffUserId: apt.stylist_user_id || undefined,
+            staffName: apt.stylist_profile?.display_name || apt.stylist_profile?.full_name || undefined,
+            selectedServices: [],
+          });
+          setRebookPickerAppt(null);
+          setBookingOpen(true);
+        }}
       />
 
       <CheckoutSummarySheet

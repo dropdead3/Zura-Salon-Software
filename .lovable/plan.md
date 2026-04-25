@@ -1,104 +1,68 @@
+## Goal
+
+When a user taps **Rebook** anywhere in the appointment detail drawer (terminal-state primary CTA, action menu, or kebab), present a lightweight interval picker first — `2 / 4 / 6 / 8 / 12` weeks out **or** a calendar date picker — then continue into the existing `QuickBookingPopover` flow (service selection, time, confirm) with the chosen date pre-filled.
+
+Today, tapping Rebook closes the detail sheet and immediately opens `QuickBookingPopover` defaulted to `currentDate`. The week-interval recommender already exists (`NextVisitRecommendation` + `getAllRebookIntervals`) but is only surfaced inside `CheckoutSummarySheet`. We'll lift the same primitive into a small reusable dialog and trigger it from the detail-sheet Rebook handler.
+
+## Scope (single tenant-safe surface)
+
+### 1. New component — `src/components/dashboard/schedule/RebookIntervalPicker.tsx`
+
+A `PremiumFloatingPanel`-based dialog (per `mem://style/drawer-canon`) with:
+
+- **Header**: "When should we book {client}?" + service name subtitle.
+- **Interval grid** — five chips: `2w / 4w / 6w / 8w / 12w` (per user request — narrower than the existing 8-option recommender). Each chip shows the resolved date label (e.g., "Jun 5"). The recommended interval (from `getRecommendedWeeks(serviceName, serviceCategory)`, snapped to the nearest of the 5 options) gets a small primary dot, matching `NextVisitRecommendation`'s pattern.
+- **"Pick a date" row** — a `Calendar` (shadcn) inline OR a `Popover`-anchored date picker, disabling past dates. Selecting a date deselects the chip grid and vice versa.
+- **Primary CTA** — `Continue → Choose Services` — disabled until either a chip or a calendar date is chosen. Returns `{ date: Date; weeks?: number }` to the caller.
+- **Secondary** — `Cancel`.
+
+Uses tokens (`tokens.button.card`, `font-display` for header, `font-sans` for body), no `font-bold`/`font-semibold`. No emojis.
+
+### 2. Wire-up in `src/pages/dashboard/Schedule.tsx`
+
+- Add state `rebookPickerOpen: boolean` and `rebookPickerAppt: PhorestAppointment | null`.
+- Change the existing `onRebook={(apt) => { ... setBookingOpen(true) }}` block (line 1132) to instead set `rebookPickerAppt = apt; rebookPickerOpen = true; setDetailOpen(false)`. **Do not** open the booking popover yet.
+- Render `<RebookIntervalPicker open={rebookPickerOpen} appointment={rebookPickerAppt} onCancel={...} onConfirm={({ date }) => { ... }} />` near the other modals.
+- `onConfirm` runs the existing prefill logic (formerly inside `onRebook`): set `bookingDefaults = { date, stylistId: apt.stylist_user_id }`, set `rebookData` (clientId/clientName/staffUserId/staffName, `selectedServices: []`), `setActiveDraft(null)`, then `setBookingOpen(true)` and close the picker.
+
+### 3. No changes to `CheckoutSummarySheet`
+
+The post-charge rebook gate already uses `NextVisitRecommendation` with the full 8-week toggle set + "Pick a Date" — that flow stays as-is. This change only affects the **Rebook** button paths in `AppointmentDetailSheet`.
+
+### 4. No changes to `AppointmentDetailSheet`
+
+It already calls `onRebook(appointment)` from the kebab item, the action menu, and the terminal-state primary CTA. Centralizing the picker at the page level means all three entry points get the new step automatically.
+
+## Files
+
+| File | Change |
+|---|---|
+| `src/components/dashboard/schedule/RebookIntervalPicker.tsx` | **New** — interval+date picker dialog |
+| `src/pages/dashboard/Schedule.tsx` | Reroute `onRebook` through the new picker, then into existing booking flow |
+
+## Acceptance
+
+- Tapping **Rebook** (any entry point) opens the picker, not the booking popover.
+- Choosing `2 / 4 / 6 / 8 / 12 weeks` or a calendar date and pressing **Continue** opens `QuickBookingPopover` on that date with the client + stylist pre-filled and an empty service list (user proceeds through service selection → time → confirm exactly as today).
+- **Cancel** closes the picker and returns the user to the schedule (detail sheet stays closed, matching today's behavior).
+- Past dates disabled in the calendar.
+- Recommended interval pre-highlighted (snap-to-nearest of `[2,4,6,8,12]` from service category).
+- Tokens + typography canon respected; no `font-bold`/`font-semibold`; uses `PremiumFloatingPanel`.
+
+## Out of scope
+
+- Changing the checkout-side rebook gate (still 8-option toggle + script).
+- Persisting `rebooked_at_weeks` from this entry point (the checkout gate is the system-of-record for rebook attribution; this is a manual-entry rebook from the detail sheet and shouldn't write that signal).
+- Service-specific recommended-interval copy changes.
 
 ## Prompt feedback
 
-**Strong elements**
-- You set an explicit verification cadence ("screenshot after each zone at 1280px and 414px") — exactly the discipline this kind of layout work requires.
-- Invoking the Apple-level critique frame raises the bar for hierarchy and rhythm, not just "does it fit."
+You framed this concisely with a clear sequence ("interval choices → or calendar → service selection"). Two things that would make this kind of prompt land in one shot:
 
-**How to make the next prompt even sharper**
-- Specify the **failure modes you care most about** ("no horizontal clipping," "primary lever always above the fold," "no double-emphasis on tabs"). It lets me self-grade against your priorities instead of mine.
-- Name the **terminal-state behavior** explicitly (what should the shelf show for `completed`/`cancelled`/`no_show`?). Right now those statuses render no shelf at all — easy to overlook in a "continue" prompt.
-- Optional: pin a **breakpoint matrix** (e.g., 1280 / 1024 / 640 / 414) so verification gates are reproducible across future surfaces.
+1. **Specify the entry point.** "When the rebook button is clicked" — there are three Rebook buttons in this drawer (kebab, action row, terminal-state primary). Naming the surface (e.g., "the purple primary Rebook in the detail drawer") removes ambiguity.
+2. **Confirm the interval set.** You wrote `2, 4, 6, 8, 12` which differs from the existing `1, 2, 3, 4, 6, 8, 10, 12` set used at checkout. I'm honoring your set, but flagging it as a divergence — worth aligning intentionally or noting "yes, different on purpose."
 
----
+## Enhancement suggestions
 
-## Current state (audit findings)
-
-After reading `AppointmentDetailSheet.tsx`:
-
-1. **Tabs (lines 1750–1772)** — `grid grid-cols-5 gap-1` with full text labels. At 414px the labels truncate ungracefully; "Color Bar" already squeezes its icon. Not container-aware — uses CSS grid math, not measured width.
-2. **SendToPay row (lines 1709–1747)** — lives *above* the tabs as a separate band. Eats vertical space and visually competes with the tab strip.
-3. **Footer shelf (lines 2849–2879)** — already exists, status-aware for `booked → confirmed → checked_in → completed`. **But** it renders nothing for terminal states (`completed`, `cancelled`, `no_show`) — those states should expose **Rebook** as the primary lever (Lever Doctrine: silence is valid, but Rebook is a clear margin-protective next action post-completion).
-4. **Reschedule/Rebook** — buried in a `DropdownMenu` (lines 1498–1507). High-frequency operator action sitting two clicks deep.
-
----
-
-## Plan
-
-### Zone B — Container-aware tabs
-
-**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (lines 1750–1772)
-
-- Wrap the `TabsList` in a `useSpatialState` measurement (density: `'standard'`, expected width 560px).
-- At `state === 'default'` (≥560px container): full text labels as today.
-- At `state === 'compressed'` (≈480–560px): keep labels but reduce horizontal padding and gap from `gap-1` → `gap-0.5`; allow text to use `tokens.label` size.
-- At `state === 'compact'` or `'stacked'` (<480px): switch to **icon + sr-only label** triggers. Each tab gets a Lucide glyph (`FileText` Details, `History` History, `Image` Photos, `StickyNote` Notes, `Beaker` Color Bar). Badges (`NavBadge`) remain visible as dot indicators.
-- Preserve `grid grid-cols-5` always — equal touch targets ≥44px (per `SPATIAL_TAP_TARGET_MIN`).
-
-**Acceptance**
-- 1280px: identical to today (full labels).
-- 414px: 5 evenly-spaced icon tabs, no clipping, badges visible as dots in the top-right of each tile.
-
----
-
-### Zone C — Status-aware sticky action shelf
-
-**File:** `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` (lines 1709–1747 and 2849–2879)
-
-**Restructure into a single shelf**:
-1. **Remove** the standalone SendToPay band (lines 1709–1747). SendToPay becomes a **secondary lever** in the sticky shelf.
-2. **Always render** the footer shelf (remove the `availableTransitions.includes(...)` gate that hides it for terminal states).
-3. **Status → primary lever** mapping:
-
-   | Status | Primary lever | Secondary (in shelf) | Overflow (kebab) |
-   |---|---|---|---|
-   | `booked` | **Confirm** | Send to Pay (if amt>0) | Reschedule, Rebook |
-   | `confirmed` | **Check In** | Send to Pay (if amt>0) | Reschedule, Rebook |
-   | `checked_in` | **Checkout** (or Complete) | Send to Pay (if amt>0) | Reschedule |
-   | `completed` | **Rebook** | — | — |
-   | `cancelled` / `no_show` | **Rebook** | — | (cancellation-fee tools stay where they are) |
-
-4. **Layout** (`SpatialRow` with `density='standard'`):
-   - Primary `Button` (default size, `flex-1`) → always first.
-   - Secondary as `Button variant="outline" size="sm"` — collapses into overflow at `compact`.
-   - `OverflowActions` (P1/P2 priorities) for Reschedule/Rebook on non-terminal states.
-5. Container is already `sticky` via the `flex-col` + `shrink-0` pattern in `PremiumFloatingPanel` — keep `border-t border-border/60 bg-card/85 backdrop-blur-xl p-4`.
-
-**Why this matters (doctrine)**
-- *Lever Doctrine*: one primary, optional secondary, rest in overflow.
-- *No alert fatigue*: terminal-state Rebook is a single button, not a banner.
-- *Container-aware*: shelf reflows the same way tabs do, using the same `useSpatialState` hook.
-
----
-
-### Verification gates (mandatory between zones)
-
-After **Zone B**:
-1. `browser--navigate_to_sandbox` → `/org/drop-dead-salons/dashboard/schedule`
-2. `browser--set_viewport_size` 1280×800 → open an appointment → screenshot
-3. `browser--set_viewport_size` 414×896 → screenshot
-4. **Critique pass** (Apple-design-head frame): tab clipping? icon weight balanced? badge collisions? rhythm with header?
-5. Fix any issues before starting Zone C.
-
-After **Zone C**:
-1. Repeat 1280 / 414 screenshots for each of: `booked`, `confirmed`, `checked_in`, `completed` appointments (or simulate via the available test data).
-2. Verify primary lever is above the fold on 414px.
-3. Verify shelf doesn't overlap the bottom safe-area on mobile.
-
-If any pass fails, fix in-place and re-screenshot before declaring done.
-
----
-
-### Risks & trade-offs
-
-- **Removing SendToPay band**: it's currently visually prominent. Moving it to a secondary slot in the shelf is the right call (it's not the *next* action — Confirm/Check-in is). Operators will need to learn the new location once.
-- **Always-render shelf**: adds ~64px of permanent chrome. Acceptable trade for predictability + consistent CTA placement (matches platform shelf patterns elsewhere).
-- **Icon-only tabs at <480px**: trades label clarity for tap-target size. Mitigated by `aria-label` + tooltip on long-press.
-
----
-
-## Enhancement suggestions (post-shipment)
-
-1. **Keyboard-first lever**: bind `⌘↵` to the shelf's primary button. Power-users will love it.
-2. **Lever animation**: when status transitions (e.g., `booked → confirmed`), morph the primary button label with a 180ms crossfade — reinforces the lifecycle metaphor.
-3. **Telemetry hook**: emit `appointment.lever.clicked` with `{from_status, lever, time_to_click_ms}` so we can measure whether the shelf is actually reducing clicks-to-checkout. That's the real ROI signal.
+- **Unify the rebook surface long-term.** Two interval sets (5 here, 8 at checkout) is a small canon split. Consider whether the detail-sheet picker should also be 8 options for consistency, or whether the checkout gate should drop to 5 for cognitive load. Either way, codify it.
+- **Capture the rebook source.** Add a column like `appointments.rebooked_from = 'detail_sheet' | 'checkout_gate' | 'manual'` so analytics can distinguish operator-initiated rebooks from the post-charge script. Material for understanding which surface drives retention.
