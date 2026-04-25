@@ -577,16 +577,24 @@ export function RebookIntervalPicker({
                           'text-muted-foreground font-normal text-[0.7rem] uppercase tracking-wider h-8 flex items-center justify-center',
                         row: 'grid grid-cols-7 mt-1',
                         cell: 'h-10 w-full text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
+                        // Purple ghost selected — replaces the default solid fill
+                        day_selected:
+                          'bg-primary/[0.08] text-foreground border-2 border-primary rounded-md hover:bg-primary/[0.12] focus:bg-primary/[0.12] aria-selected:bg-primary/[0.08] aria-selected:text-foreground',
+                        // Demote today so it doesn't fight the selection ring
+                        day_today: 'font-medium text-primary',
                       }}
                       components={{
                         DayContent: ({ date }) => {
                           const key = format(date, 'yyyy-MM-dd');
                           const cap = capacityMap.get(key);
+                          const off = isStylistOff(date);
                           return (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div className="relative flex items-center justify-center h-9 w-9 mx-auto">
-                                  <span>{date.getDate()}</span>
+                                  <span className={cn(off && 'text-muted-foreground/70')}>
+                                    {date.getDate()}
+                                  </span>
                                   {cap && (
                                     <span
                                       className={cn(
@@ -595,11 +603,21 @@ export function RebookIntervalPicker({
                                       )}
                                     />
                                   )}
+                                  {off && (
+                                    <span className="absolute -bottom-0.5 right-0 font-display text-[7px] uppercase tracking-wider text-muted-foreground/60 leading-none">
+                                      Off
+                                    </span>
+                                  )}
                                 </div>
                               </TooltipTrigger>
-                              {cap && (
+                              {(cap || off) && (
                                 <TooltipContent side="top">
-                                  {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
+                                  {off && <>Stylist not scheduled{cap ? ' · ' : ''}</>}
+                                  {cap && (
+                                    <>
+                                      {cap.apptCount} booked · {LOAD_LABEL[cap.load]}
+                                    </>
+                                  )}
                                 </TooltipContent>
                               )}
                             </Tooltip>
