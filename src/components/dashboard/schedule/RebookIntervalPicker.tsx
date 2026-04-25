@@ -200,15 +200,20 @@ export function RebookIntervalPicker({
         const date = addWeeks(fromDate, weeks);
         const key = format(date, 'yyyy-MM-dd');
         const cap = capacityMap.get(key);
+        const closure = getSalonClosure(date);
         return {
           weeks,
           date,
           dateLabel: format(date, 'MMM d'),
           load: cap?.load,
           apptCount: cap?.apptCount ?? 0,
+          salonClosed: closure.closed,
+          closureReason: closure.reason,
         };
       }),
-    [fromDate, capacityMap],
+    // getSalonClosure depends on locationHoursJson + locationHolidayClosures
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fromDate, capacityMap, locationHoursJson, locationHolidayClosures],
   );
 
   const targetDate: Date | null = customDate
