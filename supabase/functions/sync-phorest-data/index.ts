@@ -2110,67 +2110,40 @@ async function syncSalesTransactions(
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
 
-        // Batch appointment status reconciliation — DETERMINISTIC.
+        // Batch appointment status reconciliation — ATOMIC, DETERMINISTIC.
         //
-        // Phase 3: now that `phorest_transaction_items.appointment_id` is
-        // populated by the linkage RPC inside `saveTransactionItems`, we
-        // promote appointments to `completed` only when a *linked* service
-        // line item exists for that exact appointment. This eliminates the
-        // prior fuzzy `client_id + date` reconciler, which over-completed
-        // any past appointment for the client on that day — a Suzy-style
-        // bug surface where a same-day re-service or earlier walk-in could
-        // mark an unrelated booked appointment as completed.
+        // Phase 4: single-statement RPC eliminates the prior read/write race
+        // window. The RPC `reconcile_appointment_status_via_linkage` runs as
+        // SECURITY DEFINER and performs the candidate-select + status-promote
+        // in one atomic SQL statement. A stylist editing an appointment mid-
+        // sync can no longer race the reconciler.
         //
         // Past-only window: same-day reconciliation stays out of band so
         // mid-day transactions don't prematurely complete in-progress work.
         try {
           const todayStr = new Date().toISOString().split('T')[0];
-
-          // Fetch the candidate appointment IDs first, then update in a
-          // bounded batch. We avoid a raw SQL UPDATE here because the
-          // Supabase JS client can't express the EXISTS subquery without
-          // a server-side function; this two-step is equivalent and
-          // keeps the writer auditable.
-          const { data: candidateAppts, error: candidatesErr } = await supabase
-            .from('phorest_transaction_items')
-            .select('appointment_id')
-            .eq('location_id', branchId)
-            .eq('item_type', 'service')
-            .gte('transaction_date', dateFrom)
-            .lt('transaction_date', todayStr)
-            .not('appointment_id', 'is', null);
-
-          if (candidatesErr) {
-            console.error(`[Reconcile] Failed to read linked appointment ids for ${branchName}:`, candidatesErr.message);
-          } else {
-            const apptIds = [...new Set((candidateAppts || []).map((r: any) => r.appointment_id).filter(Boolean))];
-
-            if (apptIds.length === 0) {
-              console.log(`[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=0 (no linked past transactions)`);
-            } else {
-              let reconciled = 0;
-              for (let i = 0; i < apptIds.length; i += 100) {
-                const batch = apptIds.slice(i, i + 100);
-                const { data: updated, error: updErr } = await supabase
-                  .from('phorest_appointments')
-                  .update({ status: 'completed' })
-                  .in('id', batch)
-                  .in('status', ['booked', 'confirmed', 'checked_in'])
-                  .select('id');
-                if (updErr) {
-                  console.error(`[Reconcile] Batch update failed for ${branchName}:`, updErr.message);
-                } else {
-                  reconciled += updated?.length || 0;
-                }
-              }
-              console.log(
-                `[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} ` +
-                `linked_appts=${apptIds.length} reconciled=${reconciled} (deterministic via appointment_id)`
-              );
+          const { data: rpcResult, error: rpcErr } = await supabase.rpc(
+            'reconcile_appointment_status_via_linkage',
+            {
+              p_location_id: branchId,
+              p_date_from: dateFrom,
+              p_date_to: todayStr,
             }
+          );
+
+          if (rpcErr) {
+            console.error(`[Reconcile] Atomic RPC failed for ${branchName}:`, rpcErr.message);
+          } else {
+            const row = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+            const candidates = row?.candidate_count ?? 0;
+            const reconciled = row?.reconciled_count ?? 0;
+            console.log(
+              `[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} ` +
+              `linked_appts=${candidates} reconciled=${reconciled} (atomic RPC)`
+            );
           }
         } catch (reconErr: any) {
-          console.error(`[Reconcile] Deterministic status reconciliation failed for ${branchName}:`, reconErr.message);
+          console.error(`[Reconcile] Atomic status reconciliation failed for ${branchName}:`, reconErr.message);
         }
       }
 
