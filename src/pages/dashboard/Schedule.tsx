@@ -1154,6 +1154,8 @@ export default function Schedule() {
       <RebookIntervalPicker
         open={rebookPickerOpen}
         appointment={rebookPickerAppt}
+        locationHoursJson={selectedLocationData?.hours_json ?? null}
+        locationHolidayClosures={selectedLocationData?.holiday_closures ?? null}
         onCancel={() => {
           setRebookPickerOpen(false);
           setRebookPickerAppt(null);
