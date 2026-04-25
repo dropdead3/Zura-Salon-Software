@@ -1673,16 +1673,8 @@ export function AppointmentDetailSheet({
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {services.length > 1 ? `${services.length} services` : appointment.service_name}
                     </p>
-                    {/* Last visit date */}
-                    {historyLoading && !lastVisitDate && (
-                      <Skeleton className="h-3 w-24 mt-1" />
-                    )}
-                    {lastVisitDate && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Last visit: {formatDate(parseISO(lastVisitDate), 'MMM d')}
-                      </p>
-                    )}
                   </div>
+
                 </div>
 
                 {/* Consolidated chip strip — wraps gracefully via SpatialRow */}
