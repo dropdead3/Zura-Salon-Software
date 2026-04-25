@@ -118,7 +118,14 @@ export function RebookIntervalPicker({
     () => addDays(today, CAPACITY_HORIZON_DAYS),
     [today],
   );
-  const { capacityMap } = useScheduleDayCapacity(today, horizonEnd);
+  // Scope capacity to the original stylist when present — that's the load
+  // that actually matters for this client's rebook.
+  const stylistUserId = appointment?.stylist_user_id ?? null;
+  const { capacityMap, isStylistScoped } = useScheduleDayCapacity(
+    today,
+    horizonEnd,
+    { stylistUserId },
+  );
 
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
