@@ -142,7 +142,7 @@ function DroppableSlot({
   const highlight = isOver || dndIsOver;
   const [isHovered, setIsHovered] = useState(false);
   const showBadge = isHovered && (isPastSlot || isAvailable || isOutsideHours);
-  const badgeLabel = isPastSlot ? 'Unavailable' : formatSlotTime(hour, minute);
+  const badgeLabel = isPastSlot ? 'Cannot schedule in the past' : formatSlotTime(hour, minute);
 
   const borderClass = minute === 0
     ? 'border-t border-border dark:border-border/50'
