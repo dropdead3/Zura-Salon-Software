@@ -109,11 +109,12 @@ export function MarketingNav() {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-2 h-10 px-6 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors"
+              to={dashboardHref}
+              aria-label={ctaAria}
+              className="inline-flex items-center gap-2 h-10 pl-6 pr-5 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors max-w-[260px]"
             >
-              Go to Dashboard
-              <ArrowRight className="w-4 h-4" />
+              <span className="truncate max-w-[180px]">{ctaLabel}</span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
             </Link>
           ) : (
             <>
