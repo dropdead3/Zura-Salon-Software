@@ -3,11 +3,12 @@
 // Branded PWA splash for the org-branded login PWA.
 // GET /functions/v1/org-splash?slug={orgSlug}
 //
-// Returns an SVG splash (1242x2688 viewBox — iOS scales for any device) with
-// the org logo centered on a black background. SVG is used instead of a
-// rasterized PNG so the function has zero native/binary deps and bundles
-// reliably in the edge runtime. Safari accepts SVG for
-// `apple-touch-startup-image`.
+// Strategy:
+//   1. If a cached raster exists in the `org-splash-cache` bucket
+//      (`{orgId}.jpg` or `.png`), 302-redirect to it. Owners generate this
+//      via the "Generate PWA splash" button in Brand Assets.
+//   2. Otherwise return an inline SVG with the logo (or org name) centered
+//      on black. SVG is iOS-friendly and zero-binary-deps in edge runtime.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
