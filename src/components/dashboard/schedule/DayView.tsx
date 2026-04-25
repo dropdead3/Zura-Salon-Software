@@ -215,6 +215,8 @@ interface AppointmentCardProps {
   useShortLabels?: boolean;
   declinedReasonLabel?: string | null;
   connectInactive?: boolean;
+  /** When true, suppresses the right-edge hover-shrink affordance (past appts can't be booked next to). */
+  isPastAppointment?: boolean;
 }
 
 function AppointmentCard({
@@ -238,6 +240,7 @@ function AppointmentCard({
   useShortLabels = false,
   declinedReasonLabel = null,
   connectInactive = false,
+  isPastAppointment = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -249,7 +252,9 @@ function AppointmentCard({
   const hoverBoundsRef = useRef<DOMRect | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragOverlay || isHoveredRight) return;
+    // Past appointments don't expose the right-edge "schedule next to" affordance —
+    // there's nothing to book in the past.
+    if (isDragOverlay || isHoveredRight || isPastAppointment) return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (e.clientX > rect.right - 24) {
       hoverBoundsRef.current = rect;
@@ -258,7 +263,7 @@ function AppointmentCard({
   };
 
   useEffect(() => {
-    if (!isHoveredRight || isDragOverlay) {
+    if (!isHoveredRight || isDragOverlay || isPastAppointment) {
       hoverBoundsRef.current = null;
       return;
     }
@@ -305,7 +310,7 @@ function AppointmentCard({
     ? undefined
     : isOverlapping
       ? overlapWidth
-      : isHoveredRight
+      : (isHoveredRight && !isPastAppointment)
         ? `calc(${100 / totalOverlapping * 0.7}%)`
         : overlapWidth;
   const cardLeft = overlapLeft;
@@ -1102,15 +1107,21 @@ export function DayView({
                          // Check if any confirmed time block overlaps this appointment
                          const aptStartMin = parseTimeToMinutes(apt.start_time);
                          const aptEndMin = parseTimeToMinutes(apt.end_time);
-                         const hasCoverage = assistantTimeBlocks.some(b =>
-                           b.status === 'confirmed' &&
-                           parseTimeToMinutes(b.start_time) < aptEndMin &&
-                           parseTimeToMinutes(b.end_time) > aptStartMin &&
-                           (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
-                         );
-                         return (
-                         <AppointmentCard
-                           key={apt.id}
+                          const hasCoverage = assistantTimeBlocks.some(b =>
+                            b.status === 'confirmed' &&
+                            parseTimeToMinutes(b.start_time) < aptEndMin &&
+                            parseTimeToMinutes(b.end_time) > aptStartMin &&
+                            (b.requesting_user_id === stylist.user_id || b.assistant_user_id === stylist.user_id)
+                          );
+                          // Past appointment = viewing a prior day, OR today + end already elapsed.
+                          // Mirrors isPastSlot semantics ("fully past = end has elapsed") so cards
+                          // straddling "now" remain interactive.
+                          const isPastAppointment = date
+                            ? (date < todayDate) || (showCurrentTime && aptEndMin <= dayNowMins)
+                            : false;
+                          return (
+                          <AppointmentCard
+                            key={apt.id}
                            appointment={apt}
                            hoursStart={hoursStart}
                            onClick={() => onAppointmentClick(apt)}
