@@ -1,0 +1,563 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Loader2, ArrowLeft, Eye, EyeOff, Download, Monitor, User, Users } from 'lucide-react';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationBySlug } from '@/hooks/useOrganizations';
+import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
+import { OrgLoginPinPad } from '@/components/auth/OrgLoginPinPad';
+import { OrgLoginUserGrid } from '@/components/auth/OrgLoginUserGrid';
+import { useOrgValidatePin, useOrgTeamForLogin } from '@/hooks/useOrgPinValidation';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { formatDisplayName } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { PLATFORM_NAME } from '@/lib/brand';
+import NotFound from '@/pages/NotFound';
+
+const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
+
+type DeviceMode = 'shared' | 'personal';
+
+function getDeviceModeKey(orgId: string) {
+  return `org-login-device-mode:${orgId}`;
+}
+
+function getRememberedUserKey(orgId: string) {
+  return `org-login-remembered-user:${orgId}`;
+}
+
+interface RememberedUser {
+  user_id: string;
+  display_name: string;
+  photo_url: string | null;
+}
+
+/**
+ * Per-organization branded login surface.
+ *
+ * URL: /org/:orgSlug/login
+ *
+ * Behavior:
+ *   - Cold start (no session): inline email + password under the org logo.
+ *   - Returning user, personal device: avatar + 4-digit PIN entry only.
+ *   - Returning user, shared device: avatar grid → tap → PIN.
+ *   - Installable as a per-org PWA via dynamic manifest endpoint.
+ *
+ * Lives OUTSIDE OrganizationProvider per the public/private route isolation
+ * canon — uses provider-free hooks only.
+ */
+export default function OrgBrandedLogin() {
+  const { orgSlug } = useParams<{ orgSlug: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+  const { signIn, user, authReady, signOut } = useAuth();
+  const { data: organization, isLoading: orgLoading, error: orgError } = useOrganizationBySlug(orgSlug);
+  const { isInstallable, isIOS, install } = usePWAInstall();
+
+  // Where to land after auth
+  const from = (location.state as any)?.from?.pathname as string | undefined;
+  const dashboardHome = orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
+  const redirectTarget = from && from.startsWith(`/org/${orgSlug}/`) ? from : dashboardHome;
+
+  // Device-mode state
+  const [deviceMode, setDeviceMode] = useState<DeviceMode | null>(null);
+  const [showDeviceModeDialog, setShowDeviceModeDialog] = useState(false);
+
+  // Cold-start form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [forceFullForm, setForceFullForm] = useState(false);
+
+  // PIN state
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [pinLockoutUntil, setPinLockoutUntil] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
+
+  const validatePin = useOrgValidatePin(organization?.id);
+  const { data: teamMembers = [] } = useOrgTeamForLogin(
+    organization?.id && deviceMode === 'shared' ? organization.id : null,
+  );
+
+  // Load device mode + remembered user from localStorage once org resolves
+  useEffect(() => {
+    if (!organization?.id) return;
+    const mode = localStorage.getItem(getDeviceModeKey(organization.id)) as DeviceMode | null;
+    if (mode === 'shared' || mode === 'personal') {
+      setDeviceMode(mode);
+    }
+    const remembered = localStorage.getItem(getRememberedUserKey(organization.id));
+    if (remembered) {
+      try {
+        setRememberedUser(JSON.parse(remembered));
+      } catch {
+        // ignore malformed
+      }
+    }
+  }, [organization?.id]);
+
+  // First time on this device → ask shared vs personal (only if a user is signed in,
+  // since cold-start doesn't need the choice yet)
+  useEffect(() => {
+    if (!organization?.id || !user || deviceMode !== null) return;
+    setShowDeviceModeDialog(true);
+  }, [organization?.id, user, deviceMode]);
+
+  const handleChooseDeviceMode = (mode: DeviceMode) => {
+    if (!organization?.id) return;
+    localStorage.setItem(getDeviceModeKey(organization.id), mode);
+    setDeviceMode(mode);
+    setShowDeviceModeDialog(false);
+  };
+
+  const handleResetDeviceMode = () => {
+    if (!organization?.id) return;
+    localStorage.removeItem(getDeviceModeKey(organization.id));
+    localStorage.removeItem(getRememberedUserKey(organization.id));
+    setDeviceMode(null);
+    setRememberedUser(null);
+    setShowDeviceModeDialog(true);
+  };
+
+  // Submit handlers
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError(null);
+    const valid = emailSchema.safeParse(email);
+    if (!valid.success) {
+      setEmailError(valid.error.errors[0].message);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast({ variant: 'destructive', title: 'Sign in failed', description: error.message });
+        return;
+      }
+      // After login, prompt for device mode if not chosen yet
+      if (organization?.id && !localStorage.getItem(getDeviceModeKey(organization.id))) {
+        setShowDeviceModeDialog(true);
+      }
+      sonnerToast.success(`Welcome to ${organization?.name ?? 'your dashboard'}`);
+      navigate(redirectTarget, { replace: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePinSubmit = async () => {
+    if (pin.length !== 4) return;
+    if (pinLockoutUntil && Date.now() < pinLockoutUntil) {
+      const secs = Math.ceil((pinLockoutUntil - Date.now()) / 1000);
+      toast({
+        variant: 'destructive',
+        title: 'Too many attempts',
+        description: `Wait ${secs}s before trying again.`,
+      });
+      return;
+    }
+    try {
+      const result = await validatePin.mutateAsync(pin);
+      if (!result) {
+        const next = pinAttempts + 1;
+        setPinAttempts(next);
+        setPinError(true);
+        setTimeout(() => setPinError(false), 500);
+        setPin('');
+        if (next >= 3) {
+          setPinLockoutUntil(Date.now() + 30_000);
+          setPinAttempts(0);
+          toast({
+            variant: 'destructive',
+            title: 'Locked out',
+            description: '3 wrong PINs. Wait 30 seconds.',
+          });
+        } else {
+          toast({ variant: 'destructive', title: 'Wrong PIN', description: `${3 - next} attempts left.` });
+        }
+        return;
+      }
+
+      // Personal mode: PIN must match the currently signed-in user.
+      // Shared mode: PIN must match the user the operator tapped.
+      const expectedUserId =
+        deviceMode === 'personal' ? user?.id : selectedUserId;
+
+      if (expectedUserId && result.user_id !== expectedUserId) {
+        setPinError(true);
+        setTimeout(() => setPinError(false), 500);
+        setPin('');
+        toast({
+          variant: 'destructive',
+          title: 'PIN does not match',
+          description:
+            deviceMode === 'personal'
+              ? 'That PIN belongs to another team member. Use yours or sign in with email.'
+              : 'That PIN belongs to a different person.',
+        });
+        return;
+      }
+
+      // Success — remember this user for personal mode
+      if (organization?.id && deviceMode === 'personal') {
+        const remembered: RememberedUser = {
+          user_id: result.user_id,
+          display_name: result.display_name,
+          photo_url: result.photo_url,
+        };
+        localStorage.setItem(getRememberedUserKey(organization.id), JSON.stringify(remembered));
+      }
+
+      sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
+      sonnerToast.success(`Welcome, ${result.display_name.split(' ')[0]}`);
+      navigate(redirectTarget, { replace: true });
+    } catch (err) {
+      console.error('PIN validation error:', err);
+      toast({ variant: 'destructive', title: 'PIN check failed', description: 'Please try again.' });
+    }
+  };
+
+  const handleSwitchAccount = async () => {
+    await signOut();
+    setForceFullForm(true);
+    setRememberedUser(null);
+    if (organization?.id) {
+      localStorage.removeItem(getRememberedUserKey(organization.id));
+    }
+  };
+
+  // ─────────────────────────── Render gates ───────────────────────────
+
+  if (orgLoading || !authReady) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <Loader2 className="w-7 h-7 animate-spin text-white/60" />
+      </div>
+    );
+  }
+
+  if (orgError || !organization || !orgSlug) {
+    return <NotFound />;
+  }
+
+  // Determine which sub-flow to render
+  const sessionUserHere = !!user && !forceFullForm;
+  const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
+  const showColdForm = !showPinFlow;
+
+  // ─────────────────────────── Markup ───────────────────────────
+
+  const manifestSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl) return undefined;
+    return `${supaUrl}/functions/v1/org-manifest?slug=${encodeURIComponent(orgSlug)}`;
+  }, [orgSlug]);
+
+  const orgName = organization.name;
+  const themeColor = '#0a0a0a';
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col">
+      <Helmet>
+        <title>{`Sign in · ${orgName}`}</title>
+        <meta name="theme-color" content={themeColor} />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content={orgName} />
+        {manifestSrc && <link rel="manifest" href={manifestSrc} />}
+        {organization.logo_url && (
+          <link rel="apple-touch-icon" href={organization.logo_url} />
+        )}
+      </Helmet>
+
+      {/* Atmospheric backdrop */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
+      </div>
+
+      <main className="flex-1 flex items-center justify-center px-6 py-12 relative z-10">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Hero logo */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-16 flex items-center justify-center">
+              <OrganizationLogo
+                variant="website"
+                logoUrl={organization.logo_url}
+                theme="dark"
+                alt={orgName}
+                className="max-h-16 w-auto"
+              />
+            </div>
+            <p className="text-sm text-white/60 font-sans text-center">
+              {showColdForm
+                ? `Sign in to ${orgName}`
+                : sessionUserHere
+                  ? 'Enter your PIN to continue'
+                  : 'Tap your photo to sign in'}
+            </p>
+          </div>
+
+          {/* COLD-START EMAIL + PASSWORD */}
+          {showColdForm && (
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-white/80 font-sans">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-violet-500"
+                />
+                {emailError && <p className="text-xs text-red-400">{emailError}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-white/80 font-sans">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 pr-10 focus-visible:ring-violet-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-violet-600 hover:bg-violet-500 text-white font-sans"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
+              </Button>
+
+              <div className="flex items-center justify-between text-xs text-white/50 font-sans">
+                <Link
+                  to={`/login`}
+                  state={{ from: { pathname: redirectTarget } }}
+                  className="hover:text-white/80 transition-colors"
+                >
+                  Use platform login
+                </Link>
+                {forceFullForm && rememberedUser && (
+                  <button
+                    type="button"
+                    onClick={() => setForceFullForm(false)}
+                    className="hover:text-white/80 transition-colors flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3 h-3" /> Back to PIN
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
+
+          {/* PIN FLOW: PERSONAL MODE — current session user */}
+          {showPinFlow && deviceMode !== 'shared' && sessionUserHere && (
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                  {rememberedUser?.photo_url ? (
+                    <img src={rememberedUser.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-white/60" />
+                  )}
+                </div>
+                <p className="text-base text-white font-sans">
+                  {rememberedUser?.display_name ?? user?.email ?? 'Welcome back'}
+                </p>
+              </div>
+
+              <OrgLoginPinPad
+                value={pin}
+                onChange={setPin}
+                onSubmit={handlePinSubmit}
+                disabled={validatePin.isPending}
+                errorShake={pinError}
+              />
+
+              <button
+                type="button"
+                onClick={handleSwitchAccount}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans"
+              >
+                Not you? Sign in as someone else
+              </button>
+            </div>
+          )}
+
+          {/* PIN FLOW: SHARED MODE */}
+          {showPinFlow && deviceMode === 'shared' && (
+            <div className="space-y-6">
+              {!selectedUserId ? (
+                <OrgLoginUserGrid members={teamMembers} onSelect={setSelectedUserId} />
+              ) : (
+                <div className="flex flex-col items-center gap-6">
+                  {(() => {
+                    const m = teamMembers.find((x) => x.user_id === selectedUserId);
+                    if (!m) return null;
+                    const name = formatDisplayName(m.full_name, m.display_name);
+                    return (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                          {m.photo_url ? (
+                            <img src={m.photo_url} alt={name} className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-8 h-8 text-white/60" />
+                          )}
+                        </div>
+                        <p className="text-base text-white font-sans">{name}</p>
+                      </div>
+                    );
+                  })()}
+
+                  <OrgLoginPinPad
+                    value={pin}
+                    onChange={setPin}
+                    onSubmit={handlePinSubmit}
+                    disabled={validatePin.isPending}
+                    errorShake={pinError}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUserId(null);
+                      setPin('');
+                    }}
+                    className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3 h-3" /> Choose another person
+                  </button>
+                </div>
+              )}
+
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setForceFullForm(true)}
+                  className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans"
+                >
+                  Sign in with email instead
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Install + device-mode footer */}
+          <div className="pt-4 border-t border-white/5 flex flex-col items-center gap-3">
+            {(isInstallable || isIOS) && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isInstallable) {
+                    install();
+                  } else {
+                    sonnerToast.info('On iPhone/iPad: Share → Add to Home Screen');
+                  }
+                }}
+                className="flex items-center gap-2 text-xs text-white/60 hover:text-white/90 transition-colors font-sans"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Install {orgName} as an app
+              </button>
+            )}
+            {deviceMode && (
+              <button
+                type="button"
+                onClick={handleResetDeviceMode}
+                className="text-[11px] text-white/30 hover:text-white/60 transition-colors font-sans flex items-center gap-1.5"
+              >
+                {deviceMode === 'shared' ? <Users className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                {deviceMode === 'shared' ? 'Shared device' : 'Personal device'} · change
+              </button>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="relative z-10 py-6 text-center">
+        <p className="text-[11px] text-white/30 font-sans tracking-wide">
+          Powered by {PLATFORM_NAME}
+        </p>
+      </footer>
+
+      {/* Device-mode chooser */}
+      <Dialog open={showDeviceModeDialog} onOpenChange={(open) => {
+        // Don't allow dismissal without a choice if no mode set yet
+        if (!open && deviceMode === null) return;
+        setShowDeviceModeDialog(open);
+      }}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display tracking-wide text-white">
+              How should this device behave?
+            </DialogTitle>
+            <DialogDescription className="text-white/60 font-sans">
+              We'll remember your choice on this browser.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3 py-2">
+            <button
+              type="button"
+              onClick={() => handleChooseDeviceMode('personal')}
+              className="text-left p-4 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <Monitor className="w-5 h-5 text-violet-400" />
+                <span className="font-display tracking-wide text-white">Personal device</span>
+              </div>
+              <p className="text-xs text-white/60 font-sans">
+                Just me. Skip directly to my PIN. Best for your own laptop.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChooseDeviceMode('shared')}
+              className="text-left p-4 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.08] hover:border-white/20 transition-colors"
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <Users className="w-5 h-5 text-violet-400" />
+                <span className="font-display tracking-wide text-white">Shared device</span>
+              </div>
+              <p className="text-xs text-white/60 font-sans">
+                Multiple people use this. Show everyone, tap a face, enter PIN. Best for the front desk iPad.
+              </p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
