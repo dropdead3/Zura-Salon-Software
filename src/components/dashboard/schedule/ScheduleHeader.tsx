@@ -6,6 +6,8 @@ import { computeUtilizationByStylist } from '@/lib/schedule-utilization';
 import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import { useOrgNow } from '@/hooks/useOrgNow';
 import { getOrgDayOffset } from '@/lib/orgTime';
+import { toast } from 'sonner';
+import { CalendarOff } from 'lucide-react';
 
 function getRelativeDayLabel(offset: number): string {
   if (offset === 0) return 'Today';
