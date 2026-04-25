@@ -14,11 +14,18 @@ import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { OrgLoginPinPad } from '@/components/auth/OrgLoginPinPad';
 import { OrgLoginUserGrid } from '@/components/auth/OrgLoginUserGrid';
+import { OrgLoginRecentTiles } from '@/components/auth/OrgLoginRecentTiles';
 import { useOrgValidatePin, useOrgTeamForLogin } from '@/hooks/useOrgPinValidation';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { PLATFORM_NAME } from '@/lib/brand';
+import {
+  getRecentUsers,
+  pushRecentUser,
+  forgetRecentUser,
+  type RememberedDeviceUser,
+} from '@/lib/orgLoginDeviceMemory';
 import NotFound from '@/pages/NotFound';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
@@ -54,7 +61,7 @@ interface RememberedUser {
  * canon — uses provider-free hooks only.
  */
 export default function OrgBrandedLogin() {
-  const { orgSlug } = useParams<{ orgSlug: string }>();
+  const { orgSlug, locationSlug } = useParams<{ orgSlug: string; locationSlug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -86,13 +93,17 @@ export default function OrgBrandedLogin() {
   const [pinLockoutUntil, setPinLockoutUntil] = useState<number | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
+  const [recents, setRecents] = useState<RememberedDeviceUser[]>([]);
+  const [recentsBypassed, setRecentsBypassed] = useState(false);
+  const [recentSelected, setRecentSelected] = useState<RememberedDeviceUser | null>(null);
 
   const validatePin = useOrgValidatePin(organization?.id);
   const { data: teamMembers = [] } = useOrgTeamForLogin(
     organization?.id && deviceMode === 'shared' ? organization.id : null,
+    locationSlug ?? null,
   );
 
-  // Load device mode + remembered user from localStorage once org resolves
+  // Load device mode + remembered user + recents from localStorage once org resolves
   useEffect(() => {
     if (!organization?.id) return;
     const mode = localStorage.getItem(getDeviceModeKey(organization.id)) as DeviceMode | null;
@@ -107,7 +118,8 @@ export default function OrgBrandedLogin() {
         // ignore malformed
       }
     }
-  }, [organization?.id]);
+    if (orgSlug) setRecents(getRecentUsers(orgSlug));
+  }, [organization?.id, orgSlug]);
 
   // First time on this device → ask shared vs personal (only if a user is signed in,
   // since cold-start doesn't need the choice yet)
@@ -194,8 +206,11 @@ export default function OrgBrandedLogin() {
 
       // Personal mode: PIN must match the currently signed-in user.
       // Shared mode: PIN must match the user the operator tapped.
-      const expectedUserId =
-        deviceMode === 'personal' ? user?.id : selectedUserId;
+      const expectedUserId = recentSelected
+        ? recentSelected.user_id
+        : deviceMode === 'personal'
+          ? user?.id
+          : selectedUserId;
 
       if (expectedUserId && result.user_id !== expectedUserId) {
         setPinError(true);
@@ -221,6 +236,13 @@ export default function OrgBrandedLogin() {
         };
         localStorage.setItem(getRememberedUserKey(organization.id), JSON.stringify(remembered));
       }
+
+      // Always push to per-device recents (used by the household tile picker)
+      pushRecentUser(orgSlug, {
+        user_id: result.user_id,
+        display_name: result.display_name,
+        photo_url: result.photo_url,
+      });
 
       sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
       sonnerToast.success(`Welcome, ${result.display_name.split(' ')[0]}`);
@@ -256,16 +278,29 @@ export default function OrgBrandedLogin() {
 
   // Determine which sub-flow to render
   const sessionUserHere = !!user && !forceFullForm;
+  const showRecentsPicker =
+    !sessionUserHere && recents.length > 0 && !recentsBypassed && !recentSelected;
+  const showRecentsPin = !!recentSelected;
   const showPinFlow = sessionUserHere || (deviceMode === 'shared' && !forceFullForm);
-  const showColdForm = !showPinFlow;
+  const showColdForm = !showPinFlow && !showRecentsPicker && !showRecentsPin;
 
   // ─────────────────────────── Markup ───────────────────────────
 
   const manifestSrc = useMemo(() => {
     const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
     if (!supaUrl) return undefined;
-    return `${supaUrl}/functions/v1/org-manifest?slug=${encodeURIComponent(orgSlug)}`;
-  }, [orgSlug]);
+    const params = new URLSearchParams({ slug: orgSlug });
+    if (locationSlug) params.set('loc', locationSlug);
+    return `${supaUrl}/functions/v1/org-manifest?${params.toString()}`;
+  }, [orgSlug, locationSlug]);
+
+  const splashSrc = useMemo(() => {
+    const supaUrl = (import.meta as any).env?.VITE_SUPABASE_URL as string | undefined;
+    if (!supaUrl) return undefined;
+    const params = new URLSearchParams({ slug: orgSlug });
+    if (locationSlug) params.set('loc', locationSlug);
+    return `${supaUrl}/functions/v1/org-splash?${params.toString()}`;
+  }, [orgSlug, locationSlug]);
 
   const orgName = organization.name;
   const themeColor = '#0a0a0a';
@@ -282,6 +317,8 @@ export default function OrgBrandedLogin() {
         {organization.logo_url && (
           <link rel="apple-touch-icon" href={organization.logo_url} />
         )}
+        {/* iOS PWA branded splash — single high-res image, iOS scales as needed */}
+        {splashSrc && <link rel="apple-touch-startup-image" href={splashSrc} />}
       </Helmet>
 
       {/* Atmospheric backdrop */}
@@ -304,13 +341,80 @@ export default function OrgBrandedLogin() {
               />
             </div>
             <p className="text-sm text-white/60 font-sans text-center">
-              {showColdForm
-                ? `Sign in to ${orgName}`
-                : sessionUserHere
+              {showRecentsPicker
+                ? 'Welcome back — tap your photo'
+                : showRecentsPin
                   ? 'Enter your PIN to continue'
-                  : 'Tap your photo to sign in'}
+                  : showColdForm
+                    ? `Sign in to ${orgName}`
+                    : sessionUserHere
+                      ? 'Enter your PIN to continue'
+                      : 'Tap your photo to sign in'}
             </p>
           </div>
+
+          {/* RECENT-ON-DEVICE TILE PICKER (1–3 faces) */}
+          {showRecentsPicker && (
+            <div className="space-y-5">
+              <OrgLoginRecentTiles
+                users={recents}
+                onSelect={(u) => {
+                  setRecentSelected(u);
+                  setPin('');
+                }}
+                onForget={(uid) => {
+                  forgetRecentUser(orgSlug, uid);
+                  const next = getRecentUsers(orgSlug);
+                  setRecents(next);
+                  if (next.length === 0) setRecentsBypassed(true);
+                }}
+              />
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setRecentsBypassed(true)}
+                  className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans"
+                >
+                  Not you? Sign in with email
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* RECENTS → PIN ENTRY for the picked face */}
+          {showRecentsPin && recentSelected && (
+            <div className="flex flex-col items-center gap-6">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-white/10 flex items-center justify-center">
+                  {recentSelected.photo_url ? (
+                    <img src={recentSelected.photo_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-white/60" />
+                  )}
+                </div>
+                <p className="text-base text-white font-sans">{recentSelected.display_name}</p>
+              </div>
+
+              <OrgLoginPinPad
+                value={pin}
+                onChange={setPin}
+                onSubmit={handlePinSubmit}
+                disabled={validatePin.isPending}
+                errorShake={pinError}
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setRecentSelected(null);
+                  setPin('');
+                }}
+                className="text-xs text-white/50 hover:text-white/80 transition-colors font-sans flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3 h-3" /> Back
+              </button>
+            </div>
+          )}
 
           {/* COLD-START EMAIL + PASSWORD */}
           {showColdForm && (

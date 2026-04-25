@@ -43,20 +43,34 @@ interface OrgTeamMember {
 /**
  * Provider-free roster fetch for the shared-device avatar grid.
  * Returns only members who have a PIN set (others can't sign in via PIN anyway).
+ *
+ * Optional `locationId` filters the roster to only staff assigned to that
+ * location (via employee_profiles.location_ids). Used by the per-location
+ * login route /org/:slug/loc/:locId/login.
  */
-export function useOrgTeamForLogin(organizationId: string | null | undefined) {
+export function useOrgTeamForLogin(
+  organizationId: string | null | undefined,
+  locationId?: string | null,
+) {
   return useQuery({
-    queryKey: ['org-login-team', organizationId],
+    queryKey: ['org-login-team', organizationId, locationId ?? null],
     queryFn: async (): Promise<OrgTeamMember[]> => {
       if (!organizationId) return [];
 
-      const { data: profiles, error: profilesError } = await supabase
+      let query = supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, photo_url')
+        .select('user_id, full_name, display_name, photo_url, location_id, location_ids')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .eq('is_approved', true)
         .order('full_name');
+
+      if (locationId) {
+        // Match either the primary location_id or membership in location_ids[]
+        query = query.or(`location_id.eq.${locationId},location_ids.cs.{${locationId}}`);
+      }
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 

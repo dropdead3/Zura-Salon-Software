@@ -22,8 +22,15 @@ Deno.serve(async (req) => {
   try {
     const url = new URL(req.url);
     const slug = url.searchParams.get('slug');
+    const loc = url.searchParams.get('loc');
     if (!slug || !/^[a-z0-9-]+$/i.test(slug)) {
       return new Response(JSON.stringify({ error: 'Invalid slug' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (loc && !/^[a-z0-9-]+$/i.test(loc)) {
+      return new Response(JSON.stringify({ error: 'Invalid loc' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -36,7 +43,7 @@ Deno.serve(async (req) => {
 
     const { data: org } = await supabase
       .from('organizations')
-      .select('name, slug, logo_url')
+      .select('id, name, slug, logo_url')
       .eq('slug', slug)
       .maybeSingle();
 
@@ -47,15 +54,29 @@ Deno.serve(async (req) => {
       });
     }
 
-    const shortName = (org.name || slug).slice(0, 12);
+    let locName: string | null = null;
+    if (loc) {
+      const { data: location } = await supabase
+        .from('locations')
+        .select('id, name')
+        .eq('organization_id', org.id)
+        .eq('id', loc)
+        .maybeSingle();
+      if (location) locName = location.name;
+    }
+
+    const displayName = locName ? `${org.name} · ${locName}` : org.name;
+    const shortName = (locName ?? org.name ?? slug).slice(0, 12);
     const icon = org.logo_url || '/icons/icon-512x512.png';
+    const startUrl = loc ? `/org/${org.slug}/loc/${loc}/login` : `/org/${org.slug}/login`;
+    const scope = loc ? `/org/${org.slug}/loc/${loc}/` : `/org/${org.slug}/`;
 
     const manifest = {
-      name: org.name,
+      name: displayName,
       short_name: shortName,
-      description: `Sign in to ${org.name}`,
-      start_url: `/org/${org.slug}/login`,
-      scope: `/org/${org.slug}/`,
+      description: `Sign in to ${displayName}`,
+      start_url: startUrl,
+      scope,
       display: 'standalone',
       orientation: 'any',
       background_color: '#0a0a0a',
