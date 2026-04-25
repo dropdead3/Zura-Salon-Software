@@ -577,11 +577,17 @@ export function DayView({
 
       // Smooth on post-hydration recompute (e.g., React Query fills appointments
       // after mount); instant on initial land or zoom. Honor reduced-motion.
+      // Also force instant for sub-2-row deltas — micro-shifts read as jitter,
+      // not intent.
       const prefersReducedMotion =
         typeof window !== 'undefined' &&
         window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const delta = Math.abs(top - ref.scrollTop);
+      const isMicroShift = delta < ROW_HEIGHT * 2;
       const behavior: ScrollBehavior =
-        hasLandedRef.current && !isZoomChange && !prefersReducedMotion ? 'smooth' : 'instant';
+        hasLandedRef.current && !isZoomChange && !prefersReducedMotion && !isMicroShift
+          ? 'smooth'
+          : 'instant';
       requestAnimationFrame(() => {
         ref.scrollTo({ top, behavior });
         hasLandedRef.current = true;
