@@ -1693,14 +1693,11 @@ export function AppointmentDetailSheet({
                 {/* Consolidated chip strip — wraps gracefully via SpatialRow */}
                 <div className="mt-3">
                   <SpatialRow className="!gap-2">
-                    <Badge className={cn(statusConfig.bg, statusConfig.text, 'shrink-0')}>
-                      <StatusIcon className="h-3.5 w-3.5 mr-1" /> {statusConfig.label}
-                    </Badge>
                     {appointment.status === 'confirmed' && (
                       <span className="text-xs text-muted-foreground shrink-0">
                         {confirmationSource?.method && CONFIRM_METHOD_DISPLAY[confirmationSource.method]
-                          ? `via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
-                          : '(method unknown)'}
+                          ? `Confirmed via ${CONFIRM_METHOD_DISPLAY[confirmationSource.method].label}`
+                          : 'Confirmed (method unknown)'}
                       </span>
                     )}
                     {isWalkIn && (
