@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 interface PinValidationResult {
   user_id: string;
@@ -24,6 +25,7 @@ export function useOrgValidatePin(organizationId: string | null | undefined) {
       const { data, error } = await supabase.rpc('validate_user_pin', {
         _organization_id: organizationId,
         _pin: pin,
+        _device_fingerprint: getDeviceFingerprint(),
       });
 
       if (error) throw error;
