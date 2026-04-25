@@ -3,12 +3,20 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { cn } from '@/lib/utils';
 import { SolutionsDesktopTrigger, SolutionsMobileAccordion } from './SolutionsMegaMenu';
 
 export function MarketingNav() {
   const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { dashPath, orgSlug } = useOrgDashboardPath();
+  const dashboardHref = orgSlug ? dashPath('/') : '/dashboard';
+  const orgName = effectiveOrganization?.name;
+  const ctaLabel = orgName ? `Open ${orgName}` : 'Go to Dashboard';
+  const ctaAria = orgName ? `Open ${orgName} dashboard` : 'Go to dashboard';
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -101,11 +109,12 @@ export function MarketingNav() {
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-2 h-10 px-6 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors"
+              to={dashboardHref}
+              aria-label={ctaAria}
+              className="inline-flex items-center gap-2 h-10 pl-6 pr-5 bg-white text-slate-950 hover:bg-slate-100 rounded-full font-sans text-sm font-medium transition-colors max-w-[260px]"
             >
-              Go to Dashboard
-              <ArrowRight className="w-4 h-4" />
+              <span className="truncate max-w-[180px]">{ctaLabel}</span>
+              <ArrowRight className="w-4 h-4 shrink-0" />
             </Link>
           ) : (
             <>
@@ -158,12 +167,13 @@ export function MarketingNav() {
               <hr className="border-white/[0.06]" />
               {user ? (
                 <Link
-                  to="/dashboard"
+                  to={dashboardHref}
+                  aria-label={ctaAria}
                   className="inline-flex items-center justify-center gap-2 h-12 w-full bg-white text-slate-950 rounded-full font-sans text-sm font-medium"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Go to Dashboard
-                  <ArrowRight className="w-4 h-4" />
+                  <span className="truncate max-w-[220px]">{ctaLabel}</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </Link>
               ) : (
                 <>
