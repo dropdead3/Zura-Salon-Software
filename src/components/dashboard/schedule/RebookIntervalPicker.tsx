@@ -172,6 +172,18 @@ export function RebookIntervalPicker({
     return !workDays.has(token);
   };
 
+  // Salon-closed detection — combines weekly hours_json + ad-hoc holiday_closures.
+  // Returns reason text when known so we can label the chip/calendar tooltip.
+  const getSalonClosure = (date: Date): { closed: boolean; reason?: string } => {
+    if (!locationHoursJson && !locationHolidayClosures) return { closed: false };
+    const info = getLocationHoursForDate(
+      locationHoursJson,
+      locationHolidayClosures,
+      date,
+    );
+    return { closed: info.isClosed, reason: info.closureReason };
+  };
+
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
   useEffect(() => {
