@@ -1162,9 +1162,21 @@ export function LocationsSettingsContent() {
             </TabsContent>
             
             <TabsContent value="holidays" className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Add dates when this location will be closed
-              </p>
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Add dates when this location will be closed
+                </p>
+                {/* US holiday preset loader — bulk-adds the salon-industry common
+                    set for the current year. Skips any dates already on the list. */}
+                <Button
+                  variant="outline"
+                  size={tokens.button.inline}
+                  onClick={loadUSHolidayPresets}
+                  type="button"
+                >
+                  Load {new Date().getFullYear()} US holidays
+                </Button>
+              </div>
               
               {/* Add new holiday */}
               <div className="flex items-end gap-2">
