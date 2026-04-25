@@ -317,6 +317,29 @@ export function LocationsSettingsContent() {
     }));
   };
 
+  /**
+   * Bulk-load common US salon holidays for the current year. Skips dates the
+   * operator already has on the list (idempotent), so re-clicking never
+   * duplicates entries. Operators can still remove any preset individually.
+   */
+  const loadUSHolidayPresets = () => {
+    const year = new Date().getFullYear();
+    const presets = getUSHolidayPresets(year);
+    setFormData(f => {
+      const existingDates = new Set(f.holiday_closures.map(h => h.date));
+      const additions = presets.filter(p => !existingDates.has(p.date));
+      if (additions.length === 0) {
+        toast.info(`All ${year} US holidays are already on the list`);
+        return f;
+      }
+      toast.success(`Added ${additions.length} ${year} US holiday${additions.length === 1 ? '' : 's'}`);
+      return {
+        ...f,
+        holiday_closures: [...f.holiday_closures, ...additions],
+      };
+    });
+  };
+
   // Location Groups state
   const { data: locationGroups = [], isLoading: loadingGroups } = useLocationGroups();
   const createGroup = useCreateLocationGroup();
