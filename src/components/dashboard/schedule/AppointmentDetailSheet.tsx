@@ -40,7 +40,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger, SubTabsList, SubTabsTrigger }
 import { ColorBarTab } from '@/components/dashboard/color-bar/ColorBarTab';
 import { ClientFormulaHistoryTab } from '@/components/dashboard/clients/ClientFormulaHistoryTab';
 import { CheckoutClarityPanel } from '@/components/dashboard/color-bar/CheckoutClarityPanel';
-import { ClientMemoryPanel } from '@/components/dashboard/schedule/ClientMemoryPanel';
+
 import { HospitalityBlock } from '@/components/dashboard/clients/HospitalityBlock';
 import { getHospitalityClientKey } from '@/lib/hospitality-keys';
 import { ContactActionDialog } from '@/components/dashboard/schedule/ContactActionDialog';
@@ -1788,13 +1788,6 @@ export function AppointmentDetailSheet({
                       firstName={appointment.client_name?.split(' ')[0]}
                     />
 
-                    {/* Client Memory Panel */}
-                    <ClientMemoryPanel
-                      clientId={appointment.phorest_client_id}
-                      serviceName={appointment.service_name}
-                      orgId={resolvedOrgId}
-                      className="-mx-4 mt-4 mb-4 border-y border-border/40 py-4"
-                    />
                     <motion.div variants={staggerContainer} initial={false} animate="show" className="mt-5 space-y-5">
                     {/* Notes From Booking Assistant — surfaced from Notes tab for at-a-glance client intent */}
                     {appointment.notes && (
