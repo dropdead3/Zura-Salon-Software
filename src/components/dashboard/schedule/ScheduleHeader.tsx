@@ -212,12 +212,14 @@ export function ScheduleHeader({
 
   // Closure modifiers — categorize dates in the picker window into routine
   // weekly closures (e.g. Mondays off) vs specific holiday closures so each
-  // can be styled distinctly in the calendar.
+  // can be styled distinctly in the calendar. Also returns a holidayNameByKey
+  // map for the per-cell "Why closed?" tooltip.
   const closureModifiers = useMemo(() => {
     const weeklyClosed: Date[] = [];
     const holidayClosed: Date[] = [];
+    const holidayNameByKey = new Map<string, string>();
     if (!locHours && (!locHolidays || locHolidays.length === 0)) {
-      return { weeklyClosed, holidayClosed };
+      return { weeklyClosed, holidayClosed, holidayNameByKey };
     }
     // Window: 6 months back through 12 months forward — covers any visible
     // calendar navigation without unbounded growth.
@@ -226,10 +228,14 @@ export function ScheduleHeader({
       const d = addDays(start, i);
       const closure = isClosedOnDate(locHours, locHolidays, d);
       if (!closure.isClosed) continue;
-      if (closure.reason === 'Regular hours') weeklyClosed.push(d);
-      else holidayClosed.push(d);
+      if (closure.reason === 'Regular hours') {
+        weeklyClosed.push(d);
+      } else {
+        holidayClosed.push(d);
+        holidayNameByKey.set(format(d, 'yyyy-MM-dd'), closure.reason ?? 'Holiday');
+      }
     }
-    return { weeklyClosed, holidayClosed };
+    return { weeklyClosed, holidayClosed, holidayNameByKey };
   }, [locHours, locHolidays, orgToday]);
 
   // Closed-tomorrow chip: surface a calm warning when the next operating day
