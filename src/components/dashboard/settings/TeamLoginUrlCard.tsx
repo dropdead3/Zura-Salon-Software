@@ -4,12 +4,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Copy, ExternalLink, QrCode, Smartphone, Sparkles, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Copy,
+  ExternalLink,
+  QrCode,
+  Smartphone,
+  Sparkles,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
-import { useGenerateOrgSplash } from '@/hooks/useGenerateOrgSplash';
+import { useGenerateOrgSplash, useOrgSplashDrift } from '@/hooks/useGenerateOrgSplash';
 
 /**
  * Team Login URL — Settings → Brand Assets card.
@@ -25,6 +34,7 @@ export function TeamLoginUrlCard() {
   const { data: locations = [] } = useLocations();
   const [scope, setScope] = useState<string>('org'); // 'org' | locationId
   const generateSplash = useGenerateOrgSplash();
+  const drift = useOrgSplashDrift();
 
   const orgSlug = effectiveOrganization?.slug;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -49,6 +59,11 @@ export function TeamLoginUrlCard() {
       toast.error('Could not copy — long-press the URL field to copy manually');
     }
   };
+
+  // Preferred preview source: just-generated dataUrl (always fresh) →
+  // cached storage URL → null (empty state).
+  const previewSrc = generateSplash.data?.dataUrl ?? drift.cachedUrl ?? null;
+  const hasLogo = !!effectiveOrganization?.logo_url;
 
   if (!orgSlug) return null;
 
@@ -156,7 +171,7 @@ export function TeamLoginUrlCard() {
               variant="outline"
               size="sm"
               onClick={() => generateSplash.mutate()}
-              disabled={generateSplash.isPending || !effectiveOrganization?.logo_url}
+              disabled={generateSplash.isPending || !hasLogo}
               className="shrink-0 font-sans"
             >
               {generateSplash.isPending ? (
@@ -167,15 +182,80 @@ export function TeamLoginUrlCard() {
               ) : (
                 <>
                   <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                  {generateSplash.isSuccess ? 'Regenerate splash' : 'Generate splash'}
+                  {drift.cachedUrl || generateSplash.isSuccess ? 'Regenerate splash' : 'Generate splash'}
                 </>
               )}
             </Button>
           </div>
-          {!effectiveOrganization?.logo_url && (
+
+          {!hasLogo && (
             <p className="text-xs text-muted-foreground font-sans italic">
               Upload an organization logo first — the splash uses it as the centerpiece.
             </p>
+          )}
+
+          {/* Drift nudge — surfaces only when cached file is stale relative to current logo/theme/name */}
+          {hasLogo && drift.isDrifted && (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-2">
+                <p className="text-xs text-foreground font-sans">
+                  Your logo, name, or theme changed since this splash was generated. New PWA installs will show the old version until you regenerate.
+                </p>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => generateSplash.mutate()}
+                  disabled={generateSplash.isPending}
+                  className="h-auto p-0 text-xs text-amber-600 hover:text-amber-700 dark:text-amber-400"
+                >
+                  Regenerate now →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Preview pane */}
+          {hasLogo && (
+            <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-4 items-start pt-2">
+              <div className="flex flex-col items-center gap-1.5">
+                {drift.isLoading && !previewSrc ? (
+                  <Skeleton className="w-[108px] h-[192px] rounded-lg" />
+                ) : previewSrc ? (
+                  <a
+                    href={previewSrc}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-[108px] h-[192px] rounded-lg overflow-hidden bg-black border border-border hover:border-primary/40 transition-colors"
+                    title="Open full size"
+                  >
+                    <img
+                      src={previewSrc}
+                      alt="PWA splash preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </a>
+                ) : (
+                  <div className="w-[108px] h-[192px] rounded-lg border border-dashed border-border flex items-center justify-center bg-muted/30">
+                    <span className="text-[10px] text-muted-foreground font-sans text-center px-2">
+                      No splash yet
+                    </span>
+                  </div>
+                )}
+                <span className="text-[10px] text-muted-foreground font-sans">1080 × 1920</span>
+              </div>
+              <div className="space-y-1 pt-1">
+                <p className="text-xs font-sans text-foreground">
+                  {previewSrc ? 'Preview' : 'Generate to preview'}
+                </p>
+                <p className="text-[11px] text-muted-foreground font-sans leading-relaxed">
+                  {previewSrc
+                    ? 'What staff will see when launching your installed app on Android or Chrome. Tap to open at full size.'
+                    : 'After you generate, the rendered splash will appear here so you can confirm logo placement and brand color before deploying.'}
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </CardContent>

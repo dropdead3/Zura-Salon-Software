@@ -31730,6 +31730,7 @@ export type Database = {
               display_name: string
               is_primary_owner: boolean
               is_super_admin: boolean
+              lockout_until: string
               photo_url: string
               user_id: string
             }[]

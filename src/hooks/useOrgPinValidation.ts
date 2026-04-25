@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
-interface PinValidationResult {
+interface PinValidationIdentity {
   user_id: string;
   display_name: string;
   photo_url: string | null;
@@ -10,15 +10,22 @@ interface PinValidationResult {
   is_primary_owner: boolean;
 }
 
+export type PinValidationResult =
+  | { kind: 'identity'; identity: PinValidationIdentity }
+  | { kind: 'locked'; lockedUntil: Date }
+  | { kind: 'no_match' };
+
 /**
  * Provider-free PIN validation. Takes organizationId directly so it can run
  * on routes that live OUTSIDE OrganizationProvider (e.g. /org/:slug/login).
  *
- * Mirrors the kiosk-side validation pattern (useKioskValidatePin).
+ * Returns a discriminated result instead of throwing on lockout — the RPC now
+ * surfaces `lockout_until` as a structured field so the UI can show a precise
+ * countdown to staff.
  */
 export function useOrgValidatePin(organizationId: string | null | undefined) {
   return useMutation({
-    mutationFn: async (pin: string): Promise<PinValidationResult | null> => {
+    mutationFn: async (pin: string): Promise<PinValidationResult> => {
       if (!organizationId) throw new Error('No organization context');
       if (!/^\d{4}$/.test(pin)) throw new Error('PIN must be exactly 4 digits');
 
@@ -29,7 +36,31 @@ export function useOrgValidatePin(organizationId: string | null | undefined) {
       });
 
       if (error) throw error;
-      return data && data.length > 0 ? (data[0] as PinValidationResult) : null;
+      if (!data || data.length === 0) return { kind: 'no_match' };
+
+      const row = data[0] as {
+        user_id: string | null;
+        display_name: string | null;
+        photo_url: string | null;
+        is_super_admin: boolean | null;
+        is_primary_owner: boolean | null;
+        lockout_until: string | null;
+      };
+
+      if (row.lockout_until) {
+        return { kind: 'locked', lockedUntil: new Date(row.lockout_until) };
+      }
+      if (!row.user_id) return { kind: 'no_match' };
+      return {
+        kind: 'identity',
+        identity: {
+          user_id: row.user_id,
+          display_name: row.display_name ?? '',
+          photo_url: row.photo_url,
+          is_super_admin: !!row.is_super_admin,
+          is_primary_owner: !!row.is_primary_owner,
+        },
+      };
     },
   });
 }
