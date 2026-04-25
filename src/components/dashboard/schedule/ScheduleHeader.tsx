@@ -428,6 +428,8 @@ export function ScheduleHeader({
                 moderate: capacityModifiers.moderate,
                 low: capacityModifiers.low,
                 critical: capacityModifiers.critical,
+                weeklyClosed: closureModifiers.weeklyClosed,
+                holidayClosed: closureModifiers.holidayClosed,
               }}
               modifiersClassNames={{
                 moderate:
@@ -436,10 +438,32 @@ export function ScheduleHeader({
                   "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-orange-500",
                 critical:
                   "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-red-500",
+                // Routine weekly closures — muted, line-through. Not selectable.
+                weeklyClosed:
+                  "text-muted-foreground/40 line-through",
+                // Holiday closures — rose tint + dashed ring so they read as
+                // intentional/exceptional, not just "off". Not selectable.
+                holidayClosed:
+                  "relative text-rose-300/80 line-through before:content-[''] before:absolute before:inset-1 before:rounded-full before:border before:border-dashed before:border-rose-400/40 before:pointer-events-none",
               }}
+              disabled={[
+                ...closureModifiers.weeklyClosed,
+                ...closureModifiers.holidayClosed,
+              ]}
             />
-            {/* Capacity legend strip */}
-            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-1 text-[11px] text-muted-foreground border-t border-border/50">
+            {/* Closed-tomorrow chip — surfaces an upcoming closure inline so
+                operators can plan rebookings without leaving the picker. */}
+            {tomorrowClosure && (
+              <div className="mx-3 mt-2 flex items-center gap-2 rounded-md border border-rose-400/30 bg-rose-500/[0.06] px-2.5 py-1.5 text-[11px] text-rose-200/90">
+                <CalendarOff className="h-3 w-3 shrink-0" />
+                <span className="truncate">
+                  Closed tomorrow ({tomorrowClosure.reason}). Next open:{' '}
+                  <span className="font-medium">{format(tomorrowClosure.nextOpen, 'EEE, MMM d')}</span>
+                </span>
+              </div>
+            )}
+            {/* Capacity + closure legend strip */}
+            <div className="flex items-center justify-center gap-3 px-3 pb-3 pt-2 text-[11px] text-muted-foreground border-t border-border/50">
               <span className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                 Filling
@@ -452,9 +476,17 @@ export function ScheduleHeader({
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                 Booked
               </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-[1px] bg-muted-foreground/40" />
+                Closed
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full border border-dashed border-rose-400/60" />
+                Holiday
+              </span>
               <MetricInfoTooltip
-                title="Capacity signal"
-                description="Dots under each date reflect org-wide booked time vs available shift time. White = open · Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%."
+                title="Calendar signals"
+                description="Dots under dates reflect org-wide capacity (Yellow ≥ 50% · Orange ≥ 70% · Red ≥ 90%). Strikethrough days are closed (regular hours); dashed rose ring marks holiday closures."
                 side="top"
               />
             </div>
