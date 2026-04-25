@@ -1826,26 +1826,12 @@ export function AppointmentDetailSheet({
               {/* ─── Tabbed Content ───────────────────────────── */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
                 <div className="mx-6">
-                  <TabsList className="mb-0 shrink-0 w-full grid grid-cols-5 gap-1">
-                    <TabsTrigger value="details" className="font-sans w-full">Details</TabsTrigger>
-                    <TabsTrigger value="history" className="font-sans w-full">History</TabsTrigger>
-                    <TabsTrigger value="photos" className="font-sans w-full relative gap-1.5">
-                      <span>Photos</span>
-                      {unviewedPhotosCount > 0 && activeTab !== 'photos' && (
-                        <NavBadge count={unviewedPhotosCount} />
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="notes" className="font-sans w-full relative gap-1.5">
-                      <span>Notes</span>
-                      {unviewedNotesCount > 0 && activeTab !== 'notes' && isWorkingThisAppointment && (
-                        <NavBadge count={unviewedNotesCount} />
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="color-bar" className="font-sans gap-1.5 w-full">
-                      <Beaker className="w-3.5 h-3.5" />
-                      Color Bar
-                    </TabsTrigger>
-                  </TabsList>
+                  <ResponsiveAppointmentTabs
+                    activeTab={activeTab}
+                    unviewedPhotosCount={unviewedPhotosCount}
+                    unviewedNotesCount={unviewedNotesCount}
+                    isWorkingThisAppointment={isWorkingThisAppointment}
+                  />
                 </div>
 
                 <ScrollArea className="flex-1">
