@@ -1,82 +1,168 @@
-## Diagnosis
+# Per-Organization Branded Login + PIN Re-Entry + PWA Install
 
-The marketing route `/` lives **outside** `OrganizationProvider` (per the Public vs Private Route Isolation canon — `mem://architecture/public-vs-private-route-isolation`). My previous edit added `useOrganizationContext()` and `useOrgDashboardPath()` to `MarketingNav`, both of which throw when no provider is mounted above them. Result: the entire marketing site error-boundaries into "Unexpected Interruption."
+## What you'll get
 
-## Root Cause
+A bookmark-able, install-as-app login page at:
 
-`src/components/marketing/MarketingNav.tsx` lines 6–7, 14–18:
-```ts
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-// ...
-const { effectiveOrganization } = useOrganizationContext(); // ← throws on /
-const { dashPath, orgSlug } = useOrgDashboardPath();        // ← also throws
+```
+/org/drop-dead-salons/login
+/org/{any-org}/login
 ```
 
-Both hooks call `useContext(OrganizationContext)` and throw if the value is `null`. They are dashboard-only hooks.
+…that shows **the org's own logo** (not Zura's), persists the session for 30 days, and on return visits asks only for a **4-digit PIN** instead of a full email + password. Each org becomes its own installable Progressive Web App on Mac, Windows, and iOS — with the org's logo as the dock icon.
 
-## Fix Plan
+---
 
-### 1. Create a lightweight, provider-free hook: `useUserPrimaryOrgSlug`
+## Phase A — Branded Org Login Page
 
-New file: `src/hooks/useUserPrimaryOrgSlug.ts`
+### A1. New route + page
 
-- Uses `useAuth()` (which IS available globally — `AuthProvider` wraps the app)
-- Uses `useQuery` to fetch the user's first org membership directly from `organization_members` joined to `organizations(slug, name)`
-- Returns `{ slug, name, isLoading }` — never throws, safe on any route
-- `enabled: !!user?.id` so anonymous visitors skip the query entirely
-- Cache key includes `user.id`; `staleTime: 5 min`
-- Honors multi-tenant isolation (RLS on `organization_members` already scopes to `auth.uid()`)
+- Register `/org/:orgSlug/login` in `src/App.tsx` **outside** `OrganizationProvider` (per the Public-vs-Private Route Isolation canon — login surfaces must not require dashboard providers).
+- Create `src/pages/OrgBrandedLogin.tsx`. It uses `useOrganizationBySlug(orgSlug)` directly (already provider-free) to pull `name` + `logo_url`.
 
-### 2. Refactor `MarketingNav.tsx`
+### A2. Logo resolution
 
-- **Remove** imports of `useOrganizationContext` and `useOrgDashboardPath`
-- **Add** import of `useUserPrimaryOrgSlug`
-- Build `dashboardHref` inline:
-  ```ts
-  const { slug, name } = useUserPrimaryOrgSlug();
-  const dashboardHref = slug ? `/org/${slug}/dashboard/` : '/dashboard';
-  const ctaLabel = name ? `Open ${name}` : 'Go to Dashboard';
+- Use `<OrganizationLogo variant="website" logoUrl={org.logo_url} theme="dark" />` for the centered hero logo (dark-mode default; auto-flips per system theme later).
+- If the slug doesn't resolve → 404, never the Zura-branded fallback (prevents brand bleed on a wrong URL).
+
+### A3. Cold-start form (no session)
+
+- Inline email + password inputs directly under the org logo (per your answer).
+- Re-uses the existing `signIn` from `AuthContext` so all session/refresh behavior is identical to `/login`.
+- Subtitle copy: *"Sign in to {OrgName}"*. No Zura wordmark on the page — only a small footer line: *"Powered by Zura"* (per the Tenant Branding Neutralization canon — platform attribution stays subtle, not dominant).
+- After successful sign-in → redirect to `/org/{slug}/dashboard/`.
+
+### A4. URL preservation for deep links
+
+- If the user landed here from `/org/:slug/dashboard/schedule` (session expired), preserve `location.state.from` so they bounce back to the exact page after auth — same pattern already used in `OrgDashboardRoute`.
+
+---
+
+## Phase B — PIN-Only Fast Re-Entry
+
+### B1. Device-mode chooser (one-time)
+
+- On first visit to `/org/:slug/login`, ask in a small modal: **"Is this device shared (front desk) or personal (your laptop)?"**
+- Persist the choice in `localStorage` under key `org-login-device-mode:{orgId}` → `'shared' | 'personal'`.
+- Owner can clear it from a tiny "Change device type" link at the bottom.
+
+### B2. Returning user, **personal** mode
+
+- Read `useAuth().user` — already restored by Supabase's `localStorage`-backed session.
+- Show: org logo → user's avatar + display name → 4-digit PIN pad → "Enter".
+- Calls existing `useValidatePin` (or a provider-free variant — see B4) to verify, then drops them at `/org/{slug}/dashboard/`.
+- "Not you? Sign in as someone else" link → falls back to email/password form.
+
+### B3. Returning user, **shared** mode
+
+- Show: org logo → grid of all team members with photos (re-use `useTeamPinStatus` pattern, but provider-free — see B4) → tap face → PIN pad → enter.
+- This is essentially `KioskUserSelect` lifted from the existing kiosk/dock flow, but rendered on a branded login surface instead of a kiosk shell.
+
+### B4. Provider-free PIN hook
+
+- Create `src/hooks/useOrgPinValidation.ts` that takes `organizationId` directly (mirrors `useKioskValidatePin` — that hook already proves this works without `OrganizationProvider`).
+- Reason: the login route lives outside the dashboard provider tree, so `useOrganizationContext()` would crash (same root cause as the recent `MarketingNav` crash we just fixed).
+
+### B5. PIN session lifetime
+
+- Successful PIN unlock writes a `pin_unlocked_at` timestamp to `sessionStorage` and routes to dashboard.
+- The Supabase session itself (the actual auth token) follows your chosen 30-day refresh window — **no changes needed**, that's already the default.
+- If the Supabase refresh token *has* expired (>30 days idle) → the PIN flow can't help; the page seamlessly falls back to the email + password form.
+
+---
+
+## Phase C — Installable PWA (per-org manifest)
+
+### C1. Dynamic manifest endpoint
+
+- Current `public/manifest.json` is static and Zura-branded — perfect for the marketing site, useless for orgs.
+- Add a Supabase edge function `org-manifest` at `/functions/v1/org-manifest?slug={slug}` that returns a JSON manifest with:
+  ```json
+  {
+    "name": "Drop Dead Salons",
+    "short_name": "Drop Dead",
+    "start_url": "/org/drop-dead-salons/login",
+    "scope": "/org/drop-dead-salons/",
+    "display": "standalone",
+    "theme_color": "#0a0a0a",
+    "background_color": "#0a0a0a",
+    "icons": [{ "src": "{org.logo_url or generated PNG}", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
+  }
   ```
-- Keep the `truncate max-w-[180px]` styling and mobile parity
-- Anonymous visitors: hook returns `{ slug: null, name: null }` → falls through to "Sign In / Get a Demo" branch (unchanged behavior)
+- Resolves `name` + `logo_url` from `organizations` table by slug. No auth required (manifests are public by definition).
 
-### 3. No changes needed elsewhere
+### C2. Per-page manifest link
 
-- `OrgDashboardRoute`, `LegacyDashboardRedirect`, `AuthContext` from the prior wave remain correct
-- Public route isolation canon is preserved (we never mount `OrganizationProvider` on `/`)
+- In `OrgBrandedLogin.tsx`, inject a `<link rel="manifest">` via `react-helmet-async` (already in dep tree) that points to `https://{supabase}.functions.supabase.co/org-manifest?slug={orgSlug}`.
+- Also inject `<link rel="apple-touch-icon" href="{org.logo_url}">` so iOS "Add to Home Screen" picks up the org logo.
+- Set `<meta name="theme-color">` and `<meta name="apple-mobile-web-app-title" content="{org.name}">`.
 
-## Files to Edit
+### C3. Install prompt UX
 
-- **New:** `src/hooks/useUserPrimaryOrgSlug.ts`
-- **Edit:** `src/components/marketing/MarketingNav.tsx` (swap hooks, ~10 lines changed)
+- Listen for `beforeinstallprompt` and surface a small "Install as app" button below the login form (only shows when the browser supports install, i.e. Chrome/Edge desktop, Android).
+- For Safari (iOS/macOS), show a one-line tooltip: *"To install, tap Share → Add to Home Screen"* — Safari doesn't fire the prompt event.
 
-## Why This Is The Right Fix
+### C4. Service worker scope
 
-- **Respects the Public vs Private Route Isolation canon** — marketing surfaces never reach into dashboard providers
-- **No two-hop redirect** — the CTA still resolves directly to `/org/:slug/dashboard/` for authenticated users
-- **Safe for anonymous visitors** — the membership query is gated on `user?.id`
-- **Tenant-isolated** — RLS on `organization_members` enforces that users only see their own memberships
-- **Recoverable** — even if the query fails, we fall back to `/dashboard`, which `LegacyDashboardRedirect` resolves correctly
+- Existing `public/sw.js` is generic — no changes needed for v1. The org manifest's `scope: "/org/{slug}/"` ensures install behavior is per-org.
+- Out of scope for v1: offline support for the branded login itself (would require a per-org offline shell; defer until requested).
 
-## Edge Cases Handled
+---
 
-- **Anonymous visitor:** Hook disabled, CTA hidden (Sign In / Demo shown instead) ✓
-- **Authenticated user, no org:** `slug` is null, falls back to `/dashboard` → `LegacyDashboardRedirect` → `/no-organization` (Phase C from prior wave) ✓
-- **Authenticated user, multiple orgs:** Returns the first membership; matches current `LegacyDashboardRedirect` behavior ✓
-- **Query in flight:** Shows generic "Go to Dashboard" until resolved (no flash, no crash) ✓
+## Phase D — Surface the new URL to operators
 
-## Further Enhancement Suggestions
+- In **Settings → Branding**, add a small read-only card: *"Your team's login URL"* with a copy button + "Open" link → `/org/{slug}/login`.
+- In **Settings → Team**, mention it in the invite email template: *"Bookmark {url} for fast PIN-only access on your work device."*
 
-1. **Multi-org switcher in marketing nav** — for users with >1 org membership, surface a dropdown directly in the marketing CTA (defer until we have telemetry showing this matters).
-2. **Cross-tab cache hydration** — share the org-slug query result via a `BroadcastChannel` so newly opened marketing tabs don't re-query.
-3. **Lint rule: `no-org-context-in-marketing`** — add `no-restricted-imports` under `src/components/marketing/**` banning `useOrganizationContext` and `useOrgDashboardPath`. Mirrors the platform-primitive-isolation canon and prevents this regression class permanently.
+---
 
-## Prompt Coaching (per project doctrine)
+## Files to create
 
-Your prompt — *"im stuck here"* + screenshot — was efficient because the screenshot carried the full error message and stack trace. That's the highest-signal, lowest-effort way to unblock me.
+- `src/pages/OrgBrandedLogin.tsx`
+- `src/hooks/useOrgPinValidation.ts`
+- `src/components/auth/OrgLoginPinPad.tsx` (4-digit numpad — reuses styling from existing dock/kiosk PIN UI)
+- `src/components/auth/OrgLoginUserGrid.tsx` (avatar grid for shared mode)
+- `src/components/auth/OrgLoginDeviceModeDialog.tsx`
+- `supabase/functions/org-manifest/index.ts`
 
-A slightly stronger framing for next time:
-> *"This crash appeared after the last MarketingNav change. Confirm the fix doesn't violate the public-route-isolation canon."*
+## Files to edit
 
-That single sentence would have anchored my diagnosis to the canon up front and pre-empted any temptation to "just wrap MarketingNav in OrganizationProvider" (which would silently violate the isolation rule).
+- `src/App.tsx` — register `/org/:orgSlug/login`
+- `src/components/settings/BrandingSettingsCard.tsx` (or equivalent) — surface the URL
+- No changes to `AuthContext.tsx`, `OrgDashboardRoute.tsx`, or any existing login surface — the new route is additive.
+
+---
+
+## Anti-goals (intentionally NOT in this plan)
+
+- ❌ Replacing `/login` (the unified login still owns the dual-role + platform admin flow).
+- ❌ Per-org subdomain (`drop-dead.zura.app`) — that's a much bigger DNS + cert lift; the slug-based path is the 95% solution.
+- ❌ Custom domains per org (e.g. `login.dropdeadsalons.com`) — defer to Phase 2 if requested.
+- ❌ Extending Supabase session lifetime beyond 30 days — you confirmed default is correct.
+
+---
+
+## Risk register
+
+| Risk | Mitigation |
+|---|---|
+| User on a shared device walks away with their PIN remembered | PIN never persisted client-side; only the Supabase auth token is. PIN required every visit in shared mode. |
+| Org changes logo → cached manifest stale on installed PWAs | Manifest endpoint sets `Cache-Control: max-age=3600`. Worst case: 1-hour delay for icon refresh. |
+| Wrong org slug bookmarked → user sees wrong logo | A1 returns 404 if slug doesn't resolve; no silent fallback. |
+| PIN brute force on a public URL | Existing `validate_user_pin` RPC is org-scoped + already rate-limited via Supabase. Add `pin_attempts` throttle in `useOrgPinValidation` (3 fails → 30s lockout). |
+
+---
+
+## Prompt-craft feedback (positive + sharpener)
+
+**What worked exceptionally well in your prompt:** you bundled three concerns — *branding*, *bookmarking*, *PIN-only re-entry* — and gave an explicit user-facing outcome ("create that page as an app on their computer"). That outcome anchor let me design backwards from a real workflow instead of just slapping `:slug` on a URL.
+
+**Sharper next time:** name the *persona*. "An owner with a personal MacBook" vs "a front-desk iPad shared by 4 staff" produce two completely different products. You actually have both — which is why I had to ask the device-mode question. If you'd front-loaded *"both shared and personal devices"* in the prompt, I would've skipped one clarification round.
+
+---
+
+## Further enhancement suggestions
+
+1. **Per-location login URLs** (`/org/{slug}/loc/{locSlug}/login`) — for multi-location orgs, the front-desk iPad at the Mesa location only needs to surface Mesa staff, not Frisco. Keeps the avatar grid manageable.
+2. **Recent-user shortcut** — on personal-mode devices, remember the last 1–2 users in `localStorage` and skip directly to their PIN pad (zero taps to PIN entry).
+3. **Tenant-scoped PWA splash screen** — generate a 1080x1920 splash with the org logo + brand color (same renderer your terminal splash automation already uses), so the install icon and the launch screen feel cohesive.
