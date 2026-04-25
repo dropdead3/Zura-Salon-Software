@@ -181,8 +181,10 @@ function DroppableSlot({
       {showBadge && (
         <div
           className={cn(
-            'pointer-events-none absolute left-1/2 -top-8 z-40 w-max max-w-[calc(100%-8px)] -translate-x-1/2 truncate rounded px-2 py-1 text-center text-xs font-display font-medium tracking-wide shadow',
-            isPastSlot ? 'bg-muted-foreground text-white' : 'bg-foreground text-background'
+            'pointer-events-none absolute left-1/2 -top-8 z-40 w-max -translate-x-1/2 rounded px-2 py-1 text-center text-xs font-medium shadow',
+            isPastSlot
+              ? 'bg-muted-foreground text-white font-sans normal-case max-w-[260px] whitespace-nowrap'
+              : 'bg-foreground text-background font-display tracking-wide truncate max-w-[calc(100%-8px)]'
           )}
         >
           {badgeLabel}
