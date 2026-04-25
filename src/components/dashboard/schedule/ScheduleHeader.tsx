@@ -149,6 +149,16 @@ export function ScheduleHeader({
   }, []);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
   const [locationSelectOpen, setLocationSelectOpen] = useState(false);
+  // Density toggle for the calendar legend — operators who already know the
+  // signals get a more compact picker. Persisted so the choice sticks.
+  const [legendCompact, setLegendCompact] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return window.localStorage.getItem('schedhdr.legendCompact') !== '0';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('schedhdr.legendCompact', legendCompact ? '1' : '0');
+  }, [legendCompact]);
 
   // Org-timezone-aware "today"
   const { isToday: isOrgToday, todayDate: orgToday, timezone } = useOrgNow();
