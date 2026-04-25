@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Copy, ExternalLink, QrCode, Smartphone } from 'lucide-react';
+import { Copy, ExternalLink, QrCode, Smartphone, Sparkles, Loader2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
+import { useGenerateOrgSplash } from '@/hooks/useGenerateOrgSplash';
 
 /**
  * Team Login URL — Settings → Brand Assets card.
@@ -23,6 +24,7 @@ export function TeamLoginUrlCard() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations();
   const [scope, setScope] = useState<string>('org'); // 'org' | locationId
+  const generateSplash = useGenerateOrgSplash();
 
   const orgSlug = effectiveOrganization?.slug;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
