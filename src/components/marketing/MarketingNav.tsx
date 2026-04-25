@@ -167,12 +167,13 @@ export function MarketingNav() {
               <hr className="border-white/[0.06]" />
               {user ? (
                 <Link
-                  to="/dashboard"
+                  to={dashboardHref}
+                  aria-label={ctaAria}
                   className="inline-flex items-center justify-center gap-2 h-12 w-full bg-white text-slate-950 rounded-full font-sans text-sm font-medium"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Go to Dashboard
-                  <ArrowRight className="w-4 h-4" />
+                  <span className="truncate max-w-[220px]">{ctaLabel}</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </Link>
               ) : (
                 <>
