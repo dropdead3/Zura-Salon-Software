@@ -618,7 +618,7 @@ export function DayView({
   }, [activeId, appointments]);
 
   // Current time indicator
-  const { isToday: isDayToday, nowMinutes: dayNowMins } = useOrgNow();
+  const { isToday: isDayToday, nowMinutes: dayNowMins, todayDate } = useOrgNow();
   const showCurrentTime = isDayToday(date);
   const { linePx: currentTimeLinePx, overlayPx: currentTimeOverlayPx, visible: currentTimeVisible } =
     getCurrentTimeRenderMetrics(dayNowMins, hoursStart, slotInterval, ROW_HEIGHT, timeSlots.length);
