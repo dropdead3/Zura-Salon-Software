@@ -3,11 +3,12 @@
 // Branded PWA splash for the org-branded login PWA.
 // GET /functions/v1/org-splash?slug={orgSlug}
 //
-// Returns an SVG splash (1242x2688 viewBox — iOS scales for any device) with
-// the org logo centered on a black background. SVG is used instead of a
-// rasterized PNG so the function has zero native/binary deps and bundles
-// reliably in the edge runtime. Safari accepts SVG for
-// `apple-touch-startup-image`.
+// Strategy:
+//   1. If a cached raster exists in the `org-splash-cache` bucket
+//      (`{orgId}.jpg` or `.png`), 302-redirect to it. Owners generate this
+//      via the "Generate PWA splash" button in Brand Assets.
+//   2. Otherwise return an inline SVG with the logo (or org name) centered
+//      on black. SVG is iOS-friendly and zero-binary-deps in edge runtime.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -41,16 +42,37 @@ Deno.serve(async (req) => {
       return new Response('Invalid slug', { status: 400, headers: corsHeaders });
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
     const { data: org } = await supabase
       .from('organizations')
-      .select('logo_url, name')
+      .select('id, logo_url, name')
       .eq('slug', slug)
       .maybeSingle();
+
+    // ─── 1. Cached raster fallback (Chrome/Edge/Firefox PWAs) ──────
+    if (org?.id) {
+      for (const ext of ['jpg', 'png']) {
+        const cachedUrl = `${supabaseUrl}/storage/v1/object/public/org-splash-cache/${org.id}.${ext}`;
+        const headRes = await fetch(cachedUrl, { method: 'HEAD' });
+        if (headRes.ok) {
+          const v = url.searchParams.get('v') ?? '';
+          const target = v ? `${cachedUrl}?v=${encodeURIComponent(v)}` : cachedUrl;
+          return new Response(null, {
+            status: 302,
+            headers: {
+              ...corsHeaders,
+              Location: target,
+              'Cache-Control': 'public, max-age=3600',
+            },
+          });
+        }
+      }
+    }
 
     const cx = SPLASH_W / 2;
     const cy = SPLASH_H / 2;

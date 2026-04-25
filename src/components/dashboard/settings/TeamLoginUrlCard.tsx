@@ -4,11 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Copy, ExternalLink, QrCode, Smartphone } from 'lucide-react';
+import { Copy, ExternalLink, QrCode, Smartphone, Sparkles, Loader2 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
+import { useGenerateOrgSplash } from '@/hooks/useGenerateOrgSplash';
 
 /**
  * Team Login URL — Settings → Brand Assets card.
@@ -23,6 +24,7 @@ export function TeamLoginUrlCard() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: locations = [] } = useLocations();
   const [scope, setScope] = useState<string>('org'); // 'org' | locationId
+  const generateSplash = useGenerateOrgSplash();
 
   const orgSlug = effectiveOrganization?.slug;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -136,6 +138,45 @@ export function TeamLoginUrlCard() {
               <li>From now on, opening the app skips email — staff just tap a face and enter their PIN.</li>
             </ol>
           </div>
+        </div>
+
+        <div className="pt-4 border-t border-border space-y-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-sans text-foreground flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                Branded PWA splash (Android & Chrome)
+              </p>
+              <p className="text-xs text-muted-foreground font-sans">
+                iOS Safari already shows a branded splash from your logo. Generate a raster version for staff installing on Android, Chrome, Edge, or Firefox so they get the same launch experience.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => generateSplash.mutate()}
+              disabled={generateSplash.isPending || !effectiveOrganization?.logo_url}
+              className="shrink-0 font-sans"
+            >
+              {generateSplash.isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  {generateSplash.isSuccess ? 'Regenerate splash' : 'Generate splash'}
+                </>
+              )}
+            </Button>
+          </div>
+          {!effectiveOrganization?.logo_url && (
+            <p className="text-xs text-muted-foreground font-sans italic">
+              Upload an organization logo first — the splash uses it as the centerpiece.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

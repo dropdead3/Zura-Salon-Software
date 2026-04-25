@@ -17133,17 +17133,23 @@ export type Database = {
       pin_attempt_log: {
         Row: {
           attempted_at: string
+          device_fingerprint: string | null
           id: string
+          ip_address: string | null
           target_org_id: string | null
         }
         Insert: {
           attempted_at?: string
+          device_fingerprint?: string | null
           id?: string
+          ip_address?: string | null
           target_org_id?: string | null
         }
         Update: {
           attempted_at?: string
+          device_fingerprint?: string | null
           id?: string
+          ip_address?: string | null
           target_org_id?: string | null
         }
         Relationships: []
@@ -31674,27 +31680,60 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
-      validate_dock_pin: {
-        Args: { _organization_id?: string; _pin: string }
-        Returns: {
-          display_name: string
-          location_id: string
-          location_ids: string[]
-          organization_id: string
-          photo_url: string
-          user_id: string
-        }[]
-      }
-      validate_user_pin: {
-        Args: { _organization_id: string; _pin: string }
-        Returns: {
-          display_name: string
-          is_primary_owner: boolean
-          is_super_admin: boolean
-          photo_url: string
-          user_id: string
-        }[]
-      }
+      validate_dock_pin:
+        | {
+            Args: { _organization_id?: string; _pin: string }
+            Returns: {
+              display_name: string
+              location_id: string
+              location_ids: string[]
+              organization_id: string
+              photo_url: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _device_fingerprint?: string
+              _ip_address?: string
+              _organization_id?: string
+              _pin: string
+            }
+            Returns: {
+              display_name: string
+              location_id: string
+              location_ids: string[]
+              organization_id: string
+              photo_url: string
+              user_id: string
+            }[]
+          }
+      validate_user_pin:
+        | {
+            Args: { _organization_id: string; _pin: string }
+            Returns: {
+              display_name: string
+              is_primary_owner: boolean
+              is_super_admin: boolean
+              photo_url: string
+              user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _device_fingerprint?: string
+              _ip_address?: string
+              _organization_id: string
+              _pin: string
+            }
+            Returns: {
+              display_name: string
+              is_primary_owner: boolean
+              is_super_admin: boolean
+              photo_url: string
+              user_id: string
+            }[]
+          }
     }
     Enums: {
       addon_treatment: "same_as_parent" | "separate_rate" | "no_commission"
