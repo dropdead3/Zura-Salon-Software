@@ -577,11 +577,17 @@ export function DayView({
 
       // Smooth on post-hydration recompute (e.g., React Query fills appointments
       // after mount); instant on initial land or zoom. Honor reduced-motion.
+      // Also force instant for sub-2-row deltas — micro-shifts read as jitter,
+      // not intent.
       const prefersReducedMotion =
         typeof window !== 'undefined' &&
         window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const delta = Math.abs(top - ref.scrollTop);
+      const isMicroShift = delta < ROW_HEIGHT * 2;
       const behavior: ScrollBehavior =
-        hasLandedRef.current && !isZoomChange && !prefersReducedMotion ? 'smooth' : 'instant';
+        hasLandedRef.current && !isZoomChange && !prefersReducedMotion && !isMicroShift
+          ? 'smooth'
+          : 'instant';
       requestAnimationFrame(() => {
         ref.scrollTo({ top, behavior });
         hasLandedRef.current = true;
@@ -653,6 +659,21 @@ export function DayView({
 
   const earliestAbove = earlierAppointments[0] ?? null;
   const hiddenAboveCount = earlierAppointments.length;
+
+  // Sentinel chip dwell-fade: protective context, not an alert. After 8s
+  // without interaction the chip dims to 50% so it stops competing for
+  // attention. A new earliest-above appointment resets the timer.
+  // NOTE: Symmetric "Later" chip at viewport bottom is intentionally
+  // deferred — revisit only when telemetry shows this top chip is clicked
+  // on ≥15% of day-views where it renders, or on explicit operator request.
+  const [chipDimmed, setChipDimmed] = useState(false);
+  const chipKey = earliestAbove?.appt.id ?? null;
+  useEffect(() => {
+    setChipDimmed(false);
+    if (!chipKey) return;
+    const t = setTimeout(() => setChipDimmed(true), 8000);
+    return () => clearTimeout(t);
+  }, [chipKey]);
 
   // Per-stylist utilization: booked client minutes / available minutes
   // Uses the shared helper so the dropdown badge and column sort stay in sync.
@@ -863,9 +884,15 @@ export function DayView({
             onClick={() => {
               const ref = scrollRef.current;
               if (!ref) return;
+              setChipDimmed(false);
               ref.scrollTo({ top: Math.max(0, earliestAbove.topPx - 40), behavior: 'smooth' });
             }}
-            className="absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-colors"
+            onMouseEnter={() => setChipDimmed(false)}
+            onFocus={() => setChipDimmed(false)}
+            className={cn(
+              'absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-[opacity,background-color,color] duration-500 motion-reduce:transition-none',
+              chipDimmed ? 'opacity-50 hover:opacity-100 focus-visible:opacity-100' : 'opacity-100',
+            )}
             aria-label="Scroll to earlier appointment"
           >
             <ArrowUp className="h-3 w-3" />
