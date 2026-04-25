@@ -375,67 +375,92 @@ export function RebookIntervalPicker({
                       {intervals.map((interval) => {
                         const isRecommended = interval.weeks === recommendedWeeks;
                         const offThatDay = isStylistOff(interval.date);
+                        const closed = interval.salonClosed;
+                        // Compose tooltip text once. Empty string ⇒ no Tooltip
+                        // wrapper at all (kills the empty hover bubble).
+                        const tooltipText = closed
+                          ? interval.closureReason
+                            ? `Salon closed · ${interval.closureReason}`
+                            : 'Salon closed this day'
+                          : offThatDay
+                          ? "Stylist isn't scheduled this day"
+                          : interval.load
+                          ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
+                              isRecommended ? ' · Recommended' : ''
+                            }`
+                          : isRecommended
+                          ? 'Recommended'
+                          : '';
+
+                        const disabled = closed;
+
+                        const chip = (
+                          <ToggleGroupItem
+                            value={String(interval.weeks)}
+                            aria-label={`${interval.weeks} weeks`}
+                            disabled={disabled}
+                            className={cn(
+                              // Base — border-2 transparent so selected state
+                              // swaps color without 1px layout shift.
+                              'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-transparent ring-1 ring-border bg-background',
+                              'hover:bg-muted/60 transition-colors relative',
+                              // Selected = thick purple stroke + ghost fill (token).
+                              'data-[state=on]:border-primary data-[state=on]:bg-primary/[0.06] data-[state=on]:text-foreground data-[state=on]:ring-0',
+                              offThatDay && !closed && 'opacity-60',
+                              closed && 'opacity-50 cursor-not-allowed border-dashed ring-border/60',
+                            )}
+                          >
+                            <span className="font-sans text-sm leading-none">
+                              {interval.weeks}w
+                            </span>
+                            <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
+                              {interval.dateLabel}
+                            </span>
+                            {/* Recommended → top-edge label pill */}
+                            {isRecommended && !closed && (
+                              <span
+                                className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
+                                aria-label="Recommended"
+                              >
+                                Rec
+                              </span>
+                            )}
+                            {/* Salon-closed marker takes precedence over off-day */}
+                            {closed ? (
+                              <span
+                                className="absolute top-1 right-1 inline-flex items-center"
+                                aria-label="Salon closed"
+                              >
+                                <CalendarOff className="h-2.5 w-2.5 text-rose-500/70" />
+                              </span>
+                            ) : offThatDay ? (
+                              <span
+                                className="absolute top-1 right-1 inline-flex items-center"
+                                aria-label="Stylist off"
+                              >
+                                <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
+                              </span>
+                            ) : null}
+                            {!closed && interval.load && (
+                              <span
+                                className={cn(
+                                  'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
+                                  LOAD_DOT_CLASS[interval.load],
+                                )}
+                              />
+                            )}
+                          </ToggleGroupItem>
+                        );
+
+                        // No tooltip wrapper when there's nothing to say —
+                        // prevents Radix from rendering an empty popover bubble.
+                        if (!tooltipText) {
+                          return <span key={interval.weeks}>{chip}</span>;
+                        }
                         return (
                           <Tooltip key={interval.weeks}>
-                            <TooltipTrigger asChild>
-                              <ToggleGroupItem
-                                value={String(interval.weeks)}
-                                aria-label={`${interval.weeks} weeks`}
-                                className={cn(
-                                  'h-16 flex flex-col items-center justify-center gap-0.5 rounded-lg border bg-background',
-                                  'border-border hover:bg-muted/60 transition-colors relative',
-                                  // Purple ghost selected — primary tint + thick stroke + soft ring
-                                  'data-[state=on]:bg-primary/[0.06] data-[state=on]:border-primary data-[state=on]:border-2',
-                                  'data-[state=on]:ring-2 data-[state=on]:ring-primary/20 data-[state=on]:ring-offset-0',
-                                  'data-[state=on]:text-foreground',
-                                  offThatDay && 'opacity-60',
-                                )}
-                              >
-                                <span className="font-sans text-sm leading-none">
-                                  {interval.weeks}w
-                                </span>
-                                <span className="font-sans text-[10px] text-muted-foreground leading-none mt-1">
-                                  {interval.dateLabel}
-                                </span>
-                                {/* Recommended → top-edge label pill (no longer corner-dot collision) */}
-                                {isRecommended && (
-                                  <span
-                                    className="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1.5 py-px rounded-full bg-primary/10 border border-primary/30 font-display text-[8px] uppercase tracking-wider text-primary leading-none"
-                                    aria-label="Recommended"
-                                  >
-                                    Rec
-                                  </span>
-                                )}
-                                {/* Off-day marker (small, top-right) */}
-                                {offThatDay && (
-                                  <span
-                                    className="absolute top-1 right-1 inline-flex items-center"
-                                    aria-label="Stylist off"
-                                  >
-                                    <CalendarOff className="h-2.5 w-2.5 text-muted-foreground" />
-                                  </span>
-                                )}
-                                {interval.load && (
-                                  <span
-                                    className={cn(
-                                      'absolute bottom-1.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full',
-                                      LOAD_DOT_CLASS[interval.load],
-                                    )}
-                                  />
-                                )}
-                              </ToggleGroupItem>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {offThatDay
-                                ? "Stylist isn't scheduled this day"
-                                : interval.load
-                                ? `${interval.apptCount} booked · ${LOAD_LABEL[interval.load]}${
-                                    isRecommended ? ' · Recommended' : ''
-                                  }`
-                                : isRecommended
-                                ? 'Recommended'
-                                : ''}
-                            </TooltipContent>
+                            <TooltipTrigger asChild>{chip}</TooltipTrigger>
+                            <TooltipContent>{tooltipText}</TooltipContent>
                           </Tooltip>
                         );
                       })}
