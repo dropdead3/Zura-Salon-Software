@@ -61,7 +61,7 @@ interface RememberedUser {
  * canon — uses provider-free hooks only.
  */
 export default function OrgBrandedLogin() {
-  const { orgSlug } = useParams<{ orgSlug: string }>();
+  const { orgSlug, locationSlug } = useParams<{ orgSlug: string; locationSlug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
