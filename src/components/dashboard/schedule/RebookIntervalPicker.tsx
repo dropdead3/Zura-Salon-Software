@@ -17,8 +17,25 @@
  */
 
 import { useMemo, useState, useEffect } from 'react';
-import { addDays, addWeeks, format, isBefore, startOfDay } from 'date-fns';
-import { CalendarCheck, CalendarIcon, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
+import {
+  addDays,
+  addWeeks,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isBefore,
+  startOfDay,
+  startOfWeek,
+} from 'date-fns';
+import {
+  CalendarCheck,
+  CalendarIcon,
+  ArrowRight,
+  Sparkles,
+  AlertTriangle,
+  Wand2,
+  User,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -101,7 +118,14 @@ export function RebookIntervalPicker({
     () => addDays(today, CAPACITY_HORIZON_DAYS),
     [today],
   );
-  const { capacityMap } = useScheduleDayCapacity(today, horizonEnd);
+  // Scope capacity to the original stylist when present — that's the load
+  // that actually matters for this client's rebook.
+  const stylistUserId = appointment?.stylist_user_id ?? null;
+  const { capacityMap, isStylistScoped } = useScheduleDayCapacity(
+    today,
+    horizonEnd,
+    { stylistUserId },
+  );
 
   // Reset / pre-select recommended interval whenever the picker re-opens for
   // a new appointment.
@@ -137,6 +161,34 @@ export function RebookIntervalPicker({
     : null;
 
   const canContinue = !!targetDate && !isBefore(startOfDay(targetDate), today);
+
+  // "Calmest day this week" — a quick-pick chip per interval row that finds
+  // the lightest day in the same week as the interval target, so the operator
+  // can nudge the rebook off a heavy day in one tap.
+  const calmestPicks = useMemo(() => {
+    return intervals.map((interval) => {
+      const weekStart = startOfWeek(interval.date, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(interval.date, { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        .filter((d) => !isBefore(startOfDay(d), today))
+        .map((d) => {
+          const cap = capacityMap.get(format(d, 'yyyy-MM-dd'));
+          return { date: d, count: cap?.apptCount ?? 0, load: cap?.load };
+        });
+      if (!days.length) return null;
+      // Lightest by count, with a small bias toward the interval's own day on ties.
+      const targetKey = format(interval.date, 'yyyy-MM-dd');
+      const best = [...days].sort((a, b) => {
+        if (a.count !== b.count) return a.count - b.count;
+        const aIsTarget = format(a.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
+        const bIsTarget = format(b.date, 'yyyy-MM-dd') === targetKey ? -1 : 0;
+        return aIsTarget - bIsTarget;
+      })[0];
+      // Don't surface a chip if the interval's own day is already the calmest.
+      if (format(best.date, 'yyyy-MM-dd') === targetKey) return null;
+      return best;
+    });
+  }, [intervals, capacityMap, today]);
 
   // Smart nudge: when the active target lands on a heavy/full day, suggest a
   // calmer alternative from the interval grid.
@@ -198,9 +250,17 @@ export function RebookIntervalPicker({
         <div className="px-6 py-5 space-y-5 overflow-y-auto">
           {/* Interval grid */}
           <div className="space-y-2">
-            <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
-              From last visit
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="font-sans text-xs text-muted-foreground uppercase tracking-wider">
+                From last visit
+              </p>
+              {isStylistScoped && (
+                <span className="inline-flex items-center gap-1 font-sans text-[10px] text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  Stylist's book
+                </span>
+              )}
+            </div>
             <ToggleGroup
               type="single"
               value={
@@ -260,6 +320,56 @@ export function RebookIntervalPicker({
                 );
               })}
             </ToggleGroup>
+
+            {/* Calmest-day quick picks (one per interval week) */}
+            {calmestPicks.some((p) => p) && (
+              <div className="grid grid-cols-5 gap-2 pt-1">
+                {calmestPicks.map((pick, idx) => {
+                  const interval = intervals[idx];
+                  if (!pick) return <div key={interval.weeks} aria-hidden />;
+                  const isActive =
+                    customDate &&
+                    format(customDate, 'yyyy-MM-dd') ===
+                      format(pick.date, 'yyyy-MM-dd');
+                  return (
+                    <Tooltip key={interval.weeks}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomDate(pick.date);
+                            setSelectedWeeks(null);
+                            setCalendarRevealed(false);
+                          }}
+                          className={cn(
+                            'group flex items-center justify-center gap-1 rounded-md border border-dashed border-border/70 bg-background/50 px-1 py-1 transition-colors hover:bg-muted/60 hover:border-border',
+                            isActive && 'border-primary bg-primary/5',
+                          )}
+                          aria-label={`Calmest day in week of ${interval.dateLabel}: ${format(pick.date, 'EEE MMM d')}`}
+                        >
+                          <Wand2 className="h-2.5 w-2.5 text-muted-foreground group-hover:text-primary" />
+                          <span className="font-sans text-[10px] text-muted-foreground group-hover:text-foreground">
+                            {format(pick.date, 'EEE d')}
+                          </span>
+                          {pick.load && (
+                            <span
+                              className={cn(
+                                'h-1 w-1 rounded-full',
+                                LOAD_DOT_CLASS[pick.load],
+                              )}
+                            />
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Calmest day this week · {pick.count} booked ·{' '}
+                        {pick.load ? LOAD_LABEL[pick.load] : 'Open'}
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Smart nudge */}
