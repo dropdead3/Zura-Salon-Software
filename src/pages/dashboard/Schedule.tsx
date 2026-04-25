@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { LocationTimezoneProvider } from '@/contexts/LocationTimezoneContext';
 import { CallbackLookupProvider } from '@/contexts/CallbackLookupContext';
@@ -884,6 +884,18 @@ export default function Schedule() {
               selectedLocationData.holiday_closures,
               currentDate
             );
+            // Resolve next-open date when current day is closed so the banner
+            // can offer a one-click jump. Walks forward up to 60 days.
+            let nextOpen: Date | null = null;
+            if (hoursInfo.isClosed) {
+              for (let i = 1; i <= 60; i++) {
+                const d = addDays(currentDate, i);
+                if (!isClosedOnDate(selectedLocationData.hours_json, selectedLocationData.holiday_closures, d).isClosed) {
+                  nextOpen = d;
+                  break;
+                }
+              }
+            }
             return (
               <DayView
                 date={currentDate}
@@ -897,6 +909,8 @@ export default function Schedule() {
                 locationHours={hoursInfo.openTime && hoursInfo.closeTime ? { open: hoursInfo.openTime, close: hoursInfo.closeTime } : null}
                 isLocationClosed={hoursInfo.isClosed}
                 closureReason={hoursInfo.closureReason}
+                nextOpenDate={nextOpen}
+                onJumpToNextOpen={nextOpen ? () => setCurrentDate(nextOpen!) : undefined}
                 assistedAppointmentIds={assistedAppointmentIds}
                 appointmentsWithAssistants={appointmentsWithAssistants}
                 colorBy="service"

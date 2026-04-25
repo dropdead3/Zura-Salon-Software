@@ -59,6 +59,10 @@ interface DayViewProps {
   locationHours?: { open: string; close: string } | null;
   isLocationClosed?: boolean;
   closureReason?: string;
+  /** Next operating date — when present, the closed-day banner offers a Jump action. */
+  nextOpenDate?: Date | null;
+  /** Invoked when the operator clicks "Jump to next open day" in the banner. */
+  onJumpToNextOpen?: () => void;
   assistedAppointmentIds?: Set<string>;
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
@@ -380,6 +384,8 @@ export function DayView({
   locationHours,
   isLocationClosed,
   closureReason,
+  nextOpenDate,
+  onJumpToNextOpen,
   assistedAppointmentIds,
   appointmentsWithAssistants,
   colorBy = 'service',
@@ -735,11 +741,30 @@ export function DayView({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex h-full min-h-0 flex-col bg-card rounded-lg border border-border overflow-hidden">
-        {/* Closed day banner */}
+        {/* Closed day banner — when a next-open date is available, surfaces a
+            one-click jump so the operator never lands on an empty schedule
+            without a clear next move. */}
         {isLocationClosed && (
-          <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2">
+          <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2 flex-wrap">
             <ClosedBadge reason={closureReason} />
-            <span className="text-xs text-muted-foreground">All time slots are outside regular hours</span>
+            <span className="text-xs text-muted-foreground">
+              All time slots are outside regular hours
+              {nextOpenDate && (
+                <>
+                  {' · Next open '}
+                  <span className="text-foreground font-medium">{format(nextOpenDate, 'EEE, MMM d')}</span>
+                </>
+              )}
+            </span>
+            {nextOpenDate && onJumpToNextOpen && (
+              <button
+                type="button"
+                onClick={onJumpToNextOpen}
+                className="ml-auto text-[11px] font-medium px-2.5 py-1 rounded-full bg-foreground/5 hover:bg-foreground/10 text-foreground transition-colors border border-border/60"
+              >
+                Jump to next open day
+              </button>
+            )}
           </div>
         )}
         {/* Calendar Grid */}
@@ -965,6 +990,18 @@ export function DayView({
               <div className="flex-1 flex relative min-w-0">
                 {sortedStylists.map((stylist, idx) => {
                  const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
+                 // Off-day signal: when the location is open but this stylist has
+                 // nothing on the books and no schedule blocks today, render a
+                 // subtle diagonal hatch behind their column to flag they're not
+                 // working. Heuristic — operators can still drag onto the
+                 // column. We deliberately keep this visual-only.
+                 const stylistHasBlocks = scheduleBlocks.some(
+                   (b) => b.user_id === stylist.user_id,
+                 );
+                 const isLikelyOffDay =
+                   !isLocationClosed &&
+                   stylistAppointments.length === 0 &&
+                   !stylistHasBlocks;
                  
                  return (
                     <div 
@@ -972,6 +1009,19 @@ export function DayView({
                       className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                       style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
                     >
+                      {/* Off-day hatch overlay — sits behind appointments and slot
+                          interactions (pointer-events-none, z-[1]). Diagonal stripe
+                          built from a CSS gradient so it themes via tokens. */}
+                      {isLikelyOffDay && (
+                        <div
+                          className="absolute inset-0 pointer-events-none z-[1] opacity-60"
+                          style={{
+                            backgroundImage:
+                              'repeating-linear-gradient(135deg, hsl(var(--muted-foreground) / 0.08) 0 6px, transparent 6px 14px)',
+                          }}
+                          aria-hidden="true"
+                        />
+                      )}
                       {/* Past-time overlay — pixel-aligned to the current-time indicator */}
                       {showCurrentTime && currentTimeOverlayPx > 0 && (
                         <div
