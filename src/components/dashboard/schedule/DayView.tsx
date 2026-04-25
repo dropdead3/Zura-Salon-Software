@@ -519,8 +519,24 @@ export function DayView({
         const nowTopPx = slotsFromStart * ROW_HEIGHT;
         top = Math.max(0, nowTopPx - ref.clientHeight / 3);
       } else {
-        // Fallback: opening hour − 1
-        const scrollToHour = Math.max(openHour - 1, hoursStart);
+        // Fallback: land on min(opening − 1h, firstAppt − 1h).
+        // Excludes cancelled / no_show so a stale early slot doesn't yank
+        // the viewport. Covers both the "8 AM appt, opens at 9" and the
+        // "first appt of the day is 4 PM" edge cases.
+        const effDateStr = format(date, 'yyyy-MM-dd');
+        let earliestApptHour: number | null = null;
+        for (const apt of appointments) {
+          if (apt.appointment_date !== effDateStr) continue;
+          if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
+          const mins = parseTimeToMinutes(apt.start_time);
+          if (earliestApptHour === null || mins / 60 < earliestApptHour) {
+            earliestApptHour = Math.floor(mins / 60);
+          }
+        }
+
+        const baseAnchor = openHour - 1;
+        const apptAnchor = earliestApptHour !== null ? earliestApptHour - 1 : baseAnchor;
+        const scrollToHour = Math.max(Math.min(baseAnchor, apptAnchor), hoursStart);
         const slotsOffset = (scrollToHour - hoursStart) * (60 / slotInterval);
         top = slotsOffset * ROW_HEIGHT;
       }
@@ -529,7 +545,7 @@ export function DayView({
         ref.scrollTo({ top, behavior: 'instant' });
       });
     }
-  }, [date.toDateString(), locationHours?.open, locationHours?.close, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, isOrgTodayCheck, orgNowMins]);
+  }, [date, appointments, locationHours?.open, locationHours?.close, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, isOrgTodayCheck, orgNowMins]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
