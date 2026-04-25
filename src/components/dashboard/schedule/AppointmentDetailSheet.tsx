@@ -178,11 +178,6 @@ function ResponsiveAppointmentTabs({
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 <span className="sr-only">{label}</span>
               </>
-            ) : value === 'color-bar' ? (
-              <>
-                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{label}</span>
-              </>
             ) : (
               <span>{label}</span>
             )}
