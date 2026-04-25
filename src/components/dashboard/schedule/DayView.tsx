@@ -990,6 +990,18 @@ export function DayView({
               <div className="flex-1 flex relative min-w-0">
                 {sortedStylists.map((stylist, idx) => {
                  const stylistAppointments = appointmentsByStylist.get(stylist.user_id) || [];
+                 // Off-day signal: when the location is open but this stylist has
+                 // nothing on the books and no schedule blocks today, render a
+                 // subtle diagonal hatch behind their column to flag they're not
+                 // working. Heuristic — operators can still drag onto the
+                 // column. We deliberately keep this visual-only.
+                 const stylistHasBlocks = scheduleBlocks.some(
+                   (b) => b.user_id === stylist.user_id,
+                 );
+                 const isLikelyOffDay =
+                   !isLocationClosed &&
+                   stylistAppointments.length === 0 &&
+                   !stylistHasBlocks;
                  
                  return (
                     <div 
@@ -997,6 +1009,19 @@ export function DayView({
                       className={cn("flex-1 relative border-r-2 border-r-[hsl(var(--sidebar-border))] last:border-r-0", idx % 2 === 1 && STYLIST_COLUMN_ALT)}
                       style={{ minWidth: `${COLUMN_MIN_WIDTH}px` }}
                     >
+                      {/* Off-day hatch overlay — sits behind appointments and slot
+                          interactions (pointer-events-none, z-[1]). Diagonal stripe
+                          built from a CSS gradient so it themes via tokens. */}
+                      {isLikelyOffDay && (
+                        <div
+                          className="absolute inset-0 pointer-events-none z-[1] opacity-60"
+                          style={{
+                            backgroundImage:
+                              'repeating-linear-gradient(135deg, hsl(var(--muted-foreground) / 0.08) 0 6px, transparent 6px 14px)',
+                          }}
+                          aria-hidden="true"
+                        />
+                      )}
                       {/* Past-time overlay — pixel-aligned to the current-time indicator */}
                       {showCurrentTime && currentTimeOverlayPx > 0 && (
                         <div
