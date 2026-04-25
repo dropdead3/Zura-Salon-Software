@@ -655,7 +655,7 @@ export function RebookIntervalPicker({
 
           {/* Selected summary */}
           {targetDate && (
-            <div className="rounded-lg bg-muted/40 border border-border px-4 py-3 flex items-center justify-between">
+            <div className="rounded-lg bg-primary/[0.04] border-2 border-primary/40 px-4 py-3 flex items-center justify-between">
               <div>
                 <p className="font-sans text-[10px] text-muted-foreground uppercase tracking-wider">
                   Target date
