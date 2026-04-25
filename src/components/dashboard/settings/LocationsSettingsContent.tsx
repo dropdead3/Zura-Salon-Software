@@ -148,8 +148,6 @@ const emptyForm: LocationFormData = {
   ein: '',
 };
 
-import { toast } from 'sonner';
-
 export function LocationsSettingsContent() {
   const { effectiveOrganization } = useOrganizationContext();
   const { formatDate } = useFormatDate();

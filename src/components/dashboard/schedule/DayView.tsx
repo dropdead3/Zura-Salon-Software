@@ -157,7 +157,7 @@ function DroppableSlot({
         'group relative',
         borderClass,
         isPastSlot
-          ? 'cursor-not-allowed'
+          ? 'cursor-default'
           : isOutsideHours
             ? 'cursor-pointer'
             : isAvailable
