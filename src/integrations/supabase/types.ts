@@ -31473,6 +31473,14 @@ export type Database = {
         Args: { p_device_token: string; p_is_active?: boolean }
         Returns: undefined
       }
+      link_transaction_items_to_appointments: {
+        Args: { p_date_from: string; p_date_to: string; p_location_id: string }
+        Returns: {
+          tier1: number
+          tier2: number
+          tier3: number
+        }[]
+      }
       log_platform_action: {
         Args: {
           _action: string

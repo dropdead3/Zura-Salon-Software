@@ -2110,65 +2110,67 @@ async function syncSalesTransactions(
           console.error(`Payment method propagation failed for ${branchName}:`, pmErr.message);
         }
 
-        // Batch appointment status reconciliation — DB-driven, only for PAST dates.
+        // Batch appointment status reconciliation — DETERMINISTIC.
         //
-        // Rationale: We previously read field names directly off the in-memory
-        // `purchases` payload (`p.clientId`, `p.purchaseDate`). Phorest returns
-        // slightly different shapes across endpoints (`/sales`,
-        // `/staffperformance`, etc.), so when those exact field names were
-        // missing the entire reconciliation silently no-op'd — leaving past
-        // appointments stuck on `booked` even though the matching POS sale was
-        // already persisted. We now drive reconciliation off
-        // `phorest_transaction_items` (the truth we already wrote to disk),
-        // which makes it correct against any prior sync's data, not just the
-        // current API payload.
+        // Phase 3: now that `phorest_transaction_items.appointment_id` is
+        // populated by the linkage RPC inside `saveTransactionItems`, we
+        // promote appointments to `completed` only when a *linked* service
+        // line item exists for that exact appointment. This eliminates the
+        // prior fuzzy `client_id + date` reconciler, which over-completed
+        // any past appointment for the client on that day — a Suzy-style
+        // bug surface where a same-day re-service or earlier walk-in could
+        // mark an unrelated booked appointment as completed.
+        //
+        // Past-only window: same-day reconciliation stays out of band so
+        // mid-day transactions don't prematurely complete in-progress work.
         try {
           const todayStr = new Date().toISOString().split('T')[0];
 
-          // Pull persisted transaction items for this branch within the sync
-          // window. We constrain to past dates only — same-day entries are
-          // excluded so a mid-day transaction on a multi-appointment client
-          // doesn't prematurely complete still-in-progress appointments.
-          const { data: txRows, error: txErr } = await supabase
+          // Fetch the candidate appointment IDs first, then update in a
+          // bounded batch. We avoid a raw SQL UPDATE here because the
+          // Supabase JS client can't express the EXISTS subquery without
+          // a server-side function; this two-step is equivalent and
+          // keeps the writer auditable.
+          const { data: candidateAppts, error: candidatesErr } = await supabase
             .from('phorest_transaction_items')
-            .select('phorest_client_id, transaction_date')
+            .select('appointment_id')
             .eq('location_id', branchId)
+            .eq('item_type', 'service')
             .gte('transaction_date', dateFrom)
             .lt('transaction_date', todayStr)
-            .not('phorest_client_id', 'is', null);
+            .not('appointment_id', 'is', null);
 
-          if (txErr) {
-            console.error(`[Reconcile] Failed to read transaction items for ${branchName}:`, txErr.message);
-          } else if (txRows && txRows.length > 0) {
-            const uniqueClientDates = [...new Set(
-              txRows.map((r: any) => `${r.phorest_client_id}|${r.transaction_date}`)
-            )];
+          if (candidatesErr) {
+            console.error(`[Reconcile] Failed to read linked appointment ids for ${branchName}:`, candidatesErr.message);
+          } else {
+            const apptIds = [...new Set((candidateAppts || []).map((r: any) => r.appointment_id).filter(Boolean))];
 
-            let reconciled = 0;
-            for (let i = 0; i < uniqueClientDates.length; i += 50) {
-              const batch = uniqueClientDates.slice(i, i + 50);
-              const updates = batch.map((key: any) => {
-                const [clientId, txDate] = key.split('|');
-                if (!clientId || !txDate) return Promise.resolve({ data: null });
-                return supabase
+            if (apptIds.length === 0) {
+              console.log(`[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=0 (no linked past transactions)`);
+            } else {
+              let reconciled = 0;
+              for (let i = 0; i < apptIds.length; i += 100) {
+                const batch = apptIds.slice(i, i + 100);
+                const { data: updated, error: updErr } = await supabase
                   .from('phorest_appointments')
                   .update({ status: 'completed' })
-                  .eq('phorest_client_id', clientId)
-                  .eq('appointment_date', txDate)
+                  .in('id', batch)
                   .in('status', ['booked', 'confirmed', 'checked_in'])
                   .select('id');
-              });
-              const results = await Promise.all(updates);
-              reconciled += results.reduce((sum: any, r: any) => sum + (r.data?.length || 0), 0);
+                if (updErr) {
+                  console.error(`[Reconcile] Batch update failed for ${branchName}:`, updErr.message);
+                } else {
+                  reconciled += updated?.length || 0;
+                }
+              }
+              console.log(
+                `[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} ` +
+                `linked_appts=${apptIds.length} reconciled=${reconciled} (deterministic via appointment_id)`
+              );
             }
-            console.log(
-              `[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=${uniqueClientDates.length} reconciled=${reconciled}`
-            );
-          } else {
-            console.log(`[Reconcile] branch=${branchName} window=${dateFrom}..<${todayStr} candidates=0 (no past transactions persisted)`);
           }
         } catch (reconErr: any) {
-          console.error(`[Reconcile] Transaction-based status reconciliation failed for ${branchName}:`, reconErr.message);
+          console.error(`[Reconcile] Deterministic status reconciliation failed for ${branchName}:`, reconErr.message);
         }
       }
 
@@ -2846,11 +2848,39 @@ async function saveTransactionItems(
     const { error } = await supabase
       .from('phorest_transaction_items')
       .upsert(batch, { onConflict: 'transaction_id,item_name,item_type' });
-    
+
     if (!error) savedCount += batch.length;
     else console.error(`Transaction items batch upsert error: ${error.message}`);
   }
-  
+
+  // Phase 3: deterministic appointment linkage. Fill `appointment_id` on the
+  // service line items we just upserted, scoped to this branch + the date
+  // window we touched. Three-tier resolver lives in the SQL function so the
+  // same logic powers both backfill and live sync. Ambiguous matches stay
+  // NULL by design — never guess.
+  if (savedCount > 0 && allRecords.length > 0) {
+    try {
+      const dates = allRecords.map((r) => r.transaction_date).filter(Boolean).sort();
+      const dateFrom = dates[0];
+      const dateTo = dates[dates.length - 1];
+      const { data: linkRes, error: linkErr } = await supabase.rpc(
+        'link_transaction_items_to_appointments',
+        { p_location_id: branchId, p_date_from: dateFrom, p_date_to: dateTo }
+      );
+      if (linkErr) {
+        console.error(`[Linkage] branch=${branchName} RPC failed: ${linkErr.message}`);
+      } else {
+        const r = Array.isArray(linkRes) ? linkRes[0] : linkRes;
+        console.log(
+          `[Linkage] branch=${branchName} window=${dateFrom}..${dateTo} ` +
+          `tier1=${r?.tier1 ?? 0} tier2=${r?.tier2 ?? 0} tier3=${r?.tier3 ?? 0}`
+        );
+      }
+    } catch (e: any) {
+      console.error(`[Linkage] branch=${branchName} unexpected error: ${e.message}`);
+    }
+  }
+
   return savedCount;
 }
 
