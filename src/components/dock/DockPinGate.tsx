@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { DockLocationPicker } from './DockLocationPicker';
+import { LockoutCountdown } from '@/components/auth/LockoutCountdown';
+import { useSessionLockout } from '@/hooks/useSessionLockout';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import type { DockStaffSession } from '@/pages/Dock';
 
 interface DockPinGateProps {
@@ -36,6 +39,15 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const showDemo = useDockDemoAccess();
   const { data: settings } = useBusinessSettings();
   const { data: locations = [] } = useLocations();
+
+  // Dock-scoped lockout window — survives refresh/sleep so a fat-fingered
+  // staffer can't bypass the rate limit by reloading the iPad.
+  const dockOrgId = (() => {
+    try { return localStorage.getItem('dock-organization-id'); } catch { return null; }
+  })();
+  const { lockoutUntil, setLockoutUntil } = useSessionLockout(
+    dockOrgId ? `dock:${dockOrgId}` : 'dock:unbound',
+  );
 
   const businessName = settings?.business_name || '';
   const logoDarkUrl = settings?.logo_dark_url;
