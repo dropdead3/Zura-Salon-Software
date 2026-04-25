@@ -59,6 +59,10 @@ interface DayViewProps {
   locationHours?: { open: string; close: string } | null;
   isLocationClosed?: boolean;
   closureReason?: string;
+  /** Next operating date — when present, the closed-day banner offers a Jump action. */
+  nextOpenDate?: Date | null;
+  /** Invoked when the operator clicks "Jump to next open day" in the banner. */
+  onJumpToNextOpen?: () => void;
   assistedAppointmentIds?: Set<string>;
   appointmentsWithAssistants?: Set<string>;
   colorBy?: 'status' | 'service' | 'stylist';
