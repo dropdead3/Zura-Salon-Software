@@ -119,6 +119,82 @@ import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement
 import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
 
 
+// ─── Container-aware appointment tabs (Zone B) ──────────────────
+// Measures its own width and collapses labels → icons when compact.
+interface ApptTabsProps {
+  activeTab: string;
+  unviewedPhotosCount: number;
+  unviewedNotesCount: number;
+  isWorkingThisAppointment: boolean;
+}
+function ResponsiveAppointmentTabs({
+  activeTab,
+  unviewedPhotosCount,
+  unviewedNotesCount,
+  isWorkingThisAppointment,
+}: ApptTabsProps) {
+  const { ref, state } = useSpatialState<HTMLDivElement>('standard');
+  const iconOnly = state === 'compact' || state === 'stacked';
+  const compressed = state === 'compressed';
+
+  const triggerCls = cn(
+    'font-sans w-full relative gap-1.5',
+    iconOnly && 'px-1',
+    compressed && 'px-2 text-xs',
+  );
+
+  const tabs = [
+    { value: 'details', label: 'Details', Icon: FileText, badge: 0 },
+    { value: 'history', label: 'History', Icon: HistoryIcon, badge: 0 },
+    {
+      value: 'photos',
+      label: 'Photos',
+      Icon: ImageIcon,
+      badge: activeTab !== 'photos' ? unviewedPhotosCount : 0,
+    },
+    {
+      value: 'notes',
+      label: 'Notes',
+      Icon: StickyNote,
+      badge:
+        activeTab !== 'notes' && isWorkingThisAppointment ? unviewedNotesCount : 0,
+    },
+    { value: 'color-bar', label: 'Color Bar', Icon: Beaker, badge: 0 },
+  ];
+
+  return (
+    <div ref={ref} data-spatial-state={state}>
+      <TabsList className={cn('mb-0 shrink-0 w-full grid grid-cols-5', iconOnly ? 'gap-0.5' : 'gap-1')}>
+        {tabs.map(({ value, label, Icon, badge }) => (
+          <TabsTrigger
+            key={value}
+            value={value}
+            className={triggerCls}
+            aria-label={label}
+            title={iconOnly ? label : undefined}
+          >
+            {iconOnly ? (
+              <>
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                <span className="sr-only">{label}</span>
+              </>
+            ) : value === 'color-bar' ? (
+              <>
+                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>{label}</span>
+              </>
+            ) : (
+              <span>{label}</span>
+            )}
+            {badge > 0 && <NavBadge count={badge} />}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </div>
+  );
+}
+
+
 // ─── Cancellation Fee Section sub-component ─────────────────────
 function CancellationFeeSection({
   appointment,
