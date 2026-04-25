@@ -3,20 +3,19 @@ import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useUserPrimaryOrgSlug } from '@/hooks/useUserPrimaryOrgSlug';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { cn } from '@/lib/utils';
 import { SolutionsDesktopTrigger, SolutionsMobileAccordion } from './SolutionsMegaMenu';
 
 export function MarketingNav() {
   const { user } = useAuth();
-  const { effectiveOrganization } = useOrganizationContext();
-  const { dashPath, orgSlug } = useOrgDashboardPath();
-  const dashboardHref = orgSlug ? dashPath('/') : '/dashboard';
-  const orgName = effectiveOrganization?.name;
-  const ctaLabel = orgName ? `Open ${orgName}` : 'Go to Dashboard';
-  const ctaAria = orgName ? `Open ${orgName} dashboard` : 'Go to dashboard';
+  // Provider-free org resolver — MarketingNav lives outside OrganizationProvider
+  // per the Public vs Private Route Isolation canon.
+  const { slug, name } = useUserPrimaryOrgSlug();
+  const dashboardHref = slug ? `/org/${slug}/dashboard/` : '/dashboard';
+  const ctaLabel = name ? `Open ${name}` : 'Go to Dashboard';
+  const ctaAria = name ? `Open ${name} dashboard` : 'Go to dashboard';
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
