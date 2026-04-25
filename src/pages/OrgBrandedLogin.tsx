@@ -95,6 +95,7 @@ export default function OrgBrandedLogin() {
   const [rememberedUser, setRememberedUser] = useState<RememberedUser | null>(null);
   const [recents, setRecents] = useState<RememberedDeviceUser[]>([]);
   const [recentsBypassed, setRecentsBypassed] = useState(false);
+  const [recentSelected, setRecentSelected] = useState<RememberedDeviceUser | null>(null);
 
   const validatePin = useOrgValidatePin(organization?.id);
   const { data: teamMembers = [] } = useOrgTeamForLogin(
