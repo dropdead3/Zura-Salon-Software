@@ -33,6 +33,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { toast } from 'sonner';
+import { ArrowUp } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useStylistExclusionSummaries } from '@/hooks/useStylistExclusions';
@@ -473,6 +474,39 @@ export function DayView({
   // Track previous zoom config to detect zoom changes vs date changes
   const prevSlotIntervalRef = useRef(slotInterval);
   const prevRowHeightRef = useRef(ROW_HEIGHT);
+  const prevDateRef = useRef<string | null>(null);
+  const hasLandedRef = useRef(false);
+
+  // Reset landing state when the date changes — a new day deserves a fresh
+  // instant land, not a smooth pan from yesterday's anchor.
+  useEffect(() => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    if (prevDateRef.current !== dateStr) {
+      hasLandedRef.current = false;
+      prevDateRef.current = dateStr;
+    }
+  }, [date]);
+
+  // Track scrollTop (rAF-throttled) for the "earlier appointments" sentinel chip.
+  const [scrollTop, setScrollTop] = useState(0);
+  useEffect(() => {
+    const ref = scrollRef.current;
+    if (!ref) return;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        setScrollTop(ref.scrollTop);
+        frame = 0;
+      });
+    };
+    ref.addEventListener('scroll', onScroll, { passive: true });
+    setScrollTop(ref.scrollTop);
+    return () => {
+      ref.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   // Auto-scroll: preserve viewport center on zoom, scroll to opening on date change
   useEffect(() => {
@@ -541,8 +575,16 @@ export function DayView({
         top = slotsOffset * ROW_HEIGHT;
       }
 
+      // Smooth on post-hydration recompute (e.g., React Query fills appointments
+      // after mount); instant on initial land or zoom. Honor reduced-motion.
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const behavior: ScrollBehavior =
+        hasLandedRef.current && !isZoomChange && !prefersReducedMotion ? 'smooth' : 'instant';
       requestAnimationFrame(() => {
-        ref.scrollTo({ top, behavior: 'instant' });
+        ref.scrollTo({ top, behavior });
+        hasLandedRef.current = true;
       });
     }
   }, [date, appointments, locationHours?.open, locationHours?.close, hoursStart, hoursEnd, slotInterval, ROW_HEIGHT, isOrgTodayCheck, orgNowMins]);
@@ -589,6 +631,28 @@ export function DayView({
     
     return map;
   }, [appointments, stylists, dateStr]);
+
+  // "Earlier appointments" sentinel — surfaces when active appointments exist
+  // entirely above the current viewport so an operator can't miss pre-open work
+  // after manually scrolling/zooming past it.
+  const earlierAppointments = useMemo(() => {
+    if (!hasLandedRef.current) return [];
+    const items: { appt: PhorestAppointment; topPx: number }[] = [];
+    for (const apt of appointments) {
+      if (apt.appointment_date !== dateStr) continue;
+      if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
+      if (!apt.start_time) continue;
+      const mins = parseTimeToMinutes(apt.start_time);
+      const slotsFromStart = (mins - hoursStart * 60) / slotInterval;
+      const topPx = slotsFromStart * ROW_HEIGHT;
+      if (topPx + ROW_HEIGHT < scrollTop) items.push({ appt: apt, topPx });
+    }
+    items.sort((a, b) => a.topPx - b.topPx);
+    return items;
+  }, [appointments, dateStr, hoursStart, slotInterval, ROW_HEIGHT, scrollTop]);
+
+  const earliestAbove = earlierAppointments[0] ?? null;
+  const hiddenAboveCount = earlierAppointments.length;
 
   // Per-stylist utilization: booked client minutes / available minutes
   // Uses the shared helper so the dropdown badge and column sort stay in sync.
@@ -792,6 +856,28 @@ export function DayView({
           </div>
         )}
         {/* Calendar Grid */}
+        <div className="relative flex-1 min-h-0 flex flex-col">
+        {earliestAbove && (
+          <button
+            type="button"
+            onClick={() => {
+              const ref = scrollRef.current;
+              if (!ref) return;
+              ref.scrollTo({ top: Math.max(0, earliestAbove.topPx - 40), behavior: 'smooth' });
+            }}
+            className="absolute top-[60px] left-1/2 -translate-x-1/2 z-30 inline-flex items-center gap-1.5 rounded-full bg-foreground/85 backdrop-blur-md px-3 py-1.5 text-xs font-sans text-background shadow-lg hover:bg-foreground transition-colors"
+            aria-label="Scroll to earlier appointment"
+          >
+            <ArrowUp className="h-3 w-3" />
+            <span>{formatTime12h(earliestAbove.appt.start_time)}</span>
+            {earliestAbove.appt.client_name && (
+              <span className="opacity-90">· {earliestAbove.appt.client_name}</span>
+            )}
+            {hiddenAboveCount > 1 && (
+              <span className="opacity-70">+{hiddenAboveCount - 1}</span>
+            )}
+          </button>
+        )}
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <div style={{ width: needsHorizontalScroll ? requiredGridWidth : '100%' }}>
             {/* Stylist Headers - frosted glass sticky header */}
@@ -1205,6 +1291,7 @@ export function DayView({
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
