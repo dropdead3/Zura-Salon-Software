@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { LocationTimezoneProvider } from '@/contexts/LocationTimezoneContext';
 import { CallbackLookupProvider } from '@/contexts/CallbackLookupContext';
