@@ -18,6 +18,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  /** True once the FIRST session resolution has completed (success or null). Use this — not `loading` — to gate route redirects. */
+  authReady: boolean;
   roles: AppRole[];
   permissions: string[];
   platformRoles: PlatformRole[];
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
