@@ -50,6 +50,7 @@ import type { CalendarFilterState } from '@/components/dashboard/schedule/Calend
 import { AddTimeBlockForm } from '@/components/dashboard/schedule/AddTimeBlockForm';
 import { RequestAssistantPanel } from '@/components/dashboard/schedule/RequestAssistantPanel';
 import { AssistantBlockManagerSheet } from '@/components/dashboard/schedule/AssistantBlockManagerSheet';
+import { RebookIntervalPicker } from '@/components/dashboard/schedule/RebookIntervalPicker';
 import { useAssistantTimeBlocks, useAssistantTimeBlocksRange, useMyPendingAssistantBlocks } from '@/hooks/useAssistantTimeBlocks';
 import { useScheduleHotkeys } from '@/hooks/useScheduleHotkeys';
 import type { AssistantTimeBlock } from '@/hooks/useAssistantTimeBlocks';
