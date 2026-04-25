@@ -14,11 +14,18 @@ import { useOrganizationBySlug } from '@/hooks/useOrganizations';
 import { OrganizationLogo } from '@/components/brand/OrganizationLogo';
 import { OrgLoginPinPad } from '@/components/auth/OrgLoginPinPad';
 import { OrgLoginUserGrid } from '@/components/auth/OrgLoginUserGrid';
+import { OrgLoginRecentTiles } from '@/components/auth/OrgLoginRecentTiles';
 import { useOrgValidatePin, useOrgTeamForLogin } from '@/hooks/useOrgPinValidation';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { formatDisplayName } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { PLATFORM_NAME } from '@/lib/brand';
+import {
+  getRecentUsers,
+  pushRecentUser,
+  forgetRecentUser,
+  type RememberedDeviceUser,
+} from '@/lib/orgLoginDeviceMemory';
 import NotFound from '@/pages/NotFound';
 
 const emailSchema = z.string().trim().email({ message: 'Please enter a valid email address' });
