@@ -182,35 +182,38 @@ export default function OrgBrandedLogin() {
   const handlePinSubmit = async () => {
     if (pin.length !== 4) return;
     if (pinLockoutUntil && Date.now() < pinLockoutUntil) {
-      const secs = Math.ceil((pinLockoutUntil - Date.now()) / 1000);
-      toast({
-        variant: 'destructive',
-        title: 'Too many attempts',
-        description: `Wait ${secs}s before trying again.`,
-      });
+      // Inline countdown is the dominant signal — no toast.
       return;
     }
     try {
       const result = await validatePin.mutateAsync(pin);
-      if (!result) {
+
+      // ── Server-side rate limit (per-device or org-wide window) ──
+      if (result.kind === 'locked') {
+        setPinLockoutUntil(result.lockedUntil.getTime());
+        setPinAttempts(0);
+        setPin('');
+        return;
+      }
+
+      // ── PIN didn't match any active staff member ──
+      if (result.kind === 'no_match') {
         const next = pinAttempts + 1;
         setPinAttempts(next);
         setPinError(true);
         setTimeout(() => setPinError(false), 500);
         setPin('');
         if (next >= 3) {
+          // Local soft-lock at 30s — server-side floor is more permissive
           setPinLockoutUntil(Date.now() + 30_000);
           setPinAttempts(0);
-          toast({
-            variant: 'destructive',
-            title: 'Locked out',
-            description: '3 wrong PINs. Wait 30 seconds.',
-          });
         } else {
           toast({ variant: 'destructive', title: 'Wrong PIN', description: `${3 - next} attempts left.` });
         }
         return;
       }
+
+      const identity = result.identity;
 
       // Personal mode: PIN must match the currently signed-in user.
       // Shared mode: PIN must match the user the operator tapped.
@@ -220,7 +223,7 @@ export default function OrgBrandedLogin() {
           ? user?.id
           : selectedUserId;
 
-      if (expectedUserId && result.user_id !== expectedUserId) {
+      if (expectedUserId && identity.user_id !== expectedUserId) {
         setPinError(true);
         setTimeout(() => setPinError(false), 500);
         setPin('');
@@ -238,22 +241,22 @@ export default function OrgBrandedLogin() {
       // Success — remember this user for personal mode
       if (organization?.id && deviceMode === 'personal') {
         const remembered: RememberedUser = {
-          user_id: result.user_id,
-          display_name: result.display_name,
-          photo_url: result.photo_url,
+          user_id: identity.user_id,
+          display_name: identity.display_name,
+          photo_url: identity.photo_url,
         };
         localStorage.setItem(getRememberedUserKey(organization.id), JSON.stringify(remembered));
       }
 
       // Always push to per-device recents (used by the household tile picker)
       pushRecentUser(orgSlug, {
-        user_id: result.user_id,
-        display_name: result.display_name,
-        photo_url: result.photo_url,
+        user_id: identity.user_id,
+        display_name: identity.display_name,
+        photo_url: identity.photo_url,
       });
 
       sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
-      sonnerToast.success(`Welcome, ${result.display_name.split(' ')[0]}`);
+      sonnerToast.success(`Welcome, ${identity.display_name.split(' ')[0]}`);
       navigate(redirectTarget, { replace: true });
     } catch (err) {
       console.error('PIN validation error:', err);
