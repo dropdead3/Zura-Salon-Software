@@ -206,8 +206,11 @@ export default function OrgBrandedLogin() {
 
       // Personal mode: PIN must match the currently signed-in user.
       // Shared mode: PIN must match the user the operator tapped.
-      const expectedUserId =
-        deviceMode === 'personal' ? user?.id : selectedUserId;
+      const expectedUserId = recentSelected
+        ? recentSelected.user_id
+        : deviceMode === 'personal'
+          ? user?.id
+          : selectedUserId;
 
       if (expectedUserId && result.user_id !== expectedUserId) {
         setPinError(true);
