@@ -1,168 +1,120 @@
-# Per-Organization Branded Login + PIN Re-Entry + PWA Install
+## Goal
 
-## What you'll get
+Make the org-branded login page **discoverable, shareable, and polished** by:
 
-A bookmark-able, install-as-app login page at:
-
-```
-/org/drop-dead-salons/login
-/org/{any-org}/login
-```
-
-…that shows **the org's own logo** (not Zura's), persists the session for 30 days, and on return visits asks only for a **4-digit PIN** instead of a full email + password. Each org becomes its own installable Progressive Web App on Mac, Windows, and iOS — with the org's logo as the dock icon.
+1. Surfacing the team login URL inside **Settings → Business → Brand Assets** (the deferred task from the previous wave).
+2. Shipping the 3 enhancements you proposed.
 
 ---
 
-## Phase A — Branded Org Login Page
+## Phase 1 — Team Login URL card (Settings → Brand Assets)
 
-### A1. New route + page
+**File**: `src/components/dashboard/settings/BusinessSettingsContent.tsx`
 
-- Register `/org/:orgSlug/login` in `src/App.tsx` **outside** `OrganizationProvider` (per the Public-vs-Private Route Isolation canon — login surfaces must not require dashboard providers).
-- Create `src/pages/OrgBrandedLogin.tsx`. It uses `useOrganizationBySlug(orgSlug)` directly (already provider-free) to pull `name` + `logo_url`.
+Add a new card below the existing **Brand Logos** card on the `brand` tab:
 
-### A2. Logo resolution
+- **Title**: `TEAM LOGIN URL` (font-display, design-token canon)
+- **Description**: "Bookmark this on team devices or install it as an app. Your team enters their PIN — no password each time."
+- **Body**:
+  - Read-only input showing `https://{host}/org/{orgSlug}/login`
+  - **Copy** button (uses `navigator.clipboard`, sonner toast on success)
+  - **Open** button (opens in new tab)
+  - **QR code** (using existing `QRCodeFullScreen` pattern, scoped to a small inline preview) so a manager can scan it onto an iPad
+- **Source of truth**: Pull `orgSlug` from `useOrganizationContext().effectiveOrganization.slug` — already in scope via the parent component.
 
-- Use `<OrganizationLogo variant="website" logoUrl={org.logo_url} theme="dark" />` for the centered hero logo (dark-mode default; auto-flips per system theme later).
-- If the slug doesn't resolve → 404, never the Zura-branded fallback (prevents brand bleed on a wrong URL).
-
-### A3. Cold-start form (no session)
-
-- Inline email + password inputs directly under the org logo (per your answer).
-- Re-uses the existing `signIn` from `AuthContext` so all session/refresh behavior is identical to `/login`.
-- Subtitle copy: *"Sign in to {OrgName}"*. No Zura wordmark on the page — only a small footer line: *"Powered by Zura"* (per the Tenant Branding Neutralization canon — platform attribution stays subtle, not dominant).
-- After successful sign-in → redirect to `/org/{slug}/dashboard/`.
-
-### A4. URL preservation for deep links
-
-- If the user landed here from `/org/:slug/dashboard/schedule` (session expired), preserve `location.state.from` so they bounce back to the exact page after auth — same pattern already used in `OrgDashboardRoute`.
+**Lint canon check**: Use `tokens.card.title`, `tokens.button.cardAction`. No `font-bold`, no raw shadcn primitives outside the dashboard tree (this is dashboard, so shadcn is fine).
 
 ---
 
-## Phase B — PIN-Only Fast Re-Entry
+## Phase 2 — Per-Location Login URL (Enhancement #1)
 
-### B1. Device-mode chooser (one-time)
+**Why**: Once a single org has 30+ stylists across 3 locations, a single avatar grid becomes a wall of faces. Scoping by location keeps shared-mode usable.
 
-- On first visit to `/org/:slug/login`, ask in a small modal: **"Is this device shared (front desk) or personal (your laptop)?"**
-- Persist the choice in `localStorage` under key `org-login-device-mode:{orgId}` → `'shared' | 'personal'`.
-- Owner can clear it from a tiny "Change device type" link at the bottom.
+**Route**: `/org/:orgSlug/loc/:locationSlug/login`
 
-### B2. Returning user, **personal** mode
+**Files to create / edit**:
+- `src/pages/OrgBrandedLogin.tsx` — already exists; extend to read optional `locationSlug` from route params
+- `src/hooks/useOrgPinValidation.ts` — extend `useOrgTeamForLogin` to optionally accept `locationId` and filter `employee_profiles` via the existing `employee_locations` join table
+- `src/App.tsx` — register the new nested route alongside the existing `/org/:orgSlug/login`
+- `src/components/dashboard/settings/BusinessSettingsContent.tsx` — in the same Team Login URL card, add a **per-location dropdown** that swaps the URL/QR to the selected location's slug
+- `supabase/functions/org-manifest/index.ts` — accept optional `loc` query param so the installed PWA scope is location-specific (`/org/{slug}/loc/{loc}/`)
 
-- Read `useAuth().user` — already restored by Supabase's `localStorage`-backed session.
-- Show: org logo → user's avatar + display name → 4-digit PIN pad → "Enter".
-- Calls existing `useValidatePin` (or a provider-free variant — see B4) to verify, then drops them at `/org/{slug}/dashboard/`.
-- "Not you? Sign in as someone else" link → falls back to email/password form.
-
-### B3. Returning user, **shared** mode
-
-- Show: org logo → grid of all team members with photos (re-use `useTeamPinStatus` pattern, but provider-free — see B4) → tap face → PIN pad → enter.
-- This is essentially `KioskUserSelect` lifted from the existing kiosk/dock flow, but rendered on a branded login surface instead of a kiosk shell.
-
-### B4. Provider-free PIN hook
-
-- Create `src/hooks/useOrgPinValidation.ts` that takes `organizationId` directly (mirrors `useKioskValidatePin` — that hook already proves this works without `OrganizationProvider`).
-- Reason: the login route lives outside the dashboard provider tree, so `useOrganizationContext()` would crash (same root cause as the recent `MarketingNav` crash we just fixed).
-
-### B5. PIN session lifetime
-
-- Successful PIN unlock writes a `pin_unlocked_at` timestamp to `sessionStorage` and routes to dashboard.
-- The Supabase session itself (the actual auth token) follows your chosen 30-day refresh window — **no changes needed**, that's already the default.
-- If the Supabase refresh token *has* expired (>30 days idle) → the PIN flow can't help; the page seamlessly falls back to the email + password form.
+**Fallback**: If `locationSlug` is invalid or not provided, fall back to org-wide behavior (current).
 
 ---
 
-## Phase C — Installable PWA (per-org manifest)
+## Phase 3 — "Recent on this device" memory (Enhancement #2)
 
-### C1. Dynamic manifest endpoint
+**Why**: A household sharing one laptop (owner + manager) shouldn't see a 30-tile grid OR be forced into single-user personal mode.
 
-- Current `public/manifest.json` is static and Zura-branded — perfect for the marketing site, useless for orgs.
-- Add a Supabase edge function `org-manifest` at `/functions/v1/org-manifest?slug={slug}` that returns a JSON manifest with:
-  ```json
-  {
-    "name": "Drop Dead Salons",
-    "short_name": "Drop Dead",
-    "start_url": "/org/drop-dead-salons/login",
-    "scope": "/org/drop-dead-salons/",
-    "display": "standalone",
-    "theme_color": "#0a0a0a",
-    "background_color": "#0a0a0a",
-    "icons": [{ "src": "{org.logo_url or generated PNG}", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
-  }
-  ```
-- Resolves `name` + `logo_url` from `organizations` table by slug. No auth required (manifests are public by definition).
+**Implementation**:
+- New `localStorage` key per org: `zura.org-login.recent.{orgSlug}` → array of `{ user_id, display_name, photo_url, last_used_at }` (max 3, LRU)
+- After a successful PIN login on `OrgBrandedLogin`, push the user to this list
+- New device-mode option: when stored array length is 2–3, render a compact "Welcome back" tile picker BEFORE the device-mode chooser fires. User taps a face → straight to PIN pad. "Not you?" link opens the full grid (shared mode) or email form (personal mode reset)
+- Honors a "Forget this device" button (clears the array)
 
-### C2. Per-page manifest link
-
-- In `OrgBrandedLogin.tsx`, inject a `<link rel="manifest">` via `react-helmet-async` (already in dep tree) that points to `https://{supabase}.functions.supabase.co/org-manifest?slug={orgSlug}`.
-- Also inject `<link rel="apple-touch-icon" href="{org.logo_url}">` so iOS "Add to Home Screen" picks up the org logo.
-- Set `<meta name="theme-color">` and `<meta name="apple-mobile-web-app-title" content="{org.name}">`.
-
-### C3. Install prompt UX
-
-- Listen for `beforeinstallprompt` and surface a small "Install as app" button below the login form (only shows when the browser supports install, i.e. Chrome/Edge desktop, Android).
-- For Safari (iOS/macOS), show a one-line tooltip: *"To install, tap Share → Add to Home Screen"* — Safari doesn't fire the prompt event.
-
-### C4. Service worker scope
-
-- Existing `public/sw.js` is generic — no changes needed for v1. The org manifest's `scope: "/org/{slug}/"` ensures install behavior is per-org.
-- Out of scope for v1: offline support for the branded login itself (would require a per-org offline shell; defer until requested).
+**Files**:
+- `src/pages/OrgBrandedLogin.tsx` — add the recents-tile branch above the existing personal/shared split
+- `src/components/auth/OrgLoginRecentTiles.tsx` (new) — 1–3 large avatar tiles, same hover/scale animation as `OrgLoginUserGrid`
+- `src/lib/orgLoginDeviceMemory.ts` (new) — small typed wrapper around `localStorage` (read / push / clear / forget)
 
 ---
 
-## Phase D — Surface the new URL to operators
+## Phase 4 — Branded splash for installed PWA (Enhancement #3)
 
-- In **Settings → Branding**, add a small read-only card: *"Your team's login URL"* with a copy button + "Open" link → `/org/{slug}/login`.
-- In **Settings → Team**, mention it in the invite email template: *"Bookmark {url} for fast PIN-only access on your work device."*
+**Why**: Today the manifest serves the org's logo as the app icon, but the splash shown while the PWA boots is a generic white screen. Match the polish of your terminal splash automation.
 
----
-
-## Files to create
-
-- `src/pages/OrgBrandedLogin.tsx`
-- `src/hooks/useOrgPinValidation.ts`
-- `src/components/auth/OrgLoginPinPad.tsx` (4-digit numpad — reuses styling from existing dock/kiosk PIN UI)
-- `src/components/auth/OrgLoginUserGrid.tsx` (avatar grid for shared mode)
-- `src/components/auth/OrgLoginDeviceModeDialog.tsx`
-- `supabase/functions/org-manifest/index.ts`
-
-## Files to edit
-
-- `src/App.tsx` — register `/org/:orgSlug/login`
-- `src/components/settings/BrandingSettingsCard.tsx` (or equivalent) — surface the URL
-- No changes to `AuthContext.tsx`, `OrgDashboardRoute.tsx`, or any existing login surface — the new route is additive.
+**Implementation**:
+- Reuse the renderer pattern from `src/lib/generate-terminal-splash.ts` (1080×1920, black bg, centered logo, accent corner glows)
+- New edge function: `supabase/functions/org-splash/index.ts` that renders a PNG at standard PWA splash sizes (640×1136, 750×1334, 828×1792, 1125×2436, 1170×2532, 1242×2688, 1284×2778, 1290×2796 — covering iPhone SE → 15 Pro Max). Cached aggressively via `Cache-Control: public, max-age=86400, immutable`.
+  - Uses `imagescript` or canvas-equivalent in Deno; if unavailable, fall back to a single 1242×2688 PNG and let iOS scale.
+- `OrgBrandedLogin` `<Helmet>` adds the apple-touch-startup-image links pointing at the new function with `?slug={orgSlug}` (and `?loc={locSlug}` when applicable)
+- Color-theme aware: pull `colorTheme` from the org's `site_settings` so the corner glow matches their dashboard palette (consistent with `useAutoSyncTerminalSplash` doctrine)
 
 ---
 
-## Anti-goals (intentionally NOT in this plan)
+## Files Summary
 
-- ❌ Replacing `/login` (the unified login still owns the dual-role + platform admin flow).
-- ❌ Per-org subdomain (`drop-dead.zura.app`) — that's a much bigger DNS + cert lift; the slug-based path is the 95% solution.
-- ❌ Custom domains per org (e.g. `login.dropdeadsalons.com`) — defer to Phase 2 if requested.
-- ❌ Extending Supabase session lifetime beyond 30 days — you confirmed default is correct.
+**New**:
+- `src/components/auth/OrgLoginRecentTiles.tsx`
+- `src/lib/orgLoginDeviceMemory.ts`
+- `supabase/functions/org-splash/index.ts`
 
----
-
-## Risk register
-
-| Risk | Mitigation |
-|---|---|
-| User on a shared device walks away with their PIN remembered | PIN never persisted client-side; only the Supabase auth token is. PIN required every visit in shared mode. |
-| Org changes logo → cached manifest stale on installed PWAs | Manifest endpoint sets `Cache-Control: max-age=3600`. Worst case: 1-hour delay for icon refresh. |
-| Wrong org slug bookmarked → user sees wrong logo | A1 returns 404 if slug doesn't resolve; no silent fallback. |
-| PIN brute force on a public URL | Existing `validate_user_pin` RPC is org-scoped + already rate-limited via Supabase. Add `pin_attempts` throttle in `useOrgPinValidation` (3 fails → 30s lockout). |
+**Edited**:
+- `src/components/dashboard/settings/BusinessSettingsContent.tsx` (login URL card + per-location selector)
+- `src/pages/OrgBrandedLogin.tsx` (location scoping, recents-tile branch, splash links)
+- `src/hooks/useOrgPinValidation.ts` (optional `locationId` filter)
+- `src/App.tsx` (new nested route)
+- `supabase/functions/org-manifest/index.ts` (optional `loc` param → narrower scope)
 
 ---
 
-## Prompt-craft feedback (positive + sharpener)
+## Doctrine alignment
 
-**What worked exceptionally well in your prompt:** you bundled three concerns — *branding*, *bookmarking*, *PIN-only re-entry* — and gave an explicit user-facing outcome ("create that page as an app on their computer"). That outcome anchor let me design backwards from a real workflow instead of just slapping `:slug` on a URL.
-
-**Sharper next time:** name the *persona*. "An owner with a personal MacBook" vs "a front-desk iPad shared by 4 staff" produce two completely different products. You actually have both — which is why I had to ask the device-mode question. If you'd front-loaded *"both shared and personal devices"* in the prompt, I would've skipped one clarification round.
+- **Public vs Private Route Isolation** ✅ — all login surfaces remain outside `OrganizationProvider`
+- **Location Identity & Slugs** ✅ — uses string slugs, not UUIDs, in the URL
+- **Multi-Tenant URL Hierarchy** ✅ — extends the existing `/org/:slug` namespace cleanly
+- **Terminal Splash Automation** ✅ — splash renderer mirrors the existing pattern + color-theme reactivity
 
 ---
 
-## Further enhancement suggestions
+## Order of execution & cost
 
-1. **Per-location login URLs** (`/org/{slug}/loc/{locSlug}/login`) — for multi-location orgs, the front-desk iPad at the Mesa location only needs to surface Mesa staff, not Frisco. Keeps the avatar grid manageable.
-2. **Recent-user shortcut** — on personal-mode devices, remember the last 1–2 users in `localStorage` and skip directly to their PIN pad (zero taps to PIN entry).
-3. **Tenant-scoped PWA splash screen** — generate a 1080x1920 splash with the org logo + brand color (same renderer your terminal splash automation already uses), so the install icon and the launch screen feel cohesive.
+| Phase | Effort | Ship priority |
+|---|---|---|
+| 1 — Login URL card | Small | **Ship first** (unblocks the deferred task) |
+| 3 — Recent on device | Small | Ship second (pure client-side, low risk) |
+| 2 — Per-location URL | Medium | Ship third (touches edge function + hook + routing) |
+| 4 — PWA splash | Medium | Ship last (new edge function, image rendering in Deno) |
+
+I'll execute all four in one wave unless you'd rather stage them.
+
+---
+
+## Open question before execution
+
+**Phase 4 splash rendering**: Deno doesn't have a native Canvas. Two options:
+- **A)** Add `imagescript` (pure-TS PNG encoder, no native deps) — clean, ~50KB cold start cost
+- **B)** Pre-render once on the client at first PWA install, upload to Supabase Storage as `org-splash/{orgSlug}.png`, serve from CDN — zero cold-start cost, but requires a one-time client-side render trigger
+
+My recommendation: **B** — it's faster at runtime, uses the renderer you already trust (`generate-terminal-splash.ts`), and avoids re-implementing canvas in Deno. I'll proceed with **B** unless you say otherwise on approval.
