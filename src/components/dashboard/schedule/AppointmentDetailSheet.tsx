@@ -2869,37 +2869,140 @@ export function AppointmentDetailSheet({
                 </div>
               )}
 
-              {/* ─── Footer Action Bar (Lifecycle Only) ────────── */}
-              {(availableTransitions.includes('confirmed') || availableTransitions.includes('checked_in') || availableTransitions.includes('completed')) && (
-                <div className="p-4 border-t border-border/60 bg-card/60 backdrop-blur-md shrink-0">
-                  <div className="flex items-center gap-2">
-                    {/* Confirm */}
-                    {availableTransitions.includes('confirmed') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('confirmed')} disabled={isUpdating} className="flex-1">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+              {/* ─── Unified Action Shelf (Zone C) ──────────────
+                  Status-aware: one primary lever, optional secondary, rest in overflow.
+                  Always rendered so the next-best action is predictable. */}
+              {(() => {
+                const status = appointment.status;
+                const isTerminal = status === 'completed' || status === 'cancelled' || status === 'no_show';
+
+                // SendToPay availability (secondary lever)
+                const phone = appointment.client_phone?.trim();
+                const rawEmail = clientRecord?.email?.trim();
+                const isPlaceholderEmail = rawEmail
+                  ? /^(na|none|noemail|test|n\/a)@/i.test(rawEmail) || !/@.+\..+/.test(rawEmail)
+                  : true;
+                const email = rawEmail && !isPlaceholderEmail ? rawEmail : null;
+                const showSendPay =
+                  !isTerminal &&
+                  !!appointment.id &&
+                  !!resolvedOrgId &&
+                  appointment.total_price != null &&
+                  appointment.total_price > 0;
+
+                // Build overflow actions (P1 = collapse to kebab on compact)
+                const overflowActions: Array<{ key: string; label: string; onClick: () => void; icon: React.ReactNode; priority: 'P1' | 'P2' }> = [];
+                if (!isTerminal && onReschedule) {
+                  overflowActions.push({
+                    key: 'reschedule',
+                    label: 'Reschedule',
+                    icon: <CalendarClock className="h-3.5 w-3.5" />,
+                    onClick: () => onReschedule(appointment),
+                    priority: 'P1',
+                  });
+                }
+                if (!isTerminal && onRebook) {
+                  overflowActions.push({
+                    key: 'rebook',
+                    label: 'Rebook',
+                    icon: <Repeat className="h-3.5 w-3.5" />,
+                    onClick: () => onRebook(appointment),
+                    priority: 'P2',
+                  });
+                }
+
+                // Determine primary lever
+                let primary: React.ReactNode = null;
+                if (status === 'completed' || status === 'cancelled' || status === 'no_show') {
+                  // Terminal → Rebook is the next best action
+                  if (onRebook) {
+                    primary = (
+                      <Button
+                        size={tokens.button.card}
+                        onClick={() => onRebook(appointment)}
+                        disabled={isUpdating}
+                        className="flex-1"
+                      >
+                        <Repeat className="h-3.5 w-3.5 mr-1" /> Rebook
                       </Button>
-                    )}
-                    {/* Check In */}
-                    {availableTransitions.includes('checked_in') && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('checked_in')} disabled={isUpdating} className="flex-1">
-                        <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
-                      </Button>
-                    )}
-                    {/* Checkout */}
-                    {availableTransitions.includes('completed') && onPay && (
-                      <Button size={tokens.button.card} onClick={() => onPay(appointment)} disabled={isUpdating} className="flex-1">
-                        <CreditCard className="h-3.5 w-3.5 mr-1" /> Checkout
-                      </Button>
-                    )}
-                    {/* Complete (if no pay handler) */}
-                    {availableTransitions.includes('completed') && !onPay && (
-                      <Button size={tokens.button.card} onClick={() => handleStatusChange('completed')} disabled={isUpdating} className="flex-1">
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
-                      </Button>
-                    )}
+                    );
+                  }
+                } else if (availableTransitions.includes('confirmed')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('confirmed')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Confirm
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('checked_in')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('checked_in')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <UserCheck className="h-3.5 w-3.5 mr-1" /> Check In
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('completed') && onPay) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => onPay(appointment)}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CreditCard className="h-3.5 w-3.5 mr-1" /> Checkout
+                    </Button>
+                  );
+                } else if (availableTransitions.includes('completed')) {
+                  primary = (
+                    <Button
+                      size={tokens.button.card}
+                      onClick={() => handleStatusChange('completed')}
+                      disabled={isUpdating}
+                      className="flex-1"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" /> Complete
+                    </Button>
+                  );
+                }
+
+                // If nothing to show at all, suppress (silence is valid output)
+                if (!primary && !showSendPay && overflowActions.length === 0) return null;
+
+                return (
+                  <div className="p-4 border-t border-border/60 bg-card/85 backdrop-blur-xl shrink-0">
+                    <div className="flex items-center gap-2">
+                      {primary}
+                      {showSendPay && (
+                        <SendToPayButton
+                          appointmentId={appointment.id}
+                          organizationId={resolvedOrgId!}
+                          totalAmountCents={Math.round((appointment.total_price || 0) * 100)}
+                          serviceName={appointment.service_name}
+                          clientName={appointment.client_name}
+                          clientEmail={email}
+                          clientPhone={phone}
+                          phorestClientId={appointment.phorest_client_id}
+                          afterpayEnabled={orgAfterpayEnabled}
+                          afterpaySurchargeEnabled={orgSurchargeEnabled}
+                          afterpaySurchargeRate={orgSurchargeRate}
+                          onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                        />
+                      )}
+                      {overflowActions.length > 0 && (
+                        <OverflowActions actions={overflowActions} />
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </PremiumFloatingPanel>
 
       {/* Wave 22.5 — Zura-native call/text dialogs */}
