@@ -51,6 +51,23 @@ export function OrgDashboardRoute() {
     staleTime: 5 * 60 * 1000,
   });
 
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log('[OrgDashboardRoute] decision', {
+      pathname: location.pathname,
+      authReady,
+      hasUser: !!user,
+      isLoading,
+      orgSlug,
+      hasOrg: !!organization,
+      isPlatformUser,
+      membershipReady,
+      isMembershipLoading,
+      isMembershipFetched,
+      isMember,
+    });
+  }
+
   // 1) Wait for first session resolution before any redirect decision.
   if (!authReady) {
     return <BootLuxeLoader fullScreen />;
@@ -89,6 +106,8 @@ export function OrgDashboardRoute() {
   }
 
   // 7) Only now — with a real resolved pair and a completed query — can we deny.
+  // DOCTRINE: Dashboard routes must NEVER redirect to '/'. Only /login,
+  // /no-organization, OrgAccessDenied, or NotFound are valid exits.
   if (!isMember) {
     return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
   }
