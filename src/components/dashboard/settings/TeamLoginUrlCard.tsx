@@ -6,6 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Copy,
   ExternalLink,
   QrCode,
@@ -13,12 +23,17 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useGenerateOrgSplash, useOrgSplashDrift } from '@/hooks/useGenerateOrgSplash';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { useClearDeviceLockout } from '@/hooks/useClearDeviceLockout';
+import { useSessionLockout } from '@/hooks/useSessionLockout';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 /**
  * Team Login URL — Settings → Brand Assets card.
