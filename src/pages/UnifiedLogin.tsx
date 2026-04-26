@@ -580,15 +580,15 @@ export default function UnifiedLogin() {
             <div className="flex items-center justify-center mb-6">
               <PlatformLogo variant="login" className="h-10 w-auto" />
             </div>
-            <h1 className="text-3xl font-medium text-white tracking-tight">
-              {isForgotPassword
-                ? 'Reset Password'
-                : isPlatformInviteSignup
-                ? 'Create Your Account'
-                : isLogin
-                ? 'Welcome back'
-                : 'Create Account'}
-            </h1>
+            {!(isLogin && !isForgotPassword && !isPlatformInviteSignup) && (
+              <h1 className="text-3xl font-medium text-white tracking-tight">
+                {isForgotPassword
+                  ? 'Reset Password'
+                  : isPlatformInviteSignup
+                  ? 'Create Your Account'
+                  : 'Create Account'}
+              </h1>
+            )}
             <p className="text-slate-400">
               {isForgotPassword
                 ? 'Enter your email to receive a reset link'
