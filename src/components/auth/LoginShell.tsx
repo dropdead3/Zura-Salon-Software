@@ -28,7 +28,17 @@ interface LoginShellProps {
  */
 export function LoginShell({ children, footer, topLeft, className }: LoginShellProps) {
   return (
-    <div className={cn('min-h-screen bg-slate-950 flex flex-col relative overflow-hidden', className)}>
+    <div
+      className={cn(
+        // Scope dark Zura tokens to the auth canvas. Login routes live OUTSIDE
+        // the dashboard provider tree, so without these classes --foreground,
+        // --input, etc. resolve to the light-theme defaults — which makes
+        // autofilled text render near-black on the slate-950 surface.
+        'dark theme-cream-lux',
+        'min-h-screen bg-slate-950 flex flex-col relative overflow-hidden',
+        className,
+      )}
+    >
       {/* Background — gradient blobs + grid (always present, never animated in/out) */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]" />
