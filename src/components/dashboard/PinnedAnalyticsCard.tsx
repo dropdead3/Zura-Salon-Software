@@ -395,34 +395,40 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     let metricLabel = '';
     let metricSubtext = '';
     let goalPaceIcon: React.ReactNode = null;
-    
+
+    // Smart compact currency for simple-view tiles:
+    // - values >= $1,000 collapse to compact form ($20.3K, $1.2M) to prevent overflow
+    // - smaller values render with full precision so $842 stays exact
+    const formatCurrencySmart = (amount: number) =>
+      Math.abs(amount) >= 1000 ? formatCurrencyCompact(amount) : formatCurrencyWhole(amount);
+
     switch (cardId) {
       case 'executive_summary':
-        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
         metricLabel = filters.dateRange === 'today'
           ? "Today's expected revenue across all services and retail"
           : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'sales_overview':
         if (isToday && todayActualData?.hasActualData) {
-          metricValue = formatCurrencyWhole(todayActualData.actualRevenue);
+          metricValue = formatCurrencySmart(todayActualData.actualRevenue);
           metricLabel = 'Sales so far today';
-          metricSubtext = `${formatCurrencyWhole(salesData?.totalRevenue ?? 0)} expected today`;
+          metricSubtext = `${formatCurrencySmart(salesData?.totalRevenue ?? 0)} expected today`;
         } else {
-          metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+          metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
           metricLabel = isToday
             ? "Today's expected revenue across all services and retail"
             : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         }
         break;
       case 'daily_brief':
-        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
         metricLabel = `Revenue earned ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
-          metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
+          metricValue = `${top.name.split(' ')[0]} · ${formatCurrencySmart(top.totalRevenue)}`;
           metricLabel = `Highest earning team member ${getPeriodLabel(filters.dateRange)}`;
         } else {
           metricValue = '--';
@@ -438,7 +444,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       }
       case 'revenue_breakdown':
-        metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
+        metricValue = `${formatCurrencySmart(salesData?.serviceRevenue ?? 0)} / ${formatCurrencySmart(salesData?.productRevenue ?? 0)}`;
         metricLabel = `Service vs. retail revenue for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'retail_effectiveness':
@@ -514,7 +520,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = '--';
           metricLabel = 'Loading forecast data';
         } else {
-          metricValue = formatCurrencyWhole(weekAheadData?.totalRevenue ?? 0);
+          metricValue = formatCurrencySmart(weekAheadData?.totalRevenue ?? 0);
           metricLabel = 'Estimated booked service revenue for the next 7 days (excludes today)';
         }
         break;
@@ -581,7 +587,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
             <div className="mt-4 flex-1">
-              <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
+              <BlurredAmount className="font-display text-2xl font-medium truncate block">{metricValue}</BlurredAmount>
               {metricLabel && (
                 <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
                   {goalPaceIcon}

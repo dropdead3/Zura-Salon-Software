@@ -793,13 +793,15 @@ function DashboardSections({
                       roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
                     />
                   )}
-                  <div className={cn(
-                    "grid grid-cols-1 sm:grid-cols-2 gap-4",
-                    pinnedCardIds.length <= 3 && `lg:grid-cols-${pinnedCardIds.length}`,
-                    pinnedCardIds.length === 4 && "lg:grid-cols-4",
-                    pinnedCardIds.length >= 5 && pinnedCardIds.length <= 9 && "lg:grid-cols-3",
-                    pinnedCardIds.length >= 10 && "lg:grid-cols-4",
-                  )}>
+                  <div
+                    className="grid gap-4"
+                    style={{
+                      // Auto-fit with a 260px floor: cards never compress below this,
+                      // they wrap to fewer columns instead. Keeps simple-view tiles legible
+                      // and gives compact currency values (e.g. $20.3K) breathing room.
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    }}
+                  >
                     {pinnedCardIds.map(cId => (
                       <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
                     ))}
