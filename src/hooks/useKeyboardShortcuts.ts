@@ -17,6 +17,7 @@ const SEQUENCE_TIMEOUT = 1000; // 1 second to complete sequence
 export function useKeyboardShortcuts() {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
+  const { toggleHideNumbers } = useHideNumbers();
   const [keySequence, setKeySequence] = useState<string[]>([]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
