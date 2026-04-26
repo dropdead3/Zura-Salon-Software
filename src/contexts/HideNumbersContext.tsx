@@ -177,13 +177,7 @@ export function BlurredAmount({
   as: Component = 'span',
   disableTooltip = false
 }: BlurredAmountProps) {
-  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
-  
-  const handleDoubleClick = () => {
-    if (!hideNumbers) {
-      quickHide();
-    }
-  };
+  const { hideNumbers, requestUnhide } = useHideNumbers();
 
   // Wave 1: subtle crossfade on value change for premium "data is alive" feel.
   // Keyed on stringified children — when the formatted value changes, the span
@@ -192,37 +186,18 @@ export function BlurredAmount({
     ? String(children)
     : undefined;
   const animatedClass = valueKey !== undefined ? 'animate-fade-in-fast' : '';
-  
+
   if (!hideNumbers) {
-    if (disableTooltip) {
-      return (
-        <Component 
-          key={valueKey}
-          className={cn(className, animatedClass, 'cursor-pointer')} 
-          onDoubleClick={handleDoubleClick}
-        >
-          {children}
-        </Component>
-      );
-    }
     return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Component 
-              key={valueKey}
-              className={cn(className, animatedClass, 'cursor-pointer')} 
-              onDoubleClick={handleDoubleClick}
-            >
-              {children}
-            </Component>
-          </TooltipTrigger>
-          <TooltipContent>Double-click to hide</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Component
+        key={valueKey}
+        className={cn(className, animatedClass)}
+      >
+        {children}
+      </Component>
     );
   }
-  
+
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
