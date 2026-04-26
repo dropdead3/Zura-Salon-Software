@@ -3165,8 +3165,12 @@ textarea:autofill:hover,
 textarea:autofill:focus,
 select:-webkit-autofill,
 select:autofill {
-  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
-  box-shadow: 0 0 0 1000px transparent inset !important;
+  /* Mask Chrome's native autofill paint with the slate-950 auth canvas color.
+     Must be opaque, not `transparent`, otherwise the browser's grey/yellow
+     autofill fill bleeds through and makes autofilled inputs look like a
+     different shape than their unfilled siblings. */
+  -webkit-box-shadow: 0 0 0 1000px hsl(222 47% 4%) inset !important;
+  box-shadow: 0 0 0 1000px hsl(222 47% 4%) inset !important;
   /* Pin autofill text to the active theme's foreground token.
      `currentColor` resolves to Chrome's UA default (black) on bare inputs,
      which makes autofilled email/password invisible on dark surfaces.
