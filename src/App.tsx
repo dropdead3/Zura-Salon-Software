@@ -471,6 +471,12 @@ function DashboardRoutes() {
   );
 }
 
+/** Mounts the auth-flow telemetry listener exactly once per session. */
+function AuthFlowTelemetryMount() {
+  useEffect(() => installAuthFlowTelemetry(), []);
+  return null;
+}
+
 const App = () => (
   <HelmetProvider>
     <ThemeProvider attribute="data-public-theme" defaultTheme="light" enableSystem={false} disableTransitionOnChange storageKey="public-theme">
@@ -478,6 +484,7 @@ const App = () => (
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
+              <AuthFlowTelemetryMount />
               <ThemeInitializer />
               <AnimationIntensityInitializer />
               <TooltipProvider delayDuration={0}>
