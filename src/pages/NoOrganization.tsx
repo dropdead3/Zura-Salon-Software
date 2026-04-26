@@ -3,10 +3,10 @@ import { Building2, Copy, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PLATFORM_NAME } from '@/lib/brand';
+import { usePlatformThemeIsolation } from '@/hooks/usePlatformThemeIsolation';
 
 /**
  * NoOrganization
@@ -16,16 +16,31 @@ import { PLATFORM_NAME } from '@/lib/brand';
  * tree so it cannot recursively trigger the "no org → redirect" cascade
  * that previously bounced users to the marketing landing page on refresh.
  *
+ * Brand isolation:
+ *  - This is platform identity space, not org-luxe space. Users without an
+ *    org have no tenant palette to inherit, so we render in the canonical
+ *    Zura platform palette (purple primary, dark navy backdrop, black depth).
+ *  - `usePlatformThemeIsolation` strips any cached `theme-rosewood` /
+ *    `theme-cream-lux` / `dark` / inline org vars left on `<html>` by the
+ *    prior dashboard session so this surface paints cleanly regardless of
+ *    where the user came from.
+ *  - All colors resolve through `--platform-*` tokens scoped to the
+ *    `.platform-theme.platform-dark` wrapper. Raw shadcn primitives that
+ *    read `--background`/`--foreground` are intentionally avoided here.
+ *
  * Doctrine:
  *  - Advisory tone, no shame language
- *  - Explain why the gap exists and what the next move is
- *  - Two clear actions: contact admin, sign out
- *  - Surfaces the signed-in email so the operator knows which account they're on
+ *  - Two clear actions: copy email, sign out
+ *  - Surfaces signed-in email so the operator knows which account they're on
  */
 export default function NoOrganization() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+
+  // Strip lingering org `theme-*` + `dark` + inline vars on mount.
+  // Same pattern PlatformLayout uses on /platform/* entry.
+  usePlatformThemeIsolation();
 
   const email = user?.email ?? '';
 
@@ -49,36 +64,89 @@ export default function NoOrganization() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
-      <div className="w-full max-w-md">
+    <div
+      className="platform-theme platform-dark min-h-screen flex items-center justify-center px-6 py-12 relative overflow-hidden"
+      style={{ background: 'hsl(var(--platform-bg))' }}
+      data-surface="dead-end"
+    >
+      {/* Ambient platform-purple glow — subtle, top-anchored, behind content */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 50% at 50% 0%, hsl(var(--platform-primary) / 0.12) 0%, transparent 70%)',
+        }}
+      />
+
+      <div className="relative w-full max-w-md">
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-6">
-            <Building2 className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+          {/* Icon disc — platform card surface + Zura purple accent */}
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border"
+            style={{
+              backgroundColor: 'hsl(var(--platform-bg-card))',
+              borderColor: 'hsl(var(--platform-border))',
+            }}
+          >
+            <Building2
+              className="w-6 h-6"
+              style={{ color: 'hsl(var(--platform-primary))' }}
+              aria-hidden="true"
+            />
           </div>
 
-          <h1 className={cn('font-display tracking-wide uppercase text-xl text-foreground mb-3')}>
+          <h1
+            className={cn('font-display tracking-wide uppercase text-xl mb-3')}
+            style={{ color: 'hsl(var(--platform-foreground))' }}
+          >
             No Organization Linked
           </h1>
 
-          <p className={cn(tokens.empty.description, 'max-w-sm mb-8')}>
+          <p
+            className="font-sans text-sm leading-relaxed max-w-sm mb-8"
+            style={{ color: 'hsl(var(--platform-foreground-muted))' }}
+          >
             Your {PLATFORM_NAME} account isn't connected to an organization yet.
             Reach out to your account owner or administrator so they can add you to the team.
           </p>
 
           {email && (
-            <div className="w-full bg-muted/40 border border-border rounded-xl px-4 py-3 mb-6 flex items-center justify-between gap-3">
+            <div
+              className="w-full rounded-xl px-4 py-3 mb-6 flex items-center justify-between gap-3 border"
+              style={{
+                backgroundColor: 'hsl(var(--platform-bg-surface))',
+                borderColor: 'hsl(var(--platform-border-subtle))',
+              }}
+            >
               <div className="text-left min-w-0">
-                <div className="font-sans text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                <div
+                  className="font-sans text-[10px] uppercase tracking-wider mb-0.5"
+                  style={{ color: 'hsl(var(--platform-foreground-subtle))' }}
+                >
                   Signed in as
                 </div>
-                <div className="font-sans text-sm text-foreground truncate">{email}</div>
+                <div
+                  className="font-sans text-sm truncate"
+                  style={{ color: 'hsl(var(--platform-foreground))' }}
+                >
+                  {email}
+                </div>
               </div>
               <Button
                 type="button"
-                variant="ghost"
                 size="sm"
                 onClick={handleCopyEmail}
-                className="shrink-0 h-8 px-2 font-sans text-xs"
+                className="shrink-0 h-8 px-2 font-sans text-xs border-0 bg-transparent"
+                style={{ color: 'hsl(var(--platform-foreground-muted))' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'hsl(var(--platform-bg-hover))';
+                  e.currentTarget.style.color = 'hsl(var(--platform-foreground))';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'hsl(var(--platform-foreground-muted))';
+                }}
                 aria-label="Copy email address"
               >
                 <Copy className="w-3.5 h-3.5 mr-1.5" />
@@ -92,15 +160,32 @@ export default function NoOrganization() {
               type="button"
               onClick={handleSignOut}
               disabled={signingOut}
-              variant="outline"
-              className="w-full font-sans"
+              className="w-full font-sans border"
+              style={{
+                backgroundColor: 'hsl(var(--platform-bg-card))',
+                borderColor: 'hsl(var(--platform-border))',
+                color: 'hsl(var(--platform-foreground))',
+              }}
+              onMouseEnter={(e) => {
+                if (!signingOut) {
+                  e.currentTarget.style.backgroundColor = 'hsl(var(--platform-bg-hover))';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!signingOut) {
+                  e.currentTarget.style.backgroundColor = 'hsl(var(--platform-bg-card))';
+                }
+              }}
             >
               <LogOut className="w-4 h-4 mr-2" />
               {signingOut ? 'Signing out…' : 'Sign out'}
             </Button>
           </div>
 
-          <p className="font-sans text-xs text-muted-foreground/70 mt-6">
+          <p
+            className="font-sans text-xs mt-6"
+            style={{ color: 'hsl(var(--platform-foreground-subtle))' }}
+          >
             Already added? Try signing out and back in to refresh your access.
           </p>
         </div>

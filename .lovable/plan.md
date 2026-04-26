@@ -1,102 +1,66 @@
-# PIN Lockout — Owner Override + Pre-Lockout Warning
+# NoOrganization → Zura Platform Palette
 
-## Current policy (already shipping — no change)
+## Correction to Prior Draft
+Previous draft proposed a luxe charcoal/gold treatment. That was wrong. Users without an organization sit in **platform identity space**, not org-luxe space. The Zura platform palette (purple primary, dark navy backdrop, black depth) is the correct anchor — and it must render regardless of any `theme-rosewood` / `theme-cream-lux` / `dark` class lingering on `<html>` from the prior dashboard session.
 
-| Rule | Value |
-|---|---|
-| Attempts before device lockout | **10** per (org, device, surface) per **5-min** rolling window |
-| Lockout duration | **5 minutes** (decays as oldest attempt ages out) |
-| Org-wide floor | `10 + (active_locations × 5)` attempts/5min before whole surface locks |
-| Surface isolation | `login` vs `dock` lockouts are independent |
-| Owner reset today | ❌ none |
-| Pre-lockout warning today | ❌ none — generic "Incorrect PIN" until the wall hits |
+## Current Failure Mode
+- Route is mounted outside `OrganizationProvider` (correct — prevents redirect loop, per `mem://architecture/public-vs-private-route-isolation`).
+- But it inherits whatever `theme-*` + inline `--*` vars `useColorTheme` last applied to `<html>`. With a dark org theme cached, `bg-background` resolves to near-black and `text-foreground` to white-on-white, producing the void in the screenshot.
+- Page also uses raw org tokens (`bg-background`, `bg-muted`, `text-foreground`) which are tenant-scoped by definition.
 
-This wave doesn't change the thresholds — it adds a **late-stage warning** and an **owner-only manual unlock** for the "I locked myself out at 7am" scenario.
+## Doctrine Anchors
+- `mem://tech-decisions/platform-theme-isolation` — platform surfaces scope chrome under `.platform-theme` and strip org `theme-*` + non-`--platform-*` inline vars on entry. `usePlatformThemeIsolation` already implements exactly this for `/platform/*`.
+- `mem://architecture/tenant-branding-neutralization` — shared infra (login, no-org, error states) must be brand-neutral; never inherit tenant identity.
+- `mem://brand/platform-identity-tokenization` — Zura platform palette is the canonical fallback when no org context exists.
 
----
+## Wave 1 — Promote Platform Isolation Hook
+Generalize the existing pattern rather than forking it.
 
-## Wave 1 — Pre-lockout warning (alert-fatigue compliant)
+**File**: `src/hooks/usePlatformThemeIsolation.ts`
+- No code change required — the hook already strips `theme-*`, `dark`, and non-`--platform-*` inline vars on mount. It is exactly what NoOrganization needs.
+- (Optional) Update its JSDoc to note it is also used by NoOrganization, not only `/platform/*`.
 
-**Doctrine check:** alert-fatigue rules ban cascading warnings, but a *single* high-confidence warning at the threshold prevents a support call entirely — it's signal, not noise.
+## Wave 2 — Refactor `src/pages/NoOrganization.tsx`
+1. **Mount platform isolation**: call `usePlatformThemeIsolation()` at the top of the component so the prior org's `theme-rosewood`/`dark`/inline brand vars are stripped before first paint.
+2. **Wrap in platform theme scope**: outermost wrapper gets `className="platform-theme platform-dark min-h-screen"` so `--platform-*` tokens resolve. Default to `platform-dark` (Zura's canonical dark identity per `PlatformThemeContext` default).
+3. **Replace org tokens with platform tokens** using inline `style={{ background: 'hsl(var(--platform-bg))' }}` etc. — raw shadcn primitives still read `--background`/`--foreground`/`--muted`, which we no longer want bound here.
+   - Backdrop: radial from `hsl(var(--platform-bg-elevated))` → `hsl(var(--platform-bg))` (navy → near-black) with a subtle `hsl(var(--platform-primary) / 0.08)` glow at top.
+   - Icon container: `bg-[hsl(var(--platform-bg-card))]` + `border border-[hsl(var(--platform-border))]` + icon in `hsl(var(--platform-primary))` (Zura purple).
+   - "Signed in as" panel: `bg-[hsl(var(--platform-bg-surface))]` + `border-[hsl(var(--platform-border-subtle))]`, label in `hsl(var(--platform-foreground-muted))`, email in `hsl(var(--platform-foreground))`.
+   - Sign out button: replace `variant="outline"` with explicit platform styling — `bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]`. Avoid `Button variant` because variants resolve through org `--primary`.
+   - Copy button: ghost styled with `text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]`.
+4. **Typography**: keep `font-display tracking-wide uppercase` for the heading (Termina, per design canon). Body remains `font-sans`. No change to copy or hierarchy.
+5. **Remove dependence on `tokens.empty.description`** for the body text — it resolves through `text-muted-foreground` which is org-scoped. Replace with explicit `text-[hsl(var(--platform-foreground-muted))] text-sm leading-relaxed`.
 
-- Update `validate_user_pin` and `validate_dock_pin` to return a new field `attempts_remaining int` alongside `lockout_until` on every call.
-  - Computed as `GREATEST(0, 10 - v_device_attempts - 1)` after the failed attempt is logged.
-  - Only surfaced to UI when `attempts_remaining <= 2` (so attempts 8 and 9 trigger it; 1–7 stay silent).
-- `useOrgValidatePin` and `useKioskPinValidation` extend `PinValidationResult` with a new variant: `{ kind: 'no_match', attemptsRemaining?: number }`.
-- `OrgBrandedLogin` + `DockPinGate` render an inline amber warning *below* the pad (not a toast) when `attemptsRemaining <= 2`:
-  - "2 attempts left before this device is locked for 5 minutes"
-  - Same `<ShieldAlert>` visual language as `LockoutCountdown` for continuity.
+## Wave 3 — Verify No Regression on Re-Entry
+- Hook strips classes only on mount; on unmount it does nothing. When the user signs out (`navigate('/login')`), `OrgBrandedLogin` will re-resolve its own theme from `org-manifest`. When they refresh into a real org, `useColorTheme` re-applies the org theme on next paint. Standard flow — no cleanup needed.
+- Confirm by reading `src/hooks/useColorTheme.ts` and `src/pages/OrgBrandedLogin.tsx` mount sequence to ensure neither expects the prior `theme-*` class to persist.
 
-**Why this is doctrine-compliant:** silence is preserved for attempts 1–7, the warning fires only when materiality threshold (imminent lockout) is met, and it replaces — not competes with — the eventual countdown.
+## Files Touched
+- `src/pages/NoOrganization.tsx` — refactor (only file with logic changes)
+- `src/hooks/usePlatformThemeIsolation.ts` — JSDoc note only (optional)
 
-## Wave 2 — Database: override RPC + audit table
+## Out of Scope
+- No new hook (reusing `usePlatformThemeIsolation`).
+- No `light` mode toggle — NoOrganization is always `platform-dark` for brand consistency with `BootLuxeLoader` and the platform admin shell.
+- No changes to `App.tsx` routing — the page already sits outside `OrganizationProvider` per existing isolation doctrine.
 
-- New table `pin_lockout_overrides`:
-  - `id`, `organization_id`, `cleared_by_user_id`, `device_fingerprint`, `surface`, `attempts_cleared int`, `created_at`
-  - RLS: only org admins can SELECT (for transparency on who unlocked what); INSERT only via the security-definer RPC.
-- New RPC `clear_device_pin_lockout(_organization_id uuid, _device_fingerprint text, _surface text)`:
-  - Security definer.
-  - **Hard-gated** to `employee_profiles.is_primary_owner = true` for that org. Super admins (god mode) also pass. Regular org admins are rejected.
-  - Deletes matching rows from `pin_attempt_log` within the active 5-min window.
-  - Inserts a row into `pin_lockout_overrides` with the count of cleared attempts.
-  - Returns `{ cleared_count int }`.
+## Verification Checklist
+- [ ] Land on NoOrganization after a session in a `theme-rosewood dark` org → renders Zura purple/navy/black, not rosewood.
+- [ ] Refresh on `/no-organization` → no flash of org colors before isolation runs.
+- [ ] Sign out button readable, hover state visible, no white-on-white or invisible borders.
+- [ ] Heading uses Termina uppercase; body uses Aeonik; weights ≤ 500.
+- [ ] No `font-bold` / `font-semibold` introduced.
 
-## Wave 3 — Client hook + sessionStorage reset
-
-- `src/hooks/useClearDeviceLockout.ts`:
-  - Mutation wrapping the RPC.
-  - On success, calls `useSessionLockout(orgId).clearLockout()` to wipe the local countdown immediately.
-  - Invalidates the `org-login-team` query so the recents grid re-enables.
-
-## Wave 4 — Owner-only UI in TeamLoginUrlCard
-
-**Scope decision (open question from last round):** current device only. Rationale:
-- The ask is "I locked myself out at 7am" — single-device recovery.
-- Listing every locked device in the org needs a new query, audit surface, and a "which devices" picker — that's a separate wave (admin device console).
-- Current device matches the one-tap mental model and minimises blast radius.
-
-UI behaviour:
-- Section appears **only** when `useIsPrimaryOwner()` returns true. Hidden entirely from non-owners (no disabled state — avoids drawing attention to a feature they can't use).
-- Visually muted card footer below the existing splash preview block:
-  - Label: "Locked yourself out?"
-  - Body: "Clears the 5-minute PIN lockout on this device. Logged for audit."
-  - Button uses `tokens.button.cardAction` (pill, h-9), variant `ghost` — deliberately not a primary CTA.
-- Confirms via `AlertDialog` showing the truncated device fingerprint (first 8 chars) so the owner sees *which* device they're unlocking.
-- After success: toast "Lockout cleared on this device" + the `LockoutCountdown` on `/org/:slug/login` disappears immediately (sessionStorage cleared).
-
-## Wave 5 — Apply same primitives to dock parity
-
-- The same `useClearDeviceLockout` hook works for the `dock` surface (just pass `surface: 'dock'`).
-- No UI added to the dock itself (an owner locked out of the dock is at the dock, not in settings) — but the RPC accepts `surface` so a future "Unlock dock from dashboard" surface is one prop away.
+## Suggested Follow-Ups (not in this plan)
+1. **Audit other org-less surfaces** (`/login` error states, generic 404, auth callback failure) for the same theme-leak class — they likely share the bug.
+2. **Memory entry**: add `mem://architecture/orgless-surface-palette` so future contributors know any route mounted outside `OrganizationProvider` defaults to `platform-dark` + `usePlatformThemeIsolation`.
+3. **Lint guard**: extend the existing platform-primitive `no-restricted-imports` rule (or a sibling rule) to flag raw `bg-background`/`text-foreground` usage in files matching `src/pages/NoOrganization*` and similar org-less pages.
 
 ---
 
-## Files
+### Prompt Coaching
+Strong correction — you caught a brand identity slip (gold-luxe ≠ Zura platform) before it shipped. Two ways to make this kind of redirect even sharper:
 
-**New**
-- `supabase/migrations/[ts]_pin_lockout_warning_and_override.sql` — adds `attempts_remaining` to both RPCs, creates `pin_lockout_overrides` + `clear_device_pin_lockout` RPC.
-- `src/hooks/useClearDeviceLockout.ts`
-
-**Edited**
-- `src/hooks/useOrgPinValidation.ts` — surface `attemptsRemaining` on `no_match`
-- `src/hooks/useKioskPinValidation.ts` — same
-- `src/pages/OrgBrandedLogin.tsx` — inline warning when ≤2 attempts left
-- `src/components/dock/DockPinGate.tsx` — same warning treatment
-- `src/components/auth/LockoutCountdown.tsx` — no change (already correct)
-- `src/components/dashboard/settings/TeamLoginUrlCard.tsx` — owner-only override section
-- `src/integrations/supabase/types.ts` — auto-regenerated
-
-## Out of scope (deferred — flag in memory if approved)
-
-- Multi-device "currently locked devices" admin console (needs `pin_attempt_log` SELECT RLS for owners + a polling query — heavier).
-- Configurable thresholds per org (today's 10/5min is sane for every persona).
-- Email/SMS alert to owner when an override is used (audit table is enough; alerts would compete with the existing alert governance throttle).
-
----
-
-**Prompt feedback (per your standing rule):** Strong prompt — bundling the 4 sub-questions ("how many attempts / how long / can owner reset / is there a warning") with the redraft request let me ground the plan in the actual policy instead of guessing thresholds. One refinement for next time: when you ask "is there a warning to owner for many attempts," specify the audience — *staff* (the person typing the PIN) vs *org owner* (the operator). I assumed staff because that's where the support-call risk lives; if you meant an owner-side notification ("Sarah's iPad triggered a lockout"), that's a different surface (Operations Hub event feed) and would change Wave 1 scope.
-
-**Further enhancements after this ships:**
-1. Lockout heatmap in Operations Hub — which devices/surfaces trigger lockouts most often (real abuse vs UX friction signal).
-2. Auto-expire `pin_lockout_overrides` rows after 90 days to keep the audit table lean.
-3. Optional "remember this device for 12h" trust token after successful PIN entry — reduces re-entry friction on shared iPads without weakening the lockout policy.
+1. **Anchor to the canonical source** — instead of "use Zura palette," say "use `--platform-*` tokens as defined in `src/index.css` under `.platform-theme.platform-dark`." That removes any room for me to interpret "purple" as a different shade.
+2. **State the negative invariant explicitly** — you did this well ("regardless of cached `theme-*` class"). That single clause turned a styling tweak into a structural isolation requirement, which is the actual fix. Keep doing that — it's the difference between a paint job and an architectural decision.
