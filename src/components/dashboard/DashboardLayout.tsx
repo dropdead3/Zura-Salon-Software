@@ -49,6 +49,7 @@ import { IncidentBanner } from '@/components/dashboard/IncidentBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
+import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 
 import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
 import { InitialSetupGateBanner } from '@/components/onboarding/setup/InitialSetupGateBanner';
@@ -635,6 +636,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
       <HelpFAB />
       {isLocked && !isImpersonating && <DashboardLockScreen onUnlock={unlock} />}
       <ClockInPromptDialog />
+      <KeyboardShortcutsDialog />
       
       
       {hasZuraGuidance && <ZuraStickyGuidance />}

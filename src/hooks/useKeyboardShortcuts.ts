@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useHideNumbers } from '@/contexts/HideNumbersContext';
 
 type ShortcutHandler = () => void;
 
@@ -16,6 +17,7 @@ const SEQUENCE_TIMEOUT = 1000; // 1 second to complete sequence
 export function useKeyboardShortcuts() {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
+  const { toggleHideNumbers } = useHideNumbers();
   const [keySequence, setKeySequence] = useState<string[]>([]);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -56,6 +58,13 @@ export function useKeyboardShortcuts() {
       description: 'Go to Profile',
       category: 'Navigation',
       handler: () => navigate(dashPath('/profile')),
+    },
+    // Privacy
+    {
+      key: 'h',
+      description: 'Hide / show monetary values',
+      category: 'Privacy',
+      handler: () => toggleHideNumbers(),
     },
     // Help
     {
