@@ -616,7 +616,7 @@ export default function UnifiedLogin() {
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Your full name"
                     required
-                    className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500"
+                    className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500"
                   />
                 </div>
               )}
@@ -670,7 +670,7 @@ export default function UnifiedLogin() {
                     placeholder="you@company.com"
                     required
                     disabled={isPlatformInviteSignup}
-                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-10 ${emailError ? 'border-red-500' : ''} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
+                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-10 ${emailError ? 'border-red-500' : ''} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
                   />
                   {!isLogin && checkingStaffInvitation && debouncedEmail.includes('@') && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -707,7 +707,7 @@ export default function UnifiedLogin() {
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-12"
+                      className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12"
                     />
                     <button
                       type="button"
@@ -746,7 +746,7 @@ export default function UnifiedLogin() {
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 focus:border-violet-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : ''}`}
+                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : ''}`}
                     />
                     <button
                       type="button"

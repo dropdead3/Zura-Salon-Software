@@ -8,8 +8,10 @@ const PlatformTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     <Textarea
       ref={ref}
       className={cn(
-        // Input shape canon: focus = fill-tone shift only (no border-color change).
-        'bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
+        // Input shape canon: textareas use rounded-2xl (deliberate exception
+        // to the pill canon — multi-line content needs corners).
+        // Focus = fill-tone shift only (no border-color change).
+        'rounded-2xl bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
         'focus:bg-[hsl(var(--platform-input-focus))] focus-visible:bg-[hsl(var(--platform-input-focus))]',
         className,
       )}
