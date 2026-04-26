@@ -14,6 +14,7 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { PLATFORM_NAME } from '@/lib/brand';
 import { DockLocationPicker } from './DockLocationPicker';
 import { LockoutCountdown } from '@/components/auth/LockoutCountdown';
+import { PreLockoutWarning } from '@/components/auth/PreLockoutWarning';
 import { useSessionLockout } from '@/hooks/useSessionLockout';
 import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 import type { DockStaffSession } from '@/pages/Dock';
@@ -29,6 +30,8 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Pre-lockout warning surfaced only when ≤ 2 attempts remain (alert-fatigue compliant).
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const [pendingSession, setPendingSession] = useState<{
     userId: string;
     organizationId: string;
@@ -99,15 +102,23 @@ export function DockPinGate({ onSuccess }: DockPinGateProps) {
         if (data && (data as { lockout_until: string | null }).lockout_until) {
           const until = new Date((data as { lockout_until: string }).lockout_until).getTime();
           setLockoutUntil(until);
+          setAttemptsRemaining(null);
           setPin('');
           return;
         }
 
         if (dbError || !data || !data.user_id) {
+          // Surface server-tracked remaining attempts only when imminent.
+          const remaining =
+            data && typeof (data as { attempts_remaining: number | null }).attempts_remaining === 'number'
+              ? (data as { attempts_remaining: number }).attempts_remaining
+              : null;
+          setAttemptsRemaining(remaining !== null && remaining <= 2 ? remaining : null);
           setError(true);
           setPin('');
           toast.error('Invalid PIN');
         } else {
+          setAttemptsRemaining(null);
           // Bind device to org on first successful login
           if (!storedOrgId && data.organization_id) {
             try { localStorage.setItem('dock-organization-id', data.organization_id); } catch {}
