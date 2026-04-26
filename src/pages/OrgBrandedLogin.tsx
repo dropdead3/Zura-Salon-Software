@@ -16,6 +16,7 @@ import { OrgLoginPinPad } from '@/components/auth/OrgLoginPinPad';
 import { OrgLoginUserGrid } from '@/components/auth/OrgLoginUserGrid';
 import { OrgLoginRecentTiles } from '@/components/auth/OrgLoginRecentTiles';
 import { LockoutCountdown } from '@/components/auth/LockoutCountdown';
+import { PreLockoutWarning } from '@/components/auth/PreLockoutWarning';
 import { useOrgValidatePin, useOrgTeamForLogin } from '@/hooks/useOrgPinValidation';
 import { useSessionLockout } from '@/hooks/useSessionLockout';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
