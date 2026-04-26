@@ -187,7 +187,20 @@ export default function UnifiedLogin() {
   const { toast } = useToast();
   const acceptStaffInvitation = useAcceptInvitation();
   const { roleOptions } = useRoleUtils();
-  
+
+  /**
+   * Navigate to a post-auth destination. Marks the auth-flow sentinel so
+   * the dashboard's loader stack renders <AuthFlowLoader /> on the same
+   * slate-950 canvas instead of flashing the theme-driven BootLuxeLoader.
+   */
+  const navigateAuthenticated = useCallback(
+    (path: string) => {
+      markAuthFlowActive();
+      navigate(path, { replace: true });
+    },
+    [navigate],
+  );
+
 
   // Staff invitation check
   const debouncedEmail = useDebounce(email, 500);
