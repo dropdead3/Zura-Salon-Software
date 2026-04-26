@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { isAllLocations } from '@/lib/locationFilter';
 
@@ -11,14 +11,19 @@ interface UseDashboardHotkeysParams {
   locationId: string;
   setLocationId: (id: string) => void;
   accessibleLocations: DashboardHotkeyLocation[];
+  /** When true, prepend "All Locations" as the first cycle entry. */
+  canViewAggregate: boolean;
   compactView: boolean;
   setCompactView: (v: boolean) => void;
 }
 
+const AGGREGATE_ID = 'all';
+
 /**
  * Org dashboard hotkeys (page-local):
- * - ArrowLeft / ArrowRight: toggle Detailed / Simple view
- * - ArrowUp / ArrowDown: cycle individual locations (wrap), skipping aggregate
+ * - ArrowLeft / ArrowRight: clamp-toggle Simple ↔ Detailed view
+ * - ArrowUp / ArrowDown: cycle locations with wrap. When `canViewAggregate`,
+ *   "All Locations" is included as the first entry in the cycle.
  *
  * Mirrors the schedule page hotkey doctrine.
  */
@@ -26,9 +31,19 @@ export function useDashboardHotkeys({
   locationId,
   setLocationId,
   accessibleLocations,
+  canViewAggregate,
   compactView,
   setCompactView,
 }: UseDashboardHotkeysParams) {
+  // Build the canonical cycle: [All?, ...locations]
+  const cycle = useMemo<DashboardHotkeyLocation[]>(() => {
+    const base = accessibleLocations;
+    if (canViewAggregate) {
+      return [{ id: AGGREGATE_ID, name: 'All Locations' }, ...base];
+    }
+    return base;
+  }, [accessibleLocations, canViewAggregate]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
@@ -46,7 +61,7 @@ export function useDashboardHotkeys({
 
       switch (event.key) {
         case 'ArrowLeft':
-          // Clamped: ← always moves toward Simple (left position in the toggle). No-op if already there.
+          // Clamped: ← always moves toward Simple. No-op if already there.
           event.preventDefault();
           if (!compactView) {
             setCompactView(true);
@@ -54,7 +69,7 @@ export function useDashboardHotkeys({
           }
           return;
         case 'ArrowRight':
-          // Clamped: → always moves toward Detailed (right position in the toggle). No-op if already there.
+          // Clamped: → always moves toward Detailed. No-op if already there.
           event.preventDefault();
           if (compactView) {
             setCompactView(false);
@@ -62,26 +77,27 @@ export function useDashboardHotkeys({
           }
           return;
         case 'ArrowDown': {
-          if (accessibleLocations.length <= 1) return;
+          if (cycle.length <= 1) return;
           event.preventDefault();
-          const onAggregate = isAllLocations(locationId);
-          const idx = onAggregate
-            ? -1
-            : accessibleLocations.findIndex((l) => l.id === locationId);
-          const next = accessibleLocations[(idx + 1) % accessibleLocations.length];
+          // Resolve current index. Aggregate ('all'/'') maps to the synthetic AGGREGATE entry if present.
+          const currentIdx = isAllLocations(locationId)
+            ? cycle.findIndex((l) => l.id === AGGREGATE_ID)
+            : cycle.findIndex((l) => l.id === locationId);
+          const nextIdx = currentIdx < 0 ? 0 : (currentIdx + 1) % cycle.length;
+          const next = cycle[nextIdx];
           setLocationId(next.id);
           toast(`Viewing: ${next.name}`, { duration: 1500 });
           return;
         }
         case 'ArrowUp': {
-          if (accessibleLocations.length <= 1) return;
+          if (cycle.length <= 1) return;
           event.preventDefault();
-          const onAggregate = isAllLocations(locationId);
-          const idx = onAggregate
-            ? 0
-            : accessibleLocations.findIndex((l) => l.id === locationId);
-          const prevIdx = idx <= 0 ? accessibleLocations.length - 1 : idx - 1;
-          const prev = accessibleLocations[prevIdx];
+          const currentIdx = isAllLocations(locationId)
+            ? cycle.findIndex((l) => l.id === AGGREGATE_ID)
+            : cycle.findIndex((l) => l.id === locationId);
+          const base = currentIdx < 0 ? 0 : currentIdx;
+          const prevIdx = base <= 0 ? cycle.length - 1 : base - 1;
+          const prev = cycle[prevIdx];
           setLocationId(prev.id);
           toast(`Viewing: ${prev.name}`, { duration: 1500 });
           return;
@@ -91,5 +107,5 @@ export function useDashboardHotkeys({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [locationId, setLocationId, accessibleLocations, compactView, setCompactView]);
+  }, [locationId, setLocationId, cycle, compactView, setCompactView]);
 }
