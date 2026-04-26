@@ -1,5 +1,6 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import { installAuthFlowTelemetry } from "@/lib/authFlowTelemetry";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -470,6 +471,12 @@ function DashboardRoutes() {
   );
 }
 
+/** Mounts the auth-flow telemetry listener exactly once per session. */
+function AuthFlowTelemetryMount() {
+  useEffect(() => installAuthFlowTelemetry(), []);
+  return null;
+}
+
 const App = () => (
   <HelmetProvider>
     <ThemeProvider attribute="data-public-theme" defaultTheme="light" enableSystem={false} disableTransitionOnChange storageKey="public-theme">
@@ -477,6 +484,7 @@ const App = () => (
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
+              <AuthFlowTelemetryMount />
               <ThemeInitializer />
               <AnimationIntensityInitializer />
               <TooltipProvider delayDuration={0}>

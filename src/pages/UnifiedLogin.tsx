@@ -21,6 +21,8 @@ import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { LoginShell } from '@/components/auth/LoginShell';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
 import { markAuthFlowActive } from '@/lib/authFlowSentinel';
+import { prefetchPostLogin } from '@/lib/prefetchPostLogin';
+import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
@@ -187,18 +189,25 @@ export default function UnifiedLogin() {
   const { toast } = useToast();
   const acceptStaffInvitation = useAcceptInvitation();
   const { roleOptions } = useRoleUtils();
+  const queryClient = useQueryClient();
 
   /**
    * Navigate to a post-auth destination. Marks the auth-flow sentinel so
    * the dashboard's loader stack renders <AuthFlowLoader /> on the same
    * slate-950 canvas instead of flashing the theme-driven BootLuxeLoader.
+   *
+   * Also fire-and-forget warms the dashboard's first-paint queries
+   * (user_preferences + employee_profile) so by the time the route mounts
+   * the data is hot — collapsing AuthFlowLoader visibility to <50ms on
+   * warm sessions. See src/lib/prefetchPostLogin.ts.
    */
   const navigateAuthenticated = useCallback(
-    (path: string) => {
+    (path: string, userId?: string) => {
       markAuthFlowActive();
+      if (userId) prefetchPostLogin(queryClient, userId);
       navigate(path);
     },
-    [navigate],
+    [navigate, queryClient],
   );
 
 
@@ -259,7 +268,7 @@ export default function UnifiedLogin() {
             userId: user.id,
           });
           sonnerToast.success('Welcome to the platform!');
-          navigateAuthenticated('/platform/overview');
+          navigateAuthenticated('/platform/overview', user.id);
           return;
         } catch (error) {
           console.error('Failed to accept platform invitation:', error);
@@ -271,17 +280,17 @@ export default function UnifiedLogin() {
       if (info.hasPlatformRoles && info.hasOrgMembership) {
         const savedPref = await getDualRolePreference(user.id);
         if (savedPref === 'platform') {
-          navigateAuthenticated('/platform/overview');
+          navigateAuthenticated('/platform/overview', user.id);
           return;
         }
         if (savedPref?.startsWith('org_dashboard:')) {
           const slug = savedPref.split(':')[1];
-          navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard');
+          navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard', user.id);
           return;
         }
         // Legacy format
         if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
-          navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`);
+          navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`, user.id);
           return;
         }
         setDualRoleInfo(info);
@@ -291,7 +300,7 @@ export default function UnifiedLogin() {
       }
 
       const redirectPath = await getUserRedirectPath(user.id, from);
-      navigateAuthenticated(redirectPath);
+      navigateAuthenticated(redirectPath, user.id);
     };
 
     checkAccess();
@@ -343,7 +352,7 @@ export default function UnifiedLogin() {
                   userId: loggedInUser.id,
                 });
                 sonnerToast.success('Welcome to the platform!');
-                navigateAuthenticated('/platform/overview');
+                navigateAuthenticated('/platform/overview', loggedInUser.id);
                 return;
               } catch (error) {
                 console.error('Failed to accept platform invitation:', error);
@@ -355,16 +364,16 @@ export default function UnifiedLogin() {
             if (info.hasPlatformRoles && info.hasOrgMembership) {
               const savedPref = await getDualRolePreference(loggedInUser.id);
               if (savedPref === 'platform') {
-                navigateAuthenticated('/platform/overview');
+                navigateAuthenticated('/platform/overview', loggedInUser.id);
                 return;
               }
               if (savedPref?.startsWith('org_dashboard:')) {
                 const slug = savedPref.split(':')[1];
-                navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard');
+                navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard', loggedInUser.id);
                 return;
               }
               if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
-                navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`);
+                navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`, loggedInUser.id);
                 return;
               }
               setDualRoleInfo(info);
@@ -374,7 +383,7 @@ export default function UnifiedLogin() {
             }
 
             const redirectPath = await getUserRedirectPath(loggedInUser.id, from);
-            navigateAuthenticated(redirectPath);
+            navigateAuthenticated(redirectPath, loggedInUser.id);
           }
         }
       } else {
@@ -442,7 +451,7 @@ export default function UnifiedLogin() {
     const path = destination === 'platform'
       ? '/platform/overview'
       : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
-    navigateAuthenticated(path);
+    navigateAuthenticated(path, user?.id);
   };
 
   const phaseTransition = { duration: 0.18, ease: 'easeOut' as const };

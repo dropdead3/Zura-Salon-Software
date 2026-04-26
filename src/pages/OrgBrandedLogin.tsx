@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { markAuthFlowActive } from '@/lib/authFlowSentinel';
+import { prefetchPostLogin } from '@/lib/prefetchPostLogin';
 import { Helmet } from 'react-helmet-async';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Loader2, ArrowLeft, Eye, EyeOff, Download, Monitor, User, Users } from 'lucide-react';
@@ -68,6 +71,19 @@ export default function OrgBrandedLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  /**
+   * Wraps navigation into the dashboard with the post-login handoff
+   * primitives: marks the auth-flow sentinel (so the dashboard's loader
+   * stack stays on the slate-950 canvas) and warms first-paint queries
+   * for the resolved user. Mirrors UnifiedLogin.navigateAuthenticated.
+   */
+  const navigateAuthenticated = (path: string, userId?: string) => {
+    markAuthFlowActive();
+    if (userId) prefetchPostLogin(queryClient, userId);
+    navigate(path, { replace: true });
+  };
   const { signIn, user, authReady, signOut } = useAuth();
   const { data: organization, isLoading: orgLoading, error: orgError } = useOrganizationBySlug(orgSlug);
   const { isInstallable, isIOS, install } = usePWAInstall();
@@ -145,7 +161,7 @@ export default function OrgBrandedLogin() {
     // If the chooser was opened immediately after a cold-start signin, the
     // navigation was deferred — complete it now that the choice is recorded.
     if (user) {
-      navigate(redirectTarget, { replace: true });
+      navigateAuthenticated(redirectTarget, user.id);
     }
   };
 
@@ -182,7 +198,10 @@ export default function OrgBrandedLogin() {
         setShowDeviceModeDialog(true);
         return;
       }
-      navigate(redirectTarget, { replace: true });
+      // Resolve the freshly-signed-in user for prefetch (the `user` from
+      // useAuth() may not have repopulated yet on this tick).
+      const { data: { user: signedIn } } = await supabase.auth.getUser();
+      navigateAuthenticated(redirectTarget, signedIn?.id);
     } finally {
       setLoading(false);
     }
@@ -275,7 +294,7 @@ export default function OrgBrandedLogin() {
 
       sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
       sonnerToast.success(`Welcome, ${identity.display_name.split(' ')[0]}`);
-      navigate(redirectTarget, { replace: true });
+      navigateAuthenticated(redirectTarget, identity.user_id);
     } catch (err) {
       console.error('PIN validation error:', err);
       toast({ variant: 'destructive', title: 'PIN check failed', description: 'Please try again.' });
