@@ -428,7 +428,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
-          metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
+          metricValue = `${top.name.split(' ')[0]} · ${formatCurrencySmart(top.totalRevenue)}`;
           metricLabel = `Highest earning team member ${getPeriodLabel(filters.dateRange)}`;
         } else {
           metricValue = '--';
