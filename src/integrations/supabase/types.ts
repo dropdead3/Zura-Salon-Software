@@ -17157,6 +17157,44 @@ export type Database = {
         }
         Relationships: []
       }
+      pin_lockout_overrides: {
+        Row: {
+          attempts_cleared: number
+          cleared_by_user_id: string
+          created_at: string
+          device_fingerprint: string
+          id: string
+          organization_id: string
+          surface: string
+        }
+        Insert: {
+          attempts_cleared?: number
+          cleared_by_user_id: string
+          created_at?: string
+          device_fingerprint: string
+          id?: string
+          organization_id: string
+          surface: string
+        }
+        Update: {
+          attempts_cleared?: number
+          cleared_by_user_id?: string
+          created_at?: string
+          device_fingerprint?: string
+          id?: string
+          organization_id?: string
+          surface?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pin_lockout_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_audit_log: {
         Row: {
           action: string
@@ -31251,6 +31289,16 @@ export type Database = {
       }
       check_user_has_pin: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_seo_scores: { Args: never; Returns: undefined }
+      clear_device_pin_lockout: {
+        Args: {
+          _device_fingerprint: string
+          _organization_id: string
+          _surface?: string
+        }
+        Returns: {
+          cleared_count: number
+        }[]
+      }
       create_booking: {
         Args: {
           p_appointment_date: string
@@ -31703,6 +31751,7 @@ export type Database = {
               _pin: string
             }
             Returns: {
+              attempts_remaining: number
               display_name: string
               location_id: string
               location_ids: string[]
@@ -31732,6 +31781,7 @@ export type Database = {
               _surface?: string
             }
             Returns: {
+              attempts_remaining: number
               display_name: string
               is_primary_owner: boolean
               is_super_admin: boolean

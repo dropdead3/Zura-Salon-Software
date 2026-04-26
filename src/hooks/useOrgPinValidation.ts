@@ -13,7 +13,7 @@ interface PinValidationIdentity {
 export type PinValidationResult =
   | { kind: 'identity'; identity: PinValidationIdentity }
   | { kind: 'locked'; lockedUntil: Date }
-  | { kind: 'no_match' };
+  | { kind: 'no_match'; attemptsRemaining: number | null };
 
 /**
  * Provider-free PIN validation. Takes organizationId directly so it can run
@@ -37,7 +37,7 @@ export function useOrgValidatePin(organizationId: string | null | undefined) {
       });
 
       if (error) throw error;
-      if (!data || data.length === 0) return { kind: 'no_match' };
+      if (!data || data.length === 0) return { kind: 'no_match', attemptsRemaining: null };
 
       const row = data[0] as {
         user_id: string | null;
@@ -46,12 +46,15 @@ export function useOrgValidatePin(organizationId: string | null | undefined) {
         is_super_admin: boolean | null;
         is_primary_owner: boolean | null;
         lockout_until: string | null;
+        attempts_remaining: number | null;
       };
 
       if (row.lockout_until) {
         return { kind: 'locked', lockedUntil: new Date(row.lockout_until) };
       }
-      if (!row.user_id) return { kind: 'no_match' };
+      if (!row.user_id) {
+        return { kind: 'no_match', attemptsRemaining: row.attempts_remaining ?? null };
+      }
       return {
         kind: 'identity',
         identity: {

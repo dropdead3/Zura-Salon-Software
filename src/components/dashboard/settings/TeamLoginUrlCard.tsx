@@ -6,6 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Copy,
   ExternalLink,
   QrCode,
@@ -13,12 +23,17 @@ import {
   Sparkles,
   Loader2,
   AlertCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useLocations } from '@/hooks/useLocations';
 import { useGenerateOrgSplash, useOrgSplashDrift } from '@/hooks/useGenerateOrgSplash';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { useClearDeviceLockout } from '@/hooks/useClearDeviceLockout';
+import { useSessionLockout } from '@/hooks/useSessionLockout';
+import { getDeviceFingerprint } from '@/lib/deviceFingerprint';
 
 /**
  * Team Login URL — Settings → Brand Assets card.
@@ -35,6 +50,33 @@ export function TeamLoginUrlCard() {
   const [scope, setScope] = useState<string>('org'); // 'org' | locationId
   const generateSplash = useGenerateOrgSplash();
   const drift = useOrgSplashDrift();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const clearLockout = useClearDeviceLockout();
+  const { clearLockout: clearLocalLockout } = useSessionLockout(effectiveOrganization?.id);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+
+  const deviceFp = useMemo(() => getDeviceFingerprint(), []);
+  const fpPreview = deviceFp ? `${deviceFp.slice(0, 8)}…` : 'unknown';
+
+  const handleClearLockout = async () => {
+    if (!effectiveOrganization?.id) return;
+    try {
+      const res = await clearLockout.mutateAsync({
+        organizationId: effectiveOrganization.id,
+        surface: 'login',
+      });
+      clearLocalLockout();
+      setOverrideOpen(false);
+      toast.success(
+        res.clearedCount > 0
+          ? `Lockout cleared on this device (${res.clearedCount} attempt${res.clearedCount === 1 ? '' : 's'} removed)`
+          : 'No active lockout on this device — already clear',
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not clear lockout';
+      toast.error(message);
+    }
+  };
 
   const orgSlug = effectiveOrganization?.slug;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -258,7 +300,80 @@ export function TeamLoginUrlCard() {
             </div>
           )}
         </div>
+
+        {/* Owner-only: manual unlock for this device.
+            Hidden from non-owners entirely (avoids drawing attention to a
+            feature they can't use). The 5-min lockout normally protects
+            against brute force, but the primary owner needs an escape hatch
+            for the "I locked myself out at 7am before my first client" case. */}
+        {isPrimaryOwner && (
+          <div className="pt-4 border-t border-border space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-xs font-sans text-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                  Locked yourself out?
+                </p>
+                <p className="text-[11px] text-muted-foreground font-sans leading-relaxed">
+                  Clears the 5-minute PIN lockout on this device. Logged for audit.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setOverrideOpen(true)}
+                disabled={clearLockout.isPending || !deviceFp}
+                className="shrink-0 font-sans h-9 px-4 rounded-full"
+              >
+                {clearLockout.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  'Clear lockout'
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
+
+      <AlertDialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display tracking-wide">
+              Clear PIN lockout on this device?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-sans space-y-2">
+              <span className="block">
+                This will remove the active 5-minute lockout for the device you're
+                currently using and let staff retry their PIN immediately.
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Device: <span className="font-mono">{fpPreview}</span> · Surface: login
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                The action is recorded in the audit log under your name.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearLockout.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleClearLockout();
+              }}
+              disabled={clearLockout.isPending}
+            >
+              {clearLockout.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Clear lockout'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
