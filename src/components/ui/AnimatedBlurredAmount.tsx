@@ -45,7 +45,7 @@ export function AnimatedBlurredAmount({
   const reduceMotion = useReducedMotion();
   const animationsOff = useIsAnimationsOff();
   const { shouldAnimate, markAnimated } = useFirstSessionAnimation(animationKey);
-  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
+  const { hideNumbers, requestUnhide } = useHideNumbers();
   const [hasMounted, setHasMounted] = useState(false);
   const [isAutoCompact, setIsAutoCompact] = useState(false);
   const spanRef = useRef<HTMLSpanElement>(null);
