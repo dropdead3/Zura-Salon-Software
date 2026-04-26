@@ -54,17 +54,19 @@ export function LoginShell({ children, footer, topLeft, className }: LoginShellP
       </div>
 
       {topLeft && (
-        <div className="p-6 relative z-10">
+        <div className="absolute top-0 left-0 p-6 z-20">
           {topLeft}
         </div>
       )}
 
-      <div className="flex-1 flex items-center justify-center px-6 pb-20 relative z-10">
+      {/* True viewport center — children are absolutely centered so neither the
+          topLeft chrome nor the footer can pull the optical center upward. */}
+      <div className="absolute inset-0 grid place-items-center px-6 z-10">
         {children}
       </div>
 
       {footer && (
-        <div className="py-6 text-center relative z-10">
+        <div className="absolute bottom-0 inset-x-0 py-6 text-center z-10">
           {footer}
         </div>
       )}
