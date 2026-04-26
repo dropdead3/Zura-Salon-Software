@@ -176,6 +176,15 @@ export default function DashboardHome() {
     setCompactView(v);
     try { localStorage.setItem('cc-view-mode', v ? 'compact' : 'detailed'); } catch {}
   };
+
+  // Page-local hotkeys: ←/→ toggle Simple/Detailed, ↑/↓ cycle locations
+  useDashboardHotkeys({
+    locationId,
+    setLocationId,
+    accessibleLocations,
+    compactView,
+    setCompactView: handleCompactChange,
+  });
   
   // Set default location when access data loads
   useEffect(() => {
