@@ -555,8 +555,10 @@ export default function OrgBrandedLogin() {
                 </p>
               </div>
 
-              {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+              {pinLockoutUntil && pinLockoutUntil > Date.now() ? (
                 <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+              ) : (
+                <PreLockoutWarning attemptsRemaining={attemptsRemaining} />
               )}
 
               <OrgLoginPinPad
@@ -607,8 +609,10 @@ export default function OrgBrandedLogin() {
                     );
                   })()}
 
-                  {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+                  {pinLockoutUntil && pinLockoutUntil > Date.now() ? (
                     <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+                  ) : (
+                    <PreLockoutWarning attemptsRemaining={attemptsRemaining} />
                   )}
 
                   <OrgLoginPinPad
