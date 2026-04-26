@@ -1776,12 +1776,28 @@ html, body, #root {
   }
 
   /* ───────── Wave 1: macOS-style focus ring with offset ─────────
-     2px ring + 2px transparent offset reads as proper focus, not "border replacement". */
+     2px ring + 2px transparent offset reads as proper focus, not "border replacement".
+     EXCLUSIONS:
+       - inputs / textareas / selects: handled by the input-shape canon
+         (rounded-full + fill-tone shift). A rectangular outline-offset ring
+         can't follow the pill radius cleanly and reads as a "shape change".
+       - Radix collection items: have their own focus styles.
+       - .focus-no-ring escape hatch for any one-off element.
+  */
   .focus-ring-premium:focus-visible,
-  *:focus-visible:not([data-radix-collection-item]) {
+  *:focus-visible:not([data-radix-collection-item]):not(input):not(textarea):not(select):not([role="combobox"]):not([role="textbox"]):not(.focus-no-ring) {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
     border-radius: inherit;
+  }
+
+  /* Inputs/selects/textareas use the canonical fill-tone focus only — no outline. */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="combobox"]:focus-visible,
+  [role="textbox"]:focus-visible {
+    outline: none !important;
   }
 
   /* Reduced motion: disable all custom animations */
@@ -3124,25 +3140,37 @@ html.dark.theme-orchid {
    Input shape canon — autofill normalization
    Browsers (Chrome/Safari) repaint autofilled inputs with their
    own background and a sharp-cornered fill, which visually breaks
-   the pill input shape and makes the password field render as a
-   rectangle while the email field renders as a pill (because only
-   one is autofilled). This rule keeps the autofilled fill
-   transparent, the text color matched, and the radius inherited
-   from the input itself — preserving the canonical pill geometry.
+   the pill input shape. This rule:
+     1. Hides the autofill paint behind a transparent inset shadow
+        the size of the input (1000px ensures full coverage).
+     2. Forces text color to follow the input's own color.
+     3. Pins the radius to the input's own (`inherit`) so the
+        autofill paint can never round to a rectangle.
+     4. Stalls the autofill fade-in transition (9999s) so the
+        browser never re-paints with a different background.
    ============================================================ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active,
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
-select:-webkit-autofill {
-  /* Use a long inset shadow to override the UA yellow/white fill. */
+textarea:autofill,
+textarea:autofill:hover,
+textarea:autofill:focus,
+select:-webkit-autofill,
+select:autofill {
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
   box-shadow: 0 0 0 1000px transparent inset !important;
   -webkit-text-fill-color: currentColor !important;
-  caret-color: currentColor;
-  transition: background-color 9999s ease-in-out 0s;
-  border-radius: inherit;
+  caret-color: currentColor !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+  border-radius: inherit !important;
+  /* Belt-and-suspenders: kill any UA outline on autofilled focus */
+  outline: none !important;
 }
