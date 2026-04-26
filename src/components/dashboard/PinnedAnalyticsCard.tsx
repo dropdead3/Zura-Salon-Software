@@ -55,7 +55,7 @@ import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
