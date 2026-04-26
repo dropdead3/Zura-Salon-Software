@@ -77,6 +77,8 @@ import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCa
 import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { isAuthFlowActive, clearAuthFlow } from '@/lib/authFlowSentinel';
 
 const ROLE_MESSAGES = {
   leadership: {
