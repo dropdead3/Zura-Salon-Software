@@ -130,6 +130,18 @@ export function LegacyDashboardRedirect() {
   const { user, authReady } = useAuth();
   const path = splat || '';
 
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log('[LegacyDashboardRedirect] decision', {
+      path,
+      authReady,
+      hasUser: !!user,
+      isOrgLoading,
+      hasEffectiveOrg: !!effectiveOrganization,
+      slug: effectiveOrganization?.slug ?? null,
+    });
+  }
+
   // /dashboard/platform/* → /platform/*
   if (path.startsWith('platform')) {
     const rest = path.replace(/^platform\/?/, '');
@@ -166,7 +178,7 @@ export function LegacyDashboardRedirect() {
   }
 
   // 5) Authenticated, org query resolved, but no org for this account.
-  //    Send to dedicated dead-end page (NOT back to /login, which on production
-  //    lands on the marketing site and feels like the app dropped them).
+  //    DOCTRINE: NEVER send authenticated users to '/' (marketing). Use the
+  //    dedicated dead-end page instead so the experience is clear.
   return <Navigate to="/no-organization" replace />;
 }
