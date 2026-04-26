@@ -30,10 +30,12 @@ const PlatformInput = React.forwardRef<HTMLInputElement, PlatformInputProps>(
         <input
           type={type}
           className={cn(
+            // Input shape canon: rectangular rounded-xl, focus = fill-tone shift only.
+            // No border-color change on focus, no ring.
             'flex h-10 w-full rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
-            'transition-all duration-150',
-            'focus:outline-none focus:border-[hsl(var(--platform-primary)/0.5)]',
-            'hover:border-[hsl(var(--platform-border))] hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
+            'transition-colors duration-150',
+            'focus:outline-none focus-visible:outline-none focus:bg-[hsl(var(--platform-input-focus))] focus-visible:bg-[hsl(var(--platform-input-focus))]',
+            'hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'file:border-0 file:bg-transparent file:text-sm file:font-medium',
             icon && 'pl-10',

@@ -38,7 +38,9 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-full border border-input bg-background px-4 py-2 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-foreground/30 transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          // Input shape canon: rectangular rounded-xl, focus = fill-tone shift only.
+          // No border-color change, no ring, no shape change.
+          "flex h-10 w-full rounded-xl border border-input bg-background px-4 py-2 text-base file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus:bg-muted/60 focus-visible:bg-muted/60 dark:focus:bg-white/[0.04] dark:focus-visible:bg-white/[0.04] transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
           className,
         )}
         ref={ref}

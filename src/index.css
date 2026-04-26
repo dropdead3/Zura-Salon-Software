@@ -3119,3 +3119,28 @@ html.dark.theme-orchid {
     transition: none;
   }
 }
+
+/* ============================================================
+   Input shape canon — autofill normalization
+   Browsers (especially Chrome/Safari) repaint autofilled inputs
+   with their own background and a sharp-cornered fill, which
+   visually breaks the rectangular rounded-xl input shape and
+   makes focus look like a "shape change". This rule keeps the
+   autofilled fill transparent and the text color matched.
+   ============================================================ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill {
+  /* Use a long inset shadow to override the UA yellow/white fill. */
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: currentColor !important;
+  caret-color: currentColor;
+  transition: background-color 9999s ease-in-out 0s;
+  border-radius: inherit;
+}
