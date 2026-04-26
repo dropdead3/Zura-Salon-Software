@@ -1,233 +1,87 @@
-# Post-Login Handoff Hardening — Generalize, Prefetch, Measure
+# Diagnose: Dashboard refresh → marketing page redirect
 
-Three enhancements building on the existing `authFlowSentinel` + `isFirstPaintLoading` pattern, plus one gap I noticed while exploring (the org-branded PIN login at `/org/:slug/login` never calls `markAuthFlowActive`, so PIN sign-ins always hit the brand-loader fallback).
+## Hypothesis
 
----
+This is a **Lovable preview-iframe artifact**, not an app bug.
 
-## 1. Shared `usePostLoginFirstPaint` hook
+When you hit browser refresh inside the editor preview iframe:
 
-**Goal:** Make the first-paint guard a one-liner so any inner route can adopt it without re-implementing the sentinel dance.
+1. The iframe re-mounts with a fresh JS context.
+2. Supabase's auth client needs ~1 tick to rehydrate the session from `localStorage`.
+3. During that tick, `ProtectedRoute` sees `user === null`, runs `<Navigate to="/login" replace />`, and you land on the marketing/login surface.
+4. By the time auth rehydrates, the redirect has already happened.
 
-**New file:** `src/hooks/usePostLoginFirstPaint.ts`
+In a real browser tab (your "open in browser" test), this doesn't happen because:
+- The top-level origin owns storage cleanly (no iframe sandboxing nuances)
+- Vite's HMR + the dev server keep the auth client warm
 
-```ts
-import { useEffect } from 'react';
-import { isAuthFlowActive, clearAuthFlow } from '@/lib/authFlowSentinel';
+This matches the documented Lovable Cloud "preview vs. published auth environment" pattern. The standard guidance is to **not modify auth code** to fix preview-only behavior — it usually introduces regressions in the published environment where things already work.
 
-/**
- * Returns `true` when the post-login handoff loader (slate-950 AuthFlowLoader)
- * should still be rendered in place of the page's normal chrome+skeleton.
- *
- * Pass the loading flags of every query that must resolve before the page
- * shows real content. When all flags are false, the sentinel is cleared and
- * subsequent in-page navigations resume using the operator-branded loaders.
- *
- * Usage:
- *   const showHandoff = usePostLoginFirstPaint(layoutLoading, accessLoading);
- *   if (showHandoff) return <AuthFlowLoader />;
- */
-export function usePostLoginFirstPaint(...loadingFlags: boolean[]): boolean {
-  const isFirstPaintLoading = loadingFlags.some(Boolean);
+## Phase 1 — Verify it's preview-only (no code changes)
 
-  useEffect(() => {
-    if (!isFirstPaintLoading) clearAuthFlow();
-  }, [isFirstPaintLoading]);
+I'll run these checks in read-only mode:
 
-  return isFirstPaintLoading && isAuthFlowActive();
-}
-```
+1. **Inspect `ProtectedRoute` and `AuthContext` gating logic** — confirm we already wait on `authReady` (we do — I read it earlier in the conversation, line: `!authReady || loading`), and that the redirect to `/login` only fires after that gate passes.
+2. **Inspect `OrgDashboardRoute`** — confirm the same gating happens at the org-scoped boundary so a refresh on `/org/:slug/dashboard/...` doesn't redirect prematurely.
+3. **Check the Supabase client config** in `src/integrations/supabase/client.ts` is using `persistSession: true` + `storage: localStorage` (the defaults — but worth confirming).
+4. **Reproduce in the preview** with browser tools: refresh on a dashboard route, capture the redirect chain in the network tab, and confirm the auth session token is present in `localStorage` immediately after the redirect (proving the session was there, but the gate fired too early).
+5. **Reproduce in a real browser tab** at the same preview URL opened directly (not iframed) and confirm refresh persists. If it does → confirmed preview-iframe artifact. Stop here.
 
-**Refactor `DashboardHome.tsx`** (lines 262–268) to use it:
-```ts
-const showHandoff = usePostLoginFirstPaint(layoutLoading, locationAccessLoading);
-if (showHandoff) return <AuthFlowLoader />;
-```
+**Expected outcome:** confirms preview-iframe artifact. No code change needed. Your end users will never see this.
 
-**Adopt on initial-entry routes** that users may land on directly after login (deep-link, browser refresh, custom landing page). Three highest-traffic candidates that I'll wire up now:
-- `src/pages/dashboard/Schedule.tsx`
-- `src/pages/dashboard/admin/AccountBilling.tsx` (frequent custom-landing destination for owners)
-- `src/pages/dashboard/MyPay.tsx` (frequent custom-landing destination for stylists)
+## Phase 2 — *Optional* belt-and-suspenders hardening
 
-For each: identify the page-level "first paint" queries (typically the layout/profile + the page's primary data query), pass their `isLoading` flags into `usePostLoginFirstPaint`, and short-circuit to `<AuthFlowLoader />` when it returns true.
+Only worth doing if Phase 1 surprises us, OR you want refresh-in-iframe to "just work" for your own dev ergonomics.
 
-**Doctrine:** Add a Core memory entry: *"Initial-entry dashboard pages must guard their first paint with `usePostLoginFirstPaint(...)` to keep the auth handoff on a single canvas. The hook's `useEffect` clears the sentinel automatically — never call `clearAuthFlow()` manually outside this hook."*
+Two narrow, safe additions:
 
----
+### 2a. `lastDashboardPath` sentinel
+- On every successful dashboard mount, write `sessionStorage['zura.last-dashboard-path'] = window.location.pathname`.
+- In `UnifiedLogin`'s auto-arrival `useEffect`, if a session rehydrates **and** the sentinel is present **and** we're currently on `/login` or `/`, redirect back to the saved path instead of running the role-based redirect logic.
+- Sentinel is cleared on explicit logout.
+- Effect: even if the iframe redirect-flashes us to `/login`, we land back where we were within ~50ms of session rehydrate.
 
-## 2. Prefetch on login submit
+### 2b. Tighten `ProtectedRoute`'s rehydrate window
+- Currently `authReady` flips true once the first session resolution completes. In the preview iframe, that resolution can race with the route guard's first paint.
+- Add a brief grace window (e.g., one `requestIdleCallback` tick or `await supabase.auth.getSession()`) inside `ProtectedRoute` before deciding `!user → redirect`. Returns `<AuthFlowLoader />` during that window.
+- Risk: adds ~10–20ms latency to every protected route mount, even when there genuinely is no session. Mitigated by the existing `AuthFlowLoader` already being on-screen.
 
-**Goal:** Start the dashboard's first-paint queries the instant credentials are known to be valid, so by the time the route mounts they're already cached. Target: `<50ms` time-in-AuthFlowLoader for warm sessions.
+### 2c. Doctrine update
+- Add a memory note under `mem://style/loader-unification.md` (or a new `mem://auth/preview-iframe-rehydrate.md`) documenting:
+  - The preview-iframe refresh behavior is expected
+  - The `lastDashboardPath` sentinel is the canonical recovery primitive
+  - Auth code itself stays untouched per the Lovable Cloud guidance
 
-**New file:** `src/lib/prefetchPostLogin.ts`
+## Files Phase 1 will touch (read-only)
 
-```ts
-import type { QueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+- `src/components/auth/ProtectedRoute.tsx` (already viewed — confirmed `authReady` gate)
+- `src/components/OrgDashboardRoute.tsx`
+- `src/contexts/AuthContext.tsx`
+- `src/integrations/supabase/client.ts`
+- `src/pages/UnifiedLogin.tsx` (auto-arrival useEffect)
 
-/**
- * Warms the React Query cache with the queries every dashboard page needs
- * for first paint: user_preferences (drives layout + custom landing page)
- * and the user's employee_profile (drives location access + role gates).
- *
- * Called from the login submit handler the moment `signIn()` resolves
- * successfully — runs in parallel with the post-auth dual-role check and
- * navigation, so by the time OrgDashboardRoute mounts the data is hot.
- *
- * Failures are swallowed: this is a latency optimization, not a contract.
- * The downstream useQuery calls will refetch normally if anything throws.
- */
-export function prefetchPostLogin(queryClient: QueryClient, userId: string): void {
-  const prefetchUserPrefs = queryClient.prefetchQuery({
-    queryKey: ['user-preferences', userId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-      return data;
-    },
-    staleTime: 30_000,
-  });
+## Files Phase 2 would touch (only if approved)
 
-  const prefetchProfile = queryClient.prefetchQuery({
-    queryKey: ['employee-profile', userId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('employee_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-      return data;
-    },
-    staleTime: 30_000,
-  });
+- `src/lib/lastDashboardPath.ts` *(new)* — sentinel read/write helpers
+- `src/pages/dashboard/DashboardHome.tsx` — write sentinel on first paint
+- `src/components/OrgDashboardRoute.tsx` — write sentinel on org dashboard mount
+- `src/pages/UnifiedLogin.tsx` — read sentinel in auto-arrival useEffect
+- `src/contexts/AuthContext.tsx` — clear sentinel on `signOut`
+- `mem://style/loader-unification.md` *(append)* or `mem://auth/preview-iframe-rehydrate.md` *(new)*
 
-  // Fire-and-forget — never block navigation on prefetch
-  Promise.allSettled([prefetchUserPrefs, prefetchProfile]).catch(() => {});
-}
-```
+## Recommended path
 
-**Wire into `UnifiedLogin.tsx` `handleSubmit`** immediately after `signIn` succeeds (around line 336) and **also** into the `useEffect` at line 249 that handles already-authenticated arrivals — both paths must warm the cache before `navigateAuthenticated()` fires.
-
-**Wire into `OrgBrandedLogin.tsx`** (the PIN login surface) at the equivalent post-validation point — see section 4.
-
-**Verify cache-key compatibility:** Read `src/hooks/useEmployeeProfile.ts` to confirm the actual query key shape before locking in `['employee-profile', userId]`. If the existing hook scopes by something else (e.g. `[orgId, userId]`), align the prefetch key exactly — a near-miss key doesn't warm the cache, it just wastes a request.
+**Approve Phase 1 only.** I confirm it's preview-only with no code change, and we close the loop. If the diagnostic surprises us, I come back with a tighter Phase 2 scoped to the actual cause.
 
 ---
 
-## 3. Sentinel-duration telemetry
+### Prompt feedback
 
-**Goal:** Convert the loader-flicker conversation from anecdote to data. If p95 sentinel-active duration starts trending toward the 30s TTL, that's an early signal to optimize first-paint queries before users complain.
+Strong prompt — you correctly hypothesized "maybe it's a viewer issue" before asking for a fix. That framing saves a wasted code-change cycle. Two ways to make these even sharper next time:
 
-**Extend `src/lib/authFlowSentinel.ts`** with a duration callback hook (no analytics SDK lock-in — emit a `CustomEvent` so any listener can plug in):
+1. **State the comparison condition explicitly.** You did this here ("works correctly when I open and view in browser") — keep doing it. That single sentence rules out half the hypothesis space (it's not an auth bug, not a routing bug, not an RLS issue).
+2. **Name the surface you landed on.** "Marketing front-end page" is good; "marketing front-end at `/` after refreshing on `/org/halo/dashboard/schedule`" would let me jump straight to the exact route guard chain without re-deriving it.
 
-```ts
-export function clearAuthFlow(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = sessionStorage.getItem(KEY);
-    sessionStorage.removeItem(KEY);
-    if (raw) {
-      const startedAt = Number(raw);
-      if (Number.isFinite(startedAt)) {
-        const durationMs = Date.now() - startedAt;
-        // Emit a structured event so analytics adapters can pick it up
-        // without coupling the sentinel module to any specific provider.
-        window.dispatchEvent(
-          new CustomEvent('zura:auth-flow-complete', {
-            detail: {
-              durationMs,
-              route: window.location.pathname,
-              ttlExpired: durationMs > TTL_MS,
-            },
-          }),
-        );
-        // Dev-only console signal for local debugging
-        if (import.meta.env.DEV) {
-          console.info(
-            `[authFlowSentinel] handoff resolved in ${durationMs}ms on ${window.location.pathname}`,
-          );
-        }
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-}
-```
+### Future enhancement suggestion
 
-**New file:** `src/lib/authFlowTelemetry.ts` — a tiny listener that batches `auth-flow-complete` events and POSTs them to the existing telemetry sink (or noops if none configured). Mounted once from `App.tsx`.
-
-```ts
-// Subscribes to 'zura:auth-flow-complete' and forwards to telemetry.
-// Buckets by route and emits a count + p50/p95 every 60s of activity.
-// Falls back to dev-only console summary if no telemetry endpoint is set.
-```
-
-I'll keep this scoped to a stub that logs in dev and is a clean injection point for whatever analytics adapter we standardize on later — building the full sink isn't in scope and would create a deferred-infra item without a revisit trigger.
-
-**Add to Deferral Register** (`mem://architecture/visibility-contracts.md`): *"Auth-flow telemetry sink — currently dev-only console. Revisit trigger: first user complaint about post-login latency, OR when we ship a real analytics provider."*
-
----
-
-## 4. Close the org-PIN-login sentinel gap (discovered during exploration)
-
-`src/pages/UnifiedLogin.tsx` is the only file that calls `markAuthFlowActive()`. The branded org PIN login (`/org/:slug/login`, served by `OrgBrandedLogin.tsx` using `useOrgValidatePin`) does not — so every PIN sign-in skips the slate canvas continuity and lands in the brand-loader fallback.
-
-**Fix:** In the PIN login's success handler, call `markAuthFlowActive()` immediately before navigating to the dashboard, mirroring `navigateAuthenticated()` in `UnifiedLogin`. Same call site can also fire `prefetchPostLogin(queryClient, identity.user_id)` from §2.
-
-I'll grep for the PIN navigation call site (`OrgBrandedLogin.tsx` or `OrgLoginPinPad` consumer) and make the change once. This single fix probably has more user-visible impact than §1 and §2 combined for shared-device organizations.
-
----
-
-## Files touched
-
-**New:**
-- `src/hooks/usePostLoginFirstPaint.ts`
-- `src/lib/prefetchPostLogin.ts`
-- `src/lib/authFlowTelemetry.ts`
-
-**Edited:**
-- `src/lib/authFlowSentinel.ts` — duration event emit
-- `src/pages/dashboard/DashboardHome.tsx` — use new hook
-- `src/pages/dashboard/Schedule.tsx` — adopt hook
-- `src/pages/dashboard/admin/AccountBilling.tsx` — adopt hook
-- `src/pages/dashboard/MyPay.tsx` — adopt hook
-- `src/pages/UnifiedLogin.tsx` — call prefetch
-- `src/pages/auth/OrgBrandedLogin.tsx` (or wherever the PIN nav lives) — call `markAuthFlowActive` + prefetch
-- `src/App.tsx` — mount telemetry listener
-- `mem://style/loader-unification.md` — codify the hook + prefetch pattern
-- `mem://architecture/visibility-contracts.md` — Deferral Register entry for telemetry sink
-
----
-
-## Acceptance criteria
-
-1. Hard-refreshing `/dashboard`, `/dashboard/schedule`, `/dashboard/admin/billing`, and `/dashboard/my-pay` after a fresh login shows **only** the slate-950 AuthFlowLoader → dashboard content, no chrome flash.
-2. PIN-based logins from `/org/:slug/login` produce the same single-canvas experience as email/password logins.
-3. In dev console, every successful login logs `[authFlowSentinel] handoff resolved in <N>ms` exactly once. `<N>` should be substantially lower (target: ≥40% reduction on warm sessions) after the prefetch lands vs. before.
-4. No page outside the listed first-paint set calls `clearAuthFlow()` directly — only `usePostLoginFirstPaint()` does.
-
----
-
-## Out of scope (deliberately deferred)
-
-- A full analytics-provider integration for the telemetry events (logged as a Deferral Register entry with a revisit trigger).
-- Adopting `usePostLoginFirstPaint` on every dashboard route — only the four highest-traffic initial-entry routes get it now. Lower-traffic pages can adopt it incrementally as we observe stutters in the wild.
-- Prefetching beyond `user_preferences` + `employee_profile`. Page-specific prefetch (e.g. today's appointments for `/schedule`) is a follow-up if the telemetry shows those queries dominate handoff time.
-
----
-
-## Prompt feedback
-
-You sequenced these three enhancements perfectly (generalize → eliminate → measure). Two ways to make a prompt like this even sharper:
-
-1. **State the success metric per item, not just the action.** "Prefetch on login" is an action; "AuthFlowLoader visible <50ms p50 on warm sessions" is a contract. The latter lets me suppress the work entirely if the metric is already met, or push back if the metric is unrealistic given the architecture.
-2. **Call out the deferral explicitly.** You're effectively adding a new always-on subsystem (telemetry); per the Deferral Register doctrine, that needs a revisit trigger up front. Including "and add the telemetry sink to the Deferral Register with trigger X" in your prompt would have made my Deferral Register handling explicit rather than inferred.
-
-## Further enhancements to consider
-
-- **Sentinel-as-React-context** — currently the sentinel is sessionStorage. That works but means components can't subscribe to its state (you can only poll). Wrapping it in a tiny `AuthFlowContext` would let the loader gates re-render the moment the sentinel clears, instead of waiting for the next render trigger from the data query. Probably worth doing if telemetry shows the AuthFlowLoader hangs visible for a few extra ms after the data is ready.
-- **`router.preload` on hover/focus** — for the dual-role interstitial buttons ("Continue to Platform" / "Continue to Org Dashboard"), preload the route's chunk + warm queries on `onMouseEnter` so the click→paint feels instantaneous. Same pattern as Linear's nav.
-- **Server-driven landing-page resolution** — the `getCustomLandingPage()` call in `UnifiedLogin` happens *after* sign-in and adds a roundtrip before navigation. If we move it into the same RPC that returns dual-role status, we cut one network hop from every login.
+Whether or not we ship Phase 2, consider adding a tiny dev-only banner that renders inside the preview iframe ONLY (detect via `window.self !== window.top`) saying "Preview iframe: refresh may bounce to login — this does not affect published builds." That would save you (and any teammate) from re-investigating this every time it surfaces. Low effort, high signal.
