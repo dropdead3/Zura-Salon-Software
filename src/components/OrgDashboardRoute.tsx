@@ -51,6 +51,23 @@ export function OrgDashboardRoute() {
     staleTime: 5 * 60 * 1000,
   });
 
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log('[OrgDashboardRoute] decision', {
+      pathname: location.pathname,
+      authReady,
+      hasUser: !!user,
+      isLoading,
+      orgSlug,
+      hasOrg: !!organization,
+      isPlatformUser,
+      membershipReady,
+      isMembershipLoading,
+      isMembershipFetched,
+      isMember,
+    });
+  }
+
   // 1) Wait for first session resolution before any redirect decision.
   if (!authReady) {
     return <BootLuxeLoader fullScreen />;
@@ -89,6 +106,8 @@ export function OrgDashboardRoute() {
   }
 
   // 7) Only now — with a real resolved pair and a completed query — can we deny.
+  // DOCTRINE: Dashboard routes must NEVER redirect to '/'. Only /login,
+  // /no-organization, OrgAccessDenied, or NotFound are valid exits.
   if (!isMember) {
     return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
   }
@@ -110,6 +129,18 @@ export function LegacyDashboardRedirect() {
   const { effectiveOrganization, isLoading: isOrgLoading } = useOrganizationContext();
   const { user, authReady } = useAuth();
   const path = splat || '';
+
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log('[LegacyDashboardRedirect] decision', {
+      path,
+      authReady,
+      hasUser: !!user,
+      isOrgLoading,
+      hasEffectiveOrg: !!effectiveOrganization,
+      slug: effectiveOrganization?.slug ?? null,
+    });
+  }
 
   // /dashboard/platform/* → /platform/*
   if (path.startsWith('platform')) {
@@ -147,7 +178,7 @@ export function LegacyDashboardRedirect() {
   }
 
   // 5) Authenticated, org query resolved, but no org for this account.
-  //    Send to dedicated dead-end page (NOT back to /login, which on production
-  //    lands on the marketing site and feels like the app dropped them).
+  //    DOCTRINE: NEVER send authenticated users to '/' (marketing). Use the
+  //    dedicated dead-end page instead so the experience is clear.
   return <Navigate to="/no-organization" replace />;
 }
