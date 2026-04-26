@@ -75,6 +75,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   private handleGoHome = () => {
+    // Stay inside the user's current dashboard context if possible.
+    // DOCTRINE: never kick an authenticated user to '/' (marketing) on a
+    // render error. Reload the same org-scoped URL; otherwise fall back to
+    // the legacy '/dashboard' redirect which resolves the slug from context.
+    if (typeof window !== 'undefined') {
+      const { pathname, search, hash } = window.location;
+      const orgDashMatch = pathname.match(/^\/org\/[^/]+\/dashboard(?:\/|$)/);
+      const platformMatch = pathname.startsWith('/platform');
+      if (orgDashMatch || platformMatch) {
+        window.location.assign(`${pathname}${search}${hash}`);
+        return;
+      }
+    }
     window.location.assign('/dashboard');
   };
 
