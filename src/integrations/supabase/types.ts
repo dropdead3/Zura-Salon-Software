@@ -8046,7 +8046,6 @@ export type Database = {
           emergency_phone: string | null
           extensions_certified: boolean | null
           full_name: string
-          hide_numbers: boolean
           highlighted_services: string[] | null
           hire_date: string | null
           homepage_order: number | null
@@ -8103,7 +8102,6 @@ export type Database = {
           emergency_phone?: string | null
           extensions_certified?: boolean | null
           full_name: string
-          hide_numbers?: boolean
           highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_order?: number | null
@@ -8160,7 +8158,6 @@ export type Database = {
           emergency_phone?: string | null
           extensions_certified?: boolean | null
           full_name?: string
-          hide_numbers?: boolean
           highlighted_services?: string[] | null
           hire_date?: string | null
           homepage_order?: number | null
