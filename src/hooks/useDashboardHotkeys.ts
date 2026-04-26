@@ -46,17 +46,19 @@ export function useDashboardHotkeys({
 
       switch (event.key) {
         case 'ArrowLeft':
-          event.preventDefault();
-          if (compactView) {
-            setCompactView(false);
-            toast('Switched to Detailed view', { duration: 1500 });
-          }
-          return;
-        case 'ArrowRight':
+          // Clamped: ← always moves toward Simple (left position in the toggle). No-op if already there.
           event.preventDefault();
           if (!compactView) {
             setCompactView(true);
             toast('Switched to Simple view', { duration: 1500 });
+          }
+          return;
+        case 'ArrowRight':
+          // Clamped: → always moves toward Detailed (right position in the toggle). No-op if already there.
+          event.preventDefault();
+          if (compactView) {
+            setCompactView(false);
+            toast('Switched to Detailed view', { duration: 1500 });
           }
           return;
         case 'ArrowDown': {
