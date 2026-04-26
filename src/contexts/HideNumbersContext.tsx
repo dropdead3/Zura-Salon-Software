@@ -1,6 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
@@ -25,13 +23,13 @@ interface HideNumbersContextType {
 const HideNumbersContext = createContext<HideNumbersContextType | undefined>(undefined);
 
 // Internal dialog component that uses context
-function HideNumbersConfirmDialog({ 
-  open, 
-  onOpenChange, 
-  onConfirm 
-}: { 
-  open: boolean; 
-  onOpenChange: (open: boolean) => void; 
+function HideNumbersConfirmDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }) {
   return (
@@ -45,7 +43,7 @@ function HideNumbersConfirmDialog({
               <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                  This feature is to prevent sensitive financial data from being displayed 
+                  This feature is to prevent sensitive financial data from being displayed
                   if logging in at the front desk or shared workstations.
                 </p>
               </div>
@@ -63,91 +61,43 @@ function HideNumbersConfirmDialog({
   );
 }
 
+/**
+ * Session-only privacy fence.
+ *
+ * `hideNumbers` defaults to `true` on every new session/tab and is held
+ * exclusively in React state for the lifetime of the provider mount.
+ * Reveal state is intentionally NOT persisted to the database, localStorage,
+ * or site_settings — re-login or new tab re-blurs by default. This protects
+ * front-desk and shared workstations from inheriting yesterday's revealed state.
+ */
 export function HideNumbersProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  // Start hidden by default for security
   const [hideNumbers, setHideNumbers] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // On login/mount, load persisted preference from database
-  useEffect(() => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-    
-    const loadPreference = async () => {
-      try {
-        const { data } = await supabase
-          .from('employee_profiles')
-          .select('hide_numbers')
-          .eq('user_id', user.id)
-          .single();
-        
-        // Use persisted value, default to hidden if no record
-        setHideNumbers(data?.hide_numbers ?? true);
-      } catch (err) {
-        console.error('Error loading hide_numbers preference:', err);
-        setHideNumbers(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadPreference();
-  }, [user]);
-
-  // Request to unhide - shows confirmation dialog
+  // Request to unhide via clicking a blurred value — shows confirmation dialog.
   const requestUnhide = () => {
     if (hideNumbers) {
       setShowConfirmDialog(true);
     }
   };
 
-  // Called when user confirms in dialog
-  const confirmUnhide = async () => {
+  const confirmUnhide = () => {
     setHideNumbers(false);
     setShowConfirmDialog(false);
-    
-    // Persist to database
-    if (user) {
-      try {
-        await supabase
-          .from('employee_profiles')
-          .update({ hide_numbers: false })
-          .eq('user_id', user.id);
-      } catch (err) {
-        console.error('Error saving hide_numbers preference:', err);
-      }
-    }
   };
 
-  // Toggle for header eye icon (bypasses confirmation since it's explicit)
-  const toggleHideNumbers = async () => {
-    if (!user) return;
-
-    const newValue = !hideNumbers;
-    setHideNumbers(newValue);
-
-    try {
-      await supabase
-        .from('employee_profiles')
-        .update({ hide_numbers: newValue })
-        .eq('user_id', user.id);
-    } catch (err) {
-      console.error('Error saving hide_numbers preference:', err);
-      setHideNumbers(!newValue);
-    }
+  // Toggle for header eye icon and `h` hotkey (explicit, no confirmation).
+  const toggleHideNumbers = () => {
+    setHideNumbers((prev) => !prev);
   };
-
-
 
   return (
-    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading }}>
+    <HideNumbersContext.Provider
+      value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading: false }}
+    >
       {children}
-      <HideNumbersConfirmDialog 
-        open={showConfirmDialog} 
+      <HideNumbersConfirmDialog
+        open={showConfirmDialog}
         onOpenChange={setShowConfirmDialog}
         onConfirm={confirmUnhide}
       />
@@ -171,11 +121,11 @@ interface BlurredAmountProps {
   disableTooltip?: boolean;
 }
 
-export function BlurredAmount({ 
-  children, 
+export function BlurredAmount({
+  children,
   className,
   as: Component = 'span',
-  disableTooltip = false
+  disableTooltip = false,
 }: BlurredAmountProps) {
   const { hideNumbers, requestUnhide } = useHideNumbers();
 
@@ -202,8 +152,8 @@ export function BlurredAmount({
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Component 
-            className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
+          <Component
+            className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')}
             tabIndex={0}
             onClick={requestUnhide}
             onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
