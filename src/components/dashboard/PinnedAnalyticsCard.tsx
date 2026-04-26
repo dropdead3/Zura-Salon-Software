@@ -587,7 +587,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
             <div className="mt-4 flex-1">
-              <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
+              <BlurredAmount className="font-display text-2xl font-medium truncate block">{metricValue}</BlurredAmount>
               {metricLabel && (
                 <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
                   {goalPaceIcon}
