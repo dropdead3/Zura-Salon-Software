@@ -50,6 +50,33 @@ export function TeamLoginUrlCard() {
   const [scope, setScope] = useState<string>('org'); // 'org' | locationId
   const generateSplash = useGenerateOrgSplash();
   const drift = useOrgSplashDrift();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const clearLockout = useClearDeviceLockout();
+  const { clearLockout: clearLocalLockout } = useSessionLockout(effectiveOrganization?.id);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+
+  const deviceFp = useMemo(() => getDeviceFingerprint(), []);
+  const fpPreview = deviceFp ? `${deviceFp.slice(0, 8)}…` : 'unknown';
+
+  const handleClearLockout = async () => {
+    if (!effectiveOrganization?.id) return;
+    try {
+      const res = await clearLockout.mutateAsync({
+        organizationId: effectiveOrganization.id,
+        surface: 'login',
+      });
+      clearLocalLockout();
+      setOverrideOpen(false);
+      toast.success(
+        res.clearedCount > 0
+          ? `Lockout cleared on this device (${res.clearedCount} attempt${res.clearedCount === 1 ? '' : 's'} removed)`
+          : 'No active lockout on this device — already clear',
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not clear lockout';
+      toast.error(message);
+    }
+  };
 
   const orgSlug = effectiveOrganization?.slug;
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
