@@ -111,7 +111,6 @@ export function AnimatedBlurredAmount({
   })();
 
   const handleClick = () => { if (hideNumbers) requestUnhide(); };
-  const handleDoubleClick = () => { if (!hideNumbers) quickHide(); };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && hideNumbers) requestUnhide(); };
 
   const displayContent = currency ? formattedValue : `${prefix}${formattedValue}${suffix}`;
