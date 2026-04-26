@@ -106,7 +106,7 @@ export function OrgDashboardRoute() {
 
   // 5) Platform users bypass membership entirely.
   if (isPlatformUser) {
-    return <DashboardOutlet />;
+    return <Outlet />;
   }
 
   // 6) Membership query not yet resolvable (orgId / userId still pairing) OR
