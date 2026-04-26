@@ -66,6 +66,25 @@ export function useKeyboardShortcuts() {
       category: 'Privacy',
       handler: () => toggleHideNumbers(),
     },
+    // Dashboard (handlers live in useDashboardHotkeys; listed here for the help dialog)
+    {
+      key: '←',
+      description: 'Switch to Detailed view (dashboard)',
+      category: 'Dashboard',
+      handler: () => {},
+    },
+    {
+      key: '→',
+      description: 'Switch to Simple view (dashboard)',
+      category: 'Dashboard',
+      handler: () => {},
+    },
+    {
+      key: '↑ / ↓',
+      description: 'Cycle locations (dashboard)',
+      category: 'Dashboard',
+      handler: () => {},
+    },
     // Help
     {
       key: '?',
