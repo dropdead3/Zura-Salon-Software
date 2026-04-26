@@ -20,6 +20,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useColorBarSetting } from '@/hooks/color-bar/useColorBarSettings';
 import { toast } from 'sonner';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { usePostLoginFirstPaint } from '@/hooks/usePostLoginFirstPaint';
 
 interface TipDistributionPolicy {
   enabled: boolean;
@@ -71,6 +73,12 @@ export default function MyPay() {
   // Redirect if org doesn't have payroll enabled
   if (!entitlementLoading && !isEntitled) {
     return <Navigate to={dashPath('/')} replace />;
+  }
+
+  // Post-login handoff: keep the slate-950 canvas continuous when the user
+  // lands directly on /my-pay (custom landing page or hard refresh).
+  if (usePostLoginFirstPaint(isLoading, entitlementLoading)) {
+    return <AuthFlowLoader />;
   }
 
   if (isLoading || entitlementLoading) {
