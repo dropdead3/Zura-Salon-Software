@@ -79,6 +79,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
 import { usePostLoginFirstPaint } from '@/hooks/usePostLoginFirstPaint';
+import { useDashboardHotkeys } from '@/hooks/useDashboardHotkeys';
 
 const ROLE_MESSAGES = {
   leadership: {
@@ -175,6 +176,15 @@ export default function DashboardHome() {
     setCompactView(v);
     try { localStorage.setItem('cc-view-mode', v ? 'compact' : 'detailed'); } catch {}
   };
+
+  // Page-local hotkeys: ←/→ toggle Simple/Detailed, ↑/↓ cycle locations
+  useDashboardHotkeys({
+    locationId,
+    setLocationId,
+    accessibleLocations,
+    compactView,
+    setCompactView: handleCompactChange,
+  });
   
   // Set default location when access data loads
   useEffect(() => {

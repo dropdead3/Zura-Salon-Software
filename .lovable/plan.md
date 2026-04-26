@@ -1,64 +1,62 @@
+# Add arrow-key hotkeys for location & view toggling on org dashboard
+
 ## Goal
-Register a single-key `h` shortcut that flips `hideNumbers` instantly in both directions — bypassing the reveal-confirmation dialog — so operators can hide/show monetary values without reaching for the top-bar eye icon.
+Mirror the schedule page hotkey doctrine on `DashboardHome`:
+- **↑ / ↓** — cycle through individual locations (skipping aggregate "All Locations"), wrapping at ends
+- **← / →** — toggle Simple ↔ Detailed view
+- **Sonner toast** confirms each change (1.5s, no description)
 
-## Approach
-Hook into the existing `useKeyboardShortcuts` infrastructure (which already powers `g h`, `g s`, `?`, etc.) so the new shortcut inherits the same input/textarea/dialog suppression and the help dialog auto-discovers it. The toggle will call `toggleHideNumbers()` from `HideNumbersContext`, which already (a) flips state and (b) persists to `employee_profiles.hide_numbers` — no DB or context changes required.
+## Files
 
-The only nuance is sequence collision: `useKeyboardShortcuts` already registers `g h` (Go to Home), so a bare `h` would either fire immediately or be swallowed while the `g`-prefix sequence is open. We resolve this by checking the current `keySequence` length before treating `h` as the privacy toggle — `h` only fires when no prefix is pending.
+### 1. NEW — `src/hooks/useDashboardHotkeys.ts`
+Modeled on `src/hooks/useScheduleHotkeys.ts` (proven page-local pattern).
 
-## Changes
+```ts
+useDashboardHotkeys({
+  locationId, setLocationId,
+  accessibleLocations,         // real locations only — aggregate is implicit ('')
+  compactView, setCompactView, // false=Detailed, true=Simple (matches existing cc-view-mode)
+})
+```
 
-### 1. `src/hooks/useKeyboardShortcuts.ts`
-- Import `useHideNumbers` from `@/contexts/HideNumbersContext`.
-- Add a new shortcut entry:
-  ```ts
-  {
-    key: 'h',
-    description: 'Hide / show monetary values',
-    category: 'Privacy',
-    handler: () => toggleHideNumbers(),
-  }
-  ```
-- In the `handleKeyDown` matcher, when the typed key is `h` AND `keySequence` is empty (no prefix like `g` is pending), treat it as the bare `h` shortcut. This preserves `g h` → dashboard navigation while letting standalone `h` toggle privacy.
-- No change to the `SEQUENCE_TIMEOUT` logic — bare keys already work this way; we just need to ensure `'h'` doesn't get re-interpreted as the start of a new prefix.
+Behavior:
+- Skip when target is INPUT/TEXTAREA/SELECT, contentEditable, or inside `[role="dialog"]`
+- Skip when meta/ctrl/alt held
+- **ArrowLeft** → `setCompactView(false)` + toast `Switched to Detailed view`
+- **ArrowRight** → `setCompactView(true)` + toast `Switched to Simple view`
+- **ArrowUp / ArrowDown** → cycle through `accessibleLocations` with wrap; toast `Viewing: <name>`
+  - If current `locationId === ''` (aggregate), Down starts at index 0, Up at last
+  - No-op if `accessibleLocations.length <= 1`
+- All matched keys call `event.preventDefault()` to suppress page scroll
 
-### 2. `src/components/KeyboardShortcutsDialog.tsx`
-- No code change needed. The dialog already groups by `category`, so the new "Privacy" section appears automatically with the `H` keycap rendered.
+### 2. EDIT — `src/pages/dashboard/DashboardHome.tsx`
+- Import and call the new hook near existing `locationId` / `compactView` state (around lines 168–177)
+- Pass `accessibleLocations` from `useUserLocationAccess`
+- No other changes
 
-### 3. Behavior contract (per user decision)
-- `h` while visible → instantly hides (no dialog).
-- `h` while hidden → instantly reveals (no dialog, bypassing `requestUnhide`).
-- This means the `h` path uses `toggleHideNumbers()` directly, not `requestUnhide()`. The eye-icon UX in the top bar remains unchanged — clicking the blurred value still triggers the confirmation dialog for users who don't know the shortcut.
+### 3. EDIT — `src/hooks/useKeyboardShortcuts.ts`
+Add three documentation-only entries under a new **Dashboard** category so the `?` help dialog lists them:
+- `←` — Switch to Detailed view
+- `→` — Switch to Simple view
+- `↑ / ↓` — Cycle locations
 
-## Guardrails (already inherited from `useKeyboardShortcuts`)
-- Suppressed inside `<input>`, `<textarea>`, `contentEditable`, and any `[role="dialog"]` — so `h` typed in a search box or modal won't fire.
-- Modifier combos (Cmd/Ctrl/Alt + h) are ignored — browser shortcuts (e.g., Cmd+H to hide app on macOS) keep working.
-- The shortcut is auto-listed in the `?` help dialog under a new "Privacy" category.
+Handlers are no-ops here — actual handling lives in the page-local hook (active only on dashboard). Same separation as `useScheduleHotkeys`.
 
-## Memory
-- Update `mem://style/platform-ui-standards-and-privacy` to note that `h` is the canonical privacy-toggle hotkey, and that it bypasses the reveal confirmation by design (operator-initiated, intentional keystroke).
+### 4. EDIT — `mem://style/platform-ui-standards-and-privacy`
+Append "Dashboard / Schedule hotkey doctrine" subsection:
+- Arrow keys reserved for primary axis-toggles on data-dense surfaces
+- Toast feedback required for transient state toggles (distinct from `h`, which is a persistent privacy state visible globally via blur)
+- Page-local `use<Page>Hotkeys` for state-dependent bindings; global `useKeyboardShortcuts` for nav/help
 
-## Out of Scope
-- No change to `HideNumbersContext` API, DB schema, or persistence path.
-- No change to `BlurredAmount` click-to-reveal behavior — that flow keeps its confirmation dialog for accidental clicks.
-- No new shortcut for other privacy surfaces (e.g., client names) — scope is monetary values only, matching the request.
+## Out of scope
+- `CommandCenterControlRow`, `AnalyticsFilterBar`, `LocationSelect`, `LocationMultiSelect` UI
+- Prefetching adjacent locations (revisit if cycling feels sluggish)
+- The `h` privacy hotkey
 
-## Files Touched
-- `src/hooks/useKeyboardShortcuts.ts` (add shortcut + sequence-collision guard)
-- `mem://style/platform-ui-standards-and-privacy` (document the hotkey)
-
----
-
-## Prompt Feedback
-**What worked well:** Your prompt was crisp — verb (`create`), mechanism (`hotkey`), key (`h`), mnemonic rationale (`hide`), target (`monetary values`), and scope (`dashboard`). That's enough to act on without a clarifier round in most cases.
-
-**Where it could be tighter:** The one ambiguity I had to ask about was *behavior asymmetry* — your existing privacy system intentionally gates **reveal** behind a confirmation dialog (shoulder-surfing protection). A prompt like *"hotkey `h` to toggle hide/show monetary values, bypassing the reveal confirmation"* would have let me skip the question entirely.
-
-**Prompt template for hotkey requests:**
-> Add hotkey `[key]` to `[action]`. Behavior: `[toggle | one-way | sequence]`. Bypass confirmations: `[yes/no]`. Scope: `[dashboard | global | specific page]`.
-
-## Further Enhancement Suggestions
-1. **Visual confirmation on toggle** — a subtle 1.5s toast (`"Numbers hidden"` / `"Numbers visible"`) so the user has feedback when the keystroke fires, especially since blurred → unblurred is obvious but unblurred → blurred can be missed if the user isn't looking at a number-heavy region.
-2. **Companion shortcut: `Shift+H` for "panic hide"** — if you ever want a one-way safety key (e.g., front-desk shared workstations), `Shift+H` could call `quickHide()` only, never reveal. Pairs naturally with the toggle.
-3. **Auto-hide on idle** — register an inactivity timer (e.g., 5 min) that calls `quickHide()`. Complements the manual hotkey with passive protection, useful for the shared-workstation persona the privacy system was built for.
-4. **Telemetry hook** — log `hide_numbers` toggles (count + method: hotkey vs. eye icon vs. blur-click) to understand whether the hotkey actually drives adoption of the privacy feature, or whether the eye icon stays dominant.
+## Verification
+1. `/org/drop-dead-salons/dashboard` → press `→` → Simple view + toast
+2. Press `←` → Detailed view + toast
+3. Press `↓` → next location selected + toast with name; wraps past the last
+4. Press `?` → shortcuts dialog shows new "Dashboard" section
+5. Focus an Add Task textarea → arrows behave normally, no hijack
+6. Open any dialog → arrows do nothing on dashboard underneath
