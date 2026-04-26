@@ -5,6 +5,8 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
 import { AccessDeniedView } from './AccessDeniedView';
 import { BootLuxeLoader } from '@/components/ui/BootLuxeLoader';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { isAuthFlowActive } from '@/lib/authFlowSentinel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 
 
@@ -43,7 +45,7 @@ export function ProtectedRoute({
     (requireSuperAdmin && profileLoading) ||
     (requiredPermission && !isPlatformUser && effectivePermissionsLoading);
   if (authOrPermissionsLoading) {
-    return <BootLuxeLoader fullScreen />;
+    return isAuthFlowActive() ? <AuthFlowLoader /> : <BootLuxeLoader fullScreen />;
   }
 
   if (!user) {
