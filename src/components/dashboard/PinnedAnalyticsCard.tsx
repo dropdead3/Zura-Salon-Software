@@ -410,16 +410,9 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'sales_overview':
-        if (isToday && todayActualData?.hasActualData) {
-          metricValue = formatCurrencySmart(todayActualData.actualRevenue);
-          metricLabel = 'Sales so far today';
-          metricSubtext = `${formatCurrencySmart(salesData?.totalRevenue ?? 0)} expected today`;
-        } else {
-          metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
-          metricLabel = isToday
-            ? "Today's expected revenue across all services and retail"
-            : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
-        }
+        // Custom render below — leave metricValue/metricLabel empty so we use the dedicated layout.
+        metricValue = '';
+        metricLabel = '';
         break;
       case 'daily_brief':
         metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
