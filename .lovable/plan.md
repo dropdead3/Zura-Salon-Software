@@ -1,39 +1,54 @@
-## Plan
+## Root cause
 
-The prompt is strong because it names the exact visual failure and the desired invariant: inputs must stay fully round at all times. A tighter prompt in the future would help even more if it names the exact surface too, for example: "On `/login`, Chrome autofill/focus is still rendering the email field as a rectangle. Keep the input itself `rounded-full` in all states and remove any global/browser override that paints square corners." That makes the target, browser state, and acceptance criteria unambiguous.
+The autofill normalization in `src/index.css` (~line 3170) sets:
 
-### What I found
-- The shared `Input` primitive already uses `rounded-full` and does not intentionally change shape on focus.
-- `UnifiedLogin.tsx` is using that shared `Input`, so the rectangle is not coming from a local `rounded-*` override there.
-- The remaining likely culprit is browser-driven styling during autofill / focus plus a global `*:focus-visible` outline rule in `src/index.css` that still applies to almost everything.
-- The screenshot matches a browser-painted rectangular autofill/focus layer rather than the app’s intended pill geometry.
+```css
+-webkit-text-fill-color: currentColor !important;
+```
 
-### Implementation plan
-1. Narrow the global focus rule so it no longer affects form controls that are supposed to use the input-shape canon.
-2. Strengthen the autofill normalization in `src/index.css` so Chrome/Safari preserve the input’s own `rounded-full` shape instead of painting a square autofill surface.
-3. Add explicit overflow/clip safety to the shared input/select primitives where needed so any browser-painted inner layer is clipped to the pill radius.
-4. Re-check `UnifiedLogin.tsx` and `OrgBrandedLogin.tsx` for any remaining class-level overrides that could reintroduce a square visual on email/password fields.
-5. Verify the same treatment across shared `Input`, `SelectTrigger`, and platform `PlatformInput` so the fix is consistent platform-wide.
+`currentColor` resolves against the input's own computed `color`, not the surrounding theme wrapper. Because the base `<Input>` primitive does not declare its own `color`, it falls back to Chrome's UA default for form controls (black) — so autofilled text paints black even on the dark login surface where the wrapper has `text-white`.
 
-### Files to update
-- `src/index.css`
-- `src/components/ui/input.tsx`
-- `src/components/ui/select.tsx`
-- `src/components/platform/ui/PlatformInput.tsx`
-- `src/pages/UnifiedLogin.tsx`
-- `src/pages/OrgBrandedLogin.tsx` (only if any lingering local override remains)
+Compounding this: `-webkit-text-fill-color` always wins over `color` for autofilled inputs, so a `text-white` className on the input has no effect on autofilled text.
 
-### Acceptance criteria
-- Email and password inputs remain `rounded-full` before focus, on focus, while autofilled, and while browser password suggestions are open.
-- No focus state changes the perceived geometry to rectangle.
-- Focus feedback is fill-only, using a slight tonal shift, with no border/ring/shape jump.
-- The default Zura palette remains intact.
+## Fix
 
-## Technical details
-- Likely change in `src/index.css`: replace the broad `*:focus-visible:not([data-radix-collection-item])` rule with a more targeted selector so generic browser focus outlines do not visually compete with pill controls.
-- Likely autofill adjustments: preserve `border-radius: inherit`, add clipping/painting safeguards, and ensure the autofill fill follows the input’s own background instead of a browser rectangle.
-- If needed, primitives will get `overflow-hidden` or equivalent clipping so browser inner paint cannot escape the pill radius.
+Replace `currentColor` with the theme-aware foreground token so autofilled text follows the active theme automatically:
 
-### Enhancement suggestions
-- Add a small authoring-time canon note or lint follow-up to prevent reintroducing broad global focus selectors that override component-specific input behavior.
-- Add one preview QA checklist item for login surfaces: normal, focused, autofilled, and password-manager-open states.
+```css
+-webkit-text-fill-color: hsl(var(--foreground)) !important;
+caret-color: hsl(var(--foreground)) !important;
+```
+
+`--foreground` is already defined per theme (white in dark mode, near-black in light mode) and updates reactively when the theme switches. This means:
+
+- Login (dark) → autofilled text = white ✅
+- Light-mode dashboard form → autofilled text = near-black ✅
+- Theme switch → autofilled text re-paints automatically ✅
+
+This is the canonical fix because it removes the dependency on cascade resolution and pins autofill text to the same token every other piece of UI text uses.
+
+## Files to change
+
+1. **`src/index.css`** (~line 3170)
+   - Replace `-webkit-text-fill-color: currentColor !important` with `-webkit-text-fill-color: hsl(var(--foreground)) !important`
+   - Replace `caret-color: currentColor !important` with `caret-color: hsl(var(--foreground)) !important`
+
+2. **`mem://style/input-shape-canon.md`**
+   - Update the autofill normalization section to document why `currentColor` is banned and `--foreground` is required.
+   - Add this to the anti-patterns list: "Using `currentColor` in `-webkit-text-fill-color` — autofill resolves it to UA defaults, not the surrounding theme."
+
+## Acceptance criteria
+
+- On `/login` in dark mode: Chrome autofills `email`/`password` → text is white and clearly visible against the dark input.
+- Switching to a light-mode org theme on a form with autofill → text is dark/foreground-colored, not white-on-white.
+- The pill input shape and fill-tone focus behavior remain unchanged (this is a color-only change, no geometry or focus interaction touched).
+- No regression on Safari (which uses the same `:-webkit-autofill` selector path).
+
+## Why this won't flip again
+
+The previous three rounds on this surface all failed because each fix targeted a *different layer* (the primitive className, the autofill mask, the global focus outline) without addressing the actual color resolution. Pinning to `--foreground` aligns autofill with the same token system that drives every other text surface — the next theme change (Cream, Rose, Ocean, etc.) will automatically pick up the right autofill color without any further work.
+
+## Enhancement suggestions
+
+1. **Visual regression QA on theme switch** — the canon memory should call out a test case: autofill an input in dark mode, switch to a light theme, confirm autofill text re-paints to the new foreground color.
+2. **Stylelint rule (deferred)** — when the deferred input-shape lint rule lands, also ban `currentColor` inside `-webkit-text-fill-color` declarations. That's the leverage marker that prevents this from ever recurring.
