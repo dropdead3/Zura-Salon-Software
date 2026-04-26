@@ -196,7 +196,7 @@ export default function UnifiedLogin() {
   const navigateAuthenticated = useCallback(
     (path: string) => {
       markAuthFlowActive();
-      navigate(path, { replace: true });
+      navigateAuthenticated(path);
     },
     [navigate],
   );
@@ -259,7 +259,7 @@ export default function UnifiedLogin() {
             userId: user.id,
           });
           sonnerToast.success('Welcome to the platform!');
-          navigate('/platform/overview', { replace: true });
+          navigateAuthenticated('/platform/overview');
           return;
         } catch (error) {
           console.error('Failed to accept platform invitation:', error);
@@ -271,17 +271,17 @@ export default function UnifiedLogin() {
       if (info.hasPlatformRoles && info.hasOrgMembership) {
         const savedPref = await getDualRolePreference(user.id);
         if (savedPref === 'platform') {
-          navigate('/platform/overview', { replace: true });
+          navigateAuthenticated('/platform/overview');
           return;
         }
         if (savedPref?.startsWith('org_dashboard:')) {
           const slug = savedPref.split(':')[1];
-          navigate(slug ? `/org/${slug}/dashboard` : '/dashboard', { replace: true });
+          navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard');
           return;
         }
         // Legacy format
         if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
-          navigate(`/org/${info.orgs[0].slug}/dashboard`, { replace: true });
+          navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`);
           return;
         }
         setDualRoleInfo(info);
@@ -291,7 +291,7 @@ export default function UnifiedLogin() {
       }
 
       const redirectPath = await getUserRedirectPath(user.id, from);
-      navigate(redirectPath, { replace: true });
+      navigateAuthenticated(redirectPath);
     };
 
     checkAccess();
@@ -343,7 +343,7 @@ export default function UnifiedLogin() {
                   userId: loggedInUser.id,
                 });
                 sonnerToast.success('Welcome to the platform!');
-                navigate('/platform/overview', { replace: true });
+                navigateAuthenticated('/platform/overview');
                 return;
               } catch (error) {
                 console.error('Failed to accept platform invitation:', error);
@@ -355,16 +355,16 @@ export default function UnifiedLogin() {
             if (info.hasPlatformRoles && info.hasOrgMembership) {
               const savedPref = await getDualRolePreference(loggedInUser.id);
               if (savedPref === 'platform') {
-                navigate('/platform/overview', { replace: true });
+                navigateAuthenticated('/platform/overview');
                 return;
               }
               if (savedPref?.startsWith('org_dashboard:')) {
                 const slug = savedPref.split(':')[1];
-                navigate(slug ? `/org/${slug}/dashboard` : '/dashboard', { replace: true });
+                navigateAuthenticated(slug ? `/org/${slug}/dashboard` : '/dashboard');
                 return;
               }
               if (savedPref === 'org_dashboard' && info.orgs.length > 0) {
-                navigate(`/org/${info.orgs[0].slug}/dashboard`, { replace: true });
+                navigateAuthenticated(`/org/${info.orgs[0].slug}/dashboard`);
                 return;
               }
               setDualRoleInfo(info);
@@ -374,7 +374,7 @@ export default function UnifiedLogin() {
             }
 
             const redirectPath = await getUserRedirectPath(loggedInUser.id, from);
-            navigate(redirectPath, { replace: true });
+            navigateAuthenticated(redirectPath);
           }
         }
       } else {
@@ -405,7 +405,7 @@ export default function UnifiedLogin() {
                 ? `Your account has been created with the ${roleOptions.find(r => r.value === staffInvitation.role)?.label} role.`
                 : `Welcome! You've been registered as ${roleOptions.find(r => r.value === role)?.label}.`,
             });
-            navigate('/dashboard', { replace: true });
+            navigateAuthenticated('/dashboard');
           }
         }
       }
@@ -437,7 +437,7 @@ export default function UnifiedLogin() {
       const path = destination === 'platform'
         ? '/platform/overview'
         : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
-      navigate(path, { replace: true });
+      navigateAuthenticated(path);
     };
 
     return (
