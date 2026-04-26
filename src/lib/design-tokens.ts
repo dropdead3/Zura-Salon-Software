@@ -172,22 +172,6 @@ export const tokens = {
     search: 'bg-muted/50 border-border/60',
     /** Filter dropdown: subtle filled background with soft border */
     filter: 'bg-muted/50 border-border/60',
-  },
-
-  // ========================================
-  // TABLE TOKENS
-  // ========================================
-  table: {
-    /** Column header: Aeonik Pro, small, medium weight, muted, tracked — NEVER uppercase */
-    columnHeader: 'font-sans text-sm font-medium text-foreground/60 tracking-wider',
-  },
-
-  // ========================================
-  // INPUT / FORM CONTROL TOKENS (Canon)
-  // ========================================
-  // Calm rectangular shape across the entire platform. Focus = fill-tone shift only.
-  // No radius change, no ring, no border-color jump on focus.
-  input: {
     /** Canonical rectangular shape — applies to inputs, selects, textareas */
     shape: 'rounded-xl',
     /** Idle border — subtle, theme-aware */
@@ -201,6 +185,14 @@ export const tokens = {
       'dark:focus:bg-white/[0.04] dark:focus-visible:bg-white/[0.04]',
     /** Smooth tonal transition — no geometry, no color jump */
     transition: 'transition-colors duration-150',
+  },
+
+  // ========================================
+  // TABLE TOKENS
+  // ========================================
+  table: {
+    /** Column header: Aeonik Pro, small, medium weight, muted, tracked — NEVER uppercase */
+    columnHeader: 'font-sans text-sm font-medium text-foreground/60 tracking-wider',
   },
 
   // ========================================
