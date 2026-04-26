@@ -448,6 +448,8 @@ export default function OrgBrandedLogin() {
               ) : (
                 <PreLockoutWarning attemptsRemaining={attemptsRemaining} />
               )}
+
+              <OrgLoginPinPad
                 value={pin}
                 onChange={setPin}
                 onSubmit={handlePinSubmit}
