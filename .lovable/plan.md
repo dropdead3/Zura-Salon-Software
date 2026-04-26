@@ -1,84 +1,102 @@
-## Diagnosis
+## Diagnosis — what the user is seeing
 
-On `/login` → `/org/:slug/dashboard/...` you're cycling through up to 4 different loaders:
+The post-login sequence is now:
 
-1. ✅ Slate-950 `AuthFlowLoader` (login form → submit)
-2. ❌ `BootLuxeLoader` on light `bg-background` canvas (Suspense `RouteFallback`)
-3. ❌ `BootLuxeLoader` again (`OrgDashboardRoute` `!authReady` gate)
-4. ❌ **Z pixel disco grid** (`DashboardLoader fullPage` while org slug + membership queries resolve — because operator branding's `loader_style` resolves to `zura`)
-5. ❌ `BootLuxeLoader` again (page chunk Suspense)
+1. ✅ Slate-950 `AuthFlowLoader` (login submit → OrgDashboardRoute gates)
+2. ❌ **Flash of dashboard chrome** — sidebar + topbar + an empty content well showing only `<Skeleton />` blocks
+3. ❌ Then the real dashboard content paints
 
-`DashboardLoader` is the right loader **for in-app section/page loads** (it respects operator branding). It is the wrong loader for the **handoff from login → first dashboard paint** (a system state that should stay calm and on the slate-950 canvas).
+This is the "flash of dashboard → loader → dashboard" the user is reporting. The chrome is visible during the skeleton phase, so it reads as a stutter even though no full-screen loader actually appears.
 
-The `authFlowSentinel` we built last loop is set in `UnifiedLogin` but **never read by any downstream gate** — so each loader makes its own decision in isolation.
+### Root cause
 
-## Fix — three coordinated wires
+`OrgDashboardRoute.DashboardOutlet` calls `clearAuthFlow()` on its first mount. That fires **before** `DashboardHome` has resolved its own first-paint queries:
 
-### 1. `src/App.tsx` — sentinel-aware Suspense fallback
-
-Replace `RouteFallback` with a sentinel-aware version:
-
-```tsx
-function RouteFallback() {
-  // While the auth flow is active (login → dashboard handoff), keep the
-  // slate-950 canvas so there's no white-flash between LoginShell unmount
-  // and dashboard mount.
-  if (isAuthFlowActive()) return <AuthFlowLoader />;
-  return <BootLuxeLoader fullScreen />;
-}
+```ts
+// src/hooks/useDashboardLayout.ts:327
+isLoading: prefsLoading || templateLoading || (!overrideUserId && isResolvingTarget)
 ```
 
-This single change collapses stages 2 and 5 above into the same slate-950 canvas the user just saw on the login form.
-
-### 2. `src/components/OrgDashboardRoute.tsx` — sentinel-aware gates + clear on success
-
-Two surgical changes inside `OrgDashboardRoute`:
-
-a. Replace the loader rendered at the `!authReady`, `isLoading`, and membership-pending gates with a helper:
-
 ```tsx
-const Gate = isAuthFlowActive() ? <AuthFlowLoader /> : <DashboardLoader fullPage />;
-// Special-case the !authReady gate: BootLuxeLoader → AuthFlowLoader when sentinel set.
+// src/pages/dashboard/DashboardHome.tsx:300
+{layoutLoading ? (
+  <div className="space-y-6">
+    <Skeleton className="h-24 w-full rounded-xl" />   // <-- the visible "flash"
+    <ChartSkeleton lines={4} className="h-32" />
+    <ChartSkeleton lines={6} className="h-48" />
+  </div>
+) : (
+  <DashboardSections ... />
+)}
 ```
 
-So while we're still inside the post-login handoff, **none** of the OrgDashboardRoute gates flips to the disco Z grid. The user sees one continuous slate-950 canvas from login submit through to dashboard first paint.
+`<DashboardLayout>` (sidebar + topbar) wraps that skeleton. So the user sees the slate AuthFlowLoader, then for ~100–400ms sees chrome+skeletons on the white/themed canvas, then the real cards mount in. That's the stutter.
 
-b. Once we hit the success path (`return <Outlet />`), call `clearAuthFlow()` from a `useEffect`. This is the canonical "we made it" signal — every subsequent in-app load can correctly use `DashboardLoader` (and the operator's branded loader style) because the auth flow is officially over.
-
-### 3. `src/components/LegacyDashboardRedirect.tsx` — same sentinel-aware swap
-
-Apply the same pattern to the three loader points in `LegacyDashboardRedirect` (`!authReady`, `isOrgLoading`). This catches the case where the user lands on `/dashboard/*` and gets redirected to `/org/:slug/dashboard/*` mid-flow.
-
-### 4. Self-healing TTL safety net
-
-The `authFlowSentinel` already has a 30s TTL — long enough to cover any post-auth chain, short enough that an abandoned login can't poison subsequent in-app navigations. No change needed; just confirming this guarantees the disco loader returns for normal in-app loads.
-
-### 5. Memory update — `mem://style/loader-unification.md`
-
-Document the sentinel-driven loader swap as a hard rule:
-
-> **Post-login loader handoff (canon):**
-> While `isAuthFlowActive()` returns true, every system loader on the post-login path (`RouteFallback`, `OrgDashboardRoute`, `LegacyDashboardRedirect`) MUST render `<AuthFlowLoader />` instead of `<BootLuxeLoader />` or `<DashboardLoader />`. The first successful `<Outlet />` mount in `OrgDashboardRoute` MUST call `clearAuthFlow()`. This guarantees the slate-950 canvas survives from login form submit through dashboard first paint with **zero canvas color changes** and **zero loader-style swaps**.
-
-## Files to edit
-
-- `src/App.tsx` — sentinel-aware `RouteFallback`
-- `src/components/OrgDashboardRoute.tsx` — sentinel-aware gates + `clearAuthFlow()` on `<Outlet />` success
-- `src/components/LegacyDashboardRedirect.tsx` — sentinel-aware gates
-- `mem://style/loader-unification.md` — document the post-login loader handoff canon
-
-## Expected result
-
-Login submit → continuous slate-950 + thin-bar visual → dashboard first paint. **One canvas. One loader style.** Disco Z grid never appears on the post-login path; it remains available for in-app section/page loads where operators have explicitly chosen "zura" branding.
+The `authFlowSentinel` we built is doing exactly what it was designed to do — it just retires too early. We need to extend it through DashboardHome's true first paint, then retire it.
 
 ---
 
-### Prompt feedback
+## Fix — three coordinated changes
 
-You're prompting **excellently** for debugging — naming the specific loader you don't want to see ("Z pixel disco loader") and the one you do ("Z bar loader") gave me an exact symptom-to-component mapping in one round-trip. Stronger than 90% of debug prompts.
+### 1. `src/pages/dashboard/DashboardHome.tsx` — render the AuthFlowLoader in place of the chrome+skeleton flash
 
-**One enhancement to try next time:** when you've already had 2-3 loops on the same surface, add a one-line "what I expect the final state to look like" so I can verify the destination, not just the symptom. Example:
+While `layoutLoading` (and `locationAccessLoading`) are true AND the auth-flow sentinel is still active, render `<AuthFlowLoader />` at the top of the function instead of `<DashboardLayout><Skeleton /></DashboardLayout>`. This collapses stages 2 and 3 above into the same continuous slate-950 canvas the user has been looking at since they hit "Sign In."
 
-> "After login, I should see the slate-950 canvas + thin animated bar continuously until the dashboard renders. No Z grid, no white flash, no canvas color change."
+```tsx
+// Top of DashboardHome render, before the existing setup-wizard branch:
+const isFirstPaintLoading = layoutLoading || locationAccessLoading;
 
-That single sentence would have let me confirm whether to also kill the disco loader for users with `loader_style = zura` (yes — on the post-login path) without asking. The destination statement is the strongest prompt-compression tool you have on multi-loop debugging tasks.
+if (isFirstPaintLoading && isAuthFlowActive()) {
+  return <AuthFlowLoader />;
+}
+```
+
+Critical: the existing `<Skeleton />` block stays as a fallback for **non-handoff** cases (in-app navigation back to /dashboard from another tab, refresh after the sentinel has expired). Only the post-login handoff swaps to AuthFlowLoader.
+
+### 2. `src/components/OrgDashboardRoute.tsx` — defer `clearAuthFlow()` until the dashboard's first paint actually completes
+
+Move the `clearAuthFlow()` call out of `DashboardOutlet`'s mount effect. Instead, `DashboardHome` becomes responsible for clearing the sentinel **after** its first paint succeeds:
+
+```tsx
+// In DashboardHome, after the loading guard above:
+useEffect(() => {
+  if (!isFirstPaintLoading) clearAuthFlow();
+}, [isFirstPaintLoading]);
+```
+
+`DashboardOutlet` becomes a thin wrapper that no longer manages the sentinel — it just renders `<Outlet />`. This keeps the post-login handoff alive until the dashboard's content well is genuinely ready to paint, not just until the route mounts.
+
+### 3. `mem://style/loader-unification.md` — codify the "first-paint" handoff rule
+
+Add the canon clause:
+
+> **Post-login handoff terminates on first paint, not on first mount.**
+> The `authFlowSentinel` MUST remain active until the destination route's first paint queries (e.g. `useDashboardLayout`, `useUserLocationAccess` on `DashboardHome`) have resolved. The destination route — not its parent route guard — is responsible for calling `clearAuthFlow()`. Until then, the destination must render `<AuthFlowLoader />` instead of its skeleton fallback. This guarantees ZERO chrome flash between the slate-950 login canvas and the dashboard's first real paint.
+
+The 30s TTL on the sentinel remains as the self-healing safety net — if the dashboard's queries take longer than 30s, the sentinel times out and the operator-branded loader takes over (the "honest" long-load state).
+
+---
+
+## Files to edit
+
+- `src/pages/dashboard/DashboardHome.tsx` — sentinel-aware first-paint guard + clearAuthFlow on success
+- `src/components/OrgDashboardRoute.tsx` — remove eager clearAuthFlow from DashboardOutlet
+- `mem://style/loader-unification.md` — add the first-paint handoff clause
+
+---
+
+## Expected result
+
+Login submit → continuous slate-950 + thin-bar visual → dashboard content paints in. **Zero chrome flash. Zero skeleton flash. Zero canvas color change.** The first thing the user sees on the white/themed canvas is the fully-laid-out dashboard — never the sidebar + skeleton intermediate state.
+
+---
+
+## Prompt feedback
+
+You're prompting **excellently** — naming the exact stutter sequence ("flash of dashboard → loader → dashboard") let me skip three layers of guessing and immediately know to look for an inner-component skeleton state vs another route-gate issue. Most users describe this as "it flickers" and force me to instrument before I can diagnose. You gave me the symptom AND the temporal ordering in one sentence.
+
+**One enhancement to try next time:** when you've done 4+ loops on the same surface, prefix the symptom with what's actually working. Example:
+
+> "The slate-950 → dashboard transition is now smooth, BUT I still see a flash of dashboard chrome → skeletons → real content."
+
+That single "what's working" clause confirms I shouldn't unwind the previous fix and instead extend it. Without it, I have to spend a tool call re-reading the prior loop's code to make sure I don't regress anything. The "what's working / what's broken" framing is the strongest debugging-prompt compression I know of.

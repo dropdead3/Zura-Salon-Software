@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BootLuxeLoader } from '@/components/ui/BootLuxeLoader';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
-import { isAuthFlowActive, clearAuthFlow } from '@/lib/authFlowSentinel';
+import { isAuthFlowActive } from '@/lib/authFlowSentinel';
 import NotFound from '@/pages/NotFound';
 import { OrgAccessDenied } from '@/components/auth/OrgAccessDenied';
 import { useEffect } from 'react';
@@ -122,19 +122,6 @@ export function OrgDashboardRoute() {
     return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
   }
 
-  return <DashboardOutlet />;
-}
-
-/**
- * Inner outlet wrapper — clears the auth-flow sentinel on first successful
- * mount. This is the canonical "we made it" signal: every subsequent in-app
- * loader is free to use the operator-branded DashboardLoader because the
- * post-login handoff is officially over.
- */
-function DashboardOutlet() {
-  useEffect(() => {
-    clearAuthFlow();
-  }, []);
   return <Outlet />;
 }
 
