@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { PLATFORM_NAME, PLATFORM_NAME_FULL } from '@/lib/brand';
 import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +18,9 @@ import { toast as sonnerToast } from 'sonner';
 import { Loader2, ArrowLeft, Eye, EyeOff, Mail, CheckCircle, Shield, Building2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlatformLogo } from '@/components/brand/PlatformLogo';
+import { LoginShell } from '@/components/auth/LoginShell';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { markAuthFlowActive } from '@/lib/authFlowSentinel';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
