@@ -183,6 +183,27 @@ export const tokens = {
   },
 
   // ========================================
+  // INPUT / FORM CONTROL TOKENS (Canon)
+  // ========================================
+  // Calm rectangular shape across the entire platform. Focus = fill-tone shift only.
+  // No radius change, no ring, no border-color jump on focus.
+  input: {
+    /** Canonical rectangular shape — applies to inputs, selects, textareas */
+    shape: 'rounded-xl',
+    /** Idle border — subtle, theme-aware */
+    border: 'border border-input',
+    /** Idle fill — slightly recessed from card background */
+    fill: 'bg-background',
+    /** Focus = fill-tone delta only. Works on every theme + light/dark. */
+    focus:
+      'focus:outline-none focus-visible:outline-none ' +
+      'focus:bg-muted/60 focus-visible:bg-muted/60 ' +
+      'dark:focus:bg-white/[0.04] dark:focus-visible:bg-white/[0.04]',
+    /** Smooth tonal transition — no geometry, no color jump */
+    transition: 'transition-colors duration-150',
+  },
+
+  // ========================================
   // LOADING STATE TOKENS
   // ========================================
   loading: {

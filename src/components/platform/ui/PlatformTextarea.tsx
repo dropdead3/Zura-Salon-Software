@@ -8,7 +8,9 @@ const PlatformTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     <Textarea
       ref={ref}
       className={cn(
-        'bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))] focus-visible:border-[hsl(var(--platform-primary)/0.5)]',
+        // Input shape canon: focus = fill-tone shift only (no border-color change).
+        'bg-[hsl(var(--platform-input))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
+        'focus:bg-[hsl(var(--platform-input-focus))] focus-visible:bg-[hsl(var(--platform-input-focus))]',
         className,
       )}
       {...props}

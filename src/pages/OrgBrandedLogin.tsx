@@ -482,7 +482,7 @@ export default function OrgBrandedLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 focus-visible:ring-violet-500"
+                  className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 focus:bg-white/[0.08] focus-visible:bg-white/[0.08]"
                 />
                 {emailError && <p className="text-xs text-red-400">{emailError}</p>}
               </div>
@@ -497,7 +497,7 @@ export default function OrgBrandedLogin() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 pr-10 focus-visible:ring-violet-500"
+                    className="bg-white/[0.04] border-white/10 text-white placeholder:text-white/30 pr-10 focus:bg-white/[0.08] focus-visible:bg-white/[0.08]"
                   />
                   <button
                     type="button"
