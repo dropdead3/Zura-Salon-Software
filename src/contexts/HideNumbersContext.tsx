@@ -159,7 +159,7 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, quickHide, isLoading }}>
+    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading }}>
       {children}
       <HideNumbersConfirmDialog 
         open={showConfirmDialog} 
