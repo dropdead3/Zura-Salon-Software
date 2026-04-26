@@ -19,8 +19,8 @@ const PlatformSelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      // Input shape canon: rectangular rounded-xl, focus = fill-tone shift only.
-      'flex h-10 w-full items-center justify-between rounded-xl border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-4 py-2 text-sm text-[hsl(var(--platform-foreground))]',
+      // Input shape canon: PILL (rounded-full). Focus = fill-tone shift only.
+      'flex h-10 w-full items-center justify-between rounded-full border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-5 py-2 text-sm text-[hsl(var(--platform-foreground))]',
       'placeholder:text-[hsl(var(--platform-foreground-subtle))]',
       'transition-colors duration-150',
       'focus:outline-none focus-visible:outline-none focus:bg-[hsl(var(--platform-input-focus))] focus-visible:bg-[hsl(var(--platform-input-focus))]',

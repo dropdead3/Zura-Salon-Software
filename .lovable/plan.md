@@ -1,99 +1,115 @@
 ## Goal
 
-Eliminate the "shape change" you're seeing on focus and standardize every input/select/textarea on a single calm rectangular shape across the entire platform. Focus becomes a **fill-tone shift only** (subtly lighter or darker depending on theme/mode) — no radius change, no ring, no border-color jump, no pill→rectangle hop.
+Make every input control on the entire platform **fully round (`rounded-full`)** and **never change shape, border color, or geometry on focus** — only a subtle fill-tone shift to acknowledge interaction.
 
-## Root cause confirmed
+The screenshot shows the bug clearly: the email field renders pill-shaped (autofill repaint masks the radius) while the password field renders rectangular — same primitive, two different shapes. Root cause: the canon I established last round was `rounded-xl`, and `UnifiedLogin.tsx` adds `focus:border-violet-500` to every input, so on focus the border *jumps color* on top of an already-inconsistent baseline radius. Both must go.
 
-Three different radii are in play right now:
+---
 
-| Primitive | Current | Result |
-|---|---|---|
-| `Input` (`src/components/ui/input.tsx`) | `rounded-full` (pill) | email field in your screenshot |
-| `Textarea` (`src/components/ui/textarea.tsx`) | `rounded-md` | mismatched |
-| `SelectTrigger` (`src/components/ui/select.tsx`) | `rounded-full` (pill) | mismatched with textarea |
-| `PlatformInput` | `rounded-xl` | mismatched with org `Input` |
-| Login page password field | inherits `rounded-full` but `pr-10` + autofill UA styles visually re-square it on focus | the awkward shape jump in your screenshot |
+## Wave 1 — Update the input canon to pill geometry
 
-Plus, focus styles are inconsistent: `focus-visible:border-foreground/30` (Input/Textarea/Select) flips border color on focus → reads as a "shape change" alongside the autofill background.
+**File:** `src/lib/design-tokens.ts`
 
-## Plan — 4 waves
+Change `tokens.input.shape` from `'rounded-xl'` to `'rounded-full'`. Update the JSDoc from "Canonical rectangular shape" to "Canonical pill shape — never overridden, never animated, never changes on focus." This is the single source of truth that the lint rule will enforce against.
 
-### Wave 1 — Establish the canonical input shape token
+The focus token (`focus:bg-muted/60` + `dark:focus:bg-white/[0.04]`) stays exactly as is — it's already correct: fill-tone delta only, no border, no ring, no geometry.
 
-Add a single source of truth in `src/lib/design-tokens.ts`:
+---
 
-```ts
-input: {
-  // Rectangular, calm. Same radius as PlatformInput already uses.
-  shape: 'rounded-xl',
-  // Focus = fill-tone shift only. No ring, no border color jump, no shape change.
-  focus: 'focus:outline-none focus-visible:outline-none focus:bg-muted/60 focus-visible:bg-muted/60 dark:focus:bg-white/[0.06] dark:focus-visible:bg-white/[0.06]',
-  // Idle fill — slightly recessed from background so focus tone has room to read
-  fill: 'bg-muted/30 dark:bg-white/[0.03]',
-  border: 'border border-input',
-  transition: 'transition-colors duration-150',
-}
-```
+## Wave 2 — Apply pill geometry to org primitives
 
-Rationale: focus signal becomes a **brightness delta against the surrounding card**, which works on both light and dark themes and on every tenant palette (Zura purple, Cream, Rose, Sage, Ocean, Ember, Noir) without per-theme overrides. The border stays put; the radius stays put.
+**Files:**
+- `src/components/ui/input.tsx` — swap `rounded-xl` → `rounded-full`. Bump horizontal padding from `px-4` → `px-5` so text doesn't kiss the curve at the pill ends.
+- `src/components/ui/textarea.tsx` — textareas cannot be `rounded-full` (it would clip multi-line content into a lozenge). Keep at `rounded-2xl` (slightly rounder than today's xl) and document the deliberate exception in a comment so future audits don't "fix" it back to xl.
+- `src/components/ui/select.tsx` — trigger swaps `rounded-xl` → `rounded-full` with `px-5`. Dropdown content stays `rounded-xl` (the popover panel is not an input). The item rows already use `rounded-full` — leave them.
 
-### Wave 2 — Update the 3 org primitives
+All three keep the existing focus-fill-tone logic untouched. No `focus:border-*`, no `focus:ring-*`, no `focus:rounded-*`.
 
-- **`src/components/ui/input.tsx`** — replace `rounded-full` → `rounded-xl`; remove `focus-visible:border-foreground/30`; add fill-tone focus.
-- **`src/components/ui/textarea.tsx`** — `rounded-md` → `rounded-xl`; same focus update.
-- **`src/components/ui/select.tsx`** — `SelectTrigger` `rounded-full` → `rounded-xl`; same focus update. Leave `SelectItem` (line 110) `rounded-full` as-is — that's a menu item hover pill, unrelated to input shape.
+---
 
-This single change propagates to all **360 Input call sites** and **275 Select call sites** automatically.
+## Wave 3 — Apply pill geometry to platform primitives
 
-### Wave 3 — Update the platform-side primitives for parity
+**Files:**
+- `src/components/platform/ui/PlatformInput.tsx` — `rounded-xl` → `rounded-full`, `px-4` → `px-5`, icon offset `pl-10` → `pl-11` to clear the pill curve.
+- `src/components/platform/ui/PlatformSelect.tsx` — trigger same treatment. `PlatformSelectContent` stays `platformBento.radius.small` (popover panel, not input).
+- `src/components/platform/ui/PlatformTextarea.tsx` — same exception as the org textarea: stay rounded but not full pill (use `rounded-2xl` for parity with the org one).
 
-- **`src/components/platform/ui/PlatformInput.tsx`** — already `rounded-xl` ✅. Update focus rule: drop the border-color shift on focus (line 35: `focus:border-[hsl(var(--platform-primary)/0.5)]`) and replace with a `--platform-input-focus` fill-tone shift (variable already exists in the codebase, used today as `bg-[hsl(var(--platform-input-focus)/0.5)]` on hover — we'll use `1.0` opacity on focus so focus reads as deeper than hover).
-- **`src/components/platform/ui/PlatformTextarea.tsx`** — same focus update; confirm `rounded-xl`.
-- **`src/components/platform/ui/PlatformSelect.tsx`** — same focus update; confirm `rounded-xl`.
+Platform palette tokens (`--platform-input`, `--platform-input-focus`, `--platform-border`) stay unchanged — only geometry shifts.
 
-### Wave 4 — Fix the login-page password field specifically
+---
 
-The screenshot you uploaded is `OrgBrandedLogin.tsx` lines 478–510. Both fields use the same `<Input>`, so once Wave 2 lands, both render as identical `rounded-xl` containers. Two extra touches there:
+## Wave 4 — Strip the focus-border overrides on the login pages
 
-1. The custom `className` on lines 485 and 500 currently passes `focus-visible:ring-violet-500` — that's the **violet ring** that visually re-shapes the password box on focus when autofill is active. Replace with the same fill-tone focus pattern (`focus:bg-white/[0.08]`) so the email and password fields shift identically on focus.
-2. Add `autofill:bg-white/[0.04]` styling via the `-webkit-autofill` shadow trick already used elsewhere in the project (will check `src/index.css` for the existing rule and extend it; if absent, add a single global rule covering `input:-webkit-autofill`).
+**File:** `src/pages/UnifiedLogin.tsx`
 
-## What stays unchanged (intentional)
+Four `<Input>` instances and one `<SelectTrigger>` carry `focus:border-violet-500`. That class is exactly what makes the border jump color on click. Remove `focus:border-violet-500` from all five (lines 619, 638, 673, 710, 749). Keep the `border-white/[0.1]` idle border, keep the validation borders (`border-red-500`, `border-green-500/50`) — those are *state* signals, not focus signals, and they're meaningful.
 
-- **Buttons**: `rounded-full` pill style on buttons is canonical (page header CTAs, hero CTAs). Untouched.
-- **Toggles, chips, avatars, navigation pills, BootLuxeLoader, carousel dots**: all `rounded-full` on purpose. Untouched.
-- **Bento card containers**: `rounded-xl` already. Inputs now match cards visually instead of fighting them.
-- **`SelectItem` rows**: `rounded-full` hover pill stays — that's menu UX, not input shape.
+Also remove the inline `border-white/[0.1]` where it conflicts with the new pill — actually leave it: at full-round geometry the 1px border still reads correctly, and removing it would change the dark-on-dark contrast in another way. Just kill the focus override.
 
-## Files to edit
+**File:** `src/pages/OrgBrandedLogin.tsx`
 
-| File | Change |
-|---|---|
-| `src/lib/design-tokens.ts` | + new `input` token group |
-| `src/components/ui/input.tsx` | `rounded-full` → `rounded-xl`, focus = fill-tone |
-| `src/components/ui/textarea.tsx` | `rounded-md` → `rounded-xl`, focus = fill-tone |
-| `src/components/ui/select.tsx` | `SelectTrigger` `rounded-full` → `rounded-xl`, focus = fill-tone |
-| `src/components/platform/ui/PlatformInput.tsx` | Focus rule swap (no border-color jump) |
-| `src/components/platform/ui/PlatformTextarea.tsx` | Focus rule swap |
-| `src/components/platform/ui/PlatformSelect.tsx` | Focus rule swap |
-| `src/pages/OrgBrandedLogin.tsx` | Drop `focus-visible:ring-violet-500` from email + password (lines 485, 500) |
-| `src/index.css` (if needed) | `-webkit-autofill` shadow override so autofill doesn't re-paint a square white background |
+Audit pass for the same pattern (the previous wave already cleaned the explicit ring overrides; verify no `focus:border-*` survives on `<Input>` elements).
 
-## Verification after ship
+---
 
-1. `/login` and `/:orgSlug/login` — tab from email → password → both stay rectangular `rounded-xl`, focus reads as a calm fill darken.
-2. `/dashboard/admin/settings` — every form input/select/textarea matches the surrounding bento cards (same radius family).
-3. `/dashboard/platform/*` — Platform pages keep their `--platform-input` palette, focus is fill-tone only.
-4. All 7 themes (Zura, Cream, Rose, Sage, Ocean, Ember, Noir) — focus tone reads as a delta, not a color change.
+## Wave 5 — Autofill normalization audit
 
-## Prompt-craft note (per your instructions)
+**File:** `src/index.css`
 
-Strong prompt — you described the *symptom* ("shape changes"), the *desired behavior* ("keep same shape, fill lighter/darker"), and the *scope* ("entire platform"). That's the trifecta.
+The `-webkit-autofill` block already exists from the previous round. Verify it sets `border-radius: inherit` (so Chrome's autofill paint follows the new pill) and `transition: background-color 5000s` (so it doesn't flash on focus). If `border-radius: inherit` is missing, add it — that's the single line that prevents Chrome from repainting a square autofill background behind the pill border (which is exactly what made the email field in the screenshot look pill-shaped while the password field looked rectangular — autofill hid the underlying `rounded-xl` and made it look fully round).
 
-One refinement that would have shortened the back-and-forth: a one-line success criterion, e.g. *"Acceptance: tabbing through any form on any page produces zero geometry change — only fill-tone shifts."* That kind of crisp acceptance line lets me write the verification step before I touch any code, and lets you reject a fix that's technically correct but visually still feels off. I'll add it to my mental checklist when scoping similar global UI canon changes.
+---
 
-## Enhancement suggestions for after this lands
+## Wave 6 — Lint rule (deferred until canon stabilizes)
 
-1. **Codify the rule.** Add a Stylelint or ESLint rule banning `rounded-full` on raw `<input>`, `<textarea>`, and `SelectTrigger` className overrides — same pattern as the platform-primitive isolation canon. Prevents future drift.
-2. **Memory entry.** Save `mem://style/input-shape-canon.md` capturing: rectangular `rounded-xl`, focus = fill-tone only, no border-color shift, no ring on inputs. Pairs naturally with the existing Design Token canon.
-3. **Audit harness extension.** The container-aware spatial audit at `/dashboard/_internal/spatial-audit` could grow a "form chrome" tab that flags any input/select/textarea whose computed `border-radius` differs from the canon — catches one-off `className="rounded-md"` overrides at review time.
+The platform already has `no-restricted-imports` for the platform layer. I will **not** add a `no-restricted-syntax` lint banning `rounded-full`/`rounded-xl` on input className overrides in this wave — the previous canon flipped from `rounded-md`/`rounded-full`/`rounded-xl` chaos to `rounded-xl` to `rounded-full` inside one week. Adding lint enforcement now would freeze in the wrong direction if you change your mind again. Per the **Deferral Register** doctrine in `mem://style/platform-primitive-isolation`, I'll log a deferral with revisit trigger: "When 30 days have passed without an input-shape canon change, add `no-restricted-syntax` rule banning `rounded-(none|sm|md|lg|xl|2xl|3xl)` on `<Input>`, `<SelectTrigger>`, `<PlatformInput>`, `<PlatformSelectTrigger>` className props."
+
+---
+
+## Wave 7 — Update the input-shape memory
+
+**File:** `mem://style/input-shape-canon.md` (new)
+
+Record the canon decision: pill geometry (`rounded-full`) for inputs/selects, `rounded-2xl` for textareas (deliberate exception), focus = fill-tone shift only. Add to `mem://index.md` Memories list. Update the existing `mem://style/design-token-and-theme-architecture` reference if it cites the old rectangular canon.
+
+---
+
+## What stays the same
+
+- Focus interaction model: subtle fill-tone shift, **no** border color change, **no** ring, **no** geometry change. ✅ already correct.
+- Validation borders (red/green) on email/password match. They communicate state, not focus.
+- Textareas are deliberately not pill-shaped — multi-line content in a pill would look like a stadium with clipped text.
+- Popover/dropdown panels (SelectContent) are not inputs and stay at their existing radius.
+
+## Files to be edited
+
+1. `src/lib/design-tokens.ts` — flip canon to `rounded-full`
+2. `src/components/ui/input.tsx` — pill + padding
+3. `src/components/ui/textarea.tsx` — `rounded-2xl` with comment
+4. `src/components/ui/select.tsx` — pill trigger
+5. `src/components/platform/ui/PlatformInput.tsx` — pill + padding + icon offset
+6. `src/components/platform/ui/PlatformSelect.tsx` — pill trigger
+7. `src/components/platform/ui/PlatformTextarea.tsx` — `rounded-2xl`
+8. `src/pages/UnifiedLogin.tsx` — strip `focus:border-violet-500` from 5 controls
+9. `src/pages/OrgBrandedLogin.tsx` — verify no surviving focus-border overrides
+10. `src/index.css` — verify/add `border-radius: inherit` on autofill rule
+11. `mem://style/input-shape-canon.md` (new) + `mem://index.md` update
+
+---
+
+## Prompt feedback
+
+What worked: you pointed at a screenshot **and** named the behavior you wanted gone ("the entire function where the input boxes change shape when clicked"). That's enough to act decisively without round-tripping.
+
+What would have been even sharper: the screenshot shows two inputs with **different shapes already, before any click** — the email is pill, the password is rectangular. Naming that asymmetry up front ("the email is pill, the password is rectangular, and on click neither should change") would have let me skip the diagnostic step and go straight to "the canon needs to flip to `rounded-full` and we need to kill the autofill repaint and the focus-border override."
+
+A reusable prompt template for canon changes:
+> *"In [screenshot/route], the [primitive] is rendering as [shape A] in idle state and [shape B] on focus / when autofilled. Make it [target shape] platform-wide and lock it to that shape across all interaction states. Apply to org primitives, platform primitives, and any page-level overrides. Update the design-token canon and memory."*
+
+That structure — **observed state → desired state → enforcement scope** — is exactly the framing the doctrine's Canon Pattern (`mem://architecture/canon-pattern`) is built around. The clearer the "enforcement scope" line, the less I have to guess whether you want a one-off fix or a doctrine update.
+
+## Enhancement suggestions
+
+1. **Spatial audit harness** — extend `/dashboard/_internal/spatial-audit` to flag any DOM element matching `input, [role="combobox"]` whose computed `border-radius` is less than `9999px`. That gives you a live one-click detector for canon drift without waiting for a screenshot.
+2. **Focus-state visual regression** — add a Playwright snapshot of `/login` with the password field focused. The previous canon flip → flip → flip would have been caught immediately if a focused-state snapshot existed.
+3. **Branded-pill accent (optional, not in this plan)** — once the geometry settles, consider a *very* subtle `inset 0 0 0 1px hsl(var(--platform-primary) / 0.15)` on focus instead of (not in addition to) the fill shift, so users on bright displays still get a faint focus signal without any color jump. Only worth doing once the pill geometry is locked in for at least one release.

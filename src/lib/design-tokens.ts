@@ -172,8 +172,13 @@ export const tokens = {
     search: 'bg-muted/50 border-border/60',
     /** Filter dropdown: subtle filled background with soft border */
     filter: 'bg-muted/50 border-border/60',
-    /** Canonical rectangular shape — applies to inputs, selects, textareas */
-    shape: 'rounded-xl',
+    /**
+     * Canonical PILL shape — applies to inputs and select triggers.
+     * Never overridden, never animated, never changes on focus.
+     * Textareas are a deliberate exception: they use rounded-2xl because
+     * a fully-pill multi-line area would clip text into a lozenge.
+     */
+    shape: 'rounded-full',
     /** Idle border — subtle, theme-aware */
     border: 'border border-input',
     /** Idle fill — slightly recessed from card background */

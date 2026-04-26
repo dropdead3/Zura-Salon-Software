@@ -3122,11 +3122,13 @@ html.dark.theme-orchid {
 
 /* ============================================================
    Input shape canon — autofill normalization
-   Browsers (especially Chrome/Safari) repaint autofilled inputs
-   with their own background and a sharp-cornered fill, which
-   visually breaks the rectangular rounded-xl input shape and
-   makes focus look like a "shape change". This rule keeps the
-   autofilled fill transparent and the text color matched.
+   Browsers (Chrome/Safari) repaint autofilled inputs with their
+   own background and a sharp-cornered fill, which visually breaks
+   the pill input shape and makes the password field render as a
+   rectangle while the email field renders as a pill (because only
+   one is autofilled). This rule keeps the autofilled fill
+   transparent, the text color matched, and the radius inherited
+   from the input itself — preserving the canonical pill geometry.
    ============================================================ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

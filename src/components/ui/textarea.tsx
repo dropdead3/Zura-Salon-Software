@@ -24,8 +24,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
   return (
     <textarea
       className={cn(
-        // Input shape canon: rectangular rounded-xl, focus = fill-tone shift only.
-        "flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus:bg-muted/60 focus-visible:bg-muted/60 dark:focus:bg-white/[0.04] dark:focus-visible:bg-white/[0.04] transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50",
+        // Input shape canon: textareas are a DELIBERATE exception to the
+        // pill canon — multi-line content in a fully-rounded shape would
+        // clip into a lozenge. Use rounded-2xl. Do not "fix" to rounded-full.
+        "flex min-h-[80px] w-full rounded-2xl border border-input bg-background px-4 py-3 text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus:bg-muted/60 focus-visible:bg-muted/60 dark:focus:bg-white/[0.04] dark:focus-visible:bg-white/[0.04] transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       ref={ref}
