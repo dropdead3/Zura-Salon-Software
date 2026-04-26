@@ -19,7 +19,6 @@ interface HideNumbersContextType {
   hideNumbers: boolean;
   toggleHideNumbers: () => void;
   requestUnhide: () => void;
-  quickHide: () => void;
   isLoading: boolean;
 }
 
@@ -142,25 +141,10 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Quick hide - called on double-click, immediately hides without confirmation
-  const quickHide = async () => {
-    if (!user || hideNumbers) return; // Already hidden or not logged in
-    
-    setHideNumbers(true);
-    
-    // Persist to database
-    try {
-      await supabase
-        .from('employee_profiles')
-        .update({ hide_numbers: true })
-        .eq('user_id', user.id);
-    } catch (err) {
-      console.error('Error saving hide_numbers preference:', err);
-    }
-  };
+
 
   return (
-    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, quickHide, isLoading }}>
+    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading }}>
       {children}
       <HideNumbersConfirmDialog 
         open={showConfirmDialog} 
@@ -193,13 +177,7 @@ export function BlurredAmount({
   as: Component = 'span',
   disableTooltip = false
 }: BlurredAmountProps) {
-  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
-  
-  const handleDoubleClick = () => {
-    if (!hideNumbers) {
-      quickHide();
-    }
-  };
+  const { hideNumbers, requestUnhide } = useHideNumbers();
 
   // Wave 1: subtle crossfade on value change for premium "data is alive" feel.
   // Keyed on stringified children — when the formatted value changes, the span
@@ -208,37 +186,18 @@ export function BlurredAmount({
     ? String(children)
     : undefined;
   const animatedClass = valueKey !== undefined ? 'animate-fade-in-fast' : '';
-  
+
   if (!hideNumbers) {
-    if (disableTooltip) {
-      return (
-        <Component 
-          key={valueKey}
-          className={cn(className, animatedClass, 'cursor-pointer')} 
-          onDoubleClick={handleDoubleClick}
-        >
-          {children}
-        </Component>
-      );
-    }
     return (
-      <TooltipProvider delayDuration={100}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Component 
-              key={valueKey}
-              className={cn(className, animatedClass, 'cursor-pointer')} 
-              onDoubleClick={handleDoubleClick}
-            >
-              {children}
-            </Component>
-          </TooltipTrigger>
-          <TooltipContent>Double-click to hide</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Component
+        key={valueKey}
+        className={cn(className, animatedClass)}
+      >
+        {children}
+      </Component>
     );
   }
-  
+
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
