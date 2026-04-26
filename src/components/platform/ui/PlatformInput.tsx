@@ -30,9 +30,10 @@ const PlatformInput = React.forwardRef<HTMLInputElement, PlatformInputProps>(
         <input
           type={type}
           className={cn(
-            // Input shape canon: PILL (rounded-full). Focus = fill-tone shift only.
-            // No border-color change, no ring, no shape change.
-            'flex h-10 w-full rounded-full border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-5 py-2 text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
+            // Input shape canon: PILL (rounded-full) — locked with !important so no
+            // page-level className override or tailwind-merge dedup can strip it.
+            // Focus = fill-tone shift only. No border-color change, no ring.
+            '!rounded-full appearance-none flex h-10 w-full border border-[hsl(var(--platform-border)/0.5)] bg-[hsl(var(--platform-input))] px-5 py-2 text-sm text-[hsl(var(--platform-foreground))] placeholder:text-[hsl(var(--platform-foreground-subtle))]',
             'transition-colors duration-150',
             'focus:outline-none focus-visible:outline-none focus:bg-[hsl(var(--platform-input-focus))] focus-visible:bg-[hsl(var(--platform-input-focus))]',
             'hover:bg-[hsl(var(--platform-input-focus)/0.5)]',
