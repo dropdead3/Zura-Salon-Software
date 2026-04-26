@@ -149,6 +149,21 @@ export function AnimatedBlurredAmount({
     </AnimatePresence>
   );
 
+
+  if (!hideNumbers) {
+    return (
+      <span
+        ref={spanRef}
+        className={cn(
+          className,
+          shouldAutoCompact && 'overflow-hidden text-ellipsis whitespace-nowrap block'
+        )}
+      >
+        {inner}
+      </span>
+    );
+  }
+
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
@@ -158,17 +173,16 @@ export function AnimatedBlurredAmount({
             className={cn(
               className,
               shouldAutoCompact && 'overflow-hidden text-ellipsis whitespace-nowrap block',
-              hideNumbers ? 'blur-md select-none cursor-pointer transition-all duration-200' : 'cursor-pointer'
+              'blur-md select-none cursor-pointer transition-all duration-200'
             )}
             onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
             onKeyDown={handleKeyDown}
-            tabIndex={hideNumbers ? 0 : undefined}
+            tabIndex={0}
           >
             {inner}
           </span>
         </TooltipTrigger>
-        <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide'}</TooltipContent>
+        <TooltipContent>Click to reveal</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
