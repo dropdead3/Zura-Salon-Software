@@ -1,66 +1,99 @@
-# NoOrganization → Zura Platform Palette
+## Goal
 
-## Correction to Prior Draft
-Previous draft proposed a luxe charcoal/gold treatment. That was wrong. Users without an organization sit in **platform identity space**, not org-luxe space. The Zura platform palette (purple primary, dark navy backdrop, black depth) is the correct anchor — and it must render regardless of any `theme-rosewood` / `theme-cream-lux` / `dark` class lingering on `<html>` from the prior dashboard session.
+Eliminate the "shape change" you're seeing on focus and standardize every input/select/textarea on a single calm rectangular shape across the entire platform. Focus becomes a **fill-tone shift only** (subtly lighter or darker depending on theme/mode) — no radius change, no ring, no border-color jump, no pill→rectangle hop.
 
-## Current Failure Mode
-- Route is mounted outside `OrganizationProvider` (correct — prevents redirect loop, per `mem://architecture/public-vs-private-route-isolation`).
-- But it inherits whatever `theme-*` + inline `--*` vars `useColorTheme` last applied to `<html>`. With a dark org theme cached, `bg-background` resolves to near-black and `text-foreground` to white-on-white, producing the void in the screenshot.
-- Page also uses raw org tokens (`bg-background`, `bg-muted`, `text-foreground`) which are tenant-scoped by definition.
+## Root cause confirmed
 
-## Doctrine Anchors
-- `mem://tech-decisions/platform-theme-isolation` — platform surfaces scope chrome under `.platform-theme` and strip org `theme-*` + non-`--platform-*` inline vars on entry. `usePlatformThemeIsolation` already implements exactly this for `/platform/*`.
-- `mem://architecture/tenant-branding-neutralization` — shared infra (login, no-org, error states) must be brand-neutral; never inherit tenant identity.
-- `mem://brand/platform-identity-tokenization` — Zura platform palette is the canonical fallback when no org context exists.
+Three different radii are in play right now:
 
-## Wave 1 — Promote Platform Isolation Hook
-Generalize the existing pattern rather than forking it.
+| Primitive | Current | Result |
+|---|---|---|
+| `Input` (`src/components/ui/input.tsx`) | `rounded-full` (pill) | email field in your screenshot |
+| `Textarea` (`src/components/ui/textarea.tsx`) | `rounded-md` | mismatched |
+| `SelectTrigger` (`src/components/ui/select.tsx`) | `rounded-full` (pill) | mismatched with textarea |
+| `PlatformInput` | `rounded-xl` | mismatched with org `Input` |
+| Login page password field | inherits `rounded-full` but `pr-10` + autofill UA styles visually re-square it on focus | the awkward shape jump in your screenshot |
 
-**File**: `src/hooks/usePlatformThemeIsolation.ts`
-- No code change required — the hook already strips `theme-*`, `dark`, and non-`--platform-*` inline vars on mount. It is exactly what NoOrganization needs.
-- (Optional) Update its JSDoc to note it is also used by NoOrganization, not only `/platform/*`.
+Plus, focus styles are inconsistent: `focus-visible:border-foreground/30` (Input/Textarea/Select) flips border color on focus → reads as a "shape change" alongside the autofill background.
 
-## Wave 2 — Refactor `src/pages/NoOrganization.tsx`
-1. **Mount platform isolation**: call `usePlatformThemeIsolation()` at the top of the component so the prior org's `theme-rosewood`/`dark`/inline brand vars are stripped before first paint.
-2. **Wrap in platform theme scope**: outermost wrapper gets `className="platform-theme platform-dark min-h-screen"` so `--platform-*` tokens resolve. Default to `platform-dark` (Zura's canonical dark identity per `PlatformThemeContext` default).
-3. **Replace org tokens with platform tokens** using inline `style={{ background: 'hsl(var(--platform-bg))' }}` etc. — raw shadcn primitives still read `--background`/`--foreground`/`--muted`, which we no longer want bound here.
-   - Backdrop: radial from `hsl(var(--platform-bg-elevated))` → `hsl(var(--platform-bg))` (navy → near-black) with a subtle `hsl(var(--platform-primary) / 0.08)` glow at top.
-   - Icon container: `bg-[hsl(var(--platform-bg-card))]` + `border border-[hsl(var(--platform-border))]` + icon in `hsl(var(--platform-primary))` (Zura purple).
-   - "Signed in as" panel: `bg-[hsl(var(--platform-bg-surface))]` + `border-[hsl(var(--platform-border-subtle))]`, label in `hsl(var(--platform-foreground-muted))`, email in `hsl(var(--platform-foreground))`.
-   - Sign out button: replace `variant="outline"` with explicit platform styling — `bg-[hsl(var(--platform-bg-card))] border-[hsl(var(--platform-border))] text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]`. Avoid `Button variant` because variants resolve through org `--primary`.
-   - Copy button: ghost styled with `text-[hsl(var(--platform-foreground-muted))] hover:text-[hsl(var(--platform-foreground))] hover:bg-[hsl(var(--platform-bg-hover))]`.
-4. **Typography**: keep `font-display tracking-wide uppercase` for the heading (Termina, per design canon). Body remains `font-sans`. No change to copy or hierarchy.
-5. **Remove dependence on `tokens.empty.description`** for the body text — it resolves through `text-muted-foreground` which is org-scoped. Replace with explicit `text-[hsl(var(--platform-foreground-muted))] text-sm leading-relaxed`.
+## Plan — 4 waves
 
-## Wave 3 — Verify No Regression on Re-Entry
-- Hook strips classes only on mount; on unmount it does nothing. When the user signs out (`navigate('/login')`), `OrgBrandedLogin` will re-resolve its own theme from `org-manifest`. When they refresh into a real org, `useColorTheme` re-applies the org theme on next paint. Standard flow — no cleanup needed.
-- Confirm by reading `src/hooks/useColorTheme.ts` and `src/pages/OrgBrandedLogin.tsx` mount sequence to ensure neither expects the prior `theme-*` class to persist.
+### Wave 1 — Establish the canonical input shape token
 
-## Files Touched
-- `src/pages/NoOrganization.tsx` — refactor (only file with logic changes)
-- `src/hooks/usePlatformThemeIsolation.ts` — JSDoc note only (optional)
+Add a single source of truth in `src/lib/design-tokens.ts`:
 
-## Out of Scope
-- No new hook (reusing `usePlatformThemeIsolation`).
-- No `light` mode toggle — NoOrganization is always `platform-dark` for brand consistency with `BootLuxeLoader` and the platform admin shell.
-- No changes to `App.tsx` routing — the page already sits outside `OrganizationProvider` per existing isolation doctrine.
+```ts
+input: {
+  // Rectangular, calm. Same radius as PlatformInput already uses.
+  shape: 'rounded-xl',
+  // Focus = fill-tone shift only. No ring, no border color jump, no shape change.
+  focus: 'focus:outline-none focus-visible:outline-none focus:bg-muted/60 focus-visible:bg-muted/60 dark:focus:bg-white/[0.06] dark:focus-visible:bg-white/[0.06]',
+  // Idle fill — slightly recessed from background so focus tone has room to read
+  fill: 'bg-muted/30 dark:bg-white/[0.03]',
+  border: 'border border-input',
+  transition: 'transition-colors duration-150',
+}
+```
 
-## Verification Checklist
-- [ ] Land on NoOrganization after a session in a `theme-rosewood dark` org → renders Zura purple/navy/black, not rosewood.
-- [ ] Refresh on `/no-organization` → no flash of org colors before isolation runs.
-- [ ] Sign out button readable, hover state visible, no white-on-white or invisible borders.
-- [ ] Heading uses Termina uppercase; body uses Aeonik; weights ≤ 500.
-- [ ] No `font-bold` / `font-semibold` introduced.
+Rationale: focus signal becomes a **brightness delta against the surrounding card**, which works on both light and dark themes and on every tenant palette (Zura purple, Cream, Rose, Sage, Ocean, Ember, Noir) without per-theme overrides. The border stays put; the radius stays put.
 
-## Suggested Follow-Ups (not in this plan)
-1. **Audit other org-less surfaces** (`/login` error states, generic 404, auth callback failure) for the same theme-leak class — they likely share the bug.
-2. **Memory entry**: add `mem://architecture/orgless-surface-palette` so future contributors know any route mounted outside `OrganizationProvider` defaults to `platform-dark` + `usePlatformThemeIsolation`.
-3. **Lint guard**: extend the existing platform-primitive `no-restricted-imports` rule (or a sibling rule) to flag raw `bg-background`/`text-foreground` usage in files matching `src/pages/NoOrganization*` and similar org-less pages.
+### Wave 2 — Update the 3 org primitives
 
----
+- **`src/components/ui/input.tsx`** — replace `rounded-full` → `rounded-xl`; remove `focus-visible:border-foreground/30`; add fill-tone focus.
+- **`src/components/ui/textarea.tsx`** — `rounded-md` → `rounded-xl`; same focus update.
+- **`src/components/ui/select.tsx`** — `SelectTrigger` `rounded-full` → `rounded-xl`; same focus update. Leave `SelectItem` (line 110) `rounded-full` as-is — that's a menu item hover pill, unrelated to input shape.
 
-### Prompt Coaching
-Strong correction — you caught a brand identity slip (gold-luxe ≠ Zura platform) before it shipped. Two ways to make this kind of redirect even sharper:
+This single change propagates to all **360 Input call sites** and **275 Select call sites** automatically.
 
-1. **Anchor to the canonical source** — instead of "use Zura palette," say "use `--platform-*` tokens as defined in `src/index.css` under `.platform-theme.platform-dark`." That removes any room for me to interpret "purple" as a different shade.
-2. **State the negative invariant explicitly** — you did this well ("regardless of cached `theme-*` class"). That single clause turned a styling tweak into a structural isolation requirement, which is the actual fix. Keep doing that — it's the difference between a paint job and an architectural decision.
+### Wave 3 — Update the platform-side primitives for parity
+
+- **`src/components/platform/ui/PlatformInput.tsx`** — already `rounded-xl` ✅. Update focus rule: drop the border-color shift on focus (line 35: `focus:border-[hsl(var(--platform-primary)/0.5)]`) and replace with a `--platform-input-focus` fill-tone shift (variable already exists in the codebase, used today as `bg-[hsl(var(--platform-input-focus)/0.5)]` on hover — we'll use `1.0` opacity on focus so focus reads as deeper than hover).
+- **`src/components/platform/ui/PlatformTextarea.tsx`** — same focus update; confirm `rounded-xl`.
+- **`src/components/platform/ui/PlatformSelect.tsx`** — same focus update; confirm `rounded-xl`.
+
+### Wave 4 — Fix the login-page password field specifically
+
+The screenshot you uploaded is `OrgBrandedLogin.tsx` lines 478–510. Both fields use the same `<Input>`, so once Wave 2 lands, both render as identical `rounded-xl` containers. Two extra touches there:
+
+1. The custom `className` on lines 485 and 500 currently passes `focus-visible:ring-violet-500` — that's the **violet ring** that visually re-shapes the password box on focus when autofill is active. Replace with the same fill-tone focus pattern (`focus:bg-white/[0.08]`) so the email and password fields shift identically on focus.
+2. Add `autofill:bg-white/[0.04]` styling via the `-webkit-autofill` shadow trick already used elsewhere in the project (will check `src/index.css` for the existing rule and extend it; if absent, add a single global rule covering `input:-webkit-autofill`).
+
+## What stays unchanged (intentional)
+
+- **Buttons**: `rounded-full` pill style on buttons is canonical (page header CTAs, hero CTAs). Untouched.
+- **Toggles, chips, avatars, navigation pills, BootLuxeLoader, carousel dots**: all `rounded-full` on purpose. Untouched.
+- **Bento card containers**: `rounded-xl` already. Inputs now match cards visually instead of fighting them.
+- **`SelectItem` rows**: `rounded-full` hover pill stays — that's menu UX, not input shape.
+
+## Files to edit
+
+| File | Change |
+|---|---|
+| `src/lib/design-tokens.ts` | + new `input` token group |
+| `src/components/ui/input.tsx` | `rounded-full` → `rounded-xl`, focus = fill-tone |
+| `src/components/ui/textarea.tsx` | `rounded-md` → `rounded-xl`, focus = fill-tone |
+| `src/components/ui/select.tsx` | `SelectTrigger` `rounded-full` → `rounded-xl`, focus = fill-tone |
+| `src/components/platform/ui/PlatformInput.tsx` | Focus rule swap (no border-color jump) |
+| `src/components/platform/ui/PlatformTextarea.tsx` | Focus rule swap |
+| `src/components/platform/ui/PlatformSelect.tsx` | Focus rule swap |
+| `src/pages/OrgBrandedLogin.tsx` | Drop `focus-visible:ring-violet-500` from email + password (lines 485, 500) |
+| `src/index.css` (if needed) | `-webkit-autofill` shadow override so autofill doesn't re-paint a square white background |
+
+## Verification after ship
+
+1. `/login` and `/:orgSlug/login` — tab from email → password → both stay rectangular `rounded-xl`, focus reads as a calm fill darken.
+2. `/dashboard/admin/settings` — every form input/select/textarea matches the surrounding bento cards (same radius family).
+3. `/dashboard/platform/*` — Platform pages keep their `--platform-input` palette, focus is fill-tone only.
+4. All 7 themes (Zura, Cream, Rose, Sage, Ocean, Ember, Noir) — focus tone reads as a delta, not a color change.
+
+## Prompt-craft note (per your instructions)
+
+Strong prompt — you described the *symptom* ("shape changes"), the *desired behavior* ("keep same shape, fill lighter/darker"), and the *scope* ("entire platform"). That's the trifecta.
+
+One refinement that would have shortened the back-and-forth: a one-line success criterion, e.g. *"Acceptance: tabbing through any form on any page produces zero geometry change — only fill-tone shifts."* That kind of crisp acceptance line lets me write the verification step before I touch any code, and lets you reject a fix that's technically correct but visually still feels off. I'll add it to my mental checklist when scoping similar global UI canon changes.
+
+## Enhancement suggestions for after this lands
+
+1. **Codify the rule.** Add a Stylelint or ESLint rule banning `rounded-full` on raw `<input>`, `<textarea>`, and `SelectTrigger` className overrides — same pattern as the platform-primitive isolation canon. Prevents future drift.
+2. **Memory entry.** Save `mem://style/input-shape-canon.md` capturing: rectangular `rounded-xl`, focus = fill-tone only, no border-color shift, no ring on inputs. Pairs naturally with the existing Design Token canon.
+3. **Audit harness extension.** The container-aware spatial audit at `/dashboard/_internal/spatial-audit` could grow a "form chrome" tab that flags any input/select/textarea whose computed `border-radius` differs from the canon — catches one-off `className="rounded-md"` overrides at review time.
