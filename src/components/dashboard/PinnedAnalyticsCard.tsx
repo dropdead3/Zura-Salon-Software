@@ -561,7 +561,70 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     const visKey = cardId === 'operations_stats' ? 'operations_quick_stats' : cardId;
     const link = CARD_LINKS[cardId];
     const description = CARD_DESCRIPTIONS[cardId];
-    
+
+    // ── Sales Overview: closed-day detection + 3-row payload ──
+    let salesOverviewView:
+      | { kind: 'closed'; message: string }
+      | { kind: 'metrics'; current: string; expected: string | null; attach: string }
+      | null = null;
+
+    if (cardId === 'sales_overview') {
+      // Closed-day check is today-only by design
+      const evaluateClosure = (): { message: string } | null => {
+        if (!isToday) return null;
+        if (!locations || locations.length === 0) return null; // wait for data — don't flash "Closed"
+        const today = new Date();
+
+        if (filters.locationId !== 'all') {
+          const loc = locations.find(l => l.id === filters.locationId);
+          if (!loc) return null;
+          const closure = isClosedOnDate(loc.hours_json, loc.holiday_closures, today);
+          if (!closure.isClosed) return null;
+          const reason = closure.reason && closure.reason !== 'Regular hours' ? closure.reason : 'No Sales';
+          return { message: `${loc.name} Closed — ${reason}` };
+        }
+
+        // All-locations rollup: only show closed when EVERY accessible location is closed today
+        const accessIds = new Set((accessibleLocations ?? []).map(l => l.id));
+        const scope = accessIds.size > 0
+          ? locations.filter(l => accessIds.has(l.id))
+          : locations.filter(l => l.is_active);
+        if (scope.length === 0) return null;
+
+        const closures = scope.map(l => isClosedOnDate(l.hours_json, l.holiday_closures, today));
+        const allClosed = closures.every(c => c.isClosed);
+        if (!allClosed) return null;
+
+        const holidayReasons = closures
+          .map(c => c.reason)
+          .filter((r): r is string => !!r && r !== 'Regular hours');
+        const sharedHoliday = holidayReasons.length === scope.length
+          && holidayReasons.every(r => r === holidayReasons[0])
+          ? holidayReasons[0]
+          : null;
+        return { message: sharedHoliday ? `Locations Closed — ${sharedHoliday}` : 'Locations Closed' };
+      };
+
+      const closure = evaluateClosure();
+      if (closure) {
+        salesOverviewView = { kind: 'closed', message: closure.message };
+      } else {
+        const expectedRevenue = salesData?.totalRevenue ?? 0;
+        const currentRevenue = isToday && todayActualData?.hasActualData
+          ? todayActualData.actualRevenue
+          : expectedRevenue;
+        const showExpected = isToday; // Only meaningful when "today" — otherwise == current
+        const attach = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
+
+        salesOverviewView = {
+          kind: 'metrics',
+          current: formatCurrencySmart(currentRevenue),
+          expected: showExpected ? formatCurrencySmart(expectedRevenue) : null,
+          attach,
+        };
+      }
+    }
+
     return (
       <VisibilityGate elementKey={visKey}>
         <PinnableCard
@@ -580,17 +643,54 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
             <div className="mt-4 flex-1">
-              <BlurredAmount className="font-display text-2xl font-medium truncate block">{metricValue}</BlurredAmount>
-              {metricLabel && (
-                <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
-                  {goalPaceIcon}
-                  {metricLabel}
-                </p>
-              )}
-              {metricSubtext && (
-                <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-sans">
-                  {metricSubtext}
-                </p>
+              {salesOverviewView ? (
+                salesOverviewView.kind === 'closed' ? (
+                  <p className="text-sm text-muted-foreground mt-1">{salesOverviewView.message}</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-sans">
+                        Current Sales
+                      </span>
+                      <BlurredAmount className="font-display text-xl font-medium truncate">
+                        {salesOverviewView.current}
+                      </BlurredAmount>
+                    </div>
+                    {salesOverviewView.expected && (
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-sans">
+                          Expected Sales
+                        </span>
+                        <BlurredAmount className="text-sm text-muted-foreground truncate">
+                          {salesOverviewView.expected}
+                        </BlurredAmount>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-sans">
+                        Retail Attach
+                      </span>
+                      <span className="text-sm text-muted-foreground truncate">
+                        {salesOverviewView.attach}
+                      </span>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <>
+                  <BlurredAmount className="font-display text-2xl font-medium truncate block">{metricValue}</BlurredAmount>
+                  {metricLabel && (
+                    <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1">
+                      {goalPaceIcon}
+                      {metricLabel}
+                    </p>
+                  )}
+                  {metricSubtext && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-sans">
+                      {metricSubtext}
+                    </p>
+                  )}
+                </>
               )}
             </div>
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/40 min-h-[28px]">
