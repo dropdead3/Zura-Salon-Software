@@ -411,18 +411,18 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       case 'sales_overview':
         if (isToday && todayActualData?.hasActualData) {
-          metricValue = formatCurrencyWhole(todayActualData.actualRevenue);
+          metricValue = formatCurrencySmart(todayActualData.actualRevenue);
           metricLabel = 'Sales so far today';
-          metricSubtext = `${formatCurrencyWhole(salesData?.totalRevenue ?? 0)} expected today`;
+          metricSubtext = `${formatCurrencySmart(salesData?.totalRevenue ?? 0)} expected today`;
         } else {
-          metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+          metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
           metricLabel = isToday
             ? "Today's expected revenue across all services and retail"
             : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         }
         break;
       case 'daily_brief':
-        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
         metricLabel = `Revenue earned ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'top_performers': {
