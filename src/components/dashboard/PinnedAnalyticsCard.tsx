@@ -520,7 +520,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = '--';
           metricLabel = 'Loading forecast data';
         } else {
-          metricValue = formatCurrencyWhole(weekAheadData?.totalRevenue ?? 0);
+          metricValue = formatCurrencySmart(weekAheadData?.totalRevenue ?? 0);
           metricLabel = 'Estimated booked service revenue for the next 7 days (excludes today)';
         }
         break;
