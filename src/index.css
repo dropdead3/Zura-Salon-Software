@@ -3137,13 +3137,13 @@ html.dark.theme-orchid {
 }
 
 /* ============================================================
-   Input shape canon — autofill normalization
+   Input shape canon — autofill normalization + pill geometry
    Browsers (Chrome/Safari) repaint autofilled inputs with their
    own background and a sharp-cornered fill, which visually breaks
    the pill input shape. This rule:
      1. Hides the autofill paint behind a transparent inset shadow
         the size of the input (1000px ensures full coverage).
-     2. Forces text color to follow the input's own color.
+     2. Forces text color to follow the active theme's --foreground.
      3. Pins the radius to the input's own (`inherit`) so the
         autofill paint can never round to a rectangle.
      4. Stalls the autofill fade-in transition (9999s) so the
@@ -3170,12 +3170,27 @@ select:autofill {
   /* Pin autofill text to the active theme's foreground token.
      `currentColor` resolves to Chrome's UA default (black) on bare inputs,
      which makes autofilled email/password invisible on dark surfaces.
-     Using `--foreground` follows every theme reactively (white in dark,
-     near-black in light, theme-tinted in branded modes). */
+     Using `--foreground` follows every theme reactively. */
   -webkit-text-fill-color: hsl(var(--foreground)) !important;
   caret-color: hsl(var(--foreground)) !important;
   transition: background-color 9999s ease-in-out 0s !important;
   border-radius: inherit !important;
-  /* Belt-and-suspenders: kill any UA outline on autofilled focus */
   outline: none !important;
+}
+
+/* ============================================================
+   Input shape canon — global pill geometry safety net
+   Inputs and select triggers must always render as pills.
+   This guards against:
+     - tailwind-merge dropping `rounded-full` due to className conflicts
+     - third-party CSS resets that zero out border-radius on form controls
+     - browser UA defaults (Chrome paints inputs with 0 radius by default)
+   Textareas are excluded — they use rounded-2xl per canon (multi-line
+   content can't be a pill). Buttons are excluded — they have their own
+   shape variants (pill, square, ghost).
+   ============================================================ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+[role="combobox"],
+[role="textbox"]:not(textarea) {
+  border-radius: 9999px !important;
 }
