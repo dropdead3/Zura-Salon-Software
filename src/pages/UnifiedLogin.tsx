@@ -21,6 +21,8 @@ import { PlatformLogo } from '@/components/brand/PlatformLogo';
 import { LoginShell } from '@/components/auth/LoginShell';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
 import { markAuthFlowActive } from '@/lib/authFlowSentinel';
+import { prefetchPostLogin } from '@/lib/prefetchPostLogin';
+import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useCheckInvitation, useAcceptInvitation } from '@/hooks/useStaffInvitations';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
@@ -187,18 +189,25 @@ export default function UnifiedLogin() {
   const { toast } = useToast();
   const acceptStaffInvitation = useAcceptInvitation();
   const { roleOptions } = useRoleUtils();
+  const queryClient = useQueryClient();
 
   /**
    * Navigate to a post-auth destination. Marks the auth-flow sentinel so
    * the dashboard's loader stack renders <AuthFlowLoader /> on the same
    * slate-950 canvas instead of flashing the theme-driven BootLuxeLoader.
+   *
+   * Also fire-and-forget warms the dashboard's first-paint queries
+   * (user_preferences + employee_profile) so by the time the route mounts
+   * the data is hot — collapsing AuthFlowLoader visibility to <50ms on
+   * warm sessions. See src/lib/prefetchPostLogin.ts.
    */
   const navigateAuthenticated = useCallback(
-    (path: string) => {
+    (path: string, userId?: string) => {
       markAuthFlowActive();
+      if (userId) prefetchPostLogin(queryClient, userId);
       navigate(path);
     },
-    [navigate],
+    [navigate, queryClient],
   );
 
 
