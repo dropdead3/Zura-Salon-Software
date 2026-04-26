@@ -59,6 +59,13 @@ export function useKeyboardShortcuts() {
       category: 'Navigation',
       handler: () => navigate(dashPath('/profile')),
     },
+    // Privacy
+    {
+      key: 'h',
+      description: 'Hide / show monetary values',
+      category: 'Privacy',
+      handler: () => toggleHideNumbers(),
+    },
     // Help
     {
       key: '?',
