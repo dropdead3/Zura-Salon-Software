@@ -443,11 +443,11 @@ export default function OrgBrandedLogin() {
                 <p className="text-base text-white font-sans">{recentSelected.display_name}</p>
               </div>
 
-              {pinLockoutUntil && pinLockoutUntil > Date.now() && (
+              {pinLockoutUntil && pinLockoutUntil > Date.now() ? (
                 <LockoutCountdown until={pinLockoutUntil} onExpire={() => setPinLockoutUntil(null)} />
+              ) : (
+                <PreLockoutWarning attemptsRemaining={attemptsRemaining} />
               )}
-
-              <OrgLoginPinPad
                 value={pin}
                 onChange={setPin}
                 onSubmit={handlePinSubmit}
