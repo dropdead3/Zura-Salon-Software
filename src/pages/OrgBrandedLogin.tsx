@@ -92,6 +92,9 @@ export default function OrgBrandedLogin() {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [pinAttempts, setPinAttempts] = useState(0);
+  // Pre-lockout warning: number of attempts left before this device locks for 5 min.
+  // Surfaced ONLY when ≤ 2 (alert-fatigue compliant — silence for 1–7 attempts).
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   // Lockout window survives refresh / iPad sleep via sessionStorage so a
   // staffer can't bypass the rate limit by reloading the PWA.
   const { lockoutUntil: pinLockoutUntil, setLockoutUntil: setPinLockoutUntil } =
@@ -208,6 +211,15 @@ export default function OrgBrandedLogin() {
         setPinError(true);
         setTimeout(() => setPinError(false), 500);
         setPin('');
+        // Surface server-tracked remaining attempts only when imminent.
+        if (
+          typeof result.attemptsRemaining === 'number' &&
+          result.attemptsRemaining <= 2
+        ) {
+          setAttemptsRemaining(result.attemptsRemaining);
+        } else {
+          setAttemptsRemaining(null);
+        }
         if (next >= 3) {
           // Local soft-lock at 30s — server-side floor is more permissive
           setPinLockoutUntil(Date.now() + 30_000);
