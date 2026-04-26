@@ -19,7 +19,6 @@ interface HideNumbersContextType {
   hideNumbers: boolean;
   toggleHideNumbers: () => void;
   requestUnhide: () => void;
-  quickHide: () => void;
   isLoading: boolean;
 }
 
