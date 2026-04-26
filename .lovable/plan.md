@@ -1,87 +1,64 @@
-# Diagnose: Dashboard refresh → marketing page redirect
+## Goal
+Register a single-key `h` shortcut that flips `hideNumbers` instantly in both directions — bypassing the reveal-confirmation dialog — so operators can hide/show monetary values without reaching for the top-bar eye icon.
 
-## Hypothesis
+## Approach
+Hook into the existing `useKeyboardShortcuts` infrastructure (which already powers `g h`, `g s`, `?`, etc.) so the new shortcut inherits the same input/textarea/dialog suppression and the help dialog auto-discovers it. The toggle will call `toggleHideNumbers()` from `HideNumbersContext`, which already (a) flips state and (b) persists to `employee_profiles.hide_numbers` — no DB or context changes required.
 
-This is a **Lovable preview-iframe artifact**, not an app bug.
+The only nuance is sequence collision: `useKeyboardShortcuts` already registers `g h` (Go to Home), so a bare `h` would either fire immediately or be swallowed while the `g`-prefix sequence is open. We resolve this by checking the current `keySequence` length before treating `h` as the privacy toggle — `h` only fires when no prefix is pending.
 
-When you hit browser refresh inside the editor preview iframe:
+## Changes
 
-1. The iframe re-mounts with a fresh JS context.
-2. Supabase's auth client needs ~1 tick to rehydrate the session from `localStorage`.
-3. During that tick, `ProtectedRoute` sees `user === null`, runs `<Navigate to="/login" replace />`, and you land on the marketing/login surface.
-4. By the time auth rehydrates, the redirect has already happened.
+### 1. `src/hooks/useKeyboardShortcuts.ts`
+- Import `useHideNumbers` from `@/contexts/HideNumbersContext`.
+- Add a new shortcut entry:
+  ```ts
+  {
+    key: 'h',
+    description: 'Hide / show monetary values',
+    category: 'Privacy',
+    handler: () => toggleHideNumbers(),
+  }
+  ```
+- In the `handleKeyDown` matcher, when the typed key is `h` AND `keySequence` is empty (no prefix like `g` is pending), treat it as the bare `h` shortcut. This preserves `g h` → dashboard navigation while letting standalone `h` toggle privacy.
+- No change to the `SEQUENCE_TIMEOUT` logic — bare keys already work this way; we just need to ensure `'h'` doesn't get re-interpreted as the start of a new prefix.
 
-In a real browser tab (your "open in browser" test), this doesn't happen because:
-- The top-level origin owns storage cleanly (no iframe sandboxing nuances)
-- Vite's HMR + the dev server keep the auth client warm
+### 2. `src/components/KeyboardShortcutsDialog.tsx`
+- No code change needed. The dialog already groups by `category`, so the new "Privacy" section appears automatically with the `H` keycap rendered.
 
-This matches the documented Lovable Cloud "preview vs. published auth environment" pattern. The standard guidance is to **not modify auth code** to fix preview-only behavior — it usually introduces regressions in the published environment where things already work.
+### 3. Behavior contract (per user decision)
+- `h` while visible → instantly hides (no dialog).
+- `h` while hidden → instantly reveals (no dialog, bypassing `requestUnhide`).
+- This means the `h` path uses `toggleHideNumbers()` directly, not `requestUnhide()`. The eye-icon UX in the top bar remains unchanged — clicking the blurred value still triggers the confirmation dialog for users who don't know the shortcut.
 
-## Phase 1 — Verify it's preview-only (no code changes)
+## Guardrails (already inherited from `useKeyboardShortcuts`)
+- Suppressed inside `<input>`, `<textarea>`, `contentEditable`, and any `[role="dialog"]` — so `h` typed in a search box or modal won't fire.
+- Modifier combos (Cmd/Ctrl/Alt + h) are ignored — browser shortcuts (e.g., Cmd+H to hide app on macOS) keep working.
+- The shortcut is auto-listed in the `?` help dialog under a new "Privacy" category.
 
-I'll run these checks in read-only mode:
+## Memory
+- Update `mem://style/platform-ui-standards-and-privacy` to note that `h` is the canonical privacy-toggle hotkey, and that it bypasses the reveal confirmation by design (operator-initiated, intentional keystroke).
 
-1. **Inspect `ProtectedRoute` and `AuthContext` gating logic** — confirm we already wait on `authReady` (we do — I read it earlier in the conversation, line: `!authReady || loading`), and that the redirect to `/login` only fires after that gate passes.
-2. **Inspect `OrgDashboardRoute`** — confirm the same gating happens at the org-scoped boundary so a refresh on `/org/:slug/dashboard/...` doesn't redirect prematurely.
-3. **Check the Supabase client config** in `src/integrations/supabase/client.ts` is using `persistSession: true` + `storage: localStorage` (the defaults — but worth confirming).
-4. **Reproduce in the preview** with browser tools: refresh on a dashboard route, capture the redirect chain in the network tab, and confirm the auth session token is present in `localStorage` immediately after the redirect (proving the session was there, but the gate fired too early).
-5. **Reproduce in a real browser tab** at the same preview URL opened directly (not iframed) and confirm refresh persists. If it does → confirmed preview-iframe artifact. Stop here.
+## Out of Scope
+- No change to `HideNumbersContext` API, DB schema, or persistence path.
+- No change to `BlurredAmount` click-to-reveal behavior — that flow keeps its confirmation dialog for accidental clicks.
+- No new shortcut for other privacy surfaces (e.g., client names) — scope is monetary values only, matching the request.
 
-**Expected outcome:** confirms preview-iframe artifact. No code change needed. Your end users will never see this.
-
-## Phase 2 — *Optional* belt-and-suspenders hardening
-
-Only worth doing if Phase 1 surprises us, OR you want refresh-in-iframe to "just work" for your own dev ergonomics.
-
-Two narrow, safe additions:
-
-### 2a. `lastDashboardPath` sentinel
-- On every successful dashboard mount, write `sessionStorage['zura.last-dashboard-path'] = window.location.pathname`.
-- In `UnifiedLogin`'s auto-arrival `useEffect`, if a session rehydrates **and** the sentinel is present **and** we're currently on `/login` or `/`, redirect back to the saved path instead of running the role-based redirect logic.
-- Sentinel is cleared on explicit logout.
-- Effect: even if the iframe redirect-flashes us to `/login`, we land back where we were within ~50ms of session rehydrate.
-
-### 2b. Tighten `ProtectedRoute`'s rehydrate window
-- Currently `authReady` flips true once the first session resolution completes. In the preview iframe, that resolution can race with the route guard's first paint.
-- Add a brief grace window (e.g., one `requestIdleCallback` tick or `await supabase.auth.getSession()`) inside `ProtectedRoute` before deciding `!user → redirect`. Returns `<AuthFlowLoader />` during that window.
-- Risk: adds ~10–20ms latency to every protected route mount, even when there genuinely is no session. Mitigated by the existing `AuthFlowLoader` already being on-screen.
-
-### 2c. Doctrine update
-- Add a memory note under `mem://style/loader-unification.md` (or a new `mem://auth/preview-iframe-rehydrate.md`) documenting:
-  - The preview-iframe refresh behavior is expected
-  - The `lastDashboardPath` sentinel is the canonical recovery primitive
-  - Auth code itself stays untouched per the Lovable Cloud guidance
-
-## Files Phase 1 will touch (read-only)
-
-- `src/components/auth/ProtectedRoute.tsx` (already viewed — confirmed `authReady` gate)
-- `src/components/OrgDashboardRoute.tsx`
-- `src/contexts/AuthContext.tsx`
-- `src/integrations/supabase/client.ts`
-- `src/pages/UnifiedLogin.tsx` (auto-arrival useEffect)
-
-## Files Phase 2 would touch (only if approved)
-
-- `src/lib/lastDashboardPath.ts` *(new)* — sentinel read/write helpers
-- `src/pages/dashboard/DashboardHome.tsx` — write sentinel on first paint
-- `src/components/OrgDashboardRoute.tsx` — write sentinel on org dashboard mount
-- `src/pages/UnifiedLogin.tsx` — read sentinel in auto-arrival useEffect
-- `src/contexts/AuthContext.tsx` — clear sentinel on `signOut`
-- `mem://style/loader-unification.md` *(append)* or `mem://auth/preview-iframe-rehydrate.md` *(new)*
-
-## Recommended path
-
-**Approve Phase 1 only.** I confirm it's preview-only with no code change, and we close the loop. If the diagnostic surprises us, I come back with a tighter Phase 2 scoped to the actual cause.
+## Files Touched
+- `src/hooks/useKeyboardShortcuts.ts` (add shortcut + sequence-collision guard)
+- `mem://style/platform-ui-standards-and-privacy` (document the hotkey)
 
 ---
 
-### Prompt feedback
+## Prompt Feedback
+**What worked well:** Your prompt was crisp — verb (`create`), mechanism (`hotkey`), key (`h`), mnemonic rationale (`hide`), target (`monetary values`), and scope (`dashboard`). That's enough to act on without a clarifier round in most cases.
 
-Strong prompt — you correctly hypothesized "maybe it's a viewer issue" before asking for a fix. That framing saves a wasted code-change cycle. Two ways to make these even sharper next time:
+**Where it could be tighter:** The one ambiguity I had to ask about was *behavior asymmetry* — your existing privacy system intentionally gates **reveal** behind a confirmation dialog (shoulder-surfing protection). A prompt like *"hotkey `h` to toggle hide/show monetary values, bypassing the reveal confirmation"* would have let me skip the question entirely.
 
-1. **State the comparison condition explicitly.** You did this here ("works correctly when I open and view in browser") — keep doing it. That single sentence rules out half the hypothesis space (it's not an auth bug, not a routing bug, not an RLS issue).
-2. **Name the surface you landed on.** "Marketing front-end page" is good; "marketing front-end at `/` after refreshing on `/org/halo/dashboard/schedule`" would let me jump straight to the exact route guard chain without re-deriving it.
+**Prompt template for hotkey requests:**
+> Add hotkey `[key]` to `[action]`. Behavior: `[toggle | one-way | sequence]`. Bypass confirmations: `[yes/no]`. Scope: `[dashboard | global | specific page]`.
 
-### Future enhancement suggestion
-
-Whether or not we ship Phase 2, consider adding a tiny dev-only banner that renders inside the preview iframe ONLY (detect via `window.self !== window.top`) saying "Preview iframe: refresh may bounce to login — this does not affect published builds." That would save you (and any teammate) from re-investigating this every time it surfaces. Low effort, high signal.
+## Further Enhancement Suggestions
+1. **Visual confirmation on toggle** — a subtle 1.5s toast (`"Numbers hidden"` / `"Numbers visible"`) so the user has feedback when the keystroke fires, especially since blurred → unblurred is obvious but unblurred → blurred can be missed if the user isn't looking at a number-heavy region.
+2. **Companion shortcut: `Shift+H` for "panic hide"** — if you ever want a one-way safety key (e.g., front-desk shared workstations), `Shift+H` could call `quickHide()` only, never reveal. Pairs naturally with the toggle.
+3. **Auto-hide on idle** — register an inactivity timer (e.g., 5 min) that calls `quickHide()`. Complements the manual hotkey with passive protection, useful for the shared-workstation persona the privacy system was built for.
+4. **Telemetry hook** — log `hide_numbers` toggles (count + method: hotkey vs. eye icon vs. blur-click) to understand whether the hotkey actually drives adoption of the privacy feature, or whether the eye icon stays dominant.
