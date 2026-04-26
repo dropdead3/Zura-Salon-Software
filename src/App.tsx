@@ -9,6 +9,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "next-themes";
 import ScrollToTop from "./components/ScrollToTop";
 import { BootLuxeLoader } from "@/components/ui/BootLuxeLoader";
+import { AuthFlowLoader } from "@/components/auth/AuthFlowLoader";
+import { isAuthFlowActive } from "@/lib/authFlowSentinel";
 
 import { AuthProvider } from "./contexts/AuthContext";
 import { ViewAsProvider } from "./contexts/ViewAsContext";
@@ -71,6 +73,10 @@ function AccessDeniedPreview() {
 // Platform Admin pages
 
 function RouteFallback() {
+  // While the auth flow is active (login → dashboard handoff), keep the
+  // slate-950 AuthFlowLoader canvas so there's no white flash between
+  // LoginShell unmount and the dashboard's first paint.
+  if (isAuthFlowActive()) return <AuthFlowLoader />;
   return <BootLuxeLoader fullScreen />;
 }
 const Index = lazyWithRetry(() => import("./pages/Index"));
