@@ -79,6 +79,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
 import { usePostLoginFirstPaint } from '@/hooks/usePostLoginFirstPaint';
+import { useDashboardHotkeys } from '@/hooks/useDashboardHotkeys';
 
 const ROLE_MESSAGES = {
   leadership: {
