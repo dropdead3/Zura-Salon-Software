@@ -324,7 +324,7 @@ export default function OrgBrandedLogin() {
 
   if (orgLoading || !authReady) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="dark theme-cream-lux min-h-screen bg-slate-950 flex items-center justify-center">
         <Loader2 className="w-7 h-7 animate-spin text-white/60" />
       </div>
     );
@@ -354,7 +354,7 @@ export default function OrgBrandedLogin() {
   const themeColor = '#0a0a0a';
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col">
+    <div className="dark theme-cream-lux min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col">
       <Helmet>
         <title>{`Sign in · ${orgName}`}</title>
         <meta name="theme-color" content={themeColor} />
