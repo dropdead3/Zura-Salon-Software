@@ -177,11 +177,12 @@ export default function DashboardHome() {
     try { localStorage.setItem('cc-view-mode', v ? 'compact' : 'detailed'); } catch {}
   };
 
-  // Page-local hotkeys: ←/→ toggle Simple/Detailed, ↑/↓ cycle locations
+  // Page-local hotkeys: ←/→ toggle Simple/Detailed, ↑/↓ cycle locations (incl. All)
   useDashboardHotkeys({
     locationId,
     setLocationId,
     accessibleLocations,
+    canViewAggregate,
     compactView,
     setCompactView: handleCompactChange,
   });
