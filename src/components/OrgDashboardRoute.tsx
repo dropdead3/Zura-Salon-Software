@@ -4,6 +4,8 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { BootLuxeLoader } from '@/components/ui/BootLuxeLoader';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { isAuthFlowActive, clearAuthFlow } from '@/lib/authFlowSentinel';
 import NotFound from '@/pages/NotFound';
 import { OrgAccessDenied } from '@/components/auth/OrgAccessDenied';
 import { useEffect } from 'react';
@@ -68,9 +70,17 @@ export function OrgDashboardRoute() {
     });
   }
 
+  // Sentinel-aware loader: while the post-login handoff is in flight, keep
+  // the slate-950 AuthFlowLoader canvas so the user perceives ONE continuous
+  // surface from login submit through dashboard first paint. Once we've
+  // resolved everything and rendered <Outlet />, clearAuthFlow() retires the
+  // sentinel and subsequent in-app loads use the operator-branded loader.
+  const authFlow = isAuthFlowActive();
+  const handoffLoader = authFlow ? <AuthFlowLoader /> : <DashboardLoader fullPage />;
+
   // 1) Wait for first session resolution before any redirect decision.
   if (!authReady) {
-    return <BootLuxeLoader fullScreen />;
+    return authFlow ? <AuthFlowLoader /> : <BootLuxeLoader fullScreen />;
   }
 
   // 2) No user → bounce to /login, preserving the intended URL.
@@ -86,7 +96,7 @@ export function OrgDashboardRoute() {
 
   // 3) Org slug still resolving.
   if (isLoading) {
-    return <DashboardLoader fullPage />;
+    return handoffLoader;
   }
 
   // 4) Slug genuinely doesn't resolve to an org.
@@ -96,13 +106,13 @@ export function OrgDashboardRoute() {
 
   // 5) Platform users bypass membership entirely.
   if (isPlatformUser) {
-    return <Outlet />;
+    return <DashboardOutlet />;
   }
 
   // 6) Membership query not yet resolvable (orgId / userId still pairing) OR
   //    in flight OR not yet fetched once. Treat as loading, NEVER as denied.
   if (!membershipReady || isMembershipLoading || !isMembershipFetched) {
-    return <DashboardLoader fullPage />;
+    return handoffLoader;
   }
 
   // 7) Only now — with a real resolved pair and a completed query — can we deny.
@@ -112,6 +122,19 @@ export function OrgDashboardRoute() {
     return <OrgAccessDenied organizationName={organization.name} myDashboardPath="/dashboard" />;
   }
 
+  return <DashboardOutlet />;
+}
+
+/**
+ * Inner outlet wrapper — clears the auth-flow sentinel on first successful
+ * mount. This is the canonical "we made it" signal: every subsequent in-app
+ * loader is free to use the operator-branded DashboardLoader because the
+ * post-login handoff is officially over.
+ */
+function DashboardOutlet() {
+  useEffect(() => {
+    clearAuthFlow();
+  }, []);
   return <Outlet />;
 }
 
