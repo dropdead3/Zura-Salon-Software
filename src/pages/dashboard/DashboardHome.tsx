@@ -77,6 +77,8 @@ import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCa
 import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
+import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
+import { isAuthFlowActive, clearAuthFlow } from '@/lib/authFlowSentinel';
 
 const ROLE_MESSAGES = {
   leadership: {
@@ -249,6 +251,21 @@ export default function DashboardHome() {
   const pool = useMemo(() => getMessagePool(!!isLeadership, hasStylistRole, isFrontDesk), [isLeadership, hasStylistRole, isFrontDesk]);
   const [greeting] = useState(() => pool.greetings[Math.floor(Math.random() * pool.greetings.length)]);
   const [subtitle] = useState(() => pool.subtitles[Math.floor(Math.random() * pool.subtitles.length)]);
+
+  // Post-login handoff guard: while the auth-flow sentinel is still active
+  // AND our first-paint queries are still in flight, render the slate-950
+  // AuthFlowLoader instead of the chrome+skeleton intermediate state. This
+  // collapses the "flash of dashboard" stutter into one continuous canvas
+  // from login submit through the dashboard's first real paint. Once first
+  // paint resolves, clearAuthFlow() retires the sentinel so subsequent
+  // in-app loads use the operator-branded DashboardLoader.
+  const isFirstPaintLoading = layoutLoading || locationAccessLoading;
+  useEffect(() => {
+    if (!isFirstPaintLoading) clearAuthFlow();
+  }, [isFirstPaintLoading]);
+  if (isFirstPaintLoading && isAuthFlowActive()) {
+    return <AuthFlowLoader />;
+  }
 
   // Show setup wizard for first-time users
   if (!hasCompletedSetup && !layoutLoading) {
