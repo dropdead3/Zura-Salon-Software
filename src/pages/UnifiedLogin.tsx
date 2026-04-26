@@ -414,42 +414,134 @@ export default function UnifiedLogin() {
     }
   };
 
-  if (checkingAccess || loadingPlatformInvitation) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
-          <p className="text-slate-400 text-sm">
-            {loadingPlatformInvitation ? 'Loading invitation...' : 'Checking access...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // ─────────────────────────────────────────────────────────────────────
+  // Phase resolution: a single LoginShell is mounted always; only the
+  // inner content swaps with a 180ms crossfade. No more full-screen
+  // unmount/remount between "checking access" and the form — the canvas
+  // (slate-950 + gradient blobs + grid) is one continuous surface.
+  // ─────────────────────────────────────────────────────────────────────
 
-  // Dual-role interstitial
-  if (showDualRoleInterstitial && dualRoleInfo) {
-    const handleDestinationChoice = async (destination: string, orgSlug?: string) => {
-      const prefValue = destination === 'platform' ? 'platform' : `org_dashboard:${orgSlug}`;
-      if (rememberChoice && user) {
-        await saveDualRolePreference(user.id, prefValue);
-      }
-      const path = destination === 'platform'
-        ? '/platform/overview'
-        : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
-      navigateAuthenticated(path);
-    };
+  type Phase = 'loader' | 'dual-role' | 'invitation-error' | 'form';
+  const phase: Phase =
+    checkingAccess || loadingPlatformInvitation
+      ? 'loader'
+      : showDualRoleInterstitial && dualRoleInfo
+        ? 'dual-role'
+        : platformInvitationToken && platformInvitation && platformInvitation.status !== 'pending'
+          ? 'invitation-error'
+          : 'form';
 
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]" />
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
-        </div>
+  const isPlatformInviteSignup =
+    !isLogin && !!platformInvitationToken && platformInvitation?.status === 'pending';
 
-        <div className="flex-1 flex items-center justify-center px-6 relative z-10">
-          <div className="w-full max-w-md space-y-8">
+  const handleDestinationChoice = async (destination: string, orgSlug?: string) => {
+    const prefValue = destination === 'platform' ? 'platform' : `org_dashboard:${orgSlug}`;
+    if (rememberChoice && user) {
+      await saveDualRolePreference(user.id, prefValue);
+    }
+    const path = destination === 'platform'
+      ? '/platform/overview'
+      : orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard';
+    navigateAuthenticated(path);
+  };
+
+  const phaseTransition = { duration: 0.18, ease: 'easeOut' as const };
+  const phaseVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
+
+  // The form/dual-role phases need the back-link in the top-left chrome.
+  // The loader and invitation-error phases hide it (no-op chrome on those).
+  const topLeft =
+    phase === 'form' || phase === 'dual-role' ? (
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to home
+      </Link>
+    ) : undefined;
+
+  const footer = (
+    <p className="text-slate-600 text-sm">
+      &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}
+    </p>
+  );
+
+  return (
+    <LoginShell topLeft={topLeft} footer={footer}>
+      <AnimatePresence mode="wait" initial={false}>
+        {phase === 'loader' && (
+          <motion.div
+            key="phase-loader"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={phaseVariants}
+            transition={phaseTransition}
+            className="flex flex-col items-center gap-4"
+            role="status"
+            aria-label="Loading"
+          >
+            <PlatformLogo variant="login" className="h-9 w-auto opacity-80" />
+            <div className="relative w-32 h-px overflow-hidden rounded-full bg-white/10">
+              <div
+                className="absolute inset-y-0 h-px rounded-full bg-white/50"
+                style={{
+                  width: '40%',
+                  animation: 'auth-flow-bar-slide 1.4s ease-in-out infinite',
+                }}
+              />
+            </div>
+            <style>{`
+              @keyframes auth-flow-bar-slide {
+                0% { left: -40%; }
+                100% { left: 100%; }
+              }
+            `}</style>
+          </motion.div>
+        )}
+
+        {phase === 'invitation-error' && platformInvitation && (
+          <motion.div
+            key="phase-invitation-error"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={phaseVariants}
+            transition={phaseTransition}
+            className="max-w-md w-full p-8 text-center bg-white/[0.03] border border-white/[0.06] rounded-2xl"
+          >
+            <div className="p-4 bg-red-500/10 rounded-full w-fit mx-auto mb-4">
+              <Mail className="w-8 h-8 text-red-400" />
+            </div>
+            <h2 className="text-xl font-medium text-white mb-2">
+              {platformInvitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired'}
+            </h2>
+            <p className="text-slate-400 mb-6">
+              {platformInvitation.status === 'accepted'
+                ? 'This invitation has already been accepted.'
+                : 'This invitation has expired or been cancelled.'}
+            </p>
+            <Button onClick={() => navigate('/login', { replace: true })} className="bg-violet-600 hover:bg-violet-500">
+              Go to Login
+            </Button>
+          </motion.div>
+        )}
+
+        {phase === 'dual-role' && dualRoleInfo && (
+          <motion.div
+            key="phase-dual-role"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={phaseVariants}
+            transition={phaseTransition}
+            className="w-full max-w-md space-y-8"
+          >
             <div className="text-center space-y-4">
               <div className="flex items-center justify-center mb-6">
                 <PlatformLogo variant="login" className="h-10 w-auto" />
@@ -524,352 +616,292 @@ export default function UnifiedLogin() {
                 Remember my choice
               </label>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        )}
 
-        {/* Bottom branding */}
-        <div className="py-6 text-center relative z-10">
-          <p className="text-slate-600 text-sm">
-            &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Expired/invalid platform invitation
-  if (platformInvitationToken && platformInvitation && platformInvitation.status !== 'pending') {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center px-4">
-        <div className="max-w-md w-full p-8 text-center bg-white/[0.03] border border-white/[0.06] rounded-2xl">
-          <div className="p-4 bg-red-500/10 rounded-full w-fit mx-auto mb-4">
-            <Mail className="w-8 h-8 text-red-400" />
-          </div>
-          <h2 className="text-xl font-medium text-white mb-2">
-            {platformInvitation.status === 'accepted' ? 'Invitation Already Used' : 'Invitation Expired'}
-          </h2>
-          <p className="text-slate-400 mb-6">
-            {platformInvitation.status === 'accepted'
-              ? 'This invitation has already been accepted.'
-              : 'This invitation has expired or been cancelled.'}
-          </p>
-          <Button onClick={() => navigate('/login', { replace: true })} className="bg-violet-600 hover:bg-violet-500">
-            Go to Login
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const isPlatformInviteSignup = !isLogin && platformInvitationToken && platformInvitation?.status === 'pending';
-
-  return (
-    <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
-        <div
-          className="absolute inset-0 opacity-[0.015]"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '50px 50px',
-          }}
-        />
-      </div>
-
-      {/* Back link */}
-      <div className="p-6 relative z-10">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
-      </div>
-
-      {/* Form */}
-      <div className="flex-1 flex items-center justify-center px-6 pb-20 relative z-10">
-        <div className="w-full max-w-md space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center mb-6">
-              <PlatformLogo variant="login" className="h-10 w-auto" />
-            </div>
-            {!(isLogin && !isForgotPassword && !isPlatformInviteSignup) && (
-              <h1 className="text-3xl font-medium text-white tracking-tight">
+        {phase === 'form' && (
+          <motion.div
+            key="phase-form"
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            variants={phaseVariants}
+            transition={phaseTransition}
+            className="w-full max-w-md space-y-8"
+          >
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center mb-6">
+                <PlatformLogo variant="login" className="h-10 w-auto" />
+              </div>
+              {!(isLogin && !isForgotPassword && !isPlatformInviteSignup) && (
+                <h1 className="text-3xl font-medium text-white tracking-tight">
+                  {isForgotPassword
+                    ? 'Reset Password'
+                    : isPlatformInviteSignup
+                    ? 'Create Your Account'
+                    : 'Create Account'}
+                </h1>
+              )}
+              <p className="text-slate-400">
                 {isForgotPassword
-                  ? 'Reset Password'
+                  ? 'Enter your email to receive a reset link'
                   : isPlatformInviteSignup
-                  ? 'Create Your Account'
-                  : 'Create Account'}
-              </h1>
-            )}
-            <p className="text-slate-400">
-              {isForgotPassword
-                ? 'Enter your email to receive a reset link'
-                : isPlatformInviteSignup
-                ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
-                : isLogin
-                ? contextualSubtitle
-                : `Get started with ${PLATFORM_NAME}`}
-            </p>
-          </div>
+                  ? `You've been invited as ${platformInvitation?.role.replace('platform_', '').replace('_', ' ')}`
+                  : isLogin
+                  ? contextualSubtitle
+                  : `Get started with ${PLATFORM_NAME}`}
+              </p>
+            </div>
 
-          {/* Form Card */}
-          <div className="p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-sm shadow-2xl">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Full Name (signup only) */}
-              {!isLogin && !isForgotPassword && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm text-slate-300">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
-                    required
-                    className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500"
-                  />
-                </div>
-              )}
-
-              {/* Role (staff signup only, not platform invite) */}
-              {!isLogin && !isForgotPassword && !isPlatformInviteSignup && (
-                <div className="space-y-2">
-                  <Label className="text-sm text-slate-300">Your Role</Label>
-                  {staffInvitation ? (
-                    <div className="h-12 px-4 bg-green-500/10 border border-green-500/20 flex items-center gap-3 rounded-md">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                      <span className="font-medium text-green-300">
-                        {roleOptions.find(r => r.value === staffInvitation.role)?.label}
-                      </span>
-                      <span className="text-xs text-green-500 ml-1">(assigned by invitation)</span>
-                    </div>
-                  ) : (
-                    <Select value={role} onValueChange={(v) => setRole(v as AppRole)} required>
-                      <SelectTrigger className="h-12 bg-white/[0.05] border-white/[0.1] text-white">
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {roleOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex flex-col items-start">
-                              <span className="font-medium">{option.label}</span>
-                              <span className="text-xs text-muted-foreground">{option.description}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-              )}
-
-              {/* Email */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm text-slate-300">
-                  Email
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setEmailError(null);
-                    }}
-                    placeholder="you@company.com"
-                    required
-                    disabled={isPlatformInviteSignup}
-                    className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-10 ${emailError ? 'border-red-500' : ''} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
-                  />
-                  {!isLogin && checkingStaffInvitation && debouncedEmail.includes('@') && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                    </div>
-                  )}
-                  {!isLogin && staffInvitation && !checkingStaffInvitation && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <CheckCircle className="w-4 h-4 text-green-400" />
-                    </div>
-                  )}
-                </div>
-                {emailError && <p className="text-xs text-red-400">{emailError}</p>}
-                {!isLogin && staffInvitation && (
-                  <div className="flex items-center gap-2 text-xs text-green-400">
-                    <Mail className="w-3 h-3" />
-                    <span>You have a pending invitation!</span>
+            {/* Form Card */}
+            <div className="p-8 bg-white/[0.03] border border-white/[0.08] rounded-2xl backdrop-blur-sm shadow-2xl">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Full Name (signup only) */}
+                {!isLogin && !isForgotPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm text-slate-300">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Your full name"
+                      required
+                      className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500"
+                    />
                   </div>
                 )}
-              </div>
 
-              {/* Password */}
-              {!isForgotPassword && (
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm text-slate-300">
-                    Password
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      minLength={6}
-                      className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                {/* Role (staff signup only, not platform invite) */}
+                {!isLogin && !isForgotPassword && !isPlatformInviteSignup && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-slate-300">Your Role</Label>
+                    {staffInvitation ? (
+                      <div className="h-12 px-4 bg-green-500/10 border border-green-500/20 flex items-center gap-3 rounded-md">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        <span className="font-medium text-green-300">
+                          {roleOptions.find(r => r.value === staffInvitation.role)?.label}
+                        </span>
+                        <span className="text-xs text-green-500 ml-1">(assigned by invitation)</span>
+                      </div>
+                    ) : (
+                      <Select value={role} onValueChange={(v) => setRole(v as AppRole)} required>
+                        <SelectTrigger className="h-12 bg-white/[0.05] border-white/[0.1] text-white">
+                          <SelectValue placeholder="Select your role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roleOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex flex-col items-start">
+                                <span className="font-medium">{option.label}</span>
+                                <span className="text-xs text-muted-foreground">{option.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Confirm Password (signup) */}
-              {!isLogin && !isForgotPassword && (
+                {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm text-slate-300">
-                    Confirm Password
+                  <Label htmlFor="email" className="text-sm text-slate-300">
+                    Email
                   </Label>
                   <div className="relative">
                     <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
+                      id="email"
+                      type="email"
+                      value={email}
                       onChange={(e) => {
-                        const newValue = e.target.value;
-                        setConfirmPassword(newValue);
-                        if (passwordMatchTimeoutRef.current) {
-                          clearTimeout(passwordMatchTimeoutRef.current);
-                        }
-                        if (newValue.length >= 6 && password.length >= 6) {
-                          passwordMatchTimeoutRef.current = setTimeout(() => {
-                            showPasswordMatchToast(newValue === password);
-                          }, 800);
-                        }
+                        setEmail(e.target.value);
+                        setEmailError(null);
                       }}
-                      placeholder="••••••••"
+                      placeholder="you@company.com"
                       required
-                      minLength={6}
-                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : ''}`}
+                      disabled={isPlatformInviteSignup}
+                      className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-10 ${emailError ? 'border-red-500' : ''} ${staffInvitation && !isLogin ? 'border-green-500/50' : ''}`}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                    {!isLogin && checkingStaffInvitation && debouncedEmail.includes('@') && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                      </div>
+                    )}
+                    {!isLogin && staffInvitation && !checkingStaffInvitation && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      </div>
+                    )}
                   </div>
-                  {confirmPassword.length >= 6 && (
-                    <p className={`text-xs ${confirmPassword === password ? 'text-green-400' : 'text-red-400'}`}>
-                      {confirmPassword === password ? 'Passwords match' : 'Passwords do not match'}
-                    </p>
+                  {emailError && <p className="text-xs text-red-400">{emailError}</p>}
+                  {!isLogin && staffInvitation && (
+                    <div className="flex items-center gap-2 text-xs text-green-400">
+                      <Mail className="w-3 h-3" />
+                      <span>You have a pending invitation!</span>
+                    </div>
                   )}
                 </div>
-              )}
 
-              {/* Buttons */}
-              <div className="flex gap-3 pt-1">
-                {isLogin && !isForgotPassword && canSignUp && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsLogin(false)}
-                    className="flex-1 h-12 font-medium bg-transparent border-white/[0.1] text-white hover:bg-white/[0.05]"
-                  >
-                    Sign Up
-                  </Button>
+                {/* Password */}
+                {!isForgotPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm text-slate-300">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                        className="h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 )}
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 h-12 font-medium bg-violet-600 hover:bg-violet-500 text-white"
-                >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isForgotPassword ? (
-                    'Send Reset Link'
-                  ) : isLogin ? (
-                    'Sign In'
-                  ) : (
-                    'Create Account'
-                  )}
-                </Button>
-              </div>
-            </form>
 
-            {/* Toggle & Forgot Password */}
-            <div className="text-center space-y-3 mt-6">
-              {isLogin && !isForgotPassword && (
-                <button
-                  type="button"
-                  onClick={() => setIsForgotPassword(true)}
-                  className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  Forgot password?
-                </button>
-              )}
-              <div>
-                {isForgotPassword ? (
+                {/* Confirm Password (signup) */}
+                {!isLogin && !isForgotPassword && (
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-sm text-slate-300">
+                      Confirm Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          setConfirmPassword(newValue);
+                          if (passwordMatchTimeoutRef.current) {
+                            clearTimeout(passwordMatchTimeoutRef.current);
+                          }
+                          if (newValue.length >= 6 && password.length >= 6) {
+                            passwordMatchTimeoutRef.current = setTimeout(() => {
+                              showPasswordMatchToast(newValue === password);
+                            }, 800);
+                          }
+                        }}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                        className={`h-12 bg-white/[0.05] border-white/[0.1] text-white placeholder:text-slate-500 pr-12 ${confirmPassword.length >= 6 ? (confirmPassword === password ? 'border-green-500/50' : 'border-red-500') : ''}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {confirmPassword.length >= 6 && (
+                      <p className={`text-xs ${confirmPassword === password ? 'text-green-400' : 'text-red-400'}`}>
+                        {confirmPassword === password ? 'Passwords match' : 'Passwords do not match'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex gap-3 pt-1">
+                  {isLogin && !isForgotPassword && canSignUp && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsLogin(false)}
+                      className="flex-1 h-12 font-medium bg-transparent border-white/[0.1] text-white hover:bg-white/[0.05]"
+                    >
+                      Sign Up
+                    </Button>
+                  )}
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 h-12 font-medium bg-violet-600 hover:bg-violet-500 text-white"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isForgotPassword ? (
+                      'Send Reset Link'
+                    ) : isLogin ? (
+                      'Sign In'
+                    ) : (
+                      'Create Account'
+                    )}
+                  </Button>
+                </div>
+              </form>
+
+              {/* Toggle & Forgot Password */}
+              <div className="text-center space-y-3 mt-6">
+                {isLogin && !isForgotPassword && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsForgotPassword(false);
-                      setIsLogin(true);
-                      lastPasswordMatchStateRef.current = null;
-                    }}
+                    onClick={() => setIsForgotPassword(true)}
                     className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
                   >
-                    Back to sign in
+                    Forgot password?
                   </button>
-                ) : !isLogin ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(true);
-                      lastPasswordMatchStateRef.current = null;
-                    }}
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    Already have an account? Sign in
-                  </button>
-                ) : canSignUp ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(false);
-                      lastPasswordMatchStateRef.current = null;
-                    }}
-                    className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    Don't have an account? Sign up
-                  </button>
-                ) : null}
+                )}
+                <div>
+                  {isForgotPassword ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setIsLogin(true);
+                        lastPasswordMatchStateRef.current = null;
+                      }}
+                      className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      Back to sign in
+                    </button>
+                  ) : !isLogin ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLogin(true);
+                        lastPasswordMatchStateRef.current = null;
+                      }}
+                      className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      Already have an account? Sign in
+                    </button>
+                  ) : canSignUp ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsLogin(false);
+                        lastPasswordMatchStateRef.current = null;
+                      }}
+                      className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      Don't have an account? Sign up
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom branding */}
-      <div className="py-6 text-center relative z-10">
-        <p className="text-slate-600 text-sm">
-          &copy; {new Date().getFullYear()} {PLATFORM_NAME_FULL}
-        </p>
-      </div>
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </LoginShell>
   );
 }
+
