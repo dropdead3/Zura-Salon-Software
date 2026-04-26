@@ -43,7 +43,30 @@ export function isAuthFlowActive(): boolean {
 export function clearAuthFlow(): void {
   if (typeof window === 'undefined') return;
   try {
+    const raw = sessionStorage.getItem(KEY);
     sessionStorage.removeItem(KEY);
+    if (!raw) return;
+
+    const startedAt = Number(raw);
+    if (!Number.isFinite(startedAt)) return;
+
+    const durationMs = Date.now() - startedAt;
+    // Emit a structured event so any analytics adapter can pick it up
+    // without coupling this module to a specific provider. See
+    // src/lib/authFlowTelemetry.ts for the dev-only listener.
+    try {
+      window.dispatchEvent(
+        new CustomEvent('zura:auth-flow-complete', {
+          detail: {
+            durationMs,
+            route: window.location.pathname,
+            ttlExpired: durationMs > TTL_MS,
+          },
+        }),
+      );
+    } catch {
+      /* dispatch failures are non-fatal */
+    }
   } catch {
     /* ignore */
   }
