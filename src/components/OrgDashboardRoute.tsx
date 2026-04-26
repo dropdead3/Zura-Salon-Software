@@ -171,9 +171,14 @@ export function LegacyDashboardRedirect() {
     return <Navigate to={`/platform/${rest}`} replace />;
   }
 
+  // Sentinel-aware loaders: keep the slate-950 AuthFlowLoader canvas during
+  // the post-login handoff so the legacy redirect doesn't flash the white
+  // BootLuxeLoader / disco Z grid mid-transition.
+  const authFlow = isAuthFlowActive();
+
   // 1) Auth still resolving — show spinner.
   if (!authReady) {
-    return <BootLuxeLoader fullScreen />;
+    return authFlow ? <AuthFlowLoader /> : <BootLuxeLoader fullScreen />;
   }
 
   // 2) Not authenticated — redirect to login, preserving destination.
@@ -192,7 +197,7 @@ export function LegacyDashboardRedirect() {
 
   // 3) Org context still hydrating — wait. Never redirect on a transient null.
   if (isOrgLoading) {
-    return <DashboardLoader fullPage />;
+    return authFlow ? <AuthFlowLoader /> : <DashboardLoader fullPage />;
   }
 
   // 4) Org resolved → forward to canonical org-scoped URL.
