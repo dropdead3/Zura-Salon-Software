@@ -161,7 +161,7 @@ export default function OrgBrandedLogin() {
     // If the chooser was opened immediately after a cold-start signin, the
     // navigation was deferred — complete it now that the choice is recorded.
     if (user) {
-      navigate(redirectTarget, { replace: true });
+      navigateAuthenticated(redirectTarget, user.id);
     }
   };
 
@@ -198,7 +198,10 @@ export default function OrgBrandedLogin() {
         setShowDeviceModeDialog(true);
         return;
       }
-      navigate(redirectTarget, { replace: true });
+      // Resolve the freshly-signed-in user for prefetch (the `user` from
+      // useAuth() may not have repopulated yet on this tick).
+      const { data: { user: signedIn } } = await supabase.auth.getUser();
+      navigateAuthenticated(redirectTarget, signedIn?.id);
     } finally {
       setLoading(false);
     }
@@ -291,7 +294,7 @@ export default function OrgBrandedLogin() {
 
       sessionStorage.setItem(`pin_unlocked_at:${organization?.id}`, String(Date.now()));
       sonnerToast.success(`Welcome, ${identity.display_name.split(' ')[0]}`);
-      navigate(redirectTarget, { replace: true });
+      navigateAuthenticated(redirectTarget, identity.user_id);
     } catch (err) {
       console.error('PIN validation error:', err);
       toast({ variant: 'destructive', title: 'PIN check failed', description: 'Please try again.' });
