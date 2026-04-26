@@ -196,7 +196,7 @@ export default function UnifiedLogin() {
   const navigateAuthenticated = useCallback(
     (path: string) => {
       markAuthFlowActive();
-      navigateAuthenticated(path);
+      navigate(path);
     },
     [navigate],
   );
