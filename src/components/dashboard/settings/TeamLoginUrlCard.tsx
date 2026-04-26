@@ -300,7 +300,80 @@ export function TeamLoginUrlCard() {
             </div>
           )}
         </div>
+
+        {/* Owner-only: manual unlock for this device.
+            Hidden from non-owners entirely (avoids drawing attention to a
+            feature they can't use). The 5-min lockout normally protects
+            against brute force, but the primary owner needs an escape hatch
+            for the "I locked myself out at 7am before my first client" case. */}
+        {isPrimaryOwner && (
+          <div className="pt-4 border-t border-border space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-xs font-sans text-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                  Locked yourself out?
+                </p>
+                <p className="text-[11px] text-muted-foreground font-sans leading-relaxed">
+                  Clears the 5-minute PIN lockout on this device. Logged for audit.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setOverrideOpen(true)}
+                disabled={clearLockout.isPending || !deviceFp}
+                className="shrink-0 font-sans h-9 px-4 rounded-full"
+              >
+                {clearLockout.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  'Clear lockout'
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
+
+      <AlertDialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display tracking-wide">
+              Clear PIN lockout on this device?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-sans space-y-2">
+              <span className="block">
+                This will remove the active 5-minute lockout for the device you're
+                currently using and let staff retry their PIN immediately.
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Device: <span className="font-mono">{fpPreview}</span> · Surface: login
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                The action is recorded in the audit log under your name.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearLockout.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleClearLockout();
+              }}
+              disabled={clearLockout.isPending}
+            >
+              {clearLockout.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Clear lockout'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
