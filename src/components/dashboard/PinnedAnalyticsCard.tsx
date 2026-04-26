@@ -395,10 +395,16 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     let metricLabel = '';
     let metricSubtext = '';
     let goalPaceIcon: React.ReactNode = null;
-    
+
+    // Smart compact currency for simple-view tiles:
+    // - values >= $1,000 collapse to compact form ($20.3K, $1.2M) to prevent overflow
+    // - smaller values render with full precision so $842 stays exact
+    const formatCurrencySmart = (amount: number) =>
+      Math.abs(amount) >= 1000 ? formatCurrencyCompact(amount) : formatCurrencyWhole(amount);
+
     switch (cardId) {
       case 'executive_summary':
-        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
         metricLabel = filters.dateRange === 'today'
           ? "Today's expected revenue across all services and retail"
           : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
