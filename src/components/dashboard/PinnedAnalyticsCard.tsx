@@ -444,7 +444,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       }
       case 'revenue_breakdown':
-        metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
+        metricValue = `${formatCurrencySmart(salesData?.serviceRevenue ?? 0)} / ${formatCurrencySmart(salesData?.productRevenue ?? 0)}`;
         metricLabel = `Service vs. retail revenue for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'retail_effectiveness':
