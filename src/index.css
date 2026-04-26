@@ -3167,8 +3167,13 @@ select:-webkit-autofill,
 select:autofill {
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
   box-shadow: 0 0 0 1000px transparent inset !important;
-  -webkit-text-fill-color: currentColor !important;
-  caret-color: currentColor !important;
+  /* Pin autofill text to the active theme's foreground token.
+     `currentColor` resolves to Chrome's UA default (black) on bare inputs,
+     which makes autofilled email/password invisible on dark surfaces.
+     Using `--foreground` follows every theme reactively (white in dark,
+     near-black in light, theme-tinted in branded modes). */
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  caret-color: hsl(var(--foreground)) !important;
   transition: background-color 9999s ease-in-out 0s !important;
   border-radius: inherit !important;
   /* Belt-and-suspenders: kill any UA outline on autofilled focus */
