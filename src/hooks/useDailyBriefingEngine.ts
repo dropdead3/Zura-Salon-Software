@@ -98,6 +98,10 @@ export function useDailyBriefingEngine(
   // Attribution
   const { data: attribution } = useZuraActionsAttribution();
 
+  // Stylist Privacy Contract — empty-goals coach nudge (stylist context only).
+  const isStylistContext = roleContext === 'stylist';
+  const { data: showGoalsNudge = false } = useStylistGoalsNudge(isStylistContext);
+
   return useMemo(() => {
     // ── 1. TODAY'S FOCUS ──────────────────────────────────────────────
     let focus: BriefingFocus | null = null;
