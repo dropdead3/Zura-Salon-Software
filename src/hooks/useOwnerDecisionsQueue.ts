@@ -70,11 +70,11 @@ export function useOwnerDecisionsQueue(args: { enabled: boolean }) {
               .in('user_id', userIds)
           : { data: [] as Array<{ user_id: string; first_name: string | null; last_name: string | null }> };
 
-        const nameByUser = new Map(
+        const nameByUser = new Map<string, string>(
           (profiles ?? []).map((p) => [
             p.user_id,
             [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Team member',
-          ]),
+          ] as [string, string]),
         );
 
         for (const r of timeOff) {
