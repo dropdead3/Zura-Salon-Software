@@ -564,15 +564,19 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   };
 
   if (isLoading) return null;
-
-  // Owner-only governance: only account owners can author dashboard layouts.
-  const canCustomize = useCanCustomizeDashboardLayouts();
-  const { isViewingAs, viewAsRole } = useViewAs();
   if (!canCustomize) return null;
 
   const editingLabel = isViewingAs && viewAsRole
-    ? `Editing layout for ${viewAsRole.replace(/_/g, ' ')}`
-    : 'Editing your own layout';
+    ? `Editing org-wide layout for ${viewAsRole.replace(/_/g, ' ')}`
+    : "Editing your own layout";
+
+  const handlePreviewRoleChange = (value: string) => {
+    if (value === '__self__') {
+      clearViewAs();
+    } else {
+      setViewAsRole(value as AppRole);
+    }
+  };
 
   return (
     <>
@@ -601,6 +605,21 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               {editingLabel}
             </div>
           </div>
+
+          {/* Preview-as-role: owner picks which role's canvas to author. */}
+          <div className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-2">
+            <label className="text-[10px] font-display tracking-wider uppercase text-muted-foreground">
+              Preview as role
+            </label>
+            <RoleSelect
+              value={isViewingAs && viewAsRole ? viewAsRole : '__self__'}
+              onChange={handlePreviewRoleChange}
+            />
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Pick a role to see its dashboard live. Your edits save org-wide for that role — every user with that role will see them.
+            </p>
+          </div>
+        </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
             <Input
