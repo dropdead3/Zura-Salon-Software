@@ -233,6 +233,14 @@ interface DashboardCustomizeMenuProps {
   roleContext?: RoleContext;
 }
 
+const PREVIEWABLE_ROLES: { role: AppRole; label: string }[] = [
+  { role: 'admin', label: 'General Manager' },
+  { role: 'manager', label: 'Manager' },
+  { role: 'receptionist', label: 'Front Desk' },
+  { role: 'stylist', label: 'Stylist' },
+  { role: 'stylist_assistant', label: 'Assistant' },
+];
+
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
@@ -251,7 +259,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const saveLayout = useSaveDashboardLayout(targetUserId);
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
-  
+  const canCustomize = useCanCustomizeDashboardLayouts();
+  const { isViewingAs, viewAsRole, setViewAsRole, clearViewAs } = useViewAs();
+
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const registerElement = useRegisterVisibilityElement();
   const [isTogglingPin, setIsTogglingPin] = useState(false);
