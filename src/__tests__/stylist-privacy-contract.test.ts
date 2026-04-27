@@ -6,6 +6,10 @@ import {
   isStylistAllowedSection,
   isStylistOnlyViewer,
 } from '@/lib/dashboard/stylistPrivacy';
+import {
+  shouldShowStylistGoalsNudge,
+  STYLIST_GOALS_NUDGE_MIN_AGE_MS,
+} from '@/hooks/useStylistGoalsNudge';
 
 describe('Stylist Privacy Contract', () => {
   it('allowlist and forbidden list must not overlap', () => {
@@ -61,6 +65,76 @@ describe('Stylist Privacy Contract', () => {
       // E.g. a future role with no stylist family — contract doesn't apply.
       expect(isStylistOnlyViewer([])).toBe(false);
       expect(isStylistOnlyViewer(['unknown_role'])).toBe(false);
+  });
+
+  describe('empty-goals coach nudge gate', () => {
+    const NOW = new Date('2026-04-27T00:00:00Z').getTime();
+    const eightDaysAgo = new Date(NOW - 8 * 24 * 60 * 60 * 1000).toISOString();
+    const threeDaysAgo = new Date(NOW - 3 * 24 * 60 * 60 * 1000).toISOString();
+
+    it('shows nudge when account is >7d old and no goals row exists', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: eightDaysAgo,
+          goals: null,
+          now: NOW,
+        }),
+      ).toBe(true);
+    });
+
+    it('shows nudge when goals row exists but both targets are zero', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: eightDaysAgo,
+          goals: { weekly_target: 0, monthly_target: 0 },
+          now: NOW,
+        }),
+      ).toBe(true);
+    });
+
+    it('suppresses nudge when account is <7d old (onboarding silence)', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: threeDaysAgo,
+          goals: null,
+          now: NOW,
+        }),
+      ).toBe(false);
+    });
+
+    it('suppresses nudge when weekly target is set', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: eightDaysAgo,
+          goals: { weekly_target: 1500, monthly_target: 0 },
+          now: NOW,
+        }),
+      ).toBe(false);
+    });
+
+    it('suppresses nudge when monthly target is set', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: eightDaysAgo,
+          goals: { weekly_target: 0, monthly_target: 6000 },
+          now: NOW,
+        }),
+      ).toBe(false);
+    });
+
+    it('suppresses nudge when account-creation timestamp is missing', () => {
+      expect(
+        shouldShowStylistGoalsNudge({
+          accountCreatedAt: null,
+          goals: null,
+          now: NOW,
+        }),
+      ).toBe(false);
+    });
+
+    it('threshold constant is exactly 7 days', () => {
+      expect(STYLIST_GOALS_NUDGE_MIN_AGE_MS).toBe(7 * 24 * 60 * 60 * 1000);
     });
   });
+});
 });
