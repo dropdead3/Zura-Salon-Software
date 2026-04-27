@@ -75,6 +75,9 @@ const PaydayCountdownBanner = React.lazy(() => import('@/components/dashboard/my
 const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/InsightsNudgeBanner').then(m => ({ default: m.InsightsNudgeBanner })));
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
+const MyQuickStatsSection = React.lazy(() => import('@/components/dashboard/stylist/MyQuickStatsSection').then(m => ({ default: m.MyQuickStatsSection })));
+const PersonalGoalsSection = React.lazy(() => import('@/components/dashboard/stylist/PersonalGoalsSection').then(m => ({ default: m.PersonalGoalsSection })));
+const MyPerformanceSection = React.lazy(() => import('@/components/dashboard/stylist/MyPerformanceSection').then(m => ({ default: m.MyPerformanceSection })));
 import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCard';
 import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -644,7 +647,13 @@ function DashboardSections({
     todays_prep: hasStylistRole && (
       <TodaysPrepSection />
     ),
-    
+
+    // Stylist Privacy Contract — Phase 3.2 self-scoped sections.
+    // Each component fetches data filtered by the authenticated user.
+    my_quick_stats: hasStylistRole && <MyQuickStatsSection />,
+    personal_goals: hasStylistRole && <PersonalGoalsSection />,
+    my_performance: hasStylistRole && <MyPerformanceSection />,
+
     push_list: hasStylistRole && (
       <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
         <StylistPushList />

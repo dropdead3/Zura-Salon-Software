@@ -19,6 +19,7 @@
 export const STYLIST_ALLOWED_SECTIONS = new Set<string>([
   'daily_briefing',      // role-aware: 'stylist' context only
   'todays_prep',          // their day, their clients
+  'my_quick_stats',       // self-scoped weekly KPI strip (Phase 3.2)
   'personal_goals',       // their own targets (Phase 3.2)
   'my_performance',       // own revenue/retail trajectory (Phase 3.2)
   'level_progress',       // their own level

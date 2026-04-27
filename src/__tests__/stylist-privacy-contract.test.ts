@@ -36,6 +36,12 @@ describe('Stylist Privacy Contract', () => {
     expect(isStylistAllowedSection('hub_quicklinks')).toBe(false);
   });
 
+  it('Phase 3.2 self-scoped sections are allowed', () => {
+    expect(isStylistAllowedSection('my_quick_stats')).toBe(true);
+    expect(isStylistAllowedSection('personal_goals')).toBe(true);
+    expect(isStylistAllowedSection('my_performance')).toBe(true);
+  });
+
   describe('isStylistOnlyViewer', () => {
     it('treats pure stylist as stylist-only', () => {
       expect(isStylistOnlyViewer(['stylist'])).toBe(true);
