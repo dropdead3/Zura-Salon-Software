@@ -6,6 +6,10 @@ import {
   isStylistAllowedSection,
   isStylistOnlyViewer,
 } from '@/lib/dashboard/stylistPrivacy';
+import {
+  shouldShowStylistGoalsNudge,
+  STYLIST_GOALS_NUDGE_MIN_AGE_MS,
+} from '@/hooks/useStylistGoalsNudge';
 
 describe('Stylist Privacy Contract', () => {
   it('allowlist and forbidden list must not overlap', () => {
