@@ -5,6 +5,7 @@ import { useCapitalProjects } from '@/hooks/useCapitalProjects';
 import { useSEOTasks } from '@/hooks/useSEOTasks';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useZuraActionsAttribution } from '@/hooks/useZuraActionsAttribution';
+import { useStylistGoalsNudge } from '@/hooks/useStylistGoalsNudge';
 import type { Task } from '@/hooks/useTasks';
 
 // ── Types ────────────────────────────────────────────────────────────
