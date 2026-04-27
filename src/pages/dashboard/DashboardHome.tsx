@@ -48,6 +48,8 @@ import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 const DashboardSetupWizard = React.lazy(() => import('@/components/dashboard/DashboardSetupWizard').then(m => ({ default: m.DashboardSetupWizard })));
+import { OperatorTopBar } from '@/components/dashboard/owner/OperatorTopBar';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
 const TodaysQueueSection = React.lazy(() => import('@/components/dashboard/TodaysQueueSection').then(m => ({ default: m.TodaysQueueSection })));
@@ -294,8 +296,23 @@ export default function DashboardHome() {
     );
   }
 
+  // Owner-only Operator Top-Bar gate.
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const operatorBarLocationId = locationId || undefined;
+  const operatorBarScopeLabel = useMemo(() => {
+    if (!operatorBarLocationId) return canViewAggregate ? 'All Locations' : '';
+    return accessibleLocations.find((l) => l.id === operatorBarLocationId)?.name ?? '';
+  }, [operatorBarLocationId, accessibleLocations, canViewAggregate]);
+
   return (
     <DashboardLayout>
+      {/* Owner Operator Top-Bar — fixed, scroll-revealed. */}
+      <OperatorTopBar
+        enabled={isPrimaryOwner && hasCompletedSetup}
+        locationId={operatorBarLocationId}
+        accessibleLocationIds={accessibleLocationIds}
+        scopeLabel={operatorBarScopeLabel}
+      />
       <motion.div 
         className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-6 overflow-x-hidden"
         initial="hidden"
