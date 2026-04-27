@@ -441,16 +441,29 @@ export function useDashboardLayout(overrideUserId?: string) {
   };
 }
 
-// Save dashboard layout
+// Save dashboard layout.
+//
+// Owner-author governance routing:
+// - When the account owner is in View-As mode, writes are routed to
+//   `dashboard_role_layouts` for the previewed role (org-wide governance edit).
+// - Otherwise (owner editing their own canvas), writes go to `user_preferences`.
+// - Non-owners cannot reach this code path because the customize menu is gated
+//   by `useCanCustomizeDashboardLayouts` (RLS also enforces this server-side).
 export function useSaveDashboardLayout(overrideUserId?: string) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { targetUserId: godModeTargetUserId } = useGodModeTargetUserId();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { isViewingAs, viewAsRole } = useViewAs();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+
+  // Route to role layout when owner is previewing a role.
+  const writeTarget: 'role' | 'personal' =
+    isPrimaryOwner && isViewingAs && viewAsRole ? 'role' : 'personal';
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
-      const targetId = overrideUserId || godModeTargetUserId;
-      if (!targetId) throw new Error('User not authenticated');
-
       const sanitizedLayout = sanitizeDashboardLayout(layout);
       const layoutJson = {
         sections: sanitizedLayout.sections,
@@ -461,6 +474,27 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         hubOrder: sanitizedLayout.hubOrder,
         enabledHubs: sanitizedLayout.enabledHubs,
       };
+
+      if (writeTarget === 'role') {
+        if (!orgId) throw new Error('No organization context');
+        if (!user?.id) throw new Error('Not authenticated');
+        const { error } = await supabase
+          .from('dashboard_role_layouts')
+          .upsert(
+            {
+              organization_id: orgId,
+              role: viewAsRole as AppRole,
+              layout: layoutJson,
+              updated_by: user.id,
+            },
+            { onConflict: 'organization_id,role' }
+          );
+        if (error) throw error;
+        return;
+      }
+
+      const targetId = overrideUserId || godModeTargetUserId;
+      if (!targetId) throw new Error('User not authenticated');
 
       // First check if user preferences exist
       const { data: existing } = await supabase
@@ -470,29 +504,19 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         .maybeSingle();
 
       if (existing) {
-        // Update existing preferences
         const { error } = await supabase
           .from('user_preferences')
           .update({ dashboard_layout: layoutJson })
           .eq('user_id', targetId);
-
         if (error) throw error;
       } else {
-        // Insert new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert([{
-            user_id: targetId,
-            dashboard_layout: layoutJson,
-          }]);
-
+          .insert([{ user_id: targetId, dashboard_layout: layoutJson }]);
         if (error) throw error;
       }
     },
     onMutate: async (layout) => {
-      const targetId = overrideUserId || godModeTargetUserId;
-      if (!targetId) return;
-
       const sanitizedLayout = sanitizeDashboardLayout(layout);
       const layoutJson = {
         sections: sanitizedLayout.sections,
@@ -504,28 +528,38 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         enabledHubs: sanitizedLayout.enabledHubs,
       };
 
+      if (writeTarget === 'role' && orgId && viewAsRole) {
+        const key = ['dashboard-role-layout', orgId, viewAsRole];
+        await queryClient.cancelQueries({ queryKey: key });
+        const previous = queryClient.getQueryData(key);
+        queryClient.setQueryData(key, { layout: layoutJson, updated_at: new Date().toISOString(), updated_by: user?.id });
+        return { previousRoleLayout: previous, key };
+      }
+
+      const targetId = overrideUserId || godModeTargetUserId;
+      if (!targetId) return;
       await queryClient.cancelQueries({ queryKey: ['user-preferences', targetId] });
       const previousUserPrefs = queryClient.getQueryData(['user-preferences', targetId]);
-
-      queryClient.setQueryData(['user-preferences', targetId], {
-        dashboard_layout: layoutJson,
-      });
-
+      queryClient.setQueryData(['user-preferences', targetId], { dashboard_layout: layoutJson });
       return { previousUserPrefs, targetId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      if (writeTarget === 'role' && orgId && viewAsRole) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, viewAsRole] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      }
     },
     onError: (error, _layout, context) => {
-      if (context?.targetId) {
+      if (context && 'previousRoleLayout' in context && context.key) {
+        queryClient.setQueryData(context.key as readonly unknown[], context.previousRoleLayout);
+      } else if (context && 'targetId' in context && context.targetId) {
         queryClient.setQueryData(['user-preferences', context.targetId], context.previousUserPrefs);
       }
       toast.error('Failed to save dashboard layout', { description: error.message });
     },
   });
 }
-
-// Update specific parts of layout
 export function useUpdateDashboardLayout() {
   const { layout } = useDashboardLayout();
   const saveMutation = useSaveDashboardLayout();
