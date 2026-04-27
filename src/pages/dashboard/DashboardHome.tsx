@@ -761,7 +761,12 @@ function DashboardSections({
     toggleTask,
     deleteTask,
     isImpersonating,
-    isImpersonating,
+    todayClients,
+    thisWeekRevenue,
+    newClients,
+    rebookingRate,
+    quickStatsLoading,
+    quickStatsScopeLabel,
   ]);
 
   // Render sections in order based on layout
