@@ -6,6 +6,13 @@ import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -233,6 +240,32 @@ interface DashboardCustomizeMenuProps {
   roleContext?: RoleContext;
 }
 
+const PREVIEWABLE_ROLES: { role: AppRole; label: string }[] = [
+  { role: 'admin', label: 'General Manager' },
+  { role: 'manager', label: 'Manager' },
+  { role: 'receptionist', label: 'Front Desk' },
+  { role: 'stylist', label: 'Stylist' },
+  { role: 'stylist_assistant', label: 'Assistant' },
+];
+
+function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-xs">
+        <SelectValue placeholder="Select role" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__self__">My own dashboard</SelectItem>
+        {PREVIEWABLE_ROLES.map(({ role, label }) => (
+          <SelectItem key={role} value={role}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
@@ -251,7 +284,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const saveLayout = useSaveDashboardLayout(targetUserId);
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
-  
+  const canCustomize = useCanCustomizeDashboardLayouts();
+  const { isViewingAs, viewAsRole, setViewAsRole, clearViewAs } = useViewAs();
+
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const registerElement = useRegisterVisibilityElement();
   const [isTogglingPin, setIsTogglingPin] = useState(false);
@@ -554,15 +589,19 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   };
 
   if (isLoading) return null;
-
-  // Owner-only governance: only account owners can author dashboard layouts.
-  const canCustomize = useCanCustomizeDashboardLayouts();
-  const { isViewingAs, viewAsRole } = useViewAs();
   if (!canCustomize) return null;
 
   const editingLabel = isViewingAs && viewAsRole
-    ? `Editing layout for ${viewAsRole.replace(/_/g, ' ')}`
-    : 'Editing your own layout';
+    ? `Editing org-wide layout for ${viewAsRole.replace(/_/g, ' ')}`
+    : "Editing your own layout";
+
+  const handlePreviewRoleChange = (value: string) => {
+    if (value === '__self__') {
+      clearViewAs();
+    } else {
+      setViewAsRole(value as AppRole);
+    }
+  };
 
   return (
     <>
@@ -591,6 +630,23 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               {editingLabel}
             </div>
           </div>
+
+          {/* Preview-as-role: owner picks which role's canvas to author. */}
+          <div className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-2">
+            <label className="text-[10px] font-display tracking-wider uppercase text-muted-foreground">
+              Preview as role
+            </label>
+            <RoleSelect
+              value={isViewingAs && viewAsRole ? viewAsRole : '__self__'}
+              onChange={handlePreviewRoleChange}
+            />
+            <p className="text-[10px] text-muted-foreground leading-snug">
+              Pick a role to see its dashboard live. Your edits save org-wide for that role — every user with that role will see them.
+            </p>
+          </div>
+        </div>
+
+        <div className="px-5 pb-3 border-b border-border/40">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
             <Input

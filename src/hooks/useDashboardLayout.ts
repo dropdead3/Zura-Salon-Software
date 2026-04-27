@@ -245,13 +245,41 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   return sanitizeDashboardLayout(migrated);
 }
 
-// Map roles to template role_name
-function getRoleTemplateKey(roles: string[], isLeadership: boolean): string {
+// Map roles to template role_name. Order matters: highest-precedence role wins.
+function getRoleTemplateKey(roles: string[], isLeadership: boolean, isPrimaryOwner: boolean): string {
+  if (isPrimaryOwner) return 'account_owner';
+  if (roles.includes('admin')) return 'leadership';
+  if (roles.includes('manager')) return 'manager';
   if (isLeadership) return 'leadership';
   if (roles.includes('stylist')) return 'stylist';
   if (roles.includes('stylist_assistant')) return 'assistant';
   if (roles.includes('receptionist')) return 'operations';
   return 'stylist'; // Default fallback
+}
+
+/**
+ * Map an app_role enum value to the template role_name used in
+ * dashboard_layout_templates. Used by Preview-as-role / role-targeted writes.
+ */
+export function templateKeyForRole(role: AppRole): string {
+  switch (role) {
+    case 'super_admin':
+    case 'admin':
+      return 'leadership';
+    case 'manager':
+      return 'manager';
+    case 'stylist':
+      return 'stylist';
+    case 'stylist_assistant':
+    case 'assistant':
+    case 'admin_assistant':
+    case 'operations_assistant':
+      return 'assistant';
+    case 'receptionist':
+      return 'operations';
+    default:
+      return 'stylist';
+  }
 }
 
 // Fetch all available templates
@@ -281,7 +309,17 @@ export function useDashboardLayout(overrideUserId?: string) {
   const targetUserId = overrideUserId || godModeTargetUserId;
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const primaryRoleKey = pickPrimaryRoleKey(roles);
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const { isViewingAs, viewAsRole } = useViewAs();
+
+  // When the owner is previewing as a role, resolve that role's layout
+  // (not the owner's own primary role).
+  const primaryRoleKey = (isViewingAs && viewAsRole) ? viewAsRole : pickPrimaryRoleKey(roles);
+
+  // Personal overrides only apply for account owners. All other roles see
+  // the owner-authored org-role layout (or the seeded template). This enforces
+  // the locked governance decision: users cannot personalize their own dashboard.
+  const allowPersonalLayout = !!isPrimaryOwner && !isViewingAs;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
     queryKey: ['user-preferences', targetUserId],
@@ -297,12 +335,15 @@ export function useDashboardLayout(overrideUserId?: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && allowPersonalLayout,
   });
 
   // Determine if user is leadership for template selection
-  const isLeadership = roles.includes('super_admin') || roles.includes('manager');
-  const templateKey = getRoleTemplateKey(roles, isLeadership);
+  const isLeadership = roles.includes('super_admin') || roles.includes('manager') || roles.includes('admin');
+  // When previewing as a role, look up that role's template directly.
+  const templateKey = (isViewingAs && viewAsRole)
+    ? templateKeyForRole(viewAsRole)
+    : getRoleTemplateKey(roles, isLeadership, isPrimaryOwner);
 
   const { data: roleTemplate, isLoading: templateLoading } = useQuery({
     queryKey: ['dashboard-layout-template', templateKey],
@@ -323,7 +364,7 @@ export function useDashboardLayout(overrideUserId?: string) {
       }
       return null;
     },
-    enabled: roles.length > 0,
+    enabled: roles.length > 0 || (isViewingAs && !!viewAsRole),
   });
 
   // Owner-authored role layout for the current org + primary role.
@@ -400,16 +441,29 @@ export function useDashboardLayout(overrideUserId?: string) {
   };
 }
 
-// Save dashboard layout
+// Save dashboard layout.
+//
+// Owner-author governance routing:
+// - When the account owner is in View-As mode, writes are routed to
+//   `dashboard_role_layouts` for the previewed role (org-wide governance edit).
+// - Otherwise (owner editing their own canvas), writes go to `user_preferences`.
+// - Non-owners cannot reach this code path because the customize menu is gated
+//   by `useCanCustomizeDashboardLayouts` (RLS also enforces this server-side).
 export function useSaveDashboardLayout(overrideUserId?: string) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { targetUserId: godModeTargetUserId } = useGodModeTargetUserId();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { isViewingAs, viewAsRole } = useViewAs();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+
+  // Route to role layout when owner is previewing a role.
+  const writeTarget: 'role' | 'personal' =
+    isPrimaryOwner && isViewingAs && viewAsRole ? 'role' : 'personal';
 
   return useMutation({
     mutationFn: async (layout: DashboardLayout) => {
-      const targetId = overrideUserId || godModeTargetUserId;
-      if (!targetId) throw new Error('User not authenticated');
-
       const sanitizedLayout = sanitizeDashboardLayout(layout);
       const layoutJson = {
         sections: sanitizedLayout.sections,
@@ -420,6 +474,27 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         hubOrder: sanitizedLayout.hubOrder,
         enabledHubs: sanitizedLayout.enabledHubs,
       };
+
+      if (writeTarget === 'role') {
+        if (!orgId) throw new Error('No organization context');
+        if (!user?.id) throw new Error('Not authenticated');
+        const { error } = await supabase
+          .from('dashboard_role_layouts')
+          .upsert(
+            {
+              organization_id: orgId,
+              role: viewAsRole as AppRole,
+              layout: layoutJson,
+              updated_by: user.id,
+            },
+            { onConflict: 'organization_id,role' }
+          );
+        if (error) throw error;
+        return;
+      }
+
+      const targetId = overrideUserId || godModeTargetUserId;
+      if (!targetId) throw new Error('User not authenticated');
 
       // First check if user preferences exist
       const { data: existing } = await supabase
@@ -429,29 +504,19 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         .maybeSingle();
 
       if (existing) {
-        // Update existing preferences
         const { error } = await supabase
           .from('user_preferences')
           .update({ dashboard_layout: layoutJson })
           .eq('user_id', targetId);
-
         if (error) throw error;
       } else {
-        // Insert new preferences
         const { error } = await supabase
           .from('user_preferences')
-          .insert([{
-            user_id: targetId,
-            dashboard_layout: layoutJson,
-          }]);
-
+          .insert([{ user_id: targetId, dashboard_layout: layoutJson }]);
         if (error) throw error;
       }
     },
     onMutate: async (layout) => {
-      const targetId = overrideUserId || godModeTargetUserId;
-      if (!targetId) return;
-
       const sanitizedLayout = sanitizeDashboardLayout(layout);
       const layoutJson = {
         sections: sanitizedLayout.sections,
@@ -463,28 +528,38 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
         enabledHubs: sanitizedLayout.enabledHubs,
       };
 
+      if (writeTarget === 'role' && orgId && viewAsRole) {
+        const key = ['dashboard-role-layout', orgId, viewAsRole];
+        await queryClient.cancelQueries({ queryKey: key });
+        const previous = queryClient.getQueryData(key);
+        queryClient.setQueryData(key, { layout: layoutJson, updated_at: new Date().toISOString(), updated_by: user?.id });
+        return { previousRoleLayout: previous, key };
+      }
+
+      const targetId = overrideUserId || godModeTargetUserId;
+      if (!targetId) return;
       await queryClient.cancelQueries({ queryKey: ['user-preferences', targetId] });
       const previousUserPrefs = queryClient.getQueryData(['user-preferences', targetId]);
-
-      queryClient.setQueryData(['user-preferences', targetId], {
-        dashboard_layout: layoutJson,
-      });
-
+      queryClient.setQueryData(['user-preferences', targetId], { dashboard_layout: layoutJson });
       return { previousUserPrefs, targetId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      if (writeTarget === 'role' && orgId && viewAsRole) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, viewAsRole] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      }
     },
     onError: (error, _layout, context) => {
-      if (context?.targetId) {
+      if (context && 'previousRoleLayout' in context && context.key) {
+        queryClient.setQueryData(context.key as readonly unknown[], context.previousRoleLayout);
+      } else if (context && 'targetId' in context && context.targetId) {
         queryClient.setQueryData(['user-preferences', context.targetId], context.previousUserPrefs);
       }
       toast.error('Failed to save dashboard layout', { description: error.message });
     },
   });
 }
-
-// Update specific parts of layout
 export function useUpdateDashboardLayout() {
   const { layout } = useDashboardLayout();
   const saveMutation = useSaveDashboardLayout();
@@ -516,12 +591,34 @@ export function useCompleteSetup() {
 }
 
 // Reset to role default template
+// Reset to role default template.
+//
+// When the owner is previewing a role, "Reset to default" deletes the
+// org-role layout so the role falls back to the seeded template — instead
+// of writing the template into dashboard_role_layouts (which would freeze it).
 export function useResetToDefault(overrideUserId?: string) {
   const { roleTemplate } = useDashboardLayout(overrideUserId);
   const saveMutation = useSaveDashboardLayout(overrideUserId);
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { isViewingAs, viewAsRole } = useViewAs();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+
+  const isRoleReset = isPrimaryOwner && isViewingAs && !!viewAsRole && !!orgId;
 
   return useMutation({
     mutationFn: async () => {
+      if (isRoleReset) {
+        const { error } = await supabase
+          .from('dashboard_role_layouts')
+          .delete()
+          .eq('organization_id', orgId)
+          .eq('role', viewAsRole as AppRole);
+        if (error) throw error;
+        return;
+      }
+
       if (!roleTemplate?.layout) {
         throw new Error('No default template found');
       }
@@ -532,7 +629,12 @@ export function useResetToDefault(overrideUserId?: string) {
       });
     },
     onSuccess: () => {
-      toast.success('Dashboard reset to default');
+      if (isRoleReset && orgId && viewAsRole) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, viewAsRole] });
+        toast.success(`Reset ${viewAsRole.replace(/_/g, ' ')} layout to template default`);
+      } else {
+        toast.success('Dashboard reset to default');
+      }
     },
   });
 }
