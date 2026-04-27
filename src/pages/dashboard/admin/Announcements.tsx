@@ -72,6 +72,7 @@ interface Announcement {
   is_pinned: boolean;
   is_active: boolean;
   author_id: string;
+  organization_id: string;
   expires_at: string | null;
   created_at: string;
   link_url: string | null;
