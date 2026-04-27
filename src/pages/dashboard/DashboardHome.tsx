@@ -572,6 +572,7 @@ function DashboardSections({
             Today · {quickStatsScopeLabel}
           </p>
         )}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
