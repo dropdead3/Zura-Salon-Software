@@ -49,6 +49,7 @@ import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer'
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 const DashboardSetupWizard = React.lazy(() => import('@/components/dashboard/DashboardSetupWizard').then(m => ({ default: m.DashboardSetupWizard })));
 import { OperatorTopBar } from '@/components/dashboard/owner/OperatorTopBar';
+import { DecisionsAwaitingSection } from '@/components/dashboard/owner/DecisionsAwaitingSection';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
@@ -524,6 +525,9 @@ function DashboardSections({
 
     // Owner-only governance card. Renders null for non-owners via internal guard.
     team_dashboards: <TeamDashboardsCard />,
+
+    // Owner-only operator primitive — escalations queue. Self-suppresses when empty.
+    decisions_awaiting: <DecisionsAwaitingSection />,
 
     payday_countdown: <PaydayCountdownBanner />,
     
