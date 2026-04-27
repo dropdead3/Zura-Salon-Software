@@ -645,6 +645,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               Pick a role to see its dashboard live. Your edits save org-wide for that role — every user with that role will see them.
             </p>
           </div>
+
+          {/* Owner-only: history of who changed which role layout. */}
+          <DashboardLayoutAuditPanel role={isViewingAs && viewAsRole ? (viewAsRole as AppRole) : null} />
         </div>
 
         <div className="px-5 pb-3 border-b border-border/40">
