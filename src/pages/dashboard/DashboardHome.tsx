@@ -57,6 +57,7 @@ import { getDateRange, type AnalyticsFilters, type DateRangeType } from '@/compo
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { CommandCenterControlRow } from '@/components/dashboard/CommandCenterControlRow';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useCanViewFinancials, FINANCIAL_PINNED_CARD_IDS } from '@/hooks/useCanViewFinancials';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { useQuickStats } from '@/hooks/useQuickStats';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -448,12 +449,16 @@ function DashboardSections({
   const { data: visibilityData } = useDashboardVisibility();
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
   const effectivePinnedCardIds = useMemo(() => getPinnedCardIdsFromLayout(layout), [layout]);
-  
+  const canViewFinancials = useCanViewFinancials();
+
   const isCardPinned = (cardId: string): boolean => {
+    // Manager variant gate: hide org financials from plain managers regardless
+    // of layout/visibility config. Owners explicitly grant via permissions.
+    if (FINANCIAL_PINNED_CARD_IDS.has(cardId) && !canViewFinancials) return false;
     if (isPinnedInLayout(layout, cardId)) return true;
     if (!visibilityData) return false;
     const visibilityKey = getPinnedVisibilityKey(cardId);
-    return leadershipRoles.some(role => 
+    return leadershipRoles.some(role =>
       visibilityData.find(v => v.element_key === visibilityKey && v.role === role)?.is_visible ?? false
     );
   };
