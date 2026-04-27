@@ -567,7 +567,11 @@ function DashboardSections({
     
     quick_stats: hasStylistRole && (
       <VisibilityGate elementKey="quick_stats">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickStatsScopeLabel && (
+          <p className="text-[10px] font-display tracking-wide text-muted-foreground mb-2 uppercase">
+            Today · {quickStatsScopeLabel}
+          </p>
+        )}
           <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
