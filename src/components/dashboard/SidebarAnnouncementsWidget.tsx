@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Megaphone, ChevronRight, Pin, ExternalLink } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useMarkAnnouncementsRead } from '@/hooks/useMarkAnnouncementsRead';
 
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
@@ -120,6 +121,12 @@ export function SidebarAnnouncementsWidget({
       supabase.removeChannel(channel);
     };
   }, [user?.id, queryClient]);
+
+  // Mark visible announcements as read when sidebar widget is expanded.
+  useMarkAnnouncementsRead(
+    announcements.map(a => a.id),
+    isExpanded && announcements.length > 0,
+  );
 
   if (announcements.length === 0) return null;
 

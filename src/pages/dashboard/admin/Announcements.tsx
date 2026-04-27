@@ -40,6 +40,7 @@ import {
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -72,6 +73,7 @@ interface Announcement {
   is_pinned: boolean;
   is_active: boolean;
   author_id: string;
+  organization_id: string;
   expires_at: string | null;
   created_at: string;
   link_url: string | null;
@@ -97,6 +99,8 @@ const normalizeUrl = (url: string): string => {
 
 export default function Announcements() {
   const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
@@ -287,12 +291,15 @@ export default function Announcements() {
   };
 
   const handleCreate = () => {
-    if (!user) return;
+    if (!user || !orgId) {
+      toast.error('Organization context not loaded');
+      return;
+    }
     // Get max sort_order for pinned announcements
-    const maxSortOrder = pinnedAnnouncements.length > 0 
-      ? Math.max(...pinnedAnnouncements.map(a => a.sort_order || 0)) 
+    const maxSortOrder = pinnedAnnouncements.length > 0
+      ? Math.max(...pinnedAnnouncements.map(a => a.sort_order || 0))
       : 0;
-    
+
     createMutation.mutate({
       title,
       content,
@@ -300,6 +307,7 @@ export default function Announcements() {
       is_pinned: isPinned,
       is_active: true,
       author_id: user.id,
+      organization_id: orgId,
       expires_at: expiresAt || null,
       link_url: linkUrl || null,
       link_label: linkLabel || null,

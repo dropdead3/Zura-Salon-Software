@@ -24,6 +24,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useMarkAnnouncementsRead } from '@/hooks/useMarkAnnouncementsRead';
 
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
@@ -81,6 +82,12 @@ export function AnnouncementsBento({
   const hasAnnouncements = filteredAnnouncements.length > 0;
   const displayedAnnouncements = filteredAnnouncements.slice(0, 3);
   const totalCount = filteredAnnouncements.length;
+
+  // Mark visible announcements as read when the card is expanded.
+  useMarkAnnouncementsRead(
+    displayedAnnouncements.map(a => a.id),
+    isExpanded && hasAnnouncements,
+  );
 
   return (
     <Card className="p-6 rounded-xl backdrop-blur-sm">

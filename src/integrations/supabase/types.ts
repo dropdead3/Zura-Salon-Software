@@ -704,6 +704,7 @@ export type Database = {
           link_label: string | null
           link_url: string | null
           location_id: string | null
+          organization_id: string
           priority: string | null
           sort_order: number | null
           title: string
@@ -720,6 +721,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           location_id?: string | null
+          organization_id: string
           priority?: string | null
           sort_order?: number | null
           title: string
@@ -736,6 +738,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           location_id?: string | null
+          organization_id?: string
           priority?: string | null
           sort_order?: number | null
           title?: string
@@ -747,6 +750,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -7151,6 +7161,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      dashboard_role_layout_audit: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_layout: Json | null
+          organization_id: string
+          previous_layout: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_layout?: Json | null
+          organization_id: string
+          previous_layout?: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_layout?: Json | null
+          organization_id?: string
+          previous_layout?: Json | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_role_layout_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_role_layouts: {
         Row: {
@@ -31797,6 +31848,10 @@ export type Database = {
       }
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_location_access: {
+        Args: { _location_id: string; _user_id: string }
         Returns: boolean
       }
       validate_dock_pin:
