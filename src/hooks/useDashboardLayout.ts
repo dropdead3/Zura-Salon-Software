@@ -309,7 +309,17 @@ export function useDashboardLayout(overrideUserId?: string) {
   const targetUserId = overrideUserId || godModeTargetUserId;
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const primaryRoleKey = pickPrimaryRoleKey(roles);
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const { isViewingAs, viewAsRole } = useViewAs();
+
+  // When the owner is previewing as a role, resolve that role's layout
+  // (not the owner's own primary role).
+  const primaryRoleKey = (isViewingAs && viewAsRole) ? viewAsRole : pickPrimaryRoleKey(roles);
+
+  // Personal overrides only apply for account owners. All other roles see
+  // the owner-authored org-role layout (or the seeded template). This enforces
+  // the locked governance decision: users cannot personalize their own dashboard.
+  const allowPersonalLayout = !!isPrimaryOwner && !isViewingAs;
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
     queryKey: ['user-preferences', targetUserId],
@@ -325,12 +335,15 @@ export function useDashboardLayout(overrideUserId?: string) {
       if (error) throw error;
       return data;
     },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && allowPersonalLayout,
   });
 
   // Determine if user is leadership for template selection
-  const isLeadership = roles.includes('super_admin') || roles.includes('manager');
-  const templateKey = getRoleTemplateKey(roles, isLeadership);
+  const isLeadership = roles.includes('super_admin') || roles.includes('manager') || roles.includes('admin');
+  // When previewing as a role, look up that role's template directly.
+  const templateKey = (isViewingAs && viewAsRole)
+    ? templateKeyForRole(viewAsRole)
+    : getRoleTemplateKey(roles, isLeadership, isPrimaryOwner);
 
   const { data: roleTemplate, isLoading: templateLoading } = useQuery({
     queryKey: ['dashboard-layout-template', templateKey],
@@ -351,7 +364,7 @@ export function useDashboardLayout(overrideUserId?: string) {
       }
       return null;
     },
-    enabled: roles.length > 0,
+    enabled: roles.length > 0 || (isViewingAs && !!viewAsRole),
   });
 
   // Owner-authored role layout for the current org + primary role.
