@@ -925,6 +925,10 @@ function DashboardSections({
         
         // Regular section: only render if section is enabled
         if (!layout.sections.includes(sectionId)) return null;
+        // Stylist Privacy Contract: drop forbidden sections silently for
+        // stylist-only viewers, regardless of whether they're in the layout.
+        // Dev log fires inside isStylistAllowedSection.
+        if (stylistOnly && !isStylistAllowedSection(sectionId)) return null;
         
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
