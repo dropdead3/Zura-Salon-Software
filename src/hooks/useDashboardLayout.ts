@@ -604,10 +604,24 @@ export function useCompleteSetup() {
 // Reset to role default template
 // Reset to role default template.
 //
-// When the owner is previewing a role, "Reset to default" deletes the
-// org-role layout so the role falls back to the seeded template — instead
-// of writing the template into dashboard_role_layouts (which would freeze it).
+// Three branches:
+//
+//   1. Owner previewing a role  → DELETE the org-role layout row so the role
+//      falls back to the seeded template (instead of freezing the template
+//      into dashboard_role_layouts).
+//
+//   2. Owner on their own canvas → CLEAR the personal dashboard_layout in
+//      user_preferences so resolution falls through to the org-role layout
+//      (if any) and then the seeded `account_owner` template. This means
+//      future template changes propagate automatically — the user does NOT
+//      drift away again the moment they "reset".
+//
+//   3. Non-owners (or impersonation targets) → write the template snapshot
+//      to user_preferences (legacy path; non-owners have no template
+//      fall-through to lean on).
 export function useResetToDefault(overrideUserId?: string) {
+  const { user } = useAuth();
+  const { targetUserId: godModeTargetUserId } = useGodModeTargetUserId();
   const { roleTemplate } = useDashboardLayout(overrideUserId);
   const saveMutation = useSaveDashboardLayout(overrideUserId);
   const queryClient = useQueryClient();
@@ -617,9 +631,11 @@ export function useResetToDefault(overrideUserId?: string) {
   const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
 
   const isRoleReset = isPrimaryOwner && isViewingAs && !!viewAsRole && !!orgId;
+  const isOwnerSelfReset = isPrimaryOwner && !isViewingAs;
 
   return useMutation({
     mutationFn: async () => {
+      // Branch 1: owner previewing a role → drop the org-role override.
       if (isRoleReset) {
         const { error } = await supabase
           .from('dashboard_role_layouts')
@@ -630,10 +646,24 @@ export function useResetToDefault(overrideUserId?: string) {
         return;
       }
 
+      // Branch 2: owner on own canvas → wipe personal layout for true
+      // fall-through to the live owner template.
+      if (isOwnerSelfReset) {
+        const targetId = overrideUserId || godModeTargetUserId || user?.id;
+        if (!targetId) throw new Error('User not authenticated');
+        const { error } = await supabase
+          .from('user_preferences')
+          .update({ dashboard_layout: null })
+          .eq('user_id', targetId);
+        if (error) throw error;
+        return;
+      }
+
+      // Branch 3: legacy fallback — write template snapshot for non-owners
+      // (no template fall-through path available).
       if (!roleTemplate?.layout) {
         throw new Error('No default template found');
       }
-
       await saveMutation.mutateAsync({
         ...roleTemplate.layout,
         hasCompletedSetup: true,
@@ -643,9 +673,19 @@ export function useResetToDefault(overrideUserId?: string) {
       if (isRoleReset && orgId && viewAsRole) {
         queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, viewAsRole] });
         toast.success(`Reset ${viewAsRole.replace(/_/g, ' ')} layout to template default`);
-      } else {
-        toast.success('Dashboard reset to default');
+        return;
       }
+      if (isOwnerSelfReset) {
+        const targetId = overrideUserId || godModeTargetUserId || user?.id;
+        if (targetId) {
+          // Clear cache so resolution re-runs against template immediately.
+          queryClient.setQueryData(['user-preferences', targetId], { dashboard_layout: null });
+          queryClient.invalidateQueries({ queryKey: ['user-preferences', targetId] });
+        }
+        toast.success('Dashboard restored to the latest template');
+        return;
+      }
+      toast.success('Dashboard reset to default');
     },
   });
 }

@@ -1,30 +1,53 @@
-# Remove "Team Dashboards" Card from Command Center
+# Reset-to-Template Button Upgrade
 
-The role-switcher in the Customize menu already lets owners preview each role's dashboard, so the dedicated **Team Dashboards** card is redundant. This change removes it from the rendered Command Center while leaving the underlying component file intact (in case it's wanted back later).
+The "Reset to Default" button **already exists** inside the Customize menu, but today it works by snapshotting the template into your `user_preferences` row. That means the moment you reset, you immediately drift away from any future template updates again — exactly the bug that hid the new owner sections from you.
+
+This change makes Reset do what it should: **wipe your personal layout** so the dashboard falls through to the live `account_owner` template every time it loads.
 
 ## What changes for the user
-- The "Team Dashboards" card (with Manager / Stylist / Receptionist / Admin / Bookkeeper preview tiles) disappears from the Command Center home.
-- No data is lost. Role-preview still works via the existing role-switcher.
-- Existing owner layouts that already had this section will be auto-cleaned on next load.
+
+- Inside Customize → "Reset to Default" button keeps its label and confirmation dialog.
+- After confirming:
+  - Your personal `dashboard_layout` row is **cleared** (set to `null`).
+  - On next render, the dashboard resolves to the live owner template (with `daily_briefing`, `decisions_awaiting`, `team_pulse`, `upcoming_events`, etc.).
+  - Any future template improvements appear automatically — no second reset needed.
+- Toast: "Dashboard restored to the latest template".
 
 ## Technical changes
 
-**1. `src/pages/dashboard/DashboardHome.tsx`**
-- Drop the `TeamDashboardsCard` import.
-- Remove the `team_dashboards: <TeamDashboardsCard />` entry from the `sectionComponents` map (replace with a comment explaining why).
+**1. `src/hooks/useResetToDefault` — three branches**
 
-**2. `src/hooks/useDashboardLayout.ts`**
-- Remove `'team_dashboards'` from `DEFAULT_LAYOUT.sections` and `DEFAULT_LAYOUT.sectionOrder`.
-- Replace the existing additive migration shim (Phase 2.5) that *inserts* `team_dashboards` after `hub_quicklinks` with a **subtractive** shim that *strips* `team_dashboards` from any persisted layout that still contains it. This auto-heals existing user layouts and the `account_owner` template seed without breaking other sections.
+Rewrite the mutation in `src/hooks/useDashboardLayout.ts` (~lines 605–651):
 
-**3. Database — `dashboard_layout_templates` table**
-- Run a one-time data update that strips `"team_dashboards"` from both `layout.sections` and `layout.sectionOrder` for every template row that contains it (currently `account_owner` and any other seeded role templates).
+| Caller | Action | Why |
+|---|---|---|
+| Owner previewing a role (`isViewingAs`) | DELETE row in `dashboard_role_layouts` for that role | Fall through to seeded template (already today's behavior — preserved) |
+| **Owner on own canvas (new)** | `UPDATE user_preferences SET dashboard_layout = NULL` | True fall-through to live owner template — no template snapshotting |
+| Non-owners / impersonation targets | Write template snapshot to `user_preferences` (legacy) | They have no template fall-through to lean on |
 
-## What stays
-- `src/components/dashboard/TeamDashboardsCard.tsx` — file kept (no import references after this change). Cheap insurance if we ever want it back.
-- `STYLIST_FORBIDDEN_SECTIONS` entry for `team_dashboards` in `src/lib/dashboard/stylistPrivacy.ts` — kept (defensive: any stale persisted layout that somehow re-introduces the section will still be blocked from stylist views).
-- The privacy-contract test assertion stays green.
+Also: optimistically clear the React Query cache (`['user-preferences', targetId]`) on success so the dashboard re-renders without a second fetch.
+
+**2. No UI changes needed**
+
+The existing "Reset to Default" button (`DashboardCustomizeMenu.tsx` lines 855–880) already calls `resetToDefault.mutate()`. Once the hook behavior is upgraded, the button does the right thing.
+
+## What stays the same
+
+- Button location, icon, confirmation copy.
+- `useSaveDashboardLayout` behavior for normal edits — unchanged.
+- Org-role-layout reset for "preview-as-role" mode — unchanged.
 
 ## Verification
-- Vitest run on `stylist-privacy-contract.test.ts` (15 tests should still pass).
-- Manual: reload `/org/:slug/dashboard` as Account Owner → Team Dashboards card no longer renders; all other sections (Daily Briefing, Decisions Awaiting, pinned analytics, Team Pulse, Upcoming, Tasks, Announcements, Widgets) render in their existing order.
+
+1. As account owner, open Customize → click "Reset to Default" → confirm.
+2. Toast: "Dashboard restored to the latest template".
+3. Dashboard re-renders with the new owner sections in canonical order:
+   `daily_briefing → ai_insights → decisions_awaiting → hub_quicklinks → … → team_pulse → upcoming_events → schedule_tasks → announcements → widgets`.
+4. Re-open Customize: section order matches the seeded `account_owner` template.
+5. (DB sanity) `SELECT dashboard_layout FROM user_preferences WHERE user_id = '<owner>'` returns `null`.
+
+## Out of scope (explicitly)
+
+- No "stale layout" banner on the dashboard. Keeping scope to the button.
+- No backfill of existing personal layouts — owners get the new template on demand by clicking Reset.
+- No changes to the Customize menu UI itself.
