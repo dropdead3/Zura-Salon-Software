@@ -24,6 +24,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useMarkAnnouncementsRead } from '@/hooks/useMarkAnnouncementsRead';
 
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
