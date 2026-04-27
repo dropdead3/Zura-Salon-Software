@@ -40,6 +40,7 @@ import {
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -98,6 +99,8 @@ const normalizeUrl = (url: string): string => {
 
 export default function Announcements() {
   const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
