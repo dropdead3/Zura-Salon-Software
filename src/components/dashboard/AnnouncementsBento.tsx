@@ -83,6 +83,12 @@ export function AnnouncementsBento({
   const displayedAnnouncements = filteredAnnouncements.slice(0, 3);
   const totalCount = filteredAnnouncements.length;
 
+  // Mark visible announcements as read when the card is expanded.
+  useMarkAnnouncementsRead(
+    displayedAnnouncements.map(a => a.id),
+    isExpanded && hasAnnouncements,
+  );
+
   return (
     <Card className="p-6 rounded-xl backdrop-blur-sm">
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
