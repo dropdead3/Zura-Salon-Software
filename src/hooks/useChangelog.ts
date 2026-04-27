@@ -259,7 +259,7 @@ export function usePublishChangelog() {
       // (Announcements are org-scoped post-Phase-2; a single global insert is
       // no longer possible.)
       if (entry.send_as_announcement && user) {
-        const { data: orgs } = await supabase
+        const { data: orgs } = await (supabase as any)
           .from('organizations')
           .select('id')
           .eq('is_active', true);
