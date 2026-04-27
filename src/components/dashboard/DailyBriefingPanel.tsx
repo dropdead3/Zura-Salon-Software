@@ -37,8 +37,14 @@ export function DailyBriefingPanel({
   const {
     focus, automatedActions, shouldDoTasks, blockers,
     opportunityRemainingCents, capturedCents, activeGrowthMoves,
-    atRiskCents, isLoading, hasContent,
+    atRiskCents, coachNudges, isLoading, hasContent,
   } = briefing;
+
+  const handleCoachNudgeClick = (sectionId?: string) => {
+    if (!sectionId) return;
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Completion handler with micro-interaction
   const handleComplete = (task: Task) => {
