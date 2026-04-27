@@ -57,6 +57,7 @@ import { getDateRange, type AnalyticsFilters, type DateRangeType } from '@/compo
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { CommandCenterControlRow } from '@/components/dashboard/CommandCenterControlRow';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useCanViewFinancials, FINANCIAL_PINNED_CARD_IDS } from '@/hooks/useCanViewFinancials';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { useQuickStats } from '@/hooks/useQuickStats';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
