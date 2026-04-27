@@ -704,6 +704,7 @@ export type Database = {
           link_label: string | null
           link_url: string | null
           location_id: string | null
+          organization_id: string
           priority: string | null
           sort_order: number | null
           title: string
@@ -720,6 +721,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           location_id?: string | null
+          organization_id: string
           priority?: string | null
           sort_order?: number | null
           title: string
@@ -736,6 +738,7 @@ export type Database = {
           link_label?: string | null
           link_url?: string | null
           location_id?: string | null
+          organization_id?: string
           priority?: string | null
           sort_order?: number | null
           title?: string
@@ -747,6 +750,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -31838,6 +31848,10 @@ export type Database = {
       }
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_location_access: {
+        Args: { _location_id: string; _user_id: string }
         Returns: boolean
       }
       validate_dock_pin:
