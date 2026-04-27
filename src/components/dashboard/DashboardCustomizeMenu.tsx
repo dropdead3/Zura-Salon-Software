@@ -66,6 +66,8 @@ import {
   getPinnedVisibilityKey,
   toPinnedEntry,
 } from '@/hooks/useDashboardLayout';
+import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
@@ -553,6 +555,15 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
   if (isLoading) return null;
 
+  // Owner-only governance: only account owners can author dashboard layouts.
+  const canCustomize = useCanCustomizeDashboardLayouts();
+  const { isViewingAs, viewAsRole } = useViewAs();
+  if (!canCustomize) return null;
+
+  const editingLabel = isViewingAs && viewAsRole
+    ? `Editing layout for ${viewAsRole.replace(/_/g, ' ')}`
+    : 'Editing your own layout';
+
   return (
     <>
       {variant === 'icon' ? (
@@ -575,6 +586,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             <p className="text-sm text-muted-foreground mt-1">
               Drag to reorder, toggle to show/hide sections
             </p>
+            <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/60 text-[11px] text-muted-foreground capitalize">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              {editingLabel}
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />

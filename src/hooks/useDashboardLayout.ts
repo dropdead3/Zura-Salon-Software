@@ -3,7 +3,30 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from './useEffectiveUser';
 import { useGodModeTargetUserId } from './useGodModeTargetUserId';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { useIsPrimaryOwner } from './useIsPrimaryOwner';
+import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+
+type AppRole = Database['public']['Enums']['app_role'];
+
+/**
+ * Pick the canonical role key used for owner-authored role layouts.
+ * Owners curate one layout per role enum value (stylist, manager, admin, etc.).
+ */
+function pickPrimaryRoleKey(roles: string[]): AppRole {
+  const priority: AppRole[] = [
+    'super_admin', 'admin', 'manager',
+    'receptionist', 'bookkeeper', 'inventory_manager',
+    'stylist', 'stylist_assistant', 'assistant', 'admin_assistant',
+    'operations_assistant', 'booth_renter',
+  ];
+  for (const role of priority) {
+    if (roles.includes(role)) return role;
+  }
+  return 'stylist';
+}
 
 export interface DashboardLayout {
   sections: string[];
@@ -256,6 +279,9 @@ export function useDashboardLayout(overrideUserId?: string) {
   const roles = useEffectiveRoles();
   const { targetUserId: godModeTargetUserId, isResolvingTarget } = useGodModeTargetUserId();
   const targetUserId = overrideUserId || godModeTargetUserId;
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const primaryRoleKey = pickPrimaryRoleKey(roles);
 
   const { data: userPrefs, isLoading: prefsLoading } = useQuery({
     queryKey: ['user-preferences', targetUserId],
@@ -300,6 +326,31 @@ export function useDashboardLayout(overrideUserId?: string) {
     enabled: roles.length > 0,
   });
 
+  // Owner-authored role layout for the current org + primary role.
+  // This is the org-wide "what stylists see" / "what managers see" canvas.
+  const { data: orgRoleLayoutRow, isLoading: orgRoleLayoutLoading } = useQuery({
+    queryKey: ['dashboard-role-layout', orgId, primaryRoleKey],
+    queryFn: async () => {
+      if (!orgId) return null;
+      const { data, error } = await supabase
+        .from('dashboard_role_layouts')
+        .select('layout, updated_at, updated_by')
+        .eq('organization_id', orgId)
+        .eq('role', primaryRoleKey)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId && roles.length > 0,
+  });
+
+  const orgRoleLayout: DashboardLayout | null = orgRoleLayoutRow?.layout
+    ? sanitizeDashboardLayout({
+        ...DEFAULT_LAYOUT,
+        ...(orgRoleLayoutRow.layout as unknown as Partial<DashboardLayout>),
+      })
+    : null;
+
   // Determine the effective layout - safely parse JSON
   const parsedLayout = userPrefs?.dashboard_layout as Record<string, unknown> | null;
   const rawSavedLayout: DashboardLayout | null = parsedLayout ? sanitizeDashboardLayout({
@@ -314,9 +365,21 @@ export function useDashboardLayout(overrideUserId?: string) {
 
   const hasCompletedSetup = rawSavedLayout?.hasCompletedSetup ?? false;
 
-  // Use saved layout if exists, otherwise use role template, otherwise default
-  const baseLayout: DashboardLayout = rawSavedLayout ||
-    (roleTemplate?.layout ? sanitizeDashboardLayout({ ...roleTemplate.layout, sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections, hasCompletedSetup: false }) : DEFAULT_LAYOUT);
+  // Resolution order:
+  //   1. User's own saved layout (personal override -- legacy + future per-user customization)
+  //   2. Owner-authored role layout for this org (the governed default)
+  //   3. Static role template (seed default)
+  //   4. Hard-coded DEFAULT_LAYOUT
+  const baseLayout: DashboardLayout =
+    rawSavedLayout ||
+    orgRoleLayout ||
+    (roleTemplate?.layout
+      ? sanitizeDashboardLayout({
+          ...roleTemplate.layout,
+          sectionOrder: roleTemplate.layout.sectionOrder || roleTemplate.layout.sections,
+          hasCompletedSetup: false,
+        })
+      : DEFAULT_LAYOUT);
 
   // Migrate legacy layouts that use command_center
   const layout = migrateLayout(baseLayout, baseLayout.pinnedCards || []);
@@ -324,10 +387,16 @@ export function useDashboardLayout(overrideUserId?: string) {
   return {
     layout,
     hasCompletedSetup,
-    isLoading: prefsLoading || templateLoading || (!overrideUserId && isResolvingTarget),
+    isLoading: prefsLoading || templateLoading || orgRoleLayoutLoading || (!overrideUserId && isResolvingTarget),
     roleTemplate,
     templateKey,
     isLeadership,
+    /** The org-wide owner-authored layout for the effective primary role, if any. */
+    orgRoleLayout,
+    /** The role key under which org-wide layout writes are scoped. */
+    primaryRoleKey,
+    /** Resolved org id (for write hooks). */
+    orgId,
   };
 }
 
@@ -499,3 +568,101 @@ export function useToggleWidget() {
     },
   });
 }
+
+// ────────────────────────────────────────────────────────────────────────
+// OWNER GOVERNANCE: role-keyed layout writes
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * Whether the current user is allowed to author org-wide role layouts
+ * (i.e. customize what a given role sees on the dashboard).
+ *
+ * Owner-controlled governance: only the account owner (is_primary_owner)
+ * can customize role layouts. Other admins/managers see, but cannot author.
+ */
+export function useCanCustomizeDashboardLayouts(): boolean {
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
+  return !!isPrimaryOwner;
+}
+
+/**
+ * Save an org-wide layout for a specific role.
+ * RLS gates this to is_primary_owner / platform users.
+ */
+export function useSaveRoleLayout() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useMutation({
+    mutationFn: async ({ role, layout }: { role: AppRole; layout: DashboardLayout }) => {
+      if (!orgId) throw new Error('No organization context');
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const sanitized = sanitizeDashboardLayout(layout);
+      const layoutJson = {
+        sections: sanitized.sections,
+        sectionOrder: sanitized.sectionOrder,
+        pinnedCards: sanitized.pinnedCards,
+        widgets: sanitized.widgets,
+        hasCompletedSetup: true,
+        hubOrder: sanitized.hubOrder,
+        enabledHubs: sanitized.enabledHubs,
+      };
+
+      const { error } = await supabase
+        .from('dashboard_role_layouts')
+        .upsert(
+          {
+            organization_id: orgId,
+            role,
+            layout: layoutJson,
+            updated_by: user.id,
+          },
+          { onConflict: 'organization_id,role' }
+        );
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, { role }) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, role] });
+      toast.success(`Saved layout for ${role.replace(/_/g, ' ')}`);
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to save role layout', { description: error.message });
+    },
+  });
+}
+
+/**
+ * Delete an org-wide role layout (revert that role to the static template default).
+ * RLS gates this to is_primary_owner / platform users.
+ */
+export function useResetRoleLayout() {
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  return useMutation({
+    mutationFn: async (role: AppRole) => {
+      if (!orgId) throw new Error('No organization context');
+
+      const { error } = await supabase
+        .from('dashboard_role_layouts')
+        .delete()
+        .eq('organization_id', orgId)
+        .eq('role', role);
+
+      if (error) throw error;
+    },
+    onSuccess: (_data, role) => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, role] });
+      toast.success(`Reset layout for ${role.replace(/_/g, ' ')} to template default`);
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to reset role layout', { description: error.message });
+    },
+  });
+}
+
