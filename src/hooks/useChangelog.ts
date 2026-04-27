@@ -264,8 +264,9 @@ export function usePublishChangelog() {
           .select('id')
           .eq('is_active', true);
 
-        if (orgs && orgs.length > 0) {
-          const announcementRows = orgs.map(o => ({
+        const orgList = (orgs ?? []) as Array<{ id: string }>;
+        if (orgList.length > 0) {
+          const announcementRows = orgList.map(o => ({
             organization_id: o.id,
             title: entry.title,
             content: entry.content,
