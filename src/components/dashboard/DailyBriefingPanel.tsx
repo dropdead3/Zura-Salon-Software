@@ -158,6 +158,27 @@ export function DailyBriefingPanel({
             </section>
           )}
 
+          {/* ── B2. COACH NUDGES (deterministic, non-monetary) ─────────── */}
+          {coachNudges.length > 0 && (
+            <section>
+              <p className={tokens.label.tiny}>COACH</p>
+              <div className="mt-2 space-y-1.5">
+                {coachNudges.map((nudge) => (
+                  <button
+                    key={nudge.id}
+                    type="button"
+                    onClick={() => handleCoachNudgeClick(nudge.scrollToSectionId)}
+                    className="w-full flex items-center gap-2 text-left rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors group"
+                  >
+                    <Target className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <p className="text-xs font-sans flex-1">{nudge.label}</p>
+                    <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* ── C. YOU SHOULD DO ───────────────────────────────────────── */}
           {shouldDoTasks.length > 0 && (
             <section>
