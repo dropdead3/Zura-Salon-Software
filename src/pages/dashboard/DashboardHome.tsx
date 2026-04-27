@@ -647,7 +647,13 @@ function DashboardSections({
     todays_prep: hasStylistRole && (
       <TodaysPrepSection />
     ),
-    
+
+    // Stylist Privacy Contract — Phase 3.2 self-scoped sections.
+    // Each component fetches data filtered by the authenticated user.
+    my_quick_stats: hasStylistRole && <MyQuickStatsSection />,
+    personal_goals: hasStylistRole && <PersonalGoalsSection />,
+    my_performance: hasStylistRole && <MyPerformanceSection />,
+
     push_list: hasStylistRole && (
       <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
         <StylistPushList />
