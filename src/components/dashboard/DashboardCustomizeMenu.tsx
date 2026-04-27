@@ -620,6 +620,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             </p>
           </div>
         </div>
+
+        <div className="px-5 pb-3 border-b border-border/40">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
             <Input
