@@ -245,13 +245,41 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
   return sanitizeDashboardLayout(migrated);
 }
 
-// Map roles to template role_name
-function getRoleTemplateKey(roles: string[], isLeadership: boolean): string {
+// Map roles to template role_name. Order matters: highest-precedence role wins.
+function getRoleTemplateKey(roles: string[], isLeadership: boolean, isPrimaryOwner: boolean): string {
+  if (isPrimaryOwner) return 'account_owner';
+  if (roles.includes('admin')) return 'leadership';
+  if (roles.includes('manager')) return 'manager';
   if (isLeadership) return 'leadership';
   if (roles.includes('stylist')) return 'stylist';
   if (roles.includes('stylist_assistant')) return 'assistant';
   if (roles.includes('receptionist')) return 'operations';
   return 'stylist'; // Default fallback
+}
+
+/**
+ * Map an app_role enum value to the template role_name used in
+ * dashboard_layout_templates. Used by Preview-as-role / role-targeted writes.
+ */
+export function templateKeyForRole(role: AppRole): string {
+  switch (role) {
+    case 'super_admin':
+    case 'admin':
+      return 'leadership';
+    case 'manager':
+      return 'manager';
+    case 'stylist':
+      return 'stylist';
+    case 'stylist_assistant':
+    case 'assistant':
+    case 'admin_assistant':
+    case 'operations_assistant':
+      return 'assistant';
+    case 'receptionist':
+      return 'operations';
+    default:
+      return 'stylist';
+  }
 }
 
 // Fetch all available templates
