@@ -47,6 +47,11 @@ export const STYLIST_FORBIDDEN_SECTIONS = new Set<string>([
   'payday_countdown',     // own paycheck OK in principle, but currently org-shaped — re-add if/when scoped
   'ai_insights',          // owner/manager intelligence
   'quick_stats',          // org-week-revenue leak — re-add as 'my_quick_stats' when self-scoped
+  // ── Phase 2 owner operator primitives ───────────────────────────────
+  'today_at_glance',      // org-wide presence/VIP/conflicts (owner)
+  'decisions_awaiting',   // org escalation queue (owner)
+  'team_pulse',           // recognition + intervention triggers (owner)
+  'upcoming_events',      // org operator events (owner)
 ]);
 
 /**
