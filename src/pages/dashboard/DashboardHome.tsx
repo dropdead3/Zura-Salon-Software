@@ -64,6 +64,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useTranslation } from 'react-i18next';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
+import { TeamDashboardsCard } from '@/components/dashboard/TeamDashboardsCard';
 const AIInsightsDrawer = React.lazy(() => import('@/components/dashboard/AIInsightsDrawer').then(m => ({ default: m.AIInsightsDrawer })));
 const PersonalInsightsDrawer = React.lazy(() => import('@/components/dashboard/PersonalInsightsDrawer').then(m => ({ default: m.PersonalInsightsDrawer })));
 const TodaysPrepSection = React.lazy(() => import('@/components/dashboard/TodaysPrepSection').then(m => ({ default: m.TodaysPrepSection })));
@@ -496,7 +497,8 @@ function DashboardSections({
       />
     ),
 
-    
+    // Owner-only governance card. Renders null for non-owners via internal guard.
+    team_dashboards: <TeamDashboardsCard />,
 
     payday_countdown: <PaydayCountdownBanner />,
     
