@@ -802,6 +802,10 @@ function DashboardSections({
     id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id))
   );
 
+  // Stylist Privacy Contract gate (mem://architecture/stylist-privacy-contract).
+  // Computed once per render — used by both pinned and regular section gates.
+  const stylistOnly = isStylistOnlyViewer(roles);
+
   return (
     <>
       {orderedSectionIds.map((sectionId, index) => {
@@ -809,6 +813,9 @@ function DashboardSections({
         if (isPinnedCardEntry(sectionId)) {
           const cardId = getPinnedCardId(sectionId);
           if (!isLeadership || !isCardPinned(cardId)) return null;
+          // Defense-in-depth: even if a layout pinned a financial card into
+          // the stylist template, suppress it. The contract is non-negotiable.
+          if (stylistOnly && STYLIST_FORBIDDEN_PINNED_CARDS.has(cardId)) return null;
           
           // In compact mode, pinned cards are rendered together in a grid below
           // Only render filter bar at the first pinned card position
