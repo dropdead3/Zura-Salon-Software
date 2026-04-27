@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Megaphone, ChevronRight, Pin, ExternalLink } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useMarkAnnouncementsRead } from '@/hooks/useMarkAnnouncementsRead';
 
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
