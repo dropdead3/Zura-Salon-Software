@@ -82,6 +82,11 @@ import type { BriefingRoleContext } from '@/hooks/useDailyBriefingEngine';
 import { AuthFlowLoader } from '@/components/auth/AuthFlowLoader';
 import { usePostLoginFirstPaint } from '@/hooks/usePostLoginFirstPaint';
 import { useDashboardHotkeys } from '@/hooks/useDashboardHotkeys';
+import {
+  isStylistAllowedSection,
+  isStylistOnlyViewer,
+  STYLIST_FORBIDDEN_PINNED_CARDS,
+} from '@/lib/dashboard/stylistPrivacy';
 
 const ROLE_MESSAGES = {
   leadership: {
