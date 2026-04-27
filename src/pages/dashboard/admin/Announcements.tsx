@@ -470,6 +470,7 @@ export default function Announcements() {
                       onDelete={(id) => deleteMutation.mutate(id)}
                       isDraggable={false}
                       locationName={getLocationName(announcement.location_id)}
+                      readStats={readStats?.[announcement.id]}
                     />
                   ))}
                 </div>
