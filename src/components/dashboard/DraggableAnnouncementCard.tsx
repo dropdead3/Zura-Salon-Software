@@ -59,6 +59,7 @@ interface DraggableAnnouncementCardProps {
   onDelete: (id: string) => void;
   isDraggable?: boolean;
   locationName?: string | null;
+  readStats?: { audience_count: number; read_count: number; read_rate: number };
 }
 
 export function DraggableAnnouncementCard({
