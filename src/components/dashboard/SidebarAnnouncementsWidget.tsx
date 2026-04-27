@@ -122,6 +122,12 @@ export function SidebarAnnouncementsWidget({
     };
   }, [user?.id, queryClient]);
 
+  // Mark visible announcements as read when sidebar widget is expanded.
+  useMarkAnnouncementsRead(
+    announcements.map(a => a.id),
+    isExpanded && announcements.length > 0,
+  );
+
   if (announcements.length === 0) return null;
 
   return (
