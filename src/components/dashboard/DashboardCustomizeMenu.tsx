@@ -6,6 +6,13 @@ import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
