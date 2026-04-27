@@ -942,7 +942,13 @@ function DashboardSections({
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
         
-        return <React.Fragment key={sectionId}>{component}</React.Fragment>;
+        // Wrap in a div with a stable id so coach nudges (and other deep
+        // links) can scroll to specific sections.
+        return (
+          <div key={sectionId} id={`section-${sectionId}`} className="scroll-mt-24">
+            {component}
+          </div>
+        );
       })}
     </>
   );
