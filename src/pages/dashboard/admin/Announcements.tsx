@@ -60,6 +60,7 @@ import {
 } from '@dnd-kit/sortable';
 import { DraggableAnnouncementCard } from '@/components/dashboard/DraggableAnnouncementCard';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { useAnnouncementReadStats } from '@/hooks/useAnnouncementReadStats';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -139,6 +140,13 @@ export default function Announcements() {
     announcements?.filter(a => !a.is_pinned) || [], 
     [announcements]
   );
+
+  // Read-receipt analytics, keyed by announcement_id
+  const announcementIds = useMemo(
+    () => (announcements ?? []).map((a) => a.id),
+    [announcements]
+  );
+  const { data: readStats } = useAnnouncementReadStats(announcementIds);
 
   // DnD sensors
   const sensors = useSensors(
@@ -434,6 +442,7 @@ export default function Announcements() {
                           onDelete={(id) => deleteMutation.mutate(id)}
                           isDraggable={true}
                           locationName={getLocationName(announcement.location_id)}
+                          readStats={readStats?.[announcement.id]}
                         />
                       ))}
                     </div>
@@ -461,6 +470,7 @@ export default function Announcements() {
                       onDelete={(id) => deleteMutation.mutate(id)}
                       isDraggable={false}
                       locationName={getLocationName(announcement.location_id)}
+                      readStats={readStats?.[announcement.id]}
                     />
                   ))}
                 </div>

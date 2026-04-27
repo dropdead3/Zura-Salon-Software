@@ -59,6 +59,7 @@ export function TasksCard({
   const [showSnoozed, setShowSnoozed] = useState(false);
   const [completedFilters, setCompletedFilters] = useState<CompletedFilters>({ search: '', priority: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'active' | 'deferred'>('active');
 
   const isSearching = searchQuery.trim().length > 0;
   const today = startOfDay(new Date());
@@ -87,6 +88,29 @@ export function TasksCard({
     () => visibleActive.filter((t) => t.due_date && startOfDay(parseISO(t.due_date)) < today).length,
     [visibleActive, today]
   );
+
+  // "Deferred" = anything the operator pushed off: overdue, snoozed, or expired.
+  // Sorted oldest-first so the longest-deferred item is most visible. Capped at 10.
+  const deferredTasks = useMemo(() => {
+    const overdue = visibleActive.filter(
+      (t) => t.due_date && startOfDay(parseISO(t.due_date)) < today
+    );
+    const combined = [...overdue, ...snoozedTasks, ...expiredTasks];
+    const seen = new Set<string>();
+    const unique = combined.filter((t) => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id);
+      return true;
+    });
+    unique.sort((a, b) => {
+      const aDate = a.due_date ? parseISO(a.due_date).getTime() : Number.POSITIVE_INFINITY;
+      const bDate = b.due_date ? parseISO(b.due_date).getTime() : Number.POSITIVE_INFINITY;
+      return aDate - bDate;
+    });
+    return unique.slice(0, 10);
+  }, [visibleActive, snoozedTasks, expiredTasks, today]);
+
+  const deferredCount = deferredTasks.length;
 
   // Group active tasks by date
   const taskGroups = useMemo((): TaskGroup[] => {
@@ -211,6 +235,40 @@ export function TasksCard({
           />
         </div>
 
+        {/* Tab strip: Active vs Deferred yesterday */}
+        <div className="flex items-center gap-1 mb-3 p-0.5 bg-muted/50 rounded-lg w-fit">
+          <button
+            type="button"
+            onClick={() => setActiveTab('active')}
+            className={cn(
+              'px-3 py-1 text-[10px] font-display tracking-wide rounded-md transition-colors',
+              activeTab === 'active'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            ACTIVE {visibleActive.length > 0 && <span className="ml-1 opacity-60">({visibleActive.length})</span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('deferred')}
+            className={cn(
+              'px-3 py-1 text-[10px] font-display tracking-wide rounded-md transition-colors flex items-center gap-1',
+              activeTab === 'deferred'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <AlarmClock className="w-2.5 h-2.5" />
+            DEFERRED
+            {deferredCount > 0 && (
+              <span className={cn('ml-0.5', deferredCount > 0 && activeTab !== 'deferred' && 'text-amber-600')}>
+                ({deferredCount}{deferredCount === 10 ? '+' : ''})
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* Search Bar */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
@@ -244,6 +302,30 @@ export function TasksCard({
               </AnimatePresence>
             ) : (
               <p className="text-center text-xs text-muted-foreground py-6">No tasks match your search</p>
+            )}
+          </div>
+        ) : activeTab === 'deferred' ? (
+          /* Deferred View — what got pushed off (overdue + snoozed + expired), oldest first, capped at 10 */
+          <div className="space-y-3">
+            <p className="text-[10px] text-muted-foreground font-display tracking-wide flex items-center gap-1.5">
+              <AlarmClock className="w-3 h-3" />
+              WHAT YOU DEFERRED
+              <span className="opacity-60 normal-case font-sans">
+                · oldest first{deferredCount === 10 ? ' · top 10' : ''}
+              </span>
+            </p>
+            {deferredCount > 0 ? (
+              <AnimatePresence mode="popLayout">
+                {deferredTasks.map((task) => renderTask(task))}
+              </AnimatePresence>
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">
+                <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
+                <p className="text-sm font-display">NOTHING DEFERRED</p>
+                <p className="text-xs mt-1 text-muted-foreground/60">
+                  No overdue, snoozed, or expired tasks. Stay on it.
+                </p>
+              </div>
             )}
           </div>
         ) : (
