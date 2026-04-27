@@ -591,12 +591,34 @@ export function useCompleteSetup() {
 }
 
 // Reset to role default template
+// Reset to role default template.
+//
+// When the owner is previewing a role, "Reset to default" deletes the
+// org-role layout so the role falls back to the seeded template — instead
+// of writing the template into dashboard_role_layouts (which would freeze it).
 export function useResetToDefault(overrideUserId?: string) {
   const { roleTemplate } = useDashboardLayout(overrideUserId);
   const saveMutation = useSaveDashboardLayout(overrideUserId);
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { isViewingAs, viewAsRole } = useViewAs();
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+
+  const isRoleReset = isPrimaryOwner && isViewingAs && !!viewAsRole && !!orgId;
 
   return useMutation({
     mutationFn: async () => {
+      if (isRoleReset) {
+        const { error } = await supabase
+          .from('dashboard_role_layouts')
+          .delete()
+          .eq('organization_id', orgId)
+          .eq('role', viewAsRole as AppRole);
+        if (error) throw error;
+        return;
+      }
+
       if (!roleTemplate?.layout) {
         throw new Error('No default template found');
       }
@@ -607,7 +629,12 @@ export function useResetToDefault(overrideUserId?: string) {
       });
     },
     onSuccess: () => {
-      toast.success('Dashboard reset to default');
+      if (isRoleReset && orgId && viewAsRole) {
+        queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, viewAsRole] });
+        toast.success(`Reset ${viewAsRole.replace(/_/g, ' ')} layout to template default`);
+      } else {
+        toast.success('Dashboard reset to default');
+      }
     },
   });
 }
