@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Zap, CheckCircle2, AlertTriangle, TrendingUp,
-  Rocket, ShieldAlert, ArrowRight, Sparkles, Timer,
+  Rocket, ShieldAlert, ArrowRight, Sparkles, Timer, Target,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
