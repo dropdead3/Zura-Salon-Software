@@ -186,6 +186,22 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     };
   }
 
+  // Ensure team_dashboards is added right after hub_quicklinks for existing
+  // owner layouts (Phase 2.5 — promotes role governance to a visible card).
+  if (!migrated.sectionOrder?.includes('team_dashboards')) {
+    const hubIdx = migrated.sectionOrder?.indexOf('hub_quicklinks');
+    const insertIdx = hubIdx !== undefined && hubIdx >= 0 ? hubIdx + 1 : 0;
+    const newSections = [...(migrated.sections || [])];
+    const newOrder = [...(migrated.sectionOrder || [])];
+    newSections.splice(insertIdx, 0, 'team_dashboards');
+    newOrder.splice(insertIdx, 0, 'team_dashboards');
+    migrated = {
+      ...migrated,
+      sections: newSections,
+      sectionOrder: newOrder,
+    };
+  }
+
   // Ensure ai_insights is added for existing layouts (migration for existing users)
   if (!migrated.sectionOrder?.includes('ai_insights')) {
     migrated = {
