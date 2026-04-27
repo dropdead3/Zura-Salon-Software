@@ -13805,6 +13805,66 @@ export type Database = {
           },
         ]
       }
+      org_calendar_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_at: string | null
+          id: string
+          kind: string
+          location_id: string | null
+          organization_id: string
+          start_at: string
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          kind?: string
+          location_id?: string | null
+          organization_id: string
+          start_at: string
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_at?: string | null
+          id?: string
+          kind?: string
+          location_id?: string | null
+          organization_id?: string
+          start_at?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_calendar_events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_calendar_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_handbook_block_refs: {
         Row: {
           created_at: string
