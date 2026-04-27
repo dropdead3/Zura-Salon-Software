@@ -291,12 +291,15 @@ export default function Announcements() {
   };
 
   const handleCreate = () => {
-    if (!user) return;
+    if (!user || !orgId) {
+      toast.error('Organization context not loaded');
+      return;
+    }
     // Get max sort_order for pinned announcements
-    const maxSortOrder = pinnedAnnouncements.length > 0 
-      ? Math.max(...pinnedAnnouncements.map(a => a.sort_order || 0)) 
+    const maxSortOrder = pinnedAnnouncements.length > 0
+      ? Math.max(...pinnedAnnouncements.map(a => a.sort_order || 0))
       : 0;
-    
+
     createMutation.mutate({
       title,
       content,
@@ -304,6 +307,7 @@ export default function Announcements() {
       is_pinned: isPinned,
       is_active: true,
       author_id: user.id,
+      organization_id: orgId,
       expires_at: expiresAt || null,
       link_url: linkUrl || null,
       link_label: linkLabel || null,
