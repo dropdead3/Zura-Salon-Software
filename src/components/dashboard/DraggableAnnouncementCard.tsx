@@ -70,6 +70,7 @@ export function DraggableAnnouncementCard({
   onDelete,
   isDraggable = false,
   locationName,
+  readStats,
 }: DraggableAnnouncementCardProps) {
   const { formatDate } = useFormatDate();
   const {
