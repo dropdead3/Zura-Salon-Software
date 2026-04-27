@@ -46,6 +46,15 @@ describe('Stylist Privacy Contract', () => {
     expect(isStylistAllowedSection('my_performance')).toBe(true);
   });
 
+  it('Phase 2 owner operator primitives are forbidden for stylists', () => {
+    expect(STYLIST_FORBIDDEN_SECTIONS.has('today_at_glance')).toBe(true);
+    expect(STYLIST_FORBIDDEN_SECTIONS.has('decisions_awaiting')).toBe(true);
+    expect(STYLIST_FORBIDDEN_SECTIONS.has('team_pulse')).toBe(true);
+    expect(STYLIST_FORBIDDEN_SECTIONS.has('upcoming_events')).toBe(true);
+    expect(isStylistAllowedSection('decisions_awaiting')).toBe(false);
+    expect(isStylistAllowedSection('today_at_glance')).toBe(false);
+  });
+
   describe('isStylistOnlyViewer', () => {
     it('treats pure stylist as stylist-only', () => {
       expect(isStylistOnlyViewer(['stylist'])).toBe(true);
