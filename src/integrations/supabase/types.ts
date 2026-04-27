@@ -680,6 +680,13 @@ export type Database = {
             foreignKeyName: "announcement_reads_announcement_id_fkey"
             columns: ["announcement_id"]
             isOneToOne: false
+            referencedRelation: "announcement_read_stats"
+            referencedColumns: ["announcement_id"]
+          },
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
             referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
@@ -30829,6 +30836,32 @@ export type Database = {
       }
     }
     Views: {
+      announcement_read_stats: {
+        Row: {
+          announcement_id: string | null
+          audience_count: number | null
+          location_id: string | null
+          organization_id: string | null
+          read_count: number | null
+          read_rate: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_setup_funnel_health: {
         Row: {
           completed_count: number | null
