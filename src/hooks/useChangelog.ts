@@ -254,17 +254,29 @@ export function usePublishChangelog() {
           .eq('id', id);
       }
 
-      // If send_as_announcement is enabled, create an announcement
+      // If send_as_announcement is enabled, fan out one announcement per
+      // active organization so every tenant sees it in their org-scoped feed.
+      // (Announcements are org-scoped post-Phase-2; a single global insert is
+      // no longer possible.)
       if (entry.send_as_announcement && user) {
-        await supabase.from('announcements').insert({
-          title: entry.title,
-          content: entry.content,
-          priority: entry.is_major ? 'high' : 'normal',
-          is_pinned: entry.is_major,
-          author_id: user.id,
-          link_url: '/dashboard/changelog',
-          link_label: 'View Details',
-        });
+        const { data: orgs } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('is_active', true);
+
+        if (orgs && orgs.length > 0) {
+          const announcementRows = orgs.map(o => ({
+            organization_id: o.id,
+            title: entry.title,
+            content: entry.content,
+            priority: entry.is_major ? 'high' : 'normal',
+            is_pinned: entry.is_major,
+            author_id: user.id,
+            link_url: '/dashboard/changelog',
+            link_label: 'View Details',
+          }));
+          await supabase.from('announcements').insert(announcementRows);
+        }
       }
 
       return entry;
