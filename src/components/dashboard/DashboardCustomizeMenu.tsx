@@ -74,6 +74,7 @@ import {
   toPinnedEntry,
 } from '@/hooks/useDashboardLayout';
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
+import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
