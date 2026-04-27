@@ -296,6 +296,14 @@ export default function DashboardHome() {
     );
   }
 
+  // Owner-only Operator Top-Bar gate.
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const operatorBarLocationId = locationId || undefined;
+  const operatorBarScopeLabel = useMemo(() => {
+    if (!operatorBarLocationId) return canViewAggregate ? 'All Locations' : '';
+    return accessibleLocations.find((l) => l.id === operatorBarLocationId)?.name ?? '';
+  }, [operatorBarLocationId, accessibleLocations, canViewAggregate]);
+
   return (
     <DashboardLayout>
       <motion.div 
