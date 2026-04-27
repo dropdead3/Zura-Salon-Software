@@ -308,7 +308,7 @@ export default function DashboardHome() {
     <DashboardLayout>
       {/* Owner Operator Top-Bar — fixed, scroll-revealed. */}
       <OperatorTopBar
-        enabled={isPrimaryOwner && !hasCompletedSetup === false /* render once setup is done */}
+        enabled={isPrimaryOwner && hasCompletedSetup}
         locationId={operatorBarLocationId}
         accessibleLocationIds={accessibleLocationIds}
         scopeLabel={operatorBarScopeLabel}
