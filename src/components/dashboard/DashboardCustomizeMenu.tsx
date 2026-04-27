@@ -248,6 +248,24 @@ const PREVIEWABLE_ROLES: { role: AppRole; label: string }[] = [
   { role: 'stylist_assistant', label: 'Assistant' },
 ];
 
+function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-xs">
+        <SelectValue placeholder="Select role" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__self__">My own dashboard</SelectItem>
+        {PREVIEWABLE_ROLES.map(({ role, label }) => (
+          <SelectItem key={role} value={role}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
