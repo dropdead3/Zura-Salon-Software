@@ -50,6 +50,8 @@ import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicato
 const DashboardSetupWizard = React.lazy(() => import('@/components/dashboard/DashboardSetupWizard').then(m => ({ default: m.DashboardSetupWizard })));
 import { OperatorTopBar } from '@/components/dashboard/owner/OperatorTopBar';
 import { DecisionsAwaitingSection } from '@/components/dashboard/owner/DecisionsAwaitingSection';
+import { TeamPulseSection } from '@/components/dashboard/owner/TeamPulseSection';
+import { UpcomingEventsSection } from '@/components/dashboard/owner/UpcomingEventsSection';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
@@ -528,6 +530,22 @@ function DashboardSections({
 
     // Owner-only operator primitive — escalations queue. Self-suppresses when empty.
     decisions_awaiting: <DecisionsAwaitingSection />,
+
+    // Owner-only operator primitive — recognition + intervention triggers.
+    team_pulse: (
+      <TeamPulseSection
+        locationId={analyticsFilters.locationId || undefined}
+        accessibleLocationIds={accessibleLocations.map((l) => l.id)}
+      />
+    ),
+
+    // Owner-only operator primitive — 14-day operator-curated events.
+    upcoming_events: (
+      <UpcomingEventsSection
+        locationId={analyticsFilters.locationId || undefined}
+        accessibleLocationIds={accessibleLocations.map((l) => l.id)}
+      />
+    ),
 
     payday_countdown: <PaydayCountdownBanner />,
     
