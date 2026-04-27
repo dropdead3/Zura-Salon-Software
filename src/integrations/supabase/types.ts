@@ -7152,6 +7152,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_role_layout_audit: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_layout: Json | null
+          organization_id: string
+          previous_layout: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_layout?: Json | null
+          organization_id: string
+          previous_layout?: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_layout?: Json | null
+          organization_id?: string
+          previous_layout?: Json | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_role_layout_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_role_layouts: {
         Row: {
           created_at: string
