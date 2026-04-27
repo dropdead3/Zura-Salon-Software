@@ -133,6 +133,13 @@ export function DraggableAnnouncementCard({
                 </>
               )}
             </Badge>
+            {/* Read-receipt badge */}
+            {readStats && readStats.audience_count > 0 && (
+              <Badge variant="outline" className="text-[10px] py-0.5 font-sans">
+                Read by {readStats.read_count} of {readStats.audience_count}
+                <span className="ml-1 text-muted-foreground">· {readStats.read_rate}%</span>
+              </Badge>
+            )}
           </div>
           <h3 className="font-display text-lg mb-2">{announcement.title}</h3>
           <p className="text-sm text-muted-foreground font-sans whitespace-pre-wrap">
