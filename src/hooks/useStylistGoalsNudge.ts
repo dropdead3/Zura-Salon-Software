@@ -2,6 +2,30 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+export const STYLIST_GOALS_NUDGE_MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Pure gate function (testable). Returns true when the stylist should see
+ * the empty-goals coach nudge.
+ *
+ * Inputs are explicit so the function is deterministic and side-effect free.
+ */
+export function shouldShowStylistGoalsNudge(args: {
+  accountCreatedAt: string | null | undefined;
+  goals: { weekly_target: number | null; monthly_target: number | null } | null;
+  now?: number;
+}): boolean {
+  const now = args.now ?? Date.now();
+  if (!args.accountCreatedAt) return false;
+  const ageMs = now - new Date(args.accountCreatedAt).getTime();
+  if (ageMs <= STYLIST_GOALS_NUDGE_MIN_AGE_MS) return false;
+  if (!args.goals) return true;
+  const weekly = Number(args.goals.weekly_target ?? 0);
+  const monthly = Number(args.goals.monthly_target ?? 0);
+  return weekly === 0 && monthly === 0;
+}
+
+
 /**
  * Stylist Privacy Contract — coach nudge signal.
  *
