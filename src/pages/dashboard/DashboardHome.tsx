@@ -306,6 +306,13 @@ export default function DashboardHome() {
 
   return (
     <DashboardLayout>
+      {/* Owner Operator Top-Bar — fixed, scroll-revealed. */}
+      <OperatorTopBar
+        enabled={isPrimaryOwner && !hasCompletedSetup === false /* render once setup is done */}
+        locationId={operatorBarLocationId}
+        accessibleLocationIds={accessibleLocationIds}
+        scopeLabel={operatorBarScopeLabel}
+      />
       <motion.div 
         className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-6 overflow-x-hidden"
         initial="hidden"
