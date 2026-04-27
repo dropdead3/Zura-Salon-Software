@@ -428,7 +428,22 @@ function DashboardSections({
   const { t } = useTranslation('dashboard');
   const { formatCurrencyWhole } = useFormatCurrency();
   const { effectiveOrganization } = useOrganizationContext();
-  const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats();
+  // "Today at a glance" follows the global location toggle:
+  //   '' (All Locations) → rollup across every accessible location
+  //   single id          → that location only
+  const quickStatsLocationId = analyticsFilters.locationId || undefined;
+  const quickStatsAccessibleIds = useMemo(
+    () => (quickStatsLocationId ? undefined : accessibleLocations.map((l) => l.id)),
+    [quickStatsLocationId, accessibleLocations]
+  );
+  const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats(
+    quickStatsLocationId,
+    quickStatsAccessibleIds
+  );
+  const quickStatsScopeLabel = useMemo(() => {
+    if (!analyticsFilters.locationId) return canViewAggregate ? 'All Locations' : '';
+    return accessibleLocations.find((l) => l.id === analyticsFilters.locationId)?.name ?? '';
+  }, [analyticsFilters.locationId, accessibleLocations, canViewAggregate]);
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
@@ -552,6 +567,11 @@ function DashboardSections({
     
     quick_stats: hasStylistRole && (
       <VisibilityGate elementKey="quick_stats">
+        {quickStatsScopeLabel && (
+          <p className="text-[10px] font-display tracking-wide text-muted-foreground mb-2 uppercase">
+            Today · {quickStatsScopeLabel}
+          </p>
+        )}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
@@ -741,7 +761,12 @@ function DashboardSections({
     toggleTask,
     deleteTask,
     isImpersonating,
-    isImpersonating,
+    todayClients,
+    thisWeekRevenue,
+    newClients,
+    rebookingRate,
+    quickStatsLoading,
+    quickStatsScopeLabel,
   ]);
 
   // Render sections in order based on layout
