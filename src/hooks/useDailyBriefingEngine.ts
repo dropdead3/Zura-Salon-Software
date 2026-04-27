@@ -271,8 +271,19 @@ export function useDailyBriefingEngine(
       (sum, t) => sum + (t.estimated_revenue_impact_cents || 0), 0,
     );
 
+    // ── 8. COACH NUDGES (deterministic, non-monetary) ───────────────
+    const coachNudges: CoachNudge[] = [];
+    if (isStylistContext && showGoalsNudge) {
+      coachNudges.push({
+        id: 'set-personal-goals',
+        label: 'Set your weekly + monthly sales target — takes 30 seconds.',
+        scrollToSectionId: 'section-personal_goals',
+      });
+    }
+
     const hasContent = !!focus || automatedActions.length > 0 || shouldDoTasks.length > 0
-      || blockers.length > 0 || activeGrowthMoves.length > 0 || capturedCents > 0;
+      || blockers.length > 0 || activeGrowthMoves.length > 0 || capturedCents > 0
+      || coachNudges.length > 0;
 
     return {
       focus,
@@ -283,11 +294,13 @@ export function useDailyBriefingEngine(
       capturedCents,
       activeGrowthMoves,
       atRiskCents,
+      coachNudges,
       isLoading: capitalLoading || projectsLoading || seoLoading,
       hasContent,
     };
   }, [
     tasks, topOpportunity, opportunities, capitalProjects, seoTasks,
     todayStr, attribution, showCapital, capitalLoading, projectsLoading, seoLoading,
+    isStylistContext, showGoalsNudge,
   ]);
 }
