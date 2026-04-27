@@ -45,13 +45,11 @@ export function useStylistGoalsNudge(enabled: boolean) {
   return useQuery({
     queryKey: ['stylist-goals-nudge', userId],
     queryFn: async () => {
-      if (!userId) return false;
+      if (!userId || !createdAt) return false;
 
-      // Account age gate (>7 days)
-      if (!createdAt) return false;
+      // Cheap account-age gate before hitting the DB.
       const ageMs = Date.now() - new Date(createdAt).getTime();
-      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-      if (ageMs <= SEVEN_DAYS_MS) return false;
+      if (ageMs <= STYLIST_GOALS_NUDGE_MIN_AGE_MS) return false;
 
       const { data, error } = await supabase
         .from('stylist_personal_goals')
@@ -61,13 +59,12 @@ export function useStylistGoalsNudge(enabled: boolean) {
 
       if (error) return false;
 
-      // No row yet → nudge.
-      if (!data) return true;
-
-      // Row exists but both targets are zero → nudge.
-      const weekly = Number(data.weekly_target ?? 0);
-      const monthly = Number(data.monthly_target ?? 0);
-      return weekly === 0 && monthly === 0;
+      return shouldShowStylistGoalsNudge({
+        accountCreatedAt: createdAt,
+        goals: data
+          ? { weekly_target: data.weekly_target as number | null, monthly_target: data.monthly_target as number | null }
+          : null,
+      });
     },
     enabled: enabled && !!userId,
     staleTime: 5 * 60 * 1000,
