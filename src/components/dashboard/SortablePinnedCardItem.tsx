@@ -18,6 +18,12 @@ interface SortablePinnedCardItemProps {
   onToggle: () => void;
   isLoading?: boolean;
   sortable?: boolean;
+  /**
+   * 1-indexed position within the visible pinned-cards list. When provided
+   * and <= 6, the row is marked as "in Simple view" (primary ordinal chip +
+   * left accent). Positions > 6 are dimmed (Detailed view only).
+   */
+  simpleViewIndex?: number;
 }
 
 interface PinnedCardItemRowProps extends SortablePinnedCardItemProps {
