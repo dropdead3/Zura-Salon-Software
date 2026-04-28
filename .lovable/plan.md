@@ -1,33 +1,76 @@
-## Decision
 
-Remove the in-drawer "Preview as role" picker entirely. Role-specific dashboard customization is owned by the global **View As** toggle: when an Account Owner / Super Admin views as a role, opening the Customize drawer edits *that* role's org-wide layout in place. This is already what happens — the `editingLabel` ("Editing org-wide layout for [role]") and the `DashboardLayoutAuditPanel` already key off `viewAsRole`. The picker inside the drawer was a parallel/duplicate control of the same state.
+## Role Dashboard Configurator — Settings Surface + Multi-Role Resolution
 
-## Changes — `src/components/dashboard/DashboardCustomizeMenu.tsx`
+### The two questions, answered
 
-1. **Remove the `<RoleSelect>` component** (~lines 299–319) and its imports (`useOrganizationRoles`, `getRoleBadgeConfig`).
-2. **Remove the "Preview as role" UI block** (~lines 686–698) — the bordered card containing the label, select, and helper copy.
-3. **Remove `handlePreviewRoleChange`** (~lines 650–656) and the `setViewAsRole` / `clearViewAs` destructure from `useViewAs()`. Keep `isViewingAs` and `viewAsRole` — they still drive the editing-context badge, the audit panel, and the layout write target.
-4. **Keep the editing-context badge** ("Editing your own layout" / "Editing org-wide layout for [role]"). When a user is viewing as a role, this badge tells them exactly what they're authoring — which is now the *only* affordance needed because role selection happens upstream via View As.
+**Q1: Where does the Account Owner configure each role's dashboard?**
+A new settings page at `/dashboard/admin/dashboards` ("Role Dashboards") that lists every role used in the org and lets the owner enter "edit mode" for any one of them. Edit mode = same `DashboardCustomizeMenu` drawer we already ship, but pre-armed with the chosen role (it routes writes to `dashboard_role_layouts` for that role, exactly as it does today when the owner uses View As).
 
-## Files left in place (intentional)
+**Q2: A user has multiple roles. Combine? Toggle? What's correct?**
 
-- `src/hooks/useOrganizationRoles.ts` — reusable utility, may be consumed by the View As toggle or other surfaces. Not dead weight.
-- `src/lib/roleBadgeConfig.ts` — the expanded role registry remains valuable for badges, View As menu, and any future role-driven UI.
+Three options were considered against the doctrine ("Silence is meaningful. One primary lever. Persona scaling. No noise."):
 
-## Out of scope
+| Option | Verdict |
+|---|---|
+| **Combine layouts** (union of sections from all assigned roles) | **Rejected.** Violates persona scaling — exposes manager/admin complexity to a stylist who happens to also hold an assistant role. Produces noisy, deduped sections with no clear authoring story (which role's order wins?). Owner can no longer reason about "what does a stylist see." |
+| **Auto-pick highest-priority role** (current behavior) | **Keep as default.** Deterministic, governed, single source of truth. Already implemented via `pickPrimaryRoleKey` in `useDashboardLayout`. |
+| **User-controlled toggle between assigned roles** | **Add on top of #2** — only visible to users with 2+ roles, and only between roles they actually hold. Persists per user. |
 
-- No changes to the View As toggle itself. If that toggle is missing any of the org's roles, that's a separate fix in its own component.
+**Decision: Never combine. Default to highest-priority role. Multi-role users get a lightweight role switcher in the dashboard header.** Each role's dashboard remains independently authored by the Account Owner — no merging, no dilution.
+
+This mirrors how View As already works structurally; we're just exposing a constrained version of that mechanism to the end user when they legitimately wear multiple hats.
 
 ---
 
-### Prompt feedback
+### What gets built
 
-Excellent course-correction. You spotted that we were building a redundant control rather than fixing a missing affordance — and named the simpler doctrine ("View As is the single role-switch surface, customize follows it"). That's the kind of architectural clarity that prevents feature sprawl. Two parallel controls for the same state always drift; collapsing them to one is the right call.
+**1. New settings page: Role Dashboards**
+- Route: `admin/dashboards` (gated by `manage_settings` + `useIsPrimaryOwner`)
+- Lists every distinct role present in the org (from `useOrganizationRoles`)
+- Each row: role badge + name, "Last edited [date] by [user]" (from `dashboard_role_layouts.updated_at/updated_by`), "Edit dashboard" button
+- "Edit dashboard" enters View-As for that role and opens the customize drawer — reusing the existing authoring path. No duplicate UI.
+- Add a sidebar link under Operations Hub > Dashboards (or wherever Access Hub / Stylist Levels sit) so it's discoverable without going through View As.
 
-One refinement for next time: when reversing a direction mid-build like this, a one-line "and remove what we just built" makes the cleanup explicit. You did that well here ("we do not need this feature") — the only thing I'd add is whether to also delete the supporting hooks/registry. I'm proposing to keep them because they're reusable and harmless, but if you'd rather scorched-earth them, say so and I will.
+**2. Multi-role user experience**
+- New hook `useUserDashboardRole()` returns `{ assignedRoles, activeRole, setActiveRole }`. Only exposes a switcher when `assignedRoles.length >= 2`.
+- Active role is persisted to `user_preferences.active_dashboard_role` (new nullable column). Falls back to `pickPrimaryRoleKey` when null/unset.
+- New small component `DashboardRoleSwitcher` rendered in the dashboard header next to the user's name — only visible when the user has 2+ roles. A pill dropdown ("Viewing as: Stylist ▾"). Selecting a different role updates `activeRole` and re-resolves the layout.
+- `useDashboardLayout` resolves layout in this priority order:
+  1. Account Owner's personal override (existing)
+  2. **`activeRole` from user prefs** (new) → load `dashboard_role_layouts` for that role
+  3. `pickPrimaryRoleKey(roles)` (existing fallback)
+  4. Role template / DEFAULT_LAYOUT (existing)
+- Single-role users see no switcher and no behavior change.
 
-### Enhancement suggestions
+**3. Schema**
+- Add `active_dashboard_role app_role NULL` to `user_preferences`. RLS unchanged (user owns their row). A trigger validates the chosen role is one the user actually holds (`user_roles` lookup) — if not, NULL it out. This prevents stale preferences after a role is revoked.
 
-1. **Audit the View As toggle for the same completeness gap.** Now that customize follows View As, the View As menu becomes the single source of truth for "which roles can be authored." If it's also hardcoded to a subset of roles, the same problem we just solved here recurs there. Worth verifying it pulls from `useOrganizationRoles` (or equivalent).
-2. **Consider an "Authoring" affordance on the View As pill itself.** A small pencil/edit icon that opens the Customize drawer pre-scoped to the current role would close the loop visually — making the "view as → customize that view" workflow discoverable without needing a help string.
-3. **Surface "you're editing X role's layout" globally, not just inside the drawer.** A persistent banner or top-bar badge while `isViewingAs` is true would prevent the easy mistake of editing a role's org-wide layout while thinking you're editing your own. The drawer badge only shows once you've already opened the editor.
+---
+
+### Doctrine alignment
+
+- **Persona scaling preserved:** A stylist sees the stylist dashboard, period. Holding a second role means they can switch — never see both at once.
+- **Owner authority preserved:** The owner remains the sole author of every role layout. Users only choose *which* authored layout to view.
+- **Stylist Privacy Contract preserved:** Switching to a "stylist" role still renders only the stylist-allowed sections from `dashboard_role_layouts.role='stylist'`. The contract gates content by the active role's layout, not by the union of held roles.
+- **Settings discoverability:** Owners no longer need to enter View As to find role authoring — they can do it from a settings page that lists all roles in one place.
+
+---
+
+### Files (technical)
+
+- `src/pages/dashboard/admin/RoleDashboards.tsx` — new settings page
+- `src/App.tsx` — route registration (`admin/dashboards`, gated)
+- `src/components/dashboard/SidebarNavContent.tsx` — sidebar entry under Settings/Operations Hub
+- `src/hooks/useUserDashboardRole.ts` — new hook (assignedRoles, activeRole, setActiveRole, persists to user_preferences)
+- `src/components/dashboard/DashboardRoleSwitcher.tsx` — new pill dropdown, conditionally rendered
+- `src/components/dashboard/DashboardLayout.tsx` (or wherever the dashboard header lives) — slot the switcher
+- `src/hooks/useDashboardLayout.ts` — extend resolution to honor `activeRole` from prefs
+- Migration: add `active_dashboard_role` column + validation trigger on `user_preferences`
+
+---
+
+### Out of scope (deferred, with triggers)
+
+- Combining/merging dashboards across roles — **explicitly rejected** by doctrine; do not revisit unless persona scaling is overhauled.
+- A dedicated "view comparison" mode (side-by-side stylist vs manager) — defer until a real owner asks for it.
+- Per-location dashboard variants — separate concern; revisit when location-scoped overrides land.
