@@ -65,6 +65,10 @@ export interface DashboardLayout {
   // Hub customization
   hubOrder?: string[];     // Order of hub hrefs
   enabledHubs?: string[];  // Which hubs are visible (by href)
+  // Per-section dismissed configuration stubs (e.g., 'payroll_deadline', 'payday_countdown').
+  // Persists cross-device so a stub dismissed on one device stays dismissed on others.
+  // Reset via the Customize menu's "Reset dismissed prompts" action.
+  dismissedStubs?: string[];
 }
 
 export interface DashboardTemplate {
