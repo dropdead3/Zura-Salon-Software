@@ -1,98 +1,117 @@
+# Plan v3 — Role Dashboard Configurator (Gap-closed build)
 
-## Plan v2 — Role Dashboard Configurator (Revised after audit)
+## Bugs and gaps found in plan v2
 
-### What the codebase already has (that v1 missed)
+The deeper audit surfaced **6 real issues**, two of them blocking. Only after fixing these is the build truly correct.
 
-Your codebase is **further along than my first plan assumed**. Re-using what exists is the better build:
+---
 
-| Asset | What it does | Status |
+### GAP 1 (BLOCKING): Settings can't open the Customize drawer
+
+`DashboardCustomizeMenu` owns its `isOpen` state internally. Today's `TeamDashboardsCard` flow is:
+
+1. Owner clicks "Preview" → sets View As → toast appears
+2. Owner reads the help text: *"Open Customize Dashboard to edit this layout"*
+3. Owner manually navigates to the dashboard
+4. Owner finds the Customize button
+5. Owner opens the drawer
+
+That is broken UX. From a Settings page deep-link, step 3 destroys the flow. v2 inherited this bug.
+
+**Fix:** Lift `isOpen` to a tiny global store (or a dedicated React context) so any surface — Settings, sidebar, dashboard header — can `openCustomizeDrawer({ roleKey: 'stylist' })`. Pattern: a `useCustomizeDrawer()` hook with `{ isOpen, open, close, intendedRole }`. The drawer subscribes; the role tile button calls `setViewAsRole('stylist'); openCustomizeDrawer()`. The drawer mount stays in `DashboardLayout`, but its open state becomes externally controllable.
+
+---
+
+### GAP 2 (BLOCKING): Pattern mismatch — `access-hub` is a route, not a Settings detail
+
+I claimed in v2 that `access-hub` lives inside `SettingsCategoryDetail`. It does **not** — it's a dedicated page at `/admin/access-hub` (App.tsx:432), and Settings just deep-links to it. `levels` is the same: dedicated `StylistLevels` page. Pattern for governance hubs that span multiple roles:
+
+> Dedicated route → linked from Settings card → has its own page header.
+
+**Fix:** Create a real `RoleDashboards` page at `admin/dashboards`, register in `App.tsx` and `categoriesMap`. The Settings card click navigates there.
+
+---
+
+### GAP 3: Role list is hardcoded to 5 roles, ignores org's actual roles
+
+`useTeamDashboardSummary.ts` hardcodes `TEAM_DASHBOARD_ROLES = [manager, stylist, receptionist, admin, bookkeeper]`. An org with `general_manager`, `assistant_manager`, `booth_renter`, `front_desk` won't see them. Yet `pickPrimaryRoleKey` recognizes 12+ roles.
+
+**Fix:** Source from `useOrganizationRoles()` (created last loop). Filter to assigned roles. Sort by canonical badge order. Matches the user's earlier ask.
+
+---
+
+### GAP 4: `templateKeyForRole` collapses roles — UI must signal it
+
+`templateKeyForRole()` collapses `super_admin` and `admin` → `'leadership'`. Owner customizes for `manager` → multiple roles silently share it. Today's UI shows them as separate tiles → owner expects independent layouts → confusion.
+
+**Fix:** Group tiles by `templateKeyForRole()` output. One tile per *template key*, listing all org roles that resolve to it ("Leadership — Super Admin, Admin"). This rule also determines whether the **multi-role end-user switcher** appears: only when a user holds 2+ roles in different template-key groups.
+
+---
+
+### GAP 5: `dashboard_role_layouts` is keyed by `role`, not template key — schema/UI mismatch
+
+The table has unique on `(organization_id, role)`. But seeded templates and runtime resolution use `template_key`. Writing to `role='admin'` and `role='super_admin'` creates two rows that both resolve to `'leadership'` — and at read time, the row matching the user's *primary role* wins.
+
+**Latent bug:** an owner who customizes for `admin` and a `super_admin` user will *not* see those customizations.
+
+**Fix (no schema change):** When the owner authors a layout for any role in a collapsed group, **mirror the write to all roles in that group**. Reset path mirrors the delete. Encapsulate in `useSaveRoleLayout` / `useResetRoleLayout`. Document the invariant. A future migration can canonicalize to template-key storage; mirroring is correct and reversible.
+
+---
+
+### GAP 6: Active role switching is NOT impersonation
+
+A user voluntarily switching their own active dashboard role is not impersonation and must NOT call `setViewAsRole()` (that path triggers toasts and writes to `impersonation_logs`).
+
+**Fix:** Introduce `useActiveDashboardRole()` as a distinct concept from View As. Two separate state surfaces, both feeding into the resolution priority in `useDashboardLayout`.
+
+---
+
+## Revised file plan
+
+| File | Change | Reason |
 |---|---|---|
-| `dashboard_role_layouts` table | Per-(org, role) authored layouts, RLS-gated to primary owner | ✅ Live |
-| `dashboard_role_layout_audit` table | "Last edited at / by" per role | ✅ Live |
-| `useTeamDashboardSummary` hook | Returns each role + `hasOverride` + `lastEditedAt` | ✅ Live |
-| `TeamDashboardsCard` component | Owner-facing tile grid: each role → "Preview" → enters View As → Customize drawer routes writes to that role | ✅ Live but **orphaned** (removed from Command Center; section retired in `RETIRED_SECTION_IDS`) |
-| `useSaveRoleLayout` / `useResetRoleLayout` | Already-built role-keyed mutations (separate from View-As path) | ✅ Live, currently unused by UI |
-| `useDashboardLayout` resolution | Already routes via View-As role when owner is previewing | ✅ Live |
-| Stylist Privacy Contract enforcement | Allowlist + forbidden pinned cards applied at runtime regardless of authored layout | ✅ Live |
+| `src/contexts/CustomizeDrawerContext.tsx` | NEW — `{ isOpen, open(roleKey?), close }` | GAP 1 |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Replace local `useState` with context; accept external open trigger | GAP 1 |
+| `src/pages/dashboard/admin/RoleDashboards.tsx` | NEW — page rendering the role grid + Customize trigger | GAP 2 |
+| `src/App.tsx` | Register `admin/dashboards` route, lazy load | GAP 2 |
+| `src/pages/dashboard/admin/Settings.tsx` | Add `'role-dashboards'` to `categoriesMap`; navigate on click | GAP 2 |
+| `src/hooks/useSettingsLayout.ts` | Add `'role-dashboards'` to the `team` group | GAP 2 |
+| `src/hooks/useTeamDashboardSummary.ts` | Source from `useOrganizationRoles()`; group by `templateKeyForRole()` | GAP 3 + GAP 4 |
+| `src/components/dashboard/TeamDashboardsCard.tsx` | Render grouped tiles; "Edit" button calls `openCustomizeDrawer()` | GAP 1 + GAP 4 |
+| `src/hooks/useDashboardLayout.ts` (`useSaveRoleLayout`, `useResetRoleLayout`) | Mirror write/delete across all roles in the collapsed template-key group | GAP 5 |
+| `src/hooks/useActiveDashboardRole.ts` | NEW — read/write `activeRole` inside `user_preferences.dashboard_layout` JSON, validate against held roles | GAP 6 |
+| `src/hooks/useDashboardLayout.ts` (`pickPrimaryRoleKey` consumer) | Honor `activeRole` over priority fallback when valid | GAP 6 |
+| `src/components/dashboard/DashboardRoleSwitcher.tsx` | NEW — pill, only renders when user holds 2+ roles in different template-key groups | GAP 4 + GAP 6 |
+| `src/components/dashboard/DashboardLayout.tsx` | Slot the switcher in the header; mount the `CustomizeDrawerProvider` | GAP 1 + GAP 6 |
 
-**Implication:** v1 over-built. We don't need a new page, new table column, new hook, or schema change. We need to **re-home the orphaned `TeamDashboardsCard` into Settings** and **add a small multi-role switcher** for end users.
-
----
-
-### Revised build (much smaller)
-
-#### 1. Settings entry — "Role Dashboards"
-
-- Add a new `SettingsCategory`: `role-dashboards` (icon: `LayoutDashboard`)
-- Add to `SECTION_GROUPS` under the existing `team` group (Access & Visibility) in `useSettingsLayout.ts`
-- Add detail view in `SettingsCategoryDetail.tsx` that renders the existing `<TeamDashboardsCard />` (which already does the right thing — sets View As, surfaces "Custom"/"Default", links to Customize)
-- Owner-only: `SettingsCategoryDetail` gates by `useCanCustomizeDashboardLayouts()` (already returns `isPrimaryOwner`)
-- Un-retire the orphan: leave `TeamDashboardsCard.tsx` as-is — just re-mount it inside Settings instead of the dashboard
-
-That's it for Q1. ~20 lines of glue, no new component.
-
-#### 2. Multi-role end-user experience
-
-The right question is **"does this user actually have multiple meaningful dashboard-divergent roles?"** Today `pickPrimaryRoleKey` collapses on a strict priority order — silently. That's fine for 95% of users but obscures choice for the rare manager-who-also-takes-clients case.
-
-**Decision (unchanged from v1, sharpened):**
-- **Never combine.** Combining violates the Stylist Privacy Contract — a manager+stylist user combining layouts could surface manager financials inside what stylist-mode is supposed to hide. Doctrine prohibits this.
-- **Default = highest-priority role** (`pickPrimaryRoleKey`, current behavior).
-- **Persist the user's choice** so it's sticky across sessions (per-user preference, not per-tab).
-- **Switcher only renders for users with 2+ assigned roles whose `templateKeyForRole()` resolves to *different* templates.** A user with `stylist` + `assistant` both resolve to different templates → show switcher. A user with `admin` + `super_admin` both resolve to `leadership` → no switcher (no real choice).
-- **Switcher is constrained to roles the user actually holds.** Server-side validation: when reading `active_dashboard_role`, cross-check against `user_roles`. If the role was revoked, NULL it out and fall back to `pickPrimaryRoleKey`. **No new column needed** — store this inside the existing `user_preferences.dashboard_layout` JSON as `activeRole`. (Read-then-update pattern already standard for that table.)
-
-#### 3. Schema impact
-
-**None.** Reusing `user_preferences.dashboard_layout` JSON for `activeRole`. No migration. No trigger. No RLS changes.
-
-The validation is a 3-line client guard:
-```
-if (activeRole && !userRoles.includes(activeRole)) activeRole = null;
-```
-Plus a server-side echo when the layout is read (already done implicitly because RLS gates `dashboard_role_layouts` reads to org members — they can read any role's layout for their org regardless).
+**No schema changes.** `user_preferences.dashboard_layout` JSON gets a new `activeRole` key; mirroring is a write-side detail.
 
 ---
 
-### Files
+## Doctrine re-check
 
-| File | Change |
-|---|---|
-| `src/hooks/useSettingsLayout.ts` | Add `'role-dashboards'` to the `team` group |
-| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` | Add `'role-dashboards'` case → renders `<TeamDashboardsCard />` |
-| `src/lib/iconMap` (or wherever Settings registers icons/colors) | Add icon + color for the new category |
-| `src/hooks/useDashboardLayout.ts` | Read `activeRole` from `user_preferences.dashboard_layout`; honor it in `pickPrimaryRoleKey` resolution; validate against held roles |
-| `src/components/dashboard/DashboardRoleSwitcher.tsx` | NEW — small pill dropdown, conditional render |
-| `src/components/dashboard/DashboardLayout.tsx` | Slot the switcher in the header next to the user identity |
-
-**No new route. No new page. No migration.** That's the entire delta.
+- ✅ **Visibility Contract:** switcher returns `null` when no real choice. Settings tile group hides unassigned roles.
+- ✅ **Stylist Privacy Contract:** active role drives the resolved layout; allowlist still applied at runtime.
+- ✅ **Owner authority:** owners author per template-key group (mirrored to all member roles); only owners can customize.
+- ✅ **State Updates:** `user_preferences` JSON writes use read-then-update.
+- ✅ **Settings Navigation Uniformity:** `RoleDashboards` is a real page with `DashboardPageHeader`, matches `AccessHub` / `StylistLevels` / `CompensationHub` pattern.
+- ✅ **Identity:** no hardcoded tenant strings.
 
 ---
 
-### Where v1 was wrong
+## Memory updates after ship
 
-1. **Proposed a new `/admin/dashboards` route** — unnecessary; Settings detail view is the established pattern (`access-hub`, `users`, `levels` all live there).
-2. **Proposed adding `active_dashboard_role` column + validation trigger** — overkill. The JSON blob in `user_preferences.dashboard_layout` already stores per-user UI state. Adding a column when a JSON field will do violates "least invasive change."
-3. **Missed that `TeamDashboardsCard` and `useTeamDashboardSummary` already existed** — would have re-built the exact same component under a different name, creating a fork hazard.
-4. **Didn't catch the `pickPrimaryRoleKey` collapse case** — two roles that resolve to the same template don't deserve a switcher. v1 would have shown a no-op switcher to admin+super_admin users.
-
-### Doctrine alignment (re-checked)
-
-- ✅ Stylist Privacy Contract — switching to `stylist` activates the stylist allowlist; combining is rejected.
-- ✅ Owner authority — owners remain sole authors of role layouts.
-- ✅ Persona scaling — solo stylists never see manager surfaces accidentally.
-- ✅ Settings Navigation Uniformity — uses the established settings detail pattern.
-- ✅ Visibility Contract — switcher returns `null` when there's no real choice (no noise).
-- ✅ State Updates — `user_preferences` JSON uses read-then-update (already standard).
-
-### Out of scope (deferred)
-
-- Sidebar shortcut to Role Dashboards — defer until owners report it's hard to find inside Settings.
-- A separate "compare roles" view — defer; doctrine says "one primary lever," and the existing Preview flow already covers comparison via View As.
-- Per-location dashboard variants — separate concern, not blocked by this work.
+- New memory: `mem://features/dashboard/role-layout-authoring` documenting the template-key collapse rule, mirror-write invariant, and switcher visibility logic.
+- Update `mem://architecture/stylist-privacy-contract`: add active-role switching as a user-level pivot point covered by existing enforcement anchors.
 
 ---
 
-### Approval question
+## What changed from v2
 
-This drops the build from ~7 file changes + migration to **~5 file changes + zero schema**. Approve v2?
+| v2 said | v3 says | Why |
+|---|---|---|
+| Render `TeamDashboardsCard` inside `SettingsCategoryDetail` | Build a real `RoleDashboards` page + Settings card links to it | v2 misread the access-hub pattern |
+| Hardcoded 5-role list is fine | Source from `useOrganizationRoles()` and group by template key | Owner ask + closes silent-collapse bug |
+| Just mount the existing card | Card needs grouping refactor + external drawer trigger | Two real bugs surfaced |
+| Reuse View As for active role | Separate `activeRole` from View As | Audit-log + conceptual conflict |
+| No schema changes (still true) | No schema changes — but mirror writes across role group | Latent bug in existing storage model |
