@@ -34,7 +34,7 @@ import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard'
 import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
 import { DailyBriefCard } from '@/components/dashboard/analytics/DailyBriefCard';
 import { OperationalHealthCard } from '@/components/dashboard/analytics/OperationalHealthCard';
-import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsRollupCard';
+import { LocationsStatusCard } from '@/components/dashboard/analytics/LocationsStatusCard';
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
@@ -99,7 +99,7 @@ const CARD_COMPONENTS: Record<string, string> = {
   'hiring_capacity': 'HiringCapacity',
   'staffing_trends': 'StaffingTrends',
   'stylist_workload': 'StylistWorkload',
-  'locations_rollup': 'LocationsRollup',
+  'locations_rollup': 'LocationsStatus',
   'service_mix': 'ServiceMix',
   'retail_effectiveness': 'RetailEffectiveness',
   'commission_summary': 'CommissionSummary',
@@ -469,18 +469,14 @@ export function CommandCenterAnalytics() {
       case 'locations_rollup':
         return (
           <VisibilityGate key={cardId} elementKey="locations_rollup">
-            <EnforcementGateBanner gateKey="gate_margin_baselines">
-              <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center">
-                <LocationsRollupCard
-                  filterContext={{
-                    locationId: 'all',
-                    dateRange,
-                  }}
-                  dateFrom={dateFilters.dateFrom}
-                  dateTo={dateFilters.dateTo}
-                />
-              </PinnableCard>
-            </EnforcementGateBanner>
+            <PinnableCard elementKey="locations_rollup" elementName="Locations Status" category="Command Center">
+              <LocationsStatusCard
+                filterContext={{
+                  locationId: 'all',
+                  dateRange,
+                }}
+              />
+            </PinnableCard>
           </VisibilityGate>
         );
       case 'service_mix':
