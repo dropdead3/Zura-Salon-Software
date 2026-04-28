@@ -67,7 +67,7 @@ import { useQuickStats } from '@/hooks/useQuickStats';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useTranslation } from 'react-i18next';
-import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
+// HubQuickLinks removed — sidebar handles hub navigation.
 // TeamDashboardsCard removed from Command Center — owners preview role
 // dashboards via the role-switcher in Customize.
 const AIInsightsDrawer = React.lazy(() => import('@/components/dashboard/AIInsightsDrawer').then(m => ({ default: m.AIInsightsDrawer })));
@@ -506,12 +506,8 @@ function DashboardSections({
     // Moved to header (right side, under Customize)
     ai_insights: null,
     
-    hub_quicklinks: isLeadership && (
-      <HubQuickLinks 
-        hubOrder={layout.hubOrder}
-        enabledHubs={layout.enabledHubs}
-      />
-    ),
+    // hub_quicklinks removed — sidebar already provides hub navigation. Avoids redundancy per UX doctrine.
+    hub_quicklinks: null,
 
     // team_dashboards intentionally removed — operators preview role-specific
     // dashboards via the role-switcher in Customize, not a dedicated card.
