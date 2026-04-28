@@ -8,6 +8,7 @@ import { Banknote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 
 
 function formatCurrency(amount: number): string {
@@ -24,8 +25,18 @@ export function PaydayCountdownBanner() {
   const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { settings, currentPeriod, estimatedCompensation, isLoading } = useMyPayData();
 
-  // Self-gating: only render if org has payroll enabled AND user has payroll settings
-  if (isLoading || entitlementLoading || !isEntitled || !settings) return null;
+  // Self-gating: only render if org has payroll enabled AND user has payroll settings.
+  // Doctrine: silence is valid output, but we report the reason so the operator
+  // can diagnose via the suppression bus / customize menu hint.
+  if (isLoading || entitlementLoading) return null;
+  if (!isEntitled) {
+    reportVisibilitySuppression('payday-countdown', 'payroll-not-entitled', {});
+    return null;
+  }
+  if (!settings) {
+    reportVisibilitySuppression('payday-countdown', 'no-payroll-settings', {});
+    return null;
+  }
 
   const checkDate = parseISO(currentPeriod.checkDate);
   const now = new Date();
