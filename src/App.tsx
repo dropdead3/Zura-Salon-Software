@@ -157,6 +157,7 @@ const LeadManagement = lazyWithRetry(() => import("./pages/dashboard/admin/LeadM
 const AdminFeatureFlags = lazyWithRetry(() => import("./pages/dashboard/admin/FeatureFlags"));
 const FeaturesCenter = lazyWithRetry(() => import("./pages/dashboard/admin/FeaturesCenter"));
 const AccessHub = lazyWithRetry(() => import("./pages/dashboard/admin/AccessHub"));
+const RoleDashboards = lazyWithRetry(() => import("./pages/dashboard/admin/RoleDashboards"));
 const PlatformFeatureFlags = lazyWithRetry(() => import("./pages/dashboard/platform/FeatureFlags"));
 const ClientDirectory = lazyWithRetry(() => import("./pages/dashboard/ClientDirectory"));
 const Schedule = lazyWithRetry(() => import("./pages/dashboard/Schedule"));
@@ -430,6 +431,7 @@ function DashboardRoutes() {
       <Route path="admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
       <Route path="admin/merge-clients" element={<ProtectedRoute requiredPermission="client_merge"><MergeClients /></ProtectedRoute>} />
       <Route path="admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
+      <Route path="admin/dashboards" element={<ProtectedRoute requiredPermission="manage_settings"><RoleDashboards /></ProtectedRoute>} />
 
       {/* Zura Capital routes — gated by capital_enabled flag + super admin / primary owner only */}
       <Route path="admin/capital" element={<ProtectedRoute requireSuperAdmin><CapitalFeatureGate fallback={<Navigate to=".." replace />}><CapitalQueue /></CapitalFeatureGate></ProtectedRoute>} />

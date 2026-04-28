@@ -67,6 +67,7 @@ const categoriesMap: Record<string, { id: string; label: string; description: st
   'program': { id: 'program', label: 'Program Editor', description: 'Build and edit Client Engine courses, modules, and learning paths for structured team development.', icon: GraduationCap },
   'levels': { id: 'levels', label: 'Stylist Levels', description: 'Define experience tiers, associate pricing multipliers, and set promotion criteria for stylists.', icon: Layers },
   'access-hub': { id: 'access-hub', label: 'Roles & Controls Hub', description: 'Configure which modules, pages, and features are visible to each role. Manage granular permissions.', icon: Shield },
+  'role-dashboards': { id: 'role-dashboards', label: 'Role Dashboards', description: 'Curate what each role group sees on their dashboard. Authoring once mirrors to every sibling role in the same template group.', icon: Layers },
   'locations': { id: 'locations', label: 'Locations', description: 'Manage salon addresses, operating hours, holiday schedules, and location-specific settings.', icon: MapPin },
   'dayrate': { id: 'dayrate', label: 'Day Rate', description: 'Configure chair rental pricing, day-rate agreements, and independent contractor billing terms.', icon: Armchair },
   'sms': { id: 'sms', label: 'Text Messages', description: 'Create and manage SMS templates, automated text sequences, and messaging rules for client communication.', icon: MessageSquare },
@@ -138,6 +139,7 @@ export default function Settings() {
     else if (id === 'business') openCategory('business' as SettingsCategory);
     else if (id === 'users') navigate(dashPath('/admin/team-members'));
     else if (id === 'access-hub') navigate(dashPath('/admin/access-hub'));
+    else if (id === 'role-dashboards') navigate(dashPath('/admin/dashboards'));
     else if (id === 'data-import') navigate(dashPath('/admin/data-import'));
     else if (id === 'zura-config') navigate(dashPath('/admin/zura-config'));
     else if (id === 'handbooks') navigate(dashPath('/admin/handbooks'));

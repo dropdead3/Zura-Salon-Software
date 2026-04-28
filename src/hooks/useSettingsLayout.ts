@@ -24,6 +24,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   loyalty: '#F59E0B',
   feedback: '#10B981',
   'access-hub': '#8B5CF6',
+  'role-dashboards': '#6366F1',
   leaderboard: '#EAB308',
   'team-rewards': '#F59E0B',
   kiosk: '#8B5CF6',
@@ -54,7 +55,7 @@ export const SECTION_GROUPS = [
   {
     id: 'team',
     label: 'Access & Visibility',
-    categories: ['users', 'access-hub'],
+    categories: ['users', 'access-hub', 'role-dashboards'],
   },
   {
     id: 'custom-programs',
