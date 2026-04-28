@@ -53,7 +53,7 @@ import { TeamPulseSection } from '@/components/dashboard/owner/TeamPulseSection'
 import { UpcomingEventsSection } from '@/components/dashboard/owner/UpcomingEventsSection';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, getPinnedVisibilityKey, PINNABLE_CARD_IDS, getPinnedCardIdsFromLayout, isPinnedInLayout, ANALYTICS_SECTION_ID } from '@/hooks/useDashboardLayout';
 const TodaysQueueSection = React.lazy(() => import('@/components/dashboard/TodaysQueueSection').then(m => ({ default: m.TodaysQueueSection })));
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 const PinnedAnalyticsCard = React.lazy(() => import('@/components/dashboard/PinnedAnalyticsCard').then(m => ({ default: m.PinnedAnalyticsCard })));
