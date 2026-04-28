@@ -19,9 +19,6 @@ import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
-// Platform-level roles that must never appear in tenant-scoped UI.
-const PLATFORM_ONLY_ROLES = new Set<AppRole>(['super_admin']);
-
 export function useOrganizationRoles() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -40,7 +37,7 @@ export function useOrganizationRoles() {
 
       const distinct = Array.from(
         new Set((data ?? []).map((r) => r.role as AppRole))
-      ).filter((role) => !PLATFORM_ONLY_ROLES.has(role));
+      );
 
       // Sort by the canonical badge order so dropdowns/legends/badges agree.
       distinct.sort(
