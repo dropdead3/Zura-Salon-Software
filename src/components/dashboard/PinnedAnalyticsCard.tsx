@@ -499,20 +499,31 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const now = new Date();
         const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
         const nowMin = now.getHours() * 60 + now.getMinutes();
-        const openCount = visible.filter((loc) => {
+        const CLOSING_SOON_THRESHOLD_MINUTES = 30;
+        let openCount = 0;
+        let closingSoonCount = 0;
+        for (const loc of visible) {
           const closure = isClosedOnDate(loc.hours_json, loc.holiday_closures, now);
-          if (closure.isClosed) return false;
+          if (closure.isClosed) continue;
           const dh = loc.hours_json?.[dayKeys[now.getDay()]];
-          if (!dh?.open || !dh?.close || dh.closed) return false;
+          if (!dh?.open || !dh?.close || dh.closed) continue;
           const [oH, oM] = dh.open.split(':').map(Number);
           const [cH, cM] = dh.close.split(':').map(Number);
-          if ([oH, oM, cH, cM].some(Number.isNaN)) return false;
+          if ([oH, oM, cH, cM].some(Number.isNaN)) continue;
           const openMin = oH * 60 + oM;
           const closeMin = cH * 60 + cM;
-          return nowMin >= openMin && nowMin < closeMin;
-        }).length;
+          if (nowMin >= openMin && nowMin < closeMin) {
+            openCount += 1;
+            const remaining = closeMin - nowMin;
+            if (remaining > 0 && remaining <= CLOSING_SOON_THRESHOLD_MINUTES) {
+              closingSoonCount += 1;
+            }
+          }
+        }
         metricValue = `${openCount} of ${visible.length}`;
-        metricLabel = 'Open right now';
+        metricLabel = closingSoonCount > 0
+          ? `Open right now · ${closingSoonCount} closing soon`
+          : 'Open right now';
         break;
       }
       case 'service_mix': {
