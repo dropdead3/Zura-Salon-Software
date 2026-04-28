@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { useOrganizationRoles } from '@/hooks/useOrganizationRoles';
+import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import {
   Select,
   SelectContent,
@@ -294,25 +296,21 @@ interface DashboardCustomizeMenuProps {
   roleContext?: RoleContext;
 }
 
-const PREVIEWABLE_ROLES: { role: AppRole; label: string }[] = [
-  { role: 'admin', label: 'General Manager' },
-  { role: 'manager', label: 'Manager' },
-  { role: 'receptionist', label: 'Front Desk' },
-  { role: 'stylist', label: 'Stylist' },
-  { role: 'stylist_assistant', label: 'Assistant' },
-];
-
 function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // Drives options from the roles actually present in the current organization
+  // (excluding platform-only roles like super_admin). See `useOrganizationRoles`.
+  const { data: orgRoles, isLoading } = useOrganizationRoles();
+
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={isLoading}>
       <SelectTrigger className="h-8 text-xs">
-        <SelectValue placeholder="Select role" />
+        <SelectValue placeholder={isLoading ? 'Loading roles…' : 'Select role'} />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="__self__">My own dashboard</SelectItem>
-        {PREVIEWABLE_ROLES.map(({ role, label }) => (
+        {(orgRoles ?? []).map((role) => (
           <SelectItem key={role} value={role}>
-            {label}
+            {getRoleBadgeConfig(role).label}
           </SelectItem>
         ))}
       </SelectContent>
