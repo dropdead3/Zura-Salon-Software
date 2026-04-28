@@ -17,6 +17,7 @@ export interface DashboardElementVisibility {
   element_category: string;
   role: AppRole;
   is_visible: boolean;
+  organization_id: string | null;
   created_at: string;
   updated_at: string;
 }
