@@ -888,6 +888,13 @@ function DashboardSections({
 
   const hasVisiblePinnedAnalytics = visiblePinnedCardIds.length > 0;
 
+  // Simple view caps pinned analytics at the first 6 (display order). Detailed
+  // view renders all of them. Customize drawer surfaces a tip when capped.
+  const SIMPLE_VIEW_CARD_LIMIT = 6;
+  const renderedPinnedCardIds = compact
+    ? visiblePinnedCardIds.slice(0, SIMPLE_VIEW_CARD_LIMIT)
+    : visiblePinnedCardIds;
+
   return (
     <>
       {orderedSectionIds.map((sectionId, index) => {
@@ -921,7 +928,7 @@ function DashboardSections({
                     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                   }}
                 >
-                  {visiblePinnedCardIds.map(cId => (
+                  {renderedPinnedCardIds.map(cId => (
                     <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
                   ))}
                 </div>
