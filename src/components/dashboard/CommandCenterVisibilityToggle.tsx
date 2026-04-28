@@ -12,6 +12,7 @@ import { Pin, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -47,6 +48,8 @@ export function CommandCenterVisibilityToggle({
   const { layout } = useDashboardLayout();
   const saveLayout = useSaveDashboardLayout();
   const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id ?? null;
 
   // Only show for Super Admins
   if (!isSuperAdmin) return null;
@@ -65,18 +68,23 @@ export function CommandCenterVisibilityToggle({
   const handleToggle = async (checked: boolean) => {
     setIsToggling(true);
     try {
-      // Upsert all leadership roles in a single batch call
+      if (!orgId) {
+        throw new Error('No active organization selected.');
+      }
+      // Wave 2: tenant-scoped upsert. NULL-org rows are platform-seeded
+      // global defaults and must not be touched here.
       const rows = LEADERSHIP_ROLES.map(role => ({
         element_key: elementKey,
         element_name: elementName,
         element_category: elementCategory,
         role,
         is_visible: checked,
+        organization_id: orgId,
       }));
 
       const { error } = await supabase
         .from('dashboard_element_visibility')
-        .upsert(rows, { onConflict: 'element_key,role' })
+        .upsert(rows, { onConflict: 'element_key,role,organization_id' })
         .select();
 
       if (error) throw error;
