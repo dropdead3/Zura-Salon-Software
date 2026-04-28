@@ -12,6 +12,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      // Render above all overlays/drawers (PremiumFloatingPanel uses z-50,
+      // radix dialogs/sheets up to z-[100]). Toasts must always win.
+      style={{ zIndex: 2147483000 } as React.CSSProperties}
       icons={{
         success: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
         error: <XCircle className="h-4 w-4 text-destructive" />,
