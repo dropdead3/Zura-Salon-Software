@@ -11,7 +11,7 @@ import {
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
   LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
-  Beaker, Award, FlaskConical, Package,
+  Beaker, Award, FlaskConical, Package, GraduationCap,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -63,6 +63,7 @@ import { useClientFunnel } from '@/hooks/useSalesAnalytics';
 import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { useHiringCapacity } from '@/hooks/useHiringCapacity';
+import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
 import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
@@ -240,6 +241,7 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   service_profitability: { icon: Scissors, label: 'Service Profitability' },
   control_tower: { icon: FlaskConical, label: 'Control Tower' },
   predictive_inventory: { icon: Package, label: 'Predictive Inventory' },
+  level_progress_kpi: { icon: GraduationCap, label: 'Level Progress' },
 };
 
 // Tooltip descriptions for compact bento tiles
@@ -272,6 +274,7 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   service_profitability: 'Service-level profitability ranking by revenue minus product cost.',
   control_tower: 'Real-time color bar alerts: waste, variance, and compliance issues.',
   predictive_inventory: 'AI-forecasted color inventory needs based on booking trends.',
+  level_progress_kpi: 'Stylists by promotion readiness: ready to level up, on pace, at risk, or needs review (level down).',
 };
 
 // Link mapping for compact bento tiles
@@ -304,6 +307,7 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   service_profitability: { label: 'Profitability', href: '/dashboard/admin/analytics?tab=sales' },
   control_tower: { label: 'Control Tower', href: '/dashboard/admin/color-bar' },
   predictive_inventory: { label: 'Inventory', href: '/dashboard/admin/color-bar' },
+  level_progress_kpi: { label: 'Team Progress', href: '/dashboard/admin/team-directory' },
 };
 
 /**
@@ -360,6 +364,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const { data: clientHealthData } = useClientHealthSegments();
   const newBookingsQuery = useNewBookings(locationFilter, filters.dateRange);
   const hiringCapacity = useHiringCapacity();
+  const { counts: levelCounts } = useTeamLevelProgress();
   const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
   const { data: weekAheadData, isLoading: weekAheadLoading } = useWeekAheadRevenue(locationFilter);
   const { data: queueData } = useTodaysQueue(locationFilter);
@@ -554,6 +559,31 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricValue = '--';
         metricLabel = 'View full card for details';
         break;
+      case 'level_progress_kpi': {
+        const total = levelCounts?.total ?? 0;
+        if (total === 0) {
+          // Visibility-contract canon: silence when no team to evaluate
+          return null;
+        }
+        const needsReview = levelCounts?.belowStandard ?? 0;
+        const ready = levelCounts?.ready ?? 0;
+        const atRisk = levelCounts?.atRisk ?? 0;
+        const onPace = levelCounts?.inProgress ?? 0;
+        if (needsReview > 0) {
+          metricValue = `${needsReview} need review`;
+          goalPaceIcon = <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />;
+        } else if (ready > 0) {
+          metricValue = `${ready} ready to level up`;
+          goalPaceIcon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />;
+        } else if (atRisk > 0) {
+          metricValue = `${atRisk} at risk`;
+          goalPaceIcon = <AlertTriangle className="w-3.5 h-3.5 text-warning-foreground shrink-0" />;
+        } else {
+          metricValue = `${onPace} on pace`;
+        }
+        metricLabel = `${total} stylist${total === 1 ? '' : 's'} tracked`;
+        break;
+      }
       default:
         metricValue = '--';
         metricLabel = '';

@@ -683,7 +683,10 @@ function DashboardSections({
       </VisibilityGate>
     ),
 
-    level_progress: (hasStylistRole || isLeadership) && (
+    // Stylist-only personal nudge. Leadership users get the team Level Progress
+    // surface via the pinnable analytic card (level_progress_kpi), which respects
+    // the simple/detailed view toggle in the Command Center.
+    level_progress: hasStylistRole && !isLeadership && (
       <VisibilityGate elementKey="level_progress" elementName="Level Progress" elementCategory="growth">
         <LevelProgressNudge />
       </VisibilityGate>
