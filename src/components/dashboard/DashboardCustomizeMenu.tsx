@@ -929,7 +929,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                             // visibly flips ON before the row migrates to
                             // the Pinned section above. Prevents the "nothing
                             // happens when I toggle" perception.
-                            isPinned={isCardPinned(card.id)}
+                            isPinned={isCardPinnedInLayout(card.id)}
                             onToggle={() => handleTogglePinnedCard(card.id)}
                             isLoading={isTogglingPin}
                             sortable={false}
