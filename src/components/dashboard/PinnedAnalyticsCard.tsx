@@ -462,6 +462,12 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       reportVisibilitySuppression('pinned-analytics-card', 'unknown-card-id', { cardId });
       return null;
     }
+    // Dev-only soft assert: every renderable card must have a canonical
+    // question registered. Enforces non-redundancy at author time without
+    // breaking production rendering.
+    if (import.meta.env.DEV && !(cardId in CARD_QUESTIONS)) {
+      reportVisibilitySuppression('pinned-analytics-card', 'card-missing-question', { cardId });
+    }
     
     const meta = CARD_META[cardId];
     const Icon = meta.icon;
