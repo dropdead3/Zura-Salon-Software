@@ -718,50 +718,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
           <Separator />
 
-          {roleContext?.isLeadership && permittedHubs.length > 0 && (
-            <>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">QUICK ACCESS HUBS</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Drag to reorder. Toggle to show/hide hubs.
-                </p>
-                <DndContext 
-                  sensors={sensors} 
-                  collisionDetection={closestCenter} 
-                  onDragEnd={handleHubDragEnd}
-                >
-                  <SortableContext 
-                    items={orderedHubs} 
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-1">
-                      {orderedHubs.map(hubHref => {
-                        const hub = permittedHubs.find(h => h.href === hubHref);
-                        if (!hub) return null;
-                        const Icon = hub.icon;
-                        const isEnabled = layout.enabledHubs 
-                          ? layout.enabledHubs.includes(hub.href)
-                          : true;
-                        return (
-                          <SortableHubItem
-                            key={hub.href}
-                            id={hub.href}
-                            label={hub.label}
-                            icon={<Icon className="w-4 h-4" />}
-                            colorClass={hub.colorClass}
-                            isEnabled={isEnabled}
-                            onToggle={() => handleToggleHub(hub.href)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              </div>
-
-              <Separator />
-            </>
-          )}
+          {/* Quick Access Hubs removed — sidebar handles hub navigation. */}
 
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">WIDGETS</h3>

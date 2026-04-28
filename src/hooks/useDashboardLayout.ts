@@ -141,8 +141,8 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -177,12 +177,13 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     };
   }
 
-  // Ensure hub_quicklinks is added for existing layouts (migration for existing users)
-  if (!migrated.sectionOrder?.includes('hub_quicklinks')) {
+  // Strip hub_quicklinks from any persisted layouts — section was removed
+  // (sidebar already provides hub navigation; the dashboard card was redundant).
+  if (migrated.sectionOrder?.includes('hub_quicklinks') || migrated.sections?.includes('hub_quicklinks')) {
     migrated = {
       ...migrated,
-      sections: ['hub_quicklinks', ...(migrated.sections || [])],
-      sectionOrder: ['hub_quicklinks', ...(migrated.sectionOrder || [])],
+      sections: (migrated.sections || []).filter((id) => id !== 'hub_quicklinks'),
+      sectionOrder: (migrated.sectionOrder || []).filter((id) => id !== 'hub_quicklinks'),
     };
   }
 
@@ -223,7 +224,7 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
 
   // Ensure payroll sections are added for existing layouts
   if (!migrated.sectionOrder?.includes('payroll_deadline')) {
-    const insertAfter = migrated.sectionOrder?.indexOf('hub_quicklinks');
+    const insertAfter = migrated.sectionOrder?.indexOf('todays_prep');
     const idx = insertAfter !== undefined && insertAfter >= 0 ? insertAfter + 1 : 2;
     const newSections = [...(migrated.sections || [])];
     const newOrder = [...(migrated.sectionOrder || [])];
