@@ -820,121 +820,104 @@ function DashboardSections({
   const orderedSectionIds = layout.sectionOrder?.length > 0 
     ? layout.sectionOrder 
     : layout.sections;
-  
-  // Track if we've rendered the filter bar (only show once, before first pinned card)
-  // filterBarRendered is no longer needed — detailed mode renders filter bar via bento grouping
 
-  // Collect pinned card IDs for grid rendering in compact mode
+  // Pinned card IDs in display order. Source of truth is `layout.pinnedCards`
+  // (drag-reorderable inside the Analytics section). Anything pinned in the
+  // visibility DB but not yet in the array (e.g. just-pinned, missing from a
+  // legacy layout) is appended.
   const pinnedCardIds = useMemo(() => {
-    const fromOrder = orderedSectionIds
-      .filter(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)))
-      .map(getPinnedCardId);
-    return [...fromOrder, ...missingPinnedCards];
-  }, [orderedSectionIds, missingPinnedCards, visibilityData]);
-
-  // Determine the index of the first pinned card in the section order (for filter bar placement)
-  const firstPinnedIndex = orderedSectionIds.findIndex(
-    id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id))
-  );
+    const fromLayout = (layout.pinnedCards || []).filter(id => isCardPinned(id));
+    const seen = new Set(fromLayout);
+    const extras = PINNABLE_CARD_IDS.filter(id => isCardPinned(id) && !seen.has(id));
+    return [...fromLayout, ...extras];
+  }, [layout.pinnedCards, visibilityData, effectivePinnedCardIds]);
 
   // Stylist Privacy Contract gate (mem://architecture/stylist-privacy-contract).
-  // Computed once per render — used by both pinned and regular section gates.
   const stylistOnly = isStylistOnlyViewer(roles);
 
+  // Filter pinned cards down to what the current viewer is actually allowed
+  // to see (leadership + privacy contract).
+  const visiblePinnedCardIds = useMemo(() => {
+    if (!isLeadership) return [];
+    return pinnedCardIds.filter(cardId => {
+      if (stylistOnly && STYLIST_FORBIDDEN_PINNED_CARDS.has(cardId)) return false;
+      return true;
+    });
+  }, [pinnedCardIds, isLeadership, stylistOnly]);
+
+  const hasVisiblePinnedAnalytics = visiblePinnedCardIds.length > 0;
 
   return (
     <>
       {orderedSectionIds.map((sectionId, index) => {
-        // Handle pinned analytics cards
-        if (isPinnedCardEntry(sectionId)) {
-          const cardId = getPinnedCardId(sectionId);
-          if (!isLeadership || !isCardPinned(cardId)) return null;
-          // Defense-in-depth: even if a layout pinned a financial card into
-          // the stylist template, suppress it. The contract is non-negotiable.
-          if (stylistOnly && STYLIST_FORBIDDEN_PINNED_CARDS.has(cardId)) return null;
-          
-          // In compact mode, pinned cards are rendered together in a grid below
-          // Only render filter bar at the first pinned card position
+        // Defensive: skip any legacy `pinned:*` entries that slipped through
+        // sanitize. They are now represented by the `analytics` marker.
+        if (isPinnedCardEntry(sectionId)) return null;
+
+        // Analytics section — render the entire pinned-cards block here.
+        if (sectionId === ANALYTICS_SECTION_ID) {
+          if (!layout.sections.includes(ANALYTICS_SECTION_ID)) return null;
+          if (!hasVisiblePinnedAnalytics) return null;
+
           if (compact) {
-            if (index === firstPinnedIndex) {
-              // Render filter bar + the entire bento grid here
-              return (
-                <React.Fragment key="compact-analytics-grid">
-                  {hasPinnedAnalytics && (
-                    <CommandCenterControlRow
-                      isLeadership={isLeadership}
-                      analyticsFilters={analyticsFilters}
-                      onLocationChange={onLocationChange}
-                      onDateRangeChange={onDateRangeChange}
-                      accessibleLocations={accessibleLocations}
-                      canViewAggregate={canViewAggregate}
-                      compact={compact}
-                      onCompactChange={onCompactChange}
-                      roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                    />
-                  )}
-                  <div
-                    className="grid gap-4"
-                    style={{
-                      // Auto-fit with a 260px floor: cards never compress below this,
-                      // they wrap to fewer columns instead. Keeps simple-view tiles legible
-                      // and gives compact currency values (e.g. $20.3K) breathing room.
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                    }}
-                  >
-                    {pinnedCardIds.map(cId => (
-                      <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
-                    ))}
-                  </div>
-                </React.Fragment>
-              );
-            }
-            // Skip remaining pinned cards (already rendered in the grid above)
-            return null;
-          }
-          
-          // Detailed mode: render all pinned cards at the first pinned position
-          if (index === firstPinnedIndex) {
-            const allDetailedPinned = [
-              ...orderedSectionIds
-                .filter(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)))
-                .map(getPinnedCardId),
-              ...missingPinnedCards,
-            ];
-            
-            if (allDetailedPinned.length === 0) return null;
-            
-            // Group consecutive half-sized cards into pairs
-            type CardGroup = { type: 'full' | 'pair'; cards: string[] };
-            const groups: CardGroup[] = [];
-            let i = 0;
-            while (i < allDetailedPinned.length) {
-              const current = allDetailedPinned[i];
-              const next = allDetailedPinned[i + 1];
-              if (getCardSize(current) === 'half' && next && getCardSize(next) === 'half') {
-                groups.push({ type: 'pair', cards: [current, next] });
-                i += 2;
-              } else {
-                groups.push({ type: 'full', cards: [current] });
-                i += 1;
-              }
-            }
-            
             return (
-              <React.Fragment key="detailed-analytics-grid">
-                {hasPinnedAnalytics && (
-                    <CommandCenterControlRow
-                      isLeadership={isLeadership}
-                      analyticsFilters={analyticsFilters}
-                      onLocationChange={onLocationChange}
-                      onDateRangeChange={onDateRangeChange}
-                      accessibleLocations={accessibleLocations}
-                      canViewAggregate={canViewAggregate}
-                      compact={compact}
-                      onCompactChange={onCompactChange}
-                      roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                    />
-                )}
+              <React.Fragment key="analytics-section-compact">
+                <CommandCenterControlRow
+                  isLeadership={isLeadership}
+                  analyticsFilters={analyticsFilters}
+                  onLocationChange={onLocationChange}
+                  onDateRangeChange={onDateRangeChange}
+                  accessibleLocations={accessibleLocations}
+                  canViewAggregate={canViewAggregate}
+                  compact={compact}
+                  onCompactChange={onCompactChange}
+                  roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                />
+                <div
+                  id="section-analytics"
+                  className="grid gap-4 scroll-mt-24"
+                  style={{
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  }}
+                >
+                  {visiblePinnedCardIds.map(cId => (
+                    <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
+                  ))}
+                </div>
+              </React.Fragment>
+            );
+          }
+
+          // Detailed mode: group consecutive half-sized cards into pairs.
+          type CardGroup = { type: 'full' | 'pair'; cards: string[] };
+          const groups: CardGroup[] = [];
+          let i = 0;
+          while (i < visiblePinnedCardIds.length) {
+            const current = visiblePinnedCardIds[i];
+            const next = visiblePinnedCardIds[i + 1];
+            if (getCardSize(current) === 'half' && next && getCardSize(next) === 'half') {
+              groups.push({ type: 'pair', cards: [current, next] });
+              i += 2;
+            } else {
+              groups.push({ type: 'full', cards: [current] });
+              i += 1;
+            }
+          }
+
+          return (
+            <React.Fragment key="analytics-section-detailed">
+              <CommandCenterControlRow
+                isLeadership={isLeadership}
+                analyticsFilters={analyticsFilters}
+                onLocationChange={onLocationChange}
+                onDateRangeChange={onDateRangeChange}
+                accessibleLocations={accessibleLocations}
+                canViewAggregate={canViewAggregate}
+                compact={compact}
+                onCompactChange={onCompactChange}
+                roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+              />
+              <div id="section-analytics" className="scroll-mt-24 space-y-4">
                 {groups.map((group, gi) => {
                   if (group.type === 'pair') {
                     return (
@@ -952,25 +935,19 @@ function DashboardSections({
                     <PinnedAnalyticsCard key={group.cards[0]} cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
                   );
                 })}
-              </React.Fragment>
-            );
-          }
-          // Skip remaining pinned cards (already rendered at first position)
-          return null;
+              </div>
+            </React.Fragment>
+          );
         }
-        
+
         // Regular section: only render if section is enabled
         if (!layout.sections.includes(sectionId)) return null;
-        // Stylist Privacy Contract: drop forbidden sections silently for
-        // stylist-only viewers, regardless of whether they're in the layout.
-        // Dev log fires inside isStylistAllowedSection.
+        // Stylist Privacy Contract: drop forbidden sections silently.
         if (stylistOnly && !isStylistAllowedSection(sectionId)) return null;
 
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
 
-        // Wrap in a div with a stable id so coach nudges (and other deep
-        // links) can scroll to specific sections.
         return (
           <div key={sectionId} id={`section-${sectionId}`} className="scroll-mt-24">
             {component}
