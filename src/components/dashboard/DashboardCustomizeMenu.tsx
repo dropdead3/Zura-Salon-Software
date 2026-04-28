@@ -741,6 +741,15 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                               >
                                 {isAnalyticsExpanded ? '▾' : '▸'} Pinned cards ({cardCount})
                               </button>
+                              {isAnalyticsExpanded && cardCount > 6 && (
+                                <div className="mb-2 mr-1 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+                                  <p className="text-[11px] font-sans text-foreground/80 leading-snug">
+                                    Simple view shows the first <span className="font-medium text-foreground">6</span> pinned cards
+                                    {' '}({cardCount - 6} hidden in Simple). Drag to reorder which appear first,
+                                    or switch to Detailed view to see all {cardCount}.
+                                  </p>
+                                </div>
+                              )}
                               {isAnalyticsExpanded && (
                                 <DndContext
                                   sensors={sensors}
