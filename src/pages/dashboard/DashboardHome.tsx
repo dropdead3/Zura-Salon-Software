@@ -305,7 +305,7 @@ export default function DashboardHome() {
         scopeLabel={operatorBarScopeLabel}
       />
       <motion.div 
-        className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-6 overflow-x-hidden"
+        className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-4 overflow-x-hidden max-w-[1600px] mx-auto"
         initial="hidden"
         animate="visible"
         variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
