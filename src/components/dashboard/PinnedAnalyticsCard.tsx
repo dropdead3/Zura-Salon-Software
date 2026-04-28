@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
-import { VisibilityGate, useElementVisibility } from '@/components/visibility';
+// VisibilityGate intentionally NOT imported here.
+// PinnedAnalyticsCard is only rendered when the user has explicitly pinned a
+// card via Customize. Re-gating it on per-role visibility silently betrays
+// user intent (the contract: a pinned card MUST render). The role-level
+// visibility table still gates the underlying Analytics Hub tabs and the
+// Customize menu's "Available cards" list — those are the correct enforcement
+// points.
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
