@@ -274,6 +274,7 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   service_profitability: 'Service-level profitability ranking by revenue minus product cost.',
   control_tower: 'Real-time color bar alerts: waste, variance, and compliance issues.',
   predictive_inventory: 'AI-forecasted color inventory needs based on booking trends.',
+  level_progress_kpi: 'Stylists by promotion readiness: ready to level up, on pace, at risk, or needs review (level down).',
 };
 
 // Link mapping for compact bento tiles
