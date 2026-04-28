@@ -261,12 +261,12 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
 
 // Tooltip descriptions for compact bento tiles
 const CARD_DESCRIPTIONS: Record<string, string> = {
-  executive_summary: 'Total revenue across all services and products.',
-  daily_brief: 'Revenue generated today across all providers.',
+  executive_summary: 'Period revenue versus the prior comparable period — are you trending up or down?',
+  daily_brief: "Today's operational pulse: appointments, queue, and revenue earned so far.",
   sales_overview: 'Combined service and product revenue for the selected period.',
   top_performers: 'Highest-earning team member by total revenue.',
   operations_stats: 'Current queue activity including waiting and in-service clients.',
-  revenue_breakdown: 'Revenue split between services and retail products.',
+  revenue_breakdown: 'Where revenue is coming from — service vs retail mix.',
   client_funnel: 'Total unique clients (new and returning) in the period.',
   client_health: 'Clients flagged as at-risk, win-back, or new-no-return.',
   operational_health: 'Overall operational status across monitored locations.',
