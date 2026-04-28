@@ -683,7 +683,7 @@ function DashboardSections({
       </VisibilityGate>
     ),
 
-    level_progress: hasStylistRole && (
+    level_progress: (hasStylistRole || isLeadership) && (
       <VisibilityGate elementKey="level_progress" elementName="Level Progress" elementCategory="growth">
         <LevelProgressNudge />
       </VisibilityGate>
