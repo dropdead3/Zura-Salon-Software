@@ -928,7 +928,6 @@ function DashboardSections({
                     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                   }}
                 >
-                  {visiblePinnedCardIds.map(cId => (
                   {renderedPinnedCardIds.map(cId => (
                     <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
                   ))}
