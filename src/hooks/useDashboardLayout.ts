@@ -870,3 +870,24 @@ export function useResetRoleLayout() {
   });
 }
 
+/**
+ * Resolve every `app_role` enum value present in `user_roles` for `orgId`
+ * that maps to the same template key as `targetRole`. Used to mirror role
+ * layout writes across the collapsed group so users with sibling roles
+ * (e.g. super_admin vs admin) see the same authored layout.
+ */
+async function resolveSiblingRoles(orgId: string, targetRole: AppRole): Promise<AppRole[]> {
+  const targetTemplate = templateKeyForRole(targetRole);
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('organization_id', orgId);
+  if (error) throw error;
+  const distinct = Array.from(new Set((data ?? []).map((r) => r.role as AppRole)));
+  const siblings = distinct.filter((r) => templateKeyForRole(r) === targetTemplate);
+  // Always include the target role itself, even if no user currently holds it
+  // (the owner is authoring for that role enum value).
+  if (!siblings.includes(targetRole)) siblings.push(targetRole);
+  return siblings;
+}
+
