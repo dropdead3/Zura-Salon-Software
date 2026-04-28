@@ -7,9 +7,6 @@
  * Used by the "Preview as" dropdown in the Dashboard Customize drawer so that
  * a primary owner can preview the dashboard for any role that actually exists
  * in their org — not a hardcoded subset of the enum.
- *
- * Excludes `super_admin` because it is a platform-level role and must never
- * appear in tenant-scoped UI even if a record exists.
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
