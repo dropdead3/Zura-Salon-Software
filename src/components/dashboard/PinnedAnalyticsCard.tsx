@@ -529,8 +529,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         }
         metricValue = `${openCount} of ${visible.length}`;
         const labelExtras = [
-          closingSoonCount > 0 ? `${closingSoonCount} closing soon` : null,
-          opensSoonCount > 0 ? `${opensSoonCount} opens soon` : null,
+          closingSoonCount > 0 ? `${closingSoonCount} ${closingSoonCount === 1 ? 'closes' : 'close'} soon` : null,
+          opensSoonCount > 0 ? `${opensSoonCount} ${opensSoonCount === 1 ? 'opens' : 'open'} soon` : null,
         ].filter(Boolean);
         metricLabel = labelExtras.length > 0
           ? `Open right now · ${labelExtras.join(' · ')}`
