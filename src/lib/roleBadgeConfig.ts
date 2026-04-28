@@ -56,6 +56,48 @@ const ROLE_BADGE_MAP: Partial<Record<AppRole, RoleBadgeConfig>> = {
     colorClasses: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
     order: 6,
   },
+  stylist_assistant: {
+    label: 'Stylist Assistant',
+    shortLabel: 'Stylist Asst',
+    icon: HandHelping,
+    colorClasses: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    order: 7,
+  },
+  admin_assistant: {
+    label: 'Admin Assistant',
+    shortLabel: 'Admin Asst',
+    icon: HandHelping,
+    colorClasses: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    order: 8,
+  },
+  operations_assistant: {
+    label: 'Operations Assistant',
+    shortLabel: 'Ops Asst',
+    icon: HandHelping,
+    colorClasses: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+    order: 9,
+  },
+  bookkeeper: {
+    label: 'Bookkeeper',
+    shortLabel: 'Books',
+    icon: User,
+    colorClasses: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-800',
+    order: 10,
+  },
+  inventory_manager: {
+    label: 'Inventory Manager',
+    shortLabel: 'Inventory',
+    icon: User,
+    colorClasses: 'bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-400 border-slate-200 dark:border-slate-800',
+    order: 11,
+  },
+  booth_renter: {
+    label: 'Booth Renter',
+    shortLabel: 'Renter',
+    icon: Scissors,
+    colorClasses: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 border-teal-200 dark:border-teal-800',
+    order: 12,
+  },
 };
 
 const FALLBACK_BADGE: RoleBadgeConfig = {
