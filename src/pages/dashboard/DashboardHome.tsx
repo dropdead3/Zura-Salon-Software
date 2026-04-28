@@ -842,14 +842,6 @@ function DashboardSections({
   // Computed once per render — used by both pinned and regular section gates.
   const stylistOnly = isStylistOnlyViewer(roles);
 
-  // Side-by-side pairings: when these two regular sections appear consecutively
-  // in sectionOrder AND both render, they're rendered as a 2-col row on lg+.
-  // This breaks the full-width vertical stack on the owner canvas without
-  // forcing layout assumptions on roles whose templates don't include them.
-  const SECTION_PAIRS: Record<string, string> = {
-    daily_briefing: 'decisions_awaiting',
-    team_pulse: 'upcoming_events',
-  };
 
   return (
     <>
