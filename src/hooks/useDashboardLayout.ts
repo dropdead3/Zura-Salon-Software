@@ -128,6 +128,7 @@ export const PINNABLE_CARD_IDS = [
   'staff_performance',
   'staffing_trends',
   'hiring_capacity',
+  'level_progress_kpi',
   'stylist_workload',
   'client_experience_staff',
   'control_tower',
