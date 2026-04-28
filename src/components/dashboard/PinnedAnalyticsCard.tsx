@@ -399,6 +399,10 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const { data: rebookData } = useRebookingRate(filters.dateFrom, filters.dateTo, filters.locationId);
   const { formatCurrencyWhole, formatCurrencyCompact } = useFormatCurrency();
   const { formatPercent, formatNumber } = useFormatNumber();
+  const {
+    execSummaryMinVolumeUsd: EXEC_SUMMARY_MIN_VOLUME_USD,
+    execSummaryFlatDeltaPct: EXEC_SUMMARY_FLAT_DELTA_PCT,
+  } = useMaterialityThresholds();
   
   // Additional hooks for compact metrics (called unconditionally per React rules)
   const { data: serviceMixData } = useServiceMix(filters.dateFrom, filters.dateTo, locationFilter);
