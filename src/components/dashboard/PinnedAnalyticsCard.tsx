@@ -22,11 +22,11 @@ import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import {
-  DollarSign, TrendingUp, Users, Clock, BarChart3, Heart,
+  DollarSign, TrendingUp, TrendingDown, Users, Clock, BarChart3, Heart,
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
   LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
-  Beaker, Award, FlaskConical, Package, GraduationCap,
+  Beaker, Award, FlaskConical, Package, GraduationCap, Minus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
