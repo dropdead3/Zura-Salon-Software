@@ -181,6 +181,13 @@ const getSections = (): SectionConfig[] => [
     isVisible: (ctx) => ctx.isLeadership,
   },
   {
+    id: ANALYTICS_SECTION_ID,
+    label: 'Analytics',
+    icon: <BarChart3 className="w-4 h-4" />,
+    description: 'Pinned analytics cards — reorder inside this section',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  {
     id: 'active_campaigns',
     label: 'Active Campaigns',
     icon: <Send className="w-4 h-4" />,
