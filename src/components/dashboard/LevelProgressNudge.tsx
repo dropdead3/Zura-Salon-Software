@@ -24,16 +24,16 @@ import { cn } from '@/lib/utils';
 /**
  * LevelProgressNudge — dual-mode dashboard surface.
  *
- * - Leadership (owner/admin/manager): renders an analytic card with 4 KPI buckets
- *   (Ready to Level Up, On Pace, At Risk, Needs Review for Level Down) sourced
- *   from useTeamLevelProgress().counts. Returns null when team total is 0
- *   (visibility-contract canon — silence is valid).
- * - Stylist (non-leadership): renders the personal single-user nudge with
- *   composite score, next-level proximity, and retention warnings.
+ * - Leadership (owner/admin/manager): renders the analytic KPI card.
+ * - Stylist (non-leadership): renders the personal single-user nudge.
+ *
+ * The leadership card is also exported as `LevelProgressKpiCard` so it can be
+ * mounted standalone in the Analytics Hub Staffing tab and in the Command
+ * Center pinned-analytics surface.
  */
 export function LevelProgressNudge() {
   const { isLeadership } = useLeadershipCheck();
-  return isLeadership ? <LeadershipLevelProgressCard /> : <MyLevelProgressNudge />;
+  return isLeadership ? <LevelProgressKpiCard /> : <MyLevelProgressNudge />;
 }
 
 // ─── Leadership: 4-bucket analytic KPI card ──────────────────────────────────
@@ -59,7 +59,12 @@ function BucketTile({ label, count, icon, dotClassName, valueClassName }: Bucket
   );
 }
 
-function LeadershipLevelProgressCard() {
+/**
+ * Leadership-facing 4-bucket level-progress KPI card.
+ * Mountable anywhere — dashboard sections, Analytics Hub Staffing tab,
+ * Command Center pinned grid.
+ */
+export function LevelProgressKpiCard() {
   const { counts, isLoading } = useTeamLevelProgress();
   const { dashPath } = useOrgDashboardPath();
 
@@ -154,7 +159,7 @@ function LeadershipLevelProgressCard() {
   );
 }
 
-// ─── Stylist: personal single-user nudge (preserved from prior behavior) ─────
+// ─── Stylist: personal single-user nudge ─────────────────────────────────────
 
 function MyLevelProgressNudge() {
   const { user } = useAuth();

@@ -5,6 +5,7 @@ import { StaffRevenueLeaderboard } from '@/components/dashboard/analytics/StaffR
 import { StaffOverviewCard, StylistsOverviewCard } from '@/components/dashboard/StylistsOverviewCard';
 import { StylistExperienceCard } from '@/components/dashboard/analytics/StylistExperienceCard';
 import { LevelReadinessCard } from '@/components/dashboard/analytics/LevelReadinessCard';
+import { LevelProgressKpiCard } from '@/components/dashboard/LevelProgressNudge';
 import { DoubleBookingCard } from '@/components/dashboard/analytics/DoubleBookingCard';
 
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
@@ -34,6 +35,8 @@ export function StaffingContent({ workload, isLoading, locationId, dateRange = '
 
       {/* Standalone cards with consistent spacing */}
       <div className="space-y-6">
+        <LevelProgressKpiCard />
+
         <LevelReadinessCard />
 
         <StylistWorkloadCard 

@@ -31,6 +31,7 @@ import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard'
 
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
+import { LevelProgressKpiCard } from '@/components/dashboard/LevelProgressNudge';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
@@ -929,6 +930,14 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         <VisibilityGate elementKey="hiring_capacity">
           <PinnableCard elementKey="hiring_capacity" elementName="Hiring Capacity" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <HiringCapacityCard />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'level_progress_kpi':
+      return (
+        <VisibilityGate elementKey="level_progress_kpi">
+          <PinnableCard elementKey="level_progress_kpi" elementName="Level Progress" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <LevelProgressKpiCard />
           </PinnableCard>
         </VisibilityGate>
       );
