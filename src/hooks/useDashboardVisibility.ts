@@ -86,16 +86,18 @@ export function useVisibilityCategories() {
 
 // Fetch visibility settings for the current effective dashboard context.
 // In God Mode, this resolves roles from the impersonated org owner's profile.
+// Wave 2: tenant-aware — merges per-org overrides on top of NULL global defaults.
 export function useMyDashboardVisibility() {
   const { roles: actualRoles } = useAuth();
   const { isViewingAsUser, viewAsRole } = useViewAs();
-  const { isImpersonating } = useOrganizationContext();
+  const { isImpersonating, effectiveOrganization } = useOrganizationContext();
   const { targetUserId: godModeTargetUserId, isResolvingTarget } = useGodModeTargetUserId();
   const effectiveUserId = useEffectiveUserId();
   const roleSourceUserId = isImpersonating ? godModeTargetUserId : effectiveUserId;
+  const orgId = effectiveOrganization?.id ?? null;
 
   return useQuery({
-    queryKey: ['dashboard-visibility', 'my', roleSourceUserId, viewAsRole, isViewingAsUser, isImpersonating, actualRoles],
+    queryKey: ['dashboard-visibility', 'my', roleSourceUserId, viewAsRole, isViewingAsUser, isImpersonating, actualRoles, orgId],
     queryFn: async () => {
       let rolesToCheck: AppRole[] = actualRoles as AppRole[];
 
@@ -127,22 +129,37 @@ export function useMyDashboardVisibility() {
 
       if (rolesToCheck.length === 0) return {};
 
-      const { data, error } = await supabase
+      // Pull global defaults (org IS NULL) plus this org's overrides.
+      let query = supabase
         .from('dashboard_element_visibility')
         .select('*')
         .in('role', rolesToCheck);
 
+      query = orgId
+        ? query.or(`organization_id.is.null,organization_id.eq.${orgId}`)
+        : query.is('organization_id', null);
+
+      const { data, error } = await query.limit(5000);
+
       if (error) throw error;
 
-      const visibilityMap: Record<string, boolean> = {};
+      // Merge: per-org override wins; otherwise OR across roles for the global default.
+      const orgMap: Record<string, boolean> = {};
+      const globalMap: Record<string, boolean> = {};
 
-      (data as DashboardElementVisibility[]).forEach((item) => {
-        if (visibilityMap[item.element_key] === undefined) {
-          visibilityMap[item.element_key] = item.is_visible;
+      (data as any[]).forEach((item) => {
+        const target = item.organization_id ? orgMap : globalMap;
+        if (target[item.element_key] === undefined) {
+          target[item.element_key] = item.is_visible;
         } else {
-          visibilityMap[item.element_key] = visibilityMap[item.element_key] || item.is_visible;
+          target[item.element_key] = target[item.element_key] || item.is_visible;
         }
       });
+
+      const visibilityMap: Record<string, boolean> = { ...globalMap };
+      for (const [k, v] of Object.entries(orgMap)) {
+        visibilityMap[k] = v;
+      }
 
       return visibilityMap;
     },
