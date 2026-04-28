@@ -22,11 +22,11 @@ import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import {
-  DollarSign, TrendingUp, Users, Clock, BarChart3, Heart,
+  DollarSign, TrendingUp, TrendingDown, Users, Clock, BarChart3, Heart,
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
   LineChart, BarChart2, ChevronRight, CheckCircle2, AlertTriangle,
-  Beaker, Award, FlaskConical, Package, GraduationCap,
+  Beaker, Award, FlaskConical, Package, GraduationCap, Minus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
@@ -261,12 +261,12 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
 
 // Tooltip descriptions for compact bento tiles
 const CARD_DESCRIPTIONS: Record<string, string> = {
-  executive_summary: 'Total revenue across all services and products.',
-  daily_brief: 'Revenue generated today across all providers.',
+  executive_summary: 'Period revenue versus the prior comparable period — are you trending up or down?',
+  daily_brief: "Today's operational pulse: appointments, queue, and revenue earned so far.",
   sales_overview: 'Combined service and product revenue for the selected period.',
   top_performers: 'Highest-earning team member by total revenue.',
   operations_stats: 'Current queue activity including waiting and in-service clients.',
-  revenue_breakdown: 'Revenue split between services and retail products.',
+  revenue_breakdown: 'Where revenue is coming from — service vs retail mix.',
   client_funnel: 'Total unique clients (new and returning) in the period.',
   client_health: 'Clients flagged as at-risk, win-back, or new-no-return.',
   operational_health: 'Overall operational status across monitored locations.',
@@ -349,6 +349,29 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: filters.dateTo,
     locationId: locationFilter,
   });
+
+  // Prior comparable period — same window length, immediately preceding the current range.
+  // Used by Executive Summary to express revenue as a delta vs noise.
+  const priorPeriodRange = useMemo(() => {
+    const from = new Date(filters.dateFrom);
+    const to = new Date(filters.dateTo);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return { dateFrom: filters.dateFrom, dateTo: filters.dateTo };
+    }
+    const ms = to.getTime() - from.getTime();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const priorTo = new Date(from.getTime() - oneDay);
+    const priorFrom = new Date(priorTo.getTime() - ms);
+    return {
+      dateFrom: format(priorFrom, 'yyyy-MM-dd'),
+      dateTo: format(priorTo, 'yyyy-MM-dd'),
+    };
+  }, [filters.dateFrom, filters.dateTo]);
+  const { data: priorSalesData } = useSalesMetrics({
+    dateFrom: priorPeriodRange.dateFrom,
+    dateTo: priorPeriodRange.dateTo,
+    locationId: locationFilter,
+  });
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     filters.dateFrom, 
     filters.dateTo,
@@ -428,21 +451,54 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       Math.abs(amount) >= 1000 ? formatCurrencyCompact(amount) : formatCurrencyWhole(amount);
 
     switch (cardId) {
-      case 'executive_summary':
-        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
-        metricLabel = filters.dateRange === 'today'
-          ? "Today's expected revenue across all services and retail"
-          : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+      case 'executive_summary': {
+        // Differentiated lens: revenue *vs prior comparable period*, not the raw total
+        // (Sales Overview owns the raw $ clock; this surface answers "are we trending?")
+        const current = salesData?.totalRevenue ?? 0;
+        const prior = priorSalesData?.totalRevenue ?? 0;
+        if (prior > 0 && current > 0) {
+          const deltaPct = ((current - prior) / prior) * 100;
+          const sign = deltaPct > 0 ? '+' : '';
+          metricValue = `${sign}${deltaPct.toFixed(1)}%`;
+          const TrendIcon = deltaPct > 0.5 ? TrendingUp : deltaPct < -0.5 ? TrendingDown : Minus;
+          const trendTone = deltaPct > 0.5 ? 'text-emerald-500' : deltaPct < -0.5 ? 'text-rose-500' : 'text-muted-foreground';
+          goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
+          metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+        } else if (current > 0) {
+          // No prior baseline (new org / first period) — show the total but call out the lack of comparison
+          metricValue = formatCurrencySmart(current);
+          metricLabel = 'No prior period to compare against yet';
+        } else {
+          metricValue = '--';
+          metricLabel = `No revenue recorded for ${getPeriodLabel(filters.dateRange)}`;
+        }
         break;
+      }
       case 'sales_overview':
         // Custom render below — leave metricValue/metricLabel empty so we use the dedicated layout.
         metricValue = '';
         metricLabel = '';
         break;
-      case 'daily_brief':
-        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
-        metricLabel = `Revenue earned ${getPeriodLabel(filters.dateRange)}`;
+      case 'daily_brief': {
+        // Differentiated lens: today's *operational* pulse, not just revenue
+        const waiting = queueData?.stats.waitingCount ?? 0;
+        const inService = queueData?.stats.inServiceCount ?? 0;
+        const completed = queueData?.stats.completedCount ?? 0;
+        const totalToday = waiting + inService + completed;
+        const revenueToday = salesData?.totalRevenue ?? 0;
+        if (totalToday > 0 || revenueToday > 0) {
+          metricValue = `${totalToday} appt${totalToday === 1 ? '' : 's'}`;
+          const parts: string[] = [];
+          if (waiting > 0) parts.push(`${waiting} waiting`);
+          if (inService > 0) parts.push(`${inService} in service`);
+          if (revenueToday > 0) parts.push(`${formatCurrencySmart(revenueToday)} earned`);
+          metricLabel = parts.length > 0 ? parts.join(' · ') : `Activity ${getPeriodLabel(filters.dateRange)}`;
+        } else {
+          metricValue = '--';
+          metricLabel = `No activity ${getPeriodLabel(filters.dateRange)} yet`;
+        }
         break;
+      }
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
@@ -461,10 +517,23 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricLabel = `${waiting} waiting · ${inService} in service`;
         break;
       }
-      case 'revenue_breakdown':
-        metricValue = `${formatCurrencySmart(salesData?.serviceRevenue ?? 0)} / ${formatCurrencySmart(salesData?.productRevenue ?? 0)}`;
-        metricLabel = `Service vs. retail revenue for ${getPeriodLabel(filters.dateRange)}`;
+      case 'revenue_breakdown': {
+        // Differentiated lens: revenue *mix*, not the totals (Sales Overview owns totals)
+        const service = salesData?.serviceRevenue ?? 0;
+        const product = salesData?.productRevenue ?? 0;
+        const total = service + product;
+        if (total > 0) {
+          const servicePct = Math.round((service / total) * 100);
+          const retailPct = 100 - servicePct;
+          const dominant = servicePct >= retailPct ? `${servicePct}% Service` : `${retailPct}% Retail`;
+          metricValue = dominant;
+          metricLabel = `Service ${formatCurrencySmart(service)} · Retail ${formatCurrencySmart(product)}`;
+        } else {
+          metricValue = '--';
+          metricLabel = `No revenue mix to report for ${getPeriodLabel(filters.dateRange)}`;
+        }
         break;
+      }
       case 'retail_effectiveness':
         metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
         metricLabel = `Retail attachment rate for ${getPeriodLabel(filters.dateRange)}`;
