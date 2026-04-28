@@ -279,10 +279,20 @@ export default function DashboardHome() {
   const [greeting] = useState(() => pool.greetings[Math.floor(Math.random() * pool.greetings.length)]);
   const [subtitle] = useState(() => pool.subtitles[Math.floor(Math.random() * pool.subtitles.length)]);
 
+  // Owner-only Operator Top-Bar gate.
+  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
+  const operatorBarLocationId = locationId || undefined;
+  const operatorBarScopeLabel = useMemo(() => {
+    if (!operatorBarLocationId) return canViewAggregate ? 'All Locations' : '';
+    return accessibleLocations.find((l) => l.id === operatorBarLocationId)?.name ?? '';
+  }, [operatorBarLocationId, accessibleLocations, canViewAggregate]);
+
+  const shouldHoldFirstPaint = usePostLoginFirstPaint(layoutLoading, locationAccessLoading);
+
   // Post-login handoff guard — see src/hooks/usePostLoginFirstPaint.ts.
   // Collapses the "flash of dashboard" stutter into one continuous canvas
   // from login submit through the dashboard's first real paint.
-  if (usePostLoginFirstPaint(layoutLoading, locationAccessLoading)) {
+  if (shouldHoldFirstPaint) {
     return <AuthFlowLoader />;
   }
 
@@ -299,14 +309,6 @@ export default function DashboardHome() {
       </DashboardLayout>
     );
   }
-
-  // Owner-only Operator Top-Bar gate.
-  const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
-  const operatorBarLocationId = locationId || undefined;
-  const operatorBarScopeLabel = useMemo(() => {
-    if (!operatorBarLocationId) return canViewAggregate ? 'All Locations' : '';
-    return accessibleLocations.find((l) => l.id === operatorBarLocationId)?.name ?? '';
-  }, [operatorBarLocationId, accessibleLocations, canViewAggregate]);
 
   return (
     <DashboardLayout>
