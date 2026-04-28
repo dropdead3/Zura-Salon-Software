@@ -382,6 +382,24 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: priorPeriodRange.dateTo,
     locationId: locationFilter,
   });
+
+  // Trailing-N-day revenue series for the Executive Summary sparkline.
+  // Independent of `filters.dateRange` — a "today" filter would otherwise
+  // collapse to a single point. Only fetched when the card is pinned.
+  const trendRange = useMemo(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - (EXEC_SUMMARY_TREND_DAYS - 1));
+    return {
+      dateFrom: format(start, 'yyyy-MM-dd'),
+      dateTo: format(end, 'yyyy-MM-dd'),
+    };
+  }, []);
+  const { data: salesTrendData } = useSalesTrend(
+    trendRange.dateFrom,
+    trendRange.dateTo,
+    locationFilter,
+  );
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     filters.dateFrom, 
     filters.dateTo,
