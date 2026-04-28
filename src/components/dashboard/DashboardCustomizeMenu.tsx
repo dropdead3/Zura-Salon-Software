@@ -638,6 +638,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleBulkPinAll = async () => {
     setIsTogglingPin(true);
     try {
+      if (!orgId) {
+        throw new Error('No active organization selected — cannot pin cards.');
+      }
       const rows = unpinnedCards.flatMap(card => {
         const visibilityKey = getPinnedVisibilityKey(card.id);
         const visibilityName = visibilityKey === 'operations_quick_stats'
@@ -650,12 +653,13 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           element_category: card.category,
           role,
           is_visible: true,
+          organization_id: orgId,
         }));
       });
       if (rows.length > 0) {
         const { error } = await supabase
           .from('dashboard_element_visibility')
-          .upsert(rows, { onConflict: 'element_key,role' });
+          .upsert(rows, { onConflict: 'element_key,role,organization_id' });
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
         
