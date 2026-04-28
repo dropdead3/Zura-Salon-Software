@@ -682,10 +682,36 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         }));
       });
       if (rows.length > 0) {
-        const { error } = await supabase
+        // Read-then-update/insert (partial unique index can't be used as ON CONFLICT target).
+        const elementKeys = Array.from(new Set(rows.map(r => r.element_key)));
+        const { data: existing, error: selErr } = await supabase
           .from('dashboard_element_visibility')
-          .upsert(rows, { onConflict: 'element_key,role,organization_id' });
-        if (error) throw error;
+          .select('id, element_key, role')
+          .eq('organization_id', orgId)
+          .in('element_key', elementKeys);
+        if (selErr) throw selErr;
+
+        const existingKey = (k: string, r: string) => `${k}::${r}`;
+        const existingMap = new Map(
+          (existing || []).map(e => [existingKey(e.element_key, e.role), e.id])
+        );
+        const toInsert = rows.filter(r => !existingMap.has(existingKey(r.element_key, r.role)));
+        const toUpdate = rows.filter(r => existingMap.has(existingKey(r.element_key, r.role)));
+
+        for (const row of toUpdate) {
+          const id = existingMap.get(existingKey(row.element_key, row.role))!;
+          const { error } = await supabase
+            .from('dashboard_element_visibility')
+            .update({ is_visible: row.is_visible, element_name: row.element_name, element_category: row.element_category })
+            .eq('id', id);
+          if (error) throw error;
+        }
+        if (toInsert.length > 0) {
+          const { error } = await supabase
+            .from('dashboard_element_visibility')
+            .insert(toInsert);
+          if (error) throw error;
+        }
         queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
         
         const newPinnedCards = [...(layout.pinnedCards || []), ...unpinnedCards.map(c => c.id)];
