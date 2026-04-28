@@ -354,9 +354,20 @@ export function useDashboardLayout(overrideUserId?: string) {
   const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
   const { isViewingAs, viewAsRole } = useViewAs();
 
-  // When the owner is previewing as a role, resolve that role's layout
-  // (not the owner's own primary role).
-  const primaryRoleKey = (isViewingAs && viewAsRole) ? viewAsRole : pickPrimaryRoleKey(roles);
+  // Active dashboard role: a *user-side* pivot (not impersonation) for users
+  // who hold multiple roles whose dashboards resolve to different templates.
+  // Read inline (not via useActiveDashboardRole) to avoid circular import.
+  const { activeRole } = useActiveDashboardRoleInline();
+
+  // Resolution priority for the rendered role:
+  //   1. View As (impersonation) — owner authoring or platform debug
+  //   2. User's persisted activeRole (validated against currently held roles)
+  //   3. pickPrimaryRoleKey fallback (canonical priority list)
+  const validatedActiveRole =
+    activeRole && roles.includes(activeRole) ? activeRole : null;
+  const primaryRoleKey = (isViewingAs && viewAsRole)
+    ? viewAsRole
+    : (validatedActiveRole ?? pickPrimaryRoleKey(roles));
 
   // Personal overrides only apply for account owners. All other roles see
   // the owner-authored org-role layout (or the seeded template). This enforces
