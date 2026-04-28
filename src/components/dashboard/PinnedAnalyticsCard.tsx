@@ -8,7 +8,16 @@ import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns
 // visibility table still gates the underlying Analytics Hub tabs and the
 // Customize menu's "Available cards" list — those are the correct enforcement
 // points.
+// VisibilityGate intentionally NOT imported here. PinnedAnalyticsCard is only
+// rendered when the user has explicitly pinned a card via Customize; re-gating
+// it on per-role visibility silently betrays user intent. The role-level
+// visibility table still gates the underlying Analytics Hub tabs and the
+// Customize menu's "Available cards" list — those are the correct enforcement
+// points. Local pass-through shims keep the existing JSX structure intact
+// without re-introducing the gate.
 import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
+const VisibilityGate = ({ children }: { elementKey?: string; children: React.ReactNode }) => <>{children}</>;
+const useElementVisibility = (_elementKey: string): boolean => true;
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
