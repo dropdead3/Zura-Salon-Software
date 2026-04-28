@@ -56,6 +56,14 @@ export const isPinnedCardEntry = (id: string): boolean => id.startsWith('pinned:
 export const getPinnedCardId = (id: string): string => id.replace('pinned:', '');
 export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
 
+/**
+ * Virtual section ID representing the Analytics block in `sectionOrder`.
+ * Pinned analytics cards are rendered as one cohesive section at this
+ * marker's position. The cards' internal order is driven by `pinnedCards`,
+ * not by interleaving `pinned:*` entries in `sectionOrder` (legacy model).
+ */
+export const ANALYTICS_SECTION_ID = 'analytics';
+
 // Single source of truth for visibility keys when card IDs and registered element keys differ.
 const PINNED_CARD_VISIBILITY_KEY_MAP: Record<string, string> = {
   operations_stats: 'operations_quick_stats',
