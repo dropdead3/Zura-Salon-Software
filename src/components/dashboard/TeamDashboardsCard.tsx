@@ -2,21 +2,26 @@ import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LayoutDashboard, Eye, Settings2, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Eye, Pencil, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useCustomizeDrawer } from '@/contexts/CustomizeDrawerContext';
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
-import { useTeamDashboardSummary, type RoleSummary } from '@/hooks/useTeamDashboardSummary';
-import type { Database } from '@/integrations/supabase/types';
-
-type AppRole = Database['public']['Enums']['app_role'];
+import {
+  useTeamDashboardSummary,
+  type RoleGroupSummary,
+} from '@/hooks/useTeamDashboardSummary';
 
 /**
  * Owner-facing governance card. Promotes role-keyed dashboard layout
- * customization out of the buried Customize menu so the underlying
- * Phase 1+2 governance work is discoverable on first paint.
+ * customization out of the buried Customize menu.
+ *
+ * Each tile = one *template-key group* (e.g. "Leadership" covers super_admin
+ * + admin). "Edit" enters View-As for the group's edit role and opens the
+ * Customize drawer in place — owner authors once, mirror writes to every
+ * role in the group.
  *
  * Owner-only: returns null for non-primary-owners (matches RLS posture).
  */
@@ -24,8 +29,15 @@ export function TeamDashboardsCard() {
   const canCustomize = useCanCustomizeDashboardLayouts();
   const { data: summary = [], isLoading } = useTeamDashboardSummary();
   const { setViewAsRole, viewAsRole, isViewingAs } = useViewAs();
+  const { open: openCustomize } = useCustomizeDrawer();
 
   if (!canCustomize) return null;
+
+  const handleEdit = (group: RoleGroupSummary) => {
+    setViewAsRole(group.editRole);
+    // Allow ViewAs context to settle, then open the drawer.
+    setTimeout(() => openCustomize(), 0);
+  };
 
   return (
     <Card className="relative overflow-hidden p-6 rounded-xl bg-card/80 backdrop-blur-xl border-border">
@@ -37,7 +49,7 @@ export function TeamDashboardsCard() {
           <div>
             <h2 className="font-display text-base tracking-wide">Team Dashboards</h2>
             <p className="text-sm text-muted-foreground font-sans mt-0.5">
-              Curate what each role sees when they log in.
+              Curate what each role group sees when they log in.
             </p>
           </div>
         </div>
@@ -49,60 +61,55 @@ export function TeamDashboardsCard() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-32 rounded-xl bg-muted/40 animate-pulse"
-              />
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-36 rounded-xl bg-muted/40 animate-pulse" />
             ))
-          : summary.map((row) => (
-              <RoleTile
-                key={row.role}
-                row={row}
-                isActive={isViewingAs && viewAsRole === row.role}
-                onPreview={() => setViewAsRole(row.role)}
+          : summary.map((group) => (
+              <RoleGroupTile
+                key={group.templateKey}
+                group={group}
+                isActive={isViewingAs && viewAsRole === group.editRole}
+                onPreview={() => setViewAsRole(group.editRole)}
+                onEdit={() => handleEdit(group)}
               />
             ))}
       </div>
 
-      {isViewingAs && (
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
-          <p className="text-sm font-sans text-foreground">
-            You're previewing the dashboard as{' '}
-            <span className="font-medium">{viewAsRole?.replace(/_/g, ' ')}</span>. Open
-            Customize Dashboard to edit this layout.
-          </p>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setViewAsRole(null)}
-            className="font-sans"
-          >
-            Exit preview
-          </Button>
+      {summary.length === 0 && !isLoading && (
+        <div className="rounded-xl border border-dashed border-border/50 p-6 text-center text-sm text-muted-foreground font-sans">
+          No assigned roles in this organization yet. Invite team members to
+          curate their dashboards.
         </div>
       )}
     </Card>
   );
 }
 
-interface RoleTileProps {
-  row: RoleSummary;
+interface RoleGroupTileProps {
+  group: RoleGroupSummary;
   isActive: boolean;
   onPreview: () => void;
+  onEdit: () => void;
 }
 
-function RoleTile({ row, isActive, onPreview }: RoleTileProps) {
+function RoleGroupTile({ group, isActive, onPreview, onEdit }: RoleGroupTileProps) {
   const lastEditedLabel = useMemo(() => {
-    if (!row.lastEditedAt) return null;
+    if (!group.lastEditedAt) return null;
     try {
-      return `Edited ${formatDistanceToNow(new Date(row.lastEditedAt), { addSuffix: true })}`;
+      return `Edited ${formatDistanceToNow(new Date(group.lastEditedAt), { addSuffix: true })}`;
     } catch {
       return null;
     }
-  }, [row.lastEditedAt]);
+  }, [group.lastEditedAt]);
+
+  const memberLabel = useMemo(() => {
+    if (group.roles.length === 1) return null;
+    return group.roles
+      .map((r) => r.replace(/_/g, ' '))
+      .join(', ');
+  }, [group.roles]);
 
   return (
     <div
@@ -114,32 +121,52 @@ function RoleTile({ row, isActive, onPreview }: RoleTileProps) {
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="font-display text-xs tracking-wider uppercase">{row.label}</p>
-        {row.hasOverride ? (
+        <p className="font-display text-xs tracking-wider uppercase">{group.label}</p>
+        {group.hasOverride ? (
           <Badge variant="default" className="text-[10px] font-sans h-5 px-1.5">
             Custom
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-[10px] font-sans h-5 px-1.5 text-muted-foreground">
+          <Badge
+            variant="outline"
+            className="text-[10px] font-sans h-5 px-1.5 text-muted-foreground"
+          >
             Default
           </Badge>
         )}
       </div>
 
+      {memberLabel && (
+        <p className="text-[11px] text-muted-foreground font-sans capitalize line-clamp-1">
+          {memberLabel}
+        </p>
+      )}
+
       <p className="text-[11px] text-muted-foreground font-sans min-h-[14px]">
-        {lastEditedLabel ?? (row.hasOverride ? 'Custom layout' : 'Using template')}
+        {lastEditedLabel ?? (group.hasOverride ? 'Custom layout' : 'Using template')}
       </p>
 
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={onPreview}
-        disabled={isActive}
-        className="mt-auto h-8 rounded-full font-sans"
-      >
-        <Eye className="w-3.5 h-3.5 mr-1.5" />
-        {isActive ? 'Previewing' : 'Preview'}
-      </Button>
+      <div className="mt-auto flex gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onPreview}
+          disabled={isActive}
+          className="flex-1 h-8 rounded-full font-sans"
+        >
+          <Eye className="w-3.5 h-3.5 mr-1.5" />
+          {isActive ? 'Previewing' : 'Preview'}
+        </Button>
+        <Button
+          size="sm"
+          variant="default"
+          onClick={onEdit}
+          className="flex-1 h-8 rounded-full font-sans"
+        >
+          <Pencil className="w-3.5 h-3.5 mr-1.5" />
+          Edit
+        </Button>
+      </div>
     </div>
   );
 }
