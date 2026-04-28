@@ -1011,12 +1011,15 @@ function DashboardSections({
         if (leaderKey) {
           for (let k = index - 1; k >= 0; k--) {
             const priorId = orderedSectionIds[k];
+            // Mirror the pairing loop: skip pinned + null-component siblings
+            // so an intermediate null section (e.g. ai_insights) doesn't break the link.
             if (isPinnedCardEntry(priorId)) continue;
+            const priorComponent = sectionComponents[priorId as keyof typeof sectionComponents];
+            if (!priorComponent) continue;
             if (
               priorId === leaderKey
               && layout.sections.includes(priorId)
               && (!stylistOnly || isStylistAllowedSection(priorId))
-              && sectionComponents[priorId as keyof typeof sectionComponents]
             ) {
               return null;
             }
