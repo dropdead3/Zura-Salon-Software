@@ -31,6 +31,7 @@ import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard'
 
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
+import { LevelProgressKpiCard } from '@/components/dashboard/LevelProgressNudge';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
