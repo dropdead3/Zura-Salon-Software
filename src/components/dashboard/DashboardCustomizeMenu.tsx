@@ -505,24 +505,31 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       // every other operator (would have been a cross-tenant bleed under the
       // current global table; doctrine still applies after Wave 2 scoping).
       if (newIsPinned) {
+        // Wave 2 (tenant isolation): writes are scoped to the operator's
+        // current organization. NULL-org rows are platform-seeded global
+        // defaults and must never be overwritten from the Customize drawer.
+        if (!orgId) {
+          throw new Error('No active organization selected — cannot pin card.');
+        }
         const rows = leadershipRoles.map(role => ({
           element_key: visibilityKey,
           element_name: visibilityName,
           element_category: card?.category || 'Analytics Hub',
           role,
           is_visible: true,
+          organization_id: orgId,
         }));
 
         queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
           if (!old) return old;
           const updated = [...old];
           for (const row of rows) {
-            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
+            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role && (v as any).organization_id === row.organization_id);
             if (idx >= 0) {
               updated[idx] = { ...updated[idx], is_visible: row.is_visible };
             } else {
               updated.push({
-                id: `optimistic-${row.element_key}-${row.role}`,
+                id: `optimistic-${row.element_key}-${row.role}-${row.organization_id}`,
                 element_key: row.element_key,
                 element_name: row.element_name,
                 element_category: row.element_category,
@@ -546,7 +553,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
         const { error } = await supabase
           .from('dashboard_element_visibility')
-          .upsert(rows, { onConflict: 'element_key,role' });
+          .upsert(rows, { onConflict: 'element_key,role,organization_id' });
 
         if (error) throw error;
 
