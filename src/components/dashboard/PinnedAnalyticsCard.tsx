@@ -241,6 +241,7 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   service_profitability: { icon: Scissors, label: 'Service Profitability' },
   control_tower: { icon: FlaskConical, label: 'Control Tower' },
   predictive_inventory: { icon: Package, label: 'Predictive Inventory' },
+  level_progress_kpi: { icon: GraduationCap, label: 'Level Progress' },
 };
 
 // Tooltip descriptions for compact bento tiles
