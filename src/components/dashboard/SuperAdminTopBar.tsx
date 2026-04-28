@@ -214,6 +214,7 @@ export function SuperAdminTopBar({
           {(isPlatformUser || isAdmin) && (
             <>
               <HideNumbersToggle iconOnly />
+              <DashboardRoleSwitcher />
 
               {/* Page Explainers toggle */}
               <Tooltip>
