@@ -522,10 +522,12 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     } catch (err: any) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
       toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
+      setIsTogglingPin(false);
+      return;
     } finally {
       setIsTogglingPin(false);
     }
-    
+
     // Update layout's pinnedCards array. The Analytics section is auto-enabled
     // by sanitizeDashboardLayout when at least one card is pinned.
     if (newIsVisible) {
@@ -536,9 +538,17 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           : [...layout.sections, ANALYTICS_SECTION_ID];
         saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sections: newSections });
       }
+      toast({
+        title: `Pinned to dashboard`,
+        description: `${visibilityName} is now visible in your Analytics section.`,
+      });
     } else {
       const newPinnedCards = (layout.pinnedCards || []).filter(id => id !== cardId);
       saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards });
+      toast({
+        title: `Unpinned from dashboard`,
+        description: `${visibilityName} was removed from your Analytics section.`,
+      });
     }
   };
 
@@ -862,7 +872,11 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                             id={card.id}
                             label={card.label}
                             icon={card.icon}
-                            isPinned={false}
+                            // Reflect optimistic pinned state so the switch
+                            // visibly flips ON before the row migrates to
+                            // the Pinned section above. Prevents the "nothing
+                            // happens when I toggle" perception.
+                            isPinned={isCardPinned(card.id)}
                             onToggle={() => handleTogglePinnedCard(card.id)}
                             isLoading={isTogglingPin}
                             sortable={false}
