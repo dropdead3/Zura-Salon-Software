@@ -22,6 +22,7 @@ export interface LocationsStatusCardProps {
 type LocationState =
   | { kind: 'open'; closeTime: string }
   | { kind: 'closing-soon'; closeTime: string; minutesRemaining: number }
+  | { kind: 'opens-soon'; openTime: string; minutesUntilOpen: number }
   | { kind: 'before-open'; openTime: string }
   | { kind: 'after-close'; nextOpenLabel: string }
   | { kind: 'closed-today'; reason: string }
@@ -30,6 +31,8 @@ type LocationState =
 
 /** Within this many minutes of close, surface the "Closing soon" amber state. */
 const CLOSING_SOON_THRESHOLD_MINUTES = 30;
+/** Within this many minutes of open, surface the "Opens soon" sky state. */
+const OPENS_SOON_THRESHOLD_MINUTES = 30;
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const DAY_LABEL: Record<(typeof DAY_NAMES)[number], string> = {
@@ -101,7 +104,13 @@ function computeLocationState(loc: Location, now: Date): LocationState {
   const closeMin = timeToMinutes(dayHours.close);
   if (openMin == null || closeMin == null) return { kind: 'no-hours' };
 
-  if (nowMin < openMin) return { kind: 'before-open', openTime: dayHours.open };
+  if (nowMin < openMin) {
+    const minutesUntilOpen = openMin - nowMin;
+    if (minutesUntilOpen > 0 && minutesUntilOpen <= OPENS_SOON_THRESHOLD_MINUTES) {
+      return { kind: 'opens-soon', openTime: dayHours.open, minutesUntilOpen };
+    }
+    return { kind: 'before-open', openTime: dayHours.open };
+  }
   if (nowMin >= closeMin) {
     const next = findNextOpenDay(loc.hours_json, loc.holiday_closures, now);
     const label = next ? `${next.dayLabel} ${formatTime(next.openTime)}` : 'tomorrow';
@@ -115,22 +124,24 @@ function computeLocationState(loc: Location, now: Date): LocationState {
 }
 
 function stateRank(s: LocationState): number {
-  // Closing-soon ranks above open so operators see urgent ones first.
+  // Time-sensitive states rank first so operators see urgent ones at the top.
   switch (s.kind) {
     case 'closing-soon':
       return 0;
-    case 'open':
+    case 'opens-soon':
       return 1;
-    case 'before-open':
+    case 'open':
       return 2;
-    case 'after-close':
+    case 'before-open':
       return 3;
-    case 'closed-today':
+    case 'after-close':
       return 4;
-    case 'closed-holiday':
+    case 'closed-today':
       return 5;
-    case 'no-hours':
+    case 'closed-holiday':
       return 6;
+    case 'no-hours':
+      return 7;
   }
 }
 
@@ -149,10 +160,16 @@ function StatusPill({ state }: { state: LocationState }) {
           text: 'text-amber-600 dark:text-amber-400',
           label: `Closing soon · ${formatTime(state.closeTime)}`,
         };
+      case 'opens-soon':
+        return {
+          dot: 'bg-sky-500',
+          text: 'text-sky-600 dark:text-sky-400',
+          label: `Opens soon · ${formatTime(state.openTime)}`,
+        };
       case 'before-open':
         return {
-          dot: 'bg-amber-500',
-          text: 'text-amber-600 dark:text-amber-400',
+          dot: 'bg-muted-foreground/60',
+          text: 'text-muted-foreground',
           label: `Opens ${formatTime(state.openTime)}`,
         };
       case 'after-close':
