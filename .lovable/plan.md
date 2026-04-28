@@ -1,62 +1,63 @@
-## Goal
+## Problem
 
-Convert the `level_progress` dashboard section from a small "go-to-page" nudge into a proper analytic card that reads like every other Command Center analytic — header + four KPI buckets:
+In the Command Center's **Simple View**, every other analytic card collapses into a uniform mini KPI tile (icon + label + one primary metric + tooltip + "View →" link, ~160px tall, defined in `PinnedAnalyticsCard.tsx` lines 386–716).
 
-1. **Ready to Level Up** — stylists who are fully qualified for promotion
-2. **On Pace** — stylists actively progressing (not at risk, not yet ready)
-3. **At Risk** — stylists who have fallen below retention minimums (coaching flag)
-4. **Needs Review for Level Down** — stylists whose retention failures triggered demotion-eligible status
+The **Level Progress** card does not. It renders its full 4-bucket leadership layout because:
 
-The whole card stays linkable to `/admin/graduation-tracker` so leadership can drill in.
+1. `level_progress` is registered as a **dashboard section** in `DashboardHome.tsx` (line 686) that renders `LevelProgressNudge` → `LevelProgressKpiCard` (the full detailed component). Dashboard sections ignore the simple/detailed toggle.
+2. `level_progress_kpi` is also registered as a **pinnable analytic card**, but it has no entry in `CARD_META` / `CARD_DESCRIPTIONS` / `CARD_LINKS` inside `PinnedAnalyticsCard.tsx`, so the compact branch returns `null` (line 389) and only the detailed switch case (line 936) ever renders.
 
-## What changes
+Net effect: the user sees the detailed card via the dashboard-section path, regardless of view mode.
 
-### 1. Rebuild `src/components/dashboard/LevelProgressNudge.tsx` as `LevelProgressCard`
+## Fix
 
-Replace the current single-stylist pill with a leadership-oriented 4-bucket KPI card following the **Card Header Layout canon**:
+### 1. Register `level_progress_kpi` in the compact metadata (PinnedAnalyticsCard.tsx)
 
-- Wrap in `Card` using `tokens.card.wrapper`
-- Header: `tokens.card.iconBox` (GraduationCap icon) + `CardTitle` with `tokens.card.title` ("LEVEL PROGRESS") + `MetricInfoTooltip` inline + total-stylists badge on the right
-- Body: 4 KPI tiles in a responsive grid (`grid-cols-2 md:grid-cols-4`) — each tile shows count + label + colored status dot
-  - Ready to Level Up — emerald
-  - On Pace — primary/blue
-  - At Risk — amber
-  - Needs Review for Level Down — rose/destructive
-- Footer: subtle "View Team Progress →" link to `dashPath('/admin/graduation-tracker')` using `tokens.button.cardFooter` style
-- Counts pulled from `useTeamLevelProgress().counts`:
-  - readyToLevelUp = `counts.ready`
-  - onPace = `counts.inProgress`
-  - atRisk = `counts.atRisk`
-  - needsReview = `counts.belowStandard`
-- Loading: skeleton state matching layout
-- Empty: when `counts.total === 0`, return `null` (visibility-contract canon — silence is valid)
+Add three entries so the compact branch renders it like every other mini tile:
 
-### 2. Keep stylist-side experience intact
+- **`CARD_META`** → `{ icon: GraduationCap, label: 'Level Progress' }`
+- **`CARD_DESCRIPTIONS`** → "Stylists by promotion readiness: ready to level up, on pace, at risk, or needs review."
+- **`CARD_LINKS`** → `{ label: 'Team Progress', href: '/dashboard/admin/team-directory' }` (matches existing "View team progress" deep link)
 
-The current `LevelProgressNudge` was meant for individual stylists ("your" career progression). Since the section is now leadership-oriented and aggregate, I'll:
+### 2. Add a compact metric branch in the `switch (cardId)` block
 
-- Keep a thin stylist-only branch inside the new card: when `hasStylistRole && !isLeadership`, render the existing single-user nudge UI (move the old logic into a small `MyLevelProgressNudge` sub-component).
-- When `isLeadership` (owner/admin/manager), render the new 4-bucket aggregate card.
-- This preserves stylist privacy contract — stylists never see org-wide counts.
+Use `useTeamLevelProgress()` (already powering the detailed card) to surface **one primary lever** in the tile, per UI Canon ("one primary lever, maybe one secondary").
 
-### 3. Wire role-aware rendering in `DashboardHome.tsx`
+Priority logic (highest-signal first):
 
-`level_progress` already renders for `hasStylistRole || isLeadership` (from the prior change). The new component handles both branches internally — no change needed at the section map.
+```
+if counts.belowStandard > 0   → "{n} need review"   (rose dot)
+else if counts.ready > 0      → "{n} ready to level up" (emerald dot)
+else if counts.atRisk > 0     → "{n} at risk"       (amber dot)
+else                          → "{total} on pace"   (primary dot)
+```
 
-### 4. Customize menu copy
+Subtext: `"{total} stylists tracked"`.
 
-Update the description in `DashboardCustomizeMenu.tsx` from "Your career level trajectory" to "Team level readiness — promotions, pace, risk" so leadership understands what they're enabling.
+This honors the doctrine — silence-by-priority, ranked leverage, never a 4-up grid in simple view.
 
-## Files edited
+### 3. Remove the duplicate dashboard-section path
 
-- `src/components/dashboard/LevelProgressNudge.tsx` — rebuilt as dual-mode (stylist nudge + leadership 4-bucket KPI card)
-- `src/components/dashboard/DashboardCustomizeMenu.tsx` — updated description text
+In `DashboardHome.tsx` `sectionMap` (line 686), `level_progress` currently renders `<LevelProgressNudge />`, which always shows the full leadership card to owners. Two options:
 
-## Open question
+- **Option A (recommended):** Keep the section entry but make it render the **stylist-only** view (`MyLevelProgressNudge`). Leadership users get the simple/detailed toggle exclusively via the analytics card. This eliminates duplication and respects the [Stylist Privacy Contract](mem://architecture/stylist-privacy-contract).
+- **Option B:** Remove `level_progress` from `sectionMap` entirely and add it to the [Dashboard Section Retirement Registry](mem://architecture/dashboard-section-retirement-registry). Stylists would then need a different surface for their personal nudge.
 
-**Should this also become pinnable in the Analytics Hub** (wrapped in `PinnableCard` like `LevelReadinessCard`), so owners can pin it to Command Center the same way they pin other analytic cards?
+Going with **Option A** preserves the stylist-facing nudge while making the leadership card a pure analytic surface that obeys the simple/detailed toggle.
 
-- If **yes**: I'll wrap it in `PinnableCard` with `elementKey="level_progress_kpi"` so it shows up in the customize menu's pinnable-cards list too.
-- If **no**: It stays a regular dashboard section toggled via the existing `level_progress` switch.
+### 4. Add a hook to expose `LevelProgressKpiCard` as the analytics-grid child only
 
-I recommend **yes** — it matches your direction that this "belongs in the analytic card section." Confirm and I'll include `PinnableCard` wrapping in the build.
+`LevelProgressNudge.tsx` keeps its current dual-mode export, but the leadership branch is no longer used by `DashboardHome`'s section map — only by the analytics hub and the pinned-card detailed path.
+
+## Files to edit
+
+- `src/components/dashboard/PinnedAnalyticsCard.tsx` — add `CARD_META` / `CARD_DESCRIPTIONS` / `CARD_LINKS` entries and a `case 'level_progress_kpi':` block in the compact switch.
+- `src/pages/dashboard/DashboardHome.tsx` — change `sectionMap.level_progress` to render only the stylist-facing nudge (or split: leadership users see nothing here because the analytic card covers it).
+- `src/components/dashboard/LevelProgressNudge.tsx` — export `MyLevelProgressNudge` so DashboardHome can render the stylist-only branch directly.
+
+## Result
+
+- **Simple view (leadership):** A single mini KPI tile — "3 need review · 19 stylists tracked" — sized identically to `executive_summary`, `top_performers`, etc., with the GraduationCap icon, info tooltip, and a "View Team Progress →" link.
+- **Detailed view (leadership):** The existing 4-bucket layout renders unchanged.
+- **Stylist view:** Personal level-progress nudge continues to render via the dashboard section, unaffected.
+- **No duplication:** the leadership 4-bucket card no longer renders twice in detailed mode.
