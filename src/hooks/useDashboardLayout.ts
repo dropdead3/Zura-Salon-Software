@@ -120,17 +120,39 @@ function dedupe<T>(items: T[] | undefined): T[] | undefined {
   return items ? [...new Set(items)] : undefined;
 }
 
+/**
+ * Section IDs that have been retired from the dashboard.
+ *
+ * Single source of truth — used by:
+ *   1. `sanitizeDashboardLayout` — strips retired IDs on every read & write of layout
+ *   2. `migrateLayout` — same set is iterated in the migration block
+ *   3. `DashboardCustomizeMenu` — defensive UI filter on `orderedUnifiedItems`
+ *
+ * To retire a section: add the ID here, remove it from `getSections()` in
+ * `DashboardCustomizeMenu.tsx`, remove its render branch in `DashboardHome.tsx`.
+ * The customize menu and stored preferences will self-clean automatically.
+ */
+export const RETIRED_SECTION_IDS = new Set<string>([
+  'hub_quicklinks',   // Sidebar handles hub navigation; dashboard card was redundant.
+  'team_dashboards',  // Replaced by role-switcher in Customize.
+  // NOTE: 'command_center' is intentionally NOT here — it has bespoke
+  // migration that converts it into inline pinned cards (see migrateLayout).
+]);
+
+export const isRetiredSectionId = (id: string): boolean => RETIRED_SECTION_IDS.has(id);
+
 function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
   const pinnedCards = [...new Set((layout.pinnedCards || []).filter((id) => VALID_PINNABLE_CARD_IDS.has(id)))];
   const sectionOrderSource = layout.sectionOrder?.length ? layout.sectionOrder : layout.sections || [];
   const sectionOrder = [...new Set(sectionOrderSource.filter((id) => {
+    if (RETIRED_SECTION_IDS.has(id)) return false;
     if (!isPinnedCardEntry(id)) return true;
     return VALID_PINNABLE_CARD_IDS.has(getPinnedCardId(id));
   }))];
 
   return {
     ...layout,
-    sections: [...new Set(layout.sections || [])],
+    sections: [...new Set((layout.sections || []).filter((id) => !RETIRED_SECTION_IDS.has(id)))],
     sectionOrder,
     pinnedCards,
     widgets: [...new Set(layout.widgets || [])],
@@ -177,25 +199,18 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
     };
   }
 
-  // Strip hub_quicklinks from any persisted layouts — section was removed
-  // (sidebar already provides hub navigation; the dashboard card was redundant).
-  if (migrated.sectionOrder?.includes('hub_quicklinks') || migrated.sections?.includes('hub_quicklinks')) {
-    migrated = {
-      ...migrated,
-      sections: (migrated.sections || []).filter((id) => id !== 'hub_quicklinks'),
-      sectionOrder: (migrated.sectionOrder || []).filter((id) => id !== 'hub_quicklinks'),
-    };
-  }
-
-  // Strip team_dashboards if present in any persisted layouts — section was
-  // removed from the Command Center (operators preview role-specific
-  // dashboards via the role-switcher in Customize, not a dedicated card).
-  if (migrated.sectionOrder?.includes('team_dashboards') || migrated.sections?.includes('team_dashboards')) {
-    migrated = {
-      ...migrated,
-      sections: (migrated.sections || []).filter((id) => id !== 'team_dashboards'),
-      sectionOrder: (migrated.sectionOrder || []).filter((id) => id !== 'team_dashboards'),
-    };
+  // Strip any retired section IDs from persisted layouts. Single source of
+  // truth: RETIRED_SECTION_IDS above. `sanitizeDashboardLayout` already filters
+  // these on every read/write — this block stays for explicit, traceable
+  // migration semantics on legacy `sections` / `sectionOrder` arrays.
+  for (const retiredId of RETIRED_SECTION_IDS) {
+    if (migrated.sectionOrder?.includes(retiredId) || migrated.sections?.includes(retiredId)) {
+      migrated = {
+        ...migrated,
+        sections: (migrated.sections || []).filter((id) => id !== retiredId),
+        sectionOrder: (migrated.sectionOrder || []).filter((id) => id !== retiredId),
+      };
+    }
   }
 
   // Ensure ai_insights is added for existing layouts (migration for existing users)
