@@ -862,7 +862,11 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                             id={card.id}
                             label={card.label}
                             icon={card.icon}
-                            isPinned={false}
+                            // Reflect optimistic pinned state so the switch
+                            // visibly flips ON before the row migrates to
+                            // the Pinned section above. Prevents the "nothing
+                            // happens when I toggle" perception.
+                            isPinned={isCardPinned(card.id)}
                             onToggle={() => handleTogglePinnedCard(card.id)}
                             isLoading={isTogglingPin}
                             sortable={false}
