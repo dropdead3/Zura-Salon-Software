@@ -445,8 +445,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [layout.widgetOrder, layout.widgets]);
   
   const unpinnedCards = useMemo(() => {
-    return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
-  }, [visibilityData]);
+    // Layout-first: a card is "available" iff the operator hasn't personally
+    // pinned it, regardless of the global role-visibility row.
+    return PINNABLE_CARDS.filter(card => !isCardPinnedInLayout(card.id));
+  }, [layout.pinnedCards, layout.sectionOrder]);
 
   const groupedUnpinnedCards = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
