@@ -364,6 +364,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const { data: clientHealthData } = useClientHealthSegments();
   const newBookingsQuery = useNewBookings(locationFilter, filters.dateRange);
   const hiringCapacity = useHiringCapacity();
+  const { counts: levelCounts } = useTeamLevelProgress();
   const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
   const { data: weekAheadData, isLoading: weekAheadLoading } = useWeekAheadRevenue(locationFilter);
   const { data: queueData } = useTodaysQueue(locationFilter);
