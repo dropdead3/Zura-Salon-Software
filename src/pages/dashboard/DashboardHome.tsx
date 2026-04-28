@@ -97,6 +97,42 @@ import {
   STYLIST_FORBIDDEN_PINNED_CARDS,
 } from '@/lib/dashboard/stylistPrivacy';
 
+/**
+ * Canonical list of section IDs that have a render branch in `sectionComponents`.
+ * Source of truth for the toggle↔component contract test
+ * (`src/__tests__/dashboard-section-contract.test.ts`).
+ *
+ * NOTE: keep in sync when adding/removing keys in the `sectionComponents`
+ * useMemo below. The `analytics` virtual marker is rendered via a special
+ * branch (not via `sectionComponents`) and is intentionally excluded.
+ */
+export const SECTION_COMPONENT_IDS = [
+  'daily_briefing',
+  'ai_insights',
+  'hub_quicklinks',
+  'decisions_awaiting',
+  'team_pulse',
+  'upcoming_events',
+  'payday_countdown',
+  'payroll_deadline',
+  'quick_actions',
+  'todays_queue',
+  'quick_stats',
+  'todays_prep',
+  'my_quick_stats',
+  'personal_goals',
+  'my_performance',
+  'push_list',
+  'level_progress',
+  'graduation_kpi',
+  'schedule_tasks',
+  'inventory_manager',
+  'active_campaigns',
+  'seo_my_tasks',
+  'client_engine',
+  'widgets',
+] as const;
+
 const ROLE_MESSAGES = {
   leadership: {
     greetings: ["Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"],
