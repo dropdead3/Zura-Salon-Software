@@ -267,6 +267,7 @@ const PINNABLE_CARDS = [
   { id: 'staff_performance', label: 'Staff Performance', category: 'Staffing', icon: <Award className="w-4 h-4" />, size: 'full' as const },
   { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" />, size: 'full' as const },
   { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" />, size: 'half' as const },
+  { id: 'level_progress_kpi', label: 'Level Progress', category: 'Staffing', icon: <GraduationCap className="w-4 h-4" />, size: 'full' as const },
   // Clients (advanced)
   { id: 'client_experience_staff', label: 'Client Experience', category: 'Clients', icon: <HeartPulse className="w-4 h-4" />, size: 'full' as const },
   // Backroom
