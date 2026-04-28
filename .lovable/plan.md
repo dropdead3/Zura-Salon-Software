@@ -1,63 +1,82 @@
+# Analytics as a First-Class Section
+
 ## Problem
 
-In the Command Center's **Simple View**, every other analytic card collapses into a uniform mini KPI tile (icon + label + one primary metric + tooltip + "View →" link, ~160px tall, defined in `PinnedAnalyticsCard.tsx` lines 386–716).
+Today the customize dashboard menu lists every section AND every pinned analytics card in one flat draggable list under "SECTIONS & ANALYTICS." Pinned cards can be dragged in between unrelated sections (e.g. between "Tasks" and "Announcements"), which:
 
-The **Level Progress** card does not. It renders its full 4-bucket leadership layout because:
+- Breaks the conceptual model — analytics is a single cohesive area on the dashboard, not a free-floating cluster of widgets.
+- Makes the customize panel longer than necessary (every pinned card adds a row at the top level).
+- Leaves the door open to layouts where one analytics card lives in section position 2 and another lives in position 7 — confusing both to author and to read.
 
-1. `level_progress` is registered as a **dashboard section** in `DashboardHome.tsx` (line 686) that renders `LevelProgressNudge` → `LevelProgressKpiCard` (the full detailed component). Dashboard sections ignore the simple/detailed toggle.
-2. `level_progress_kpi` is also registered as a **pinnable analytic card**, but it has no entry in `CARD_META` / `CARD_DESCRIPTIONS` / `CARD_LINKS` inside `PinnedAnalyticsCard.tsx`, so the compact branch returns `null` (line 389) and only the detailed switch case (line 936) ever renders.
+The render layer already coalesces all pinned cards into a single grid at the first pinned position, so the flat-list authoring model doesn't even match what the dashboard actually displays.
 
-Net effect: the user sees the detailed card via the dashboard-section path, regardless of view mode.
+## Goal
 
-## Fix
+Analytics becomes its own top-level section called **Analytics** (alongside Daily Briefing, Tasks, Announcements, Widgets, etc.). Inside that section, pinned analytics cards can be reordered. Outside it, sections — including Analytics as one block — reorder against each other.
 
-### 1. Register `level_progress_kpi` in the compact metadata (PinnedAnalyticsCard.tsx)
+## What Changes
 
-Add three entries so the compact branch renders it like every other mini tile:
+### Customize Dashboard panel
 
-- **`CARD_META`** → `{ icon: GraduationCap, label: 'Level Progress' }`
-- **`CARD_DESCRIPTIONS`** → "Stylists by promotion readiness: ready to level up, on pace, at risk, or needs review."
-- **`CARD_LINKS`** → `{ label: 'Team Progress', href: '/dashboard/admin/team-directory' }` (matches existing "View team progress" deep link)
+```text
+SECTIONS
+├── ⋮⋮ Daily Briefing               [toggle]
+├── ⋮⋮ Quick Actions                [toggle]
+├── ⋮⋮ Analytics                    [toggle]   ← new top-level section
+│     └── (expands to show pinned cards, reorderable within)
+│         ├── ⋮⋮ Sales Overview     [pinned ✓]
+│         ├── ⋮⋮ Executive Summary  [pinned ✓]
+│         └── ⋮⋮ Capacity Util.     [pinned ✓]
+├── ⋮⋮ Tasks                        [toggle]
+├── ⋮⋮ Announcements                [toggle]
+└── ⋮⋮ Widgets                      [toggle]
 
-### 2. Add a compact metric branch in the `switch (cardId)` block
-
-Use `useTeamLevelProgress()` (already powering the detailed card) to surface **one primary lever** in the tile, per UI Canon ("one primary lever, maybe one secondary").
-
-Priority logic (highest-signal first):
-
+AVAILABLE ANALYTICS         (unchanged — pin/unpin from full catalog)
 ```
-if counts.belowStandard > 0   → "{n} need review"   (rose dot)
-else if counts.ready > 0      → "{n} ready to level up" (emerald dot)
-else if counts.atRisk > 0     → "{n} at risk"       (amber dot)
-else                          → "{total} on pace"   (primary dot)
-```
 
-Subtext: `"{total} stylists tracked"`.
+- Section header changes from "SECTIONS & ANALYTICS" to **"SECTIONS"**.
+- Subhead copy updates to: *"Drag to reorder sections. Toggle to show/hide. Expand Analytics to reorder pinned cards."*
+- The Analytics section row shows a chevron; expanding reveals an inset, indented sortable list of currently-pinned cards with their own drag handles and unpin toggles.
+- Two independent DnD contexts: one for the outer section list, one for the analytics card list (only active when expanded).
 
-This honors the doctrine — silence-by-priority, ranked leverage, never a 4-up grid in simple view.
+### Dashboard render (DashboardHome.tsx)
 
-### 3. Remove the duplicate dashboard-section path
+- Analytics renders wherever the **Analytics** section sits in `sectionOrder` — not at "first pinned card index" anymore.
+- If Analytics section is toggled off, no pinned cards render and the filter bar is suppressed.
+- Card order within the analytics grid comes from a new `analyticsCardOrder: string[]` field on the layout (separate from `sectionOrder`).
+- Pinning a new card from "Available Analytics" appends it to `analyticsCardOrder` and ensures the Analytics section is enabled + present in `sectionOrder`.
 
-In `DashboardHome.tsx` `sectionMap` (line 686), `level_progress` currently renders `<LevelProgressNudge />`, which always shows the full leadership card to owners. Two options:
+### Data model (layout shape)
 
-- **Option A (recommended):** Keep the section entry but make it render the **stylist-only** view (`MyLevelProgressNudge`). Leadership users get the simple/detailed toggle exclusively via the analytics card. This eliminates duplication and respects the [Stylist Privacy Contract](mem://architecture/stylist-privacy-contract).
-- **Option B:** Remove `level_progress` from `sectionMap` entirely and add it to the [Dashboard Section Retirement Registry](mem://architecture/dashboard-section-retirement-registry). Stylists would then need a different surface for their personal nudge.
+`useDashboardLayout` payload gains:
+- `analyticsCardOrder: string[]` — ordered list of pinned card IDs (replaces interleaving in `sectionOrder`).
+- `sectionOrder` no longer contains `pinned:*` entries; it gets a single `analytics` entry instead.
 
-Going with **Option A** preserves the stylist-facing nudge while making the leadership card a pure analytic surface that obeys the simple/detailed toggle.
+A migration step inside the existing `sanitize/migrate` pipeline:
+- Detects legacy layouts where `sectionOrder` contains `pinned:*` entries.
+- Extracts those entries (preserving order) into `analyticsCardOrder`.
+- Replaces them in `sectionOrder` with a single `analytics` entry at the position of the first pinned card.
+- Idempotent — safe to run on every load.
 
-### 4. Add a hook to expose `LevelProgressKpiCard` as the analytics-grid child only
+## Files to Touch
 
-`LevelProgressNudge.tsx` keeps its current dual-mode export, but the leadership branch is no longer used by `DashboardHome`'s section map — only by the analytics hub and the pinned-card detailed path.
+- `src/components/dashboard/DashboardCustomizeMenu.tsx` — split flat list into outer sections list + nested analytics card list; rename header; add expand/collapse for Analytics.
+- `src/hooks/useDashboardLayout.ts` — add `analyticsCardOrder`, register `analytics` as a known section ID, add migration logic in the existing sanitizer, update save/reset paths.
+- `src/pages/dashboard/DashboardHome.tsx` — render the analytics grid at the position of the `analytics` section ID (instead of first-pinned-index); drive card order from `analyticsCardOrder`.
+- `src/components/dashboard/SortableSectionItem.tsx` (or a new `SortableAnalyticsSectionItem`) — support an expandable variant with a nested sortable list.
 
-## Files to edit
+## Out of Scope
 
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` — add `CARD_META` / `CARD_DESCRIPTIONS` / `CARD_LINKS` entries and a `case 'level_progress_kpi':` block in the compact switch.
-- `src/pages/dashboard/DashboardHome.tsx` — change `sectionMap.level_progress` to render only the stylist-facing nudge (or split: leadership users see nothing here because the analytic card covers it).
-- `src/components/dashboard/LevelProgressNudge.tsx` — export `MyLevelProgressNudge` so DashboardHome can render the stylist-only branch directly.
+- No changes to which cards exist in the pinnable catalog.
+- No changes to the per-role visibility / pinning DB writes.
+- No changes to Widgets section behavior.
+- No changes to compact vs detailed bento grid layout.
 
-## Result
+## Acceptance
 
-- **Simple view (leadership):** A single mini KPI tile — "3 need review · 19 stylists tracked" — sized identically to `executive_summary`, `top_performers`, etc., with the GraduationCap icon, info tooltip, and a "View Team Progress →" link.
-- **Detailed view (leadership):** The existing 4-bucket layout renders unchanged.
-- **Stylist view:** Personal level-progress nudge continues to render via the dashboard section, unaffected.
-- **No duplication:** the leadership 4-bucket card no longer renders twice in detailed mode.
+1. In Customize Dashboard, the top list shows sections only. "Analytics" appears as one entry.
+2. Dragging "Analytics" up or down moves the entire analytics block on the dashboard.
+3. Expanding "Analytics" reveals pinned cards; dragging within reorders them on the dashboard grid.
+4. Toggling "Analytics" off hides the filter bar and all pinned cards. Toggling on restores them.
+5. Existing users with legacy interleaved layouts see their analytics cluster preserved at the first pinned card's prior position, with their previous card order intact.
+6. Pinning a new card from "Available Analytics" appends it to the Analytics section and re-enables the section if it was off.

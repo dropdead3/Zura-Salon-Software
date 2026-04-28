@@ -78,6 +78,7 @@ import {
   getPinnedVisibilityKey,
   toPinnedEntry,
   isRetiredSectionId,
+  ANALYTICS_SECTION_ID,
 } from '@/hooks/useDashboardLayout';
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
 import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
@@ -177,6 +178,13 @@ const getSections = (): SectionConfig[] => [
     label: 'Team Graduation KPI',
     icon: <GraduationCap className="w-4 h-4" />,
     description: 'Stylists at risk and on-track',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  {
+    id: ANALYTICS_SECTION_ID,
+    label: 'Analytics',
+    icon: <BarChart3 className="w-4 h-4" />,
+    description: 'Pinned analytics cards — reorder inside this section',
     isVisible: (ctx) => ctx.isLeadership,
   },
   {
@@ -394,54 +402,47 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     );
   };
 
-  const orderedUnifiedItems = useMemo(() => {
+  // Outer list: sections only. Analytics is a single section entry — its
+  // pinned cards reorder inside it, never against unrelated sections.
+  const orderedSectionItems = useMemo(() => {
     const savedOrder = layout.sectionOrder || [];
-    const sectionIds = SECTIONS.map(s => s.id);
-    const pinnedCardIds = PINNABLE_CARDS
-      .map(c => c.id)
-      .filter(id => effectivePinnedCardIds.includes(id) || isCardPinned(id));
-    const pinnedEntries = pinnedCardIds.map(id => toPinnedEntry(id));
-    
+    const sectionIds = new Set(SECTIONS.map(s => s.id));
     const result: string[] = [];
-    
+
     for (const id of savedOrder) {
       if (result.includes(id)) continue;
-      // Defensive: never surface retired section IDs in the customize UI,
-      // even if they linger in stored preferences for a render cycle before
-      // sanitize/migration strips them.
       if (isRetiredSectionId(id)) continue;
-      if (sectionIds.includes(id)) {
-        result.push(id);
-      } else if (isPinnedCardEntry(id)) {
-        const cardId = getPinnedCardId(id);
-        if (isCardPinned(cardId)) {
-          result.push(id);
-        }
-      }
+      // Defensive: skip any legacy `pinned:*` interleaved in saved order.
+      if (isPinnedCardEntry(id)) continue;
+      if (sectionIds.has(id)) result.push(id);
     }
-    
-    for (const sectionId of sectionIds) {
-      if (isRetiredSectionId(sectionId)) continue;
-      if (!result.includes(sectionId)) {
-        result.push(sectionId);
-      }
+
+    // Append any sections not yet present in saved order.
+    for (const s of SECTIONS) {
+      if (isRetiredSectionId(s.id)) continue;
+      if (!result.includes(s.id)) result.push(s.id);
     }
-    
-    for (const entry of pinnedEntries) {
-      if (!result.includes(entry)) {
-        result.push(entry);
-      }
-    }
-    
+
     return result;
-  }, [layout.sectionOrder, SECTIONS, visibilityData, effectivePinnedCardIds]);
+  }, [layout.sectionOrder, SECTIONS]);
+
+  // Inner list: pinned analytics cards in their saved display order.
+  const orderedPinnedCardIds = useMemo(() => {
+    const fromLayout = (layout.pinnedCards || []).filter(id => isCardPinned(id));
+    const seen = new Set(fromLayout);
+    // Append any cards pinned in the visibility DB but missing from the array.
+    const extras = PINNABLE_CARDS
+      .map(c => c.id)
+      .filter(id => isCardPinned(id) && !seen.has(id));
+    return [...fromLayout, ...extras];
+  }, [layout.pinnedCards, visibilityData, effectivePinnedCardIds]);
+
+  const [isAnalyticsExpanded, setIsAnalyticsExpanded] = useState(true);
 
   const orderedWidgets = useMemo(() => {
     const savedWidgetOrder = layout.widgetOrder || [];
     const allIds = WIDGETS.map(w => w.id);
-    // Start with saved order, keeping only valid IDs
     const ordered = savedWidgetOrder.filter((id: string) => allIds.includes(id));
-    // Add any missing widget IDs
     const missing = allIds.filter(id => !ordered.includes(id));
     return [...ordered, ...missing];
   }, [layout.widgetOrder, layout.widgets]);
@@ -450,7 +451,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
   }, [visibilityData]);
 
-  // Group unpinned cards by category
   const groupedUnpinnedCards = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = unpinnedCards.filter(card => 
@@ -465,14 +465,13 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [unpinnedCards, searchQuery]);
   
   const { hasPermission } = useAuth();
-  // Quick Access Hubs section retired — sidebar handles hub navigation.
 
   const handleToggleSection = (sectionId: string) => {
     const sections = layout.sections.includes(sectionId)
       ? layout.sections.filter(s => s !== sectionId)
       : [...layout.sections, sectionId];
     
-    saveLayout.mutate({ ...layout, sections, sectionOrder: orderedUnifiedItems });
+    saveLayout.mutate({ ...layout, sections, sectionOrder: orderedSectionItems });
   };
 
   const handleToggleWidget = (widgetId: string) => {
@@ -502,7 +501,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         is_visible: newIsVisible,
       }));
 
-      // Optimistically update the visibility cache so UI reflects immediately
       queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
         if (!old) return old;
         const updated = [...old];
@@ -526,7 +524,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         return updated;
       });
 
-      // Also optimistically update the per-role visibility map
       queryClient.setQueriesData<Record<string, boolean>>(
         { queryKey: ['dashboard-visibility', 'my'] },
         (old) => {
@@ -541,50 +538,55 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
       if (error) throw error;
 
-      // Refetch to get authoritative server data
       await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
     } catch (err: any) {
-      // Revert optimistic update on error
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
       toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
     } finally {
       setIsTogglingPin(false);
     }
     
+    // Update layout's pinnedCards array. The Analytics section is auto-enabled
+    // by sanitizeDashboardLayout when at least one card is pinned.
     if (newIsVisible) {
-      const pinnedEntry = toPinnedEntry(cardId);
-      if (!orderedUnifiedItems.includes(pinnedEntry)) {
-        const newSectionOrder = [...orderedUnifiedItems, pinnedEntry];
+      if (!(layout.pinnedCards || []).includes(cardId)) {
         const newPinnedCards = [...(layout.pinnedCards || []), cardId];
-        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+        const newSections = layout.sections.includes(ANALYTICS_SECTION_ID)
+          ? layout.sections
+          : [...layout.sections, ANALYTICS_SECTION_ID];
+        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sections: newSections });
       }
     } else {
-      const pinnedEntry = toPinnedEntry(cardId);
-      const newSectionOrder = orderedUnifiedItems.filter(id => id !== pinnedEntry);
       const newPinnedCards = (layout.pinnedCards || []).filter(id => id !== cardId);
-      saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+      saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards });
     }
   };
 
-  const handleUnifiedDragEnd = (event: DragEndEvent) => {
+  const handleSectionDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     
-    const oldIndex = orderedUnifiedItems.indexOf(active.id as string);
-    const newIndex = orderedUnifiedItems.indexOf(over.id as string);
-    const newOrder = arrayMove(orderedUnifiedItems, oldIndex, newIndex);
-    
-    const enabledSections = newOrder.filter(id => !isPinnedCardEntry(id) && layout.sections.includes(id));
-    const pinnedCardsOrder = newOrder
-      .filter(id => isPinnedCardEntry(id))
-      .map(id => getPinnedCardId(id));
+    const oldIndex = orderedSectionItems.indexOf(active.id as string);
+    const newIndex = orderedSectionItems.indexOf(over.id as string);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const newOrder = arrayMove(orderedSectionItems, oldIndex, newIndex);
     
     saveLayout.mutate({ 
       ...layout, 
-      sections: enabledSections, 
       sectionOrder: newOrder,
-      pinnedCards: pinnedCardsOrder,
     });
+  };
+
+  const handleAnalyticsCardDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = orderedPinnedCardIds.indexOf(active.id as string);
+    const newIndex = orderedPinnedCardIds.indexOf(over.id as string);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const newOrder = arrayMove(orderedPinnedCardIds, oldIndex, newIndex);
+    
+    saveLayout.mutate({ ...layout, pinnedCards: newOrder });
   };
 
   const handleWidgetDragEnd = (event: DragEndEvent) => {
@@ -627,10 +629,11 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
         
-        const newPinnedEntries = unpinnedCards.map(c => toPinnedEntry(c.id));
-        const newSectionOrder = [...orderedUnifiedItems, ...newPinnedEntries];
         const newPinnedCards = [...(layout.pinnedCards || []), ...unpinnedCards.map(c => c.id)];
-        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sectionOrder: newSectionOrder });
+        const newSections = layout.sections.includes(ANALYTICS_SECTION_ID)
+          ? layout.sections
+          : [...layout.sections, ANALYTICS_SECTION_ID];
+        saveLayout.mutate({ ...layout, pinnedCards: newPinnedCards, sections: newSections });
       }
     } catch (err: any) {
       toast({ title: 'Failed to pin all cards', description: err?.message, variant: 'destructive' });
@@ -638,6 +641,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       setIsTogglingPin(false);
     }
   };
+
 
   if (isLoading) return null;
   if (!canCustomize) return null;
@@ -714,41 +718,89 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS & ANALYTICS</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS</h3>
             <p className="text-xs text-muted-foreground mb-4">
-              Drag to reorder. Toggle to show/hide sections. Pinned analytics can be moved among sections.
+              Drag to reorder sections. Toggle to show/hide. Expand Analytics to reorder its pinned cards.
             </p>
             <DndContext 
               sensors={sensors} 
               collisionDetection={closestCenter} 
-              onDragEnd={handleUnifiedDragEnd}
+              onDragEnd={handleSectionDragEnd}
             >
               <SortableContext 
-                items={orderedUnifiedItems} 
+                items={orderedSectionItems} 
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-1">
-                  {orderedUnifiedItems.map(itemId => {
-                    if (isPinnedCardEntry(itemId)) {
-                      const cardId = getPinnedCardId(itemId);
-                      const card = PINNABLE_CARDS.find(c => c.id === cardId);
-                      if (!card) return null;
+                  {orderedSectionItems.map(sectionId => {
+                    const section = SECTIONS.find(s => s.id === sectionId);
+                    if (!section) return null;
+
+                    // Analytics section: render as expandable, with nested
+                    // sortable list of pinned cards inside.
+                    if (sectionId === ANALYTICS_SECTION_ID) {
+                      const isEnabled = layout.sections.includes(ANALYTICS_SECTION_ID);
+                      const cardCount = orderedPinnedCardIds.length;
                       return (
-                        <SortablePinnedCardItem
-                          key={itemId}
-                          id={itemId}
-                          cardId={cardId}
-                          label={card.label}
-                          icon={card.icon}
-                          isPinned={true}
-                          onToggle={() => handleTogglePinnedCard(cardId)}
-                          isLoading={isTogglingPin}
-                        />
+                        <div key={sectionId} className="space-y-1">
+                          <SortableSectionItem
+                            id={section.id}
+                            label={section.label}
+                            description={
+                              cardCount > 0
+                                ? `${cardCount} pinned ${cardCount === 1 ? 'card' : 'cards'}`
+                                : section.description
+                            }
+                            icon={section.icon}
+                            isEnabled={isEnabled}
+                            onToggle={() => handleToggleSection(section.id)}
+                          />
+                          {isEnabled && cardCount > 0 && (
+                            <div className="ml-6 pl-3 border-l border-border/40">
+                              <button
+                                type="button"
+                                onClick={() => setIsAnalyticsExpanded(v => !v)}
+                                className="text-[10px] font-display tracking-wider uppercase text-muted-foreground/70 hover:text-muted-foreground py-1.5 px-1 transition-colors"
+                              >
+                                {isAnalyticsExpanded ? '▾' : '▸'} Pinned cards ({cardCount})
+                              </button>
+                              {isAnalyticsExpanded && (
+                                <DndContext
+                                  sensors={sensors}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={handleAnalyticsCardDragEnd}
+                                >
+                                  <SortableContext
+                                    items={orderedPinnedCardIds}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    <div className="space-y-1">
+                                      {orderedPinnedCardIds.map(cardId => {
+                                        const card = PINNABLE_CARDS.find(c => c.id === cardId);
+                                        if (!card) return null;
+                                        return (
+                                          <SortablePinnedCardItem
+                                            key={cardId}
+                                            id={cardId}
+                                            cardId={cardId}
+                                            label={card.label}
+                                            icon={card.icon}
+                                            isPinned={true}
+                                            onToggle={() => handleTogglePinnedCard(cardId)}
+                                            isLoading={isTogglingPin}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     }
-                    
-                    const section = SECTIONS.find(s => s.id === itemId);
-                    if (!section) return null;
+
                     return (
                       <SortableSectionItem
                         key={section.id}
