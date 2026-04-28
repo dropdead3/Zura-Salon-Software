@@ -61,6 +61,11 @@ import {
   Award,
   FlaskConical,
   PackageSearch,
+  GraduationCap,
+  CalendarClock,
+  Wallet2,
+  Send,
+  Sunrise,
 } from 'lucide-react';
 import { 
   useDashboardLayout, 
@@ -125,6 +130,12 @@ interface SectionConfig {
 }
 
 const getSections = (): SectionConfig[] => [
+  {
+    id: 'daily_briefing',
+    label: 'Daily Briefing',
+    icon: <Sunrise className="w-4 h-4" />,
+    description: 'Your morning operating loop',
+  },
   { 
     id: 'quick_actions', 
     label: 'Quick Actions', 
@@ -152,6 +163,40 @@ const getSections = (): SectionConfig[] => [
     icon: <ClipboardCheck className="w-4 h-4" />, 
     description: 'Pre-visit client prep',
     isVisible: (ctx) => ctx.hasStylistRole,
+  },
+  {
+    id: 'level_progress',
+    label: 'Level Progress',
+    icon: <GraduationCap className="w-4 h-4" />,
+    description: 'Your career level trajectory',
+    isVisible: (ctx) => ctx.hasStylistRole,
+  },
+  {
+    id: 'graduation_kpi',
+    label: 'Team Graduation KPI',
+    icon: <GraduationCap className="w-4 h-4" />,
+    description: 'Stylists at risk and on-track',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  {
+    id: 'active_campaigns',
+    label: 'Active Campaigns',
+    icon: <Send className="w-4 h-4" />,
+    description: 'Live marketing campaigns',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  {
+    id: 'payroll_deadline',
+    label: 'Payroll Deadline',
+    icon: <CalendarClock className="w-4 h-4" />,
+    description: 'Upcoming payroll cutoff',
+    isVisible: (ctx) => ctx.isLeadership,
+  },
+  {
+    id: 'payday_countdown',
+    label: 'Payday Countdown',
+    icon: <Wallet2 className="w-4 h-4" />,
+    description: 'Days until next payday',
   },
   { 
     id: 'schedule_tasks', 
