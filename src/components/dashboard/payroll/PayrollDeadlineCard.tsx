@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { tokens } from '@/lib/design-tokens';
@@ -9,11 +8,12 @@ import { usePayrollRunForPeriod } from '@/hooks/usePayrollRunForPeriod';
 import { useHasEffectivePermission } from '@/hooks/useEffectivePermissions';
 import { differenceInDays, addDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { AlertTriangle, CheckCircle2, ChevronRight, DollarSign, Settings, X, Zap } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, ChevronRight, DollarSign, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { ConfigurationStubCard } from '@/components/dashboard/ConfigurationStubCard';
 
 
 type UrgencyLevel = 'calm' | 'urgent' | 'critical';
@@ -46,62 +46,32 @@ export function PayrollDeadlineCard() {
   const { dashPath } = useOrgDashboardPath();
   const { formatDate } = useFormatDate();
   const { t } = useTranslation('dashboard');
-  const { t: tc } = useTranslation('common');
   const hasPayrollPermission = useHasEffectivePermission('manage_payroll');
   const { settings, currentPeriod, isLoading } = usePaySchedule();
   const { hasRun, isLoading: isCheckingRun } = usePayrollRunForPeriod(
     currentPeriod?.periodStart ?? null,
     currentPeriod?.periodEnd ?? null
   );
-  const [configDismissed, setConfigDismissed] = useState(
-    () => localStorage.getItem('payroll-deadline-config-dismissed') === 'true'
-  );
 
   // Only visible to users with manage_payroll permission
   if (!hasPayrollPermission) return null;
   if (isLoading || isCheckingRun) return null;
 
-  // No pay schedule configured
+  // No pay schedule configured — surface the configuration stub instead of
+  // silently disappearing. Operator opted into this section via Customize, so
+  // they need a path to fix the gap. Dismissal persists cross-device through
+  // `useDismissedStubs` (user_preferences.dashboard_layout.dismissedStubs[]).
   if (!settings) {
-    if (configDismissed) return null;
-
-    const handleDismiss = () => {
-      setConfigDismissed(true);
-      localStorage.setItem('payroll-deadline-config-dismissed', 'true');
-    };
-
     return (
-      <VisibilityGate
-        elementKey="payroll_deadline_countdown"
-        elementName="Payroll Deadline Countdown"
-        elementCategory="Payroll"
-      >
-        <Card className="border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/5">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
-                <Settings className="h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground">{t('payroll.pay_schedule_not_configured')}</p>
-                <p className="text-xs">{t('payroll.setup_pay_schedule_desc')}</p>
-              </div>
-              <Button variant="ghost" size={tokens.button.inline} asChild>
-                <Link to={dashPath('/admin/payroll?tab=settings')}>
-                  {tc('configure')} <ChevronRight className="h-3 w-3 ml-1" />
-                </Link>
-              </Button>
-              <button
-                onClick={handleDismiss}
-                className="p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-                aria-label="Dismiss"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-      </VisibilityGate>
+      <ConfigurationStubCard
+        sectionId="payroll_deadline"
+        title={t('payroll.pay_schedule_not_configured')}
+        reason={t('payroll.setup_pay_schedule_desc')}
+        ctaLabel={t('common:configure', { defaultValue: 'Configure' })}
+        ctaTo={dashPath('/admin/payroll?tab=settings')}
+        icon={CalendarClock}
+        dismissible
+      />
     );
   }
 

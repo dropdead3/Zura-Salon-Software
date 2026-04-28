@@ -113,6 +113,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
+import { usePaySchedule } from '@/hooks/usePaySchedule';
+import { useDismissedStubs } from '@/hooks/dashboard/useDismissedStubs';
 
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -357,6 +359,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
+  const { settings: paySchedule } = usePaySchedule();
+  const { restoreAll: restoreDismissedStubs, dismissed: dismissedStubs } = useDismissedStubs();
   const registerElement = useRegisterVisibilityElement();
   const [isTogglingPin, setIsTogglingPin] = useState(false);
   const queryClient = useQueryClient();
@@ -764,13 +768,15 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                       );
                     }
 
-                    // Payday Countdown: surface why nothing renders when org
-                    // lacks the `payroll_enabled` feature flag. Toggle remains
-                    // togglable; this is informational, not a hard gate.
-                    const description =
-                      section.id === 'payday_countdown' && !isPayrollEntitled
-                        ? 'Enable Payroll in Settings to surface this card.'
-                        : section.description;
+                    // Surface "Needs setup" hints for sections whose live card
+                    // would render the ConfigurationStubCard. Operator sees the
+                    // gap inside the Customize menu before opening the dashboard.
+                    let description = section.description;
+                    if (section.id === 'payday_countdown' && !isPayrollEntitled) {
+                      description = 'Needs setup — enable Payroll to surface this card.';
+                    } else if (section.id === 'payroll_deadline' && !paySchedule) {
+                      description = 'Needs setup — configure your pay schedule to surface this card.';
+                    }
 
                     return (
                       <SortableSectionItem
@@ -908,6 +914,17 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+
+            {dismissedStubs.size > 0 && (
+              <Button
+                variant="ghost"
+                className="w-full gap-2 text-muted-foreground"
+                onClick={() => restoreDismissedStubs()}
+              >
+                <RotateCcw className="w-4 h-4" />
+                Restore dismissed prompts ({dismissedStubs.size})
+              </Button>
+            )}
 
             {canManageVisibility && (
               <Button 
