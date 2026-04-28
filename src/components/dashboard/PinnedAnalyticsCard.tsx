@@ -84,6 +84,8 @@ import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
 import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
+import { useMaterialityThresholds } from '@/hooks/useMaterialityThresholds';
+import { CARD_DESCRIPTIONS } from './analytics/cardDescriptions';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
@@ -272,11 +274,9 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   level_progress_kpi: { icon: GraduationCap, label: 'Level Progress' },
 };
 
-// Tooltip descriptions for compact bento tiles — extracted to a sibling
-// registry so the Customize menu hover preview can layer them under the
-// canonical CARD_QUESTIONS doctrine line. See src/__tests__/card-questions-uniqueness.test.ts
-// for coverage enforcement.
-import { CARD_DESCRIPTIONS } from './analytics/cardDescriptions';
+// CARD_DESCRIPTIONS is imported at the top of the file from
+// ./analytics/cardDescriptions — the sibling of CARD_QUESTIONS.
+
 
 // Link mapping for compact bento tiles
 const CARD_LINKS: Record<string, { label: string; href: string }> = {
