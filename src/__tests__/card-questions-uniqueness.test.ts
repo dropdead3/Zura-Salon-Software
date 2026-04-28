@@ -7,6 +7,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { CARD_QUESTIONS } from '@/components/dashboard/analytics/cardQuestions';
+import { CARD_DESCRIPTIONS } from '@/components/dashboard/analytics/cardDescriptions';
+import { PINNABLE_CARDS } from '@/components/dashboard/DashboardCustomizeMenu';
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -33,5 +35,19 @@ describe('Card Questions registry', () => {
       expect(question.length, `${cardId} has empty question`).toBeGreaterThan(0);
       expect(question.trim().endsWith('?'), `${cardId} question must end with "?"`).toBe(true);
     }
+  });
+
+  it('every PINNABLE_CARDS entry has a CARD_QUESTIONS entry', () => {
+    const missing = PINNABLE_CARDS
+      .map(c => c.id)
+      .filter(id => !(id in CARD_QUESTIONS));
+    expect(missing, `Missing CARD_QUESTIONS for: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('every PINNABLE_CARDS entry has a CARD_DESCRIPTIONS entry', () => {
+    const missing = PINNABLE_CARDS
+      .map(c => c.id)
+      .filter(id => !(id in CARD_DESCRIPTIONS));
+    expect(missing, `Missing CARD_DESCRIPTIONS for: ${missing.join(', ')}`).toEqual([]);
   });
 });
