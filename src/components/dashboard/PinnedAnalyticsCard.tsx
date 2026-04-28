@@ -66,7 +66,9 @@ import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/Servi
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
-import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
+import { useSalesMetrics, useSalesByStylist, useServiceMix, useSalesTrend } from '@/hooks/useSalesData';
+import { Sparkline } from '@/components/ui/Sparkline';
+import { CARD_QUESTIONS } from '@/components/dashboard/analytics/cardQuestions';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
