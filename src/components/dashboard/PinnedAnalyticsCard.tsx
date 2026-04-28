@@ -349,6 +349,29 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: filters.dateTo,
     locationId: locationFilter,
   });
+
+  // Prior comparable period — same window length, immediately preceding the current range.
+  // Used by Executive Summary to express revenue as a delta vs noise.
+  const priorPeriodRange = useMemo(() => {
+    const from = new Date(filters.dateFrom);
+    const to = new Date(filters.dateTo);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return { dateFrom: filters.dateFrom, dateTo: filters.dateTo };
+    }
+    const ms = to.getTime() - from.getTime();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const priorTo = new Date(from.getTime() - oneDay);
+    const priorFrom = new Date(priorTo.getTime() - ms);
+    return {
+      dateFrom: format(priorFrom, 'yyyy-MM-dd'),
+      dateTo: format(priorTo, 'yyyy-MM-dd'),
+    };
+  }, [filters.dateFrom, filters.dateTo]);
+  const { data: priorSalesData } = useSalesMetrics({
+    dateFrom: priorPeriodRange.dateFrom,
+    dateTo: priorPeriodRange.dateTo,
+    locationId: locationFilter,
+  });
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     filters.dateFrom, 
     filters.dateTo,
