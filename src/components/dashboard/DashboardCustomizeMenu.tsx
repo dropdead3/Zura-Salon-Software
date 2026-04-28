@@ -482,62 +482,73 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   };
   
   const handleTogglePinnedCard = async (cardId: string) => {
-    const isPinned = isCardPinned(cardId);
-    const newIsVisible = !isPinned;
+    // Layout is the source of truth for the toggle direction. The
+    // dashboard_element_visibility row is a role-default eligibility flag,
+    // not a per-operator pinned state — checking it here previously caused
+    // a two-click bug for "Available" cards whose role default was already
+    // true. See plan in .lovable/plan.md.
+    const isPinned = isCardPinnedInLayout(cardId);
+    const newIsPinned = !isPinned;
     const card = PINNABLE_CARDS.find(c => c.id === cardId);
     const visibilityKey = getPinnedVisibilityKey(cardId);
     const visibilityName = visibilityKey === 'operations_quick_stats'
       ? 'Operations Quick Stats'
       : card?.label || cardId;
-    
+
     setIsTogglingPin(true);
     try {
-      const rows = leadershipRoles.map(role => ({
-        element_key: visibilityKey,
-        element_name: visibilityName,
-        element_category: card?.category || 'Analytics Hub',
-        role,
-        is_visible: newIsVisible,
-      }));
+      // Only flip role-default visibility ON when pinning. Unpinning is a
+      // personal layout action and must NOT downgrade role eligibility for
+      // every other operator (would have been a cross-tenant bleed under the
+      // current global table; doctrine still applies after Wave 2 scoping).
+      if (newIsPinned) {
+        const rows = leadershipRoles.map(role => ({
+          element_key: visibilityKey,
+          element_name: visibilityName,
+          element_category: card?.category || 'Analytics Hub',
+          role,
+          is_visible: true,
+        }));
 
-      queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
-        if (!old) return old;
-        const updated = [...old];
-        for (const row of rows) {
-          const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
-          if (idx >= 0) {
-            updated[idx] = { ...updated[idx], is_visible: row.is_visible };
-          } else {
-            updated.push({
-              id: `optimistic-${row.element_key}-${row.role}`,
-              element_key: row.element_key,
-              element_name: row.element_name,
-              element_category: row.element_category,
-              role: row.role as any,
-              is_visible: row.is_visible,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
-        }
-        return updated;
-      });
-
-      queryClient.setQueriesData<Record<string, boolean>>(
-        { queryKey: ['dashboard-visibility', 'my'] },
-        (old) => {
+        queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
           if (!old) return old;
-          return { ...old, [visibilityKey]: newIsVisible };
-        }
-      );
+          const updated = [...old];
+          for (const row of rows) {
+            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
+            if (idx >= 0) {
+              updated[idx] = { ...updated[idx], is_visible: row.is_visible };
+            } else {
+              updated.push({
+                id: `optimistic-${row.element_key}-${row.role}`,
+                element_key: row.element_key,
+                element_name: row.element_name,
+                element_category: row.element_category,
+                role: row.role as any,
+                is_visible: row.is_visible,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+          return updated;
+        });
 
-      const { error } = await supabase
-        .from('dashboard_element_visibility')
-        .upsert(rows, { onConflict: 'element_key,role' });
+        queryClient.setQueriesData<Record<string, boolean>>(
+          { queryKey: ['dashboard-visibility', 'my'] },
+          (old) => {
+            if (!old) return old;
+            return { ...old, [visibilityKey]: true };
+          }
+        );
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .upsert(rows, { onConflict: 'element_key,role' });
 
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+        if (error) throw error;
+
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      }
     } catch (err: any) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
       toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
@@ -549,7 +560,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
     // Update layout's pinnedCards array. The Analytics section is auto-enabled
     // by sanitizeDashboardLayout when at least one card is pinned.
-    if (newIsVisible) {
+    if (newIsPinned) {
       if (!(layout.pinnedCards || []).includes(cardId)) {
         const newPinnedCards = [...(layout.pinnedCards || []), cardId];
         const newSections = layout.sections.includes(ANALYTICS_SECTION_ID)
