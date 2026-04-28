@@ -915,6 +915,17 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
               </AlertDialogContent>
             </AlertDialog>
 
+            {dismissedStubs.size > 0 && (
+              <Button
+                variant="ghost"
+                className="w-full gap-2 text-muted-foreground"
+                onClick={() => restoreDismissedStubs()}
+              >
+                <RotateCcw className="w-4 h-4" />
+                Restore dismissed prompts ({dismissedStubs.size})
+              </Button>
+            )}
+
             {canManageVisibility && (
               <Button 
                 variant="ghost" 
