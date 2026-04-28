@@ -985,19 +985,22 @@ function DashboardSections({
         if (partnerKey) {
           for (let j = index + 1; j < orderedSectionIds.length; j++) {
             const nextId = orderedSectionIds[j];
+            // Skip pinned cards (rendered separately) and null-component sections
+            // (e.g. ai_insights moved into the header). They shouldn't block pairing.
             if (isPinnedCardEntry(nextId)) continue;
+            const nextComponent = sectionComponents[nextId as keyof typeof sectionComponents];
+            if (!nextComponent) continue;
+            // Only pair if the very next renderable sibling is the declared partner.
             if (nextId !== partnerKey) break;
             if (!layout.sections.includes(nextId)) break;
             if (stylistOnly && !isStylistAllowedSection(nextId)) break;
-            const partnerComponent = sectionComponents[nextId as keyof typeof sectionComponents];
-            if (!partnerComponent) break;
             return (
               <div
                 key={`${sectionId}+${nextId}`}
                 className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
               >
                 <div id={`section-${sectionId}`} className="scroll-mt-24 min-w-0">{component}</div>
-                <div id={`section-${nextId}`} className="scroll-mt-24 min-w-0">{partnerComponent}</div>
+                <div id={`section-${nextId}`} className="scroll-mt-24 min-w-0">{nextComponent}</div>
               </div>
             );
           }
