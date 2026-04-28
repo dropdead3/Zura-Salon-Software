@@ -7101,6 +7101,7 @@ export type Database = {
           element_name: string
           id: string
           is_visible: boolean
+          organization_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
         }
@@ -7111,6 +7112,7 @@ export type Database = {
           element_name: string
           id?: string
           is_visible?: boolean
+          organization_id?: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
@@ -7121,10 +7123,19 @@ export type Database = {
           element_name?: string
           id?: string
           is_visible?: boolean
+          organization_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_element_visibility_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dashboard_layout_templates: {
         Row: {

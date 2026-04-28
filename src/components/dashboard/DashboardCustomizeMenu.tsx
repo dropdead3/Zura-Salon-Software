@@ -83,6 +83,7 @@ import {
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
 import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useCustomizeDrawer } from '@/contexts/CustomizeDrawerContext';
 import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
@@ -304,6 +305,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const { isOpen, setOpen: setIsOpen } = useCustomizeDrawer();
   const [searchQuery, setSearchQuery] = useState('');
   const { isViewingAs, viewAsRole } = useViewAs();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id ?? null;
   const effectiveRoleContext = useMemo<RoleContext | undefined>(() => {
     if (!roleContext) return undefined;
     if (!isViewingAs || !viewAsRole) return roleContext;
@@ -502,29 +505,37 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
       // every other operator (would have been a cross-tenant bleed under the
       // current global table; doctrine still applies after Wave 2 scoping).
       if (newIsPinned) {
+        // Wave 2 (tenant isolation): writes are scoped to the operator's
+        // current organization. NULL-org rows are platform-seeded global
+        // defaults and must never be overwritten from the Customize drawer.
+        if (!orgId) {
+          throw new Error('No active organization selected — cannot pin card.');
+        }
         const rows = leadershipRoles.map(role => ({
           element_key: visibilityKey,
           element_name: visibilityName,
           element_category: card?.category || 'Analytics Hub',
           role,
           is_visible: true,
+          organization_id: orgId,
         }));
 
         queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
           if (!old) return old;
           const updated = [...old];
           for (const row of rows) {
-            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
+            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role && (v as any).organization_id === row.organization_id);
             if (idx >= 0) {
               updated[idx] = { ...updated[idx], is_visible: row.is_visible };
             } else {
               updated.push({
-                id: `optimistic-${row.element_key}-${row.role}`,
+                id: `optimistic-${row.element_key}-${row.role}-${row.organization_id}`,
                 element_key: row.element_key,
                 element_name: row.element_name,
                 element_category: row.element_category,
                 role: row.role as any,
                 is_visible: row.is_visible,
+                organization_id: row.organization_id,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               });
@@ -543,7 +554,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
         const { error } = await supabase
           .from('dashboard_element_visibility')
-          .upsert(rows, { onConflict: 'element_key,role' });
+          .upsert(rows, { onConflict: 'element_key,role,organization_id' });
 
         if (error) throw error;
 
@@ -628,6 +639,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleBulkPinAll = async () => {
     setIsTogglingPin(true);
     try {
+      if (!orgId) {
+        throw new Error('No active organization selected — cannot pin cards.');
+      }
       const rows = unpinnedCards.flatMap(card => {
         const visibilityKey = getPinnedVisibilityKey(card.id);
         const visibilityName = visibilityKey === 'operations_quick_stats'
@@ -640,12 +654,13 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           element_category: card.category,
           role,
           is_visible: true,
+          organization_id: orgId,
         }));
       });
       if (rows.length > 0) {
         const { error } = await supabase
           .from('dashboard_element_visibility')
-          .upsert(rows, { onConflict: 'element_key,role' });
+          .upsert(rows, { onConflict: 'element_key,role,organization_id' });
         if (error) throw error;
         queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
         
