@@ -83,6 +83,7 @@ import {
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
 import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useCustomizeDrawer } from '@/contexts/CustomizeDrawerContext';
 import { useGodModeTargetUserId } from '@/hooks/useGodModeTargetUserId';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
@@ -298,7 +299,7 @@ interface DashboardCustomizeMenuProps {
 
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, setOpen: setIsOpen } = useCustomizeDrawer();
   const [searchQuery, setSearchQuery] = useState('');
   const { isViewingAs, viewAsRole } = useViewAs();
   const effectiveRoleContext = useMemo<RoleContext | undefined>(() => {

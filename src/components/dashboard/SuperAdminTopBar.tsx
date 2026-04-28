@@ -44,6 +44,7 @@ import type { RoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
 import type React from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { DashboardRoleSwitcher } from '@/components/dashboard/DashboardRoleSwitcher';
 
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -214,6 +215,7 @@ export function SuperAdminTopBar({
           {(isPlatformUser || isAdmin) && (
             <>
               <HideNumbersToggle iconOnly />
+              <DashboardRoleSwitcher />
 
               {/* Page Explainers toggle */}
               <Tooltip>

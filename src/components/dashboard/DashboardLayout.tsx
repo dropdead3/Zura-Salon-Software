@@ -8,6 +8,7 @@ import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
+import { CustomizeDrawerProvider } from '@/contexts/CustomizeDrawerContext';
 import { useAutoLock } from '@/hooks/useAutoLock';
 import { useColorTheme } from '@/hooks/useColorTheme';
 import { useOrgThemeReset } from '@/hooks/useOrgThemeReset';
@@ -647,14 +648,16 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
 export function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <DashboardLockProvider>
-      <ZuraNavigationProvider>
-        <NavigationHistoryProvider>
-          <ChaChingHistoryProvider>
-            <ChaChingDetectorMount />
-            <DashboardLayoutInner {...props} />
-          </ChaChingHistoryProvider>
-        </NavigationHistoryProvider>
-      </ZuraNavigationProvider>
+      <CustomizeDrawerProvider>
+        <ZuraNavigationProvider>
+          <NavigationHistoryProvider>
+            <ChaChingHistoryProvider>
+              <ChaChingDetectorMount />
+              <DashboardLayoutInner {...props} />
+            </ChaChingHistoryProvider>
+          </NavigationHistoryProvider>
+        </ZuraNavigationProvider>
+      </CustomizeDrawerProvider>
     </DashboardLockProvider>
   );
 }

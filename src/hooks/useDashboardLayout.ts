@@ -12,6 +12,33 @@ import { toast } from 'sonner';
 type AppRole = Database['public']['Enums']['app_role'];
 
 /**
+ * Inline reader for `user_preferences.dashboard_layout.activeRole`.
+ * Lives here (not in a separate hook) to avoid a circular import with
+ * `useActiveDashboardRole` (which itself imports nothing from this file).
+ */
+function useActiveDashboardRoleInline(): { activeRole: AppRole | null } {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const { data } = useQuery({
+    queryKey: ['active-dashboard-role', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('dashboard_layout')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      const layout = (data?.dashboard_layout as Record<string, unknown> | null) || null;
+      return (layout?.activeRole as AppRole | undefined) ?? null;
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+  return { activeRole: data ?? null };
+}
+
+/**
  * Pick the canonical role key used for owner-authored role layouts.
  * Owners curate one layout per role enum value (stylist, manager, admin, etc.).
  */
@@ -354,9 +381,20 @@ export function useDashboardLayout(overrideUserId?: string) {
   const { data: isPrimaryOwner = false } = useIsPrimaryOwner();
   const { isViewingAs, viewAsRole } = useViewAs();
 
-  // When the owner is previewing as a role, resolve that role's layout
-  // (not the owner's own primary role).
-  const primaryRoleKey = (isViewingAs && viewAsRole) ? viewAsRole : pickPrimaryRoleKey(roles);
+  // Active dashboard role: a *user-side* pivot (not impersonation) for users
+  // who hold multiple roles whose dashboards resolve to different templates.
+  // Read inline (not via useActiveDashboardRole) to avoid circular import.
+  const { activeRole } = useActiveDashboardRoleInline();
+
+  // Resolution priority for the rendered role:
+  //   1. View As (impersonation) — owner authoring or platform debug
+  //   2. User's persisted activeRole (validated against currently held roles)
+  //   3. pickPrimaryRoleKey fallback (canonical priority list)
+  const validatedActiveRole =
+    activeRole && roles.includes(activeRole) ? activeRole : null;
+  const primaryRoleKey = (isViewingAs && viewAsRole)
+    ? viewAsRole
+    : (validatedActiveRole ?? pickPrimaryRoleKey(roles));
 
   // Personal overrides only apply for account owners. All other roles see
   // the owner-authored org-role layout (or the seeded template). This enforces
@@ -520,17 +558,20 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
       if (writeTarget === 'role') {
         if (!orgId) throw new Error('No organization context');
         if (!user?.id) throw new Error('Not authenticated');
+        // Mirror across every role in the same template-key group so users
+        // with sibling roles (super_admin/admin → 'leadership') all see the
+        // owner-authored layout. The schema is keyed `(org_id, role)`; we
+        // emit one row per role in the group.
+        const siblings = await resolveSiblingRoles(orgId, viewAsRole as AppRole);
+        const rows = siblings.map((role) => ({
+          organization_id: orgId,
+          role,
+          layout: layoutJson,
+          updated_by: user.id,
+        }));
         const { error } = await supabase
           .from('dashboard_role_layouts')
-          .upsert(
-            {
-              organization_id: orgId,
-              role: viewAsRole as AppRole,
-              layout: layoutJson,
-              updated_by: user.id,
-            },
-            { onConflict: 'organization_id,role' }
-          );
+          .upsert(rows, { onConflict: 'organization_id,role' });
         if (error) throw error;
         return;
       }
@@ -650,11 +691,12 @@ export function useResetToDefault(overrideUserId?: string) {
     mutationFn: async () => {
       // Branch 1: owner previewing a role → drop the org-role override.
       if (isRoleReset) {
+        const siblings = await resolveSiblingRoles(orgId, viewAsRole as AppRole);
         const { error } = await supabase
           .from('dashboard_role_layouts')
           .delete()
           .eq('organization_id', orgId)
-          .eq('role', viewAsRole as AppRole);
+          .in('role', siblings);
         if (error) throw error;
         return;
       }
@@ -777,17 +819,16 @@ export function useSaveRoleLayout() {
         enabledHubs: sanitized.enabledHubs,
       };
 
+      const siblings = await resolveSiblingRoles(orgId, role);
+      const rows = siblings.map((r) => ({
+        organization_id: orgId,
+        role: r,
+        layout: layoutJson,
+        updated_by: user.id,
+      }));
       const { error } = await supabase
         .from('dashboard_role_layouts')
-        .upsert(
-          {
-            organization_id: orgId,
-            role,
-            layout: layoutJson,
-            updated_by: user.id,
-          },
-          { onConflict: 'organization_id,role' }
-        );
+        .upsert(rows, { onConflict: 'organization_id,role' });
 
       if (error) throw error;
     },
@@ -814,21 +855,43 @@ export function useResetRoleLayout() {
     mutationFn: async (role: AppRole) => {
       if (!orgId) throw new Error('No organization context');
 
+      const siblings = await resolveSiblingRoles(orgId, role);
       const { error } = await supabase
         .from('dashboard_role_layouts')
         .delete()
         .eq('organization_id', orgId)
-        .eq('role', role);
+        .in('role', siblings);
 
       if (error) throw error;
     },
     onSuccess: (_data, role) => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, role] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId] });
       toast.success(`Reset layout for ${role.replace(/_/g, ' ')} to template default`);
     },
     onError: (error: Error) => {
       toast.error('Failed to reset role layout', { description: error.message });
     },
   });
+}
+
+/**
+ * Resolve every `app_role` enum value present in `user_roles` for `orgId`
+ * that maps to the same template key as `targetRole`. Used to mirror role
+ * layout writes across the collapsed group so users with sibling roles
+ * (e.g. super_admin vs admin) see the same authored layout.
+ */
+async function resolveSiblingRoles(orgId: string, targetRole: AppRole): Promise<AppRole[]> {
+  const targetTemplate = templateKeyForRole(targetRole);
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('organization_id', orgId);
+  if (error) throw error;
+  const distinct = Array.from(new Set((data ?? []).map((r) => r.role as AppRole)));
+  const siblings = distinct.filter((r) => templateKeyForRole(r) === targetTemplate);
+  // Always include the target role itself, even if no user currently holds it
+  // (the owner is authoring for that role enum value).
+  if (!siblings.includes(targetRole)) siblings.push(targetRole);
+  return siblings;
 }
 
