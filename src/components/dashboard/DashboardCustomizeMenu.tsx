@@ -760,8 +760,21 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                                     items={orderedPinnedCardIds}
                                     strategy={verticalListSortingStrategy}
                                   >
+                                    {cardCount > 6 && (
+                                      <div className="flex items-center gap-2 px-1 pb-2 text-[10px] font-display tracking-wider uppercase text-muted-foreground/70">
+                                        <span className="inline-flex items-center gap-1">
+                                          <span className="w-3.5 h-3.5 rounded-full bg-primary/15 text-primary inline-flex items-center justify-center text-[9px]">1</span>
+                                          –6 Simple
+                                        </span>
+                                        <span className="opacity-50">·</span>
+                                        <span className="inline-flex items-center gap-1">
+                                          <span className="w-3.5 h-3.5 rounded-full bg-muted text-muted-foreground/80 inline-flex items-center justify-center text-[9px]">7</span>
+                                          + Detailed only
+                                        </span>
+                                      </div>
+                                    )}
                                     <div className="space-y-1">
-                                      {orderedPinnedCardIds.map(cardId => {
+                                      {orderedPinnedCardIds.map((cardId, index) => {
                                         const card = PINNABLE_CARDS.find(c => c.id === cardId);
                                         if (!card) return null;
                                         return (
@@ -774,6 +787,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                                             isPinned={true}
                                             onToggle={() => handleTogglePinnedCard(cardId)}
                                             isLoading={isTogglingPin}
+                                            simpleViewIndex={index + 1}
                                           />
                                         );
                                       })}

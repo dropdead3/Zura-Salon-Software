@@ -18,6 +18,12 @@ interface SortablePinnedCardItemProps {
   onToggle: () => void;
   isLoading?: boolean;
   sortable?: boolean;
+  /**
+   * 1-indexed position within the visible pinned-cards list. When provided
+   * and <= 6, the row is marked as "in Simple view" (primary ordinal chip +
+   * left accent). Positions > 6 are dimmed (Detailed view only).
+   */
+  simpleViewIndex?: number;
 }
 
 interface PinnedCardItemRowProps extends SortablePinnedCardItemProps {
@@ -42,7 +48,11 @@ function PinnedCardItemRow({
   dragAttributes,
   dragListeners,
   isDragging = false,
+  simpleViewIndex,
 }: PinnedCardItemRowProps) {
+  const inSimpleView =
+    typeof simpleViewIndex === 'number' && simpleViewIndex >= 1 && simpleViewIndex <= 6;
+  const showOrdinal = typeof simpleViewIndex === 'number' && simpleViewIndex >= 1;
   return (
     <div
       ref={setNodeRef}
@@ -50,6 +60,7 @@ function PinnedCardItemRow({
       className={cn(
         'flex items-center justify-between p-3 rounded-lg transition-colors',
         isPinned ? 'bg-muted/50' : 'bg-transparent opacity-60',
+        inSimpleView && 'border-l-2 border-primary/50',
         isDragging && 'opacity-50 shadow-lg z-50 bg-background'
       )}
     >
@@ -63,11 +74,35 @@ function PinnedCardItemRow({
         <GripVertical className="w-4 h-4" />
       </button>
 
-      <div className="flex items-center gap-3 flex-1">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {showOrdinal && (
+          <span
+            className={cn(
+              'shrink-0 inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-display tracking-wide',
+              inSimpleView
+                ? 'bg-primary/15 text-primary'
+                : 'bg-muted text-muted-foreground/70'
+            )}
+            aria-label={
+              inSimpleView
+                ? `Position ${simpleViewIndex}: shown in Simple view`
+                : `Position ${simpleViewIndex}: Detailed view only`
+            }
+          >
+            {simpleViewIndex}
+          </span>
+        )}
         <div className="text-muted-foreground">
           {icon}
         </div>
-        <p className="text-sm font-medium">{label}</p>
+        <p
+          className={cn(
+            'text-sm font-medium truncate',
+            showOrdinal && !inSimpleView && 'text-foreground/70'
+          )}
+        >
+          {label}
+        </p>
       </div>
 
       <HoverCardPrimitive.Root openDelay={200} closeDelay={100}>
@@ -126,6 +161,7 @@ export function SortablePinnedCardItem({
   onToggle,
   isLoading = false,
   sortable = true,
+  simpleViewIndex,
 }: SortablePinnedCardItemProps) {
   const rawCardId = cardId || id;
 
@@ -141,6 +177,7 @@ export function SortablePinnedCardItem({
         isLoading={isLoading}
         sortable={false}
         rawCardId={rawCardId}
+        simpleViewIndex={simpleViewIndex}
       />
     );
   }
@@ -175,6 +212,7 @@ export function SortablePinnedCardItem({
       dragAttributes={attributes}
       dragListeners={listeners}
       isDragging={isDragging}
+      simpleViewIndex={simpleViewIndex}
     />
   );
 }
