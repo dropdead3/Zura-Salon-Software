@@ -63,6 +63,7 @@ import { useClientFunnel } from '@/hooks/useSalesAnalytics';
 import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { useHiringCapacity } from '@/hooks/useHiringCapacity';
+import { useTeamLevelProgress } from '@/hooks/useTeamLevelProgress';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
 import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
