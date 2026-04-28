@@ -21,18 +21,27 @@ export interface DashboardElementVisibility {
   updated_at: string;
 }
 
-// Fetch all visibility settings
+// Fetch all visibility settings (global defaults + current org's overrides).
+// Wave 2: tenant-scoped so per-org overrides don't bleed across tenants.
 export function useDashboardVisibility() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id ?? null;
+
   return useQuery({
-    queryKey: ['dashboard-visibility'],
+    queryKey: ['dashboard-visibility', orgId],
     queryFn: async () => {
       // Table has 1800+ rows — must override the default 1000-row limit
-      const { data, error } = await supabase
+      let query = supabase
         .from('dashboard_element_visibility')
         .select('*')
         .order('element_category')
-        .order('element_name')
-        .limit(5000);
+        .order('element_name');
+
+      query = orgId
+        ? query.or(`organization_id.is.null,organization_id.eq.${orgId}`)
+        : query.is('organization_id', null);
+
+      const { data, error } = await query.limit(5000);
 
       if (error) throw error;
       return data as unknown as DashboardElementVisibility[];
