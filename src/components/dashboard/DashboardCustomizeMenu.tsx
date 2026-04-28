@@ -535,6 +535,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                 element_category: row.element_category,
                 role: row.role as any,
                 is_visible: row.is_visible,
+                organization_id: row.organization_id,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               });
