@@ -903,6 +903,19 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
                       {metricLabel}
                     </p>
                   )}
+                  {cardId === 'executive_summary' && !execSparklineSuppressed && (() => {
+                    const series = (salesTrendData?.overall ?? [])
+                      .map((d: any) => Number(d.revenue) || 0);
+                    if (series.length < 3) return null;
+                    return (
+                      <Sparkline
+                        data={series}
+                        height={20}
+                        className={cn('mt-1.5 block', execSparklineTone ?? 'text-muted-foreground')}
+                        ariaLabel={`Trailing ${EXEC_SUMMARY_TREND_DAYS}-day revenue trend`}
+                      />
+                    );
+                  })()}
                   {metricSubtext && (
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-sans">
                       {metricSubtext}
