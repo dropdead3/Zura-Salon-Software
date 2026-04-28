@@ -240,7 +240,7 @@ const WIDGETS = [
   { id: 'dayrate', label: 'Day Rate Bookings', icon: <Armchair className="w-4 h-4" /> },
 ];
 
-const PINNABLE_CARDS = [
+export const PINNABLE_CARDS = [
   // Executive
   { id: 'executive_summary', label: 'Executive Summary', category: 'Executive', icon: <FileText className="w-4 h-4" />, size: 'full' as const },
   { id: 'daily_brief', label: 'Appointments Summary', category: 'Executive', icon: <Sun className="w-4 h-4" />, size: 'full' as const },

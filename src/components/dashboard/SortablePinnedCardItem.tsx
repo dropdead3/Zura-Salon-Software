@@ -6,6 +6,8 @@ import { GripVertical, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
 import { AnalyticsCardPreview } from './previews/AnalyticsCardPreview';
+import { CARD_QUESTIONS, type CardQuestionId } from './analytics/cardQuestions';
+import { CARD_DESCRIPTIONS } from './analytics/cardDescriptions';
 
 interface SortablePinnedCardItemProps {
   id: string;
@@ -83,12 +85,23 @@ function PinnedCardItemRow({
             align="start"
             sideOffset={16}
             className={cn(
-              'z-[60] w-[340px] p-3 rounded-xl border bg-popover text-popover-foreground shadow-xl',
+              'z-[60] w-[340px] p-3 rounded-xl border bg-popover text-popover-foreground shadow-xl space-y-2',
               'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95'
             )}
           >
+            {/* Doctrine teaching slot: question (what it answers) → description (how) → preview. */}
+            {CARD_QUESTIONS[rawCardId as CardQuestionId] && (
+              <p className="text-[10px] font-display tracking-wider uppercase text-muted-foreground/80 leading-snug">
+                {CARD_QUESTIONS[rawCardId as CardQuestionId]}
+              </p>
+            )}
+            {CARD_DESCRIPTIONS[rawCardId] && (
+              <p className="text-xs font-sans text-foreground/80 leading-snug">
+                {CARD_DESCRIPTIONS[rawCardId]}
+              </p>
+            )}
             <AnalyticsCardPreview cardId={rawCardId} />
-            <p className="text-[10px] text-muted-foreground text-center mt-2">
+            <p className="text-[10px] text-muted-foreground text-center">
               Preview with example data
             </p>
           </HoverCardPrimitive.Content>
