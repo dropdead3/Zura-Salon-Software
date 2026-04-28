@@ -305,7 +305,7 @@ export default function DashboardHome() {
         scopeLabel={operatorBarScopeLabel}
       />
       <motion.div 
-        className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-6 overflow-x-hidden"
+        className="pt-2 px-6 pb-6 lg:pt-3 lg:px-8 lg:pb-8 space-y-4 overflow-x-hidden max-w-[1600px] mx-auto"
         initial="hidden"
         animate="visible"
         variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
@@ -842,6 +842,7 @@ function DashboardSections({
   // Computed once per render — used by both pinned and regular section gates.
   const stylistOnly = isStylistOnlyViewer(roles);
 
+
   return (
     <>
       {orderedSectionIds.map((sectionId, index) => {
@@ -965,10 +966,10 @@ function DashboardSections({
         // stylist-only viewers, regardless of whether they're in the layout.
         // Dev log fires inside isStylistAllowedSection.
         if (stylistOnly && !isStylistAllowedSection(sectionId)) return null;
-        
+
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
-        
+
         // Wrap in a div with a stable id so coach nudges (and other deep
         // links) can scroll to specific sections.
         return (
@@ -976,6 +977,7 @@ function DashboardSections({
             {component}
           </div>
         );
+
       })}
     </>
   );
