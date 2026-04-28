@@ -21,11 +21,15 @@ export interface LocationsStatusCardProps {
 
 type LocationState =
   | { kind: 'open'; closeTime: string }
+  | { kind: 'closing-soon'; closeTime: string; minutesRemaining: number }
   | { kind: 'before-open'; openTime: string }
   | { kind: 'after-close'; nextOpenLabel: string }
   | { kind: 'closed-today'; reason: string }
   | { kind: 'closed-holiday'; reason: string }
   | { kind: 'no-hours' };
+
+/** Within this many minutes of close, surface the "Closing soon" amber state. */
+const CLOSING_SOON_THRESHOLD_MINUTES = 30;
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const DAY_LABEL: Record<(typeof DAY_NAMES)[number], string> = {
@@ -103,23 +107,30 @@ function computeLocationState(loc: Location, now: Date): LocationState {
     const label = next ? `${next.dayLabel} ${formatTime(next.openTime)}` : 'tomorrow';
     return { kind: 'after-close', nextOpenLabel: label };
   }
+  const minutesRemaining = closeMin - nowMin;
+  if (minutesRemaining > 0 && minutesRemaining <= CLOSING_SOON_THRESHOLD_MINUTES) {
+    return { kind: 'closing-soon', closeTime: dayHours.close, minutesRemaining };
+  }
   return { kind: 'open', closeTime: dayHours.close };
 }
 
 function stateRank(s: LocationState): number {
+  // Closing-soon ranks above open so operators see urgent ones first.
   switch (s.kind) {
-    case 'open':
+    case 'closing-soon':
       return 0;
-    case 'before-open':
+    case 'open':
       return 1;
-    case 'after-close':
+    case 'before-open':
       return 2;
-    case 'closed-today':
+    case 'after-close':
       return 3;
-    case 'closed-holiday':
+    case 'closed-today':
       return 4;
-    case 'no-hours':
+    case 'closed-holiday':
       return 5;
+    case 'no-hours':
+      return 6;
   }
 }
 
@@ -131,6 +142,12 @@ function StatusPill({ state }: { state: LocationState }) {
           dot: 'bg-emerald-500',
           text: 'text-emerald-600 dark:text-emerald-400',
           label: `Open · closes ${formatTime(state.closeTime)}`,
+        };
+      case 'closing-soon':
+        return {
+          dot: 'bg-amber-500',
+          text: 'text-amber-600 dark:text-amber-400',
+          label: `Closing soon · ${formatTime(state.closeTime)}`,
         };
       case 'before-open':
         return {
