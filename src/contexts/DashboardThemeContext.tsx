@@ -118,9 +118,17 @@ export function DashboardThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Persist user-driven changes to user_preferences. Skip writes that
-  // originated from a remote fetch.
+  // Persist user-driven changes to user_preferences. Skip:
+  //   1. The initial mount — otherwise the (possibly stale) localStorage
+  //      value would clobber the authoritative DB value before
+  //      loadFromServer() has a chance to read it.
+  //   2. Writes that originated from a remote fetch (echo prevention).
+  const hasMountedRef = useRef(false);
   useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
     if (isApplyingRemoteRef.current) {
       isApplyingRemoteRef.current = false;
       return;
