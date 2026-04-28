@@ -7,9 +7,6 @@
  * Used by the "Preview as" dropdown in the Dashboard Customize drawer so that
  * a primary owner can preview the dashboard for any role that actually exists
  * in their org — not a hardcoded subset of the enum.
- *
- * Excludes `super_admin` because it is a platform-level role and must never
- * appear in tenant-scoped UI even if a record exists.
  */
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,9 +15,6 @@ import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
-
-// Platform-level roles that must never appear in tenant-scoped UI.
-const PLATFORM_ONLY_ROLES = new Set<AppRole>(['super_admin']);
 
 export function useOrganizationRoles() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -40,7 +34,7 @@ export function useOrganizationRoles() {
 
       const distinct = Array.from(
         new Set((data ?? []).map((r) => r.role as AppRole))
-      ).filter((role) => !PLATFORM_ONLY_ROLES.has(role));
+      );
 
       // Sort by the canonical badge order so dropdowns/legends/badges agree.
       distinct.sort(
