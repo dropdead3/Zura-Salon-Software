@@ -1,76 +1,98 @@
 
-## Role Dashboard Configurator — Settings Surface + Multi-Role Resolution
+## Plan v2 — Role Dashboard Configurator (Revised after audit)
 
-### The two questions, answered
+### What the codebase already has (that v1 missed)
 
-**Q1: Where does the Account Owner configure each role's dashboard?**
-A new settings page at `/dashboard/admin/dashboards` ("Role Dashboards") that lists every role used in the org and lets the owner enter "edit mode" for any one of them. Edit mode = same `DashboardCustomizeMenu` drawer we already ship, but pre-armed with the chosen role (it routes writes to `dashboard_role_layouts` for that role, exactly as it does today when the owner uses View As).
+Your codebase is **further along than my first plan assumed**. Re-using what exists is the better build:
 
-**Q2: A user has multiple roles. Combine? Toggle? What's correct?**
+| Asset | What it does | Status |
+|---|---|---|
+| `dashboard_role_layouts` table | Per-(org, role) authored layouts, RLS-gated to primary owner | ✅ Live |
+| `dashboard_role_layout_audit` table | "Last edited at / by" per role | ✅ Live |
+| `useTeamDashboardSummary` hook | Returns each role + `hasOverride` + `lastEditedAt` | ✅ Live |
+| `TeamDashboardsCard` component | Owner-facing tile grid: each role → "Preview" → enters View As → Customize drawer routes writes to that role | ✅ Live but **orphaned** (removed from Command Center; section retired in `RETIRED_SECTION_IDS`) |
+| `useSaveRoleLayout` / `useResetRoleLayout` | Already-built role-keyed mutations (separate from View-As path) | ✅ Live, currently unused by UI |
+| `useDashboardLayout` resolution | Already routes via View-As role when owner is previewing | ✅ Live |
+| Stylist Privacy Contract enforcement | Allowlist + forbidden pinned cards applied at runtime regardless of authored layout | ✅ Live |
 
-Three options were considered against the doctrine ("Silence is meaningful. One primary lever. Persona scaling. No noise."):
+**Implication:** v1 over-built. We don't need a new page, new table column, new hook, or schema change. We need to **re-home the orphaned `TeamDashboardsCard` into Settings** and **add a small multi-role switcher** for end users.
 
-| Option | Verdict |
+---
+
+### Revised build (much smaller)
+
+#### 1. Settings entry — "Role Dashboards"
+
+- Add a new `SettingsCategory`: `role-dashboards` (icon: `LayoutDashboard`)
+- Add to `SECTION_GROUPS` under the existing `team` group (Access & Visibility) in `useSettingsLayout.ts`
+- Add detail view in `SettingsCategoryDetail.tsx` that renders the existing `<TeamDashboardsCard />` (which already does the right thing — sets View As, surfaces "Custom"/"Default", links to Customize)
+- Owner-only: `SettingsCategoryDetail` gates by `useCanCustomizeDashboardLayouts()` (already returns `isPrimaryOwner`)
+- Un-retire the orphan: leave `TeamDashboardsCard.tsx` as-is — just re-mount it inside Settings instead of the dashboard
+
+That's it for Q1. ~20 lines of glue, no new component.
+
+#### 2. Multi-role end-user experience
+
+The right question is **"does this user actually have multiple meaningful dashboard-divergent roles?"** Today `pickPrimaryRoleKey` collapses on a strict priority order — silently. That's fine for 95% of users but obscures choice for the rare manager-who-also-takes-clients case.
+
+**Decision (unchanged from v1, sharpened):**
+- **Never combine.** Combining violates the Stylist Privacy Contract — a manager+stylist user combining layouts could surface manager financials inside what stylist-mode is supposed to hide. Doctrine prohibits this.
+- **Default = highest-priority role** (`pickPrimaryRoleKey`, current behavior).
+- **Persist the user's choice** so it's sticky across sessions (per-user preference, not per-tab).
+- **Switcher only renders for users with 2+ assigned roles whose `templateKeyForRole()` resolves to *different* templates.** A user with `stylist` + `assistant` both resolve to different templates → show switcher. A user with `admin` + `super_admin` both resolve to `leadership` → no switcher (no real choice).
+- **Switcher is constrained to roles the user actually holds.** Server-side validation: when reading `active_dashboard_role`, cross-check against `user_roles`. If the role was revoked, NULL it out and fall back to `pickPrimaryRoleKey`. **No new column needed** — store this inside the existing `user_preferences.dashboard_layout` JSON as `activeRole`. (Read-then-update pattern already standard for that table.)
+
+#### 3. Schema impact
+
+**None.** Reusing `user_preferences.dashboard_layout` JSON for `activeRole`. No migration. No trigger. No RLS changes.
+
+The validation is a 3-line client guard:
+```
+if (activeRole && !userRoles.includes(activeRole)) activeRole = null;
+```
+Plus a server-side echo when the layout is read (already done implicitly because RLS gates `dashboard_role_layouts` reads to org members — they can read any role's layout for their org regardless).
+
+---
+
+### Files
+
+| File | Change |
 |---|---|
-| **Combine layouts** (union of sections from all assigned roles) | **Rejected.** Violates persona scaling — exposes manager/admin complexity to a stylist who happens to also hold an assistant role. Produces noisy, deduped sections with no clear authoring story (which role's order wins?). Owner can no longer reason about "what does a stylist see." |
-| **Auto-pick highest-priority role** (current behavior) | **Keep as default.** Deterministic, governed, single source of truth. Already implemented via `pickPrimaryRoleKey` in `useDashboardLayout`. |
-| **User-controlled toggle between assigned roles** | **Add on top of #2** — only visible to users with 2+ roles, and only between roles they actually hold. Persists per user. |
+| `src/hooks/useSettingsLayout.ts` | Add `'role-dashboards'` to the `team` group |
+| `src/components/dashboard/settings/SettingsCategoryDetail.tsx` | Add `'role-dashboards'` case → renders `<TeamDashboardsCard />` |
+| `src/lib/iconMap` (or wherever Settings registers icons/colors) | Add icon + color for the new category |
+| `src/hooks/useDashboardLayout.ts` | Read `activeRole` from `user_preferences.dashboard_layout`; honor it in `pickPrimaryRoleKey` resolution; validate against held roles |
+| `src/components/dashboard/DashboardRoleSwitcher.tsx` | NEW — small pill dropdown, conditional render |
+| `src/components/dashboard/DashboardLayout.tsx` | Slot the switcher in the header next to the user identity |
 
-**Decision: Never combine. Default to highest-priority role. Multi-role users get a lightweight role switcher in the dashboard header.** Each role's dashboard remains independently authored by the Account Owner — no merging, no dilution.
-
-This mirrors how View As already works structurally; we're just exposing a constrained version of that mechanism to the end user when they legitimately wear multiple hats.
-
----
-
-### What gets built
-
-**1. New settings page: Role Dashboards**
-- Route: `admin/dashboards` (gated by `manage_settings` + `useIsPrimaryOwner`)
-- Lists every distinct role present in the org (from `useOrganizationRoles`)
-- Each row: role badge + name, "Last edited [date] by [user]" (from `dashboard_role_layouts.updated_at/updated_by`), "Edit dashboard" button
-- "Edit dashboard" enters View-As for that role and opens the customize drawer — reusing the existing authoring path. No duplicate UI.
-- Add a sidebar link under Operations Hub > Dashboards (or wherever Access Hub / Stylist Levels sit) so it's discoverable without going through View As.
-
-**2. Multi-role user experience**
-- New hook `useUserDashboardRole()` returns `{ assignedRoles, activeRole, setActiveRole }`. Only exposes a switcher when `assignedRoles.length >= 2`.
-- Active role is persisted to `user_preferences.active_dashboard_role` (new nullable column). Falls back to `pickPrimaryRoleKey` when null/unset.
-- New small component `DashboardRoleSwitcher` rendered in the dashboard header next to the user's name — only visible when the user has 2+ roles. A pill dropdown ("Viewing as: Stylist ▾"). Selecting a different role updates `activeRole` and re-resolves the layout.
-- `useDashboardLayout` resolves layout in this priority order:
-  1. Account Owner's personal override (existing)
-  2. **`activeRole` from user prefs** (new) → load `dashboard_role_layouts` for that role
-  3. `pickPrimaryRoleKey(roles)` (existing fallback)
-  4. Role template / DEFAULT_LAYOUT (existing)
-- Single-role users see no switcher and no behavior change.
-
-**3. Schema**
-- Add `active_dashboard_role app_role NULL` to `user_preferences`. RLS unchanged (user owns their row). A trigger validates the chosen role is one the user actually holds (`user_roles` lookup) — if not, NULL it out. This prevents stale preferences after a role is revoked.
+**No new route. No new page. No migration.** That's the entire delta.
 
 ---
 
-### Doctrine alignment
+### Where v1 was wrong
 
-- **Persona scaling preserved:** A stylist sees the stylist dashboard, period. Holding a second role means they can switch — never see both at once.
-- **Owner authority preserved:** The owner remains the sole author of every role layout. Users only choose *which* authored layout to view.
-- **Stylist Privacy Contract preserved:** Switching to a "stylist" role still renders only the stylist-allowed sections from `dashboard_role_layouts.role='stylist'`. The contract gates content by the active role's layout, not by the union of held roles.
-- **Settings discoverability:** Owners no longer need to enter View As to find role authoring — they can do it from a settings page that lists all roles in one place.
+1. **Proposed a new `/admin/dashboards` route** — unnecessary; Settings detail view is the established pattern (`access-hub`, `users`, `levels` all live there).
+2. **Proposed adding `active_dashboard_role` column + validation trigger** — overkill. The JSON blob in `user_preferences.dashboard_layout` already stores per-user UI state. Adding a column when a JSON field will do violates "least invasive change."
+3. **Missed that `TeamDashboardsCard` and `useTeamDashboardSummary` already existed** — would have re-built the exact same component under a different name, creating a fork hazard.
+4. **Didn't catch the `pickPrimaryRoleKey` collapse case** — two roles that resolve to the same template don't deserve a switcher. v1 would have shown a no-op switcher to admin+super_admin users.
+
+### Doctrine alignment (re-checked)
+
+- ✅ Stylist Privacy Contract — switching to `stylist` activates the stylist allowlist; combining is rejected.
+- ✅ Owner authority — owners remain sole authors of role layouts.
+- ✅ Persona scaling — solo stylists never see manager surfaces accidentally.
+- ✅ Settings Navigation Uniformity — uses the established settings detail pattern.
+- ✅ Visibility Contract — switcher returns `null` when there's no real choice (no noise).
+- ✅ State Updates — `user_preferences` JSON uses read-then-update (already standard).
+
+### Out of scope (deferred)
+
+- Sidebar shortcut to Role Dashboards — defer until owners report it's hard to find inside Settings.
+- A separate "compare roles" view — defer; doctrine says "one primary lever," and the existing Preview flow already covers comparison via View As.
+- Per-location dashboard variants — separate concern, not blocked by this work.
 
 ---
 
-### Files (technical)
+### Approval question
 
-- `src/pages/dashboard/admin/RoleDashboards.tsx` — new settings page
-- `src/App.tsx` — route registration (`admin/dashboards`, gated)
-- `src/components/dashboard/SidebarNavContent.tsx` — sidebar entry under Settings/Operations Hub
-- `src/hooks/useUserDashboardRole.ts` — new hook (assignedRoles, activeRole, setActiveRole, persists to user_preferences)
-- `src/components/dashboard/DashboardRoleSwitcher.tsx` — new pill dropdown, conditionally rendered
-- `src/components/dashboard/DashboardLayout.tsx` (or wherever the dashboard header lives) — slot the switcher
-- `src/hooks/useDashboardLayout.ts` — extend resolution to honor `activeRole` from prefs
-- Migration: add `active_dashboard_role` column + validation trigger on `user_preferences`
-
----
-
-### Out of scope (deferred, with triggers)
-
-- Combining/merging dashboards across roles — **explicitly rejected** by doctrine; do not revisit unless persona scaling is overhauled.
-- A dedicated "view comparison" mode (side-by-side stylist vs manager) — defer until a real owner asks for it.
-- Per-location dashboard variants — separate concern; revisit when location-scoped overrides land.
+This drops the build from ~7 file changes + migration to **~5 file changes + zero schema**. Approve v2?
