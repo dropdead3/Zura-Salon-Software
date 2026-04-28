@@ -517,10 +517,23 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricLabel = `${waiting} waiting · ${inService} in service`;
         break;
       }
-      case 'revenue_breakdown':
-        metricValue = `${formatCurrencySmart(salesData?.serviceRevenue ?? 0)} / ${formatCurrencySmart(salesData?.productRevenue ?? 0)}`;
-        metricLabel = `Service vs. retail revenue for ${getPeriodLabel(filters.dateRange)}`;
+      case 'revenue_breakdown': {
+        // Differentiated lens: revenue *mix*, not the totals (Sales Overview owns totals)
+        const service = salesData?.serviceRevenue ?? 0;
+        const product = salesData?.productRevenue ?? 0;
+        const total = service + product;
+        if (total > 0) {
+          const servicePct = Math.round((service / total) * 100);
+          const retailPct = 100 - servicePct;
+          const dominant = servicePct >= retailPct ? `${servicePct}% Service` : `${retailPct}% Retail`;
+          metricValue = dominant;
+          metricLabel = `Service ${formatCurrencySmart(service)} · Retail ${formatCurrencySmart(product)}`;
+        } else {
+          metricValue = '--';
+          metricLabel = `No revenue mix to report for ${getPeriodLabel(filters.dateRange)}`;
+        }
         break;
+      }
       case 'retail_effectiveness':
         metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
         metricLabel = `Retail attachment rate for ${getPeriodLabel(filters.dateRange)}`;
