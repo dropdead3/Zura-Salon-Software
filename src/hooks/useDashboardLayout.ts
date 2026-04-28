@@ -152,15 +152,41 @@ export const isRetiredSectionId = (id: string): boolean => RETIRED_SECTION_IDS.h
 function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
   const pinnedCards = [...new Set((layout.pinnedCards || []).filter((id) => VALID_PINNABLE_CARD_IDS.has(id)))];
   const sectionOrderSource = layout.sectionOrder?.length ? layout.sectionOrder : layout.sections || [];
-  const sectionOrder = [...new Set(sectionOrderSource.filter((id) => {
-    if (RETIRED_SECTION_IDS.has(id)) return false;
-    if (!isPinnedCardEntry(id)) return true;
-    return VALID_PINNABLE_CARD_IDS.has(getPinnedCardId(id));
-  }))];
+
+  // Collapse legacy `pinned:*` entries into a single `analytics` marker at the
+  // position of the first pinned entry. Per-card order is preserved on
+  // `pinnedCards`. Idempotent — layouts already on the new model pass through.
+  const collapsed: string[] = [];
+  let analyticsInserted = false;
+  for (const id of sectionOrderSource) {
+    if (RETIRED_SECTION_IDS.has(id)) continue;
+    if (isPinnedCardEntry(id)) {
+      if (!analyticsInserted && !collapsed.includes(ANALYTICS_SECTION_ID)) {
+        collapsed.push(ANALYTICS_SECTION_ID);
+        analyticsInserted = true;
+      }
+      continue;
+    }
+    collapsed.push(id);
+  }
+  // If pinned cards exist but no analytics marker was placed (e.g. fresh
+  // layout after pinning a card), append the marker so it has a render slot.
+  if (pinnedCards.length > 0 && !collapsed.includes(ANALYTICS_SECTION_ID)) {
+    collapsed.push(ANALYTICS_SECTION_ID);
+  }
+  const sectionOrder = [...new Set(collapsed)];
+
+  // `sections` (the enabled set) gets the same treatment: drop pinned:* and
+  // ensure `analytics` is present-and-enabled when there are pinned cards.
+  const sectionsBase = (layout.sections || []).filter(
+    (id) => !RETIRED_SECTION_IDS.has(id) && !isPinnedCardEntry(id),
+  );
+  const sectionsSet = new Set(sectionsBase);
+  if (pinnedCards.length > 0) sectionsSet.add(ANALYTICS_SECTION_ID);
 
   return {
     ...layout,
-    sections: [...new Set((layout.sections || []).filter((id) => !RETIRED_SECTION_IDS.has(id)))],
+    sections: [...sectionsSet],
     sectionOrder,
     pinnedCards,
     widgets: [...new Set(layout.widgets || [])],
@@ -171,8 +197,8 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
