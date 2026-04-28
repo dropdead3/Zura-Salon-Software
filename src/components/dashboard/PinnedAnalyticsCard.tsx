@@ -471,6 +471,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     let metricLabel = '';
     let metricSubtext = '';
     let goalPaceIcon: React.ReactNode = null;
+    // Tone class for the optional Executive Summary sparkline. Set inside
+    // the executive_summary case so the sparkline below inherits the same
+    // emerald / rose / muted color as the delta indicator.
+    let execSparklineTone: string | null = null;
+    let execSparklineSuppressed = false;
 
     // Smart compact currency for simple-view tiles:
     // - values >= $1,000 collapse to compact form ($20.3K, $1.2M) to prevent overflow
