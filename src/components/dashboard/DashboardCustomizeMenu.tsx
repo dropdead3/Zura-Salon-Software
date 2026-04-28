@@ -98,8 +98,7 @@ import {
 import { SortableSectionItem } from './SortableSectionItem';
 import { SortableWidgetItem } from './SortableWidgetItem';
 import { SortablePinnedCardItem } from './SortablePinnedCardItem';
-import { SortableHubItem } from './SortableHubItem';
-import { hubLinks } from './HubQuickLinks';
+// SortableHubItem & hubLinks removed — Quick Access Hubs section retired.
 import { useDashboardVisibility, useRegisterVisibilityElement, type DashboardElementVisibility } from '@/hooks/useDashboardVisibility';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
