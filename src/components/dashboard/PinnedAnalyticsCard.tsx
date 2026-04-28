@@ -500,8 +500,10 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
         const nowMin = now.getHours() * 60 + now.getMinutes();
         const CLOSING_SOON_THRESHOLD_MINUTES = 30;
+        const OPENS_SOON_THRESHOLD_MINUTES = 30;
         let openCount = 0;
         let closingSoonCount = 0;
+        let opensSoonCount = 0;
         for (const loc of visible) {
           const closure = isClosedOnDate(loc.hours_json, loc.holiday_closures, now);
           if (closure.isClosed) continue;
@@ -518,11 +520,20 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
             if (remaining > 0 && remaining <= CLOSING_SOON_THRESHOLD_MINUTES) {
               closingSoonCount += 1;
             }
+          } else if (nowMin < openMin) {
+            const untilOpen = openMin - nowMin;
+            if (untilOpen > 0 && untilOpen <= OPENS_SOON_THRESHOLD_MINUTES) {
+              opensSoonCount += 1;
+            }
           }
         }
         metricValue = `${openCount} of ${visible.length}`;
-        metricLabel = closingSoonCount > 0
-          ? `Open right now · ${closingSoonCount} closing soon`
+        const labelExtras = [
+          closingSoonCount > 0 ? `${closingSoonCount} closing soon` : null,
+          opensSoonCount > 0 ? `${opensSoonCount} opens soon` : null,
+        ].filter(Boolean);
+        metricLabel = labelExtras.length > 0
+          ? `Open right now · ${labelExtras.join(' · ')}`
           : 'Open right now';
         break;
       }
