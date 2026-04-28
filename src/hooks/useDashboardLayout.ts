@@ -135,7 +135,8 @@ function dedupe<T>(items: T[] | undefined): T[] | undefined {
 export const RETIRED_SECTION_IDS = new Set<string>([
   'hub_quicklinks',   // Sidebar handles hub navigation; dashboard card was redundant.
   'team_dashboards',  // Replaced by role-switcher in Customize.
-  'command_center',   // Migrated to inline pinned cards.
+  // NOTE: 'command_center' is intentionally NOT here — it has bespoke
+  // migration that converts it into inline pinned cards (see migrateLayout).
 ]);
 
 export const isRetiredSectionId = (id: string): boolean => RETIRED_SECTION_IDS.has(id);
