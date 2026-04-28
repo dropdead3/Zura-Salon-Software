@@ -451,21 +451,54 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       Math.abs(amount) >= 1000 ? formatCurrencyCompact(amount) : formatCurrencyWhole(amount);
 
     switch (cardId) {
-      case 'executive_summary':
-        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
-        metricLabel = filters.dateRange === 'today'
-          ? "Today's expected revenue across all services and retail"
-          : `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
+      case 'executive_summary': {
+        // Differentiated lens: revenue *vs prior comparable period*, not the raw total
+        // (Sales Overview owns the raw $ clock; this surface answers "are we trending?")
+        const current = salesData?.totalRevenue ?? 0;
+        const prior = priorSalesData?.totalRevenue ?? 0;
+        if (prior > 0 && current > 0) {
+          const deltaPct = ((current - prior) / prior) * 100;
+          const sign = deltaPct > 0 ? '+' : '';
+          metricValue = `${sign}${deltaPct.toFixed(1)}%`;
+          const TrendIcon = deltaPct > 0.5 ? TrendingUp : deltaPct < -0.5 ? TrendingDown : Minus;
+          const trendTone = deltaPct > 0.5 ? 'text-emerald-500' : deltaPct < -0.5 ? 'text-rose-500' : 'text-muted-foreground';
+          goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
+          metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+        } else if (current > 0) {
+          // No prior baseline (new org / first period) — show the total but call out the lack of comparison
+          metricValue = formatCurrencySmart(current);
+          metricLabel = 'No prior period to compare against yet';
+        } else {
+          metricValue = '--';
+          metricLabel = `No revenue recorded for ${getPeriodLabel(filters.dateRange)}`;
+        }
         break;
+      }
       case 'sales_overview':
         // Custom render below — leave metricValue/metricLabel empty so we use the dedicated layout.
         metricValue = '';
         metricLabel = '';
         break;
-      case 'daily_brief':
-        metricValue = formatCurrencySmart(salesData?.totalRevenue ?? 0);
-        metricLabel = `Revenue earned ${getPeriodLabel(filters.dateRange)}`;
+      case 'daily_brief': {
+        // Differentiated lens: today's *operational* pulse, not just revenue
+        const waiting = queueData?.stats.waitingCount ?? 0;
+        const inService = queueData?.stats.inServiceCount ?? 0;
+        const completed = queueData?.stats.completedCount ?? 0;
+        const totalToday = waiting + inService + completed;
+        const revenueToday = salesData?.totalRevenue ?? 0;
+        if (totalToday > 0 || revenueToday > 0) {
+          metricValue = `${totalToday} appt${totalToday === 1 ? '' : 's'}`;
+          const parts: string[] = [];
+          if (waiting > 0) parts.push(`${waiting} waiting`);
+          if (inService > 0) parts.push(`${inService} in service`);
+          if (revenueToday > 0) parts.push(`${formatCurrencySmart(revenueToday)} earned`);
+          metricLabel = parts.length > 0 ? parts.join(' · ') : `Activity ${getPeriodLabel(filters.dateRange)}`;
+        } else {
+          metricValue = '--';
+          metricLabel = `No activity ${getPeriodLabel(filters.dateRange)} yet`;
+        }
         break;
+      }
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
