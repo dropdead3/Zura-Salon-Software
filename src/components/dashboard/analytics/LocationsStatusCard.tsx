@@ -318,12 +318,12 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
           </span>
           {closingSoonCount > 0 && (
             <span className="text-xs uppercase tracking-wider font-display text-amber-600 dark:text-amber-400">
-              · {closingSoonCount} closing soon
+              · {closingSoonCount} {closingSoonCount === 1 ? 'closes' : 'close'} soon
             </span>
           )}
           {opensSoonCount > 0 && (
             <span className="text-xs uppercase tracking-wider font-display text-sky-600 dark:text-sky-400">
-              · {opensSoonCount} opens soon
+              · {opensSoonCount} {opensSoonCount === 1 ? 'opens' : 'open'} soon
             </span>
           )}
         </div>
