@@ -929,6 +929,7 @@ function DashboardSections({
                   }}
                 >
                   {visiblePinnedCardIds.map(cId => (
+                  {renderedPinnedCardIds.map(cId => (
                     <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
                   ))}
                 </div>
