@@ -169,7 +169,8 @@ const getSections = (): SectionConfig[] => [
     label: 'Level Progress',
     icon: <GraduationCap className="w-4 h-4" />,
     description: 'Your career level trajectory',
-    isVisible: (ctx) => ctx.hasStylistRole,
+    // Visible to stylists and to leadership (owners can toggle/preview for themselves)
+    isVisible: (ctx) => ctx.hasStylistRole || ctx.isLeadership,
   },
   {
     id: 'graduation_kpi',
