@@ -819,17 +819,16 @@ export function useSaveRoleLayout() {
         enabledHubs: sanitized.enabledHubs,
       };
 
+      const siblings = await resolveSiblingRoles(orgId, role);
+      const rows = siblings.map((r) => ({
+        organization_id: orgId,
+        role: r,
+        layout: layoutJson,
+        updated_by: user.id,
+      }));
       const { error } = await supabase
         .from('dashboard_role_layouts')
-        .upsert(
-          {
-            organization_id: orgId,
-            role,
-            layout: layoutJson,
-            updated_by: user.id,
-          },
-          { onConflict: 'organization_id,role' }
-        );
+        .upsert(rows, { onConflict: 'organization_id,role' });
 
       if (error) throw error;
     },
