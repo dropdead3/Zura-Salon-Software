@@ -12,6 +12,33 @@ import { toast } from 'sonner';
 type AppRole = Database['public']['Enums']['app_role'];
 
 /**
+ * Inline reader for `user_preferences.dashboard_layout.activeRole`.
+ * Lives here (not in a separate hook) to avoid a circular import with
+ * `useActiveDashboardRole` (which itself imports nothing from this file).
+ */
+function useActiveDashboardRoleInline(): { activeRole: AppRole | null } {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const { data } = useQuery({
+    queryKey: ['active-dashboard-role', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('dashboard_layout')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      const layout = (data?.dashboard_layout as Record<string, unknown> | null) || null;
+      return (layout?.activeRole as AppRole | undefined) ?? null;
+    },
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+  return { activeRole: data ?? null };
+}
+
+/**
  * Pick the canonical role key used for owner-authored role layouts.
  * Owners curate one layout per role enum value (stylist, manager, admin, etc.).
  */
