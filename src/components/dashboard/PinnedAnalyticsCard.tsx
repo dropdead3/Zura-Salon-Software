@@ -55,7 +55,6 @@ import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/Cl
 import { DailyBriefCard } from '@/components/dashboard/analytics/DailyBriefCard';
 import { OperationalHealthCard } from '@/components/dashboard/analytics/OperationalHealthCard';
 import { LocationsStatusCard } from '@/components/dashboard/analytics/LocationsStatusCard';
-import { isClosedOnDate } from '@/hooks/useLocations';
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
