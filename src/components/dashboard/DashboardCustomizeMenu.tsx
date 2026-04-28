@@ -213,12 +213,9 @@ const getSections = (): SectionConfig[] => [
     icon: <CheckSquare className="w-4 h-4" />, 
     description: 'Your to-dos and action items',
   },
-  { 
-    id: 'announcements', 
-    label: 'Announcements', 
-    icon: <Megaphone className="w-4 h-4" />, 
-    description: 'Team updates and news',
-  },
+  // 'announcements' retired — now lives in floating AnnouncementsDrawer.
+  // See RETIRED_SECTION_IDS in useDashboardLayout.ts.
+
   { 
     id: 'client_engine', 
     label: 'Client Engine', 
