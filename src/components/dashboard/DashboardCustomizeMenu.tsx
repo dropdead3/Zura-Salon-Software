@@ -373,14 +373,31 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
   const effectivePinnedCardIds = useMemo(() => getPinnedCardIdsFromLayout(layout), [layout]);
   
-  const isCardPinned = (cardId: string): boolean => {
-    if (isPinnedInLayout(layout, cardId)) return true;
+  // SOURCE-OF-TRUTH SEPARATION (P0 fix):
+  // - `isCardPinnedInLayout` = the operator's personal pinned state. This is
+  //   what drives the toggle direction in the Customize drawer.
+  // - `isCardVisibleToRole` = role-default eligibility from the global
+  //   `dashboard_element_visibility` table. Used only to gate cards an
+  //   operator's role isn't allowed to see at all.
+  // Conflating these previously caused a two-click bug: the visibility row
+  // already said `is_visible=true` for leadership, so the first toggle on an
+  // "Available" card was interpreted as an UNPIN and silently noop'd the
+  // layout array. See plan in .lovable/plan.md.
+  const isCardPinnedInLayout = (cardId: string): boolean => isPinnedInLayout(layout, cardId);
+
+  const isCardVisibleToRole = (cardId: string): boolean => {
     if (!visibilityData) return false;
     const visibilityKey = getPinnedVisibilityKey(cardId);
-    return leadershipRoles.some(role => 
+    return leadershipRoles.some(role =>
       visibilityData.find(v => v.element_key === visibilityKey && v.role === role)?.is_visible ?? false
     );
   };
+
+  // Back-compat alias: anywhere not yet migrated still calls `isCardPinned`.
+  // Layout-first, then role visibility as a fallback (preserves old behavior
+  // for callers that depended on the union).
+  const isCardPinned = (cardId: string): boolean =>
+    isCardPinnedInLayout(cardId) || isCardVisibleToRole(cardId);
 
   // Outer list: sections only. Analytics is a single section entry — its
   // pinned cards reorder inside it, never against unrelated sections.

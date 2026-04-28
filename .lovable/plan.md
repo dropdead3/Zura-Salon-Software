@@ -1,61 +1,65 @@
-## Change
+## Diagnosis
 
-Visually mark which pinned cards land in **Simple view** (the first 6) inside the Customize drawer's pinned-cards list, so operators can see at a glance — without reading the tip — which cards are visible in Simple and which only appear in Detailed.
+The "Available Analytics" cards in the screenshot are all already marked **`is_visible = true`** in `dashboard_element_visibility` for the leadership roles (`super_admin`, `admin`, `manager`) — but they are not in the operator's layout `pinnedCards` array. That mismatch creates a two-click bug:
 
-## Visual treatment
+1. `isCardPinned(cardId)` returns **true** (visibility row says yes).
+2. So `handleTogglePinnedCard` interprets the click as an **unpin**: it writes `is_visible: false` and skips the layout `pinnedCards.push(...)` step.
+3. The toast says "Unpinned from dashboard," and the row stays in "Available."
+4. A second toggle is required to actually pin.
 
-For each row in the pinned-cards list, use its 1-indexed position:
+Network/console show no errors — the upsert succeeds. The bug is logical.
 
-- **Positions 1–6 (in Simple view):**
-  - Small ordinal pill before the label: `1`, `2`, … `6` — `font-display`, uppercase, `bg-primary/15 text-primary` in a `w-5 h-5 rounded-full` chip
-  - Subtle left accent: `border-l-2 border-primary/50` on the row container
-- **Positions 7+ (Detailed only):**
-  - Ordinal chip uses muted tone: `bg-muted text-muted-foreground/70`
-  - No left accent
-  - Slightly reduced label opacity (`text-foreground/70`) to signal "not in the at-a-glance view"
-- A tiny legend appears just above the list (only when `cardCount > 6`):
-  > `1`–`6` show in Simple view · `7+` Detailed only
+There is also a **second, structural problem** uncovered while debugging: `public.dashboard_element_visibility` has **no `organization_id`** column. The `(element_key, role)` unique constraint is global, so any leadership user toggling a card here mutates rows that leak across every tenant. This violates the Strict Tenant Isolation core rule. Until this is fixed, "pinning" isn't really per-org at all — it's a platform-wide preference masquerading as per-user.
 
-The cap threshold lives in a single named constant `SIMPLE_VIEW_CARD_LIMIT = 6` shared with `DashboardHome.tsx` (export from a small util or duplicate the constant in the menu — duplication acceptable; both files cite the same number).
+These two problems must be solved together, because the right toggle semantics depend on the right storage model.
 
-All colors via semantic tokens (`primary`, `muted`, `foreground`) — no raw hex. All typography respects the ban on `font-bold/font-semibold` (max `font-medium`).
+## Plan
 
-## Files & edits
+Two waves. Both are P0; ship them in separate migrations + commits per doctrine ("P0s ship in separate waves, never bundled").
 
-**1. `src/components/dashboard/SortablePinnedCardItem.tsx`**
-- Add optional prop `simpleViewIndex?: number` (1-indexed position in visible list).
-- Thread it through `PinnedCardItemRow`.
-- Render the ordinal chip immediately to the left of the icon (or replacing the icon's wrapper spacing).
-- Conditionally apply the `border-l-2 border-primary/50` and label-opacity classes based on whether `simpleViewIndex <= 6`.
-- When `simpleViewIndex` is undefined (e.g., legacy callers, the "Available" list), render exactly as before — no chip, no accent. Backward-compatible.
+### Wave 1 — Fix the toggle UX bug (immediate, no schema change)
 
-**2. `src/components/dashboard/DashboardCustomizeMenu.tsx`**
-- In the pinned-cards `.map(...)` (line ~755), pass `simpleViewIndex={index + 1}` (use the second arg of map).
-- Right above the SortableContext (or inside it, just before the rows), when `cardCount > 6`, render the legend chip line:
-  ```tsx
-  <div className="flex items-center gap-2 px-1 pb-1.5 text-[10px] font-display tracking-wider uppercase text-muted-foreground/70">
-    <span className="inline-flex items-center gap-1">
-      <span className="w-3.5 h-3.5 rounded-full bg-primary/15 text-primary inline-flex items-center justify-center text-[9px]">1</span>
-      –6 Simple
-    </span>
-    <span className="opacity-50">·</span>
-    <span className="inline-flex items-center gap-1">
-      <span className="w-3.5 h-3.5 rounded-full bg-muted text-muted-foreground/80 inline-flex items-center justify-center text-[9px]">7</span>
-      + Detailed only
-    </span>
-  </div>
-  ```
+The visibility table is a **role-default** registry ("can this role ever see this card?"), not a per-operator pinned state. Conflating the two is the source of the bug. Decouple:
+
+**`src/components/dashboard/DashboardCustomizeMenu.tsx`**
+
+- Introduce `isCardPinnedInLayout(cardId)` helper that **only** checks `layout.pinnedCards` (and `sectionOrder` pinned entries). This is the operator's personal pinned state and the source of truth for the toggle.
+- Keep the existing `isCardPinned` for visibility-gating only (e.g., to suppress cards an operator's role isn't allowed to see at all). Rename the existing function to `isCardVisibleToRole` to make the distinction obvious.
+- `handleTogglePinnedCard`: compute `isPinned = isCardPinnedInLayout(cardId)` (NOT the role-visibility check). The toggle direction now correctly mirrors what the operator sees in their drawer.
+- The visibility upsert step is preserved for now (still drives some role-gating elsewhere) but is **only** flipped to `true` on pin and **never** flipped to `false` on unpin from this surface — unpinning is a personal layout action, not a role-gating action.
+- The "Available Analytics" `SortablePinnedCardItem` already passes `isPinned={isCardPinned(card.id)}` — switch this to `isPinned={isCardPinnedInLayout(card.id)}` so the optimistic switch reflects the layout state, not the global visibility row.
+- `unpinnedCards` derivation switches to `isCardPinnedInLayout` so cards aren't filtered out of "Available" just because the global visibility row says true.
+
+Result: one click to pin, one click to unpin, with no second-click weirdness. Cards in the screenshot become togglable on the first try.
+
+### Wave 2 — Tenant-scope `dashboard_element_visibility` (separate commit)
+
+Migration:
+
+1. Add `organization_id uuid` to `dashboard_element_visibility` (nullable for backfill window).
+2. Backfill: for each existing row, fan out per organization (one row per org per `element_key, role`). This is safe because today the rows are role defaults that should apply per-org.
+3. Drop the global `(element_key, role)` unique constraint; add new `(organization_id, element_key, role)` unique constraint.
+4. Set `organization_id NOT NULL` after backfill.
+5. Add CASCADE FK to `organizations(id)`.
+6. Replace RLS:
+   - SELECT: `is_org_member(auth.uid(), organization_id)` (drop the `USING (true)` policy — strictly prohibited per core rules).
+   - ALL (manage): `is_org_admin(auth.uid(), organization_id) OR is_platform_user(auth.uid())` and require manager check via `has_role(...)` AND `organization_id = (select current effective org for the user)`.
+
+Code:
+
+- `useDashboardVisibility` (and any sibling reader/upserter): scope all queries by `effectiveOrganization.id`; include it in the cache key.
+- `handleTogglePinnedCard` upsert: include `organization_id` in `rows` and switch `onConflict` to `'organization_id,element_key,role'`.
+- `handleBulkPinAll` upsert: same.
+
+### Out of scope
+
+- No change to which cards exist (`PINNABLE_CARDS` / `PINNABLE_CARD_IDS`).
+- No change to Detailed/Simple cap, ConfigurationStubCard, dismissedStubs, or sectionOrder mechanics.
+- No change to non-Analytics visibility surfaces in Wave 1 (Wave 2 covers them by widening the table's tenant scope).
 
 ## Why this shape
 
-- **Pre-attentive cue:** the ordinal chip + left accent is readable in <100ms without reading the tip.
-- **Reinforces the lever:** drag-to-reorder already controls which cards become 1–6; numbering makes the cause/effect obvious during the drag.
-- **Reversible & non-destructive:** purely cosmetic — no storage, no layout changes.
-- **Backward-compatible:** the prop is optional, so the "Available analytics" toggle list and any non-analytics consumers of `SortablePinnedCardItem` are untouched.
-- **Doctrine-aligned:** semantic tokens only, font-display for the chip ordinals (uppercase-friendly), no banned weights, container-aware (no fixed widths beyond the chip itself).
-
-## Out of scope
-
-- No change to the cap behavior on the dashboard itself.
-- No animation on drag for the chip number — it will simply re-render with the new index. (Acceptable; matches the existing dnd-kit pattern.)
-- No persona/role-specific variation.
+- **Single source of truth per concern:** `layout.pinnedCards` = operator's personal selection. `dashboard_element_visibility` = role-default eligibility (and after Wave 2, properly tenant-scoped). Today they're confusingly merged in one boolean check, which causes the two-click bug.
+- **Wave 1 is reversible & contained** — pure logic change in one component. Fixes the visible bug today.
+- **Wave 2 closes a real tenant-isolation hole** discovered during diagnosis. Must ship before the next operator onboarding to prevent cross-tenant leakage from compounding.
+- **Doctrine-aligned:** Strict tenant isolation (Core); Signal Preservation (don't conflate "visible to role" with "pinned by operator"); Audit findings receive priority + doctrine anchor (P0 / Tenant Isolation).
