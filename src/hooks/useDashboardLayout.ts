@@ -293,26 +293,6 @@ export function templateKeyForRole(role: AppRole): string {
   }
 }
 
-// Fetch all available templates
-export function useDashboardTemplates() {
-  return useQuery({
-    queryKey: ['dashboard-layout-templates'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dashboard_layout_templates')
-        .select('*')
-        .order('display_name');
-
-      if (error) throw error;
-
-      return (data || []).map(template => ({
-        ...template,
-        layout: template.layout as unknown as DashboardLayout,
-      })) as DashboardTemplate[];
-    },
-  });
-}
-
 // Fetch user's dashboard layout
 export function useDashboardLayout(overrideUserId?: string) {
   const roles = useEffectiveRoles();
@@ -579,24 +559,6 @@ export function useUpdateDashboardLayout() {
     mutationFn: async (updates: Partial<DashboardLayout>) => {
       const newLayout = { ...layout, ...updates };
       await saveMutation.mutateAsync(newLayout);
-    },
-  });
-}
-
-// Complete setup with a specific template
-export function useCompleteSetup() {
-  const saveMutation = useSaveDashboardLayout();
-
-  return useMutation({
-    mutationFn: async (templateLayout?: DashboardLayout) => {
-      const layout = templateLayout ?
-        { ...templateLayout, hasCompletedSetup: true } :
-        { ...DEFAULT_LAYOUT, hasCompletedSetup: true };
-
-      await saveMutation.mutateAsync(layout);
-    },
-    onSuccess: () => {
-      toast.success('Dashboard setup complete!');
     },
   });
 }
