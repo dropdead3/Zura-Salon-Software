@@ -373,14 +373,31 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
   const effectivePinnedCardIds = useMemo(() => getPinnedCardIdsFromLayout(layout), [layout]);
   
-  const isCardPinned = (cardId: string): boolean => {
-    if (isPinnedInLayout(layout, cardId)) return true;
+  // SOURCE-OF-TRUTH SEPARATION (P0 fix):
+  // - `isCardPinnedInLayout` = the operator's personal pinned state. This is
+  //   what drives the toggle direction in the Customize drawer.
+  // - `isCardVisibleToRole` = role-default eligibility from the global
+  //   `dashboard_element_visibility` table. Used only to gate cards an
+  //   operator's role isn't allowed to see at all.
+  // Conflating these previously caused a two-click bug: the visibility row
+  // already said `is_visible=true` for leadership, so the first toggle on an
+  // "Available" card was interpreted as an UNPIN and silently noop'd the
+  // layout array. See plan in .lovable/plan.md.
+  const isCardPinnedInLayout = (cardId: string): boolean => isPinnedInLayout(layout, cardId);
+
+  const isCardVisibleToRole = (cardId: string): boolean => {
     if (!visibilityData) return false;
     const visibilityKey = getPinnedVisibilityKey(cardId);
-    return leadershipRoles.some(role => 
+    return leadershipRoles.some(role =>
       visibilityData.find(v => v.element_key === visibilityKey && v.role === role)?.is_visible ?? false
     );
   };
+
+  // Back-compat alias: anywhere not yet migrated still calls `isCardPinned`.
+  // Layout-first, then role visibility as a fallback (preserves old behavior
+  // for callers that depended on the union).
+  const isCardPinned = (cardId: string): boolean =>
+    isCardPinnedInLayout(cardId) || isCardVisibleToRole(cardId);
 
   // Outer list: sections only. Analytics is a single section entry — its
   // pinned cards reorder inside it, never against unrelated sections.
@@ -428,8 +445,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [layout.widgetOrder, layout.widgets]);
   
   const unpinnedCards = useMemo(() => {
-    return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
-  }, [visibilityData]);
+    // Layout-first: a card is "available" iff the operator hasn't personally
+    // pinned it, regardless of the global role-visibility row.
+    return PINNABLE_CARDS.filter(card => !isCardPinnedInLayout(card.id));
+  }, [layout.pinnedCards, layout.sectionOrder]);
 
   const groupedUnpinnedCards = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase();
@@ -463,62 +482,73 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   };
   
   const handleTogglePinnedCard = async (cardId: string) => {
-    const isPinned = isCardPinned(cardId);
-    const newIsVisible = !isPinned;
+    // Layout is the source of truth for the toggle direction. The
+    // dashboard_element_visibility row is a role-default eligibility flag,
+    // not a per-operator pinned state — checking it here previously caused
+    // a two-click bug for "Available" cards whose role default was already
+    // true. See plan in .lovable/plan.md.
+    const isPinned = isCardPinnedInLayout(cardId);
+    const newIsPinned = !isPinned;
     const card = PINNABLE_CARDS.find(c => c.id === cardId);
     const visibilityKey = getPinnedVisibilityKey(cardId);
     const visibilityName = visibilityKey === 'operations_quick_stats'
       ? 'Operations Quick Stats'
       : card?.label || cardId;
-    
+
     setIsTogglingPin(true);
     try {
-      const rows = leadershipRoles.map(role => ({
-        element_key: visibilityKey,
-        element_name: visibilityName,
-        element_category: card?.category || 'Analytics Hub',
-        role,
-        is_visible: newIsVisible,
-      }));
+      // Only flip role-default visibility ON when pinning. Unpinning is a
+      // personal layout action and must NOT downgrade role eligibility for
+      // every other operator (would have been a cross-tenant bleed under the
+      // current global table; doctrine still applies after Wave 2 scoping).
+      if (newIsPinned) {
+        const rows = leadershipRoles.map(role => ({
+          element_key: visibilityKey,
+          element_name: visibilityName,
+          element_category: card?.category || 'Analytics Hub',
+          role,
+          is_visible: true,
+        }));
 
-      queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
-        if (!old) return old;
-        const updated = [...old];
-        for (const row of rows) {
-          const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
-          if (idx >= 0) {
-            updated[idx] = { ...updated[idx], is_visible: row.is_visible };
-          } else {
-            updated.push({
-              id: `optimistic-${row.element_key}-${row.role}`,
-              element_key: row.element_key,
-              element_name: row.element_name,
-              element_category: row.element_category,
-              role: row.role as any,
-              is_visible: row.is_visible,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
-        }
-        return updated;
-      });
-
-      queryClient.setQueriesData<Record<string, boolean>>(
-        { queryKey: ['dashboard-visibility', 'my'] },
-        (old) => {
+        queryClient.setQueryData<DashboardElementVisibility[]>(['dashboard-visibility'], (old) => {
           if (!old) return old;
-          return { ...old, [visibilityKey]: newIsVisible };
-        }
-      );
+          const updated = [...old];
+          for (const row of rows) {
+            const idx = updated.findIndex(v => v.element_key === row.element_key && v.role === row.role);
+            if (idx >= 0) {
+              updated[idx] = { ...updated[idx], is_visible: row.is_visible };
+            } else {
+              updated.push({
+                id: `optimistic-${row.element_key}-${row.role}`,
+                element_key: row.element_key,
+                element_name: row.element_name,
+                element_category: row.element_category,
+                role: row.role as any,
+                is_visible: row.is_visible,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+          return updated;
+        });
 
-      const { error } = await supabase
-        .from('dashboard_element_visibility')
-        .upsert(rows, { onConflict: 'element_key,role' });
+        queryClient.setQueriesData<Record<string, boolean>>(
+          { queryKey: ['dashboard-visibility', 'my'] },
+          (old) => {
+            if (!old) return old;
+            return { ...old, [visibilityKey]: true };
+          }
+        );
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .upsert(rows, { onConflict: 'element_key,role' });
 
-      await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+        if (error) throw error;
+
+        await queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+      }
     } catch (err: any) {
       queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
       toast({ title: 'Failed to update pinned card', description: err?.message || 'Unknown error', variant: 'destructive' });
@@ -530,7 +560,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
     // Update layout's pinnedCards array. The Analytics section is auto-enabled
     // by sanitizeDashboardLayout when at least one card is pinned.
-    if (newIsVisible) {
+    if (newIsPinned) {
       if (!(layout.pinnedCards || []).includes(cardId)) {
         const newPinnedCards = [...(layout.pinnedCards || []), cardId];
         const newSections = layout.sections.includes(ANALYTICS_SECTION_ID)
@@ -899,7 +929,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                             // visibly flips ON before the row migrates to
                             // the Pinned section above. Prevents the "nothing
                             // happens when I toggle" perception.
-                            isPinned={isCardPinned(card.id)}
+                            isPinned={isCardPinnedInLayout(card.id)}
                             onToggle={() => handleTogglePinnedCard(card.id)}
                             isLoading={isTogglingPin}
                             sortable={false}
