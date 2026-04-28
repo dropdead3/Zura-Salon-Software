@@ -54,7 +54,8 @@ import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/Executive
 import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
 import { DailyBriefCard } from '@/components/dashboard/analytics/DailyBriefCard';
 import { OperationalHealthCard } from '@/components/dashboard/analytics/OperationalHealthCard';
-import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsRollupCard';
+import { LocationsStatusCard } from '@/components/dashboard/analytics/LocationsStatusCard';
+import { isClosedOnDate } from '@/hooks/useLocations';
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
@@ -237,7 +238,7 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   client_funnel: { icon: Users, label: 'Client Funnel' },
   client_health: { icon: Heart, label: 'Client Health' },
   operational_health: { icon: Activity, label: 'Operational Health' },
-  locations_rollup: { icon: MapPin, label: 'Locations Rollup' },
+  locations_rollup: { icon: MapPin, label: 'Locations Status' },
   service_mix: { icon: Scissors, label: 'Service Mix' },
   retail_effectiveness: { icon: ShoppingBag, label: 'Retail Effectiveness' },
   rebooking: { icon: CalendarCheck, label: 'Rebooking Rate' },
@@ -270,7 +271,7 @@ const CARD_DESCRIPTIONS: Record<string, string> = {
   client_funnel: 'Total unique clients (new and returning) in the period.',
   client_health: 'Clients flagged as at-risk, win-back, or new-no-return.',
   operational_health: 'Overall operational status across monitored locations.',
-  locations_rollup: 'Number of active locations in your organization.',
+  locations_rollup: 'Real-time open/closed status across your locations. Surfaces only when you operate multiple locations with differing schedules.',
   service_mix: 'Highest-revenue service category in the period.',
   retail_effectiveness: 'Percentage of service transactions that include a retail purchase.',
   rebooking: 'Percentage of clients who rebooked before leaving.',
@@ -488,9 +489,31 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       }
       case 'locations_rollup': {
-        const locRollupCount = accessibleLocations?.length ?? 0;
-        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : ''}`;
-        metricLabel = '';
+        const accessibleIds = new Set((accessibleLocations ?? []).map((l) => l.id));
+        const visible = (locations ?? []).filter((l) => accessibleIds.has(l.id));
+        if (visible.length < 2) {
+          // Materiality gate — single-location orgs get no surface here.
+          metricValue = '';
+          metricLabel = '';
+          break;
+        }
+        const now = new Date();
+        const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const openCount = visible.filter((loc) => {
+          const closure = isClosedOnDate(loc.hours_json, loc.holiday_closures, now);
+          if (closure.isClosed) return false;
+          const dh = loc.hours_json?.[dayKeys[now.getDay()]];
+          if (!dh?.open || !dh?.close || dh.closed) return false;
+          const [oH, oM] = dh.open.split(':').map(Number);
+          const [cH, cM] = dh.close.split(':').map(Number);
+          if ([oH, oM, cH, cM].some(Number.isNaN)) return false;
+          const openMin = oH * 60 + oM;
+          const closeMin = cH * 60 + cM;
+          return nowMin >= openMin && nowMin < closeMin;
+        }).length;
+        metricValue = `${openCount} of ${visible.length}`;
+        metricLabel = 'Open right now';
         break;
       }
       case 'service_mix': {
@@ -844,11 +867,9 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     case 'locations_rollup':
       return (
         <VisibilityGate elementKey="locations_rollup">
-          <EnforcementGateBanner gateKey="gate_margin_baselines">
-            <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <LocationsRollupCard filterContext={filterContext} dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
-            </PinnableCard>
-          </EnforcementGateBanner>
+          <PinnableCard elementKey="locations_rollup" elementName="Locations Status" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <LocationsStatusCard filterContext={filterContext} />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'service_mix':
