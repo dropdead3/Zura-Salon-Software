@@ -691,11 +691,12 @@ export function useResetToDefault(overrideUserId?: string) {
     mutationFn: async () => {
       // Branch 1: owner previewing a role → drop the org-role override.
       if (isRoleReset) {
+        const siblings = await resolveSiblingRoles(orgId, viewAsRole as AppRole);
         const { error } = await supabase
           .from('dashboard_role_layouts')
           .delete()
           .eq('organization_id', orgId)
-          .eq('role', viewAsRole as AppRole);
+          .in('role', siblings);
         if (error) throw error;
         return;
       }
