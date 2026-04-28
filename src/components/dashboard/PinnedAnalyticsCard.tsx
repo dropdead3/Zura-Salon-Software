@@ -307,6 +307,7 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   service_profitability: { label: 'Profitability', href: '/dashboard/admin/analytics?tab=sales' },
   control_tower: { label: 'Control Tower', href: '/dashboard/admin/color-bar' },
   predictive_inventory: { label: 'Inventory', href: '/dashboard/admin/color-bar' },
+  level_progress_kpi: { label: 'Team Progress', href: '/dashboard/admin/team-directory' },
 };
 
 /**
