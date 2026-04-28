@@ -78,6 +78,7 @@ import {
   getPinnedVisibilityKey,
   toPinnedEntry,
   isRetiredSectionId,
+  ANALYTICS_SECTION_ID,
 } from '@/hooks/useDashboardLayout';
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
 import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
