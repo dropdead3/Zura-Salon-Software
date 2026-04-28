@@ -1,22 +1,21 @@
 import { useMemo, useState } from 'react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
-// VisibilityGate intentionally NOT imported here.
-// PinnedAnalyticsCard is only rendered when the user has explicitly pinned a
-// card via Customize. Re-gating it on per-role visibility silently betrays
-// user intent (the contract: a pinned card MUST render). The role-level
-// visibility table still gates the underlying Analytics Hub tabs and the
-// Customize menu's "Available cards" list — those are the correct enforcement
-// points.
 // VisibilityGate intentionally NOT imported here. PinnedAnalyticsCard is only
 // rendered when the user has explicitly pinned a card via Customize; re-gating
-// it on per-role visibility silently betrays user intent. The role-level
-// visibility table still gates the underlying Analytics Hub tabs and the
-// Customize menu's "Available cards" list — those are the correct enforcement
-// points. Local pass-through shims keep the existing JSX structure intact
-// without re-introducing the gate.
+// it on per-role visibility silently betrays user intent (the contract: a
+// pinned card MUST render). The role-level visibility table still gates the
+// underlying Analytics Hub tabs and the Customize menu's "Available cards"
+// list — those are the correct enforcement points. Local pass-through shims
+// keep the existing JSX structure intact without re-introducing the gate.
+import * as React from 'react';
 import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
-const VisibilityGate = ({ children }: { elementKey?: string; children: React.ReactNode }) => <>{children}</>;
+const VisibilityGate = ({ children }: {
+  elementKey?: string;
+  elementName?: string;
+  elementCategory?: string;
+  children: React.ReactNode;
+}) => <>{children}</>;
 const useElementVisibility = (_elementKey: string): boolean => true;
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
