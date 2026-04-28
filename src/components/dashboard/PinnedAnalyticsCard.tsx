@@ -399,14 +399,18 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   
   // If parent tab is hidden and we have a mapping, don't render the card
   // This check MUST come AFTER all hooks are called
-  if (parentTabKey && !parentTabVisible) {
-    return null;
-  }
+  // Parent-tab gate intentionally removed — see header comment. Pinned cards
+  // are user-opt-in and must render. `parentTabVisible` is left in place as a
+  // shimmed no-op so future signals can re-attach without restructuring JSX.
+  void parentTabVisible;
 
   // ── Compact (simple) view ──────────────────────────────────────
   if (compact) {
     // Filter out unknown card IDs gracefully
-    if (!CARD_META[cardId]) return null;
+    if (!CARD_META[cardId]) {
+      reportVisibilitySuppression('pinned-analytics-card', 'unknown-card-id', { cardId });
+      return null;
+    }
     
     const meta = CARD_META[cardId];
     const Icon = meta.icon;
@@ -578,6 +582,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const total = levelCounts?.total ?? 0;
         if (total === 0) {
           // Visibility-contract canon: silence when no team to evaluate
+          reportVisibilitySuppression('pinned-analytics-card', 'no-team-data', { cardId });
           return null;
         }
         const needsReview = levelCounts?.belowStandard ?? 0;
