@@ -1,7 +1,22 @@
 import { useMemo, useState } from 'react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
-import { VisibilityGate, useElementVisibility } from '@/components/visibility';
+// VisibilityGate intentionally NOT imported here. PinnedAnalyticsCard is only
+// rendered when the user has explicitly pinned a card via Customize; re-gating
+// it on per-role visibility silently betrays user intent (the contract: a
+// pinned card MUST render). The role-level visibility table still gates the
+// underlying Analytics Hub tabs and the Customize menu's "Available cards"
+// list — those are the correct enforcement points. Local pass-through shims
+// keep the existing JSX structure intact without re-introducing the gate.
+import * as React from 'react';
+import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
+const VisibilityGate = ({ children }: {
+  elementKey?: string;
+  elementName?: string;
+  elementCategory?: string;
+  children: React.ReactNode;
+}) => <>{children}</>;
+const useElementVisibility = (_elementKey: string): boolean => true;
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { Card } from '@/components/ui/card';
@@ -384,14 +399,18 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   
   // If parent tab is hidden and we have a mapping, don't render the card
   // This check MUST come AFTER all hooks are called
-  if (parentTabKey && !parentTabVisible) {
-    return null;
-  }
+  // Parent-tab gate intentionally removed — see header comment. Pinned cards
+  // are user-opt-in and must render. `parentTabVisible` is left in place as a
+  // shimmed no-op so future signals can re-attach without restructuring JSX.
+  void parentTabVisible;
 
   // ── Compact (simple) view ──────────────────────────────────────
   if (compact) {
     // Filter out unknown card IDs gracefully
-    if (!CARD_META[cardId]) return null;
+    if (!CARD_META[cardId]) {
+      reportVisibilitySuppression('pinned-analytics-card', 'unknown-card-id', { cardId });
+      return null;
+    }
     
     const meta = CARD_META[cardId];
     const Icon = meta.icon;
@@ -563,6 +582,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const total = levelCounts?.total ?? 0;
         if (total === 0) {
           // Visibility-contract canon: silence when no team to evaluate
+          reportVisibilitySuppression('pinned-analytics-card', 'no-team-data', { cardId });
           return null;
         }
         const needsReview = levelCounts?.belowStandard ?? 0;
