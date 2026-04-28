@@ -225,6 +225,7 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
     widgetOrder: dedupe(layout.widgetOrder),
     hubOrder: dedupe(layout.hubOrder),
     enabledHubs: dedupe(layout.enabledHubs),
+    dismissedStubs: dedupe(layout.dismissedStubs),
   };
 }
 
