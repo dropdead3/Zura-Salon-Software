@@ -82,12 +82,33 @@ export function CommandCenterVisibilityToggle({
         organization_id: orgId,
       }));
 
-      const { error } = await supabase
+      // Read-then-update/insert (partial unique index can't be used as ON CONFLICT target).
+      const { data: existing, error: selErr } = await supabase
         .from('dashboard_element_visibility')
-        .upsert(rows, { onConflict: 'element_key,role,organization_id' })
-        .select();
+        .select('id, role')
+        .eq('element_key', elementKey)
+        .eq('organization_id', orgId)
+        .in('role', LEADERSHIP_ROLES);
+      if (selErr) throw selErr;
 
-      if (error) throw error;
+      const existingByRole = new Map((existing || []).map(r => [r.role, r.id]));
+      const toUpdate = rows.filter(r => existingByRole.has(r.role));
+      const toInsert = rows.filter(r => !existingByRole.has(r.role));
+
+      for (const row of toUpdate) {
+        const id = existingByRole.get(row.role)!;
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .update({ is_visible: row.is_visible, element_name: row.element_name, element_category: row.element_category })
+          .eq('id', id);
+        if (error) throw error;
+      }
+      if (toInsert.length > 0) {
+        const { error } = await supabase
+          .from('dashboard_element_visibility')
+          .insert(toInsert);
+        if (error) throw error;
+      }
 
       // Sync to dashboard_layout so Customizer stays in sync
       const currentLayout = layout ?? { sections: [], widgets: [], hasCompletedSetup: false, pinnedCards: [], sectionOrder: [] };
