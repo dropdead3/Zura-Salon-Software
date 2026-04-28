@@ -111,6 +111,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -378,6 +379,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const canCustomize = useCanCustomizeDashboardLayouts();
 
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
+  const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const registerElement = useRegisterVisibilityElement();
   const [isTogglingPin, setIsTogglingPin] = useState(false);
   const queryClient = useQueryClient();
@@ -798,12 +800,20 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                       );
                     }
 
+                    // Payday Countdown: surface why nothing renders when org
+                    // lacks the `payroll_enabled` feature flag. Toggle remains
+                    // togglable; this is informational, not a hard gate.
+                    const description =
+                      section.id === 'payday_countdown' && !isPayrollEntitled
+                        ? 'Enable Payroll in Settings to surface this card.'
+                        : section.description;
+
                     return (
                       <SortableSectionItem
                         key={section.id}
                         id={section.id}
                         label={section.label}
-                        description={section.description}
+                        description={description}
                         icon={section.icon}
                         isEnabled={layout.sections.includes(section.id)}
                         onToggle={() => handleToggleSection(section.id)}
