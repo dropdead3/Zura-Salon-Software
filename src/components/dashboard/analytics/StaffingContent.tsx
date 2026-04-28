@@ -35,6 +35,8 @@ export function StaffingContent({ workload, isLoading, locationId, dateRange = '
 
       {/* Standalone cards with consistent spacing */}
       <div className="space-y-6">
+        <LevelProgressKpiCard />
+
         <LevelReadinessCard />
 
         <StylistWorkloadCard 
