@@ -8,7 +8,8 @@ import { Banknote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
-import { reportVisibilitySuppression } from '@/lib/dev/visibility-contract-bus';
+import { useHasEffectivePermission } from '@/hooks/useEffectivePermissions';
+import { ConfigurationStubCard } from '@/components/dashboard/ConfigurationStubCard';
 
 
 function formatCurrency(amount: number): string {
@@ -24,18 +25,48 @@ export function PaydayCountdownBanner() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled, isLoading: entitlementLoading } = usePayrollEntitlement();
   const { settings, currentPeriod, estimatedCompensation, isLoading } = useMyPayData();
+  // Account owners / admins can enable Payroll; everyone else sees a passive
+  // explainer with no CTA route (they'd land on a 403).
+  const canManageFeatures = useHasEffectivePermission('manage_settings');
 
-  // Self-gating: only render if org has payroll enabled AND user has payroll settings.
-  // Doctrine: silence is valid output, but we report the reason so the operator
-  // can diagnose via the suppression bus / customize menu hint.
+  // Defer rendering while data is in flight — silence is correct here, this
+  // is a loading state, not a configuration gap.
   if (isLoading || entitlementLoading) return null;
+
+  // Configuration gates — operator opted in via Customize, so render a stub
+  // explaining why the live card is silent and (when permitted) a deep link
+  // to fix it. Doctrine: distinguish materiality silence from configuration
+  // silence (mem://architecture/visibility-contracts).
   if (!isEntitled) {
-    reportVisibilitySuppression('payday-countdown', 'payroll-not-entitled', {});
-    return null;
+    return (
+      <ConfigurationStubCard
+        sectionId="payday_countdown"
+        title="Payday Countdown"
+        reason={
+          canManageFeatures
+            ? 'Enable Payroll to surface your next paycheck.'
+            : 'Payroll is not enabled for this organization yet.'
+        }
+        ctaLabel={canManageFeatures ? 'Enable Payroll' : 'Learn more'}
+        ctaTo={dashPath('/admin/features')}
+        icon={Banknote}
+        dismissible
+      />
+    );
   }
+
   if (!settings) {
-    reportVisibilitySuppression('payday-countdown', 'no-payroll-settings', {});
-    return null;
+    return (
+      <ConfigurationStubCard
+        sectionId="payday_countdown"
+        title="Payday Countdown"
+        reason="Configure your pay setup to start the countdown."
+        ctaLabel="Set up"
+        ctaTo={dashPath('/my-pay')}
+        icon={Banknote}
+        dismissible
+      />
+    );
   }
 
   const checkDate = parseISO(currentPeriod.checkDate);
