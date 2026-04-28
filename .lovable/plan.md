@@ -1,75 +1,101 @@
-## Why only 8 of 12 cards render
+# Replace Locations Rollup with Locations Status
 
-Toggling a card "on" in Customize only writes it to `layout.pinnedCards`. Between that and actual render in `PinnedAnalyticsCard`, there are **four silent suppression layers** that can drop cards without telling the user. With 12 toggled and 8 visible, four are being dropped by one (or a mix) of:
+## Why this change
 
-### Suppression sources (in render order)
+The current `locations_rollup` card surfaces only a static count (e.g. "2 LOCATIONS"). Operators already know how many locations they have — that's not a lever, it's noise. Per Lever Doctrine: if a surface doesn't reduce ambiguity or clarify leverage, it doesn't belong.
 
-1. **Financial gate** (`DashboardHome.tsx` line 511)
-   `FINANCIAL_PINNED_CARD_IDS` (true_profit, commission_summary, staff_commission_breakdown, service_profitability, staff_performance, etc.) are dropped from `pinnedCardIds` entirely when `useCanViewFinancials()` is false. Owners pass; managers without explicit permission don't.
+There **is** a meaningful version of this surface: a real-time **Locations Status** view that answers "right now, which of my locations are open and which are closed?" — useful only when an org has 2+ locations with differing schedules / holiday closures.
 
-2. **Stylist privacy contract** (line 884)
-   `STYLIST_FORBIDDEN_PINNED_CARDS` are filtered out for stylist-only viewers. Not relevant for an Owner viewing Drop Dead, but is for view-as.
+## What gets built
 
-3. **Parent-tab visibility gate** (`PinnedAnalyticsCard.tsx` line 387)
-   Each card maps to an analytics tab via `CARD_TO_TAB_MAP` (e.g. `analytics_leadership_tab`, `analytics_sales_tab`). If that tab's `dashboard_element_visibility` row is set to hidden for the user's role, the card returns `null`. This is the most likely culprit for "I toggled it on but nothing appears" — the card is pinned, the tab is hidden.
+### 1. New component: `LocationsStatusCard`
 
-4. **Per-card self-suppression** (visibility-contracts doctrine)
-   - `level_progress_kpi` returns null when `levelCounts.total === 0`
-   - `sales_overview` returns null on closed days for "today" range
-   - `VisibilityGate` wrapping each card can hide it via per-element visibility key
-   - Cards that read empty data ranges may also return null
+Path: `src/components/dashboard/analytics/LocationsStatusCard.tsx`
 
-The user has no signal about which layer dropped the card. The toggle says "on", the card silently vanishes.
+Behavior:
+- Pulls `useActiveLocations()` and the user's `accessibleLocations`.
+- For each location, computes **right-now** state using existing helpers (`isClosedOnDate`, `getTodayHours`, `getLocationHoursForDate`) plus current local time vs. today's `open`/`close`.
+- States per location: `Open` (green dot + "closes 7pm"), `Closed — holiday` (uses holiday name), `Closed — regular hours`, `Closed — outside hours` ("opens 9am" / "opens Mon 9am").
+- Header summary: "X of Y open right now".
+- Compact list (max 6, "+N more" if exceeded) sorted: Open → Outside hours → Closed.
+- Auto-refresh state every 60s via `setInterval` so the card stays accurate without a page reload.
 
-## Fix plan
+### 2. Materiality / silence gate (Visibility Contract)
 
-### 1. Diagnose Drop Dead's actual state (read-only)
-Query for the org:
-- `dashboard_element_visibility` rows for the four analytics tab keys (`analytics_leadership_tab`, `analytics_sales_tab`, `analytics_operations_tab`, `analytics_marketing_tab`) — confirm which are hidden
-- The user's role + whether `useCanViewFinancials` evaluates true
-- Current `user_preferences.dashboard_layout.pinnedCards` to enumerate the 12
+Surface returns `null` (not a placeholder card) when:
+- `accessibleLocations.length < 2`, OR
+- All locations share identical `hours_json` AND zero holiday closures across the set (no differential signal to surface).
 
-This tells us which of the 4 layers is dropping the missing 4.
+When suppressed, emit `reportVisibilitySuppression('locations-status', '<reason>')` with reasons `single-location` and `uniform-schedules` (kebab-case, per Visibility Contract canon).
 
-### 2. Surface suppression in the Customize menu
-Apply the same pattern already used for `payday_countdown` (per the prior fix). In `DashboardCustomizeMenu.tsx`, for each pinned card row show an inline hint when the card is toggled-on but will be silently suppressed:
+Suppression hint shown in `DashboardCustomizeMenu` when toggled-on but suppressed (reusing the existing hint pipeline added earlier).
 
-- "Hidden — Sales analytics tab is off for your role" (parent tab gated)
-- "Hidden — financial permissions required" (financial gate)
-- "Hidden — no team data yet" (level_progress_kpi empty)
-- "Hidden — location is closed today" (sales_overview today-only)
+### 3. Simple-view KPI tile
 
-Compute via the same hooks `DashboardHome` uses (`useDashboardVisibility`, `useCanViewFinancials`, `useElementVisibility(parentTabKey)`).
+In `PinnedAnalyticsCard.tsx` `case 'locations_rollup'` simple branch — replace the static "X locations" string with a live "X of Y open" value + label "Open right now". Same materiality gate as detailed view.
 
-### 3. Emit suppression reasons to the visibility bus
-In `PinnedAnalyticsCard.tsx`, every `return null` branch should call the shared `visibility-contract-bus` with a kebab-case reason (`parent-tab-hidden`, `financials-not-permitted`, `no-team-data`, `location-closed`, `unknown-card-id`). Matches the doctrine from `mem://architecture/visibility-contracts.md` and gives dev-mode logging for the next time this happens.
+### 4. Rename the card identity
 
-### 4. Auto-unhide the parent tab when a child card is pinned
-When a user pins a card whose parent analytics tab is hidden, either:
-  - **Option A (recommended):** auto-enable the parent tab visibility for their role (write to `dashboard_element_visibility`) so the toggle does what the user expects.
-  - **Option B:** show a confirm prompt: "Pinning this also enables the Sales analytics tab. Continue?"
+Keep the stable id `locations_rollup` (avoids a DB migration on `dashboard_element_visibility` and pinned-card preferences for existing orgs), but update all human-facing labels and metadata:
 
-Pick A by default — toggling on a card should make it appear; that's the contract.
+| Anchor | Old | New |
+|---|---|---|
+| `DashboardCustomizeMenu` label | Locations Rollup | Locations Status |
+| `PinnableCard` elementName | Locations Rollup | Locations Status |
+| `CARD_META` label | Locations Rollup | Locations Status |
+| `CARD_DESCRIPTIONS` | "Number of active locations…" | "Real-time open/closed status across your locations. Surfaces only when multiple locations have differing schedules." |
+| Customize-menu category | Operations | Operations (unchanged) |
+| Preview tile (`AnalyticsCardPreview`) | LocationsRollupPreview | LocationsStatusPreview |
 
-### 5. Contract test
-Extend `src/__tests__/dashboard-section-contract.test.ts` (or add a sibling `pinned-card-contract.test.ts`) asserting that for every `PINNABLE_CARD_IDS` entry:
-- it has a `CARD_META` entry
-- it has a render branch in the compact `switch`
-- it has a render branch in the detailed `switch`
-- if it has self-suppression, it emits a reason to the bus
+Also update the two seed migrations' `display_name` via a new forward-only migration that does `UPDATE dashboard_element_visibility SET display_name = 'Locations Status' WHERE element_key = 'locations_rollup';` (safe, idempotent).
 
-This prevents the next "toggle does nothing" regression.
+### 5. Wire the new component
 
-## Files to edit
+In both `CommandCenterAnalytics.tsx` and `PinnedAnalyticsCard.tsx` (detailed branch), swap `LocationsRollupCard` → `LocationsStatusCard`. Delete `LocationsRollupCard.tsx` after the swap (no other consumers per `rg`).
 
-- `src/components/dashboard/DashboardCustomizeMenu.tsx` — inline suppression hints per pinned card
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` — emit suppression reasons on every `return null`
-- `src/hooks/useDashboardLayout.ts` (or new helper) — auto-enable parent tab visibility when a child card is pinned
-- `src/__tests__/dashboard-section-contract.test.ts` (extend) — pinned-card contract assertions
+### 6. Preview update
 
-No DB migrations required — uses existing `dashboard_element_visibility` rows.
+Rebuild `LocationsStatusPreview` in `AnalyticsCardPreview.tsx` to mirror the new layout (status pills, "X of Y open" header, sample 3-location list with one closed for holiday).
 
-## Out of scope
+### 7. Contract test
 
-- Restructuring the visibility-tab/card relationship (large refactor; current model is correct, just opaque)
-- Removing the financial gate (deliberate permission boundary)
+Extend `src/__tests__/dashboard-section-contract.test.ts` to assert `locations_rollup` has the new label/description and renders both simple and detailed branches without throwing.
+
+## Technical notes
+
+- No DB schema changes. Element key stays `locations_rollup`; only display copy is updated.
+- No changes to RLS or the privacy contract — `locations_rollup` remains in `STYLIST_FORBIDDEN_PINNED_CARDS`.
+- Materiality suppression follows the project's Visibility Contracts canon (return null + dev suppression log + kebab-case reason).
+- Auto-refresh interval cleared on unmount; component is container-aware (no fixed widths).
+
+## Files touched
+
+```
+NEW   src/components/dashboard/analytics/LocationsStatusCard.tsx
+NEW   supabase migration  (display_name update)
+EDIT  src/components/dashboard/CommandCenterAnalytics.tsx
+EDIT  src/components/dashboard/PinnedAnalyticsCard.tsx
+EDIT  src/components/dashboard/DashboardCustomizeMenu.tsx
+EDIT  src/components/dashboard/previews/AnalyticsCardPreview.tsx
+EDIT  src/__tests__/dashboard-section-contract.test.ts
+DEL   src/components/dashboard/analytics/LocationsRollupCard.tsx
+```
+
+---
+
+## Prompt feedback (per your standing instruction)
+
+**What worked well in your prompt**
+- You named the failure ("pointless analytic") *and* described exactly when the surface would have value (multi-location, differing hours, currently open vs. closed). That's a clean Signal → Lever framing — much easier to act on than "remove this."
+- You implicitly applied the materiality doctrine: the card should be silent when there's nothing differential to say.
+
+**How to sharpen prompts like this further**
+1. **State the doctrine anchor explicitly.** e.g. "This violates Visibility Contract — silence is valid output when there's no differential signal." That tells me which canon to enforce, not just which card to fix.
+2. **Specify suppression vs. removal.** You said "not needed" but described conditions where it *is* useful. Calling that out as "suppress when single-location, render when multi-location with schedule variance" removes one round trip.
+3. **Name the success state.** "I want to glance at the dashboard at 8:55am and instantly know which locations open at 9 vs. 10" gives me a concrete UX target to design against.
+
+**Suggested enhancements beyond this scope**
+- **"Closing soon" warning state** (e.g. yellow dot when within 30 min of close) — useful for last-call ops decisions.
+- **Click-through to location schedule editor** so a closure-day surprise leads directly to a fix.
+- **Anomaly detection**: flag a location open today that's normally closed (or vice versa) — that *is* a leverage signal worth a real-time alert, not just a status pill.
+- **Promote to alert** if a location is unexpectedly closed during business hours (staff didn't show, etc.) — graduates this from passive surface to operational tripwire.

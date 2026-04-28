@@ -263,7 +263,7 @@ const PINNABLE_CARDS = [
   { id: 'operations_stats', label: 'Operations Queue', category: 'Operations', icon: <ClipboardCheck className="w-4 h-4" />, size: 'half' as const },
   { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" />, size: 'full' as const },
   { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" />, size: 'half' as const },
-  { id: 'locations_rollup', label: 'Locations Rollup', category: 'Operations', icon: <MapPin className="w-4 h-4" />, size: 'full' as const },
+  { id: 'locations_rollup', label: 'Locations Status', category: 'Operations', icon: <MapPin className="w-4 h-4" />, size: 'full' as const },
   // Financial
   { id: 'commission_summary', label: 'Commission Summary', category: 'Financial', icon: <Wallet className="w-4 h-4" />, size: 'full' as const },
   { id: 'staff_commission_breakdown', label: 'Staff Commission Breakdown', category: 'Financial', icon: <Receipt className="w-4 h-4" />, size: 'full' as const },

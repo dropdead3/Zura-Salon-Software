@@ -481,27 +481,31 @@ function StylistWorkloadPreview() {
 }
 
 /* ═══════════════════════════════════════ */
-/* LOCATIONS ROLLUP                       */
+/* LOCATIONS STATUS                       */
 /* ═══════════════════════════════════════ */
-function LocationsRollupPreview() {
+function LocationsStatusPreview() {
   const locations = [
-    { name: 'Downtown', rev: '$18.4k', pct: 100 },
-    { name: 'Midtown', rev: '$14.2k', pct: 77 },
-    { name: 'Suburbs', rev: '$9.8k', pct: 53 },
+    { name: 'Downtown', status: 'Open · closes 7pm', tone: 'open' as const },
+    { name: 'Midtown', status: 'Opens 10am', tone: 'pending' as const },
+    { name: 'Suburbs', status: 'Holiday · Memorial Day', tone: 'closed' as const },
   ];
+  const dotClass = (t: 'open' | 'pending' | 'closed') =>
+    t === 'open' ? 'bg-emerald-500' : t === 'pending' ? 'bg-amber-500' : 'bg-rose-500';
   return (
     <div className="space-y-3">
-      <MiniHeader icon={MapPin} title="LOCATIONS ROLLUP" />
-      <div className="space-y-2">
+      <MiniHeader icon={MapPin} title="LOCATIONS STATUS" />
+      <div className="text-center">
+        <p className="font-display text-base">1<span className="text-muted-foreground">/3</span></p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Open right now</p>
+      </div>
+      <div className="space-y-1.5">
         {locations.map(l => (
-          <div key={l.name} className="space-y-0.5">
-            <div className="flex justify-between text-[10px]">
-              <span className="text-foreground font-medium">{l.name}</span>
-              <span className="text-muted-foreground">{l.rev}</span>
-            </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div className="h-full rounded-full bg-primary/70" style={{ width: `${l.pct}%` }} />
-            </div>
+          <div key={l.name} className="flex items-center justify-between gap-2 text-[10px]">
+            <span className="text-foreground font-medium truncate">{l.name}</span>
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              <span className={`w-1.5 h-1.5 rounded-full ${dotClass(l.tone)}`} />
+              {l.status}
+            </span>
           </div>
         ))}
       </div>
@@ -790,7 +794,7 @@ const PREVIEWS: Record<string, () => JSX.Element> = {
   operational_health: OperationalHealthPreview,
   capacity_utilization: CapacityUtilizationPreview,
   stylist_workload: StylistWorkloadPreview,
-  locations_rollup: LocationsRollupPreview,
+  locations_rollup: LocationsStatusPreview,
   // Financial
   commission_summary: CommissionSummaryPreview,
   staff_commission_breakdown: StaffCommissionBreakdownPreview,
