@@ -77,6 +77,7 @@ const StylistPushList = React.lazy(() => import('@/components/dashboard/StylistP
 const LevelProgressNudge = React.lazy(() => import('@/components/dashboard/LevelProgressNudge').then(m => ({ default: m.LevelProgressNudge })));
 const GraduationKpiTile = React.lazy(() => import('@/components/dashboard/GraduationKpiTile').then(m => ({ default: m.GraduationKpiTile })));
 const PaydayCountdownBanner = React.lazy(() => import('@/components/dashboard/mypay/PaydayCountdownBanner').then(m => ({ default: m.PaydayCountdownBanner })));
+const PayrollDeadlineCard = React.lazy(() => import('@/components/dashboard/payroll/PayrollDeadlineCard').then(m => ({ default: m.PayrollDeadlineCard })));
 const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/InsightsNudgeBanner').then(m => ({ default: m.InsightsNudgeBanner })));
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
@@ -532,6 +533,10 @@ function DashboardSections({
     ),
 
     payday_countdown: <PaydayCountdownBanner />,
+
+    // Leadership-only payroll deadline reminder. Self-gates internally on
+    // `manage_payroll` permission; outer gate matches Customize menu visibility.
+    payroll_deadline: isLeadership ? <PayrollDeadlineCard /> : null,
     
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
