@@ -933,6 +933,14 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           </PinnableCard>
         </VisibilityGate>
       );
+    case 'level_progress_kpi':
+      return (
+        <VisibilityGate elementKey="level_progress_kpi">
+          <PinnableCard elementKey="level_progress_kpi" elementName="Level Progress" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <LevelProgressKpiCard />
+          </PinnableCard>
+        </VisibilityGate>
+      );
     case 'staffing_trends':
       return (
         <VisibilityGate elementKey="staffing_trends">
