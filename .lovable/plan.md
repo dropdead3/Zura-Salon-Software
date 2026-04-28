@@ -1,36 +1,62 @@
-## Problem
+## Goal
 
-`Level Progress` (and several other actively-rendered sections) don't appear in the dashboard customizer because the `getSections()` registry in `DashboardCustomizeMenu.tsx` is out of sync with what `DashboardHome.tsx` actually renders.
+Convert the `level_progress` dashboard section from a small "go-to-page" nudge into a proper analytic card that reads like every other Command Center analytic — header + four KPI buckets:
 
-### Sections rendered by DashboardHome but missing from the customizer
+1. **Ready to Level Up** — stylists who are fully qualified for promotion
+2. **On Pace** — stylists actively progressing (not at risk, not yet ready)
+3. **At Risk** — stylists who have fallen below retention minimums (coaching flag)
+4. **Needs Review for Level Down** — stylists whose retention failures triggered demotion-eligible status
 
-| Section ID | Renders for | Currently toggleable? |
-|---|---|---|
-| `daily_briefing` | everyone | No |
-| `level_progress` | stylists | **No** ← user-reported |
-| `graduation_kpi` | leadership | No |
-| `active_campaigns` | leadership | No |
-| `payroll_deadline` | leadership | No |
-| `payday_countdown` | everyone | No |
+The whole card stays linkable to `/admin/graduation-tracker` so leadership can drill in.
 
-(Sections like `decisions_awaiting`, `team_pulse`, `upcoming_events` are operator-primitive surfaces that always self-suppress under the visibility contract — they intentionally aren't in the customizer. `ai_insights` and `hub_quicklinks` render as `null` permanently and stay out.)
+## What changes
 
-## Fix
+### 1. Rebuild `src/components/dashboard/LevelProgressNudge.tsx` as `LevelProgressCard`
 
-Add the six missing entries to `getSections()` in `src/components/dashboard/DashboardCustomizeMenu.tsx`, each gated by the appropriate `isVisible(ctx)` so stylists see `level_progress` while leadership sees `graduation_kpi` / `active_campaigns` / `payroll_deadline`.
+Replace the current single-stylist pill with a leadership-oriented 4-bucket KPI card following the **Card Header Layout canon**:
 
-### Lucide icons to import
+- Wrap in `Card` using `tokens.card.wrapper`
+- Header: `tokens.card.iconBox` (GraduationCap icon) + `CardTitle` with `tokens.card.title` ("LEVEL PROGRESS") + `MetricInfoTooltip` inline + total-stylists badge on the right
+- Body: 4 KPI tiles in a responsive grid (`grid-cols-2 md:grid-cols-4`) — each tile shows count + label + colored status dot
+  - Ready to Level Up — emerald
+  - On Pace — primary/blue
+  - At Risk — amber
+  - Needs Review for Level Down — rose/destructive
+- Footer: subtle "View Team Progress →" link to `dashPath('/admin/graduation-tracker')` using `tokens.button.cardFooter` style
+- Counts pulled from `useTeamLevelProgress().counts`:
+  - readyToLevelUp = `counts.ready`
+  - onPace = `counts.inProgress`
+  - atRisk = `counts.atRisk`
+  - needsReview = `counts.belowStandard`
+- Loading: skeleton state matching layout
+- Empty: when `counts.total === 0`, return `null` (visibility-contract canon — silence is valid)
 
-`GraduationCap`, `CalendarClock`, `Wallet2`, `Send`, `Sunrise`.
+### 2. Keep stylist-side experience intact
 
-## Why this happened (so it doesn't recur)
+The current `LevelProgressNudge` was meant for individual stylists ("your" career progression). Since the section is now leadership-oriented and aggregate, I'll:
 
-The customizer's `getSections()` is the **section registry** — a hand-maintained subset of the section IDs that `DashboardHome.tsx` knows how to render. Whenever a new section ID is added to `DEFAULT_LAYOUT.sections` / `sectionMap` in `DashboardHome.tsx`, it must also be added here. There's currently no test enforcing the symmetry.
+- Keep a thin stylist-only branch inside the new card: when `hasStylistRole && !isLeadership`, render the existing single-user nudge UI (move the old logic into a small `MyLevelProgressNudge` sub-component).
+- When `isLeadership` (owner/admin/manager), render the new 4-bucket aggregate card.
+- This preserves stylist privacy contract — stylists never see org-wide counts.
 
-## Optional follow-up (recommended, not in this change)
+### 3. Wire role-aware rendering in `DashboardHome.tsx`
 
-Add a Vitest that asserts every non-null key in `DashboardHome.sectionMap` either appears in `getSections()` **or** is explicitly listed in a small `INTENTIONALLY_HIDDEN_FROM_CUSTOMIZER` allowlist (operator primitives, permanently-null sections). This is the same canon pattern as `RETIRED_SECTION_IDS` — the registry plus the test prevent drift on either side.
+`level_progress` already renders for `hasStylistRole || isLeadership` (from the prior change). The new component handles both branches internally — no change needed at the section map.
 
-## Files to edit
+### 4. Customize menu copy
 
-- `src/components/dashboard/DashboardCustomizeMenu.tsx` — add 6 entries to `getSections()`, add 5 lucide-react icon imports.
+Update the description in `DashboardCustomizeMenu.tsx` from "Your career level trajectory" to "Team level readiness — promotions, pace, risk" so leadership understands what they're enabling.
+
+## Files edited
+
+- `src/components/dashboard/LevelProgressNudge.tsx` — rebuilt as dual-mode (stylist nudge + leadership 4-bucket KPI card)
+- `src/components/dashboard/DashboardCustomizeMenu.tsx` — updated description text
+
+## Open question
+
+**Should this also become pinnable in the Analytics Hub** (wrapped in `PinnableCard` like `LevelReadinessCard`), so owners can pin it to Command Center the same way they pin other analytic cards?
+
+- If **yes**: I'll wrap it in `PinnableCard` with `elementKey="level_progress_kpi"` so it shows up in the customize menu's pinnable-cards list too.
+- If **no**: It stays a regular dashboard section toggled via the existing `level_progress` switch.
+
+I recommend **yes** — it matches your direction that this "belongs in the analytic card section." Confirm and I'll include `PinnableCard` wrapping in the build.
