@@ -143,6 +143,7 @@ function dedupe<T>(items: T[] | undefined): T[] | undefined {
 export const RETIRED_SECTION_IDS = new Set<string>([
   'hub_quicklinks',   // Sidebar handles hub navigation; dashboard card was redundant.
   'team_dashboards',  // Replaced by role-switcher in Customize.
+  'announcements',    // Moved to floating AnnouncementsDrawer; dashboard render branch removed.
   // NOTE: 'command_center' is intentionally NOT here — it has bespoke
   // migration that converts it into inline pinned cards (see migrateLayout).
 ]);
@@ -197,8 +198,8 @@ function sanitizeDashboardLayout(layout: DashboardLayout): DashboardLayout {
 }
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'client_engine', 'widgets'],
+  sectionOrder: ['daily_briefing', 'ai_insights', 'todays_prep', 'payroll_deadline', 'payday_countdown', 'active_campaigns', 'quick_actions', 'todays_queue', 'quick_stats', 'level_progress', 'graduation_kpi', 'analytics', 'schedule_tasks', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,

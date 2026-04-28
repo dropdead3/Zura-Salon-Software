@@ -77,6 +77,7 @@ const StylistPushList = React.lazy(() => import('@/components/dashboard/StylistP
 const LevelProgressNudge = React.lazy(() => import('@/components/dashboard/LevelProgressNudge').then(m => ({ default: m.LevelProgressNudge })));
 const GraduationKpiTile = React.lazy(() => import('@/components/dashboard/GraduationKpiTile').then(m => ({ default: m.GraduationKpiTile })));
 const PaydayCountdownBanner = React.lazy(() => import('@/components/dashboard/mypay/PaydayCountdownBanner').then(m => ({ default: m.PaydayCountdownBanner })));
+const PayrollDeadlineCard = React.lazy(() => import('@/components/dashboard/payroll/PayrollDeadlineCard').then(m => ({ default: m.PayrollDeadlineCard })));
 const InsightsNudgeBanner = React.lazy(() => import('@/components/dashboard/InsightsNudgeBanner').then(m => ({ default: m.InsightsNudgeBanner })));
 const ActiveCampaignsCard = React.lazy(() => import('@/components/dashboard/ActiveCampaignsCard').then(m => ({ default: m.ActiveCampaignsCard })));
 const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dashboard/InventoryManagerDashboardCard').then(m => ({ default: m.InventoryManagerDashboardCard })));
@@ -95,6 +96,42 @@ import {
   isStylistOnlyViewer,
   STYLIST_FORBIDDEN_PINNED_CARDS,
 } from '@/lib/dashboard/stylistPrivacy';
+
+/**
+ * Canonical list of section IDs that have a render branch in `sectionComponents`.
+ * Source of truth for the toggle↔component contract test
+ * (`src/__tests__/dashboard-section-contract.test.ts`).
+ *
+ * NOTE: keep in sync when adding/removing keys in the `sectionComponents`
+ * useMemo below. The `analytics` virtual marker is rendered via a special
+ * branch (not via `sectionComponents`) and is intentionally excluded.
+ */
+export const SECTION_COMPONENT_IDS = [
+  'daily_briefing',
+  'ai_insights',
+  'hub_quicklinks',
+  'decisions_awaiting',
+  'team_pulse',
+  'upcoming_events',
+  'payday_countdown',
+  'payroll_deadline',
+  'quick_actions',
+  'todays_queue',
+  'quick_stats',
+  'todays_prep',
+  'my_quick_stats',
+  'personal_goals',
+  'my_performance',
+  'push_list',
+  'level_progress',
+  'graduation_kpi',
+  'schedule_tasks',
+  'inventory_manager',
+  'active_campaigns',
+  'seo_my_tasks',
+  'client_engine',
+  'widgets',
+] as const;
 
 const ROLE_MESSAGES = {
   leadership: {
@@ -532,6 +569,10 @@ function DashboardSections({
     ),
 
     payday_countdown: <PaydayCountdownBanner />,
+
+    // Leadership-only payroll deadline reminder. Self-gates internally on
+    // `manage_payroll` permission; outer gate matches Customize menu visibility.
+    payroll_deadline: isLeadership ? <PayrollDeadlineCard /> : null,
     
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">

@@ -1,82 +1,75 @@
-# Analytics as a First-Class Section
-
 ## Problem
 
-Today the customize dashboard menu lists every section AND every pinned analytics card in one flat draggable list under "SECTIONS & ANALYTICS." Pinned cards can be dragged in between unrelated sections (e.g. between "Tasks" and "Announcements"), which:
+The Customize menu lists toggles, but several have no matching render branch in `DashboardHome.tsx`, and one (Payday Countdown) silently self-suppresses with no operator-visible reason. Result: toggle is ON, nothing appears, no explanation.
 
-- Breaks the conceptual model — analytics is a single cohesive area on the dashboard, not a free-floating cluster of widgets.
-- Makes the customize panel longer than necessary (every pinned card adds a row at the top level).
-- Leaves the door open to layouts where one analytics card lives in section position 2 and another lives in position 7 — confusing both to author and to read.
+## Toggle ↔ Component Audit
 
-The render layer already coalesces all pinned cards into a single grid at the first pinned position, so the flat-list authoring model doesn't even match what the dashboard actually displays.
+I cross-referenced every entry in `getSections()` (DashboardCustomizeMenu.tsx) against the `sectionComponents` map (DashboardHome.tsx) and the live data context.
 
-## Goal
+| Toggle ID | In Customize | In sectionComponents | Status |
+|---|---|---|---|
+| daily_briefing | ✓ | ✓ | OK |
+| quick_actions | ✓ | ✓ | OK |
+| todays_queue | ✓ | ✓ | OK |
+| quick_stats | ✓ | ✓ | OK |
+| todays_prep | ✓ | ✓ | OK |
+| level_progress | ✓ | ✓ | OK |
+| graduation_kpi | ✓ | ✓ | OK |
+| analytics | ✓ | special-cased | OK |
+| active_campaigns | ✓ | ✓ | OK |
+| **payroll_deadline** | ✓ | **MISSING** | **Broken — toggle does nothing** |
+| payday_countdown | ✓ | ✓ | Renders, but **silently null** when org lacks `payroll_enabled` flag or user has no payroll settings |
+| schedule_tasks | ✓ | ✓ | OK |
+| announcements | ✓ | (intentionally moved to drawer) | Toggle is dead — should be removed from menu |
+| client_engine | ✓ | ✓ | OK |
+| widgets | ✓ | ✓ | OK |
 
-Analytics becomes its own top-level section called **Analytics** (alongside Daily Briefing, Tasks, Announcements, Widgets, etc.). Inside that section, pinned analytics cards can be reordered. Outside it, sections — including Analytics as one block — reorder against each other.
+Confirmed via DB: `organization_feature_flags` has zero rows for `payroll_enabled` on Drop Dead Salons (`fa23cd95-...`). That's why the toggle appears live but the banner never paints.
 
-## What Changes
+## Fix Plan
 
-### Customize Dashboard panel
+### 1. Wire missing `payroll_deadline` render branch
+In `src/pages/dashboard/DashboardHome.tsx`:
+- Lazy-import `PayrollDeadlineCard` from `@/components/dashboard/payroll/PayrollDeadlineCard`.
+- Add to `sectionComponents`:
+  ```ts
+  payroll_deadline: isLeadership ? <PayrollDeadlineCard /> : null,
+  ```
+  The card already self-gates on the `manage_payroll` permission internally, so this is the correct outer gate (matches the customize menu's `isVisible: ctx.isLeadership`).
 
-```text
-SECTIONS
-├── ⋮⋮ Daily Briefing               [toggle]
-├── ⋮⋮ Quick Actions                [toggle]
-├── ⋮⋮ Analytics                    [toggle]   ← new top-level section
-│     └── (expands to show pinned cards, reorderable within)
-│         ├── ⋮⋮ Sales Overview     [pinned ✓]
-│         ├── ⋮⋮ Executive Summary  [pinned ✓]
-│         └── ⋮⋮ Capacity Util.     [pinned ✓]
-├── ⋮⋮ Tasks                        [toggle]
-├── ⋮⋮ Announcements                [toggle]
-└── ⋮⋮ Widgets                      [toggle]
+### 2. Remove dead `announcements` toggle
+The render branch was deliberately removed (moved to floating `AnnouncementsDrawer`). Remove the toggle entry from `getSections()` in `DashboardCustomizeMenu.tsx` and add `'announcements'` to `RETIRED_SECTION_IDS` in `useDashboardLayout.ts` so existing layouts self-clean (the retirement registry already exists for exactly this case — see mem://architecture/dashboard-section-retirement-registry).
 
-AVAILABLE ANALYTICS         (unchanged — pin/unpin from full catalog)
-```
+### 3. Surface Payday Countdown suppression reason (visibility-contracts compliance)
+The banner's silent-null behavior is correct per the Visibility Contracts doctrine, but the operator has no way to know why their enabled toggle does nothing. Two coordinated changes:
 
-- Section header changes from "SECTIONS & ANALYTICS" to **"SECTIONS"**.
-- Subhead copy updates to: *"Drag to reorder sections. Toggle to show/hide. Expand Analytics to reorder pinned cards."*
-- The Analytics section row shows a chevron; expanding reveals an inset, indented sortable list of currently-pinned cards with their own drag handles and unpin toggles.
-- Two independent DnD contexts: one for the outer section list, one for the analytics card list (only active when expanded).
+**a. Dev-only suppression log** (already the doctrine pattern):
+In `PaydayCountdownBanner.tsx`, before each `return null`, emit through the existing `visibility-contract-bus` (`src/lib/dev/visibility-contract-bus.ts`) with kebab-case reasons:
+- `payroll-not-entitled` (org has no `payroll_enabled` flag)
+- `no-payroll-settings` (user has no settings record)
+- `loading` (skip — not a real suppression)
 
-### Dashboard render (DashboardHome.tsx)
+**b. Customize menu hint**:
+In `DashboardCustomizeMenu.tsx`, when the `payday_countdown` toggle row is enabled but the org lacks the `payroll_enabled` flag, show a small inline subtext under the description:
+> "Enable Payroll in Settings → Payroll to surface this card."
+Use the existing `usePayrollEntitlement` hook to detect the gap. No behavior change beyond the hint — toggle remains togglable.
 
-- Analytics renders wherever the **Analytics** section sits in `sectionOrder` — not at "first pinned card index" anymore.
-- If Analytics section is toggled off, no pinned cards render and the filter bar is suppressed.
-- Card order within the analytics grid comes from a new `analyticsCardOrder: string[]` field on the layout (separate from `sectionOrder`).
-- Pinning a new card from "Available Analytics" appends it to `analyticsCardOrder` and ensures the Analytics section is enabled + present in `sectionOrder`.
+### 4. Author-time guard against future drift
+Add a Vitest test `src/__tests__/dashboard-section-contract.test.ts` that:
+- Imports the section IDs from `getSections()` in `DashboardCustomizeMenu.tsx`.
+- Imports the keys of `sectionComponents` from `DashboardHome.tsx` (export the keys array as a constant for testability).
+- Asserts every non-retired toggle ID has a render branch, and every render key has a toggle (excluding the `analytics` virtual marker).
+- This is the canonical five-part canon pattern (mem://architecture/canon-pattern): invariant + Vitest enforces it forever.
 
-### Data model (layout shape)
+## Files to Edit
 
-`useDashboardLayout` payload gains:
-- `analyticsCardOrder: string[]` — ordered list of pinned card IDs (replaces interleaving in `sectionOrder`).
-- `sectionOrder` no longer contains `pinned:*` entries; it gets a single `analytics` entry instead.
-
-A migration step inside the existing `sanitize/migrate` pipeline:
-- Detects legacy layouts where `sectionOrder` contains `pinned:*` entries.
-- Extracts those entries (preserving order) into `analyticsCardOrder`.
-- Replaces them in `sectionOrder` with a single `analytics` entry at the position of the first pinned card.
-- Idempotent — safe to run on every load.
-
-## Files to Touch
-
-- `src/components/dashboard/DashboardCustomizeMenu.tsx` — split flat list into outer sections list + nested analytics card list; rename header; add expand/collapse for Analytics.
-- `src/hooks/useDashboardLayout.ts` — add `analyticsCardOrder`, register `analytics` as a known section ID, add migration logic in the existing sanitizer, update save/reset paths.
-- `src/pages/dashboard/DashboardHome.tsx` — render the analytics grid at the position of the `analytics` section ID (instead of first-pinned-index); drive card order from `analyticsCardOrder`.
-- `src/components/dashboard/SortableSectionItem.tsx` (or a new `SortableAnalyticsSectionItem`) — support an expandable variant with a nested sortable list.
+- `src/pages/dashboard/DashboardHome.tsx` — add `payroll_deadline` lazy import + render branch; export `SECTION_COMPONENT_IDS` constant for the test.
+- `src/components/dashboard/DashboardCustomizeMenu.tsx` — remove `announcements` entry; add suppression hint under `payday_countdown`.
+- `src/hooks/useDashboardLayout.ts` — add `'announcements'` to `RETIRED_SECTION_IDS`.
+- `src/components/dashboard/mypay/PaydayCountdownBanner.tsx` — emit dev-only suppression reasons via visibility-contract-bus.
+- `src/__tests__/dashboard-section-contract.test.ts` (new) — author-time invariant.
 
 ## Out of Scope
 
-- No changes to which cards exist in the pinnable catalog.
-- No changes to the per-role visibility / pinning DB writes.
-- No changes to Widgets section behavior.
-- No changes to compact vs detailed bento grid layout.
-
-## Acceptance
-
-1. In Customize Dashboard, the top list shows sections only. "Analytics" appears as one entry.
-2. Dragging "Analytics" up or down moves the entire analytics block on the dashboard.
-3. Expanding "Analytics" reveals pinned cards; dragging within reorders them on the dashboard grid.
-4. Toggling "Analytics" off hides the filter bar and all pinned cards. Toggling on restores them.
-5. Existing users with legacy interleaved layouts see their analytics cluster preserved at the first pinned card's prior position, with their previous card order intact.
-6. Pinning a new card from "Available Analytics" appends it to the Analytics section and re-enables the section if it was off.
+- Enabling the `payroll_enabled` flag for Drop Dead Salons. That's an operator decision, not a code fix. The hint in step 3b tells them where to do it.
+- Refactoring the analytics block (already addressed in prior wave).
