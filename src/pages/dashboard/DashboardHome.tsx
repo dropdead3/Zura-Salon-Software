@@ -974,10 +974,53 @@ function DashboardSections({
         // stylist-only viewers, regardless of whether they're in the layout.
         // Dev log fires inside isStylistAllowedSection.
         if (stylistOnly && !isStylistAllowedSection(sectionId)) return null;
-        
+
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
-        
+
+        // Side-by-side pairing: if this section pairs with the next renderable
+        // sibling and both render, emit them as a 2-col grid on lg+. Avoids a
+        // long full-width vertical stack on the owner canvas.
+        const partnerKey = SECTION_PAIRS[sectionId];
+        if (partnerKey) {
+          for (let j = index + 1; j < orderedSectionIds.length; j++) {
+            const nextId = orderedSectionIds[j];
+            if (isPinnedCardEntry(nextId)) continue;
+            if (nextId !== partnerKey) break;
+            if (!layout.sections.includes(nextId)) break;
+            if (stylistOnly && !isStylistAllowedSection(nextId)) break;
+            const partnerComponent = sectionComponents[nextId as keyof typeof sectionComponents];
+            if (!partnerComponent) break;
+            return (
+              <div
+                key={`${sectionId}+${nextId}`}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
+              >
+                <div id={`section-${sectionId}`} className="scroll-mt-24 min-w-0">{component}</div>
+                <div id={`section-${nextId}`} className="scroll-mt-24 min-w-0">{partnerComponent}</div>
+              </div>
+            );
+          }
+        }
+
+        // If this section is the trailing partner of a pair already emitted, skip it.
+        const leaderKey = Object.entries(SECTION_PAIRS).find(([, v]) => v === sectionId)?.[0];
+        if (leaderKey) {
+          for (let k = index - 1; k >= 0; k--) {
+            const priorId = orderedSectionIds[k];
+            if (isPinnedCardEntry(priorId)) continue;
+            if (
+              priorId === leaderKey
+              && layout.sections.includes(priorId)
+              && (!stylistOnly || isStylistAllowedSection(priorId))
+              && sectionComponents[priorId as keyof typeof sectionComponents]
+            ) {
+              return null;
+            }
+            break;
+          }
+        }
+
         // Wrap in a div with a stable id so coach nudges (and other deep
         // links) can scroll to specific sections.
         return (
@@ -985,6 +1028,7 @@ function DashboardSections({
             {component}
           </div>
         );
+
       })}
     </>
   );
