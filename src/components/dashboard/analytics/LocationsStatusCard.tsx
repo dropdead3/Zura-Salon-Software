@@ -321,6 +321,11 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
               · {closingSoonCount} closing soon
             </span>
           )}
+          {opensSoonCount > 0 && (
+            <span className="text-xs uppercase tracking-wider font-display text-sky-600 dark:text-sky-400">
+              · {opensSoonCount} opens soon
+            </span>
+          )}
         </div>
 
         <div className="space-y-2">
