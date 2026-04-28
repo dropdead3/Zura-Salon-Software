@@ -72,6 +72,7 @@ import {
   getPinnedCardId,
   getPinnedVisibilityKey,
   toPinnedEntry,
+  isRetiredSectionId,
 } from '@/hooks/useDashboardLayout';
 import { useCanCustomizeDashboardLayouts } from '@/hooks/useDashboardLayout';
 import { DashboardLayoutAuditPanel } from '@/components/dashboard/DashboardLayoutAuditPanel';
@@ -321,6 +322,10 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     
     for (const id of savedOrder) {
       if (result.includes(id)) continue;
+      // Defensive: never surface retired section IDs in the customize UI,
+      // even if they linger in stored preferences for a render cycle before
+      // sanitize/migration strips them.
+      if (isRetiredSectionId(id)) continue;
       if (sectionIds.includes(id)) {
         result.push(id);
       } else if (isPinnedCardEntry(id)) {
@@ -332,6 +337,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     }
     
     for (const sectionId of sectionIds) {
+      if (isRetiredSectionId(sectionId)) continue;
       if (!result.includes(sectionId)) {
         result.push(sectionId);
       }
