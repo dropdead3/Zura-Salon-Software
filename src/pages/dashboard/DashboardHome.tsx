@@ -978,55 +978,6 @@ function DashboardSections({
         const component = sectionComponents[sectionId as keyof typeof sectionComponents];
         if (!component) return null;
 
-        // Side-by-side pairing: if this section pairs with the next renderable
-        // sibling and both render, emit them as a 2-col grid on lg+. Avoids a
-        // long full-width vertical stack on the owner canvas.
-        const partnerKey = SECTION_PAIRS[sectionId];
-        if (partnerKey) {
-          for (let j = index + 1; j < orderedSectionIds.length; j++) {
-            const nextId = orderedSectionIds[j];
-            // Skip pinned cards (rendered separately) and null-component sections
-            // (e.g. ai_insights moved into the header). They shouldn't block pairing.
-            if (isPinnedCardEntry(nextId)) continue;
-            const nextComponent = sectionComponents[nextId as keyof typeof sectionComponents];
-            if (!nextComponent) continue;
-            // Only pair if the very next renderable sibling is the declared partner.
-            if (nextId !== partnerKey) break;
-            if (!layout.sections.includes(nextId)) break;
-            if (stylistOnly && !isStylistAllowedSection(nextId)) break;
-            return (
-              <div
-                key={`${sectionId}+${nextId}`}
-                className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"
-              >
-                <div id={`section-${sectionId}`} className="scroll-mt-24 min-w-0">{component}</div>
-                <div id={`section-${nextId}`} className="scroll-mt-24 min-w-0">{nextComponent}</div>
-              </div>
-            );
-          }
-        }
-
-        // If this section is the trailing partner of a pair already emitted, skip it.
-        const leaderKey = Object.entries(SECTION_PAIRS).find(([, v]) => v === sectionId)?.[0];
-        if (leaderKey) {
-          for (let k = index - 1; k >= 0; k--) {
-            const priorId = orderedSectionIds[k];
-            // Mirror the pairing loop: skip pinned + null-component siblings
-            // so an intermediate null section (e.g. ai_insights) doesn't break the link.
-            if (isPinnedCardEntry(priorId)) continue;
-            const priorComponent = sectionComponents[priorId as keyof typeof sectionComponents];
-            if (!priorComponent) continue;
-            if (
-              priorId === leaderKey
-              && layout.sections.includes(priorId)
-              && (!stylistOnly || isStylistAllowedSection(priorId))
-            ) {
-              return null;
-            }
-            break;
-          }
-        }
-
         // Wrap in a div with a stable id so coach nudges (and other deep
         // links) can scroll to specific sections.
         return (
