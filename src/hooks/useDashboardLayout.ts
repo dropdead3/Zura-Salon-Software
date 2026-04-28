@@ -558,17 +558,20 @@ export function useSaveDashboardLayout(overrideUserId?: string) {
       if (writeTarget === 'role') {
         if (!orgId) throw new Error('No organization context');
         if (!user?.id) throw new Error('Not authenticated');
+        // Mirror across every role in the same template-key group so users
+        // with sibling roles (super_admin/admin → 'leadership') all see the
+        // owner-authored layout. The schema is keyed `(org_id, role)`; we
+        // emit one row per role in the group.
+        const siblings = await resolveSiblingRoles(orgId, viewAsRole as AppRole);
+        const rows = siblings.map((role) => ({
+          organization_id: orgId,
+          role,
+          layout: layoutJson,
+          updated_by: user.id,
+        }));
         const { error } = await supabase
           .from('dashboard_role_layouts')
-          .upsert(
-            {
-              organization_id: orgId,
-              role: viewAsRole as AppRole,
-              layout: layoutJson,
-              updated_by: user.id,
-            },
-            { onConflict: 'organization_id,role' }
-          );
+          .upsert(rows, { onConflict: 'organization_id,role' });
         if (error) throw error;
         return;
       }
