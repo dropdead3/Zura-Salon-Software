@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { useOrganizationRoles } from '@/hooks/useOrganizationRoles';
+import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import {
   Select,
   SelectContent,
