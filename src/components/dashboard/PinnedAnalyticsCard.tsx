@@ -485,25 +485,46 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
 
     switch (cardId) {
       case 'executive_summary': {
-        // Differentiated lens: revenue *vs prior comparable period*, not the raw total
+        // Differentiated lens: revenue *vs prior comparable period*, not the raw total.
         // (Sales Overview owns the raw $ clock; this surface answers "are we trending?")
+        // Materiality gate: a delta on trivial volume is noise dressed as signal.
         const current = salesData?.totalRevenue ?? 0;
         const prior = priorSalesData?.totalRevenue ?? 0;
-        if (prior > 0 && current > 0) {
+
+        const belowVolumeThreshold =
+          current < EXEC_SUMMARY_MIN_VOLUME_USD || prior < EXEC_SUMMARY_MIN_VOLUME_USD;
+
+        if (prior > 0 && current > 0 && !belowVolumeThreshold) {
           const deltaPct = ((current - prior) / prior) * 100;
-          const sign = deltaPct > 0 ? '+' : '';
-          metricValue = `${sign}${deltaPct.toFixed(1)}%`;
-          const TrendIcon = deltaPct > 0.5 ? TrendingUp : deltaPct < -0.5 ? TrendingDown : Minus;
-          const trendTone = deltaPct > 0.5 ? 'text-emerald-500' : deltaPct < -0.5 ? 'text-rose-500' : 'text-muted-foreground';
-          goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
-          metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+          const isFlat = Math.abs(deltaPct) < EXEC_SUMMARY_FLAT_DELTA_PCT;
+          if (isFlat) {
+            metricValue = 'Flat';
+            goalPaceIcon = <Minus className="h-4 w-4 text-muted-foreground" aria-hidden />;
+            metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+            execSparklineTone = 'text-muted-foreground';
+          } else {
+            const sign = deltaPct > 0 ? '+' : '';
+            metricValue = `${sign}${deltaPct.toFixed(1)}%`;
+            const TrendIcon = deltaPct > 0 ? TrendingUp : TrendingDown;
+            const trendTone = deltaPct > 0 ? 'text-emerald-500' : 'text-rose-500';
+            goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
+            metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+            execSparklineTone = trendTone;
+          }
+        } else if (belowVolumeThreshold && (current > 0 || prior > 0)) {
+          // Suppress comparison — not enough volume to be meaningful.
+          metricValue = formatCurrencySmart(current);
+          metricLabel = `Volume below comparison threshold for ${getPeriodLabel(filters.dateRange)}`;
+          execSparklineSuppressed = true;
         } else if (current > 0) {
-          // No prior baseline (new org / first period) — show the total but call out the lack of comparison
+          // No prior baseline (new org / first period) — show the total, call out the gap.
           metricValue = formatCurrencySmart(current);
           metricLabel = 'No prior period to compare against yet';
+          execSparklineSuppressed = true;
         } else {
           metricValue = '--';
           metricLabel = `No revenue recorded for ${getPeriodLabel(filters.dateRange)}`;
+          execSparklineSuppressed = true;
         }
         break;
       }
