@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
-import { useOrganizationRoles } from '@/hooks/useOrganizationRoles';
-import { getRoleBadgeConfig } from '@/lib/roleBadgeConfig';
 import {
   Select,
   SelectContent,
@@ -296,33 +294,13 @@ interface DashboardCustomizeMenuProps {
   roleContext?: RoleContext;
 }
 
-function RoleSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  // Drives options from the roles actually present in the current organization
-  // (excluding platform-only roles like super_admin). See `useOrganizationRoles`.
-  const { data: orgRoles, isLoading } = useOrganizationRoles();
 
-  return (
-    <Select value={value} onValueChange={onChange} disabled={isLoading}>
-      <SelectTrigger className="h-8 text-xs">
-        <SelectValue placeholder={isLoading ? 'Loading roles…' : 'Select role'} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="__self__">My own dashboard</SelectItem>
-        {(orgRoles ?? []).map((role) => (
-          <SelectItem key={role} value={role}>
-            {getRoleBadgeConfig(role).label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: DashboardCustomizeMenuProps) {
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { isViewingAs, viewAsRole, setViewAsRole, clearViewAs } = useViewAs();
+  const { isViewingAs, viewAsRole } = useViewAs();
   const effectiveRoleContext = useMemo<RoleContext | undefined>(() => {
     if (!roleContext) return undefined;
     if (!isViewingAs || !viewAsRole) return roleContext;
@@ -647,13 +625,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     ? `Editing org-wide layout for ${viewAsRole.replace(/_/g, ' ')}`
     : "Editing your own layout";
 
-  const handlePreviewRoleChange = (value: string) => {
-    if (value === '__self__') {
-      clearViewAs();
-    } else {
-      setViewAsRole(value as AppRole);
-    }
-  };
+
 
   return (
     <>
@@ -683,19 +655,12 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             </div>
           </div>
 
-          {/* Preview-as-role: owner picks which role's canvas to author. */}
-          <div className="rounded-lg border border-border/40 bg-muted/20 p-3 space-y-2">
-            <label className="text-[10px] font-display tracking-wider uppercase text-muted-foreground">
-              Preview as role
-            </label>
-            <RoleSelect
-              value={isViewingAs && viewAsRole ? viewAsRole : '__self__'}
-              onChange={handlePreviewRoleChange}
-            />
-            <p className="text-[10px] text-muted-foreground leading-snug">
-              Pick a role to see its dashboard live. Your edits save org-wide for that role — every user with that role will see them.
-            </p>
-          </div>
+          {/*
+            Role-specific layout authoring is driven by the global "View As" toggle.
+            When an Account Owner / Super Admin views as a role, this drawer edits
+            that role's org-wide layout in place. The current target is shown in
+            `editingLabel` above and audited in the panel below.
+          */}
 
           {/* Owner-only: history of who changed which role layout. */}
           <DashboardLayoutAuditPanel role={isViewingAs && viewAsRole ? (viewAsRole as AppRole) : null} />
