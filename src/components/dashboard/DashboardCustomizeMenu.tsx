@@ -316,14 +316,52 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const { dashPath } = useOrgDashboardPath();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { isViewingAs, viewAsRole, setViewAsRole, clearViewAs } = useViewAs();
+  const effectiveRoleContext = useMemo<RoleContext | undefined>(() => {
+    if (!roleContext) return undefined;
+    if (!isViewingAs || !viewAsRole) return roleContext;
+
+    switch (viewAsRole) {
+      case 'super_admin':
+      case 'admin':
+      case 'manager':
+        return {
+          isLeadership: true,
+          hasStylistRole: false,
+          isFrontDesk: false,
+          isReceptionist: false,
+        };
+      case 'receptionist':
+        return {
+          isLeadership: false,
+          hasStylistRole: false,
+          isFrontDesk: true,
+          isReceptionist: true,
+        };
+      case 'stylist':
+      case 'stylist_assistant':
+      case 'assistant':
+      case 'booth_renter':
+      case 'admin_assistant':
+      case 'operations_assistant':
+        return {
+          isLeadership: false,
+          hasStylistRole: true,
+          isFrontDesk: false,
+          isReceptionist: false,
+        };
+      default:
+        return roleContext;
+    }
+  }, [roleContext, isViewingAs, viewAsRole]);
   const SECTIONS = useMemo(() => {
     const allSections = getSections();
-    if (!roleContext) return allSections;
+    if (!effectiveRoleContext) return allSections;
     return allSections.filter(section => {
       if (!section.isVisible) return true;
-      return section.isVisible(roleContext);
+      return section.isVisible(effectiveRoleContext);
     });
-  }, [roleContext]);
+  }, [effectiveRoleContext]);
   const { targetUserId } = useGodModeTargetUserId();
   const { layout, isLoading, roleTemplate } = useDashboardLayout(targetUserId);
   const resetToDefault = useResetToDefault(targetUserId);
@@ -331,7 +369,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const { can } = usePermission();
   const canManageVisibility = can('manage_visibility_console');
   const canCustomize = useCanCustomizeDashboardLayouts();
-  const { isViewingAs, viewAsRole, setViewAsRole, clearViewAs } = useViewAs();
 
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
   const registerElement = useRegisterVisibilityElement();
