@@ -66,7 +66,9 @@ import { ServiceProfitabilityCard } from '@/components/dashboard/analytics/Servi
 import { ColorBarControlTower } from '@/components/dashboard/color-bar/control-tower/ColorBarControlTower';
 import { PredictiveColorBarSummary } from '@/components/dashboard/color-bar/predictive-color-bar/PredictiveColorBarSummary';
 import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
-import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
+import { useSalesMetrics, useSalesByStylist, useServiceMix, useSalesTrend } from '@/hooks/useSalesData';
+import { Sparkline } from '@/components/ui/Sparkline';
+import { CARD_QUESTIONS } from '@/components/dashboard/analytics/cardQuestions';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useRetailBreakdown } from '@/hooks/useRetailBreakdown';
@@ -84,6 +86,14 @@ import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
+
+// ── Executive Summary materiality thresholds ────────────────────────────
+// Doctrine: "if confidence is low, suppress recommendations." A delta on
+// trivial absolute volume is noise dressed as signal — see CARD_QUESTIONS
+// for why this card answers "are we trending?" not "what's the total?"
+const EXEC_SUMMARY_MIN_VOLUME_USD = 500;  // suppress comparison below this
+const EXEC_SUMMARY_FLAT_DELTA_PCT = 2;    // |delta%| below this renders flat
+const EXEC_SUMMARY_TREND_DAYS = 14;       // trailing window for sparkline
 
 /** Human-readable phrase for the active date range, used in compact card labels. */
 function getPeriodLabel(dateRange: DateRangeType): string {
@@ -372,6 +382,24 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     dateTo: priorPeriodRange.dateTo,
     locationId: locationFilter,
   });
+
+  // Trailing-N-day revenue series for the Executive Summary sparkline.
+  // Independent of `filters.dateRange` — a "today" filter would otherwise
+  // collapse to a single point. Only fetched when the card is pinned.
+  const trendRange = useMemo(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - (EXEC_SUMMARY_TREND_DAYS - 1));
+    return {
+      dateFrom: format(start, 'yyyy-MM-dd'),
+      dateTo: format(end, 'yyyy-MM-dd'),
+    };
+  }, []);
+  const { data: salesTrendData } = useSalesTrend(
+    trendRange.dateFrom,
+    trendRange.dateTo,
+    locationFilter,
+  );
   const { data: performers, isLoading: isLoadingPerformers } = useSalesByStylist(
     filters.dateFrom, 
     filters.dateTo,
@@ -434,6 +462,12 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       reportVisibilitySuppression('pinned-analytics-card', 'unknown-card-id', { cardId });
       return null;
     }
+    // Dev-only soft assert: every renderable card must have a canonical
+    // question registered. Enforces non-redundancy at author time without
+    // breaking production rendering.
+    if (import.meta.env.DEV && !(cardId in CARD_QUESTIONS)) {
+      reportVisibilitySuppression('pinned-analytics-card', 'card-missing-question', { cardId });
+    }
     
     const meta = CARD_META[cardId];
     const Icon = meta.icon;
@@ -443,6 +477,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     let metricLabel = '';
     let metricSubtext = '';
     let goalPaceIcon: React.ReactNode = null;
+    // Tone class for the optional Executive Summary sparkline. Set inside
+    // the executive_summary case so the sparkline below inherits the same
+    // emerald / rose / muted color as the delta indicator.
+    let execSparklineTone: string | null = null;
+    let execSparklineSuppressed = false;
 
     // Smart compact currency for simple-view tiles:
     // - values >= $1,000 collapse to compact form ($20.3K, $1.2M) to prevent overflow
@@ -452,25 +491,46 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
 
     switch (cardId) {
       case 'executive_summary': {
-        // Differentiated lens: revenue *vs prior comparable period*, not the raw total
+        // Differentiated lens: revenue *vs prior comparable period*, not the raw total.
         // (Sales Overview owns the raw $ clock; this surface answers "are we trending?")
+        // Materiality gate: a delta on trivial volume is noise dressed as signal.
         const current = salesData?.totalRevenue ?? 0;
         const prior = priorSalesData?.totalRevenue ?? 0;
-        if (prior > 0 && current > 0) {
+
+        const belowVolumeThreshold =
+          current < EXEC_SUMMARY_MIN_VOLUME_USD || prior < EXEC_SUMMARY_MIN_VOLUME_USD;
+
+        if (prior > 0 && current > 0 && !belowVolumeThreshold) {
           const deltaPct = ((current - prior) / prior) * 100;
-          const sign = deltaPct > 0 ? '+' : '';
-          metricValue = `${sign}${deltaPct.toFixed(1)}%`;
-          const TrendIcon = deltaPct > 0.5 ? TrendingUp : deltaPct < -0.5 ? TrendingDown : Minus;
-          const trendTone = deltaPct > 0.5 ? 'text-emerald-500' : deltaPct < -0.5 ? 'text-rose-500' : 'text-muted-foreground';
-          goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
-          metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+          const isFlat = Math.abs(deltaPct) < EXEC_SUMMARY_FLAT_DELTA_PCT;
+          if (isFlat) {
+            metricValue = 'Flat';
+            goalPaceIcon = <Minus className="h-4 w-4 text-muted-foreground" aria-hidden />;
+            metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+            execSparklineTone = 'text-muted-foreground';
+          } else {
+            const sign = deltaPct > 0 ? '+' : '';
+            metricValue = `${sign}${deltaPct.toFixed(1)}%`;
+            const TrendIcon = deltaPct > 0 ? TrendingUp : TrendingDown;
+            const trendTone = deltaPct > 0 ? 'text-emerald-500' : 'text-rose-500';
+            goalPaceIcon = <TrendIcon className={cn('h-4 w-4', trendTone)} aria-hidden />;
+            metricLabel = `${formatCurrencySmart(current)} vs ${formatCurrencySmart(prior)} prior period`;
+            execSparklineTone = trendTone;
+          }
+        } else if (belowVolumeThreshold && (current > 0 || prior > 0)) {
+          // Suppress comparison — not enough volume to be meaningful.
+          metricValue = formatCurrencySmart(current);
+          metricLabel = `Volume below comparison threshold for ${getPeriodLabel(filters.dateRange)}`;
+          execSparklineSuppressed = true;
         } else if (current > 0) {
-          // No prior baseline (new org / first period) — show the total but call out the lack of comparison
+          // No prior baseline (new org / first period) — show the total, call out the gap.
           metricValue = formatCurrencySmart(current);
           metricLabel = 'No prior period to compare against yet';
+          execSparklineSuppressed = true;
         } else {
           metricValue = '--';
           metricLabel = `No revenue recorded for ${getPeriodLabel(filters.dateRange)}`;
+          execSparklineSuppressed = true;
         }
         break;
       }
@@ -849,6 +909,19 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
                       {metricLabel}
                     </p>
                   )}
+                  {cardId === 'executive_summary' && !execSparklineSuppressed && (() => {
+                    const series = (salesTrendData?.overall ?? [])
+                      .map((d: any) => Number(d.revenue) || 0);
+                    if (series.length < 3) return null;
+                    return (
+                      <Sparkline
+                        data={series}
+                        height={20}
+                        className={cn('mt-1.5 block', execSparklineTone ?? 'text-muted-foreground')}
+                        ariaLabel={`Trailing ${EXEC_SUMMARY_TREND_DAYS}-day revenue trend`}
+                      />
+                    );
+                  })()}
                   {metricSubtext && (
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5 font-sans">
                       {metricSubtext}
