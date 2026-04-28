@@ -258,7 +258,10 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
     .map((loc) => ({ loc, state: computeLocationState(loc, now) }))
     .sort((a, b) => stateRank(a.state) - stateRank(b.state));
 
-  const openCount = states.filter((s) => s.state.kind === 'open').length;
+  const openCount = states.filter(
+    (s) => s.state.kind === 'open' || s.state.kind === 'closing-soon',
+  ).length;
+  const closingSoonCount = states.filter((s) => s.state.kind === 'closing-soon').length;
   const total = states.length;
   const visible = states.slice(0, 6);
   const overflow = states.length - visible.length;
@@ -278,7 +281,7 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
               <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
                 Locations Status
               </h3>
-              <MetricInfoTooltip description="Real-time open/closed status across your locations. Surfaces only when you operate multiple locations with differing schedules or holiday closures." />
+              <MetricInfoTooltip description="Real-time open/closed status across your locations. Locations within 30 minutes of close show as 'Closing soon'. Surfaces only when you operate multiple locations with differing schedules or holiday closures." />
             </div>
           </div>
           <AnalyticsFilterBadge
@@ -287,7 +290,7 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
           />
         </div>
 
-        <div className="mb-3 flex items-baseline gap-2">
+        <div className="mb-3 flex items-baseline gap-2 flex-wrap">
           <span className="font-display text-2xl tracking-wide">
             {openCount}
             <span className="text-muted-foreground">/{total}</span>
@@ -295,6 +298,11 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
           <span className="text-xs text-muted-foreground uppercase tracking-wider font-display">
             Open right now
           </span>
+          {closingSoonCount > 0 && (
+            <span className="text-xs uppercase tracking-wider font-display text-amber-600 dark:text-amber-400">
+              · {closingSoonCount} closing soon
+            </span>
+          )}
         </div>
 
         <div className="space-y-2">
