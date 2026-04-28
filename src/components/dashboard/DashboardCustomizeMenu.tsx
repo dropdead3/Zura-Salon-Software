@@ -375,25 +375,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   }, [unpinnedCards, searchQuery]);
   
   const { hasPermission } = useAuth();
-  const permittedHubs = useMemo(() => {
-    return hubLinks.filter(hub => !hub.permission || hasPermission(hub.permission));
-  }, [hasPermission]);
-  
-  const orderedHubs = useMemo(() => {
-    const savedOrder = layout.hubOrder || [];
-    const enabledHubs = layout.enabledHubs;
-    const hubHrefs = permittedHubs.map(h => h.href);
-    
-    const result = savedOrder.filter(href => hubHrefs.includes(href));
-    
-    for (const href of hubHrefs) {
-      if (!result.includes(href)) {
-        result.push(href);
-      }
-    }
-    
-    return result;
-  }, [layout.hubOrder, permittedHubs]);
+  // Quick Access Hubs section retired — sidebar handles hub navigation.
 
   const handleToggleSection = (sectionId: string) => {
     const sections = layout.sections.includes(sectionId)
@@ -565,27 +547,6 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     } finally {
       setIsTogglingPin(false);
     }
-  };
-  
-  const handleToggleHub = (hubHref: string) => {
-    const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
-    const newEnabled = currentEnabled.includes(hubHref)
-      ? currentEnabled.filter(h => h !== hubHref)
-      : [...currentEnabled, hubHref];
-    
-    saveLayout.mutate({ ...layout, enabledHubs: newEnabled, hubOrder: orderedHubs });
-  };
-  
-  const handleHubDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    
-    const oldIndex = orderedHubs.indexOf(active.id as string);
-    const newIndex = orderedHubs.indexOf(over.id as string);
-    const newOrder = arrayMove(orderedHubs, oldIndex, newIndex);
-    
-    const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
-    saveLayout.mutate({ ...layout, hubOrder: newOrder, enabledHubs: currentEnabled });
   };
 
   if (isLoading) return null;
