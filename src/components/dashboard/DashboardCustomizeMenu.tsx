@@ -718,41 +718,89 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
 
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS & ANALYTICS</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">SECTIONS</h3>
             <p className="text-xs text-muted-foreground mb-4">
-              Drag to reorder. Toggle to show/hide sections. Pinned analytics can be moved among sections.
+              Drag to reorder sections. Toggle to show/hide. Expand Analytics to reorder its pinned cards.
             </p>
             <DndContext 
               sensors={sensors} 
               collisionDetection={closestCenter} 
-              onDragEnd={handleUnifiedDragEnd}
+              onDragEnd={handleSectionDragEnd}
             >
               <SortableContext 
-                items={orderedUnifiedItems} 
+                items={orderedSectionItems} 
                 strategy={verticalListSortingStrategy}
               >
                 <div className="space-y-1">
-                  {orderedUnifiedItems.map(itemId => {
-                    if (isPinnedCardEntry(itemId)) {
-                      const cardId = getPinnedCardId(itemId);
-                      const card = PINNABLE_CARDS.find(c => c.id === cardId);
-                      if (!card) return null;
+                  {orderedSectionItems.map(sectionId => {
+                    const section = SECTIONS.find(s => s.id === sectionId);
+                    if (!section) return null;
+
+                    // Analytics section: render as expandable, with nested
+                    // sortable list of pinned cards inside.
+                    if (sectionId === ANALYTICS_SECTION_ID) {
+                      const isEnabled = layout.sections.includes(ANALYTICS_SECTION_ID);
+                      const cardCount = orderedPinnedCardIds.length;
                       return (
-                        <SortablePinnedCardItem
-                          key={itemId}
-                          id={itemId}
-                          cardId={cardId}
-                          label={card.label}
-                          icon={card.icon}
-                          isPinned={true}
-                          onToggle={() => handleTogglePinnedCard(cardId)}
-                          isLoading={isTogglingPin}
-                        />
+                        <div key={sectionId} className="space-y-1">
+                          <SortableSectionItem
+                            id={section.id}
+                            label={section.label}
+                            description={
+                              cardCount > 0
+                                ? `${cardCount} pinned ${cardCount === 1 ? 'card' : 'cards'}`
+                                : section.description
+                            }
+                            icon={section.icon}
+                            isEnabled={isEnabled}
+                            onToggle={() => handleToggleSection(section.id)}
+                          />
+                          {isEnabled && cardCount > 0 && (
+                            <div className="ml-6 pl-3 border-l border-border/40">
+                              <button
+                                type="button"
+                                onClick={() => setIsAnalyticsExpanded(v => !v)}
+                                className="text-[10px] font-display tracking-wider uppercase text-muted-foreground/70 hover:text-muted-foreground py-1.5 px-1 transition-colors"
+                              >
+                                {isAnalyticsExpanded ? '▾' : '▸'} Pinned cards ({cardCount})
+                              </button>
+                              {isAnalyticsExpanded && (
+                                <DndContext
+                                  sensors={sensors}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={handleAnalyticsCardDragEnd}
+                                >
+                                  <SortableContext
+                                    items={orderedPinnedCardIds}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    <div className="space-y-1">
+                                      {orderedPinnedCardIds.map(cardId => {
+                                        const card = PINNABLE_CARDS.find(c => c.id === cardId);
+                                        if (!card) return null;
+                                        return (
+                                          <SortablePinnedCardItem
+                                            key={cardId}
+                                            id={cardId}
+                                            cardId={cardId}
+                                            label={card.label}
+                                            icon={card.icon}
+                                            isPinned={true}
+                                            onToggle={() => handleTogglePinnedCard(cardId)}
+                                            isLoading={isTogglingPin}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       );
                     }
-                    
-                    const section = SECTIONS.find(s => s.id === itemId);
-                    if (!section) return null;
+
                     return (
                       <SortableSectionItem
                         key={section.id}
