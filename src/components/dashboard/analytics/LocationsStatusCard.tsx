@@ -279,6 +279,7 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
     (s) => s.state.kind === 'open' || s.state.kind === 'closing-soon',
   ).length;
   const closingSoonCount = states.filter((s) => s.state.kind === 'closing-soon').length;
+  const opensSoonCount = states.filter((s) => s.state.kind === 'opens-soon').length;
   const total = states.length;
   const visible = states.slice(0, 6);
   const overflow = states.length - visible.length;
@@ -298,7 +299,7 @@ export function LocationsStatusCard({ filterContext }: LocationsStatusCardProps)
               <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
                 Locations Status
               </h3>
-              <MetricInfoTooltip description="Real-time open/closed status across your locations. Locations within 30 minutes of close show as 'Closing soon'. Surfaces only when you operate multiple locations with differing schedules or holiday closures." />
+              <MetricInfoTooltip description="Real-time open/closed status across your locations. Locations within 30 minutes of opening show as 'Opens soon'; within 30 minutes of close as 'Closing soon'. Surfaces only when you operate multiple locations with differing schedules or holiday closures." />
             </div>
           </div>
           <AnalyticsFilterBadge
