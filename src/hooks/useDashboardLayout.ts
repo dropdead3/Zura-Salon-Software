@@ -855,16 +855,17 @@ export function useResetRoleLayout() {
     mutationFn: async (role: AppRole) => {
       if (!orgId) throw new Error('No organization context');
 
+      const siblings = await resolveSiblingRoles(orgId, role);
       const { error } = await supabase
         .from('dashboard_role_layouts')
         .delete()
         .eq('organization_id', orgId)
-        .eq('role', role);
+        .in('role', siblings);
 
       if (error) throw error;
     },
     onSuccess: (_data, role) => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId, role] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-role-layout', orgId] });
       toast.success(`Reset layout for ${role.replace(/_/g, ' ')} to template default`);
     },
     onError: (error: Error) => {
