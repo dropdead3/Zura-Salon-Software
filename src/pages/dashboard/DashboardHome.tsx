@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { Card } from '@/components/ui/card';
@@ -47,7 +47,6 @@ import { useViewAs } from '@/contexts/ViewAsContext';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
 import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
-const DashboardSetupWizard = React.lazy(() => import('@/components/dashboard/DashboardSetupWizard').then(m => ({ default: m.DashboardSetupWizard })));
 import { OperatorTopBar } from '@/components/dashboard/owner/OperatorTopBar';
 import { DecisionsAwaitingSection } from '@/components/dashboard/owner/DecisionsAwaitingSection';
 import { TeamPulseSection } from '@/components/dashboard/owner/TeamPulseSection';
@@ -162,8 +161,7 @@ export default function DashboardHome() {
   const [viewingTask, setViewingTask] = useState<import('@/hooks/useTasks').Task | null>(null);
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const { data: profile } = useEmployeeProfile();
-  const queryClient = useQueryClient();
-  const { layout, hasCompletedSetup, isLoading: layoutLoading, templateKey } = useDashboardLayout();
+  const { layout, isLoading: layoutLoading } = useDashboardLayout();
   
   // Location access control
   const { 
@@ -296,25 +294,12 @@ export default function DashboardHome() {
     return <AuthFlowLoader />;
   }
 
-  // Show setup wizard for first-time users
-  if (!hasCompletedSetup && !layoutLoading) {
-    return (
-      <DashboardLayout>
-        <DashboardSetupWizard 
-          roleTemplateKey={templateKey}
-          onComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
-          }}
-        />
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
       {/* Owner Operator Top-Bar — fixed, scroll-revealed. */}
       <OperatorTopBar
-        enabled={isPrimaryOwner && hasCompletedSetup}
+        enabled={isPrimaryOwner}
         locationId={operatorBarLocationId}
         accessibleLocationIds={accessibleLocationIds}
         scopeLabel={operatorBarScopeLabel}
