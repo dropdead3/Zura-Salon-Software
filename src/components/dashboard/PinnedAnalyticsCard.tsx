@@ -87,6 +87,14 @@ import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule'
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
+// ── Executive Summary materiality thresholds ────────────────────────────
+// Doctrine: "if confidence is low, suppress recommendations." A delta on
+// trivial absolute volume is noise dressed as signal — see CARD_QUESTIONS
+// for why this card answers "are we trending?" not "what's the total?"
+const EXEC_SUMMARY_MIN_VOLUME_USD = 500;  // suppress comparison below this
+const EXEC_SUMMARY_FLAT_DELTA_PCT = 2;    // |delta%| below this renders flat
+const EXEC_SUMMARY_TREND_DAYS = 14;       // trailing window for sparkline
+
 /** Human-readable phrase for the active date range, used in compact card labels. */
 function getPeriodLabel(dateRange: DateRangeType): string {
   const map: Record<DateRangeType, string> = {
