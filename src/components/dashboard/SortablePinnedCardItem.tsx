@@ -161,6 +161,7 @@ export function SortablePinnedCardItem({
   onToggle,
   isLoading = false,
   sortable = true,
+  simpleViewIndex,
 }: SortablePinnedCardItemProps) {
   const rawCardId = cardId || id;
 
@@ -176,6 +177,7 @@ export function SortablePinnedCardItem({
         isLoading={isLoading}
         sortable={false}
         rawCardId={rawCardId}
+        simpleViewIndex={simpleViewIndex}
       />
     );
   }
@@ -210,6 +212,7 @@ export function SortablePinnedCardItem({
       dragAttributes={attributes}
       dragListeners={listeners}
       isDragging={isDragging}
+      simpleViewIndex={simpleViewIndex}
     />
   );
 }
