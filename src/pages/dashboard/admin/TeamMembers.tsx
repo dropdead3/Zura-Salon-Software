@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, AlertCircle, type LucideIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -267,15 +267,18 @@ export default function TeamMembers() {
    */
   const grouped = useMemo(() => {
     const byRole = new Map<string, OrganizationUser[]>();
-    const other: OrganizationUser[] = [];
+    const noRoles: OrganizationUser[] = [];
+    const otherRoles: OrganizationUser[] = [];
     for (const m of filtered) {
       const primary = primaryRoleOf(m.roles);
       if (primary) {
         const arr = byRole.get(primary) ?? [];
         arr.push(m);
         byRole.set(primary, arr);
+      } else if (!m.roles || m.roles.length === 0) {
+        noRoles.push(m);
       } else {
-        other.push(m);
+        otherRoles.push(m);
       }
     }
     const sections = Object.entries(ROLE_RANK)
@@ -287,8 +290,9 @@ export default function TeamMembers() {
         members: (byRole.get(role) ?? []).slice().sort(compareByName),
       }))
       .filter(s => s.members.length > 0);
-    other.sort(compareByName);
-    return { sections, other };
+    noRoles.sort(compareByName);
+    otherRoles.sort(compareByName);
+    return { sections, noRoles, otherRoles };
   }, [filtered]);
 
   /**
@@ -501,15 +505,37 @@ export default function TeamMembers() {
                     </div>
                   );
                 })}
-                {grouped.other.length > 0 && (
+                {grouped.noRoles.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-amber-500/30">
+                      <AlertCircle className="h-4 w-4 text-amber-500" />
+                      <h2 className="font-display text-sm uppercase tracking-wider text-foreground">No Roles Assigned</h2>
+                      <span className="text-xs text-muted-foreground">({grouped.noRoles.length})</span>
+                      <span className="ml-auto text-xs text-muted-foreground font-sans">
+                        Action required — assign a role to enable scheduling and access.
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {grouped.noRoles.map(m => (
+                        <MemberRow
+                          key={m.user_id}
+                          user={m}
+                          hasPin={pinByUser.get(m.user_id)}
+                          onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {grouped.otherRoles.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 pb-2 border-b border-border/60">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <h2 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h2>
-                      <span className="text-xs text-muted-foreground">({grouped.other.length})</span>
+                      <span className="text-xs text-muted-foreground">({grouped.otherRoles.length})</span>
                     </div>
                     <div className="space-y-2">
-                      {grouped.other.map(m => (
+                      {grouped.otherRoles.map(m => (
                         <MemberRow
                           key={m.user_id}
                           user={m}

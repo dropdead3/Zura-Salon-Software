@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import {
   Users, Bell, Shield, Loader2, Trash2, Cog, Palette, Sun, Moon, Monitor, Check, DollarSign as DollarSignIcon,
-  GraduationCap, Keyboard, Sparkles, Settings2, Save, Globe, Lock,
+  GraduationCap, Keyboard, Sparkles, Settings2, Save, Globe, Lock, AlertCircle,
 } from 'lucide-react';
 import { MessageSquareHeart } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -710,19 +710,38 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
                     })}
                     {(() => {
                       const categorizedRoles = ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager', 'director_of_operations', 'operations_assistant', 'receptionist', 'front_desk', 'stylist', 'stylist_assistant'];
-                      const uncategorizedUsers = users.filter(u => !categorizedRoles.includes(u.role));
-                      if (uncategorizedUsers.length === 0) return null;
+                      const noRoleUsers = users.filter(u => !u.role);
+                      const otherRoleUsers = users.filter(u => u.role && !categorizedRoles.includes(u.role));
                       return (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 pb-2 border-b">
-                            <Users className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h3>
-                            <span className="text-xs text-muted-foreground">({uncategorizedUsers.length})</span>
-                          </div>
-                          {uncategorizedUsers.map(u => (
-                            <UserCard key={u.user_id} u={u} updatingUser={updatingUser} updateUserRole={updateUserRole} removeUser={removeUser} currentUserId={user?.id} dynamicRoleOptions={dynamicRoleOptions} />
-                          ))}
-                        </div>
+                        <>
+                          {noRoleUsers.length > 0 && (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 pb-2 border-b border-amber-500/30">
+                                <AlertCircle className="w-4 h-4 text-amber-500" />
+                                <h3 className="font-display text-sm uppercase tracking-wider text-foreground">No Roles Assigned</h3>
+                                <span className="text-xs text-muted-foreground">({noRoleUsers.length})</span>
+                                <span className="ml-auto text-xs text-muted-foreground font-sans">
+                                  Action required — assign a role to enable scheduling and access.
+                                </span>
+                              </div>
+                              {noRoleUsers.map(u => (
+                                <UserCard key={u.user_id} u={u} updatingUser={updatingUser} updateUserRole={updateUserRole} removeUser={removeUser} currentUserId={user?.id} dynamicRoleOptions={dynamicRoleOptions} />
+                              ))}
+                            </div>
+                          )}
+                          {otherRoleUsers.length > 0 && (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 pb-2 border-b">
+                                <Users className="w-4 h-4 text-muted-foreground" />
+                                <h3 className="font-display text-sm uppercase tracking-wider text-muted-foreground">Other Roles</h3>
+                                <span className="text-xs text-muted-foreground">({otherRoleUsers.length})</span>
+                              </div>
+                              {otherRoleUsers.map(u => (
+                                <UserCard key={u.user_id} u={u} updatingUser={updatingUser} updateUserRole={updateUserRole} removeUser={removeUser} currentUserId={user?.id} dynamicRoleOptions={dynamicRoleOptions} />
+                              ))}
+                            </div>
+                          )}
+                        </>
                       );
                     })()}
                   </div>
