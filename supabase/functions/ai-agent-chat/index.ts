@@ -455,13 +455,20 @@ serve(async (req) => {
     const resolvedUuids = new Set<string>();
     const conversationMeta = { conversation_id, message_id };
 
+    // Mutation-intent regex used by the autonomy tripwire below.
+    const MUTATION_INTENT_RE = /\b(deactivate|reactivate|delete|remove|cancel|refund|fire|terminate|archive|reschedule|void|unbook|disable|deny|reject|approve|update|change|edit|set|reset|wipe)\b/i;
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+    const userIntendedMutation = MUTATION_INTENT_RE.test(lastUserMessage);
+
     // ---------- handle tool calls ----------
     if (choice.message?.tool_calls?.length > 0) {
       const toolResults: any[] = [];
       let action: unknown = null;
+      const toolsCalled: string[] = [];
 
       for (const toolCall of choice.message.tool_calls) {
         const toolName = toolCall.function.name;
+        toolsCalled.push(toolName);
         let toolArgs: any = {};
         try { toolArgs = JSON.parse(toolCall.function.arguments || '{}'); }
         catch { toolArgs = {}; }
@@ -497,7 +504,36 @@ serve(async (req) => {
         });
       }
       const followUpResult = await followUp.json();
-      const finalMessage = followUpResult.choices?.[0]?.message?.content || "Done.";
+      const rawFinal = (followUpResult.choices?.[0]?.message?.content || "").trim();
+
+      // ---------- AUTONOMY TRIPWIRE ----------
+      // Block any response that implies execution when no propose_capability staged anything.
+      const proposedThisTurn = toolsCalled.includes('propose_capability') && action !== null;
+      const FALSE_COMPLETION_RE = /\b(done|completed|deactivated|removed|deleted|cancelled|canceled|refunded|fired|terminated|archived|rescheduled|voided|disabled|updated|changed|reset)\b/i;
+
+      let finalMessage: string;
+      if (!proposedThisTurn && (userIntendedMutation || FALSE_COMPLETION_RE.test(rawFinal))) {
+        // Autonomy violation — model claimed action without staging one.
+        await recordAnomaly(supabase, {
+          organizationId: orgId,
+          userId: user.id,
+          type: 'autonomy_violation',
+          severity: 'high',
+          details: {
+            user_message: lastUserMessage.slice(0, 500),
+            model_text: rawFinal.slice(0, 500),
+            tools_called: toolsCalled,
+          },
+        });
+        finalMessage = userIntendedMutation
+          ? "I can't take that action without staging an approval card first. Try asking again and I'll prepare one for you to confirm."
+          : "I looked that up but didn't take any action. Let me know what you'd like to do next.";
+      } else if (!rawFinal) {
+        // Empty model output after read-only tools — neutral, non-committal.
+        finalMessage = "I looked that up but didn't take any action. Let me know what you'd like to do next.";
+      } else {
+        finalMessage = rawFinal;
+      }
 
       return new Response(JSON.stringify({
         message: finalMessage,
@@ -506,8 +542,30 @@ serve(async (req) => {
       }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
+    // ---------- no tool calls at all ----------
+    const directContent = (choice.message?.content || "").trim();
+    if (userIntendedMutation && directContent) {
+      // The user asked for a mutation but the model answered in prose without calling any tool.
+      // This is the worst case — narrated completion with zero tool activity. Refuse.
+      await recordAnomaly(supabase, {
+        organizationId: orgId,
+        userId: user.id,
+        type: 'autonomy_violation',
+        severity: 'high',
+        details: {
+          user_message: lastUserMessage.slice(0, 500),
+          model_text: directContent.slice(0, 500),
+          tools_called: [],
+        },
+      });
+      return new Response(JSON.stringify({
+        message: "I can't take that action without staging an approval card first. Try asking again and I'll prepare one for you to confirm.",
+        action: null,
+      }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
+    }
+
     return new Response(JSON.stringify({
-      message: choice.message?.content || "I'm not sure how to help with that.",
+      message: directContent || "I'm not sure how to help with that.",
       action: null,
     }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
 
