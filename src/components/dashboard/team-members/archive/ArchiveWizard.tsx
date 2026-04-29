@@ -55,6 +55,54 @@ function rosterMatchesRole(u: OrganizationUser, role: DestinationRole): boolean 
   return false;
 }
 
+/** True when every item in this bucket has a decision recorded. */
+function isBucketHandled(
+  b: DependencyBucket,
+  picks: Record<string, Record<string, Reassignment>>,
+): boolean {
+  if (b.count === 0) return true;
+  const m = picks[b.key] ?? {};
+  const isBulkOnly = b.key === 'client_preferences' || b.items.length === 0;
+  if (isBulkOnly) return !!m['__bulk__'];
+  // Per-item: every visible item decided + bulk marker if there's overflow.
+  const decidedCount = Object.keys(m).filter((k) => k !== '__bulk__').length;
+  if (decidedCount < b.items.length) return false;
+  if (b.count > b.items.length) return !!m['__bulk__'];
+  return true;
+}
+
+/** One-line summary of decisions made on a bucket, for the Step 2 tile. */
+function summarizeBucketDecisions(
+  b: DependencyBucket,
+  picks: Record<string, Record<string, Reassignment>>,
+  roster: OrganizationUser[],
+): string {
+  const m = picks[b.key] ?? {};
+  const entries = Object.values(m);
+  if (entries.length === 0) return '';
+  const reassign = entries.filter((r) => r.action === 'reassign' && r.destinationUserId);
+  const cancel = entries.filter((r) => r.action === 'cancel').length;
+  const drop = entries.filter((r) => r.action === 'drop').length;
+  const endDate = entries.filter((r) => r.action === 'end_date').length;
+
+  const destSet = new Set(reassign.map((r) => r.destinationUserId));
+  const parts: string[] = [];
+  if (reassign.length > 0) {
+    if (destSet.size === 1) {
+      const dest = reassign[0].destinationUserId!;
+      const u = roster.find((r) => r.user_id === dest);
+      const name = u?.display_name || u?.full_name || 'teammate';
+      parts.push(`Reassigned to ${name}`);
+    } else {
+      parts.push(`${reassign.length} reassigned across ${destSet.size}`);
+    }
+  }
+  if (cancel > 0) parts.push(`${cancel} cancelled`);
+  if (drop > 0) parts.push(`${drop} dropped`);
+  if (endDate > 0) parts.push(`${endDate} end-dated`);
+  return parts.join(' · ');
+}
+
 type Step = 1 | 2 | 3 | 4;
 
 export function ArchiveWizard({ open, onOpenChange, member, onArchived }: ArchiveWizardProps) {
@@ -69,6 +117,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const [picks, setPicks] = useState<Record<string, Record<string, Reassignment>>>({});
   // bucket -> bulk destination
   const [bulkDest, setBulkDest] = useState<Record<string, string>>({});
+  // When set on Step 2, swaps the tile grid for the per-bucket workspace.
+  const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
 
   const { data: roster = [] } = useOrganizationUsers(orgId);
   const eligibleRoster = useMemo(
@@ -92,8 +142,14 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       setConfirmed(false);
       setPicks({});
       setBulkDest({});
+      setActiveBucket(null);
     }
   }, [open, member.user_id]);
+
+  // Clear bucket workspace whenever we leave Step 2.
+  useEffect(() => {
+    if (step !== 2) setActiveBucket(null);
+  }, [step]);
 
   const buckets = scan?.buckets ?? [];
   const nonEmptyBuckets = buckets.filter((b) => b.count > 0);
@@ -103,22 +159,20 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
     [picks],
   );
 
-  const allHandled = useMemo(() => {
-    return nonEmptyBuckets.every((b) => {
-      // Bulk-style buckets (single ledger row, no items)
-      if (b.key === 'client_preferences') {
-        return !!picks[b.key]?.['__bulk__'];
-      }
-      // Per-item buckets
-      const itemCount = b.items.length;
-      const decided = Object.keys(picks[b.key] ?? {}).length;
-      // If we got fewer items than count (cap reached), require bulk fallback.
-      if (b.count > itemCount) {
-        return !!picks[b.key]?.['__bulk__'];
-      }
-      return decided >= itemCount;
-    });
-  }, [nonEmptyBuckets, picks]);
+  const handledCount = useMemo(
+    () => nonEmptyBuckets.filter((b) => isBucketHandled(b, picks)).length,
+    [nonEmptyBuckets, picks],
+  );
+
+  const allHandled = useMemo(
+    () => nonEmptyBuckets.every((b) => isBucketHandled(b, picks)),
+    [nonEmptyBuckets, picks],
+  );
+
+  const activeBucketData = useMemo(
+    () => (activeBucket ? buckets.find((b) => b.key === activeBucket) ?? null : null),
+    [activeBucket, buckets],
+  );
 
   // ---------- assignment helpers ----------
 
@@ -226,13 +280,34 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
             />
           )}
 
-          {step === 2 && (
-            <Step2 loading={scanLoading} buckets={buckets} totalBlocking={scan?.totalBlocking ?? 0} onRescan={refetch} />
+          {step === 2 && !activeBucketData && (
+            <Step2
+              loading={scanLoading}
+              buckets={buckets}
+              totalBlocking={scan?.totalBlocking ?? 0}
+              onRescan={refetch}
+              picks={picks}
+              roster={eligibleRoster}
+              handledCount={handledCount}
+              onOpenBucket={(key) => setActiveBucket(key)}
+            />
+          )}
+
+          {step === 2 && activeBucketData && (
+            <BucketWorkspace
+              bucket={activeBucketData}
+              roster={eligibleRoster}
+              picks={picks}
+              bulkDest={bulkDest}
+              setBulkDest={setBulkDest}
+              onItemPick={setItemPick}
+              onApplyBulk={applyBulk}
+            />
           )}
 
           {step === 3 && (
             <Step3
-              buckets={nonEmptyBuckets}
+              buckets={nonEmptyBuckets.filter((b) => !isBucketHandled(b, picks))}
               roster={eligibleRoster}
               picks={picks}
               bulkDest={bulkDest}
@@ -260,15 +335,30 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as Step) : s))}
-            disabled={step === 1 || archive.isPending}
+            onClick={() => {
+              if (activeBucketData) {
+                setActiveBucket(null);
+              } else {
+                setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
+              }
+            }}
+            disabled={(step === 1 && !activeBucketData) || archive.isPending}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+            {activeBucketData ? 'Back to impact preview' : 'Back'}
           </Button>
 
           <div className="flex items-center gap-2">
-            {step < 4 ? (
+            {activeBucketData ? (
+              <Button
+                size="sm"
+                disabled={!isBucketHandled(activeBucketData, picks)}
+                onClick={() => setActiveBucket(null)}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Done
+              </Button>
+            ) : step < 4 ? (
               <Button
                 size="sm"
                 disabled={
@@ -277,15 +367,21 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
                   (step === 3 && !allHandled)
                 }
                 onClick={() => {
-                  // If step 2 reveals no dependencies, skip step 3.
-                  if (step === 2 && nonEmptyBuckets.length === 0) {
+                  // Step 2 routing: skip Step 3 entirely when there's nothing
+                  // left to decide. Step 3 only shows up when buckets are
+                  // partially handled (acts as a cleanup view).
+                  if (step === 2 && (nonEmptyBuckets.length === 0 || allHandled)) {
                     setStep(4);
                   } else {
                     setStep((s) => ((s + 1) as Step));
                   }
                 }}
               >
-                {step === 2 && nonEmptyBuckets.length === 0 ? 'Continue (no dependencies)' : 'Continue'}
+                {step === 2 && nonEmptyBuckets.length === 0
+                  ? 'Continue (no dependencies)'
+                  : step === 2 && allHandled
+                    ? 'Continue to review'
+                    : 'Continue'}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
@@ -364,12 +460,16 @@ function Step1({
 // ============================================================
 
 function Step2({
-  loading, buckets, totalBlocking, onRescan,
+  loading, buckets, totalBlocking, onRescan, picks, roster, handledCount, onOpenBucket,
 }: {
   loading: boolean;
   buckets: DependencyBucket[];
   totalBlocking: number;
   onRescan: () => void;
+  picks: Record<string, Record<string, Reassignment>>;
+  roster: OrganizationUser[];
+  handledCount: number;
+  onOpenBucket: (key: ArchiveBucketKey) => void;
 }) {
   if (loading) {
     return (
@@ -396,29 +496,257 @@ function Step2({
             <span>{totalBlocking} time-sensitive items (appointments / pairings) require reassignment.</span>
           </div>
         )}
+        {nonEmpty.length > 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <div className="h-1.5 flex-1 rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full bg-emerald-500/70 transition-all"
+                style={{ width: `${(handledCount / nonEmpty.length) * 100}%` }}
+              />
+            </div>
+            <span className="font-sans text-[11px] text-muted-foreground tabular-nums">
+              {handledCount} / {nonEmpty.length} handled
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {buckets.map((b) => (
-          <div
-            key={b.key}
-            className={cn(
-              'rounded-lg border px-3 py-2 flex items-center justify-between',
-              b.count > 0 ? 'border-border bg-card/60' : 'border-border/40 bg-muted/20 opacity-60',
-            )}
-          >
-            <span className="font-sans text-xs text-foreground">{b.label}</span>
-            <Badge variant={b.count > 0 ? 'secondary' : 'outline'} className="text-[11px]">
-              {b.count}
-            </Badge>
-          </div>
-        ))}
+        {buckets.map((b) => {
+          const handled = isBucketHandled(b, picks);
+          const summary = handled && b.count > 0 ? summarizeBucketDecisions(b, picks, roster) : '';
+          const interactive = b.count > 0;
+
+          if (!interactive) {
+            return (
+              <div
+                key={b.key}
+                className="rounded-lg border border-border/40 bg-muted/20 opacity-60 px-3 py-2 flex items-center justify-between"
+              >
+                <span className="font-sans text-xs text-foreground">{b.label}</span>
+                <Badge variant="outline" className="text-[11px]">0</Badge>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={b.key}
+              type="button"
+              onClick={() => onOpenBucket(b.key)}
+              className={cn(
+                'group rounded-lg border bg-card/60 hover:bg-card/80 text-left px-3 py-2.5 transition-colors',
+                handled ? 'border-emerald-500/40' : 'border-border',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-sans text-xs text-foreground truncate">{b.label}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {handled ? (
+                    <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {b.count}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[11px]">{b.count}</Badge>
+                  )}
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+                </div>
+              </div>
+              {handled ? (
+                <p className="font-sans text-[11px] text-emerald-500/90 mt-1 truncate">
+                  {summary || 'Handled'}
+                </p>
+              ) : (
+                <p className="font-sans text-[11px] text-muted-foreground mt-1">
+                  Tap to reassign
+                </p>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <Button variant="ghost" size="sm" onClick={onRescan} className="text-xs">
         Re-scan
       </Button>
     </div>
+  );
+}
+
+// ============================================================
+// BucketWorkspace — focused per-bucket reassignment view
+// (rendered in-place on Step 2 when a bucket is opened)
+// ============================================================
+
+function BucketWorkspace({
+  bucket: b, roster, picks, bulkDest, setBulkDest, onItemPick, onApplyBulk,
+}: {
+  bucket: DependencyBucket;
+  roster: OrganizationUser[];
+  picks: Record<string, Record<string, Reassignment>>;
+  bulkDest: Record<string, string>;
+  setBulkDest: (v: Record<string, string>) => void;
+  onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
+  onApplyBulk: (b: DependencyBucket, action: ArchiveAction, dest: string | null) => void;
+}) {
+  const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
+  const decidedCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
+  const isBulkBucket = b.key === 'client_preferences' || b.items.length === 0;
+  const overflow = b.count - b.items.length;
+  const handled = isBucketHandled(b, picks);
+
+  return (
+    <section className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
+      <header className="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <p className="font-display text-xs tracking-wider uppercase text-foreground">
+            {b.label}
+          </p>
+          <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+            {b.count} {b.count === 1 ? 'item' : 'items'}
+            {b.destinationRole !== 'any' && ` · destination role: ${b.destinationRole.replace('_', ' ')}`}
+          </p>
+        </div>
+        {handled ? (
+          <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Handled
+          </Badge>
+        ) : !isBulkBucket ? (
+          <Badge variant="outline" className="text-[10px]">
+            {decidedCount} / {b.items.length} decided
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">Needs decision</Badge>
+        )}
+      </header>
+
+      {/* Bulk control */}
+      <div className="px-4 py-3 bg-muted/20 border-b border-border/40 flex items-center gap-2 flex-wrap">
+        <span className="font-sans text-xs text-muted-foreground">
+          {isBulkBucket ? 'Reassign all to' : 'Bulk reassign to'}
+        </span>
+        <Select
+          value={bulkDest[b.key] ?? ''}
+          onValueChange={(v) => setBulkDest({ ...bulkDest, [b.key]: v })}
+        >
+          <SelectTrigger className="h-8 w-[200px] rounded-full text-xs">
+            <SelectValue placeholder="Pick a teammate…" />
+          </SelectTrigger>
+          <SelectContent>
+            {eligible.length === 0 && (
+              <div className="px-2 py-2 text-xs text-muted-foreground">
+                No eligible {b.destinationRole.replace('_', ' ')}.
+              </div>
+            )}
+            {eligible.map((u) => (
+              <SelectItem key={u.user_id} value={u.user_id}>
+                {u.display_name || u.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-8 text-xs"
+          disabled={!bulkDest[b.key]}
+          onClick={() => onApplyBulk(b, 'reassign', bulkDest[b.key])}
+        >
+          Apply
+        </Button>
+        {b.actions.includes('cancel') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-destructive"
+            onClick={() => onApplyBulk(b, 'cancel', null)}
+          >
+            Cancel all
+          </Button>
+        )}
+        {b.actions.includes('drop') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => onApplyBulk(b, 'drop', null)}
+          >
+            Drop all
+          </Button>
+        )}
+        {b.actions.includes('end_date') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => onApplyBulk(b, 'end_date', null)}
+          >
+            End-date all
+          </Button>
+        )}
+      </div>
+
+      {/* Per-item rows */}
+      {!isBulkBucket && (
+        <ul className="divide-y divide-border/40 max-h-[420px] overflow-y-auto">
+          {b.items.map((raw) => {
+            const item = raw as Record<string, unknown>;
+            const id = String(item.id);
+            const decided = picks[b.key]?.[id];
+            return (
+              <li key={id} className="px-4 py-2 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-xs text-foreground truncate">
+                    {describeItem(b.key, item)}
+                  </p>
+                  {decided && (
+                    <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+                      {decided.action === 'reassign'
+                        ? `→ ${roster.find((u) => u.user_id === decided.destinationUserId)?.display_name || roster.find((u) => u.user_id === decided.destinationUserId)?.full_name || 'Selected'}`
+                        : decided.action === 'cancel' ? 'Will be cancelled'
+                        : decided.action === 'drop' ? 'Will be dropped'
+                        : 'Will be end-dated'}
+                    </p>
+                  )}
+                </div>
+                <Select
+                  value={decided?.destinationUserId ?? ''}
+                  onValueChange={(v) => onItemPick(b, id, 'reassign', v)}
+                >
+                  <SelectTrigger className="h-7 w-[160px] rounded-full text-[11px]">
+                    <SelectValue placeholder="Reassign to…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligible.map((u) => (
+                      <SelectItem key={u.user_id} value={u.user_id}>
+                        {u.display_name || u.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {b.actions.includes('cancel') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[11px]"
+                    onClick={() => onItemPick(b, id, 'cancel', null)}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {overflow > 0 && (
+        <p className="px-4 py-2 text-[11px] text-muted-foreground bg-muted/10">
+          +{overflow} more items beyond preview — bulk action will apply to all.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -441,7 +769,8 @@ function Step3({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-3" />
-        <p className="font-sans text-sm text-foreground">No reassignments needed.</p>
+        <p className="font-sans text-sm text-foreground">All buckets handled.</p>
+        <p className="font-sans text-xs text-muted-foreground mt-1">Continue to review.</p>
       </div>
     );
   }

@@ -1,195 +1,137 @@
 ## Goal
 
-Replace the today's instant `is_active` toggle and "Remove" button with a guided, audit-safe **Deactivate → Reassign → Archive** flow on the Team Member detail page. Archiving must never orphan upcoming work (appointments, assistant assignments, tasks, swaps, schedules), and reassignment must respect role compatibility (stylist assistant work can only move to another stylist assistant, etc.).
+Turn the **Step 2 — Impact Preview** tiles into interactive entry points. Clicking a bucket opens a focused per-bucket workspace where the user can review the underlying items and reassign / cancel / drop / end-date them one by one (or in bulk). When they return, the bucket on Step 2 shows a "Handled" state with a summary of the decisions made. Once every non-empty bucket is handled, the wizard skips Step 3 (which becomes redundant) and goes straight to Step 4 (Review & Confirm).
 
-## Doctrine alignment
+This replaces the current flow where Step 2 is read-only counts and Step 3 is one long scroll of every bucket stacked together.
 
-- Semi-autonomous: **Recommend → Simulate (impact preview) → Approve → Execute**. No silent destructive moves.
-- Structural gate: an archive cannot complete while a "blocking dependency" exists unless the user explicitly chooses to release/cancel it.
-- Audit logged. Historical data (sales, payroll, completed appointments) is preserved untouched.
-- Tenant-scoped, RLS-safe; only `super_admin` / `admin` can archive.
-
----
-
-## Lifecycle states (new contract)
+## UX Flow
 
 ```text
-active  ──► deactivated  ──► archived
-                ▲   │              │
-                └───┴── reactivate ┘
+Step 1: Reason + last day worked
+        │
+        ▼
+Step 2: Impact Preview (clickable tiles)
+        │   ┌──────────────────────────────────────────┐
+        │   │ Upcoming appointments        3   ›       │ ← click
+        │   │ Service-line assignments     0           │   (disabled if 0)
+        │   │ Clients · preferred stylist  11  ›       │
+        │   └──────────────────────────────────────────┘
+        │
+        │ click a tile ──► BucketWorkspace (in-panel view, not a new drawer)
+        │                  • per-item rows with reassign / cancel / drop
+        │                  • bulk apply at the top
+        │                  • "Done" button returns to Step 2
+        │
+        │ Step 2 tile now shows: "Handled · 3 reassigned to Maya"
+        │                        with an "Edit" link to re-open
+        ▼
+Step 3: (auto-skipped if every non-empty bucket is Handled)
+        Otherwise shows only the buckets still missing decisions
+        ▼
+Step 4: Review & Confirm
 ```
 
-- **active** — `is_active = true`, can log in, gets new work.
-- **deactivated** — `is_active = false`, can no longer log in, **cannot be assigned new work**, but still owns existing assignments. Reversible in 1 click. (This is what the toggle gives today, but with proper guardrails added.)
-- **archived** — `archived_at` set, removed from rosters/pickers/auto-assign, all *future* assignments must already be reassigned or cancelled. Reversible by an admin (un-archive restores to deactivated).
+## Component Changes
 
-We add columns to `employee_profiles`:
-- `archived_at timestamptz`
-- `archived_by uuid`
-- `archive_reason text` (enum-ish: `terminated`, `resigned`, `seasonal`, `transferred`, `other`)
-- `deactivated_at timestamptz`, `deactivated_by uuid`
+All work is in `src/components/dashboard/team-members/archive/ArchiveWizard.tsx`. No backend changes — the existing `scan-team-member-dependencies` and `archive-team-member` edge functions already return everything we need.
 
----
+### 1. Lift `picks` / `bulkDest` already at wizard root
 
-## The Archive Wizard (new UI)
+Already true — keep them at the wizard root so per-bucket edits persist when the user returns to Step 2.
 
-Triggered from `SecurityTab` → Account Status, replacing the current "Remove" button with **"Archive team member…"**. Opens a `PremiumFloatingPanel` drawer with 4 steps:
+### 2. New local state in `ArchiveWizard`
 
-**Step 1 — Reason & effective date**
-- Reason (required), effective date (default: today), final-day note for payroll.
-- Auto-deactivates immediately on confirm of the wizard's final step.
-
-**Step 2 — Dependency scan (the impact preview)**
-We run a single edge function `scan-team-member-dependencies` that returns counts + samples for, scoped to this user and the org:
-
-| Bucket | Source | Action options |
-|---|---|---|
-| Upcoming appointments (as stylist) | `appointments` where `staff_user_id = user AND start_time >= now() AND status NOT IN ('completed','cancelled','no_show')` | Reassign to another stylist · Cancel & notify clients · Leave on books (block archive) |
-| Upcoming service-line assignments | `appointment_service_assignments.assigned_user_id` for future appts | Reassign · Drop line |
-| Upcoming assistant pairings | `appointment_assistants.assistant_user_id` future | Reassign to another **stylist assistant** · Drop |
-| Pending assistant requests | `assistant_requests` where stylist_id or assistant_id = user AND status = pending/accepted AND request_date >= today | Reassign · Cancel |
-| Open operational tasks | `operational_tasks.assigned_to` AND status open | Reassign to user/role · Reassign to manager · Mark cancelled |
-| Open SEO tasks | `seo_tasks.assigned_to` AND status open | Same |
-| Open shift swaps | `shift_swaps` where requester or claimer or manager = user, status open | Cancel/reassign manager |
-| Pending meeting requests | `meeting_requests` where manager or team_member = user, status open | Cancel/reassign |
-| Recurring schedule | `employee_location_schedules` future | End-date the schedule |
-| Active commission/comp plan | `compensation_plans` linkage via `employee_payroll_settings` | Show — payroll will mark final-period only, no auto-delete |
-| Walk-in / waitlist preferences | `walk_in_queue.assigned_stylist_id`, `clients.preferred_stylist_id`, `waitlist_entries.preferred_stylist_id` | Bulk-clear or reassign |
-
-**Step 3 — Reassignment picker (per bucket)**
-- Group items by bucket; each row shows date/title/client and a destination dropdown.
-- **Role-compatible filter is mandatory:** assistant work → assistant pickers only; stylist work → stylist pickers only; manager-owned items → manager-eligible roles.
-- Bulk action per bucket: "Reassign all to ___".
-- Soft conflict check: if the destination stylist isn't scheduled at the same location/time, show an amber warning ("Outside their schedule — confirm before continuing").
-- Stylist assistant special rule: if the archived user is the *only* assistant configured for the location and there are upcoming assistant pairings, surface a structural warning ("No remaining assistant at this location — consider hiring before archiving").
-
-**Step 4 — Review & confirm**
-- Plain-English summary: "12 appointments → Hayleigh · 4 tasks → Manager (Kristi) · 1 schedule ended 5/2 · 23 historical records preserved."
-- Confirm copy: "Archive Eric Day. He'll be removed from rosters and pickers. Historical data stays intact. You can un-archive within 90 days."
-- Big confirm button. Destructive only after explicit checkbox: "I've reviewed the reassignments above."
-
----
-
-## Server side
-
-New edge function: `archive-team-member`
-- Auth: requires `is_org_admin`.
-- Accepts `{ userId, reason, effectiveDate, reassignments: [{bucket, itemId, destinationUserId|null, action}] }`.
-- Transaction:
-  1. Apply each reassignment (UPDATE the right table/column).
-  2. End-date `employee_location_schedules` future rows.
-  3. Set `is_active=false`, `deactivated_at`, `archived_at`, `archived_by`, `archive_reason`.
-  4. Revoke session: call existing PIN/session invalidation path; set `employee_pins.login_pin = NULL`.
-  5. Strip `user_roles` rows for this org? **No** — keep them for audit; gate visibility via `archived_at IS NULL` in roster query instead. (Roles re-apply on un-archive without rebuild.)
-  6. Insert one row into a new `team_member_archive_log` table capturing the reassignment ledger (JSONB) + reason + actor.
-  7. Insert one `operational_tasks` notification to the archiver: "Archive complete — review summary."
-- Idempotent via `idempotency_key` on the request.
-
-New edge function: `scan-team-member-dependencies`
-- Read-only; returns counts + first-N samples per bucket for the wizard.
-
-New edge function: `unarchive-team-member`
-- Reverses status flags only (no auto-restore of cancelled work). Within 90 days.
-
----
-
-## Roster & picker side-effects (must-do)
-
-To keep the absence-signal contract clean, we filter archived users out of:
-- `useOrganizationUsers` default (add `includeArchived?: boolean`).
-- All staff pickers: appointment booking, task assignment, swap claim, assistant request, meeting request, walk-in assignment, kiosk self-booking, public booking (`booking/branded-surfaces`), payroll add-employee.
-- Leaderboards and stylist-level grouping.
-- Login: existing auth gate already blocks `is_active=false`; archived implies inactive.
-
-**Surface for archived members:** Team Members page gets a new view `?view=archived` (alongside Roster / Invitations) showing archived members with un-archive CTA, archived date, reason, and the saved reassignment ledger.
-
----
-
-## UX details
-
-- The Account Status card on the detail page is rewritten:
-  - **Active** toggle stays for the soft case (e.g., "on leave for two weeks") but adds a confirmation dialog when flipping off, listing future assignments and offering to open the Archive wizard.
-  - "Remove" button → renamed **"Archive team member…"**, opens the wizard.
-  - When already archived: card shows status, reason, archived-by, and **"Un-archive"** button.
-- Empty/zero-dependency archive: wizard skips Step 3 and goes straight to Review.
-- Stylist privacy: stylist self-view never sees this card (already true).
-
----
-
-## Database migration (one)
-
-```sql
-ALTER TABLE employee_profiles
-  ADD COLUMN archived_at timestamptz,
-  ADD COLUMN archived_by uuid,
-  ADD COLUMN archive_reason text,
-  ADD COLUMN deactivated_at timestamptz,
-  ADD COLUMN deactivated_by uuid;
-
-CREATE TABLE team_member_archive_log (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL,
-  user_id uuid NOT NULL,
-  archived_by uuid NOT NULL,
-  archived_at timestamptz NOT NULL DEFAULT now(),
-  reason text,
-  reassignment_ledger jsonb NOT NULL DEFAULT '[]',
-  unarchived_at timestamptz,
-  unarchived_by uuid
-);
-ALTER TABLE team_member_archive_log ENABLE ROW LEVEL SECURITY;
--- Tenant-scoped policies via is_org_member / is_org_admin.
-
-CREATE INDEX idx_employee_profiles_archived ON employee_profiles(organization_id, archived_at);
+```ts
+const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
 ```
 
----
+When `activeBucket` is set on Step 2, render `<BucketWorkspace bucket={...} />` instead of the tile grid. The footer's "Continue" button is replaced with "Done" while inside a bucket; clicking it clears `activeBucket` and returns to the tile grid.
 
-## Files to add / change
+### 3. Update `Step2`
 
-**New**
-- `supabase/migrations/<ts>_team_member_archive.sql`
-- `supabase/functions/scan-team-member-dependencies/index.ts`
-- `supabase/functions/archive-team-member/index.ts`
-- `supabase/functions/unarchive-team-member/index.ts`
-- `src/components/dashboard/team-members/archive/ArchiveWizard.tsx` (drawer)
-- `src/components/dashboard/team-members/archive/DependencyBucket.tsx`
-- `src/components/dashboard/team-members/archive/ReassignRow.tsx`
-- `src/hooks/useArchiveTeamMember.ts` (scan / archive / unarchive)
-- `src/pages/dashboard/admin/TeamMembersArchived.tsx` view (or inline `?view=archived` in `TeamMembers.tsx`)
+- Tiles with `count > 0` become buttons:
+  - Show count badge + chevron-right
+  - On click → `setActiveBucket(b.key)`
+  - Show a "Handled" pill + summary line if `isBucketHandled(b)` is true (uses the same `allHandled`-style check, but per-bucket)
+  - Show an "Edit" affordance to re-open even after handled
+- Tiles with `count === 0` stay non-interactive (current dimmed style).
+- Keep the existing "Impact preview" header card and "Re-scan" button.
+- Add a small progress strip at the top: `2 of 3 buckets handled`.
 
-**Edited**
-- `src/components/dashboard/team-members/tabs/SecurityTab.tsx` — replace Remove with Archive wizard launcher; add archived-state card.
-- `src/hooks/useOrganizationUsers.ts` — exclude archived by default; add `includeArchived` opt-in; `useToggleUserActive` adds a soft confirm via consumer (the consumer handles the dialog).
-- `src/pages/dashboard/admin/TeamMembers.tsx` — add Archived sub-view; filter archived from roster.
-- All staff pickers identified above — switch to filtered roster (most already use `useOrganizationUsers`, so this is mostly free; the public/kiosk booking ones need explicit verification).
+### 4. New `BucketWorkspace` sub-component
 
----
+Extract the inner `<section>` from the current `Step3` map into a standalone component that renders **a single bucket** with:
 
-## Out of scope (call out, don't build now)
+- Bucket header (label, count, destination role hint)
+- Bulk control row (`Reassign all to…`, Cancel all, Drop all, End-date all)
+- Per-item list (`describeItem`, per-row Select + Cancel button) — same as today
+- Footer inside the workspace: secondary "Back to impact preview" + primary "Done" button (disabled until that bucket is fully decided)
 
-- Auto-rebooking client-preferred stylists (covered by `clients.preferred_stylist_id` clear; smart re-pairing is a Marketing OS / Phase 2 problem).
-- Payroll final-paycheck automation (left to existing payroll flow; we just freeze new accruals).
-- Document/handbook re-acknowledgment cleanup.
-- Hard delete (GDPR right-to-erasure) — separate, heavier flow, not requested here.
+Reuses the existing `onItemPick`, `onApplyBulk`, `picks`, `bulkDest`, `setBulkDest`, `rosterMatchesRole` helpers — pure refactor of existing JSX.
 
----
+### 5. Per-bucket "handled" check
 
-## Prompt-craft feedback (per project doctrine)
+Extract from the current `allHandled` memo:
 
-**What worked well in your prompt:** you framed the *behavior* (deactivate → archive → reassign), called out the role-compatibility nuance (assistant → assistant), and explicitly invited me to expand the analysis. That's high-signal scoping.
+```ts
+function isBucketHandled(b: DependencyBucket, picks): boolean {
+  if (b.count === 0) return true;
+  if (b.key === 'client_preferences' || b.items.length === 0) {
+    return !!picks[b.key]?.['__bulk__'];
+  }
+  if (b.count > b.items.length) return !!picks[b.key]?.['__bulk__'];
+  return Object.keys(picks[b.key] ?? {}).filter(k => k !== '__bulk__').length >= b.items.length;
+}
+```
 
-**Even sharper next time:**
-1. State the **lifecycle** you want (does deactivated == archived, or are they two states?). I assumed two — confirm.
-2. Name the **actor** (who can archive — admins only? GMs?).
-3. Name the **reversibility window** (un-archive forever, 90 days, never?).
-4. Call out **edge cases up front** (last-remaining-assistant, sole owner, currently-clocked-in).
+`allHandled` becomes `nonEmptyBuckets.every(b => isBucketHandled(b, picks))`.
 
-A tighter version: *"Add a two-state lifecycle (deactivated = soft, archived = hard) on Team Members, gated to super_admin/admin. Archiving must run a dependency scan across upcoming appointments, assistant pairings, tasks, swaps, schedules, and force role-compatible reassignment before completing. Un-archive available 90 days. Preserve all historical data."*
+### 6. Step 3 becomes a fallback / overflow view
 
-## Enhancement suggestions
+Since every bucket can now be handled directly from Step 2, **Step 3 is only reached if a bucket is partially handled** or the user explicitly clicks Continue with un-handled buckets. Simplest path:
 
-- Add a **"Last day worked"** field that drives the cutoff for payroll, schedule end-dating, and commission accrual freeze.
-- Surface an **archived-employee analytics tile** on the Operations Hub: count, reason mix, avg tenure at archive, reassignment lead time.
-- Wire a **Zura advisory** that flags when an active employee has zero upcoming assignments for >30 days — silent prompt to consider archiving.
-- For Phase 2: **batch archive** (seasonal closures), and an **AI lever** ("Archiving Eric leaves no assistant at Val Vista Lakes — propose hiring or reassigning Mallori as assistant cover").
+- When user clicks **Continue** on Step 2:
+  - If `nonEmptyBuckets.length === 0` → jump to Step 4 (current behavior)
+  - Else if `allHandled` → jump to Step 4 (new — skips Step 3 entirely)
+  - Else → go to Step 3, which now renders **only** the buckets where `!isBucketHandled(b)` so it acts as a "you still need to decide these" cleanup view
+
+This keeps Step 3 as a safety net without forcing the user through it.
+
+### 7. Bucket summary line on Step 2 tile
+
+After a bucket is handled, show a one-line summary derived from `picks[b.key]`:
+
+- All same destination: `Reassigned to {name}`
+- Mixed destinations: `{n} reassigned · {m} cancelled`
+- Bulk action only: `All cancelled` / `All dropped` / `End-dated`
+
+## Visual / Token Compliance
+
+- Tiles use `rounded-xl border border-border/60 bg-card/60`, hover `bg-card/80`, with `font-display text-xs tracking-[0.18em] uppercase` for the bucket label and `font-sans text-[11px]` for the secondary summary line — matches existing wizard styling.
+- "Handled" pill: small `Badge variant="outline"` with `CheckCircle2` icon in `text-emerald-500`.
+- BucketWorkspace inherits the same `space-y-5 px-6 py-5` body container — no second drawer, no portal, just an in-panel view swap so the wizard breadcrumb (`Archive · Step 2 of 4`) stays accurate.
+- All buttons stay `tokens.button.*`; selects keep `rounded-full` per Input Shape Canon.
+
+## Files Edited
+
+- `src/components/dashboard/team-members/archive/ArchiveWizard.tsx` — only file touched. ~80 lines added (new BucketWorkspace + handled summary + Step 2 tile button), ~40 lines refactored (Step3 filters to un-handled).
+
+## Out of Scope
+
+- No backend / migration changes.
+- No changes to the count semantics or actions returned by `scan-team-member-dependencies`.
+- No changes to `Step1` or `Step4`.
+
+## Enhancement Suggestions (optional, not in this plan)
+
+1. **"Suggested teammate" pre-fill** — when a bucket has a clear successor (e.g., the only other active stylist assistant at the same location), pre-select them in the bulk picker and label it `Suggested`.
+2. **Per-bucket "Notify recipient"** — once decisions are confirmed in Step 4, send the destination user(s) a one-line in-app notification: *"You've been assigned 3 appointments from Chelsea (archived)."*
+3. **Diff view in Step 4** — group the ledger by destination user so the operator sees *"Maya: 3 appts, 2 service lines"* instead of a flat list.
+4. **Client-preference reassignment intelligence** — for the "Clients with this stylist as preferred" bucket, surface each client's last-visit date and let the operator split the 11 clients across multiple successors instead of forcing one bulk destination.
+
+## Prompt Coaching
+
+Strong prompt — you anchored it to the exact screen, named the surface, and stated the verb (*click → see → work on / reassign*). Two refinements that would tighten future asks:
+
+- **Name the success state.** "When I'm done with a bucket, the tile should show Handled with a one-line summary" tells me exactly what to render on return.
+- **Decide the navigation model.** "Open in the same panel" vs "open a nested drawer" vs "open full screen" changes the layout. I picked in-panel because it preserves the wizard's step counter — flag it if you'd prefer a different model.
