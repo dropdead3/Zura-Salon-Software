@@ -512,8 +512,11 @@ function ThemeTab() {
     }
   };
 
-  const handlePreview = (themeId?: string) => {
-    window.open('/', '_blank');
+  const orgPreviewUrl = effectiveOrganization?.slug
+    ? `${window.location.origin}/org/${effectiveOrganization.slug}`
+    : null;
+  const handlePreview = (_themeId?: string) => {
+    if (orgPreviewUrl) window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer');
   };
 
   const isLoading = themesLoading || activeLoading;
