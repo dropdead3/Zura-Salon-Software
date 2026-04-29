@@ -1,10 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Award, Star, Eye } from 'lucide-react';
+import { Award, Star, Eye, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTodaysAnniversaries, useUpcomingAnniversaries, MILESTONE_YEARS } from '@/hooks/useAnniversaries';
 import { useBusinessName } from '@/hooks/useBusinessSettings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { tokens } from '@/lib/design-tokens';
@@ -13,6 +15,7 @@ export function AnniversaryWidget() {
   const { data: todaysAnniversaries, isLoading: loadingToday } = useTodaysAnniversaries();
   const { data: upcomingAnniversaries, isLoading: loadingUpcoming } = useUpcomingAnniversaries(30);
   const { isViewingAsUser } = useViewAs();
+  const { dashPath } = useOrgDashboardPath();
 
   const isLoading = loadingToday || loadingUpcoming;
 
