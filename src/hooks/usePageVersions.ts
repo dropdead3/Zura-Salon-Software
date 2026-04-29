@@ -13,6 +13,7 @@ export interface PageVersion {
   saved_by: string | null;
   saved_at: string;
   change_summary: string | null;
+  restored_from_version_id: string | null;
 }
 
 export function usePageVersions(pageId: string | undefined, orgId: string | undefined) {
