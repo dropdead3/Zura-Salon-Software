@@ -37,9 +37,12 @@ import { useTeamPinStatus, useAdminSetUserPin } from '@/hooks/useUserPin';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Archive } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { BulkArchiveWizard, type BulkArchiveTarget } from '@/components/dashboard/team-members/archive/BulkArchiveWizard';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
