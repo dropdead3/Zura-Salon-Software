@@ -33,6 +33,7 @@ import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { QuickAssignRoleChip } from '@/components/dashboard/team-members/QuickAssignRoleChip';
 import { ArchiveMemberChip } from '@/components/dashboard/team-members/ArchiveMemberChip';
+import { RestoreMemberChip } from '@/components/dashboard/team-members/RestoreMemberChip';
 
 type TeamView = 'roster' | 'invitations' | 'archived';
 const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
@@ -102,7 +103,7 @@ function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: Organization
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/60',
+        'group w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/60',
         'hover:bg-foreground/5 hover:border-border transition-colors text-left',
         !user.is_active && 'opacity-60',
       )}
@@ -159,7 +160,8 @@ export default function TeamMembers() {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
-  const { roles, isPlatformUser } = useAuth();
+  const { user, roles, isPlatformUser } = useAuth();
+  const currentUserId = user?.id;
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data: activeLocations = [] } = useActiveLocations(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
@@ -542,7 +544,7 @@ export default function TeamMembers() {
                                     user={m}
                                     hasPin={pinByUser.get(m.user_id)}
                                     onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                                    trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                                    trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                                   />
                                 ))}
                               </div>
@@ -557,7 +559,7 @@ export default function TeamMembers() {
                               user={m}
                               hasPin={pinByUser.get(m.user_id)}
                               onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                              trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                              trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                             />
                           ))}
                         </div>
@@ -589,7 +591,7 @@ export default function TeamMembers() {
                                 userName={m.display_name || m.full_name || 'this member'}
                                 suggestedRole={suggestedRole}
                               />
-                              {canManage && m.is_active && !m.is_super_admin && <ArchiveMemberChip member={m} />}
+                              {canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId && <ArchiveMemberChip member={m} />}
                             </div>
                           }
                         />
@@ -611,7 +613,7 @@ export default function TeamMembers() {
                           user={m}
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                          trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                          trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                         />
                       ))}
                     </div>
@@ -625,7 +627,7 @@ export default function TeamMembers() {
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
 
         {view === 'archived' && (
-          <ArchivedView orgId={effectiveOrganization?.id} onOpen={(uid) => navigate(dashPath(`/admin/team-members/${uid}`))} />
+          <ArchivedView orgId={effectiveOrganization?.id} onOpen={(uid) => navigate(dashPath(`/admin/team-members/${uid}`))} canManage={canManage} />
         )}
       </div>
 
@@ -634,7 +636,7 @@ export default function TeamMembers() {
   );
 }
 
-function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (userId: string) => void }) {
+function ArchivedView({ orgId, onOpen, canManage }: { orgId: string | undefined; onOpen: (userId: string) => void; canManage: boolean }) {
   const { data: archived = [], isLoading } = useOrganizationUsers(orgId, { onlyArchived: true });
   if (isLoading) {
     return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -660,7 +662,7 @@ function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (u
             type="button"
             onClick={() => onOpen(m.user_id)}
             className={cn(
-              'w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/40',
+              'group w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/40',
               'hover:bg-foreground/5 hover:border-border transition-colors text-left',
             )}
           >
@@ -676,6 +678,7 @@ function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (u
               </div>
               {m.email && <p className="font-sans text-xs text-muted-foreground truncate mt-0.5">{m.email}</p>}
             </div>
+            {canManage && <RestoreMemberChip member={m} organizationId={orgId} />}
             <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
         );

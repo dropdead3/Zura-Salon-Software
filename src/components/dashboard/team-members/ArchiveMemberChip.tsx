@@ -41,6 +41,9 @@ export function ArchiveMemberChip({ member, className }: ArchiveMemberChipProps)
             aria-label={`Archive ${member.display_name || member.full_name || 'team member'}`}
             className={cn(
               'h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10',
+              // Calm-at-rest: only reveal on row hover or keyboard focus.
+              // The parent MemberRow carries the `group` class.
+              'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity',
               className,
             )}
           >

@@ -37,9 +37,12 @@ import { useTeamPinStatus, useAdminSetUserPin } from '@/hooks/useUserPin';
 import { RoleHistoryPanel } from '@/components/dashboard/RoleHistoryPanel';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Archive } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 import type { UserWithRoles } from '@/hooks/useUserRoles';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { BulkArchiveWizard, type BulkArchiveTarget } from '@/components/dashboard/team-members/archive/BulkArchiveWizard';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -108,6 +111,13 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     role: string;
   } | null>(null);
   const [pinDialog, setPinDialog] = useState<{ target: AdminSetPinTarget; mode: PinAction } | null>(null);
+  const [bulkArchive, setBulkArchive] = useState<{
+    members: BulkArchiveTarget[];
+    skippedSummary: string | null;
+  } | null>(null);
+
+  const { user: currentUser } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
 
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
@@ -173,7 +183,53 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     }
   };
 
-  const locationList = useMemo(() => 
+  /**
+   * Open the bulk-archive wizard for the current selection. Filters out
+   * unsafe targets (self, super_admin) before opening so the wizard
+   * never sees them. Note: useAllUsersWithRoles already excludes
+   * already-archived members (is_active=true filter), so no extra
+   * archived-state guard needed here.
+   */
+  const handleBulkArchive = () => {
+    const targets: BulkArchiveTarget[] = [];
+    let skippedSelf = 0;
+    let skippedOwner = 0;
+    for (const id of selectedUsers) {
+      if (id === currentUser?.id) {
+        skippedSelf += 1;
+        continue;
+      }
+      const accountInfo = getAccountInfo(id);
+      if (accountInfo?.is_super_admin) {
+        skippedOwner += 1;
+        continue;
+      }
+      const u = users.find(x => x.user_id === id);
+      if (!u) continue;
+      targets.push({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        full_name: u.full_name,
+        photo_url: u.photo_url,
+      });
+    }
+    if (targets.length === 0) {
+      toast.info('Nothing to archive', {
+        description: 'Selection contains only protected members (yourself or super admins).',
+      });
+      return;
+    }
+    const skippedParts: string[] = [];
+    if (skippedSelf > 0) skippedParts.push(`${skippedSelf} self`);
+    if (skippedOwner > 0) skippedParts.push(`${skippedOwner} super admin${skippedOwner === 1 ? '' : 's'}`);
+    const skippedTotal = skippedSelf + skippedOwner;
+    const skippedSummary = skippedTotal > 0
+      ? `Skipped ${skippedTotal}: ${skippedParts.join(', ')}.`
+      : null;
+    setBulkArchive({ members: targets, skippedSummary });
+  };
+
+  const locationList = useMemo(() =>
     locations.map(l => ({ id: l.id, name: l.name })),
     [locations]
   );
@@ -691,6 +747,15 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
               <Trash2 className="w-3.5 h-3.5" />
               Clear PINs
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={handleBulkArchive}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              Archive selected ({selectedUsers.size})…
+            </Button>
           </div>
           <Button
             variant="ghost"
@@ -812,6 +877,18 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
 
       {/* PIN Activity panel — collapsible org-wide change history */}
       {canManage && <PinActivityPanel />}
+
+      {/* Bulk Archive Wizard — single-step, shared reason+date.
+          Per-member dependency reassignment is intentionally out of
+          scope here; falls back to the per-row chip / ArchiveWizard. */}
+      <BulkArchiveWizard
+        open={!!bulkArchive}
+        onOpenChange={(open) => { if (!open) setBulkArchive(null); }}
+        organizationId={effectiveOrganization?.id}
+        members={bulkArchive?.members ?? []}
+        skippedSummary={bulkArchive?.skippedSummary ?? null}
+        onComplete={() => setSelectedUsers(new Set())}
+      />
     </div>
   );
 }
