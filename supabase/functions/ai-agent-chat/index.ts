@@ -354,7 +354,20 @@ serve(async (req) => {
 
     // ---------- caller roles + capability filtering by user permission ----------
     const roleSet = await loadCallerRoles(supabase, user.id);
-    const capabilities = await loadCapabilitiesForUser(supabase, user.id);
+    const allCapabilities = await loadCapabilitiesForUser(supabase, user.id);
+
+    // ---------- invariants: drop any capability with a broken contract ----------
+    const { disabledIds } = validateRegistry(allCapabilities);
+
+    // ---------- kill switches: drop any capability disabled for this org ----------
+    const { data: killRows } = await supabase
+      .from('ai_capability_kill_switches')
+      .select('capability_id, disabled')
+      .eq('organization_id', orgId)
+      .eq('disabled', true);
+    const killedIds = new Set<string>((killRows || []).map((r: any) => r.capability_id));
+
+    const capabilities = allCapabilities.filter(c => !disabledIds.has(c.id) && !killedIds.has(c.id));
 
     // ---------- system prompt ----------
     let systemPrompt = buildSystemPrompt(capabilities);
