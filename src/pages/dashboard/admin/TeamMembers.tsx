@@ -635,7 +635,7 @@ export default function TeamMembers() {
   );
 }
 
-function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (userId: string) => void }) {
+function ArchivedView({ orgId, onOpen, canManage }: { orgId: string | undefined; onOpen: (userId: string) => void; canManage: boolean }) {
   const { data: archived = [], isLoading } = useOrganizationUsers(orgId, { onlyArchived: true });
   if (isLoading) {
     return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -661,7 +661,7 @@ function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (u
             type="button"
             onClick={() => onOpen(m.user_id)}
             className={cn(
-              'w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/40',
+              'group w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/40',
               'hover:bg-foreground/5 hover:border-border transition-colors text-left',
             )}
           >
@@ -677,6 +677,7 @@ function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (u
               </div>
               {m.email && <p className="font-sans text-xs text-muted-foreground truncate mt-0.5">{m.email}</p>}
             </div>
+            {canManage && <RestoreMemberChip member={m} organizationId={orgId} />}
             <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
           </button>
         );
