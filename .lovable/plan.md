@@ -1,57 +1,52 @@
-## Problem
-
-Clicking the **Website Editor** card in Operations Hub navigates to a broken URL:
-
-```text
-/org/drop-dead-salons/dashboard/admin/website-sections/admin/website-hub
-```
-
-instead of:
-
-```text
-/org/drop-dead-salons/dashboard/admin/website-hub
-```
-
-Confirmed by direct browser test — the path `admin/website-sections` is matched, then its `<Navigate>` redirect appends a second `admin/website-hub` segment.
+# Fix: Editor button loops back to Website Hub
 
 ## Root cause
 
-In `src/App.tsx`, the legacy redirect routes use **bare relative paths** as their `to` target:
-
-```tsx
-<Route path="admin/website-sections" element={<Navigate to="admin/website-hub" replace />} />
-```
-
-In React Router v6, a `to` value without a leading `/` or `..` resolves **relative to the matched route's URL**, not its parent. So from `/org/:slug/dashboard/admin/website-sections`, `to="admin/website-hub"` becomes `…/admin/website-sections/admin/website-hub`.
-
-The same flaw affects 7 sibling redirects on lines 372–380, plus 380's `admin/team-members?view=invitations`. The handbook redirects on lines 367/369 already use the correct `../handbooks?...` pattern, which is the intended fix.
+The "Editor" button in `WebsiteSettingsContent.tsx` (line 1142) links to `/admin/website-sections`. In the previous redirect cleanup, that path was rewritten to redirect to `../website-hub` (App.tsx line 378), which lands the user right back on the Website Hub → General tab. The full editor page (`WebsiteSectionsHub.tsx`, with section CRUD, page editing, stylists display, etc.) still exists but is no longer reachable because its only route became a redirect.
 
 ## Fix
 
-Update `src/App.tsx` to prefix each broken redirect with `../`, so they resolve relative to the parent `/org/:orgSlug/dashboard` route segment instead of the matched leaf:
+Two coordinated changes:
 
-| Line | Before | After |
-|------|--------|-------|
-| 372 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 373 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 374 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 375 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 376 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 377 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 378 | `to="admin/website-hub"` | `to="../website-hub"` |
-| 379 | `to="admin/access-hub?tab=role-config"` | `to="../access-hub?tab=role-config"` |
-| 380 | `to="admin/team-members?view=invitations"` | `to="../team-members?view=invitations"` |
+### 1. `src/App.tsx` (line 378)
 
-This matches the working pattern already used on lines 367 and 369 (`../handbooks?tab=wizard`) and preserves the dynamic `:orgSlug` correctly across all tenants.
+Restore a real route for the Website Editor at a clean, non-legacy path. Replace the redirect with:
+
+```tsx
+<Route
+  path="admin/website-editor"
+  element={
+    <ProtectedRoute requiredPermission="manage_settings">
+      <WebsiteSectionsHub />
+    </ProtectedRoute>
+  }
+/>
+{/* Legacy: keep old slug redirecting to the new editor path */}
+<Route
+  path="admin/website-sections"
+  element={<Navigate to="../website-editor" relative="path" replace />}
+/>
+```
+
+This:
+- Mounts `WebsiteSectionsHub` at the new canonical path `/admin/website-editor`.
+- Keeps `/admin/website-sections` as a one-hop redirect for any external bookmarks.
+- Avoids the redirect-loop back to `website-hub`.
+
+### 2. `src/components/dashboard/settings/WebsiteSettingsContent.tsx` (line 1142)
+
+Update the Editor button link to point directly at the new path (no redirect hop):
+
+```tsx
+<a href={dashPath('/admin/website-editor')}>
+```
 
 ## Verification
 
-After the fix, navigate to the preview's `/org/drop-dead-salons/dashboard/admin/team-hub`, click **Website Editor** in **Marketing & Visibility**, and confirm the URL becomes `/org/drop-dead-salons/dashboard/admin/website-hub` and the Website Hub renders. Spot-check one other affected legacy path (e.g. `/admin/services` → `/admin/website-hub`).
+After the change, clicking **Editor** from Website Hub should open `WebsiteSectionsHub` (the section list + inspector with Hero, Testimonials, Gallery, FAQ, Stylists, Locations editors, AddSectionDialog, etc.) instead of redirecting to the General tab.
 
-## Files
+## Enhancement suggestions (post-fix)
 
-- `src/App.tsx` — update 9 `<Navigate to=...>` props (lines 372–380).
-
-## Out of scope
-
-The card link itself (`/admin/website-sections` from `TeamHub.tsx`) is intentionally going through the legacy redirect, which is fine once the redirect is fixed. A future P2 cleanup could point hub cards directly at `/admin/website-hub` to skip the redirect hop, but that's a separate housekeeping pass across `TeamHub.tsx`, `ManagementHub.tsx`, and `SidebarLayoutEditor.tsx`.
+1. **Use `<Link>` not `<a>`**: The Editor button uses a raw `<a href>` which causes a full page reload. Switching to React Router's `<Link>` (or `useNavigate`) preserves SPA state and matches the rest of the dashboard.
+2. **Surface deep-link tabs**: The editor opens at the first section. Consider `?section=hero|stylists|gallery` so card CTAs across the dashboard can deep-link straight to the relevant editor panel.
+3. **Audit other consumers** of `/admin/website-sections` (`TeamHub.tsx`, `ManagementHub.tsx`, `SidebarLayoutEditor.tsx` from prior context) and update them to `/admin/website-editor` to drop the redirect hop everywhere.
