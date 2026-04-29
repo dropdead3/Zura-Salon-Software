@@ -114,6 +114,11 @@ serve(async (req) => {
     // ---------- RE-CHECK PERMISSION AT CLICK TIME ----------
     const { roleSet, permSet } = await getCallerRolesAndPermissions(supabase, user.id);
     if (!userCanInvoke(capability, roleSet, permSet)) {
+      await recordAnomaly(supabase, {
+        organizationId: orgId, userId: user.id, type: 'permission_denied_burst',
+        capabilityId: capability_id, severity: 'high',
+        details: { stage: 'execute', reason: 'userCanInvoke=false' },
+      });
       return new Response(JSON.stringify({ success: false, message: "You do not have permission to perform this action." }), {
         status: 403, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
@@ -131,6 +136,11 @@ serve(async (req) => {
     // ---------- KILL SWITCH ----------
     const kill = await isCapabilityKilled(supabase, orgId, capability_id);
     if (kill.killed) {
+      await recordAnomaly(supabase, {
+        organizationId: orgId, userId: user.id, type: 'kill_switch_attempt',
+        capabilityId: capability_id, severity: 'high',
+        details: { reason: kill.reason ?? null },
+      });
       return new Response(JSON.stringify({ success: false, message: `This action has been disabled for your organization${kill.reason ? `: ${kill.reason}` : '.'}` }), {
         status: 423, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
@@ -141,8 +151,34 @@ serve(async (req) => {
     try {
       validatedParams = validateCapabilityParams(capability_id, params || {});
     } catch (e: any) {
+      await recordAnomaly(supabase, {
+        organizationId: orgId, userId: user.id, type: 'invalid_param_burst',
+        capabilityId: capability_id, severity: 'medium',
+        details: { stage: 'execute', error: e?.message ?? 'invalid' },
+      });
       return new Response(JSON.stringify({ success: false, message: e?.message || 'Invalid parameters.' }), {
         status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- SIMULATION SHORT-CIRCUIT ----------
+    // Returns validated payload + capability metadata without invoking the
+    // handler. Mutations are NEVER performed in simulate mode.
+    if (simulate) {
+      return new Response(JSON.stringify({
+        success: true,
+        simulated: true,
+        message: `Dry run: ${capability.display_name} would be executed with the validated parameters below. No data was changed.`,
+        capability: {
+          id: capability.id,
+          display_name: capability.display_name,
+          mutation: capability.mutation,
+          risk_level: capability.risk_level,
+          ownership_scope: capability.ownership_scope,
+        },
+        params: validatedParams,
+      }), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -150,6 +186,11 @@ serve(async (req) => {
     try {
       await enforceRateLimit(supabase, orgId, user.id, 'execute');
     } catch (rl: any) {
+      await recordAnomaly(supabase, {
+        organizationId: orgId, userId: user.id, type: 'rate_limit_hit',
+        capabilityId: capability_id, severity: 'medium',
+        details: { bucket: 'execute' },
+      });
       return new Response(JSON.stringify({ success: false, message: rl?.message || 'Rate limit exceeded.' }), {
         status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
