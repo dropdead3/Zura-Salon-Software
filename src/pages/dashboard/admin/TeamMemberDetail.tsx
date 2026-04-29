@@ -28,7 +28,7 @@ export default function TeamMemberDetail() {
   const { userId } = useParams<{ userId: string }>();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
-  const { data: members, isLoading: rosterLoading } = useOrganizationUsers(effectiveOrganization?.id);
+  const { data: members, isLoading: rosterLoading } = useOrganizationUsers(effectiveOrganization?.id, { includeArchived: true });
   const [activeTab, setActiveTab] = useState('profile');
 
   const member = useMemo(() => members?.find(m => m.user_id === userId), [members, userId]);
