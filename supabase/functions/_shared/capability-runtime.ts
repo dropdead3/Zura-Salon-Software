@@ -233,6 +233,9 @@ export async function recordAudit(
     result?: unknown;
     error?: string | null;
     executed_at?: string | null;
+    expected_confirmation_token_hash?: string | null;
+    conversation_id?: string | null;
+    message_id?: string | null;
   },
 ): Promise<{ id?: string }> {
   const { data, error } = await supabase
@@ -247,6 +250,9 @@ export async function recordAudit(
       result: row.result ?? null,
       error: row.error ?? null,
       executed_at: row.executed_at ?? null,
+      expected_confirmation_token_hash: row.expected_confirmation_token_hash ?? null,
+      conversation_id: row.conversation_id ?? null,
+      message_id: row.message_id ?? null,
     })
     .select('id')
     .single();
