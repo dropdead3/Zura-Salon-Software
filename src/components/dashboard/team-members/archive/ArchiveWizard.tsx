@@ -195,6 +195,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       setPicks({});
       setBulkDest({});
       setActiveBucket(null);
+      setNotifyClients(false);
     }
   }, [open, member.user_id]);
 
