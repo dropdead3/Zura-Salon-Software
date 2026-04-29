@@ -55,6 +55,54 @@ function rosterMatchesRole(u: OrganizationUser, role: DestinationRole): boolean 
   return false;
 }
 
+/** True when every item in this bucket has a decision recorded. */
+function isBucketHandled(
+  b: DependencyBucket,
+  picks: Record<string, Record<string, Reassignment>>,
+): boolean {
+  if (b.count === 0) return true;
+  const m = picks[b.key] ?? {};
+  const isBulkOnly = b.key === 'client_preferences' || b.items.length === 0;
+  if (isBulkOnly) return !!m['__bulk__'];
+  // Per-item: every visible item decided + bulk marker if there's overflow.
+  const decidedCount = Object.keys(m).filter((k) => k !== '__bulk__').length;
+  if (decidedCount < b.items.length) return false;
+  if (b.count > b.items.length) return !!m['__bulk__'];
+  return true;
+}
+
+/** One-line summary of decisions made on a bucket, for the Step 2 tile. */
+function summarizeBucketDecisions(
+  b: DependencyBucket,
+  picks: Record<string, Record<string, Reassignment>>,
+  roster: OrganizationUser[],
+): string {
+  const m = picks[b.key] ?? {};
+  const entries = Object.values(m);
+  if (entries.length === 0) return '';
+  const reassign = entries.filter((r) => r.action === 'reassign' && r.destinationUserId);
+  const cancel = entries.filter((r) => r.action === 'cancel').length;
+  const drop = entries.filter((r) => r.action === 'drop').length;
+  const endDate = entries.filter((r) => r.action === 'end_date').length;
+
+  const destSet = new Set(reassign.map((r) => r.destinationUserId));
+  const parts: string[] = [];
+  if (reassign.length > 0) {
+    if (destSet.size === 1) {
+      const dest = reassign[0].destinationUserId!;
+      const u = roster.find((r) => r.user_id === dest);
+      const name = u?.display_name || u?.full_name || 'teammate';
+      parts.push(`Reassigned to ${name}`);
+    } else {
+      parts.push(`${reassign.length} reassigned across ${destSet.size}`);
+    }
+  }
+  if (cancel > 0) parts.push(`${cancel} cancelled`);
+  if (drop > 0) parts.push(`${drop} dropped`);
+  if (endDate > 0) parts.push(`${endDate} end-dated`);
+  return parts.join(' · ');
+}
+
 type Step = 1 | 2 | 3 | 4;
 
 export function ArchiveWizard({ open, onOpenChange, member, onArchived }: ArchiveWizardProps) {
