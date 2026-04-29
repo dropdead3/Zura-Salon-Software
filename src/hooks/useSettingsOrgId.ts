@@ -16,7 +16,7 @@ export function useSettingsOrgId(explicitOrgId?: string): string | undefined {
   if (explicitOrgId) return explicitOrgId;
 
   const orgCtx = useOptionalOrganizationContext();
-  if (orgCtx.effectiveOrganization?.id) {
+  if (orgCtx?.effectiveOrganization?.id) {
     return orgCtx.effectiveOrganization.id;
   }
 
