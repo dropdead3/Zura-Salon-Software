@@ -98,7 +98,9 @@ import {
 } from '@/components/ui/select';
 import { BookingVisibilityCard } from './BookingVisibilityCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-
+import { PublishChangelog } from '@/components/dashboard/website-editor/PublishChangelog';
+import { VersionHistoryPanel } from '@/components/dashboard/website-editor/VersionHistoryPanel';
+import { useChangelogSummary } from '@/hooks/usePublishChangelog';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
