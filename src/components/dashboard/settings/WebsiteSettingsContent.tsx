@@ -1137,16 +1137,18 @@ export function WebsiteSettingsContent() {
   // Honor ?tab=theme deep-link (set once on mount); ?openEditor=1 is consumed inside ThemeTab.
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') ?? 'general';
-  const shouldOpenThemeEditor = searchParams.get('openEditor') === '1';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [forceThemeEditor, setForceThemeEditor] = useState(searchParams.get('openEditor') === '1');
 
   useEffect(() => {
-    if (!shouldOpenThemeEditor) return;
+    if (searchParams.get('openEditor') !== '1') return;
+
+    setForceThemeEditor(true);
 
     const next = new URLSearchParams(searchParams);
     next.delete('openEditor');
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, shouldOpenThemeEditor]);
+  }, [searchParams, setSearchParams]);
 
   const handleOpenEditor = () => {
     // Switch to Theme tab and tell ThemeTab to flip into editor mode.
@@ -1201,7 +1203,7 @@ export function WebsiteSettingsContent() {
       </div>
 
       <TabsContent value="general"><GeneralTab /></TabsContent>
-      <TabsContent value="theme"><ThemeTab forceOpenEditor={shouldOpenThemeEditor} /></TabsContent>
+      <TabsContent value="theme"><ThemeTab forceOpenEditor={forceThemeEditor} onForceOpenConsumed={() => setForceThemeEditor(false)} /></TabsContent>
       <TabsContent value="booking"><BookingTab /></TabsContent>
       <TabsContent value="retail"><RetailTab /></TabsContent>
       <TabsContent value="seo"><SeoLegalTab /></TabsContent>
