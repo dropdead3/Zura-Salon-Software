@@ -71,6 +71,7 @@ import {
 import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
 import { differenceInYears } from 'date-fns';
 import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements';
+import { useStaffSchedulability } from '@/hooks/useStaffSchedulability';
 
 interface NewBookingSheetProps {
   open: boolean;
@@ -226,6 +227,12 @@ export function NewBookingSheet({
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [showInlineSigningDialog, setShowInlineSigningDialog] = useState(false);
 
+  // Onboarding wave: soft-warn if the selected stylist has no role assigned.
+  // We do NOT hard-block — operators may need to schedule before onboarding completes.
+  // Tracks whether the operator has acknowledged the warning so the second click proceeds.
+  const schedulability = useStaffSchedulability(selectedStylist || null);
+  const [schedulabilityAcknowledged, setSchedulabilityAcknowledged] = useState(false);
+
   const { data: fullRequirements = [] } = useQuery({
     queryKey: ['full-requirements-for-booking', selectedServiceRowIds.join(',')],
     queryFn: async () => {
@@ -313,6 +320,7 @@ export function NewBookingSheet({
     setClientSearch('');
     setSelectedServices([]);
     setSelectedStylist(defaultStylistId || '');
+    setSchedulabilityAcknowledged(false);
     setSelectedDate(defaultDate || new Date());
     setSelectedTime('');
     setNotes('');
@@ -334,7 +342,41 @@ export function NewBookingSheet({
     switch (step) {
       case 'client': setStep('service'); break;
       case 'service': setStep('datetime'); break;
-      case 'datetime': setStep('confirm'); break;
+      case 'datetime':
+        // Onboarding wave: soft-warn before leaving the staff-selection step
+        // when the chosen stylist has no role assigned (or is archived/inactive).
+        // Operator can dismiss/continue — this is advisory, not a hard block.
+        if (
+          !schedulability.schedulable &&
+          schedulability.warning &&
+          !schedulabilityAcknowledged
+        ) {
+          // Dev-only suppression log per visibility-contract doctrine.
+          if (import.meta.env.DEV) {
+            console.info('[staff-schedulability.warned]', {
+              userId: selectedStylist,
+              reason: schedulability.reason,
+              surface: 'NewBookingSheet',
+            });
+          }
+          toast.warning(schedulability.warning, {
+            description:
+              schedulability.reason === 'no_roles'
+                ? 'Click Continue again to schedule anyway, or assign a role first.'
+                : undefined,
+            action: {
+              label: 'Continue anyway',
+              onClick: () => {
+                setSchedulabilityAcknowledged(true);
+                setStep('confirm');
+              },
+            },
+            duration: 8000,
+          });
+          return;
+        }
+        setStep('confirm');
+        break;
       case 'confirm':
         // Wave 7: gate-with-override — if client has unsigned required forms, intercept.
         if (unsignedRequiredForms.length > 0) {
@@ -604,7 +646,7 @@ export function NewBookingSheet({
           <div className="space-y-4">
             <div>
               <Label>Stylist</Label>
-              <Select value={selectedStylist} onValueChange={(val) => { setSelectedStylist(val); setAvailableSlots([]); setSelectedTime(''); }}>
+              <Select value={selectedStylist} onValueChange={(val) => { setSelectedStylist(val); setAvailableSlots([]); setSelectedTime(''); setSchedulabilityAcknowledged(false); }}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select a stylist" />
                 </SelectTrigger>

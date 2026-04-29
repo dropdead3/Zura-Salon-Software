@@ -24,6 +24,7 @@ const CompensationTab = lazy(() => import('@/components/dashboard/team-members/t
 const LevelTab = lazy(() => import('@/components/dashboard/team-members/tabs/LevelTab').then(m => ({ default: m.LevelTab })));
 const CoachingTab = lazy(() => import('@/components/dashboard/team-members/tabs/CoachingTab').then(m => ({ default: m.CoachingTab })));
 const SecurityTab = lazy(() => import('@/components/dashboard/team-members/tabs/SecurityTab').then(m => ({ default: m.SecurityTab })));
+const AuditTrailTab = lazy(() => import('@/components/dashboard/team-members/tabs/AuditTrailTab').then(m => ({ default: m.AuditTrailTab })));
 
 const STYLIST_ROLES = ['stylist', 'stylist_assistant', 'lead_stylist', 'lead'];
 
@@ -132,6 +133,7 @@ export default function TeamMemberDetail() {
             {showLevel && <TabsTrigger value="level">Level</TabsTrigger>}
             {showCoaching && <TabsTrigger value="coaching">Coaching</TabsTrigger>}
             <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="audit">Audit</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="mt-6">
@@ -163,6 +165,9 @@ export default function TeamMemberDetail() {
           )}
           <TabsContent value="security" className="mt-6">
             <Suspense fallback={fallback}><SecurityTab userId={userId} profile={profile} /></Suspense>
+          </TabsContent>
+          <TabsContent value="audit" className="mt-6">
+            <Suspense fallback={fallback}><AuditTrailTab userId={userId} /></Suspense>
           </TabsContent>
         </Tabs>
       </div>
