@@ -1,106 +1,58 @@
-# Page selector in the Website Editor
+## Goal
 
-## What you'll be able to do
+Make the Website Hub Preview button open the URL real visitors see (custom domain when verified), centralize the public URL builder so future surfaces don't reinvent string concat, and defer the per-location dropdown until per-location public sites actually exist.
 
-Open the Website Editor and use a single dropdown at the top of the left sidebar to jump between **Home, About, Contact** (and any custom pages). The Editor button itself will also start opening the *real* editor instead of the empty stub it points at today.
+## Scope decisions
 
-## Why two changes (not one)
+**Suggestion #1 (custom domain) — IN.** The `organization_domains` table already exists with a verified `status='active'` lifecycle (DNS propagated + SSL provisioned). Today no frontend code reads it. Preview should resolve to the active domain when present, fall back to `/org/:slug` otherwise.
 
-Today there are two "website editors" living in the codebase:
+**Suggestion #2 (per-location dropdown) — DEFER, with rationale.** Routing audit shows there is no public per-location site route. Only `/org/:orgSlug/loc/:locationId/login` exists, which is the branded employee login — not a customer-facing storefront. Adding a "Preview as: Downtown / Uptown" dropdown right now would render a control that points nowhere or 404s for every location pick. Per doctrine ("If a feature does not reduce ambiguity… it does not belong"), this is parked behind a real prerequisite: the public site needs a location-scoped variant first. Logged in the Deferral Register with revisit trigger: "When a `/org/:slug/loc/:locationId` public route ships."
 
-1. **The real one** — embedded in Website Hub → Theme → Customize. It uses `WebsiteEditorSidebar` (section list, navigation, templates).
-2. **The stub** — `WebsiteSectionsHub.tsx`, which is what the **Editor** button currently opens (we just re-pointed it last turn). It queries a `website_sections` table that **does not exist in the database**, so the page renders empty regardless. It's effectively dead code.
+**Suggestion #3 (centralize the URL builder) — IN.** Three hand-rolled `${origin}/org/${slug}` strings in `WebsiteSettingsContent.tsx`. Extract a `useOrgPublicUrl()` hook so custom-domain support lands in one place.
 
-So a useful page selector means doing two things together: wire the selector into the real editor, and route the Editor button to it.
+## Implementation
 
-## Changes
+### New hook: `src/hooks/useOrgPublicUrl.ts`
 
-### 1. `WebsiteEditorSidebar.tsx` — promote the existing page Select
+Single source of truth for the org's public-facing URL. Mirrors the shape of `useOrgDashboardPath`.
 
-The sidebar already accepts `selectedPageId` / `onPageChange` props and renders a page `<Select>` at line ~468 — but it's gated behind a state the parent never wires, so it never appears. Lift it to a prominent slot at the top of the sidebar (above "Site Content"):
+- Reads `effectiveOrganization` (fallback `currentOrganization`) from `OrganizationContext`.
+- Queries `organization_domains` for the active org, filtered to `status = 'active'` and non-null `ssl_provisioned_at`. RLS already restricts to org members.
+- Cached via React Query, key includes `organization_id`, `staleTime: 5 * 60_000` (domains change rarely).
+- Returns:
+  - `publicUrl(subpath?)` — `https://customdomain.com{subpath}` when a verified domain exists, else `${origin}/org/${slug}{subpath}`.
+  - `customDomain` — the verified domain string or `null` (lets callers show a "Live at customdomain.com" hint).
+  - `isUsingCustomDomain` — boolean for badging.
+  - `isLoading` — so callers can disable Preview during initial fetch (avoids flicker from default → custom).
 
-- Pill-shaped `<Select>` styled per Input Shape Canon (rounded-full, font-sans Title Case — never uppercase per Typography Canon).
-- Source of truth: `useWebsitePages()` (already imported on line 159). Default pages: Home, About Us, Contact + any custom pages.
-- Also expose all pages from `pagesConfig.pages` (not just the 3 defaults) so custom pages appear too.
-- Selecting a page swaps the section list below to that page's sections (logic already exists at lines 336-346 — `isHomePage` branch shows `localSections` from `useWebsiteSections`, non-home shows `selectedPage.sections`).
-- A small "+ New page" item at the bottom of the dropdown calls `onAddPage` (already wired, opens `PagesManager` add flow).
+### Migrate the 3 call sites in `WebsiteSettingsContent.tsx`
 
-### 2. `WebsiteSettingsContent.tsx` — pass page state into the sidebar
+| Line | Before | After |
+|---|---|---|
+| 535–540 | `orgPreviewUrl = ${origin}/org/${slug}` | `publicUrl()` from hook |
+| 821–823 | Retail store link `…/org/${slug}/shop` | `publicUrl('/shop')` |
+| 1132–1138 | Top-level Preview button | `publicUrl()` from hook |
 
-The embedded editor at line 581 renders `<WebsiteEditorSidebar activeTab onTabChange />` but never passes page props. Add:
+### Surface the custom domain in the UI (small, honest)
 
-```tsx
-const [selectedPageId, setSelectedPageId] = useState('home');
-// ...
-<WebsiteEditorSidebar
-  activeTab={editorTab}
-  onTabChange={setEditorTab}
-  selectedPageId={selectedPageId}
-  onPageChange={setSelectedPageId}
-/>
-```
+When `isUsingCustomDomain === true`, the Preview button gets a subtle subtitle/tooltip: `Live at customdomain.com`. No new chrome — just truth-in-labeling so the operator knows Preview matches what visitors see. If no verified domain, tooltip reads `Preview at /org/{slug}`.
 
-Also surface the current page name in the editor's top status bar (line 600 area) so the user always knows which page they're editing: `Editing: {pageName} • {sectionLabel}`.
+### Deferral Register entry
 
-### 3. Re-point the Editor button to the real editor
+Append to `mem://architecture/visibility-contracts.md` Deferral Register:
 
-The `Editor` button in `WebsiteSettingsContent.tsx` (line 1142) currently opens `/admin/website-editor` → `WebsiteSectionsHub` (the stub). Switch it to a no-route action that flips the same component into editor mode, since the real editor lives right here:
+| Item | Reason | Revisit trigger |
+|---|---|---|
+| Per-location Preview dropdown | No `/org/:slug/loc/:locationId` public route exists; control would 404 | When location-scoped public site route ships |
 
-```tsx
-<Button variant="outline" size={tokens.button.card} onClick={() => setMode('editor')}>
-  <ExternalLink className="w-4 h-4 mr-1.5" />
-  Editor
-</Button>
-```
+## Files
 
-This drops a redirect hop, fixes the dead-stub problem, and lets the page selector work the moment the user clicks Editor.
+- New: `src/hooks/useOrgPublicUrl.ts`
+- Edit: `src/components/dashboard/settings/WebsiteSettingsContent.tsx` (3 call sites + Preview button tooltip)
+- Edit: `mem://architecture/visibility-contracts.md` (Deferral Register row)
 
-### 4. Route hygiene (App.tsx)
+## Out of scope
 
-Keep `/admin/website-editor` mounted but point it at the real Website Hub with a `?tab=theme&mode=editor` query so external bookmarks still land on a working editor. Then have `WebsiteSettingsContent` honor those query params on mount (read once, set tab + mode).
-
-```text
-/admin/website-editor   →  WebsiteHub  (auto-opens Theme tab in editor mode)
-/admin/website-sections →  redirect to /admin/website-editor (already done)
-```
-
-The dead `WebsiteSectionsHub.tsx` page can stay on disk for now — just no longer reachable.
-
-## Layout (sidebar, top to bottom)
-
-```text
-┌──────────────────────────────┐
-│ Page                          │
-│ [ Home              ▾ ]       │  ← new selector, pill, full width
-├──────────────────────────────┤
-│ HOME SECTIONS                 │
-│   Hero                        │
-│   Brand Statement             │
-│   …                           │
-├──────────────────────────────┤
-│ SITE CONTENT                  │
-│   Services / Stylists / etc.  │
-└──────────────────────────────┘
-```
-
-When a non-home page is selected, the middle group header switches to `{Page} SECTIONS` and shows that page's sections (existing behavior at lines 620-664).
-
-## Out of scope (call-outs, not in this change)
-
-- Per-page templates / cloning (already exists via `PagesManager` — reachable via the dropdown's "Manage pages" link, no UI change).
-- Wiring the Services and Gallery dropdown items to direct-link into their existing managers — currently the user must click the section in the list, which is one extra hop. Worth a follow-up.
-- Cleaning up the dead `WebsiteSectionsHub.tsx` page and its unused `website_sections` query (separate hygiene task).
-
-## Doctrine notes
-
-- **Input Shape Canon** — page `<Select>` is rendered with `rounded-full`.
-- **Typography Canon** — page titles use `font-sans` Title Case, group header above remains `font-display` uppercase.
-- **Routing** — uses `dashPath()` for the (now-secondary) `/admin/website-editor` URL; mode/tab state is local React state, not URL state, except for the optional `?tab=&mode=` deep-link.
-- **Tenant isolation** — `useWebsitePages` already scopes by `useSettingsOrgId`; no new queries are introduced.
-
-## Enhancement suggestions (post-fix)
-
-1. **Deep-link via URL** — promote the editor's `mode`/`page`/`section` to URL query params (`?mode=editor&page=about&section=hero`) so the page selector survives reloads and the dashboard can link to a specific editor state.
-2. **Keyboard nav** — `⌘K` page switcher inside the editor (your `WebsiteEditorSearch` component already exists; extend it to include pages).
-3. **Retire the stub** — delete `WebsiteSectionsHub.tsx` and its `website_sections` table reference once the new flow is verified, to remove the trap entirely.
-4. **Prompt-craft note** — saying "page/layout selector" gave me two interpretations (page picker vs. layout/template picker). For sharper next prompts try: *"Add a page picker in the website editor's left sidebar so I can switch between Home / About / Contact / custom pages."* The added phrase "left sidebar" anchors the location, and listing the page names communicates scope.
+- Per-location preview dropdown (deferred, see above).
+- Migrating other public-URL usages outside `WebsiteSettingsContent.tsx` — none were found in this audit, but the hook is now available for the next surface.
+- Custom domain CRUD UI (already lives elsewhere or is admin-managed; this only consumes the verified state).
