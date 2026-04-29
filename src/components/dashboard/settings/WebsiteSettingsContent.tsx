@@ -1136,8 +1136,23 @@ export function WebsiteSettingsContent() {
   const handlePreviewClick = () => {
     if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer');
   };
+
+  // Honor ?tab=theme deep-link (set once on mount); ?openEditor=1 is consumed inside ThemeTab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') ?? 'general';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleOpenEditor = () => {
+    // Switch to Theme tab and tell ThemeTab to flip into editor mode.
+    setActiveTab('theme');
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'theme');
+    next.set('openEditor', '1');
+    setSearchParams(next, { replace: true });
+  };
+
   return (
-    <Tabs defaultValue="general" className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <TabsList>
           <TabsTrigger value="general" className="gap-1.5">
@@ -1162,11 +1177,9 @@ export function WebsiteSettingsContent() {
           </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size={tokens.button.card} asChild>
-            <a href={dashPath('/admin/website-editor')}>
-              <ExternalLink className="w-4 h-4 mr-1.5" />
-              Editor
-            </a>
+          <Button variant="outline" size={tokens.button.card} onClick={handleOpenEditor}>
+            <ExternalLink className="w-4 h-4 mr-1.5" />
+            Editor
           </Button>
           <Button
             variant="outline"
