@@ -202,6 +202,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       setBulkDest({});
       setActiveBucket(null);
       setNotifyClients(false);
+      setSuppressedClientIds(new Set());
     }
   }, [open, member.user_id]);
 
@@ -292,6 +293,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       effectiveDate,
       reassignments: ledger,
       notifyReassignedClients: notifyClients,
+      suppressedClientIds: Array.from(suppressedClientIds),
     });
     onArchived?.();
     onOpenChange(false);
