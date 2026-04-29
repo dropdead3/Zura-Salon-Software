@@ -117,6 +117,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const [picks, setPicks] = useState<Record<string, Record<string, Reassignment>>>({});
   // bucket -> bulk destination
   const [bulkDest, setBulkDest] = useState<Record<string, string>>({});
+  // When set on Step 2, swaps the tile grid for the per-bucket workspace.
+  const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
 
   const { data: roster = [] } = useOrganizationUsers(orgId);
   const eligibleRoster = useMemo(
@@ -140,8 +142,14 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       setConfirmed(false);
       setPicks({});
       setBulkDest({});
+      setActiveBucket(null);
     }
   }, [open, member.user_id]);
+
+  // Clear bucket workspace whenever we leave Step 2.
+  useEffect(() => {
+    if (step !== 2) setActiveBucket(null);
+  }, [step]);
 
   const buckets = scan?.buckets ?? [];
   const nonEmptyBuckets = buckets.filter((b) => b.count > 0);
@@ -151,22 +159,20 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
     [picks],
   );
 
-  const allHandled = useMemo(() => {
-    return nonEmptyBuckets.every((b) => {
-      // Bulk-style buckets (single ledger row, no items)
-      if (b.key === 'client_preferences') {
-        return !!picks[b.key]?.['__bulk__'];
-      }
-      // Per-item buckets
-      const itemCount = b.items.length;
-      const decided = Object.keys(picks[b.key] ?? {}).length;
-      // If we got fewer items than count (cap reached), require bulk fallback.
-      if (b.count > itemCount) {
-        return !!picks[b.key]?.['__bulk__'];
-      }
-      return decided >= itemCount;
-    });
-  }, [nonEmptyBuckets, picks]);
+  const handledCount = useMemo(
+    () => nonEmptyBuckets.filter((b) => isBucketHandled(b, picks)).length,
+    [nonEmptyBuckets, picks],
+  );
+
+  const allHandled = useMemo(
+    () => nonEmptyBuckets.every((b) => isBucketHandled(b, picks)),
+    [nonEmptyBuckets, picks],
+  );
+
+  const activeBucketData = useMemo(
+    () => (activeBucket ? buckets.find((b) => b.key === activeBucket) ?? null : null),
+    [activeBucket, buckets],
+  );
 
   // ---------- assignment helpers ----------
 
