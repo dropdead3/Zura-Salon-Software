@@ -74,7 +74,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
 
     const body = await validateBody(req, ExecuteSchema, getCorsHeaders(req));
-    const { capability_id, params, audit_id, confirmation_token, denied } = body;
+    const { capability_id, params, audit_id, confirmation_token, denied, simulate } = body;
     const orgId = body.organizationId || body.organization_id;
     if (!orgId) {
       return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
@@ -86,6 +86,8 @@ serve(async (req) => {
     // ---------- DENIAL PATH ----------
     if (denied) {
       if (audit_id) await updateAuditStatus(supabase, audit_id, { status: 'denied' });
+      // Track denial-burst anomaly (5 denied/failed in 5min triggers alert).
+      await checkRepeatedDenialsBurst(supabase, orgId, user.id);
       return new Response(JSON.stringify({ success: true, message: "Action cancelled." }), {
         headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
