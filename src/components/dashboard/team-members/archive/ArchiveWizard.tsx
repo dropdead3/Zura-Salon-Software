@@ -1297,6 +1297,7 @@ function ClientPreferenceRow({
 
 function Step4({
   name, reason, effectiveDate, ledger, roster, confirmed, setConfirmed,
+  notifyClients, setNotifyClients, clientPreferenceItems,
 }: {
   name: string;
   reason: string;
@@ -1305,6 +1306,9 @@ function Step4({
   roster: OrganizationUser[];
   confirmed: boolean;
   setConfirmed: (v: boolean) => void;
+  notifyClients: boolean;
+  setNotifyClients: (v: boolean) => void;
+  clientPreferenceItems: ClientPreferenceItem[];
 }) {
   const summaryByBucket = useMemo(() => {
     const m = new Map<string, { reassign: Map<string, number>; cancel: number; drop: number; endDate: number }>();
