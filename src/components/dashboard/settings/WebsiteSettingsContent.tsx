@@ -601,6 +601,8 @@ function ThemeTab() {
                   <WebsiteEditorSidebar
                     activeTab={editorTab}
                     onTabChange={setEditorTab}
+                    selectedPageId={selectedPageId}
+                    onPageChange={setSelectedPageId}
                   />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
