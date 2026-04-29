@@ -42,9 +42,9 @@ export function BentoGrid({ children, maxPerRow = 3, gap = 'gap-3', className }:
   return (
     <div className={cn('flex flex-col', gap, className)}>
       {rows.map((row, ri) => (
-        <div key={ri} className={cn('flex flex-col sm:flex-row', gap)}>
+        <div key={ri} className={cn('flex flex-col sm:flex-row items-stretch', gap)}>
           {row.map((child, ci) => (
-            <div key={ci} className="flex-1 min-w-0">{child}</div>
+            <div key={ci} className="flex-1 min-w-0 flex">{child}</div>
           ))}
         </div>
       ))}
