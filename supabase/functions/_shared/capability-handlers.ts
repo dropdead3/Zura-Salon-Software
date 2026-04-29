@@ -196,9 +196,22 @@ registerCapability('team.deactivate_member', {
       confirmation_token: firstName,
     };
   },
-  execute: async ({ supabase, organizationId, params }: ExecuteContext): Promise<ExecuteResult> => {
+  execute: async ({ supabase, organizationId, userId, params }: ExecuteContext): Promise<ExecuteResult> => {
     const memberId = String(params.member_id || '');
     const memberName = String(params.member_name || 'team member');
+
+    if (memberId === userId) {
+      return { success: false, message: 'You cannot deactivate your own account from chat.' };
+    }
+
+    const { data: target } = await supabase
+      .from('employee_profiles')
+      .select('user_id, is_super_admin, organization_id')
+      .eq('user_id', memberId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (!target) return { success: false, message: 'That team member is not in this organization.' };
+    if (target.is_super_admin) return { success: false, message: 'The Account Owner cannot be deactivated through chat.' };
 
     const { error } = await supabase
       .from('employee_profiles')
