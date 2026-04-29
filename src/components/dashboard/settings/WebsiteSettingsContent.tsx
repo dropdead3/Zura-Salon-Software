@@ -491,16 +491,18 @@ function ThemeTab() {
   const [showPreview, setShowPreview] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
 
-  // Honor ?openEditor=1 from external links (clear it after consuming so refresh = clean)
+  // Honor ?openEditor=1 from external links once the Theme tab is mounted.
+  // Watch searchParams instead of mount-only so the editor opens reliably even
+  // when the tab switch and param update happen in the same interaction.
   useEffect(() => {
-    if (searchParams.get('openEditor') === '1') {
-      setMode('editor');
-      const next = new URLSearchParams(searchParams);
-      next.delete('openEditor');
-      setSearchParams(next, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (searchParams.get('openEditor') !== '1') return;
+
+    setMode('editor');
+
+    const next = new URLSearchParams(searchParams);
+    next.delete('openEditor');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Look up the selected page title for the status bar
   const { data: pagesConfig } = useWebsitePages();
