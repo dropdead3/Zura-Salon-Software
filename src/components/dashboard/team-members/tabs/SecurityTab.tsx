@@ -176,41 +176,85 @@ export function SecurityTab({ userId, profile }: Props) {
           <CardDescription>Activate, deactivate, or remove this team member from the organization.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
-            <div>
-              <p className="font-sans text-sm font-medium text-foreground">Active</p>
-              <p className="font-sans text-xs text-muted-foreground">Inactive members can't log in or be assigned work.</p>
-            </div>
-            <Switch
-              checked={!!profile.is_active}
-              onCheckedChange={(v) => toggleActive.mutate({ userId, isActive: v })}
-              disabled={toggleActive.isPending}
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          {!isArchived && (
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border/60">
               <div>
-                <p className="font-sans text-sm font-medium text-foreground">Remove from organization</p>
-                <p className="font-sans text-xs text-muted-foreground">Deactivates and unlinks this user. Their historical data stays intact.</p>
+                <p className="font-sans text-sm font-medium text-foreground">Active</p>
+                <p className="font-sans text-xs text-muted-foreground">
+                  Inactive members can't log in or be assigned new work, but they still own existing assignments.
+                </p>
               </div>
+              <Switch
+                checked={!!profile.is_active}
+                onCheckedChange={(v) => toggleActive.mutate({ userId, isActive: v })}
+                disabled={toggleActive.isPending}
+              />
             </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                if (confirm('Remove this team member from the organization? They will no longer be able to log in.')) {
-                  removeUser.mutate(userId);
-                }
-              }}
-              disabled={removeUser.isPending}
-            >
-              Remove
-            </Button>
-          </div>
+          )}
+
+          {isArchived ? (
+            <div className="space-y-3">
+              <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <p className="font-sans text-sm font-medium text-foreground">Archived</p>
+                <p className="font-sans text-xs text-muted-foreground mt-1">
+                  Reason: {profile.archive_reason ?? '—'}
+                  {profile.archived_at && (
+                    <> · on {new Date(profile.archived_at).toLocaleDateString()}</>
+                  )}
+                </p>
+                {archiveLog?.reassignment_ledger && Array.isArray(archiveLog.reassignment_ledger) && (
+                  <p className="font-sans text-xs text-muted-foreground mt-1">
+                    {(archiveLog.reassignment_ledger as unknown[]).length} reassignment(s) recorded.
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => unarchive.mutate(userId)}
+                disabled={unarchive.isPending}
+                className="gap-1.5"
+              >
+                {unarchive.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                Un-archive
+              </Button>
+              <p className="font-sans text-[11px] text-muted-foreground">
+                Available for 90 days after archive. Restores account access; does not undo reassigned or cancelled work.
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-destructive/30 bg-destructive/5">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-sans text-sm font-medium text-foreground">Archive team member</p>
+                  <p className="font-sans text-xs text-muted-foreground">
+                    Reassign upcoming work, then remove from rosters and pickers. Historical data stays intact.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setArchiveOpen(true)}
+                disabled={!member}
+                className="gap-1.5"
+              >
+                <Archive className="h-3.5 w-3.5" />
+                Archive…
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {member && (
+        <ArchiveWizard
+          open={archiveOpen}
+          onOpenChange={setArchiveOpen}
+          member={member}
+        />
+      )}
     </div>
   );
 }
