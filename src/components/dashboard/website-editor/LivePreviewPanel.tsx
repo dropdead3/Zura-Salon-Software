@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Monitor, Smartphone, RefreshCw } from 'lucide-react';
+import { Monitor, Smartphone, RefreshCw, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -77,6 +77,35 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     iframeReadyRef.current = false;
   };
 
+  const previewMeta = previewUrl
+    ? (() => {
+        try {
+          const url = new URL(previewUrl);
+          const isCustomDomain = url.origin !== window.location.origin;
+          return {
+            status: isLoading ? 'Loading preview' : 'Preview ready',
+            channel: isCustomDomain ? 'Custom domain' : 'Org route',
+            displayUrl: previewUrl,
+          };
+        } catch {
+          return {
+            status: isLoading ? 'Loading preview' : 'Preview ready',
+            channel: 'Org route',
+            displayUrl: previewUrl,
+          };
+        }
+      })()
+    : {
+        status: 'Resolving preview URL',
+        channel: 'Waiting for org context',
+        displayUrl: null,
+      };
+
+  const handleCopyUrl = async () => {
+    if (!previewMeta.displayUrl) return;
+    await navigator.clipboard.writeText(previewMeta.displayUrl);
+  };
+
   return (
     <div className="flex flex-col h-full bg-muted/30 border-l border-border">
       {/* Preview Header */}
@@ -125,6 +154,44 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
 
+        </div>
+      </div>
+
+      <div className="border-b border-border bg-card/60 px-3 py-2 space-y-1.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-[11px] font-display uppercase tracking-wide text-muted-foreground">
+              <span>{previewMeta.status}</span>
+              <span className="opacity-40">•</span>
+              <span>{previewMeta.channel}</span>
+            </div>
+            <p className="truncate text-xs text-foreground/80" title={previewMeta.displayUrl ?? previewMeta.status}>
+              {previewMeta.displayUrl ?? 'Waiting for organization public URL...'}
+            </p>
+          </div>
+
+          {previewMeta.displayUrl && (
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size={tokens.button.inline}
+                className="h-7 w-7 p-0"
+                onClick={handleCopyUrl}
+                title="Copy preview URL"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size={tokens.button.inline}
+                className="h-7 w-7 p-0"
+                onClick={() => window.open(previewMeta.displayUrl!, '_blank', 'noopener,noreferrer')}
+                title="Open preview URL"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
