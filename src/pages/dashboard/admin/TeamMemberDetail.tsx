@@ -10,10 +10,11 @@ import { Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
+import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import { TeamMemberHeader } from '@/components/dashboard/team-members/TeamMemberHeader';
 import { ArchiveDeliveryReceiptCard } from '@/components/dashboard/team-members/archive/ArchiveDeliveryReceiptCard';
 import { useArchiveLogEntry } from '@/hooks/useArchiveTeamMember';
+import { formatEmployeeId, formatHireDate } from '@/lib/employee-identity';
 
 const ProfileTab = lazy(() => import('@/components/dashboard/team-members/tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 const RoleAccessTab = lazy(() => import('@/components/dashboard/team-members/tabs/RoleAccessTab').then(m => ({ default: m.RoleAccessTab })));
@@ -117,6 +118,7 @@ export default function TeamMemberDetail() {
           <ArchiveLogReceipts
             organizationId={effectiveOrganization?.id}
             userId={userId}
+            member={member}
           />
         )}
 
@@ -171,17 +173,28 @@ export default function TeamMemberDetail() {
 function ArchiveLogReceipts({
   organizationId,
   userId,
+  member,
 }: {
   organizationId: string | undefined;
   userId: string | undefined;
+  member: OrganizationUser;
 }) {
   const { data: logEntry } = useArchiveLogEntry(organizationId, userId);
   if (!logEntry?.id || !organizationId) return null;
+  const fullName = member.full_name || member.display_name || 'Team member';
+  const employeeId = formatEmployeeId({
+    employeeNumber: member.employee_number,
+    userId: member.user_id,
+  });
+  const hireDate = formatHireDate(member.hire_date);
   return (
     <ArchiveDeliveryReceiptCard
       organizationId={organizationId}
       archiveLogId={logEntry.id}
       archivedAt={logEntry.archived_at}
+      fullName={fullName}
+      employeeId={employeeId}
+      hireDate={hireDate}
     />
   );
 }

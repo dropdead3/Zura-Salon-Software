@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { formatEmployeeId, formatHireDate } from '@/lib/employee-identity';
+import { IdentityBlock } from '@/components/dashboard/team-members/IdentityBlock';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
@@ -303,7 +305,11 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
 
   const name = member.display_name || member.full_name || 'this team member';
   const fullName = member.full_name || member.display_name || 'this team member';
-  const employeeId = member.user_id ? member.user_id.slice(-8).toUpperCase() : null;
+  const employeeId = formatEmployeeId({
+    employeeNumber: member.employee_number,
+    userId: member.user_id,
+  });
+  const hireDate = formatHireDate(member.hire_date);
 
   return (
     <PremiumFloatingPanel
@@ -318,20 +324,21 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
         {/* Header */}
         <header className="px-6 pt-6 pb-5 border-b border-border/50 space-y-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1.5">
               <p className="font-display text-xs tracking-[0.18em] text-muted-foreground uppercase">
                 Archive · Step {step} of 4
               </p>
-              <h2 className="font-display text-xl tracking-wide mt-1 truncate">
+              <h2 className="font-display text-xl tracking-wide truncate">
                 ARCHIVE {fullName.toUpperCase()}
               </h2>
-              {employeeId && (
-                <p className="font-sans text-[11px] text-muted-foreground mt-1 flex items-center gap-2">
-                  <span className="font-display tracking-[0.12em] uppercase">Employee ID</span>
-                  <span className="font-mono text-foreground/80 tracking-wider">{employeeId}</span>
-                </p>
-              )}
-              <p className="font-sans text-xs text-muted-foreground mt-1.5">
+              <IdentityBlock
+                fullName={fullName}
+                employeeId={employeeId}
+                hireDate={hireDate}
+                size="sm"
+                hideName
+              />
+              <p className="font-sans text-xs text-muted-foreground pt-0.5">
                 Historical data is preserved. You can un-archive within 90 days.
               </p>
             </div>
