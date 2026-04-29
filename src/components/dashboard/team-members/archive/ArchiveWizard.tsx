@@ -634,7 +634,7 @@ function BucketWorkspace({
 }) {
   const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
   const decidedCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
-  const isBulkBucket = b.key === 'client_preferences' || b.items.length === 0;
+  const isBulkBucket = b.items.length === 0;
   const overflow = b.count - b.items.length;
   const handled = isBucketHandled(b, picks);
 
