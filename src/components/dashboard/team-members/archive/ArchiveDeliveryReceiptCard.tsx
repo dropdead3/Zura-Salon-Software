@@ -22,20 +22,43 @@ interface Props {
  * Delivery receipts for the soft-notify dispatch tied to a single archive event.
  * Auto-refreshes every 60s while within the 24h capture window.
  */
-export function ArchiveDeliveryReceiptCard({ organizationId, archiveLogId, archivedAt }: Props) {
+export function ArchiveDeliveryReceiptCard({
+  organizationId,
+  archiveLogId,
+  archivedAt,
+  fullName,
+  employeeId,
+  hireDate,
+}: Props) {
   const { data, isLoading } = useArchiveDeliveryReceipts(archiveLogId, archivedAt, organizationId);
   const [open, setOpen] = useState(false);
 
+  const showIdentity = Boolean(fullName && (employeeId || hireDate));
+
+  const identityRow = showIdentity ? (
+    <div className="pb-4 mb-4 border-b border-border/40">
+      <IdentityBlock
+        fullName={fullName!}
+        employeeId={employeeId ?? null}
+        hireDate={hireDate ?? null}
+        size="md"
+      />
+    </div>
+  ) : null;
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-16 w-full" />
-        </CardContent>
-      </Card>
+      <TooltipProvider delayDuration={150}>
+        <Card>
+          <CardHeader>
+            {identityRow}
+            <Skeleton className="h-5 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-16 w-full" />
+          </CardContent>
+        </Card>
+      </TooltipProvider>
     );
   }
 
@@ -43,25 +66,30 @@ export function ArchiveDeliveryReceiptCard({ organizationId, archiveLogId, archi
 
   if (total === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-start gap-3">
-            <div className={tokens.card.iconBox}>
-              <Inbox className="w-5 h-5 text-primary" />
+      <TooltipProvider delayDuration={150}>
+        <Card>
+          <CardHeader>
+            {identityRow}
+            <div className="flex items-start gap-3">
+              <div className={tokens.card.iconBox}>
+                <Inbox className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className={tokens.card.title}>Delivery — last 24h</CardTitle>
+                <CardDescription>No client notifications were dispatched for this archive.</CardDescription>
+              </div>
             </div>
-            <div>
-              <CardTitle className={tokens.card.title}>Delivery — last 24h</CardTitle>
-              <CardDescription>No client notifications were dispatched for this archive.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+          </CardHeader>
+        </Card>
+      </TooltipProvider>
     );
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <Card>
       <CardHeader>
+        {identityRow}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className={tokens.card.iconBox}>
