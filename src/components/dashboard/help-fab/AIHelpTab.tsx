@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Send, ChevronRight, Clock, Plus, ArrowDown, Copy, Check } from 'lucide-react';
+import { Send, ChevronRight, Clock, Plus, ArrowDown, Copy, Check, AlertTriangle } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -176,8 +176,32 @@ export function AIHelpTab() {
     loadConversation(id);
   };
 
+  // Detects assistant bubbles that *sound* like an action was taken but carry
+  // no action payload — defense-in-depth against any model output that slips
+  // past the server-side autonomy tripwire.
+  const FALSE_COMPLETION_RE =
+    /\b(done|completed|deactivated|removed|deleted|cancelled|canceled|refunded|fired|terminated|archived|rescheduled|voided|disabled)\b/i;
+
+  const looksLikeSilentCompletion = (msg: AIMessage) =>
+    msg.role === 'assistant' &&
+    !msg.action &&
+    !msg.isLoading &&
+    FALSE_COMPLETION_RE.test(msg.content);
+
   const renderActionForMessage = (msg: AIMessage) => {
-    if (!msg.action) return null;
+    if (!msg.action) {
+      if (looksLikeSilentCompletion(msg)) {
+        return (
+          <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>
+              No action was taken. {AI_ASSISTANT_NAME_DEFAULT} only describes — any change requires an approval card.
+            </span>
+          </div>
+        );
+      }
+      return null;
+    }
     const status = msg.action.status;
     if (status === 'pending_confirmation' || status === 'confirmed') return null;
     return (
