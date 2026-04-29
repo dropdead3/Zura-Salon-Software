@@ -13,7 +13,7 @@ export type LevelDisplayMode = 'numbered' | 'custom_name';
 export function useWebsiteLevelDisplayMode() {
   const orgCtx = useOptionalOrganizationContext();
   const publicOrgCtx = useContext(PublicOrgContext);
-  const orgId = orgCtx.effectiveOrganization?.id || publicOrgCtx?.organization?.id;
+  const orgId = orgCtx?.effectiveOrganization?.id || publicOrgCtx?.organization?.id;
 
   return useQuery({
     queryKey: ['website-level-display-mode', orgId],
@@ -23,7 +23,7 @@ export function useWebsiteLevelDisplayMode() {
         .from('organizations')
         .select('settings')
         .eq('id', orgId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       const settings = (data?.settings as Record<string, unknown>) ?? {};
