@@ -125,10 +125,22 @@ export function useArchiveTeamMember(organizationId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: ['organization-users', organizationId] });
       qc.invalidateQueries({ queryKey: ['team-member-archive-log', organizationId] });
-      toast.success('Team member archived');
+      const s = data?.notify_summary as
+        | { internal_pings: number; clients_emailed: number; clients_sms: number; clients_skipped: number }
+        | undefined;
+      const clientTotal = (s?.clients_emailed ?? 0) + (s?.clients_sms ?? 0) + (s?.clients_skipped ?? 0);
+      const teammates = s?.internal_pings ?? 0;
+      const teammateLabel = `${teammates} teammate${teammates === 1 ? '' : 's'}`;
+      let description: string | undefined;
+      if (clientTotal > 0) {
+        description = `Notified ${s!.clients_emailed} by email, ${s!.clients_sms} by SMS, ${s!.clients_skipped} skipped. Pinged ${teammateLabel}.`;
+      } else if (teammates > 0) {
+        description = `Pinged ${teammateLabel}.`;
+      }
+      toast.success('Team member archived', description ? { description } : undefined);
     },
     onError: (err: Error) => {
       toast.error('Archive failed', { description: err.message });
