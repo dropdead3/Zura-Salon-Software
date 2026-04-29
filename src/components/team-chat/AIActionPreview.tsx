@@ -50,7 +50,17 @@ const actionTypeConfig = {
     label: 'Create Booking',
     color: 'bg-green-500/10 text-green-600 border-green-500/20',
   },
-};
+  deactivate_team_member: {
+    icon: UserMinus,
+    label: 'Deactivate Team Member',
+    color: 'bg-destructive/10 text-destructive border-destructive/20',
+  },
+  reactivate_team_member: {
+    icon: UserCheck,
+    label: 'Reactivate Team Member',
+    color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  },
+} as const;
 
 export function AIActionPreview({ action, onConfirm, onCancel, isExecuting }: AIActionPreviewProps) {
   const config = actionTypeConfig[action.type] || actionTypeConfig.reschedule;
