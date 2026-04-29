@@ -182,6 +182,52 @@ const TOOLS = [
         required: []
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_team_member",
+      description: "Look up a team member by name. Returns matching staff with their id, role, active status, and counts of upcoming appointments. ALWAYS call this first before proposing any HR action so you have a verified user_id and can disambiguate when multiple people share a first name.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "The team member's name or partial name (first, last, or both)."
+          }
+        },
+        required: ["name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_deactivate_team_member",
+      description: "Propose deactivating a team member's profile (revokes login, blocks new assignments, preserves all historical data). REVERSIBLE. Use this when someone leaves the organization. Returns a preview the human must confirm.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." },
+          reason: { type: "string", description: "Optional short reason captured for the audit log (e.g. 'left the salon', 'no longer employed')." }
+        },
+        required: ["user_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_reactivate_team_member",
+      description: "Propose reactivating a previously deactivated team member's profile (restores login and assignment eligibility). Use when someone is returning.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." }
+        },
+        required: ["user_id"]
+      }
+    }
   }
 ];
 
