@@ -320,6 +320,7 @@ export function NewBookingSheet({
     setClientSearch('');
     setSelectedServices([]);
     setSelectedStylist(defaultStylistId || '');
+    setSchedulabilityAcknowledged(false);
     setSelectedDate(defaultDate || new Date());
     setSelectedTime('');
     setNotes('');
@@ -645,7 +646,7 @@ export function NewBookingSheet({
           <div className="space-y-4">
             <div>
               <Label>Stylist</Label>
-              <Select value={selectedStylist} onValueChange={(val) => { setSelectedStylist(val); setAvailableSlots([]); setSelectedTime(''); }}>
+              <Select value={selectedStylist} onValueChange={(val) => { setSelectedStylist(val); setAvailableSlots([]); setSelectedTime(''); setSchedulabilityAcknowledged(false); }}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select a stylist" />
                 </SelectTrigger>
