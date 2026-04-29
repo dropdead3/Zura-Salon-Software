@@ -111,6 +111,13 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     role: string;
   } | null>(null);
   const [pinDialog, setPinDialog] = useState<{ target: AdminSetPinTarget; mode: PinAction } | null>(null);
+  const [bulkArchive, setBulkArchive] = useState<{
+    members: BulkArchiveTarget[];
+    skippedSummary: string | null;
+  } | null>(null);
+
+  const { user: currentUser } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
 
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
