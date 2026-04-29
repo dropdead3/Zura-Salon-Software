@@ -1383,12 +1383,205 @@ function Step4({
         </div>
       </div>
 
+      {/* Client soft-notify opt-in — only when at least one client_preferences reassignment lands */}
+      {(() => {
+        const reassignedClientIds = new Set(
+          ledger
+            .filter((r) => r.bucket === 'client_preferences' && r.action === 'reassign' && r.destinationUserId)
+            .map((r) => r.itemId),
+        );
+        if (reassignedClientIds.size === 0) return null;
+        const reassignedItems = clientPreferenceItems.filter((c) => reassignedClientIds.has(c.id));
+        const emailCount = reassignedItems.filter((c) => c.has_email).length;
+        const smsOnlyCount = reassignedItems.filter((c) => !c.has_email && c.has_phone).length;
+        const skipCount = reassignedItems.filter((c) => !c.has_email && !c.has_phone).length;
+        return (
+          <div className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-2">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={notifyClients}
+                onCheckedChange={(v) => setNotifyClients(!!v)}
+                className="mt-0.5"
+              />
+              <div className="space-y-1">
+                <p className="font-sans text-sm text-foreground">
+                  Notify the {reassignedClientIds.size} reassigned {reassignedClientIds.size === 1 ? 'client' : 'clients'}
+                </p>
+                <p className="font-sans text-xs text-muted-foreground">
+                  Sends a one-time intro to their new stylist — email when on file, SMS fallback.
+                </p>
+                <p className="font-sans text-[11px] text-muted-foreground">
+                  {emailCount} via email · {smsOnlyCount} via SMS
+                  {skipCount > 0 && ` · ${skipCount} skipped (no contact)`}
+                </p>
+              </div>
+            </label>
+          </div>
+        );
+      })()}
+
       <label className="flex items-start gap-3 cursor-pointer">
         <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} />
         <span className="font-sans text-xs text-foreground">
           I've reviewed the reassignments above and want to archive {name}.
         </span>
       </label>
+    </div>
+  );
+}
+
+// ============================================================
+// CapacitySparkline — tiny inline 14-day load visualization
+// ============================================================
+
+function CapacitySparkline({ daily }: { daily: number[] }) {
+  const data = (daily ?? []).slice(0, 14);
+  while (data.length < 14) data.push(0);
+  const max = Math.max(...data, 1);
+  const barW = 4;
+  const gap = 1;
+  const h = 14;
+  const w = 14 * (barW + gap) - gap;
+
+  return (
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <svg
+          width={w}
+          height={h}
+          viewBox={`0 0 ${w} ${h}`}
+          className="inline-block align-middle ml-1"
+          aria-label="14-day capacity"
+        >
+          {data.map((v, i) => {
+            const ratio = v / max;
+            const barH = Math.max(1, Math.round(ratio * h));
+            const ratioOfMax = max > 0 ? v / max : 0;
+            const cls =
+              ratioOfMax > 0.75 ? 'fill-rose-500'
+                : ratioOfMax > 0.25 ? 'fill-amber-500'
+                : 'fill-emerald-500';
+            return (
+              <rect
+                key={i}
+                x={i * (barW + gap)}
+                y={h - barH}
+                width={barW}
+                height={barH}
+                className={cn(cls, v === 0 && 'opacity-30')}
+              />
+            );
+          })}
+        </svg>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        Next 14 days: {data.reduce((a, b) => a + b, 0)} booked · peak day {max}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+// ============================================================
+// SmartSplitRow — one-click weighted distribution across same-level
+// teammates with capacity, qualification-aware.
+// ============================================================
+
+function SmartSplitRow({
+  bucket: b, items, eligibleStylists, roster, setPicks,
+}: {
+  bucket: DependencyBucket;
+  items: ClientPreferenceItem[];
+  eligibleStylists: EligibleStylist[];
+  roster: OrganizationUser[];
+  setPicks: React.Dispatch<React.SetStateAction<Record<string, Record<string, Reassignment>>>>;
+}) {
+  // Build the candidate pool: prefer same-level + light load.
+  const archivedLevel = eligibleStylists[0]?.stylist_level ?? null; // best-effort; org-level
+  // Score and pick top N (2..3).
+  const candidates = useMemo(() => {
+    const scored = eligibleStylists.map((e) => {
+      const load = (e.daily_load ?? []).reduce((a, b) => a + b, 0);
+      return { e, load };
+    });
+    scored.sort((a, b) => a.load - b.load);
+    const N = Math.min(3, Math.max(2, Math.ceil(items.length / 5)));
+    return scored.slice(0, N);
+  }, [eligibleStylists, items.length]);
+
+  if (candidates.length < 2) return null;
+
+  const names = candidates
+    .map((c) => {
+      const r = roster.find((u) => u.user_id === c.e.user_id);
+      return r?.display_name || r?.full_name || 'Teammate';
+    })
+    .join(' · ');
+
+  function handleSplit() {
+    // Sort clients by avg_ticket desc — high-value first.
+    const sorted = [...items].sort((a, b) => (b.avg_ticket ?? 0) - (a.avg_ticket ?? 0));
+    // Track projected post-load per candidate.
+    const projected = new Map<string, number>(
+      candidates.map((c) => [c.e.user_id, c.load]),
+    );
+    const next: Record<string, Reassignment> = {};
+    for (const client of sorted) {
+      const topServices = normalizeTopServices(client.top_services);
+      const topServiceIds = topServices.map((s) => s.id).filter(Boolean) as string[];
+      // Prefer qualified candidate with lowest projected load.
+      const ranked = candidates
+        .map((c) => {
+          const qualified = topServiceIds.length === 0
+            ? true
+            : topServiceIds.some((sid) => c.e.qualified_service_ids.includes(sid));
+          return {
+            uid: c.e.user_id,
+            qualified,
+            projected: projected.get(c.e.user_id) ?? 0,
+          };
+        })
+        .sort((a, b) => {
+          if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
+          return a.projected - b.projected;
+        });
+      const pick = ranked[0];
+      next[client.id] = {
+        bucket: b.key,
+        itemId: client.id,
+        action: 'reassign',
+        destinationUserId: pick.uid,
+      };
+      projected.set(pick.uid, (projected.get(pick.uid) ?? 0) + 1);
+    }
+    setPicks((prev) => ({ ...prev, [b.key]: next }));
+  }
+
+  return (
+    <div className="px-4 py-2.5 bg-emerald-500/[0.04] border-b border-emerald-500/20 flex items-center justify-between gap-2 flex-wrap">
+      <div className="flex items-center gap-2 min-w-0">
+        <Zap className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+        <p className="font-sans text-[11px] text-foreground min-w-0">
+          <span className="font-display uppercase tracking-wider text-emerald-500 mr-1.5">
+            Smart split
+          </span>
+          <span className="text-muted-foreground truncate">{names} — balanced by capacity</span>
+        </p>
+      </div>
+      <Tooltip delayDuration={150}>
+        <TooltipTrigger asChild>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-3 text-[11px] text-emerald-500 hover:text-emerald-400 shrink-0"
+            onClick={handleSplit}
+          >
+            Distribute all {items.length}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[300px] text-xs">
+          One-click reassignment. Each client goes to the teammate with the most capacity who's also qualified for their usual service. You can still override any row.
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }
