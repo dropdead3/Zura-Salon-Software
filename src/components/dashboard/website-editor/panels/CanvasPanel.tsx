@@ -86,7 +86,7 @@ export const CanvasPanel = memo(function CanvasPanel({
   const sendScrollMessage = useCallback((sectionId: string) => {
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
-    const origin = window.location.origin;
+    const origin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
     iframe.contentWindow.postMessage(
       { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
       origin
@@ -97,7 +97,7 @@ export const CanvasPanel = memo(function CanvasPanel({
         origin
       );
     }, 400);
-  }, []);
+  }, [previewUrl]);
 
   useEffect(() => {
     if (!activeSectionId) return;
@@ -118,7 +118,6 @@ export const CanvasPanel = memo(function CanvasPanel({
   // Listen for PREVIEW_READY from iframe content (PageSectionRenderer)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
       const msg = event.data;
       if (msg?.type === 'PREVIEW_READY') {
         iframeReadyRef.current = true;
