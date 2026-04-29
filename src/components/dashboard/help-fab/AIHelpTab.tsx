@@ -4,17 +4,14 @@ import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAIAssistant } from '@/hooks/useAIAssistant';
-import { classifyAndGround } from '@/lib/navGrounding';
+import { useAIAgentChat } from '@/hooks/team-chat/useAIAgentChat';
+import { AIActionPreview } from '@/components/team-chat/AIActionPreview';
 import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
 import { AI_ASSISTANT_NAME_DEFAULT } from '@/lib/brand';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-
-type Message = { role: 'user' | 'assistant'; content: string };
 
 const ROLE_PROMPTS: Record<string, string[]> = {
   leadership: [
@@ -49,18 +46,8 @@ const ROLE_PROMPTS: Record<string, string[]> = {
   ],
 };
 
-const ROLE_PRIORITY: string[] = ['super_admin', 'admin', 'manager', 'receptionist', 'stylist', 'stylist_assistant', 'operations_assistant', 'admin_assistant', 'bookkeeper', 'inventory_manager', 'booth_renter'];
-
 export function AIHelpTab() {
   const roles = useEffectiveRoles();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
-  const primaryRole = useMemo(() => {
-    for (const r of ROLE_PRIORITY) {
-      if (roles.includes(r as any)) return r;
-    }
-    return roles[0] ?? undefined;
-  }, [roles]);
   const prompts = useMemo(() => {
     if (roles.some(r => r === 'super_admin' || r === 'admin')) return ROLE_PROMPTS.leadership;
     if (roles.includes('manager')) return ROLE_PROMPTS.manager;
@@ -68,9 +55,17 @@ export function AIHelpTab() {
     if (roles.includes('stylist')) return ROLE_PROMPTS.stylist;
     return ROLE_PROMPTS.default;
   }, [roles]);
-  const [messages, setMessages] = useState<Message[]>([]);
+
+  const {
+    messages,
+    isLoading,
+    pendingAction,
+    sendMessage,
+    confirmAction,
+    cancelAction,
+  } = useAIAgentChat();
+
   const [inputValue, setInputValue] = useState('');
-  const { response, isLoading, error, sendMessage, reset } = useAIAssistant();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -78,27 +73,13 @@ export function AIHelpTab() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, response]);
-
-  useEffect(() => {
-    if (!isLoading && response && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'user') {
-        setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-        reset();
-      }
-    }
-  }, [isLoading, response, messages, reset]);
+  }, [messages, pendingAction, isLoading]);
 
   const handleSend = async (text?: string) => {
     const messageText = text || inputValue.trim();
     if (!messageText || isLoading) return;
-
-    const userMessage: Message = { role: 'user', content: messageText };
-    setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    const grounding = classifyAndGround(messageText, primaryRole);
-    await sendMessage(messageText, messages, orgId, primaryRole, grounding.isNavigation ? { isNavigation: grounding.isNavigation, confidence: grounding.confidence, groundingPrompt: grounding.groundingPrompt } : undefined);
+    await sendMessage(messageText);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -108,11 +89,7 @@ export function AIHelpTab() {
     }
   };
 
-  const handlePromptClick = (prompt: string) => {
-    handleSend(prompt);
-  };
-
-  const isEmpty = messages.length === 0 && !response;
+  const isEmpty = messages.length === 0;
 
   return (
     <div className="flex flex-col h-full">
@@ -120,7 +97,6 @@ export function AIHelpTab() {
         <div className="py-4 space-y-4">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[420px] text-center pt-8">
-              {/* Glow behind icon */}
               <div className="relative mb-5">
                 <div className="absolute inset-0 -m-6 rounded-full bg-primary/15 blur-2xl animate-pulse" />
                 <div className="relative w-14 h-14 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center">
@@ -129,13 +105,13 @@ export function AIHelpTab() {
               </div>
               <h3 className="font-display text-lg tracking-wide uppercase mb-2">{AI_ASSISTANT_NAME_DEFAULT}</h3>
               <p className="text-sm text-muted-foreground/70 mb-10 max-w-[260px]">
-                Your AI assistant. Ask me anything about using this platform, or your business.
+                Your AI assistant. Ask questions or request actions — anything destructive needs your approval.
               </p>
               <div className="w-full space-y-1.5">
                 {prompts.map((prompt) => (
                   <button
                     key={prompt}
-                    onClick={() => handlePromptClick(prompt)}
+                    onClick={() => handleSend(prompt)}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl bg-muted/40 hover:bg-muted/70 border border-border/30 border-l-2 border-l-primary/30 hover:border-border/50 transition-all duration-200 text-left group"
                   >
                     <ChevronRight className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
@@ -147,9 +123,9 @@ export function AIHelpTab() {
           ) : (
             <>
               <AnimatePresence initial={false}>
-                {messages.map((msg, idx) => (
+                {messages.map((msg) => (
                   <motion.div
-                    key={idx}
+                    key={msg.id}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
@@ -160,11 +136,14 @@ export function AIHelpTab() {
                         : 'mr-auto rounded-2xl rounded-bl-md bg-card/80 backdrop-blur-sm border border-border/40'
                     )}
                   >
-                    {msg.role === 'assistant' ? (
+                    {msg.isLoading ? (
+                      <div className="flex items-center gap-2.5 text-muted-foreground">
+                        <ZuraZIcon className="w-4 h-4 text-primary animate-pulse" />
+                        <DotsLoader size="sm" />
+                      </div>
+                    ) : msg.role === 'assistant' ? (
                       <div className="flex gap-2.5">
-                        {(idx === 0 || messages[idx - 1]?.role === 'user') && (
-                          <ZuraZIcon className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        )}
+                        <ZuraZIcon className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1 flex-1">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
@@ -175,43 +154,26 @@ export function AIHelpTab() {
                   </motion.div>
                 ))}
               </AnimatePresence>
-              
-              {/* Streaming response */}
-              {isLoading && response && (
+
+              {pendingAction && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mr-auto max-w-[85%] rounded-2xl rounded-bl-md px-4 py-2.5 text-sm bg-card/80 backdrop-blur-sm border border-border/40"
+                  className="mr-auto w-full"
                 >
-                  <div className="flex gap-2.5">
-                    <ZuraZIcon className="w-4 h-4 text-primary shrink-0 mt-0.5 animate-pulse" />
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1 flex-1">
-                      <ReactMarkdown>{response}</ReactMarkdown>
-                    </div>
-                  </div>
+                  <AIActionPreview
+                    action={pendingAction}
+                    onConfirm={confirmAction}
+                    onCancel={cancelAction}
+                    isExecuting={isLoading}
+                  />
                 </motion.div>
-              )}
-              
-              {/* Loading indicator */}
-              {isLoading && !response && (
-                <div className="mr-auto flex items-center gap-2.5 text-muted-foreground text-sm px-1">
-                  <ZuraZIcon className="w-4 h-4 text-primary animate-pulse" />
-                  <span className="text-xs">{AI_ASSISTANT_NAME_DEFAULT} is thinking</span>
-                  <DotsLoader size="sm" />
-                </div>
-              )}
-              
-              {/* Error message */}
-              {error && (
-                <div className="mr-auto max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-destructive/10 text-destructive">
-                  {error}
-                </div>
               )}
             </>
           )}
         </div>
       </ScrollArea>
-      
+
       <div className="px-3 pb-3 pt-1">
         <div className="h-px bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 mb-3" />
         <div className="relative">
@@ -221,15 +183,15 @@ export function AIHelpTab() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question..."
-            disabled={isLoading}
+            placeholder="Ask a question or request an action..."
+            disabled={isLoading || !!pendingAction}
             className="rounded-full bg-muted/50 border-border/40 pl-9 pr-12 h-10"
             autoCapitalize="off"
           />
           <Button
             size="icon"
             onClick={() => handleSend()}
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim() || isLoading || !!pendingAction}
             className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary/90 hover:bg-primary text-primary-foreground hover:scale-110 transition-all duration-200"
           >
             <Send className="h-3.5 w-3.5" />
