@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Send, ChevronRight } from 'lucide-react';
+import { Send, ChevronRight, Clock, Plus } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAIAgentChat } from '@/hooks/team-chat/useAIAgentChat';
 import { AIActionPreview } from '@/components/team-chat/AIActionPreview';
+import { AIHistoryPanel } from './AIHistoryPanel';
 import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -60,12 +61,16 @@ export function AIHelpTab() {
     messages,
     isLoading,
     pendingAction,
+    conversationId,
     sendMessage,
     confirmAction,
     cancelAction,
+    startNewChat,
+    loadConversation,
   } = useAIAgentChat();
 
   const [inputValue, setInputValue] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -92,7 +97,28 @@ export function AIHelpTab() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      <div className="flex items-center justify-end gap-1 px-3 pt-2 pb-1 border-b border-border/30">
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setHistoryOpen(true)}
+          className="h-7 px-2.5 rounded-full text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <Clock className="h-3.5 w-3.5" />
+          History
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={startNewChat}
+          disabled={isLoading}
+          className="h-7 px-2.5 rounded-full text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          New
+        </Button>
+      </div>
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
         <div className="py-4 space-y-4">
           {isEmpty ? (
@@ -198,6 +224,17 @@ export function AIHelpTab() {
           </Button>
         </div>
       </div>
+
+      {historyOpen && (
+        <AIHistoryPanel
+          activeConversationId={conversationId}
+          onSelect={(id) => {
+            setHistoryOpen(false);
+            loadConversation(id);
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
     </div>
   );
 }

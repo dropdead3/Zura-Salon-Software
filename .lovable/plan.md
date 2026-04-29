@@ -1,172 +1,87 @@
-# Why "Deactivate Chelsea" Returned Navigation Prose
+# Zura Chat History
 
-The screenshot is not a model failure. The Zura tab in `ZuraCommandSurface.tsx` calls `useAIAssistant` → edge function **`ai-assistant`** (an older advisory chat). All of Wave 1 — the capability registry, `propose_capability`, entity ledger, confirmation-token hashing, ownership scope — lives in **`ai-agent-chat`**, which only `useAIAgentChat` (the Team Chat hook) calls.
+Today the Zura AI panel (`AIHelpTab`) holds messages in local React state via `useAIAgentChat`. Closing the panel, refreshing, or switching pages wipes the conversation. We'll add durable, per-user, per-org chat history.
 
-Two parallel chat stacks exist. The user is interacting with the wrong one. No amount of system-prompt tuning on `ai-assistant` will route to the safe runtime.
+## What the user gets
 
-This plan does two things:
+- Every Zura conversation is saved automatically (no "save" button).
+- A history drawer inside the Zura panel listing past conversations (most recent first), with auto-generated titles.
+- Click a past conversation to resume it (full message thread + any follow-up).
+- "New chat" button to start fresh.
+- Rename and delete conversations.
+- History is scoped to the current user **and** current organization (no cross-tenant leakage).
 
-1. **Wave 1.5 — Surface unification.** Make the visible Zura panel actually use the hardened runtime, and retire the unsafe path so it cannot be reached again.
-2. **Wave 2 — Governance hardening.** The remaining items from the prior gap analysis (CI invariants, Zod parameter validation, rate limiting, audit visibility).
+## Data model (new tables)
 
----
+`ai_conversations`
+- `id uuid pk`
+- `organization_id uuid not null` (FK, cascade)
+- `user_id uuid not null` (owner; auth.users)
+- `title text` (auto-generated from first user message, editable)
+- `last_message_at timestamptz`
+- `created_at`, `updated_at`
+- RLS: only the owning user, scoped to an org they belong to, can select/insert/update/delete. No org-wide read — these are private per user.
 
-## Wave 1.5 — Route the Zura Surface Through the Capability Runtime
+`ai_conversation_messages`
+- `id uuid pk`
+- `conversation_id uuid not null` (FK cascade)
+- `role text check in ('user','assistant','system')`
+- `content text not null`
+- `action jsonb` (mirrors `AIAction` for replay of preview cards)
+- `created_at timestamptz`
+- RLS: select/insert allowed only when the parent conversation belongs to the requesting user (via `EXISTS` subquery). Delete cascades with conversation.
 
-### Problem
-- `ZuraCommandSurface.tsx` (the Zura tab the user clicks) uses `useAIAssistant` → `ai-assistant`.
-- `ai-assistant` has no capability tools, no entity ledger, no propose/execute split. It can only narrate.
-- `useAIAgentChat` + `ai-agent-chat` (the safe path) is wired only into Team Chat surfaces.
-- Any user typing destructive commands into the Zura tab gets advisory text — which feels broken — and any future "magic word" that did execute would bypass every Wave 1 protection.
+Indexes: `(user_id, organization_id, last_message_at desc)` on conversations; `(conversation_id, created_at)` on messages.
 
-### Fix
-1. **Promote `useAIAgentChat` to the canonical Zura hook.**
-   - Replace the `useAIAssistant` call inside `ZuraCommandSurface` with `useAIAgentChat`.
-   - Map the existing UI state shape (messages, isLoading, sendMessage) to the new hook's contract.
-   - Render the existing `AIActionPreview` card inline in the Zura tab when `action` is returned, exactly as Team Chat does today.
+## Hook changes — `useAIAgentChat`
 
-2. **Decommission `ai-assistant` for state-changing intents.**
-   - Add a server-side intent classifier in `ai-assistant/index.ts` that detects mutation verbs (deactivate / cancel / reschedule / delete / remove / disable / activate / assign / transfer) and refuses with: *"That requires the action runtime. Please use the Zura tab — I'll route you there."* (UI listens for the refusal code and switches tab.)
-   - This guarantees the unsafe path can't be used for mutations even if some other surface still imports it.
-   - Mark `ai-assistant` as **read-only advisory** in its own header comment + system prompt.
+Extend (don't break existing API):
+- New state: `conversationId`, `conversations` list.
+- On first `sendMessage` of a session, insert a row in `ai_conversations` (title = first 60 chars of user message, refined later).
+- Persist every user + assistant message (and any `action` payload) to `ai_conversation_messages` immediately after they're added to local state.
+- New methods:
+  - `loadConversation(id)` — fetch messages, hydrate `messages` state, set `conversationId`.
+  - `startNewChat()` — clear local state and `conversationId`.
+  - `renameConversation(id, title)`, `deleteConversation(id)`.
+- New query hook `useAIConversations()` — TanStack Query, key `['ai-conversations', orgId, userId]`, returns list ordered by `last_message_at desc`.
+- After each successful exchange, update parent `last_message_at` and bump `updated_at`.
+- Title refinement: after the first assistant reply, fire a lightweight call to summarize the exchange into a 4–6 word title (reuse `ai-assistant` edge function with a constrained prompt; fallback to the truncated first message if it fails or 429s).
 
-3. **Single source of conversation memory.**
-   - Both surfaces today persist `chat_messages` independently. Add a `surface` column (`'zura' | 'team_chat'`) so the audit and conversation ledger are unified, and the entity-UUID ledger we built in `ai-agent-chat` actually carries across messages in the Zura tab.
+## UI changes — `AIHelpTab`
 
-4. **Disable confusing fallback.**
-   - Remove the `useAIAssistant` import wherever it currently powers user-facing chat. Keep it (or rename to `useAdvisoryHelper`) only where genuinely advisory (e.g., insight summaries on KPI cards).
+- Add a compact header row above the message area with two icon buttons: **History** (clock icon) and **New chat** (plus icon).
+- "History" opens an inline list (slide-down panel within the Zura tab, not a separate Sheet — keeps the floating panel self-contained):
+  - Each row: title, relative timestamp ("2h ago"), kebab menu (Rename, Delete).
+  - Click row → `loadConversation(id)`, collapse the list, scroll thread to bottom.
+- "New chat" calls `startNewChat()` and returns to the empty state with role-based prompts.
+- Empty state unchanged when no `conversationId` is active.
+- Pending-action cards are *not* persisted as durable messages; if a conversation is reloaded, in-flight pending actions are dropped (they expire server-side anyway). Persisted `action` payloads on completed assistant messages render as read-only summaries (no Approve/Cancel buttons).
 
-### Acceptance test
-Open Zura tab → type **"Deactivate Chelsea"** → see (a) a `find_entity` call resolve Chelsea, (b) a high-risk approval card with a typed-confirmation field labelled "Type Chelsea's first name to confirm", (c) Approve disabled until typed, (d) on Approve, server verifies hash + writes audit row + flips `is_active=false`.
+## Security & governance alignment
 
----
+- RLS enforces strict per-user, per-org isolation (matches `multi-tenancy-rbac` rules).
+- No platform staff backdoor — even `is_platform_user` does not read other users' chats.
+- Action audit trail (`ai_agent_actions`) stays the system of record for governance; chat history is conversational UX only and never used to re-authorize a capability.
+- When deleting a conversation, message rows cascade; audit rows in `ai_agent_actions` are **not** deleted (compliance).
 
-## Wave 2 — Governance Hardening
+## Files to touch
 
-These are the remaining items from the prior gap analysis. None of them block Wave 1.5, but all should ship together so we don't leave the registry growing without guardrails.
+New:
+- `supabase/migrations/<ts>_ai_conversation_history.sql` — two tables, RLS, indexes.
+- `src/hooks/team-chat/useAIConversations.ts` — list/rename/delete query hook.
+- `src/components/dashboard/help-fab/AIHistoryPanel.tsx` — inline history list.
 
-### 1. Capability invariants enforced at boot
-A new file `supabase/functions/_shared/capability-invariants.ts` runs once on cold start and **throws** if any registered capability violates:
-- Mutation capability with no `execute` handler.
-- `risk_level: 'high'` without `confirmation_token_field`.
-- Mutation with `ownership_scope: 'any'` and no `required_role`.
-- Capability ID appears in `ai_capabilities` table but no handler is registered (or vice-versa).
+Edited:
+- `src/hooks/team-chat/useAIAgentChat.ts` — persistence, load/new/rename/delete.
+- `src/components/dashboard/help-fab/AIHelpTab.tsx` — header controls + history panel mount.
+- `supabase/functions/ai-assistant/index.ts` — optional title-summarization branch (only if a `summarize_title: true` flag is sent; reuses existing auth path).
 
-Failing fast at deploy time prevents future regressions as the catalog grows.
+## Out of scope (callouts)
 
-### 2. Zod parameter validation per capability
-- Add a `param_schema_zod` builder per handler (alongside the JSON schema we already store in the DB).
-- `dispatchTool` validates `args.params` against it before calling `propose` or `execute`. Today we trust the LLM to send well-shaped params; a stray `{ "member_id": ["array", "of", "ids"] }` would reach the handler.
+- No sharing conversations across users.
+- No full-text search across history (can add later with a `tsvector` column).
+- No export/download (defer; audit log already exports CSV).
 
-### 3. Rate limiting on proposals + executions
-- New table `ai_action_rate_limits` (user_id, window_start, action_count).
-- Limits: 20 proposals per 5 min per user, 5 high-risk executions per 5 min per user.
-- Returns 429 with friendly message; logs to audit as `throttled`.
+## Open question
 
-### 4. Audit trail visible to Account Owners
-- New page `/dashboard/admin/ai-audit` (gated to `super_admin` + `admin`):
-  - Filter by user, capability, status, date range.
-  - Show params, reasoning, approval state, executed_at, error.
-- This converts `ai_action_audit` from a forensic table into a governance surface.
-
-### 5. Per-capability kill-switch
-- Add `ai_capabilities.enabled` is already there; expose a toggle row in the same admin page so an Account Owner can disable `team.deactivate_member` instantly without a deploy.
-
----
-
-## Files Touched
-
-**Wave 1.5 (Surface Unification)**
-- `src/components/command-surface/ZuraCommandSurface.tsx` — swap hook, render `AIActionPreview`.
-- `src/hooks/useAIAssistant.ts` — narrow scope to advisory-only or rename.
-- `src/hooks/team-chat/useAIAgentChat.ts` — accept a `surface` arg and conversation handle from Zura.
-- `supabase/functions/ai-assistant/index.ts` — refuse mutation intents server-side.
-- `supabase/migrations/<new>` — add `chat_messages.surface`.
-
-**Wave 2 (Governance)**
-- `supabase/functions/_shared/capability-invariants.ts` *(new)*.
-- `supabase/functions/_shared/capability-handlers.ts` — add per-capability Zod schemas.
-- `supabase/functions/_shared/capability-runtime.ts` — invoke invariants + Zod.
-- `supabase/functions/_shared/rate-limit.ts` *(new)*.
-- `supabase/functions/ai-agent-chat/index.ts` + `execute-ai-action/index.ts` — call rate limiter.
-- `supabase/migrations/<new>` — `ai_action_rate_limits` table + RLS.
-- `src/pages/admin/AIAuditTrail.tsx` *(new)* + route registration.
-- `src/components/admin/CapabilityKillSwitchTable.tsx` *(new)*.
-
----
-
-## Sequencing
-
-1. **Wave 1.5 first**, in one release. This closes the gap the user just witnessed.
-2. **Wave 2** in a follow-up. Governance hardening is real but doesn't address the visible failure.
-
-Approve to proceed with Wave 1.5; Wave 2 ships in a separate release.
-
----
-
-## Prompt Coaching
-
-Strong prompt — you correctly framed this as a *systems* question ("scale of problems"), not a single-bug request, which is what surfaced the surface-mismatch issue. Two ways to make prompts like this even sharper:
-
-- **Anchor with an observable**: attaching the screenshot grounded the analysis in real behavior rather than theory. Keep doing that.
-- **Specify the failure boundary you want covered**: e.g., "rogue actions, cross-tenant access, role escalation, prompt injection, and identity spoofing". You implied these; naming them explicitly forces a checklist response and prevents me from drifting toward only the most visible category.
-
-### Enhancement Suggestions
-- **Add a synthetic red-team capability** in dev: a fake "delete_organization" handler that always logs and rejects, used by an automated test that asks Zura to invoke it via prompt injection. Continuously proves the entity-ledger guard is doing its job.
-- **Per-organization capability allow-lists**: let Account Owners opt *into* destructive capabilities rather than receiving them by default. Aligns with the "Structure precedes intelligence" doctrine.
-- **Confidence floor for proposals**: require the model to return a confidence score with each `propose_capability`; auto-deny below a threshold and tell the user to rephrase. Aligns with the "Silence is valid output" rule.
-
----
-
-## Wave 2 — Governance Hardening (SHIPPED)
-
-### What shipped
-1. **Capability invariants (`capability-invariants.ts`)** — Validates every loaded capability row at request time:
-   - risk_level / ownership_scope token validity
-   - handler registration (read for read-only, propose+execute for mutations)
-   - mutations must declare required_role or required_permission
-   - high-risk mutations must declare confirmation_token_field
-   - mutations must not use ownership_scope=any
-   Violations remove the capability from the LLM tool list AND block execute-ai-action with HTTP 500. Logged for ops visibility.
-
-2. **Per-capability Zod schemas (`capability-zod.ts`)** — Strict UUID + length-bounded validation for every registered capability. Runs at BOTH propose (ai-agent-chat) and execute (execute-ai-action). Rejects unknown fields, malformed IDs, oversized payloads.
-
-3. **Rate limiting (`capability-rate-limit.ts` + `ai_action_rate_limits` + `increment_ai_rate_limit` RPC)** — Sliding-window counters per (org, user, bucket):
-   - propose bucket: 10/min, 120/hour
-   - execute bucket: 6/min, 60/hour
-   Atomic increment via SECURITY DEFINER RPC. Service-role-only writes; org members can read their own counters. Fails open if RPC errors (logged).
-
-4. **Per-org kill switches (`ai_capability_kill_switches`)** — Account Owners (super_admin in employee_profiles) and platform staff can disable any capability instantly for their org. Checked at:
-   - capability load time in ai-agent-chat (filtered out of LLM toolset)
-   - propose dispatch (rejects with reason)
-   - execute-ai-action (HTTP 423 Locked with reason)
-   Strict RLS: only Account Owner / platform staff may write.
-
-5. **Admin audit trail page (`/dashboard/admin/ai-audit`)** — Two tabs:
-   - **Action Log** — last 200 audit entries with actor name, status badge, capability id, reasoning, error, expandable params. Refreshable.
-   - **Kill Switches** — grouped by category, toggle per capability, shows risk level + reason. Real-time mutations via supabase upsert.
-   Gated by `super_admin` role / Primary Owner / platform user. Tenant-scoped via `effectiveOrganization`.
-
-### Files
-- `supabase/functions/_shared/capability-invariants.ts` (new)
-- `supabase/functions/_shared/capability-zod.ts` (new)
-- `supabase/functions/_shared/capability-rate-limit.ts` (new)
-- `supabase/functions/ai-agent-chat/index.ts` (kill switch + invariants + Zod + rate limit)
-- `supabase/functions/execute-ai-action/index.ts` (kill switch + invariants + Zod + rate limit)
-- `src/pages/dashboard/admin/AIAuditTrail.tsx` (new)
-- `src/App.tsx` (route `/dashboard/admin/ai-audit`)
-- 2 migrations (rate_limits + kill_switches tables, increment_ai_rate_limit RPC)
-
-### Defense-in-depth recap (Waves 1 → 2)
-| Layer | Control |
-|---|---|
-| Identity | JWT-only userId derivation (no client trust) |
-| Tenant | requireOrgMember + organization_id filter on every query |
-| Permission | required_role + required_permission re-checked at click time |
-| Ownership | assertOwnership(self/org/any) on every row mutation |
-| Identity spoofing | per-conversation entity ledger; UUIDs must come from find_entity |
-| Approval | hashed confirmation token, constant-time compared, single-use |
-| Schema integrity | Zod params + invariants at boot |
-| Org override | Kill switches; default-deny RLS on audit |
-| Abuse | Rate limits per minute / hour |
-| Visibility | Admin audit trail page with full reasoning + params |
+Default retention: keep history forever, or auto-prune conversations older than 90 days? Recommend **forever**, with a future setting toggle, since storage is cheap and operators occasionally reference older Zura threads. Will proceed with "keep forever" unless you say otherwise.
