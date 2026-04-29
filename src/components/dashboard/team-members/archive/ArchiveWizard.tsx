@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { formatEmployeeId, formatHireDate } from '@/lib/employee-identity';
+import { IdentityBlock } from '@/components/dashboard/team-members/IdentityBlock';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
