@@ -1176,18 +1176,6 @@ export function WebsiteSettingsContent() {
             SEO & Legal
           </TabsTrigger>
         </TabsList>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size={tokens.button.card}
-            onClick={handlePreviewClick}
-            disabled={!previewUrl}
-            title={previewTooltip}
-          >
-            <Eye className="w-4 h-4 mr-1.5" />
-            Preview
-          </Button>
-        </div>
       </div>
 
       <TabsContent value="general"><GeneralTab /></TabsContent>
