@@ -206,15 +206,18 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     loadPersistedOrg();
   }, [isMultiOrgOwner, isPlatformUser, user?.id, userOrganizations, selectedOrganization]);
 
-  // Clear selection when logging out
+  // Clear selection when logging out (also wipes the persisted impersonation key
+  // so a different account signing in on the same tab starts clean).
   useEffect(() => {
     if (!user) {
-      setSelectedOrganization(null);
+      setSelectedOrganizationState(null);
+      writePersistedPlatformOrgId(null);
     }
   }, [user]);
 
   const clearSelection = useCallback(() => {
-    setSelectedOrganization(null);
+    setSelectedOrganizationState(null);
+    writePersistedPlatformOrgId(null);
   }, []);
 
   // Compute effective organization
