@@ -27,9 +27,72 @@ interface OrganizationContextValue {
 
 const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined);
 
+// Session-scoped persistence for platform-user impersonation. We use
+// sessionStorage (not localStorage) so closing the tab fully exits God Mode —
+// matches the security expectation that impersonation is an active, observable
+// session, never a sticky background state.
+const PLATFORM_IMPERSONATION_STORAGE_KEY = 'zura.platform.selectedOrgId';
+
+function readPersistedPlatformOrgId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(PLATFORM_IMPERSONATION_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedPlatformOrgId(orgId: string | null) {
+  if (typeof window === 'undefined') return;
+  try {
+    if (orgId) {
+      window.sessionStorage.setItem(PLATFORM_IMPERSONATION_STORAGE_KEY, orgId);
+    } else {
+      window.sessionStorage.removeItem(PLATFORM_IMPERSONATION_STORAGE_KEY);
+    }
+  } catch {
+    /* noop — storage may be unavailable in private mode */
+  }
+}
+
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
   const { user, isPlatformUser } = useAuth();
-  const [selectedOrganization, setSelectedOrganization] = useState<Organization | null>(null);
+  const [selectedOrganization, setSelectedOrganizationState] = useState<Organization | null>(null);
+
+  // Wrap setter so platform-user selections persist across refreshes within the
+  // same tab. Without this, refreshing /org/:slug/dashboard transiently drops
+  // the God Mode bar until OrgDashboardRoute re-resolves the slug.
+  const setSelectedOrganization = useCallback((org: Organization | null) => {
+    setSelectedOrganizationState(org);
+    if (isPlatformUser) {
+      writePersistedPlatformOrgId(org?.id ?? null);
+    }
+  }, [isPlatformUser]);
+
+  // Hydrate selectedOrganization from sessionStorage on mount for platform users.
+  // Fetches the persisted org_id and resolves it to a full Organization record so
+  // the GodModeBar can render its name/account number without waiting for the
+  // route's useOrganizationBySlug query.
+  useEffect(() => {
+    if (!isPlatformUser || selectedOrganization) return;
+    const persistedId = readPersistedPlatformOrgId();
+    if (!persistedId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', persistedId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        writePersistedPlatformOrgId(null);
+        return;
+      }
+      setSelectedOrganizationState(data as Organization);
+    })();
+    return () => { cancelled = true; };
+  }, [isPlatformUser, selectedOrganization]);
 
   // Fetch user's own organization from their employee_profile
   const { data: currentOrganization, isLoading: isLoadingCurrent } = useQuery({
