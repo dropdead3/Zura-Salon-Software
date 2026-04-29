@@ -747,6 +747,15 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
               <Trash2 className="w-3.5 h-3.5" />
               Clear PINs
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive"
+              onClick={handleBulkArchive}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              Archive selected ({selectedUsers.size})…
+            </Button>
           </div>
           <Button
             variant="ghost"
