@@ -908,34 +908,37 @@ function Step3({
                 Apply
               </Button>
               {b.actions.includes('cancel') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.cancel_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-destructive"
                   onClick={() => onApplyBulk(b, 'cancel', null)}
                 >
                   Cancel all
-                </Button>
+                </HintedButton>
               )}
               {b.actions.includes('drop') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.drop_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-muted-foreground"
                   onClick={() => onApplyBulk(b, 'drop', null)}
                 >
                   Drop all
-                </Button>
+                </HintedButton>
               )}
               {b.actions.includes('end_date') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.end_date_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-muted-foreground"
                   onClick={() => onApplyBulk(b, 'end_date', null)}
                 >
                   End-date all
-                </Button>
+                </HintedButton>
               )}
             </div>
 
