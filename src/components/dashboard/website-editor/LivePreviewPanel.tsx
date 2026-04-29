@@ -71,6 +71,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   }, []);
 
   const handleRefresh = () => {
+    if (!previewUrl) return;
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
     iframeReadyRef.current = false;
@@ -135,14 +136,20 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             viewMode === 'mobile' ? "max-w-[390px] my-4 rounded-lg overflow-hidden border border-border shadow-lg" : "w-full"
           )}
         >
-          <iframe
-            ref={iframeRef}
-            key={refreshKey}
-            src={previewUrl || "/?preview=true"}
-            className="w-full h-full border-0"
-            title="Website Preview"
-            onLoad={handleIframeLoad}
-          />
+          {previewUrl ? (
+            <iframe
+              ref={iframeRef}
+              key={refreshKey}
+              src={previewUrl}
+              className="w-full h-full border-0"
+              title="Website Preview"
+              onLoad={handleIframeLoad}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+              Waiting for organization preview URL…
+            </div>
+          )}
         </div>
       </div>
     </div>
