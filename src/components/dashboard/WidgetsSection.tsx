@@ -127,29 +127,39 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
         </Dialog>
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-        <VisibilityGate elementKey="widget_changelog" elementName="What's New Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('changelog') && <ChangelogWidget />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_birthdays" elementName="Team Birthdays Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('birthdays') && <BirthdayWidget />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_anniversaries" elementName="Work Anniversaries Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_schedule" elementName="My Work Days Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_dayrate" elementName="Day Rate Bookings Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('dayrate') && <DayRateWidget />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_help" elementName="Help Center Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('help') && <HelpCenterWidget />}
-        </VisibilityGate>
-        <VisibilityGate elementKey="widget_ai_tasks" elementName="AI Tasks Widget" elementCategory="Dashboard Widgets">
-          {isWidgetEnabled('ai_tasks') && <AITasksWidget />}
-        </VisibilityGate>
-      </div>
+      {(() => {
+        const WIDGET_RENDERERS: Record<WidgetId, { component: ReactNode; visibilityKey: string; visibilityName: string }> = {
+          changelog:     { component: <ChangelogWidget />,           visibilityKey: 'widget_changelog',     visibilityName: "What's New Widget" },
+          birthdays:     { component: <BirthdayWidget />,            visibilityKey: 'widget_birthdays',     visibilityName: 'Team Birthdays Widget' },
+          anniversaries: { component: <AnniversaryWidget />,         visibilityKey: 'widget_anniversaries', visibilityName: 'Work Anniversaries Widget' },
+          schedule:      { component: <WorkScheduleWidgetCompact />, visibilityKey: 'widget_schedule',      visibilityName: 'My Work Days Widget' },
+          dayrate:       { component: <DayRateWidget />,             visibilityKey: 'widget_dayrate',       visibilityName: 'Day Rate Bookings Widget' },
+          help:          { component: <HelpCenterWidget />,          visibilityKey: 'widget_help',          visibilityName: 'Help Center Widget' },
+          ai_tasks:      { component: <AITasksWidget />,             visibilityKey: 'widget_ai_tasks',      visibilityName: 'AI Tasks Widget' },
+        };
+
+        const nodes = enabledWidgets
+          .filter((id) => WIDGET_RENDERERS[id])
+          .map((id) => {
+            const r = WIDGET_RENDERERS[id];
+            return (
+              <VisibilityGate
+                key={id}
+                elementKey={r.visibilityKey}
+                elementName={r.visibilityName}
+                elementCategory="Dashboard Widgets"
+              >
+                {r.component}
+              </VisibilityGate>
+            );
+          });
+
+        return (
+          <BentoGrid maxPerRow={3} gap="gap-4">
+            {nodes}
+          </BentoGrid>
+        );
+      })()}
     </div>
   );
 }
