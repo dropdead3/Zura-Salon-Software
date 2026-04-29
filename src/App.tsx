@@ -116,7 +116,7 @@ const StylistLevels = lazyWithRetry(() => import("./pages/dashboard/admin/Stylis
 const CompensationHub = lazyWithRetry(() => import("./pages/dashboard/admin/CompensationHub"));
 const CompensationPlanEditor = lazyWithRetry(() => import("./pages/dashboard/admin/CompensationPlanEditor"));
 const LocationsManager = lazyWithRetry(() => import("./pages/dashboard/admin/LocationsManager"));
-const WebsiteSectionsHub = lazyWithRetry(() => import("./pages/dashboard/admin/WebsiteSectionsHub"));
+// WebsiteSectionsHub retired — superseded by WebsiteHub card overview + embedded editor in WebsiteSettingsContent.
 const TeamBirthdays = lazyWithRetry(() => import("./pages/dashboard/admin/TeamBirthdays"));
 const StaffStrikes = lazyWithRetry(() => import("./pages/dashboard/admin/StaffStrikes"));
 const BusinessCardRequests = lazyWithRetry(() => import("./pages/dashboard/admin/BusinessCardRequests"));
@@ -375,7 +375,8 @@ function DashboardRoutes() {
       <Route path="admin/services" element={<Navigate to="../website-hub" relative="path" replace />} />
       <Route path="admin/announcement-bar" element={<Navigate to="../website-hub" relative="path" replace />} />
       <Route path="admin/locations" element={<Navigate to="../website-hub" relative="path" replace />} />
-      <Route path="admin/website-editor" element={<Navigate to="../website-hub?tab=theme&openEditor=1" relative="path" replace />} />
+      {/* Back-compat shims — Hub is the canonical landing; deep links into the embedded editor only when explicitly requested by the legacy path. */}
+      <Route path="admin/website-editor" element={<Navigate to="../website-hub" relative="path" replace />} />
       <Route path="admin/website-sections" element={<Navigate to="../website-hub?tab=theme&openEditor=1" relative="path" replace />} />
       <Route path="admin/roles" element={<Navigate to="../access-hub?tab=role-config" relative="path" replace />} />
       <Route path="admin/accounts" element={<Navigate to="../team-members?view=invitations" relative="path" replace />} />
