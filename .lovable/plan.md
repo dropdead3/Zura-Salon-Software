@@ -1,137 +1,122 @@
 ## Goal
 
-Turn the **Step 2 — Impact Preview** tiles into interactive entry points. Clicking a bucket opens a focused per-bucket workspace where the user can review the underlying items and reassign / cancel / drop / end-date them one by one (or in bulk). When they return, the bucket on Step 2 shows a "Handled" state with a summary of the decisions made. Once every non-empty bucket is handled, the wizard skips Step 3 (which becomes redundant) and goes straight to Step 4 (Review & Confirm).
+Two upgrades to the **Clients with this stylist as preferred** bucket inside the Archive Wizard:
 
-This replaces the current flow where Step 2 is read-only counts and Step 3 is one long scroll of every bucket stacked together.
+1. **Tooltip** next to "Drop all" (and the other bulk action buttons) explaining what the action does.
+2. **Per-client reassignment** — replace the bulk-only treatment of this bucket with a per-client list. Each row shows the client's history with the archived stylist, surfaces a recommended successor at the same level with capacity, and lets the operator pick a different stylist if they want.
 
-## UX Flow
+The same per-row tooltip pattern (Drop / Cancel / End-date) is applied to all bucket types, so the operator never has to guess what each verb means.
 
-```text
-Step 1: Reason + last day worked
-        │
-        ▼
-Step 2: Impact Preview (clickable tiles)
-        │   ┌──────────────────────────────────────────┐
-        │   │ Upcoming appointments        3   ›       │ ← click
-        │   │ Service-line assignments     0           │   (disabled if 0)
-        │   │ Clients · preferred stylist  11  ›       │
-        │   └──────────────────────────────────────────┘
-        │
-        │ click a tile ──► BucketWorkspace (in-panel view, not a new drawer)
-        │                  • per-item rows with reassign / cancel / drop
-        │                  • bulk apply at the top
-        │                  • "Done" button returns to Step 2
-        │
-        │ Step 2 tile now shows: "Handled · 3 reassigned to Maya"
-        │                        with an "Edit" link to re-open
-        ▼
-Step 3: (auto-skipped if every non-empty bucket is Handled)
-        Otherwise shows only the buckets still missing decisions
-        ▼
-Step 4: Review & Confirm
-```
+## What changes
 
-## Component Changes
+### 1. Backend — `scan-team-member-dependencies` returns client items
 
-All work is in `src/components/dashboard/team-members/archive/ArchiveWizard.tsx`. No backend changes — the existing `scan-team-member-dependencies` and `archive-team-member` edge functions already return everything we need.
+The bucket is currently bulk-only because `items: []`. Update the function to:
 
-### 1. Lift `picks` / `bulkDest` already at wizard root
-
-Already true — keep them at the wizard root so per-bucket edits persist when the user returns to Step 2.
-
-### 2. New local state in `ArchiveWizard`
-
-```ts
-const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
-```
-
-When `activeBucket` is set on Step 2, render `<BucketWorkspace bucket={...} />` instead of the tile grid. The footer's "Continue" button is replaced with "Done" while inside a bucket; clicking it clears `activeBucket` and returns to the tile grid.
-
-### 3. Update `Step2`
-
-- Tiles with `count > 0` become buttons:
-  - Show count badge + chevron-right
-  - On click → `setActiveBucket(b.key)`
-  - Show a "Handled" pill + summary line if `isBucketHandled(b)` is true (uses the same `allHandled`-style check, but per-bucket)
-  - Show an "Edit" affordance to re-open even after handled
-- Tiles with `count === 0` stay non-interactive (current dimmed style).
-- Keep the existing "Impact preview" header card and "Re-scan" button.
-- Add a small progress strip at the top: `2 of 3 buckets handled`.
-
-### 4. New `BucketWorkspace` sub-component
-
-Extract the inner `<section>` from the current `Step3` map into a standalone component that renders **a single bucket** with:
-
-- Bucket header (label, count, destination role hint)
-- Bulk control row (`Reassign all to…`, Cancel all, Drop all, End-date all)
-- Per-item list (`describeItem`, per-row Select + Cancel button) — same as today
-- Footer inside the workspace: secondary "Back to impact preview" + primary "Done" button (disabled until that bucket is fully decided)
-
-Reuses the existing `onItemPick`, `onApplyBulk`, `picks`, `bulkDest`, `setBulkDest`, `rosterMatchesRole` helpers — pure refactor of existing JSX.
-
-### 5. Per-bucket "handled" check
-
-Extract from the current `allHandled` memo:
-
-```ts
-function isBucketHandled(b: DependencyBucket, picks): boolean {
-  if (b.count === 0) return true;
-  if (b.key === 'client_preferences' || b.items.length === 0) {
-    return !!picks[b.key]?.['__bulk__'];
+- Pull up to 200 clients where `preferred_stylist_id = targetUserId`, selecting:
+  - `id, first_name, last_name, last_visit_date, visit_count, total_spend, average_spend, location_id`
+- For each client, also pull a small **recent appointment summary** (last 12 months with this stylist):
+  - top 3 service names by frequency
+  - average ticket
+  - last visit date with this stylist
+- Run a single grouped query (`appointments` filtered by `staff_user_id = targetUserId AND client_id IN (...)`) and aggregate in-memory to keep this O(1) round trips.
+- Pull eligible roster **with stylist_level** and current upcoming-week capacity (count of appointments per stylist next 14 days) so the resolver can pick a successor.
+- Compute `recommendedSuccessorUserId` per client:
+  - same `stylist_level` as archived stylist (if known)
+  - same `location_id` as the client (when set)
+  - lowest forward-load (capacity proxy)
+  - tie-breaker: earliest `hire_date`
+- Return enriched `items[]` shaped as:
+  ```ts
+  {
+    id: string;            // client id
+    first_name, last_name,
+    last_visit_date, visit_count,
+    avg_ticket: number,
+    top_services: string[],
+    location_id: string | null,
+    recommended_user_id: string | null,
+    recommendation_reason: string,   // e.g. "Same level · Eastside · 12 open slots"
   }
-  if (b.count > b.items.length) return !!picks[b.key]?.['__bulk__'];
-  return Object.keys(picks[b.key] ?? {}).filter(k => k !== '__bulk__').length >= b.items.length;
-}
-```
+  ```
+- Keep `count` as the **true total** (can exceed `items.length`).
+- Add a top-level `stylistLevelOfArchived: string | null` so the UI can label the level for matching.
 
-`allHandled` becomes `nonEmptyBuckets.every(b => isBucketHandled(b, picks))`.
+No schema changes. Pure read-side enrichment of one already-existing edge function.
 
-### 6. Step 3 becomes a fallback / overflow view
+### 2. Frontend — `BucketWorkspace` recognises `client_preferences` as per-item
 
-Since every bucket can now be handled directly from Step 2, **Step 3 is only reached if a bucket is partially handled** or the user explicitly clicks Continue with un-handled buckets. Simplest path:
+Currently the wizard treats `client_preferences` as bulk-only (`isBulkBucket = b.key === 'client_preferences' || b.items.length === 0`). Now that the scan returns items for it, just remove the `client_preferences` special-case so the per-item list renders. The bulk row stays at the top (operators still want one-click "send all 11 clients to Maya").
 
-- When user clicks **Continue** on Step 2:
-  - If `nonEmptyBuckets.length === 0` → jump to Step 4 (current behavior)
-  - Else if `allHandled` → jump to Step 4 (new — skips Step 3 entirely)
-  - Else → go to Step 3, which now renders **only** the buckets where `!isBucketHandled(b)` so it acts as a "you still need to decide these" cleanup view
+### 3. New `ClientPreferenceRow` sub-component
 
-This keeps Step 3 as a safety net without forcing the user through it.
+Rendered for each client item in the `client_preferences` bucket. Shows:
 
-### 7. Bucket summary line on Step 2 tile
+- **Left column (history)**:
+  - Client name (font-sans text-sm)
+  - One-line summary: `12 visits · last Mar 14 · avg $185`
+  - Top services chips (up to 3): `Color · Cut · Gloss`
+- **Middle column (recommendation)**:
+  - Inline "Recommended" pill + suggested teammate name
+  - Sub-line: `recommendation_reason` (e.g. *"Same level · Eastside · 12 open slots"*)
+  - "Use" button to one-click accept (sets pick to recommended user)
+- **Right column (override)**:
+  - Pill-shaped Select (eligible stylists at any level, with their level annotated as a suffix in the option label) for manual override
+  - "Drop" button (with tooltip)
 
-After a bucket is handled, show a one-line summary derived from `picks[b.key]`:
+Decision state mirrors existing `picks[bucket][clientId]` shape — `action: 'reassign' | 'drop'`, `destinationUserId: string | null`. No new schema.
 
-- All same destination: `Reassigned to {name}`
-- Mixed destinations: `{n} reassigned · {m} cancelled`
-- Bulk action only: `All cancelled` / `All dropped` / `End-dated`
+### 4. Tooltips on all action verbs
 
-## Visual / Token Compliance
+Wrap each bulk-action and per-row action button in a `Tooltip` (already shipped at `@/components/ui/tooltip.tsx`):
 
-- Tiles use `rounded-xl border border-border/60 bg-card/60`, hover `bg-card/80`, with `font-display text-xs tracking-[0.18em] uppercase` for the bucket label and `font-sans text-[11px]` for the secondary summary line — matches existing wizard styling.
-- "Handled" pill: small `Badge variant="outline"` with `CheckCircle2` icon in `text-emerald-500`.
-- BucketWorkspace inherits the same `space-y-5 px-6 py-5` body container — no second drawer, no portal, just an in-panel view swap so the wizard breadcrumb (`Archive · Step 2 of 4`) stays accurate.
-- All buttons stay `tokens.button.*`; selects keep `rounded-full` per Input Shape Canon.
+- **Reassign** → "Move all open work to the selected teammate. They become responsible going forward."
+- **Drop** → "Remove the link to this archived stylist without notifying or reassigning. For client preferences this clears the 'preferred stylist' field — clients can re-pick on their next booking."
+- **Drop all** → same wording, scoped to "all items in this bucket".
+- **Cancel** → "Cancel the underlying record (appointment, request, swap). The client / counterpart will be notified per your existing cancellation policy."
+- **Cancel all** → same, scoped.
+- **End-date all** (recurring schedules) → "Set the end date to the archive's effective day so this recurrence stops generating new shifts."
+
+The tooltips live in a single `BUCKET_ACTION_TOOLTIPS` map at the top of `ArchiveWizard.tsx` so wording stays consistent and editable in one place. A small `<TooltipHint>` helper renders the trigger as the existing button text plus a subtle `Info` icon (uses `lucide-react` `Info`, already in the bundle).
+
+`TooltipProvider` is mounted at the wizard root so all tooltips share one provider.
+
+### 5. Visual / token compliance
+
+- Pill Select for the override picker (`rounded-full`) per Input Shape Canon.
+- `font-display text-[10px] uppercase tracking-wider` for the "Recommended" pill; `font-sans text-xs` for client history line; `font-sans text-[11px] text-muted-foreground` for service chips.
+- Money values stay raw integers/strings here (operator-facing wizard copy), but the **avg ticket** badge wraps in `<BlurredAmount>` per the project Privacy core rule.
+- Service chips: small outline `Badge` with `text-[10px]`.
+- Recommended pill: `border-emerald-500/40 text-emerald-500` to match the Handled state language already established on Step 2.
+- Drop button gets a destructive-tinted ghost variant only when hovered, matching the existing Cancel-all treatment.
 
 ## Files Edited
 
-- `src/components/dashboard/team-members/archive/ArchiveWizard.tsx` — only file touched. ~80 lines added (new BucketWorkspace + handled summary + Step 2 tile button), ~40 lines refactored (Step3 filters to un-handled).
+- `supabase/functions/scan-team-member-dependencies/index.ts` — enrich client_preferences bucket with items + recommendations; add eligible-roster query; expose `stylistLevelOfArchived`.
+- `src/hooks/useArchiveTeamMember.ts` — extend `DependencyBucket` items shape (loose `Record<string, unknown>` already, so no breaking change) and add the `stylistLevelOfArchived` field to `DependencyScan`.
+- `src/components/dashboard/team-members/archive/ArchiveWizard.tsx`:
+  - Drop the `client_preferences` special-case in `isBulkBucket`.
+  - Add `BUCKET_ACTION_TOOLTIPS` map + `TooltipHint` wrapper.
+  - Wrap every bulk + per-row action button with the tooltip.
+  - Mount `TooltipProvider` at the wizard root.
+  - Add `ClientPreferenceRow` sub-component and route to it from inside `BucketWorkspace` when `bucket.key === 'client_preferences'`.
 
-## Out of Scope
+## Out of scope
 
-- No backend / migration changes.
-- No changes to the count semantics or actions returned by `scan-team-member-dependencies`.
-- No changes to `Step1` or `Step4`.
+- No new tables, no migrations.
+- No notification emails to clients about the change of preferred stylist (proposed as enhancement #2 below).
+- No multi-select bulk-to-multiple-stylists splitter UI (proposed as enhancement #3 below).
 
 ## Enhancement Suggestions (optional, not in this plan)
 
-1. **"Suggested teammate" pre-fill** — when a bucket has a clear successor (e.g., the only other active stylist assistant at the same location), pre-select them in the bulk picker and label it `Suggested`.
-2. **Per-bucket "Notify recipient"** — once decisions are confirmed in Step 4, send the destination user(s) a one-line in-app notification: *"You've been assigned 3 appointments from Chelsea (archived)."*
-3. **Diff view in Step 4** — group the ledger by destination user so the operator sees *"Maya: 3 appts, 2 service lines"* instead of a flat list.
-4. **Client-preference reassignment intelligence** — for the "Clients with this stylist as preferred" bucket, surface each client's last-visit date and let the operator split the 11 clients across multiple successors instead of forcing one bulk destination.
+1. **"Why this stylist" expand** — clicking the Recommended pill expands a tiny diff card: archived stylist's average ticket vs recommended's, distance from the client's preferred location, retention rate. Lets the operator see the math.
+2. **Soft-notify clients** — when reassignment is committed, queue a one-time notification *"You've been moved to {new stylist}. Need someone else? Re-pick anytime."* (opt-in toggle in Step 4).
+3. **Smart split bulk** — instead of "send all 11 to Maya", offer "Distribute evenly across {Maya, Jordan, Kai} based on capacity & level." One click, balanced load.
+4. **Client-level guardrail** — if a client has a future appointment already booked with the archived stylist, link the two decisions: reassigning the appointment auto-fills this row's recommendation.
 
 ## Prompt Coaching
 
-Strong prompt — you anchored it to the exact screen, named the surface, and stated the verb (*click → see → work on / reassign*). Two refinements that would tighten future asks:
+This was a sharp prompt — you stacked three concrete asks (tooltip, per-stylist assignment, intelligence-driven recommendation) and gave the criteria for the recommendation (capacity + same pricing level). Two refinements to compound future asks:
 
-- **Name the success state.** "When I'm done with a bucket, the tile should show Handled with a one-line summary" tells me exactly what to render on return.
-- **Decide the navigation model.** "Open in the same panel" vs "open a nested drawer" vs "open full screen" changes the layout. I picked in-panel because it preserves the wizard's step counter — flag it if you'd prefer a different model.
+- **State the recommendation tie-breaker.** "Same level + has capacity" can pick 5 candidates. Adding "prefer same location, then earliest hire date" lets me commit to a single pick instead of asking back.
+- **Name the override behavior.** "Recommend a stylist, but the operator can override" tells me to render the pick as a soft default, not a hard decision. I'm assuming this — flag if you want the recommendation auto-applied unless the operator changes it (saves clicks for the typical case).
