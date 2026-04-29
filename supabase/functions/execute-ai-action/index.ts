@@ -5,13 +5,35 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { validateBody, ValidationError, z } from "../_shared/validation.ts";
 
 const ExecuteActionSchema = z.object({
-  actionType: z.enum(["reschedule", "cancel", "confirm", "no_show"]),
+  actionType: z.enum([
+    "reschedule",
+    "cancel",
+    "confirm",
+    "no_show",
+    "deactivate_team_member",
+    "reactivate_team_member",
+  ]),
   params: z.record(z.unknown()),
   userId: z.string().uuid().optional(),
   organizationId: z.string().uuid().optional(),
   organization_id: z.string().uuid().optional(),
   actionId: z.string().uuid().optional(),
 });
+
+const HR_ACTION_TYPES = new Set(["deactivate_team_member", "reactivate_team_member"]);
+
+async function callerCanManageTeam(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  callerUserId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', callerUserId);
+  if (error || !data) return false;
+  return data.some((r: { role: string }) => r.role === 'admin' || r.role === 'super_admin');
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
