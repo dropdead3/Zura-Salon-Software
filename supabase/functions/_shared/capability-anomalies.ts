@@ -16,7 +16,9 @@ export type AnomalyType =
   | 'kill_switch_attempt'
   | 'permission_denied_burst'
   | 'high_risk_burst'
-  | 'invalid_param_burst';
+  | 'invalid_param_burst'
+  // Model claimed/implied a mutation completed without staging or executing one.
+  | 'autonomy_violation';
 
 export type AnomalySeverity = 'low' | 'medium' | 'high' | 'critical';
 
