@@ -31,6 +31,7 @@ import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+import { QuickAssignRoleChip } from '@/components/dashboard/team-members/QuickAssignRoleChip';
 
 type TeamView = 'roster' | 'invitations' | 'archived';
 const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
@@ -91,7 +92,7 @@ function compareByName(a: OrganizationUser, b: OrganizationUser): number {
   return an.localeCompare(bn);
 }
 
-function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void }) {
+function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void; trailingSlot?: React.ReactNode }) {
   const name = user.display_name || user.full_name || 'Unnamed';
   const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
   const primaryRole = user.roles?.[0];
@@ -147,6 +148,7 @@ function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: 
           </TooltipContent>
         </Tooltip>
       )}
+      {trailingSlot}
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
     </button>
   );
