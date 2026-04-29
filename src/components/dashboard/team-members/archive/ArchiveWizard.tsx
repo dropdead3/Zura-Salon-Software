@@ -779,6 +779,7 @@ function BucketWorkspace({
                 client={client}
                 eligible={eligible}
                 roster={roster}
+                eligibleStylists={eligibleStylists}
                 decided={picks[b.key]?.[client.id]}
                 onItemPick={onItemPick}
               />
