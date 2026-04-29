@@ -1186,10 +1186,6 @@ export function WebsiteSettingsContent() {
           </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size={tokens.button.card} onClick={handleOpenEditor}>
-            <ExternalLink className="w-4 h-4 mr-1.5" />
-            Editor
-          </Button>
           <Button
             variant="outline"
             size={tokens.button.card}
