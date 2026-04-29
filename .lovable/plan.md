@@ -1,62 +1,110 @@
-# Onboarding Completeness — Sequenced Rollout
+## Wave 1.5 — Quick-Assign Polish
 
-Per doctrine ("P0s ship in separate waves, never bundled"), I'm splitting your four suggestions into two waves. Wave 1 ships the visibility + workflow improvements that are unambiguous and zero-risk. Wave 2 (enforcement + audit log) needs your input first because it touches data-layer guarantees and net-new infrastructure.
+### A. Default-select most common role
+In `QuickAssignRoleChip`, pre-focus the most-assigned non-admin role across the org so a single Enter assigns it.
 
-## Wave 1 — Ship Now (Visibility + Workflow)
+- Derive `defaultRoleSuggestion` from existing `useOrganizationUsers` data (count role frequency across active members, exclude `admin` / `super_admin`, fallback to `staff` or first available).
+- Show the suggested role as the first item with a subtle "Suggested" label; auto-focus it on popover open via `autoFocus` on its button.
+- No new query — reuse the data already loaded by `TeamMembers.tsx` and pass `suggestedRole` as a prop to the chip.
 
-### 1. Onboarding completeness counter in page header
+### B. AccessHub badge for missing roles
+The "Team Members" surface is reached from `AccessHub.tsx`, not a global sidebar. Add a small amber dot + count badge to the Team Members tile when `missingRolesCount > 0`.
 
-Add a compact counter next to the Team Members page title, materiality-gated:
+- Reuse `useOrganizationUsers` (already cached by TanStack Query — no extra request).
+- Materiality-gated: render nothing when count is 0 (silence-when-clean).
+- Count is also exposed via the existing header counter on the destination page, so the two surfaces stay in sync.
 
-- **When all members onboarded:** render nothing (silence-when-clean per visibility contract doctrine).
-- **When ≥1 member has zero roles:** render `28 of 30 onboarded · 2 missing roles` as a subtitle/badge in `DashboardPageHeader`.
-- Click target: scrolls to the "No Roles Assigned" section (anchor link), so the header signal is operationally connected to the resolution surface.
-- Token compliance: `font-display` for the count, amber `text-amber-600` for the missing-roles fragment, no `font-bold`.
-
-### 2. Quick-assign role chip inline in No-Roles `MemberRow`
-
-Inside the `noRoles.map(...)` render block (line 519 of `TeamMembers.tsx`), add an `Assign role →` button on the right side of each row:
-
-- Opens a lightweight `Popover` with a role picker (reuses the same role list from `UserRolesTab`).
-- Single click → role assignment via existing `user_roles` insert path → optimistic UI update → toast confirmation.
-- `e.stopPropagation()` so clicking the chip doesn't navigate into `TeamMemberDetail`.
-- Compresses 3 clicks (row → detail → roles tab → assign) down to 1.
-
-### Wave 1 Files
-- `src/pages/dashboard/admin/TeamMembers.tsx` — counter in header `actions`/subtitle slot, chip in `noRoles` render block.
-- `src/components/dashboard/team-members/QuickAssignRoleChip.tsx` (new) — popover + role picker + mutation.
+Multi-select bulk assignment is **deferred** — single-click default-selection already collapses the common case to one keystroke; bulk UI adds drawer + confirm dialog complexity that isn't justified until we see >5 unassigned members regularly.
 
 ---
 
-## Wave 2 — Needs Your Input (Enforcement + Governance)
+## Wave 2 — Schedulability Gate (Soft Warn, Operator Flows Only)
 
-### 3. Block scheduling for unassigned users
+Per your earlier confirmation: **soft warn**, **operator-initiated only**, public booking + Phorest sync bypass.
 
-This is **operational enforcement** and per doctrine should land at the data layer, not as a UI toast alone. Three open decisions:
+### Shared hook
+Create `src/hooks/useStaffSchedulability.ts`:
 
-- **Behavior:** soft warn (toast, allow proceed) or hard block (disable selection)? Soft warn is reversible and operator-respectful; hard block is structurally cleaner.
-- **Surface coverage:** there are ~15 appointment creation entry points (calendar drag, agenda quick-add, booking pipeline, Phorest sync, public booking, etc.). Should this gate apply universally, or only operator-initiated flows (excluding sync/public)?
-- **Anchor:** ideally a shared `useStaffSchedulability(userId)` hook returning `{ schedulable, reason }`, consumed by every entry point. This is a 2-3 day effort across surfaces.
+```ts
+function useStaffSchedulability(userId: string | null | undefined): {
+  schedulable: boolean;
+  reason: 'no_roles' | 'archived' | 'inactive' | null;
+  warning: string | null;
+}
+```
 
-I recommend: **soft warn on operator-initiated flows only**, via the shared hook. Public booking and Phorest sync should continue working (they're upstream of role assignment in real onboarding sequences).
+- Reads from the already-cached `organization-users` query (no new round-trip).
+- A user is **not schedulable** when: `roles.length === 0`, `archived_at !== null`, or `is_active === false`.
+- Returns a copy-governed message: *"This member has no role assigned yet. Schedule anyway?"* — calm, advisory tone per copy doctrine.
 
-### 4. Audit log for `role_initial_assignment`
+### Surface integration (operator-initiated only)
+Wire the warning into the operator-side staff-picker entry points. We do **not** touch:
+- Public booking surfaces (`src/pages/BookingSurface.tsx`, embed)
+- Phorest sync edge functions
+- Auto-replenishment / system-generated holds
 
-There is **no existing `team_member_audit_log` table** in the codebase (verified — zero references in migrations or src). Building this means net-new infrastructure:
+Operator surfaces to gate (toast on submit, no hard block):
+- `AddTimeBlockForm`
+- `MeetingSchedulerWizard`
+- `DockNewBookingSheet`
+- Calendar quick-add staff picker
 
-- New table `team_member_audit_log` with columns: `id`, `organization_id`, `target_user_id`, `actor_user_id`, `event` (enum/text), `payload` (jsonb), `created_at`.
-- RLS: `is_org_member` for read, `is_org_admin` for insert (per tenant isolation doctrine).
-- Trigger or app-layer write on the first role insert (trigger is cleaner — survives all entry points including future bulk imports).
-- Initial event taxonomy: `role_initial_assignment`, plus reserve slots for `role_added`, `role_removed`, `archived`, `restored` so the offboarding wizard can reuse it.
+Pattern: on submit, if `!schedulable && reason === 'no_roles'`, show a `sonner` toast with a "Continue anyway" action that re-submits, OR an "Assign role" action that deep-links to `admin/team-members?missing-roles=1#user-{id}`. Default behavior on dismiss is to allow the operation (soft warn).
 
-This is a foundational audit surface — worth doing right. Recommend pairing with a future `TeamMemberAuditTrailTab` so the data is actually visible somewhere.
+### Telemetry hook (lightweight)
+Log dismissals to console in dev only (kebab-case taxonomy: `staff-schedulability.no-role-warned`) so we can later promote to a real event if the pattern persists. No new table.
 
 ---
 
-## Recommended Sequencing
+## Wave 3 — Audit Surface (Reuse `account_approval_logs`)
 
-1. **Today:** Approve Wave 1 — ship counter + quick-assign chip.
-2. **Next:** Confirm Wave 2 design decisions above (soft vs. hard, surface coverage), then I'll plan + ship the schedulability hook.
-3. **After:** Ship the audit log table + trigger + first event, with the offboarding wizard's existing flow as the second consumer.
+Verified: `useUserRoles.ts` already writes `role_added:<role>` and `role_removed:<role>` to `account_approval_logs` on every role mutation. **No new table needed.**
 
-Approving this plan ships **Wave 1 only**. Wave 2 items become separate planned work once you answer the decisions above.
+### Schema gap
+`account_approval_logs` currently has `(id, user_id, action, performed_by, created_at)` — no `organization_id`. This is acceptable because:
+- The `user_id` resolves to a single org via `employee_profiles`.
+- RLS already restricts reads to admins via `is_coach_or_admin`.
+- Adding `organization_id` would be a nice-to-have but isn't required for the audit tab to work.
+
+We will **not** alter the table in this wave to keep blast radius small.
+
+### New hook
+`src/hooks/useTeamMemberAuditTrail.ts`:
+- Fetches from `account_approval_logs` filtered by `user_id` (per-member view) or by `user_id IN (org members)` (org-wide view).
+- Joins `performed_by` against `employee_profiles` to render actor name + photo.
+- Parses `action` strings (`role_added:stylist`, `role_removed:admin`, `approved`, `super_admin_granted`, etc.) into a typed `AuditEvent` discriminated union with a human-readable label.
+- Derives `role_initial_assignment` events at read-time: for each `user_id`, the **first** `role_added:*` row chronologically is flagged `isInitialAssignment: true`. No SQL view required — done in the hook.
+
+### New tab on TeamMemberDetail
+Add an `Audit` tab to `src/pages/dashboard/admin/TeamMemberDetail.tsx`:
+- Timeline view, newest first.
+- Each entry: actor avatar + name, action label ("Assigned Stylist role", "Removed Admin role", "Account approved"), relative timestamp, and a "First role assignment" pill on the initial event.
+- Empty state when no events: "No role or access changes recorded yet."
+- Token compliance: `font-display` for the section header, `font-sans` for body, `tokens.empty.*` for empty state.
+
+### Future-proofing notes (not built now)
+- When the offboarding wizard ships, it should write `archived:<reason>` and `restored` actions to the same table — taxonomy slot reserved.
+- Adding `organization_id` + `metadata jsonb` to `account_approval_logs` is a P2 schema enhancement; not needed for this wave but documented for the future.
+
+---
+
+## Sequencing & Files
+
+**Wave 1.5** (UI-only, ship first):
+- `src/components/dashboard/team-members/QuickAssignRoleChip.tsx` (modify — add suggestion logic + autoFocus)
+- `src/pages/dashboard/admin/TeamMembers.tsx` (modify — compute + pass `suggestedRole`)
+- `src/pages/dashboard/admin/AccessHub.tsx` (modify — render amber dot on Team Members tile)
+
+**Wave 2** (hook + 4 surface integrations):
+- `src/hooks/useStaffSchedulability.ts` (new)
+- 4 operator surfaces listed above (modify — add toast warning on submit)
+
+**Wave 3** (read-only audit surface):
+- `src/hooks/useTeamMemberAuditTrail.ts` (new)
+- `src/components/dashboard/team-members/tabs/AuditTrailTab.tsx` (new)
+- `src/pages/dashboard/admin/TeamMemberDetail.tsx` (modify — register new tab)
+
+**No database migrations.** All three waves are additive on top of existing schema and the existing `account_approval_logs` writers.
+
+### Open question before I implement
+The schedulability soft-warn pattern uses a `sonner` toast with action buttons. Confirm you want **toast-with-action** (non-blocking, operator can ignore) versus a small **inline confirm dialog** (one-extra-click but more deliberate). Toast is closer to the "soft warn" you asked for; dialog is closer to a structural gate. I'll default to toast-with-action unless you say otherwise.
