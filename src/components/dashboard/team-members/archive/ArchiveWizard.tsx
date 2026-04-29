@@ -174,6 +174,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
   // Step 4 opt-in: send a one-time intro note to reassigned clients.
   const [notifyClients, setNotifyClients] = useState(false);
+  // Step 4: clients the operator chose to suppress per-row.
+  const [suppressedClientIds, setSuppressedClientIds] = useState<Set<string>>(new Set());
 
   const { data: roster = [] } = useOrganizationUsers(orgId);
   const eligibleRoster = useMemo(
