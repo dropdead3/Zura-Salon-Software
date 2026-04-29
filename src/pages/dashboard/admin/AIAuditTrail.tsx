@@ -195,16 +195,28 @@ function AuditLogPanel({ orgId }: { orgId: string | undefined }) {
             </CardDescription>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="rounded-full"
-        >
-          <RefreshCcw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => exportAuditCsv(rows || [], profiles || {})}
+            disabled={!rows?.length}
+            className="rounded-full"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="rounded-full"
+          >
+            <RefreshCcw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
