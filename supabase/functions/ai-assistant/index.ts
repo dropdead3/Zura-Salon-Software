@@ -121,6 +121,39 @@ serve(async (req) => {
     if (!orgId) {
       return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
     }
+
+    // ------------------------------------------------------------
+    // Mutation-intent guard.
+    // `ai-assistant` is ADVISORY ONLY. Anything that would change
+    // state must go through `ai-agent-chat` (capability runtime with
+    // human approval). If the latest user message reads like a
+    // mutation request, refuse here so this surface can never become
+    // a back-door for destructive operations.
+    // ------------------------------------------------------------
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const lastUserText = (lastUser?.content || '').toLowerCase();
+    const MUTATION_PATTERNS = [
+      /\b(deactivate|reactivate|disable|enable|activate)\b.+\b(user|member|stylist|staff|employee|account|chelsea|[a-z]+)\b/,
+      /\b(delete|remove|drop|wipe|purge)\b.+\b(client|member|stylist|appointment|booking|user|account)\b/,
+      /\b(cancel|reschedule|move|reassign|transfer)\b.+\b(appointment|booking|client|stylist)\b/,
+      /\b(fire|terminate|let go)\b/,
+      /\b(change|update|set|modify)\b.+\b(commission|pay|rate|role|permission)\b/,
+    ];
+    const looksLikeMutation = MUTATION_PATTERNS.some((re) => re.test(lastUserText));
+    if (looksLikeMutation) {
+      return new Response(
+        JSON.stringify({
+          error: "That request needs approval-gated execution. Please use the Zura action surface so I can stage it for your confirmation.",
+          code: "mutation_intent_routed",
+          route_to: "ai-agent-chat",
+        }),
+        {
+          status: 409,
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        },
+      );
+    }
+
     // Verify org access
     try {
       await requireOrgMember(supabaseAdmin, user.id, orgId);
