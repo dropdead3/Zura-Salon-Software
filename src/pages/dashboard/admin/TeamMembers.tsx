@@ -543,7 +543,7 @@ export default function TeamMembers() {
                                     user={m}
                                     hasPin={pinByUser.get(m.user_id)}
                                     onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                                    trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                                    trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                                   />
                                 ))}
                               </div>
@@ -558,7 +558,7 @@ export default function TeamMembers() {
                               user={m}
                               hasPin={pinByUser.get(m.user_id)}
                               onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                              trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                              trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                             />
                           ))}
                         </div>
@@ -590,7 +590,7 @@ export default function TeamMembers() {
                                 userName={m.display_name || m.full_name || 'this member'}
                                 suggestedRole={suggestedRole}
                               />
-                              {canManage && m.is_active && !m.is_super_admin && <ArchiveMemberChip member={m} />}
+                              {canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId && <ArchiveMemberChip member={m} />}
                             </div>
                           }
                         />
@@ -612,7 +612,7 @@ export default function TeamMembers() {
                           user={m}
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
-                          trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
+                          trailingSlot={canManage && m.is_active && !m.is_super_admin && m.user_id !== currentUserId ? <ArchiveMemberChip member={m} /> : undefined}
                         />
                       ))}
                     </div>
