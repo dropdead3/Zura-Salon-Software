@@ -38,6 +38,8 @@ interface Body {
   effectiveDate?: string; // YYYY-MM-DD
   reassignments: Reassignment[];
   notifyReassignedClients?: boolean;
+  /** Client ids the operator chose to suppress in Step 4 — never receive a soft-notify. */
+  suppressedClientIds?: string[];
 }
 
 async function applyReassignment(
