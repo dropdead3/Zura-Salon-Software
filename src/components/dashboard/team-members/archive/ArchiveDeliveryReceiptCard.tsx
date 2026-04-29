@@ -141,6 +141,7 @@ export function ArchiveDeliveryReceiptCard({
         </p>
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }
 
