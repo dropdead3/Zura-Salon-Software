@@ -11,10 +11,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { BlurredAmount } from '@/components/privacy/BlurredAmount';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import {
@@ -25,7 +29,41 @@ import {
   type DependencyBucket,
   type DestinationRole,
   type Reassignment,
+  type ClientPreferenceItem,
 } from '@/hooks/useArchiveTeamMember';
+
+// ============================================================
+// Action verb tooltips — single source of truth so wording stays
+// consistent across every bucket and bulk-vs-row variant.
+// ============================================================
+const ACTION_TOOLTIPS = {
+  reassign: 'Move all open work to the selected teammate. They become responsible going forward.',
+  reassign_row: 'Make this teammate responsible for this single item.',
+  drop_all: "Clear the link to the archived stylist on every item in this bucket without notifying or reassigning. For client preferences this empties the 'preferred stylist' field — clients can re-pick on their next booking.",
+  drop_row: "Clear the link on just this item. The client can re-pick a preferred stylist on their next visit.",
+  cancel_all: 'Cancel every record in this bucket. Clients / counterparts are notified per your existing cancellation policy.',
+  cancel_row: 'Cancel just this record. The client / counterpart is notified per your existing cancellation policy.',
+  end_date_all: "Set an end date on every recurring schedule so they stop generating new shifts after the archive's effective day.",
+  use_recommendation: 'Accept the recommended teammate for this client. You can still override below.',
+} as const;
+
+function HintedButton({
+  hint, children, ...rest
+}: React.ComponentProps<typeof Button> & { hint: string }) {
+  return (
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <Button {...rest}>
+          {children}
+          <Info className="h-3 w-3 ml-1 opacity-50" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[280px] text-xs">
+        {hint}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 interface ArchiveWizardProps {
   open: boolean;
