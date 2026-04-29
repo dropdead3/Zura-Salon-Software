@@ -117,6 +117,7 @@ export default function TeamMemberDetail() {
           <ArchiveLogReceipts
             organizationId={effectiveOrganization?.id}
             userId={userId}
+            member={member}
           />
         )}
 
@@ -171,17 +172,28 @@ export default function TeamMemberDetail() {
 function ArchiveLogReceipts({
   organizationId,
   userId,
+  member,
 }: {
   organizationId: string | undefined;
   userId: string | undefined;
+  member: OrganizationUser;
 }) {
   const { data: logEntry } = useArchiveLogEntry(organizationId, userId);
   if (!logEntry?.id || !organizationId) return null;
+  const fullName = member.full_name || member.display_name || 'Team member';
+  const employeeId = formatEmployeeId({
+    employeeNumber: member.employee_number,
+    userId: member.user_id,
+  });
+  const hireDate = formatHireDate(member.hire_date);
   return (
     <ArchiveDeliveryReceiptCard
       organizationId={organizationId}
       archiveLogId={logEntry.id}
       archivedAt={logEntry.archived_at}
+      fullName={fullName}
+      employeeId={employeeId}
+      hireDate={hireDate}
     />
   );
 }
