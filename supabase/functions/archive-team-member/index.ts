@@ -13,6 +13,8 @@ import {
   requireOrgAdmin,
   authErrorResponse,
 } from "../_shared/auth.ts";
+import { sendOrgEmail } from "../_shared/email-sender.ts";
+import { sendSms } from "../_shared/sms-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -382,9 +384,8 @@ serve(async (req) => {
         if (!notifErr) notifySummary.internal_pings = rows.length;
       }
 
-      // 2) Client soft-notify (opt-in via flag).
+      // 2) Client soft-notify (opt-in via flag) — real dispatch via shared org email + SMS.
       if (body.notifyReassignedClients) {
-        // Build map of client → new stylist from the client_preferences ledger row.
         const prefRow = ledger.find(
           (l) => l.ok && l.bucket === "client_preferences" && l.action === "reassign" && l.destinationUserId,
         );
@@ -400,6 +401,14 @@ serve(async (req) => {
               .filter(Boolean)
               .join(" ") || "a new stylist";
 
+          // Resolve org name once for both email + SMS.
+          const { data: org } = await supabaseAdmin
+            .from("organizations")
+            .select("name")
+            .eq("id", body.organizationId)
+            .maybeSingle();
+          const orgName = (org?.name as string | undefined) ?? "Our team";
+
           // Pull the clients now pointing to the new stylist (post-reassignment).
           const { data: affectedClients } = await supabaseAdmin
             .from("clients")
@@ -408,55 +417,95 @@ serve(async (req) => {
             .eq("preferred_stylist_id", newStylistId)
             .eq("is_active", true);
 
+          const escapeHtml = (s: string) =>
+            s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
           const subject = `A quick update about your stylist`;
-          const buildBody = (firstName: string | null) =>
-            `Hi${firstName ? ` ${firstName}` : ""}, we wanted to let you know that ${archivedName} is no longer with us. ` +
-            `${newStylistName} will be taking great care of you going forward — same level, same pricing. ` +
-            `We can't wait to see you at your next visit.`;
+          const buildHtml = (firstName: string | null) => {
+            const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : "Hi,";
+            return `<!doctype html>
+<html><body style="margin:0;background:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;">
+        <tr><td style="padding:0 0 16px 0;">
+          <h1 style="margin:0;font-size:22px;font-weight:500;color:#0a0a0a;letter-spacing:0.01em;">A quick update about your stylist</h1>
+        </td></tr>
+        <tr><td style="padding:8px 0 16px 0;font-size:15px;line-height:1.6;color:#333;">
+          ${greeting}
+        </td></tr>
+        <tr><td style="padding:0 0 16px 0;font-size:15px;line-height:1.6;color:#333;">
+          We wanted to let you know that <strong>${escapeHtml(archivedName)}</strong> is no longer with us at <strong>${escapeHtml(orgName)}</strong>.
+        </td></tr>
+        <tr><td style="padding:0 0 16px 0;font-size:15px;line-height:1.6;color:#333;">
+          <strong>${escapeHtml(newStylistName)}</strong> will be taking great care of you going forward — same level, same pricing. We can't wait to see you at your next visit.
+        </td></tr>
+        <tr><td style="padding:24px 0 0 0;font-size:14px;line-height:1.6;color:#666;">
+          Warmly,<br/>The ${escapeHtml(orgName)} Team
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+          };
 
-          const smsRows: any[] = [];
           for (const c of affectedClients ?? []) {
-            const fname = c.first_name ?? null;
-            const message = buildBody(fname);
+            const fname = (c.first_name as string | null) ?? null;
             const hasEmail = c.email && c.reminder_email_opt_in !== false;
             const phone = c.mobile || c.phone;
             const hasSms = phone && c.reminder_sms_opt_in !== false;
 
             if (hasEmail) {
-              await supabaseAdmin.from("email_send_log").insert({
-                template_name: "stylist-reassignment-soft-notify",
-                recipient_email: c.email,
-                status: "pending",
-                metadata: {
-                  organization_id: body.organizationId,
-                  client_id: c.id,
-                  archived_user_id: body.userId,
-                  new_stylist_user_id: newStylistId,
-                  archive_log_id: logRow.id,
+              try {
+                const result = await sendOrgEmail(supabaseAdmin, body.organizationId, {
+                  to: [c.email as string],
                   subject,
-                  body: message,
-                },
-              });
-              notifySummary.clients_emailed++;
+                  html: buildHtml(fname),
+                  clientId: c.id as string,
+                  emailType: "transactional",
+                });
+                if (result.success && !result.skipped) {
+                  notifySummary.clients_emailed++;
+                } else {
+                  notifySummary.clients_skipped++;
+                  if (result.error) {
+                    console.warn("[archive-team-member] email skipped/failed", c.id, result.error);
+                  }
+                }
+              } catch (emailErr) {
+                notifySummary.clients_skipped++;
+                console.error("[archive-team-member] email error", c.id, emailErr);
+              }
             } else if (hasSms) {
-              smsRows.push({
-                organization_id: body.organizationId,
-                client_id: c.id,
-                channel: "sms",
-                direction: "outbound",
-                to_phone: phone,
-                body: message,
-                template_key: "stylist-reassignment-soft-notify",
-                status: "pending",
-                sent_by_user_id: user.id,
-              });
-              notifySummary.clients_sms++;
+              try {
+                const result = await sendSms(
+                  supabaseAdmin,
+                  {
+                    to: phone as string,
+                    templateKey: "stylist-reassignment-soft-notify",
+                    variables: {
+                      first_name: fname ?? "there",
+                      archived_stylist: archivedName,
+                      new_stylist: newStylistName,
+                      org_name: orgName,
+                    },
+                  },
+                  body.organizationId,
+                );
+                if (result.success) {
+                  notifySummary.clients_sms++;
+                } else {
+                  notifySummary.clients_skipped++;
+                  if (result.error) {
+                    console.warn("[archive-team-member] sms failed", c.id, result.error);
+                  }
+                }
+              } catch (smsErr) {
+                notifySummary.clients_skipped++;
+                console.error("[archive-team-member] sms error", c.id, smsErr);
+              }
             } else {
               notifySummary.clients_skipped++;
             }
-          }
-          if (smsRows.length > 0) {
-            await supabaseAdmin.from("client_communications").insert(smsRows);
           }
         }
       }
