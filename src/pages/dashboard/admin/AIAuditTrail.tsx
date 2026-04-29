@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ShieldAlert, History, Power, RefreshCcw } from 'lucide-react';
+import { ShieldAlert, History, Power, RefreshCcw, Download, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
