@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, RotateCcw, type LucideIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
