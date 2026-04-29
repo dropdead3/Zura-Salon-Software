@@ -28,6 +28,43 @@ export interface CapabilityRow {
   risk_level: 'low' | 'med' | 'high';
   confirmation_token_field: string | null;
   enabled: boolean;
+  /** 'self' = caller may only act on rows they own; 'org' = any row in their org; 'any' = unscoped (avoid). */
+  ownership_scope: 'self' | 'org' | 'any';
+}
+
+// ============================================================
+// Manager-role taxonomy. Anyone NOT holding one of these is
+// treated as a stylist for ownership-scope enforcement.
+// ============================================================
+export const MANAGER_ROLES = new Set<string>([
+  'admin',
+  'super_admin',
+  'manager',
+  'owner',
+]);
+
+export function isManagerRole(roleSet: Set<string>): boolean {
+  for (const r of roleSet) if (MANAGER_ROLES.has(r)) return true;
+  return false;
+}
+
+// ============================================================
+// Confirmation-token hashing (server-verifiable).
+// ============================================================
+export async function hashConfirmationToken(token: string): Promise<string> {
+  const data = new TextEncoder().encode(token.trim().toLowerCase());
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Constant-time string compare to avoid timing leaks. */
+export function constantTimeEquals(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 export interface ProposeContext {
