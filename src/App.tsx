@@ -104,6 +104,7 @@ const HandbookDashboard = lazyWithRetry(() => import("./pages/dashboard/admin/Ha
 const HandbookWizard = lazyWithRetry(() => import("./pages/dashboard/admin/HandbookWizard"));
 const AdminSettings = lazyWithRetry(() => import("./pages/dashboard/admin/Settings"));
 const TeamMembers = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMembers"));
+const AIAuditTrail = lazyWithRetry(() => import("./pages/dashboard/admin/AIAuditTrail"));
 const TeamMemberDetail = lazyWithRetry(() => import("./pages/dashboard/admin/TeamMemberDetail"));
 const AdminAnnouncements = lazyWithRetry(() => import("./pages/dashboard/admin/Announcements"));
 const HomepageStylists = lazyWithRetry(() => import("./pages/dashboard/admin/HomepageStylists"));
@@ -382,6 +383,7 @@ function DashboardRoutes() {
       <Route path="admin/compensation/:planId" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationPlanEditor /></ProtectedRoute>} />
       <Route path="admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
       <Route path="admin/team-members" element={<ProtectedRoute requiredPermission="manage_settings"><TeamMembers /></ProtectedRoute>} />
+      <Route path="admin/ai-audit" element={<ProtectedRoute requiredPermission="manage_settings"><AIAuditTrail /></ProtectedRoute>} />
       <Route path="admin/team-members/:userId" element={<ProtectedRoute requiredPermission="manage_settings"><TeamMemberDetail /></ProtectedRoute>} />
       <Route path="admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />
       <Route path="admin/headshots" element={<ProtectedRoute requiredPermission="manage_settings"><HeadshotRequests /></ProtectedRoute>} />
