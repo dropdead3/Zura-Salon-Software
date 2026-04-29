@@ -289,6 +289,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       side="right"
       showCloseButton={false}
     >
+      <TooltipProvider delayDuration={150}>
       <div className="flex flex-col h-full">
         {/* Header */}
         <header className="px-6 pt-6 pb-4 border-b border-border/50">
