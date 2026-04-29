@@ -558,7 +558,13 @@ function ThemeTab() {
                 <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
               )}
             </Button>
-            <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
+            <Button
+              variant="outline"
+              size={tokens.button.card}
+              onClick={() => orgPreviewUrl && window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer')}
+              disabled={!orgPreviewUrl}
+              title={orgPreviewUrl ?? 'No organization slug available'}
+            >
               <ExternalLink className="h-4 w-4 mr-1" />
               Open Site
             </Button>
