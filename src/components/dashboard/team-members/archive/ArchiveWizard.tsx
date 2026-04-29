@@ -1310,6 +1310,8 @@ function ClientPreferenceRow({
 function Step4({
   name, reason, effectiveDate, ledger, roster, confirmed, setConfirmed,
   notifyClients, setNotifyClients, clientPreferenceItems,
+  suppressedClientIds, setSuppressedClientIds,
+  organizationId, archivedMemberName,
 }: {
   name: string;
   reason: string;
@@ -1321,7 +1323,48 @@ function Step4({
   notifyClients: boolean;
   setNotifyClients: (v: boolean) => void;
   clientPreferenceItems: ClientPreferenceItem[];
+  suppressedClientIds: Set<string>;
+  setSuppressedClientIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  organizationId: string | undefined;
+  archivedMemberName: string;
 }) {
+  const { user } = useAuth();
+  const [smokeSending, setSmokeSending] = useState(false);
+  const [smokeResult, setSmokeResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  async function handleSmokeTest() {
+    if (!organizationId || !user?.email) return;
+    setSmokeSending(true);
+    setSmokeResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('archive-soft-notify-preview', {
+        body: {
+          organizationId,
+          archivedStylistName: archivedMemberName,
+          operatorEmail: user.email,
+          operatorPhone: (user as { phone?: string }).phone ?? null,
+        },
+      });
+      if (error) throw error;
+      const r = data as { email_sent?: boolean; sms_sent?: boolean; error?: string };
+      if (r.error) throw new Error(r.error);
+      const parts: string[] = [];
+      if (r.email_sent) parts.push('email');
+      if (r.sms_sent) parts.push('SMS');
+      setSmokeResult({
+        ok: true,
+        msg: parts.length > 0
+          ? `Sent ${parts.join(' + ')} to your contact info.`
+          : 'No channels available — add an email/phone to your profile.',
+      });
+    } catch (e) {
+      setSmokeResult({ ok: false, msg: (e as Error).message });
+    } finally {
+      setSmokeSending(false);
+    }
+  }
+
   const summaryByBucket = useMemo(() => {
     const m = new Map<string, { reassign: Map<string, number>; cancel: number; drop: number; endDate: number }>();
     for (const r of ledger) {
