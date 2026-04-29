@@ -280,13 +280,34 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
             />
           )}
 
-          {step === 2 && (
-            <Step2 loading={scanLoading} buckets={buckets} totalBlocking={scan?.totalBlocking ?? 0} onRescan={refetch} />
+          {step === 2 && !activeBucketData && (
+            <Step2
+              loading={scanLoading}
+              buckets={buckets}
+              totalBlocking={scan?.totalBlocking ?? 0}
+              onRescan={refetch}
+              picks={picks}
+              roster={eligibleRoster}
+              handledCount={handledCount}
+              onOpenBucket={(key) => setActiveBucket(key)}
+            />
+          )}
+
+          {step === 2 && activeBucketData && (
+            <BucketWorkspace
+              bucket={activeBucketData}
+              roster={eligibleRoster}
+              picks={picks}
+              bulkDest={bulkDest}
+              setBulkDest={setBulkDest}
+              onItemPick={setItemPick}
+              onApplyBulk={applyBulk}
+            />
           )}
 
           {step === 3 && (
             <Step3
-              buckets={nonEmptyBuckets}
+              buckets={nonEmptyBuckets.filter((b) => !isBucketHandled(b, picks))}
               roster={eligibleRoster}
               picks={picks}
               bulkDest={bulkDest}
@@ -314,15 +335,30 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setStep((s) => (s > 1 ? ((s - 1) as Step) : s))}
-            disabled={step === 1 || archive.isPending}
+            onClick={() => {
+              if (activeBucketData) {
+                setActiveBucket(null);
+              } else {
+                setStep((s) => (s > 1 ? ((s - 1) as Step) : s));
+              }
+            }}
+            disabled={(step === 1 && !activeBucketData) || archive.isPending}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+            {activeBucketData ? 'Back to impact preview' : 'Back'}
           </Button>
 
           <div className="flex items-center gap-2">
-            {step < 4 ? (
+            {activeBucketData ? (
+              <Button
+                size="sm"
+                disabled={!isBucketHandled(activeBucketData, picks)}
+                onClick={() => setActiveBucket(null)}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" />
+                Done
+              </Button>
+            ) : step < 4 ? (
               <Button
                 size="sm"
                 disabled={
@@ -331,15 +367,21 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
                   (step === 3 && !allHandled)
                 }
                 onClick={() => {
-                  // If step 2 reveals no dependencies, skip step 3.
-                  if (step === 2 && nonEmptyBuckets.length === 0) {
+                  // Step 2 routing: skip Step 3 entirely when there's nothing
+                  // left to decide. Step 3 only shows up when buckets are
+                  // partially handled (acts as a cleanup view).
+                  if (step === 2 && (nonEmptyBuckets.length === 0 || allHandled)) {
                     setStep(4);
                   } else {
                     setStep((s) => ((s + 1) as Step));
                   }
                 }}
               >
-                {step === 2 && nonEmptyBuckets.length === 0 ? 'Continue (no dependencies)' : 'Continue'}
+                {step === 2 && nonEmptyBuckets.length === 0
+                  ? 'Continue (no dependencies)'
+                  : step === 2 && allHandled
+                    ? 'Continue to review'
+                    : 'Continue'}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
