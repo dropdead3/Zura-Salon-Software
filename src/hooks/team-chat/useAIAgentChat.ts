@@ -65,9 +65,11 @@ export function useAIAgentChat() {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(false);
   const [pendingAction, setPendingAction] = useState<AIAction | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
+  const titleRefinedRef = useRef<Set<string>>(new Set());
 
   const setConvId = (id: string | null) => {
     conversationIdRef.current = id;
@@ -124,13 +126,49 @@ export function useAIAgentChat() {
     [user?.id, effectiveOrganization?.id, invalidateConversations]
   );
 
+  // Fire-and-forget title refinement after first assistant turn.
+  const refineTitle = useCallback(
+    async (convId: string, userText: string, assistantText: string) => {
+      if (titleRefinedRef.current.has(convId)) return;
+      titleRefinedRef.current.add(convId);
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-assistant', {
+          body: {
+            summarize_title: true,
+            organizationId: effectiveOrganization?.id,
+            messages: [
+              { role: 'user', content: userText.slice(0, 800) },
+              { role: 'assistant', content: assistantText.slice(0, 800) },
+            ],
+          },
+        });
+        if (error) return;
+        const title = (data as any)?.title;
+        if (!title || typeof title !== 'string') return;
+        await supabase.from('ai_conversations').update({ title }).eq('id', convId);
+        invalidateConversations();
+      } catch (e) {
+        console.warn('Title refinement failed', e);
+      }
+    },
+    [effectiveOrganization?.id, invalidateConversations]
+  );
+
   const sendMessage = useCallback(async (content: string) => {
     if (!user?.id || !content.trim()) return;
+
+    const trimmed = content.trim();
+
+    // Snapshot history BEFORE we push the loading bubble so we don't send
+    // an empty assistant turn to the model.
+    const historySnapshot = messages
+      .filter((m) => !m.isLoading)
+      .map((m) => ({ role: m.role, content: m.content }));
 
     const userMessage: AIMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: content.trim(),
+      content: trimmed,
       timestamp: new Date(),
     };
 
@@ -142,16 +180,18 @@ export function useAIAgentChat() {
       isLoading: true,
     };
 
-    setMessages(prev => [...prev, userMessage, loadingMessage]);
+    setMessages((prev) => [...prev, userMessage, loadingMessage]);
     setIsLoading(true);
 
+    // Detect if this is the first user turn (for title refinement).
+    const isFirstTurn = historySnapshot.length === 0;
+
     // Ensure a conversation exists and persist the user message early.
-    const convId = await ensureConversation(content.trim());
-    if (convId) await persistMessage(convId, 'user', content.trim());
+    const convId = await ensureConversation(trimmed);
+    if (convId) await persistMessage(convId, 'user', trimmed);
 
     try {
-      const history = messages.map(m => ({ role: m.role, content: m.content }));
-      history.push({ role: 'user', content: content.trim() });
+      const history = [...historySnapshot, { role: 'user' as const, content: trimmed }];
 
       const { data, error } = await supabase.functions.invoke('ai-agent-chat', {
         body: {
@@ -171,13 +211,20 @@ export function useAIAgentChat() {
         action: data.action || null,
       };
 
-      setMessages(prev => prev.filter(m => !m.isLoading).concat(assistantMessage));
+      setMessages((prev) => prev.filter((m) => !m.isLoading).concat(assistantMessage));
 
-      if (convId) await persistMessage(convId, 'assistant', assistantContent, data.action || null);
+      if (convId) {
+        await persistMessage(convId, 'assistant', assistantContent, data.action || null);
+      }
       invalidateConversations();
 
       if (data.action?.status === 'pending_confirmation') {
         setPendingAction(data.action);
+      }
+
+      // Refine the title once we have one user + one assistant turn.
+      if (isFirstTurn && convId) {
+        void refineTitle(convId, trimmed, assistantContent);
       }
     } catch (error) {
       console.error('AI Agent error:', error);
@@ -187,12 +234,12 @@ export function useAIAgentChat() {
         content: "I'm sorry, I encountered an error. Please try again.",
         timestamp: new Date(),
       };
-      setMessages(prev => prev.filter(m => !m.isLoading).concat(errorMessage));
+      setMessages((prev) => prev.filter((m) => !m.isLoading).concat(errorMessage));
       toast.error('Failed to get AI response');
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, effectiveOrganization?.id, messages, ensureConversation, persistMessage, invalidateConversations]);
+  }, [user?.id, effectiveOrganization?.id, messages, ensureConversation, persistMessage, invalidateConversations, refineTitle]);
 
   const confirmAction = useCallback(async (confirmationInput?: string) => {
     if (!pendingAction || !user?.id) return;
@@ -221,17 +268,22 @@ export function useAIAgentChat() {
       if (error) throw error;
 
       const resultText = data.success ? `✅ ${data.message}` : `❌ ${data.message}`;
+      const resolvedAction: AIAction = {
+        ...pendingAction,
+        status: data.success ? 'executed' : 'failed',
+      };
       const resultMessage: AIMessage = {
         id: `result-${Date.now()}`,
         role: 'assistant',
         content: resultText,
         timestamp: new Date(),
+        action: resolvedAction,
       };
-      setMessages(prev => [...prev, resultMessage]);
+      setMessages((prev) => [...prev, resultMessage]);
       setPendingAction(null);
 
       if (conversationIdRef.current) {
-        await persistMessage(conversationIdRef.current, 'assistant', resultText);
+        await persistMessage(conversationIdRef.current, 'assistant', resultText, resolvedAction);
       }
 
       if (data.success) toast.success(data.message);
@@ -262,17 +314,19 @@ export function useAIAgentChat() {
     }
 
     const cancelText = 'Action cancelled. Anything else?';
+    const cancelledAction: AIAction = { ...pendingAction, status: 'cancelled' };
     const cancelMessage: AIMessage = {
       id: `cancel-${Date.now()}`,
       role: 'assistant',
       content: cancelText,
       timestamp: new Date(),
+      action: cancelledAction,
     };
-    setMessages(prev => [...prev, cancelMessage]);
+    setMessages((prev) => [...prev, cancelMessage]);
     setPendingAction(null);
 
     if (conversationIdRef.current) {
-      await persistMessage(conversationIdRef.current, 'assistant', cancelText);
+      await persistMessage(conversationIdRef.current, 'assistant', cancelText, cancelledAction);
     }
   }, [pendingAction, effectiveOrganization?.id, persistMessage]);
 
@@ -286,7 +340,7 @@ export function useAIAgentChat() {
 
   const loadConversation = useCallback(async (id: string) => {
     if (!user?.id) return;
-    setIsLoading(true);
+    setIsHydrating(true);
     setPendingAction(null);
     try {
       const { data, error } = await supabase
@@ -301,22 +355,29 @@ export function useAIAgentChat() {
         content: row.content || '',
         timestamp: new Date(row.created_at),
         action: row.action
-          ? { ...(row.action as AIAction), status: 'executed' as const }
+          ? {
+              ...(row.action as AIAction),
+              // Preserve persisted status; default to 'executed' for legacy rows
+              status: ((row.action as AIAction).status ?? 'executed') as AIAction['status'],
+            }
           : null,
       }));
       setMessages(hydrated);
       setConvId(id);
+      // Mark this conversation as already-titled so we don't re-summarize.
+      titleRefinedRef.current.add(id);
     } catch (e) {
       console.error('Failed to load conversation', e);
       toast.error('Could not load conversation');
     } finally {
-      setIsLoading(false);
+      setIsHydrating(false);
     }
   }, [user?.id]);
 
   return {
     messages,
     isLoading,
+    isHydrating,
     pendingAction,
     conversationId,
     sendMessage,
@@ -327,3 +388,4 @@ export function useAIAgentChat() {
     loadConversation,
   };
 }
+

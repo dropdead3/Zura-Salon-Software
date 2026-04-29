@@ -20,6 +20,7 @@ const AssistantSchema = z.object({
     groundingPrompt: z.string(),
   }).optional(),
   dataContext: z.string().max(2000).optional(),
+  summarize_title: z.boolean().optional(),
 });
 
 const BASE_SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for ${PLATFORM_NAME}. Users may call you "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help users navigate the dashboard, understand features, and answer questions about salon operations.
@@ -116,8 +117,59 @@ serve(async (req) => {
     const { user, supabaseAdmin } = authResult;
 
     const body = await validateBody(req, AssistantSchema, getCorsHeaders(req));
-    const { messages, organizationId, userRole, groundingContext, dataContext } = body;
+    const { messages, organizationId, userRole, groundingContext, dataContext, summarize_title } = body;
     const orgId = body.organizationId || body.organization_id;
+
+    // ------------------------------------------------------------
+    // Title summarization branch — short, non-streaming, JSON.
+    // Used by Zura chat to refine auto-generated thread titles.
+    // ------------------------------------------------------------
+    if (summarize_title) {
+      const LOVABLE_API_KEY_T = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY_T) {
+        return new Response(JSON.stringify({ title: null }), {
+          status: 200,
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      try {
+        const titleSystem = `You write extremely short conversation titles. Respond with 3 to 6 words, Title Case, no punctuation, no quotes. Capture the topic only.`;
+        const transcript = messages.slice(0, 4).map((m) => `${m.role}: ${m.content}`).join("\n").slice(0, 1200);
+        const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY_T}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              { role: "system", content: titleSystem },
+              { role: "user", content: `Title this conversation:\n\n${transcript}` },
+            ],
+            stream: false,
+          }),
+        });
+        if (!r.ok) {
+          return new Response(JSON.stringify({ title: null }), {
+            status: 200,
+            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          });
+        }
+        const j = await r.json();
+        const raw: string = j?.choices?.[0]?.message?.content ?? "";
+        const cleaned = raw.replace(/["“”'`]/g, "").replace(/[.!?,;:]+$/g, "").trim();
+        const words = cleaned.split(/\s+/).slice(0, 6).join(" ");
+        const title = words.length > 60 ? words.slice(0, 57) + "…" : words;
+        return new Response(JSON.stringify({ title: title || null }), {
+          status: 200,
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      } catch (_e) {
+        return new Response(JSON.stringify({ title: null }), {
+          status: 200,
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if (!orgId) {
       return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
     }
