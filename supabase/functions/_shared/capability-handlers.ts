@@ -10,6 +10,8 @@
 
 import {
   registerCapability,
+  assertOwnership,
+  isManagerRole,
   type ProposeContext,
   type ExecuteContext,
   type ProposeResult,
