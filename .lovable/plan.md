@@ -1,118 +1,91 @@
 ## Problem
 
-Look at the screenshot:
+Three widgets currently have a footer "View All / Manage" CTA:
 
-- **Top row**: 3 short widgets (empty states) — all stretched tall, fine.
-- **Bottom row**: My Work Days vs. Day Rate — Day Rate is naturally taller, so My Work Days inflates to match. Worse, the top row is *much shorter* than the bottom row, making the section feel uneven.
-- **What's New card**: footer "View All Updates" floats in dead space because the empty state is small but the card was inflated by sibling height.
+- What's New → updates page
+- Day Rate → day rate calendar
+- Help Center → help center
+- My Work Days → profile
 
-Two distinct height problems are tangled together:
+But four widgets have no CTA, leaving the user stranded:
 
-1. **Across-row inconsistency** — row 1 is ~290px tall, row 2 is ~430px tall. No baseline, no ceiling.
-2. **Within-card dead space** — when a card stretches, its footer floats mid-card instead of pinning to the bottom edge.
+- **Team Birthdays** — no way to navigate to the celebrations page
+- **Work Anniversaries** — same problem
+- **AI Suggested Tasks** — no way to drill into the tasks/briefing surface
 
-## The rule (two layers)
+## Destination map (verified against `src/App.tsx`)
 
-### Layer 1 — Row-level height contract (in `BentoGrid` / widget cards)
+| Widget | Destination | Route | CTA copy |
+|---|---|---|---|
+| Team Birthdays | TeamBirthdays page (covers birthdays + anniversaries — confirmed via `rg "Anniversary"` in that page) | `/admin/birthdays` | View All |
+| Work Anniversaries | Same TeamBirthdays page | `/admin/birthdays` | View All |
+| AI Suggested Tasks | No standalone tasks route exists. AI tasks live in the dashboard's daily briefing. | n/a | **No CTA** — keep widget footerless. The user already sees them in the briefing on the same page. |
+| My Work Days | Profile (already wired) | `/profile` | Manage (already there) |
+| What's New | Updates dialog (already wired) | n/a | View All Updates (already there) |
+| Day Rate | Day rate calendar (already wired) | `/admin/day-rate-calendar` | View All (already there) |
+| Help Center | Help (already wired) | n/a | Browse Help Center (already there) |
 
-Every widget card uses the same `min-h` / `max-h` band so the section reads as a uniform grid regardless of content. Proposed band:
-
-- `min-h-[220px]` — empty/short widgets won't shrink below this
-- `max-h-[320px]` — content-heavy widgets won't blow out the row; overflow scrolls internally
-
-Each row still stretches its members to match the tallest sibling (`flex` default), but because every card is clamped to the same band, **the difference between the shortest and tallest possible row is at most 100px** — visually unified.
-
-Within a single row, all cards remain equal height (current behavior, unchanged).
-
-### Layer 2 — Internal layout contract (each widget Card)
-
-The 7 widgets already share the same skeleton:
-
-```tsx
-<Card className="kpi.tile justify-between min-h-[160px] p-5">
-  {/* header: icon + label */}
-  <div className="flex items-center gap-3">...</div>
-  {/* body: grows */}
-  <div className="mt-4 flex-1">...</div>
-  {/* OPTIONAL footer (3 of 7 widgets) */}
-  <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">...</div>
-</Card>
-```
-
-`tokens.kpi.tile` already declares `flex flex-col`, and `justify-between` is currently doing the bottom-pin work. That's actually fine — *but only when the body is short*. When the body has its own content (like Day Rate's stats grid), `justify-between` pushes the footer all the way down, which is what we want, AND the empty/short cards (Changelog with "No updates yet") still pin their footer to the bottom.
-
-So the **internal layout is already correct**. The only fix needed at this layer:
-
-- Bump `min-h-[160px]` → `min-h-[220px]` on every widget root so the new row baseline is honored even when a widget renders standalone outside `BentoGrid`.
-- Add `overflow-hidden` to the Card root so content respects the `max-h` clamp without breaking the rounded corners. Body content area gets `overflow-y-auto` so long lists scroll inside the card.
-
-## Width × height interaction (important edge case)
-
-`BentoGrid` already produces variable column counts per row (3+2, 2+2, 3+3+2, etc.). When a row has 2 cards (each half-width), they're wider than 3-thirds cards above. Wider cards display content more horizontally, so they often *need less height*. The fixed `min-h` floor + `max-h` ceiling prevents the wide-row cards from looking squat next to a tall narrow row.
-
-## Implementation
-
-### File 1: `src/components/dashboard/WidgetsSection.tsx`
-
-Wrap each widget node in a height-contract container so the rule lives in one place (the section), not on every widget:
+## Footer pattern (already established by existing widgets)
 
 ```tsx
-const nodes = enabledWidgets
-  .filter((id) => WIDGET_RENDERERS[id])
-  .map((id) => {
-    const r = WIDGET_RENDERERS[id];
-    return (
-      <VisibilityGate ...>
-        <div className="h-full min-h-[220px] max-h-[320px] [&>*]:h-full [&>*]:max-h-full">
-          {r.component}
-        </div>
-      </VisibilityGate>
-    );
-  });
-```
-
-The wrapper does the height enforcement; widget components stay unchanged. The descendant selectors (`[&>*]:h-full`) push the height contract onto each widget's root `Card` so it fills the wrapper.
-
-`BentoGrid` already gives each child `flex-1 min-w-0` inside a `flex` row — siblings within a row will naturally equalize to the tallest one (capped at 320px).
-
-### File 2: `src/components/ui/bento-grid.tsx`
-
-One small tweak — make rows `items-stretch` (the flex default, but explicit) and ensure each row item gets `h-full` so the wrapper above can grow. Add `items-stretch` to each row's flex container:
-
-```tsx
-<div className={cn('flex flex-col sm:flex-row items-stretch', gap)}>
-  {row.map((child, ci) => (
-    <div key={ci} className="flex-1 min-w-0 flex">{child}</div>
-  ))}
+<div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
+  <Link
+    to={dashPath('/admin/birthdays')}
+    className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+  >
+    View All <ChevronRight className="w-3 h-3" />
+  </Link>
 </div>
 ```
 
-The inner `flex` on the cell makes the child wrapper actually fill the row height (some browsers need this nudge for nested flex stretching).
+This matches the footer already used by HelpCenterWidget, DayRateWidget, ChangelogWidget, and WorkScheduleWidgetCompact — same border, same spacing, same transition.
 
-### Files NOT changed
+## Implementation
 
-The 7 widget components — keep them untouched. Their internal layout is already correct (`flex flex-col` + `justify-between` + `flex-1` body). The contract is enforced from the outside.
+### File 1: `src/components/dashboard/BirthdayWidget.tsx`
 
-## Notes & trade-offs
+1. Add imports: `Link` from `react-router-dom`, `ChevronRight` (extend the existing `lucide-react` import line), and `useOrgDashboardPath` from `@/hooks/useOrgDashboardPath`.
+2. Inside `BirthdayWidget()`, add `const { dashPath } = useOrgDashboardPath();`.
+3. Append the standard footer block (above) inside the `<Card>` immediately before its closing tag, in the main return path. Use copy: `View All`, route: `/admin/birthdays`.
+4. The loading skeleton stays unchanged.
 
-- **Why max-h-[320px] specifically?** It's the natural height of Day Rate (the tallest widget) at desktop width with 2 stats + footer + ~16px breathing. Anything more starts to dwarf shorter rows. If a future widget needs more room, it should redesign its content density rather than inflate the band.
-- **Internal scroll on overflow.** If a widget exceeds 320px (e.g. AI Tasks with 8 items), the *body* scrolls — header and footer stay pinned. Already wired because the body uses `flex-1` inside a flex column with overflow.
-- **Empty states will look more deliberate.** A 220px floor is enough room to hold "No updates yet" + a footer CTA without feeling cramped, but small enough that 3 empty cards in a row don't dominate the dashboard.
-- **No widget-level changes** = future widgets automatically inherit the height contract just by being added to `WIDGET_RENDERERS`.
+### File 2: `src/components/dashboard/AnniversaryWidget.tsx`
+
+Same three changes as BirthdayWidget. Footer routes to the same page (`/admin/birthdays`) since that page already covers anniversaries (verified — it uses anniversary hooks and shows "Work anniversaries are to celebrate the length of time…").
+
+### File 3: AI Tasks widget — intentionally skipped
+
+`AITasksWidget` doesn't get a CTA. There's no dedicated `/tasks` route, and the AI tasks are already surfaced in the dashboard's daily briefing panel on the same page. Adding a CTA that scrolls within the same page would be noise. Per the visibility/doctrine rule, silence is valid output.
+
+If the user wants this changed — e.g. add a "Manage" link that opens a tasks drawer — that's a separate ask and I'd need to know the desired destination.
+
+### Files NOT touched
+
+- `WorkScheduleWidgetCompact.tsx` — already has correct "Manage → /profile" CTA
+- `ChangelogWidget.tsx` — already has "View All Updates" trigger
+- `DayRateWidget.tsx` — already routes to `/admin/day-rate-calendar`
+- `HelpCenterWidget.tsx` — already routes to help center
+- The 220–320px height contract stays intact since the new footer fits inside the band (existing footers already do).
+
+## Notes
+
+- Both new footers use `Link` (client-side routing), satisfying the Core memory rule that prohibits `window.location.href`.
+- `dashPath('/admin/birthdays')` resolves to the multi-tenant URL hierarchy (`/org/<slug>/dashboard/admin/birthdays`).
+- `/admin/birthdays` is gated by the `view_team_overview` permission (line 357 of `App.tsx`). Stylists without that permission may see a permission denial when clicking. **This is correct behavior under the Stylist Privacy Contract** (peer rosters are forbidden for stylists). If you want stylists to see birthdays too, that's a permissions decision outside this widget change.
 
 ## Files to edit
 
-- `src/components/dashboard/WidgetsSection.tsx` — wrap each rendered widget in height-contract `<div>`
-- `src/components/ui/bento-grid.tsx` — add `items-stretch` and `flex` on row cells so wrappers actually fill row height
+- `src/components/dashboard/BirthdayWidget.tsx` — add footer with `View All → /admin/birthdays`
+- `src/components/dashboard/AnniversaryWidget.tsx` — add footer with `View All → /admin/birthdays`
 
 ## Prompt feedback
 
-"heights need a rule" is short and effective — you flagged the symptom and trusted me to think through options. That's a good prompt when you want collaborative reasoning rather than a prescribed fix.
+Clear directional ask — you named the missing surfaces ("team birthdays, work anniversaries, profile settings") and the structural pattern ("appropriate buttons to go to the area"). That gave me enough to verify destinations against the actual route table rather than guess.
 
-One enhancement for next time: **state your priority between "consistent grid" and "respect content."** Those two values pull opposite directions on height rules. You implicitly want both (your last prompt was about "clean bento"), so I'm proposing a banded approach. But if you'd said "consistency wins — every widget exactly 280px, period," I'd have proposed Rule A (uniform fixed height) instead. Naming the dominant value would let me skip the trade-off discussion.
+One refinement: when destinations differ from widget names (anniversaries → /admin/birthdays page is non-obvious), spelling out "or just route both to wherever the team celebration page lives" would have shortcut my route audit. As-is, I had to confirm that page covers anniversaries before committing.
 
 ## Enhancement suggestions
 
-1. **Codify the band as design tokens.** Add `tokens.widget.heightFloor` (`min-h-[220px]`) and `tokens.widget.heightCeiling` (`max-h-[320px]`) to `design-tokens.ts`. Then any future widget surface (operator dock, mobile shelf) reuses the same numbers without re-deciding them.
-2. **Document the widget skeleton as a contract.** A brief `WIDGET_AUTHORING.md` (or memory entry) stating: "Every dashboard widget = `<Card kpi.tile justify-between>` + header div + `flex-1` body + optional footer." Future widgets will plug into the height contract automatically.
-3. **Audit other variable-height surfaces.** The Operations Hub tile grid and Apps Marketplace cards likely have the same dead-space-above-footer issue. Worth a single sweep with the same `min-h`/`max-h` + `justify-between` pattern.
+1. **Codify a "widget CTA contract."** Add a brief authoring rule: every widget either (a) has a footer Link to its drill-down surface, or (b) has none if the data is already surfaced elsewhere on the same page. The current 7 widgets satisfy this once these two CTAs land. Worth memoializing so future widgets don't re-invent.
+2. **Address the AI Tasks gap properly.** If you do want a separate tasks-management surface (vs. the inline briefing), that's a real gap — there's no `/admin/tasks` route. Could be its own follow-up: build a Tasks page and link the widget to it.
+3. **Permission-aware CTAs.** A future enhancement: hide the footer Link entirely when the user lacks the destination's permission (e.g. stylists viewing the birthdays widget). That avoids the "click → access denied" dead-end. Easy add via `useUserPermissions().has('view_team_overview')` guard around the footer render.

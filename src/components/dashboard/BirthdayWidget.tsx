@@ -1,9 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Cake, PartyPopper, Eye } from 'lucide-react';
+import { Cake, PartyPopper, Eye, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { cn, formatDisplayName } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 
@@ -11,6 +13,7 @@ export function BirthdayWidget() {
   const { data: todaysBirthdays, isLoading: loadingToday } = useTodaysBirthdays();
   const { data: upcomingBirthdays, isLoading: loadingUpcoming } = useUpcomingBirthdays();
   const { isViewingAsUser } = useViewAs();
+  const { dashPath } = useOrgDashboardPath();
 
   const isLoading = loadingToday || loadingUpcoming;
 
@@ -130,6 +133,15 @@ export function BirthdayWidget() {
             No upcoming birthdays
           </p>
         )}
+      </div>
+
+      <div className="flex justify-end mt-2 pt-2 border-t border-border/40 min-h-[28px]">
+        <Link
+          to={dashPath('/admin/birthdays')}
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          View All <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
     </Card>
   );
