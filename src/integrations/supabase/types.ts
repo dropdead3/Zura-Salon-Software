@@ -8460,6 +8460,9 @@ export type Database = {
           admin_approved_by: string | null
           approved_at: string | null
           approved_by: string | null
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           avatar_rotation: number | null
           avatar_zoom: number | null
           bio: string | null
@@ -8470,6 +8473,8 @@ export type Database = {
           card_zoom: number | null
           chat_enabled: boolean | null
           created_at: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           departure_notes: string | null
           display_name: string | null
           email: string | null
@@ -8491,6 +8496,7 @@ export type Database = {
           is_onsite_staff: boolean
           is_primary_owner: boolean | null
           is_super_admin: boolean | null
+          last_day_worked: string | null
           lead_pool_eligible: boolean
           location_id: string | null
           location_ids: string[] | null
@@ -8516,6 +8522,9 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_rotation?: number | null
           avatar_zoom?: number | null
           bio?: string | null
@@ -8526,6 +8535,8 @@ export type Database = {
           card_zoom?: number | null
           chat_enabled?: boolean | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           departure_notes?: string | null
           display_name?: string | null
           email?: string | null
@@ -8547,6 +8558,7 @@ export type Database = {
           is_onsite_staff?: boolean
           is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
+          last_day_worked?: string | null
           lead_pool_eligible?: boolean
           location_id?: string | null
           location_ids?: string[] | null
@@ -8572,6 +8584,9 @@ export type Database = {
           admin_approved_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           avatar_rotation?: number | null
           avatar_zoom?: number | null
           bio?: string | null
@@ -8582,6 +8597,8 @@ export type Database = {
           card_zoom?: number | null
           chat_enabled?: boolean | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           departure_notes?: string | null
           display_name?: string | null
           email?: string | null
@@ -8603,6 +8620,7 @@ export type Database = {
           is_onsite_staff?: boolean
           is_primary_owner?: boolean | null
           is_super_admin?: boolean | null
+          last_day_worked?: string | null
           lead_pool_eligible?: boolean
           location_id?: string | null
           location_ids?: string[] | null
@@ -28592,6 +28610,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_member_archive_log: {
+        Row: {
+          archived_at: string
+          archived_by: string
+          created_at: string
+          effective_date: string | null
+          id: string
+          organization_id: string
+          reason: string | null
+          reassignment_ledger: Json
+          unarchived_at: string | null
+          unarchived_by: string | null
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string
+          archived_by: string
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          organization_id: string
+          reason?: string | null
+          reassignment_ledger?: Json
+          unarchived_at?: string | null
+          unarchived_by?: string | null
+          user_id: string
+        }
+        Update: {
+          archived_at?: string
+          archived_by?: string
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          organization_id?: string
+          reason?: string | null
+          reassignment_ledger?: Json
+          unarchived_at?: string | null
+          unarchived_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       terminal_hardware_requests: {
         Row: {
