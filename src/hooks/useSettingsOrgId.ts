@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOptionalOrganizationContext } from '@/contexts/OrganizationContext';
 import { PublicOrgContext } from '@/contexts/PublicOrgContext';
 
 /**
@@ -15,7 +15,7 @@ import { PublicOrgContext } from '@/contexts/PublicOrgContext';
 export function useSettingsOrgId(explicitOrgId?: string): string | undefined {
   if (explicitOrgId) return explicitOrgId;
 
-  const orgCtx = useOrganizationContext();
+  const orgCtx = useOptionalOrganizationContext();
   if (orgCtx.effectiveOrganization?.id) {
     return orgCtx.effectiveOrganization.id;
   }

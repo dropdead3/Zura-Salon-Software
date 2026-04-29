@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOptionalOrganizationContext, useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useContext } from 'react';
 import { PublicOrgContext } from '@/contexts/PublicOrgContext';
 
@@ -11,7 +11,7 @@ export type LevelDisplayMode = 'numbered' | 'custom_name';
  * Works in both dashboard (OrganizationContext) and public site (PublicOrgContext).
  */
 export function useWebsiteLevelDisplayMode() {
-  const orgCtx = useOrganizationContext();
+  const orgCtx = useOptionalOrganizationContext();
   const publicOrgCtx = useContext(PublicOrgContext);
   const orgId = orgCtx.effectiveOrganization?.id || publicOrgCtx?.organization?.id;
 
