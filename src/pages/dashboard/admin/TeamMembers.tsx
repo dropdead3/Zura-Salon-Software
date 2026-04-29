@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -92,7 +92,7 @@ function compareByName(a: OrganizationUser, b: OrganizationUser): number {
   return an.localeCompare(bn);
 }
 
-function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void; trailingSlot?: React.ReactNode }) {
+function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void; trailingSlot?: ReactNode }) {
   const name = user.display_name || user.full_name || 'Unnamed';
   const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
   const primaryRole = user.roles?.[0];
