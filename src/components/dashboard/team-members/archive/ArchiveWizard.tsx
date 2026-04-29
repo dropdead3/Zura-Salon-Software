@@ -352,11 +352,13 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
             <BucketWorkspace
               bucket={activeBucketData}
               roster={eligibleRoster}
+              eligibleStylists={eligibleStylists}
               picks={picks}
               bulkDest={bulkDest}
               setBulkDest={setBulkDest}
               onItemPick={setItemPick}
               onApplyBulk={applyBulk}
+              setPicks={setPicks}
             />
           )}
 
@@ -381,6 +383,11 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
               roster={eligibleRoster}
               confirmed={confirmed}
               setConfirmed={setConfirmed}
+              notifyClients={notifyClients}
+              setNotifyClients={setNotifyClients}
+              clientPreferenceItems={
+                (buckets.find((b) => b.key === 'client_preferences')?.items ?? []) as unknown as ClientPreferenceItem[]
+              }
             />
           )}
         </div>
