@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
+import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -170,6 +174,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
   // Step 4 opt-in: send a one-time intro note to reassigned clients.
   const [notifyClients, setNotifyClients] = useState(false);
+  // Step 4: clients the operator chose to suppress per-row.
+  const [suppressedClientIds, setSuppressedClientIds] = useState<Set<string>>(new Set());
 
   const { data: roster = [] } = useOrganizationUsers(orgId);
   const eligibleRoster = useMemo(
@@ -196,6 +202,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       setBulkDest({});
       setActiveBucket(null);
       setNotifyClients(false);
+      setSuppressedClientIds(new Set());
     }
   }, [open, member.user_id]);
 
@@ -286,6 +293,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       effectiveDate,
       reassignments: ledger,
       notifyReassignedClients: notifyClients,
+      suppressedClientIds: Array.from(suppressedClientIds),
     });
     onArchived?.();
     onOpenChange(false);
