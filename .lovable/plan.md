@@ -1,150 +1,104 @@
+## Website Publish & Version History
 
-# Website Editor — Full UX Overhaul
+Add a clear "Publish Changes" action and full version history (with non-destructive restore) to the Website Hub editor, covering both pages and theme/site-level settings.
 
-## The core problem
+### Why this matters
 
-The current editor stuffs three things into the dashboard column (sidebar + form + preview), so the preview iframe gets ~30% width (~400–500px). At that width:
+Today the editor saves changes immediately to the live site with no separation between draft and published, and no way to undo a bad edit. Operators editing a public storefront need:
+- A clear moment to publish (with a summary of what's changing)
+- A safety net to roll back if something breaks
+- Confidence that no past version is ever lost
 
-- **Desktop view is a lie** — the iframe is 500px wide, so the site renders its mobile/tablet breakpoint, not desktop.
-- **Tablet doesn't exist** — only Desktop/Mobile toggles.
-- **Mobile is fake** — a 390px box inside an already-narrow panel, no device chrome, no scaling.
-- The preview competes with the sidebar and form for space, and the dashboard chrome (page header, top nav, tabs) eats vertical room → the iframe is short and clipped.
+### What you'll see in the UI
 
-The fix is structural, not cosmetic: the editor needs its own full-viewport workspace with a true scaled preview.
+**Editor toolbar** (top-right, next to "Open Site"):
+- `History` button — opens a slide-in panel listing the last 20 versions
+- `Publish Changes` button — primary CTA, shows a small dot when there are unpublished changes; opens the existing changelog dialog
 
-## What we'll build
-
-### 1. Promote the editor to a full-workspace layout
-
-When the user enters Theme → Customize (editor mode), replace the dashboard chrome with a dedicated workspace that fills the viewport:
+**Version History panel** (slide-in from right):
+- Grouped by surface: **Pages**, **Theme**, **Footer**, **Announcement Bar**
+- Each version row shows: version number, timestamp, who saved it, change summary
+- `Restore` button on each row → confirmation dialog → applies snapshot to the live site
+- Restoring v3 doesn't delete v4–v7. It creates a new v8 marked "Restored from v3" so the audit trail stays intact and you can undo the restore.
 
 ```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ ← Back   Drop Dead Salons / Home / Hero Section          [Save] [Publish] │  ← thin top bar (48px)
-├──────────┬─────────────────────────────────┬──────────────────────────────┤
-│          │                                 │  Desktop  Tablet  Mobile  ⟳  │  ← preview toolbar
-│ Sections │   Editor form (Hero Section)    ├──────────────────────────────┤
-│ list     │                                 │                              │
-│          │   Eyebrow text  [____________]  │   ┌────────────────────┐     │
-│ • Hero   │   Headline      [____________]  │   │  Scaled iframe     │     │
-│ • About  │   Subheadline   [____________]  │   │  rendered at       │     │
-│ • ...    │   ...                           │   │  TRUE viewport     │     │
-│          │                                 │   │  (1440 / 834 / 390)│     │
-│  (260px) │   (flexible, ~480px min)        │   │  then scaled to    │     │
-│          │                                 │   │  fit pane          │     │
-│          │                                 │   └────────────────────┘     │
-│          │                                 │   1440 × 900 · 67% scale     │
-└──────────┴─────────────────────────────────┴──────────────────────────────┘
+┌─ Version History ──────────────────────┐
+│ Page: Home                             │
+│ ────────────────────────────────────── │
+│ v8 · just now · "Restored from v3"     │
+│ v7 · 2h ago  · Edited hero headline    │
+│ v6 · 1d ago  · Updated testimonials    │
+│ v3 · 3d ago  · Initial setup [Restore] │
+└────────────────────────────────────────┘
 ```
 
-Three resizable panes (`ResizablePanelGroup`, already in use):
-- **Sections sidebar** — 260px default, collapsible to icon rail
-- **Editor form** — flexible, holds the section editor
-- **Preview pane** — flexible, holds the device-frame iframe
+### Scope of versioning
 
-The whole workspace is `h-screen w-screen fixed inset-0 z-50` so dashboard chrome doesn't steal vertical space. "Back" returns to the Website Hub overview.
+**Page-level** (already exists, just needs to be exposed):
+- Each page snapshot stored in `website_page_versions`
 
-### 2. True-viewport scaled preview (the key fix)
+**Site-level / Theme** (new in this wave):
+- Theme + colors + typography
+- Footer config
+- Announcement bar
+- Navigation menus (publish flow already exists)
 
-This is the part that solves the "doesn't show desktop accurately" problem.
+A new table `website_site_versions` mirrors the page versions pattern but stores org-scoped snapshots of these site-wide configs.
 
-The iframe always renders at the **real** viewport width for the chosen device — never at the pane width. We then CSS-scale it to fit the pane:
+### Restore behavior (non-destructive)
 
-| Device  | Iframe size      | Behavior                          |
-|---------|------------------|-----------------------------------|
-| Desktop | 1440 × 900       | Scales down to fit pane width     |
-| Tablet  | 834 × 1194       | Portrait iPad, with device chrome |
-| Mobile  | 390 × 844        | iPhone 14, with device chrome     |
-| Fit     | 100% of pane     | Fluid, for quick edits            |
-
-Implementation:
-
-```tsx
-// inside the preview pane
-const targetWidth  = DEVICE[device].w;   // e.g. 1440
-const targetHeight = DEVICE[device].h;   // e.g. 900
-const scale = Math.min(paneW / targetWidth, paneH / targetHeight, 1);
-
-<div
-  style={{
-    width:  targetWidth,
-    height: targetHeight,
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left',
-  }}
->
-  <iframe src={previewUrl} style={{ width: '100%', height: '100%' }} />
-</div>
+```text
+Before restore:  v1 → v2 → v3 → v4 → v5 → v6 (live)
+User restores v3
+After restore:   v1 → v2 → v3 → v4 → v5 → v6 → v7 (live, snapshot of v3)
 ```
 
-Pane width is observed with `ResizeObserver` (we already have `useContainerSize` in `src/lib/responsive/`), so the scale recomputes when the user drags the splitter. A small footer shows "1440 × 900 · 67%".
+Nothing is deleted. Restore is itself a versioned action. You can restore the restore.
 
-### 3. Device frame chrome
+---
 
-For Tablet/Mobile, wrap the scaled iframe in a subtle device bezel (rounded corners, thin border, notch indicator for mobile). Desktop shows a browser chrome strip ("○ ○ ○  drop-dead-salons.com/"). Adds realism and makes the scale obvious.
+### Technical details
 
-### 4. Preview toolbar (top of preview pane)
+**Backend (1 new table + 1 column):**
+- New table `website_site_versions` with columns: `id`, `organization_id`, `surface` (enum: `theme` | `footer` | `announcement_bar`), `version_number`, `snapshot` (jsonb), `status`, `saved_by`, `saved_at`, `change_summary`, `restored_from_version_id` (nullable). RLS scoped to `organization_id` via existing `is_org_member` / `is_org_admin` helpers.
+- Add `restored_from_version_id uuid` column to `website_page_versions` to track restore lineage.
 
-- Device segmented control: **Desktop · Tablet · Mobile · Fit**
-- Orientation toggle (portrait/landscape) — tablet/mobile only
-- Zoom badge: "67%" (click to cycle 50% / 75% / 100% / Fit)
-- Refresh, Copy URL, Open in new tab
-- "Reload after save" toggle (auto-refresh on data save, on by default)
+**Frontend hooks (extend existing + new):**
+- Extend `useRestorePageVersion` in `src/hooks/usePageVersions.ts` so it actually writes the snapshot back via the existing page mutation, then inserts a new version row marked with `restored_from_version_id`.
+- New `src/hooks/useSiteVersions.ts` with `useSiteVersions(surface)`, `useSaveSiteVersion`, `useRestoreSiteVersion`.
+- New `src/hooks/useUnpublishedChangesCount.ts` — derives a badge count by comparing latest saved version to current draft state for pages + site surfaces.
+- `usePublishAll` in `usePublishChangelog.ts` extended to also snapshot theme/footer/announcement bar surfaces.
 
-### 5. Sections sidebar improvements
+**Frontend components (new):**
+- `src/components/dashboard/website-editor/VersionHistoryPanel.tsx` — slide-in using `PremiumFloatingPanel` (per Drawer Canon). Tabbed by surface (Pages / Theme / Footer / Announcement Bar). Page tab has a sub-selector for which page.
+- `src/components/dashboard/website-editor/RestoreConfirmDialog.tsx` — small confirm dialog showing "This will restore [surface] to v3 (saved 3 days ago by Jane). Your current version will be preserved as v8."
 
-- Page selector stays at top
-- Sections list becomes a true left rail with section icons + labels
-- Active section highlights, clicking scrolls the iframe to that section (already wired via `PREVIEW_SCROLL_TO_SECTION`)
-- Collapsible to a 56px icon rail to give the form/preview more room
+**Files modified:**
+- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` — add `History` and `Publish Changes` buttons to toolbar (both editor mode and overview mode); render `VersionHistoryPanel` and `PublishChangelog`.
+- `src/hooks/usePublishChangelog.ts` — extend `useChangelogSummary` and `usePublishAll` to include theme/footer/announcement bar diffs.
+- `src/hooks/usePageVersions.ts` — complete `useRestorePageVersion` write-back.
 
-### 6. Keyboard + ergonomics
+### Doctrine alignment
 
-- `⌘/Ctrl + \` toggles sidebar
-- `⌘/Ctrl + .` toggles preview pane
-- `⌘/Ctrl + 1/2/3` switches Desktop/Tablet/Mobile
-- `Esc` exits editor back to hub
-- Splitter positions persisted to localStorage per user
+- **Site Settings Persistence**: restore writes use the existing read-then-update pattern via the page/theme/footer mutations.
+- **Drawer Canon**: history panel uses `PremiumFloatingPanel` (no raw `Sheet`).
+- **Tenant isolation**: new `website_site_versions` table has RLS keyed to `organization_id` — no `USING (true)`.
+- **Signal preservation**: snapshots are full JSON copies; no defaults or fallbacks.
+- **Visibility contracts**: when there are zero unpublished changes, the dot badge is silent (not "0").
+- **Audit trail**: `restored_from_version_id` makes restores fully traceable.
 
-### 7. Mobile (operator on a phone/tablet)
+### Out of scope (deferred)
 
-On viewports < 1024px, the workspace becomes tabbed: **Sections | Editor | Preview** as a bottom tab bar instead of three columns. Same components, different layout shell.
+- **Scheduled publish** (publish at 9am tomorrow): future wave. Tracked in Deferral Register with revisit trigger "operator requests scheduled publishing."
+- **Per-section versioning** (restore just the hero, not the whole page): future wave.
+- **Branching / staging environments**: not in scope.
 
-## Files to change
+### Acceptance criteria
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/website-editor/LivePreviewPanel.tsx` | Replace contents: add device presets (Desktop/Tablet/Mobile/Fit), scaled iframe, ResizeObserver, orientation, device chrome, zoom badge |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | When `mode === 'editor'`, render a new `WebsiteEditorWorkspace` instead of the inline `ResizablePanelGroup`. Move the editor switch logic into the new workspace. |
-| `src/components/dashboard/website-editor/WebsiteEditorWorkspace.tsx` *(new)* | Full-viewport shell: top bar, three resizable panes, mobile tab fallback, keyboard shortcuts, persisted layout |
-| `src/components/dashboard/website-editor/PreviewDeviceFrame.tsx` *(new)* | Bezel/chrome wrapper for desktop/tablet/mobile |
-| `src/hooks/usePreviewDevice.ts` *(new)* | Device + orientation + zoom state, persisted to localStorage, exposes presets |
-| `src/components/dashboard/admin/WebsiteHub.tsx` | Mount the workspace as a portal/overlay when entering editor mode so it escapes the DashboardLayout chrome |
-
-No DB or backend changes. Pure UI/layout refactor — same `previewUrl`, same `site_settings`, same postMessage protocol.
-
-## Technical notes
-
-- **Why scaling vs. responsive resize**: scaling guarantees the iframe receives a 1440px window and renders the actual desktop layout. Resizing the iframe to 500px would just trigger the site's responsive breakpoints — which is exactly the bug today.
-- **Performance**: CSS transform `scale()` is GPU-composited, no layout thrash on splitter drag. ResizeObserver is debounced to a single rAF.
-- **Iframe reload behavior**: device switch does NOT reload the iframe (only changes outer dimensions + transform). Only the manual refresh button or save events trigger reload.
-- **Org route preview URL** (`/org/drop-dead-salons?preview=true&mode=view`) is unchanged and continues to work — the workspace is purely a better presentation layer around it.
-- **Brand/typography**: top bar uses `font-display` uppercase per UI canon; toolbar uses `tokens.button.inline`; pane backgrounds use `bg-muted/30` with `rounded-xl` per Bento Card System.
-
-## Out of scope (future phases)
-
-- Inline click-to-edit inside the preview iframe (would require a full overlay protocol)
-- Undo/redo history per section
-- Version compare (current vs. published)
-- Multi-device side-by-side view
-
-## Prompt feedback
-
-Strong prompt: you named the symptom ("preview doesn't show desktop/tablet/mobile accurately") and the scope ("entirety of the edit website feature"), which let me focus on the structural fix instead of guessing.
-
-To get even sharper plans next time, try adding:
-1. **Priority signal** — "the preview accuracy is the #1 fix; layout polish is secondary" tells me where to invest detail.
-2. **Constraint hints** — e.g. "must still live inside the dashboard" vs. "okay to take over the full screen" (I assumed the latter, which unlocks the real fix).
-3. **Reference behavior** — "like Framer / Webflow / Shopify theme editor" instantly anchors the target UX.
-
-Example upgrade: *"The Website Editor preview doesn't render desktop/tablet/mobile accurately because it's squeezed into the dashboard column. Redesign it as a full-screen workspace (Framer-style) where the preview iframe always renders at true device width and is scaled to fit. Preview accuracy is the priority."*
+1. Editor toolbar shows `History` and `Publish Changes` buttons.
+2. Publish dialog lists pending page + theme + footer + announcement bar changes; clicking Publish snapshots all of them.
+3. History panel lists versions per surface, last 20 each, ordered newest first.
+4. Restore button writes the snapshot to the live config AND creates a new version row marked with `restored_from_version_id`.
+5. Restoring a version does not delete any newer versions.
+6. The dot badge on `Publish Changes` only appears when there is at least one unsaved diff.
+7. RLS prevents any cross-org access to `website_site_versions`.
