@@ -441,6 +441,47 @@ export type Database = {
           },
         ]
       }
+      ai_action_rate_limits: {
+        Row: {
+          bucket: string
+          count: number
+          created_at: string
+          id: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          created_at?: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          created_at?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_action_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_actions: {
         Row: {
           action_params: Json
@@ -595,6 +636,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ai_capability_kill_switches: {
+        Row: {
+          capability_id: string
+          created_at: string
+          disabled: boolean
+          disabled_by: string | null
+          id: string
+          organization_id: string
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          capability_id: string
+          created_at?: string
+          disabled?: boolean
+          disabled_by?: string | null
+          id?: string
+          organization_id: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capability_id?: string
+          created_at?: string
+          disabled?: boolean
+          disabled_by?: string | null
+          id?: string
+          organization_id?: string
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_capability_kill_switches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_personal_insights: {
         Row: {
