@@ -115,3 +115,58 @@ Strong prompt — you correctly framed this as a *systems* question ("scale of p
 - **Add a synthetic red-team capability** in dev: a fake "delete_organization" handler that always logs and rejects, used by an automated test that asks Zura to invoke it via prompt injection. Continuously proves the entity-ledger guard is doing its job.
 - **Per-organization capability allow-lists**: let Account Owners opt *into* destructive capabilities rather than receiving them by default. Aligns with the "Structure precedes intelligence" doctrine.
 - **Confidence floor for proposals**: require the model to return a confidence score with each `propose_capability`; auto-deny below a threshold and tell the user to rephrase. Aligns with the "Silence is valid output" rule.
+
+---
+
+## Wave 2 — Governance Hardening (SHIPPED)
+
+### What shipped
+1. **Capability invariants (`capability-invariants.ts`)** — Validates every loaded capability row at request time:
+   - risk_level / ownership_scope token validity
+   - handler registration (read for read-only, propose+execute for mutations)
+   - mutations must declare required_role or required_permission
+   - high-risk mutations must declare confirmation_token_field
+   - mutations must not use ownership_scope=any
+   Violations remove the capability from the LLM tool list AND block execute-ai-action with HTTP 500. Logged for ops visibility.
+
+2. **Per-capability Zod schemas (`capability-zod.ts`)** — Strict UUID + length-bounded validation for every registered capability. Runs at BOTH propose (ai-agent-chat) and execute (execute-ai-action). Rejects unknown fields, malformed IDs, oversized payloads.
+
+3. **Rate limiting (`capability-rate-limit.ts` + `ai_action_rate_limits` + `increment_ai_rate_limit` RPC)** — Sliding-window counters per (org, user, bucket):
+   - propose bucket: 10/min, 120/hour
+   - execute bucket: 6/min, 60/hour
+   Atomic increment via SECURITY DEFINER RPC. Service-role-only writes; org members can read their own counters. Fails open if RPC errors (logged).
+
+4. **Per-org kill switches (`ai_capability_kill_switches`)** — Account Owners (super_admin in employee_profiles) and platform staff can disable any capability instantly for their org. Checked at:
+   - capability load time in ai-agent-chat (filtered out of LLM toolset)
+   - propose dispatch (rejects with reason)
+   - execute-ai-action (HTTP 423 Locked with reason)
+   Strict RLS: only Account Owner / platform staff may write.
+
+5. **Admin audit trail page (`/dashboard/admin/ai-audit`)** — Two tabs:
+   - **Action Log** — last 200 audit entries with actor name, status badge, capability id, reasoning, error, expandable params. Refreshable.
+   - **Kill Switches** — grouped by category, toggle per capability, shows risk level + reason. Real-time mutations via supabase upsert.
+   Gated by `super_admin` role / Primary Owner / platform user. Tenant-scoped via `effectiveOrganization`.
+
+### Files
+- `supabase/functions/_shared/capability-invariants.ts` (new)
+- `supabase/functions/_shared/capability-zod.ts` (new)
+- `supabase/functions/_shared/capability-rate-limit.ts` (new)
+- `supabase/functions/ai-agent-chat/index.ts` (kill switch + invariants + Zod + rate limit)
+- `supabase/functions/execute-ai-action/index.ts` (kill switch + invariants + Zod + rate limit)
+- `src/pages/dashboard/admin/AIAuditTrail.tsx` (new)
+- `src/App.tsx` (route `/dashboard/admin/ai-audit`)
+- 2 migrations (rate_limits + kill_switches tables, increment_ai_rate_limit RPC)
+
+### Defense-in-depth recap (Waves 1 → 2)
+| Layer | Control |
+|---|---|
+| Identity | JWT-only userId derivation (no client trust) |
+| Tenant | requireOrgMember + organization_id filter on every query |
+| Permission | required_role + required_permission re-checked at click time |
+| Ownership | assertOwnership(self/org/any) on every row mutation |
+| Identity spoofing | per-conversation entity ledger; UUIDs must come from find_entity |
+| Approval | hashed confirmation token, constant-time compared, single-use |
+| Schema integrity | Zod params + invariants at boot |
+| Org override | Kill switches; default-deny RLS on audit |
+| Abuse | Rate limits per minute / hour |
+| Visibility | Admin audit trail page with full reasoning + params |

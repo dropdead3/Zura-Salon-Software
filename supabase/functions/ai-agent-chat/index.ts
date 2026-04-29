@@ -14,6 +14,9 @@ import {
 } from "../_shared/capability-runtime.ts";
 // IMPORTANT: importing this file registers all capability handlers.
 import "../_shared/capability-handlers.ts";
+import { validateRegistry } from "../_shared/capability-invariants.ts";
+import { validateCapabilityParams } from "../_shared/capability-zod.ts";
+import { enforceRateLimit, isCapabilityKilled } from "../_shared/capability-rate-limit.ts";
 
 // NOTE: `userId` intentionally removed from the schema. The caller's identity
 // comes ONLY from the verified JWT (requireAuth → user.id). Any client-supplied
@@ -225,10 +228,20 @@ async function dispatchTool(
     if (!cap.mutation) {
       return { result: { error: `"${capId}" is read-only. Use execute_capability instead.` } };
     }
+    // Org-level kill switch.
+    const kill = await isCapabilityKilled(supabase, organizationId, capId);
+    if (kill.killed) {
+      return { result: { error: `"${capId}" has been disabled for this organization${kill.reason ? `: ${kill.reason}` : '.'}` } };
+    }
     const handlers = getCapabilityHandlers(capId);
     if (!handlers?.propose) return { result: { error: `No propose handler registered for "${capId}".` } };
 
-    const params = (args.params as Record<string, unknown>) || {};
+    let params: Record<string, unknown>;
+    try {
+      params = validateCapabilityParams(capId, args.params || {});
+    } catch (e: any) {
+      return { result: { error: e?.message || 'Invalid parameters.' } };
+    }
     const reasoning = (args.reasoning as string | undefined) || null;
 
     // ---------- ENTITY-LEDGER GUARD ----------
@@ -241,6 +254,13 @@ async function dispatchTool(
         console.warn(`[capability-tool] propose blocked — UUID ${uuid} not in entity ledger`);
         return { result: { error: `Refusing to act on identifier "${uuid}" — it was not produced by find_entity in this conversation. Look up the entity first.` } };
       }
+    }
+
+    // ---------- RATE LIMIT (propose bucket) ----------
+    try {
+      await enforceRateLimit(supabase, organizationId, userId, 'propose');
+    } catch (rl: any) {
+      return { result: { error: rl?.message || 'Rate limit exceeded.' } };
     }
 
     try {
@@ -334,7 +354,20 @@ serve(async (req) => {
 
     // ---------- caller roles + capability filtering by user permission ----------
     const roleSet = await loadCallerRoles(supabase, user.id);
-    const capabilities = await loadCapabilitiesForUser(supabase, user.id);
+    const allCapabilities = await loadCapabilitiesForUser(supabase, user.id);
+
+    // ---------- invariants: drop any capability with a broken contract ----------
+    const { disabledIds } = validateRegistry(allCapabilities);
+
+    // ---------- kill switches: drop any capability disabled for this org ----------
+    const { data: killRows } = await supabase
+      .from('ai_capability_kill_switches')
+      .select('capability_id, disabled')
+      .eq('organization_id', orgId)
+      .eq('disabled', true);
+    const killedIds = new Set<string>((killRows || []).map((r: any) => r.capability_id));
+
+    const capabilities = allCapabilities.filter(c => !disabledIds.has(c.id) && !killedIds.has(c.id));
 
     // ---------- system prompt ----------
     let systemPrompt = buildSystemPrompt(capabilities);

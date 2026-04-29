@@ -14,6 +14,9 @@ import {
 } from "../_shared/capability-runtime.ts";
 // IMPORTANT: importing this file registers all capability handlers.
 import "../_shared/capability-handlers.ts";
+import { validateCapability } from "../_shared/capability-invariants.ts";
+import { validateCapabilityParams } from "../_shared/capability-zod.ts";
+import { enforceRateLimit, isCapabilityKilled } from "../_shared/capability-rate-limit.ts";
 
 const ExecuteSchema = z.object({
   capability_id: z.string().min(1),
@@ -111,6 +114,42 @@ serve(async (req) => {
       });
     }
 
+    // ---------- INVARIANTS: refuse to run capabilities with a broken contract ----------
+    const violations = validateCapability(capability);
+    if (violations.length > 0) {
+      console.error('[execute-ai-action] capability violates invariants:', violations);
+      return new Response(JSON.stringify({ success: false, message: "This capability is misconfigured and has been blocked. Please contact support." }), {
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- KILL SWITCH ----------
+    const kill = await isCapabilityKilled(supabase, orgId, capability_id);
+    if (kill.killed) {
+      return new Response(JSON.stringify({ success: false, message: `This action has been disabled for your organization${kill.reason ? `: ${kill.reason}` : '.'}` }), {
+        status: 423, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- ZOD PARAM VALIDATION ----------
+    let validatedParams: Record<string, unknown>;
+    try {
+      validatedParams = validateCapabilityParams(capability_id, params || {});
+    } catch (e: any) {
+      return new Response(JSON.stringify({ success: false, message: e?.message || 'Invalid parameters.' }), {
+        status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- RATE LIMIT (execute bucket) ----------
+    try {
+      await enforceRateLimit(supabase, orgId, user.id, 'execute');
+    } catch (rl: any) {
+      return new Response(JSON.stringify({ success: false, message: rl?.message || 'Rate limit exceeded.' }), {
+        status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     // ---------- HIGH-RISK CONFIRMATION TOKEN — verify against stored hash ----------
     if (capability.risk_level === 'high' && capability.confirmation_token_field) {
       if (!confirmation_token || !confirmation_token.trim()) {
@@ -165,11 +204,11 @@ serve(async (req) => {
     try {
       if (handlers?.execute) {
         result = await handlers.execute({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
+          supabase, organizationId: orgId, userId: user.id, capability, params: validatedParams, roleSet,
         });
       } else if (handlers?.read) {
         const r = await handlers.read({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
+          supabase, organizationId: orgId, userId: user.id, capability, params: validatedParams, roleSet,
         });
         result = { success: true, message: r.message || "Done.", data: r.data };
       } else {
@@ -193,7 +232,7 @@ serve(async (req) => {
         organization_id: orgId,
         user_id: user.id,
         capability_id,
-        params: params || {},
+        params: validatedParams,
         status: result.success ? 'executed' : 'failed',
         result: result.data ?? result.message,
         error: result.success ? null : result.message,
