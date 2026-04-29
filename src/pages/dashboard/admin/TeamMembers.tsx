@@ -298,6 +298,33 @@ export default function TeamMembers() {
   }, [filtered]);
 
   /**
+   * Most-frequently-assigned non-elevated role across active members.
+   * Used by QuickAssignRoleChip to default-select the likely intent
+   * (so a single Enter assigns it). Excludes admin/super_admin since
+   * those require explicit elevation via separate approval flow.
+   * Falls back to `stylist` when no signal exists yet.
+   */
+  const suggestedRole = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of members ?? []) {
+      if (!m.is_active) continue;
+      for (const r of m.roles ?? []) {
+        if (r === 'admin' || r === 'super_admin') continue;
+        counts.set(r, (counts.get(r) ?? 0) + 1);
+      }
+    }
+    let best: string | null = null;
+    let bestCount = 0;
+    for (const [role, count] of counts) {
+      if (count > bestCount) {
+        best = role;
+        bestCount = count;
+      }
+    }
+    return best ?? 'stylist';
+  }, [members]);
+
+  /**
    * Build the Stylist section's nested sub-groups by level.
    * Sub-headings follow the org's configured `display_order` from `stylist_levels`.
    * Stylists with no level fall into "Unassigned".
@@ -556,6 +583,7 @@ export default function TeamMembers() {
                             <QuickAssignRoleChip
                               userId={m.user_id}
                               userName={m.display_name || m.full_name || 'this member'}
+                              suggestedRole={suggestedRole}
                             />
                           }
                         />
