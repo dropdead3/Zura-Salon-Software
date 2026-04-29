@@ -167,3 +167,21 @@ export default function TeamMemberDetail() {
     </DashboardLayout>
   );
 }
+
+function ArchiveLogReceipts({
+  organizationId,
+  userId,
+}: {
+  organizationId: string | undefined;
+  userId: string | undefined;
+}) {
+  const { data: logEntry } = useArchiveLogEntry(organizationId, userId);
+  if (!logEntry?.id || !organizationId) return null;
+  return (
+    <ArchiveDeliveryReceiptCard
+      organizationId={organizationId}
+      archiveLogId={logEntry.id}
+      archivedAt={logEntry.archived_at}
+    />
+  );
+}
