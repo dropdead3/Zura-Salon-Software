@@ -341,7 +341,41 @@ export function NewBookingSheet({
     switch (step) {
       case 'client': setStep('service'); break;
       case 'service': setStep('datetime'); break;
-      case 'datetime': setStep('confirm'); break;
+      case 'datetime':
+        // Onboarding wave: soft-warn before leaving the staff-selection step
+        // when the chosen stylist has no role assigned (or is archived/inactive).
+        // Operator can dismiss/continue — this is advisory, not a hard block.
+        if (
+          !schedulability.schedulable &&
+          schedulability.warning &&
+          !schedulabilityAcknowledged
+        ) {
+          // Dev-only suppression log per visibility-contract doctrine.
+          if (import.meta.env.DEV) {
+            console.info('[staff-schedulability.warned]', {
+              userId: selectedStylist,
+              reason: schedulability.reason,
+              surface: 'NewBookingSheet',
+            });
+          }
+          toast.warning(schedulability.warning, {
+            description:
+              schedulability.reason === 'no_roles'
+                ? 'Click Continue again to schedule anyway, or assign a role first.'
+                : undefined,
+            action: {
+              label: 'Continue anyway',
+              onClick: () => {
+                setSchedulabilityAcknowledged(true);
+                setStep('confirm');
+              },
+            },
+            duration: 8000,
+          });
+          return;
+        }
+        setStep('confirm');
+        break;
       case 'confirm':
         // Wave 7: gate-with-override — if client has unsigned required forms, intercept.
         if (unsignedRequiredForms.length > 0) {
