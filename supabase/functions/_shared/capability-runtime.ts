@@ -173,16 +173,18 @@ export async function loadCapabilitiesForUser(
 
   if (error || !caps) return [];
 
-  // Fetch caller roles + permissions once.
-  const [{ data: roleRows }, { data: permRows }] = await Promise.all([
+  // Fetch caller roles + permissions + Account Owner flag once.
+  const [{ data: roleRows }, { data: permRows }, { data: prof }] = await Promise.all([
     supabase.from('user_roles').select('role').eq('user_id', userId),
     supabase
       .from('user_roles')
       .select('role, role_permissions:role_permissions!inner(permission_id, permissions:permission_id(name))')
       .eq('user_id', userId),
+    supabase.from('employee_profiles').select('is_super_admin').eq('user_id', userId).maybeSingle(),
   ]);
 
   const roleSet = new Set<string>((roleRows || []).map((r: any) => r.role));
+  if (prof?.is_super_admin) roleSet.add('super_admin');
   const permSet = new Set<string>();
   (permRows || []).forEach((row: any) => {
     const rps = row?.role_permissions;
