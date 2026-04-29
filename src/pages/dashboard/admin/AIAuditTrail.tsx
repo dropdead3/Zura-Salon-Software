@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, History, Power, RefreshCcw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
-import { useOrganization } from '@/contexts/OrganizationContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { toast } from 'sonner';
@@ -86,7 +86,7 @@ const RISK_COLOR: Record<CapabilityRow['risk_level'], string> = {
 export default function AIAuditTrail() {
   const { roles, isPlatformUser, user } = useAuth();
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
-  const { effectiveOrganization } = useOrganization();
+  const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
 
   const isSuperAdmin = roles.includes('super_admin');
@@ -100,7 +100,7 @@ export default function AIAuditTrail() {
     <DashboardLayout>
       <DashboardPageHeader
         title="AI Audit Trail"
-        subtitle="Every action proposed, approved, executed, or refused by the agent."
+        description="Every action proposed, approved, executed, or refused by the agent."
       />
       <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto">
         <Tabs defaultValue="audit" className="w-full">
