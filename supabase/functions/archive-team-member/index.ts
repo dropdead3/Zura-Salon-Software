@@ -13,6 +13,8 @@ import {
   requireOrgAdmin,
   authErrorResponse,
 } from "../_shared/auth.ts";
+import { sendOrgEmail } from "../_shared/email-sender.ts";
+import { sendSms } from "../_shared/sms-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
