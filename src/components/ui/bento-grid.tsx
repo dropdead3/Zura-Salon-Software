@@ -17,9 +17,9 @@ export function BentoGrid({ children, maxPerRow = 3, gap = 'gap-3', className }:
   // Single row if fits
   if (count <= maxPerRow) {
     return (
-      <div className={cn('flex flex-col sm:flex-row', gap, className)}>
+      <div className={cn('flex flex-col sm:flex-row items-stretch', gap, className)}>
         {items.map((child, i) => (
-          <div key={i} className="flex-1 min-w-0">{child}</div>
+          <div key={i} className="flex-1 min-w-0 flex">{child}</div>
         ))}
       </div>
     );
