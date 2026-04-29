@@ -18,7 +18,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles, Zap,
+  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, Check, X, Info, Sparkles, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -314,7 +314,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       <TooltipProvider delayDuration={150}>
       <div className="flex flex-col h-full">
         {/* Header */}
-        <header className="px-6 pt-6 pb-4 border-b border-border/50">
+        <header className="px-6 pt-6 pb-5 border-b border-border/50 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-display text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -331,6 +331,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
               <X className="h-4 w-4" />
             </Button>
           </div>
+          <ArchiveWizardStepper currentStep={step} />
         </header>
 
         {/* Body */}
@@ -1724,6 +1725,67 @@ function SmartSplitRow({
           One-click reassignment. Each client goes to the teammate with the most capacity who's also qualified for their usual service. You can still override any row.
         </TooltipContent>
       </Tooltip>
+    </div>
+  );
+}
+
+// ============================================================
+// ArchiveWizardStepper — horizontal numbered progress visual.
+// Display-only (validation gates between steps prevent jumps).
+// ============================================================
+
+const STEPPER_STEPS = [
+  { n: 1, label: 'Reason' },
+  { n: 2, label: 'Impact' },
+  { n: 3, label: 'Cleanup' },
+  { n: 4, label: 'Confirm' },
+] as const;
+
+function ArchiveWizardStepper({ currentStep }: { currentStep: 1 | 2 | 3 | 4 }) {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      {STEPPER_STEPS.map((step, idx) => {
+        const isComplete = step.n < currentStep;
+        const isCurrent = step.n === currentStep;
+        const isLast = idx === STEPPER_STEPS.length - 1;
+
+        return (
+          <div key={step.n} className="flex items-center flex-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={cn(
+                  'relative flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-sans font-medium transition-all duration-200 flex-shrink-0',
+                  isComplete && 'bg-primary text-primary-foreground',
+                  isCurrent && 'bg-primary text-primary-foreground ring-4 ring-primary/15',
+                  !isComplete && !isCurrent && 'bg-muted text-muted-foreground border border-border',
+                )}
+              >
+                {isComplete ? <Check className="w-3.5 h-3.5" /> : step.n}
+              </span>
+              <span
+                className={cn(
+                  'font-sans text-xs whitespace-nowrap transition-colors hidden sm:inline',
+                  isCurrent && 'text-foreground font-medium',
+                  isComplete && !isCurrent && 'text-foreground',
+                  !isCurrent && !isComplete && 'text-muted-foreground',
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {!isLast && (
+              <div className="flex-1 px-2 min-w-[8px]">
+                <div
+                  className={cn(
+                    'h-px w-full transition-colors duration-200',
+                    isComplete ? 'bg-primary/60' : 'bg-border',
+                  )}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
