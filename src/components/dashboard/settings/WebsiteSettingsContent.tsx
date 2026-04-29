@@ -57,6 +57,7 @@ import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useW
 // useColorTheme already imported above
 // Website Editor components for embedded editor
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
+import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
@@ -480,10 +481,29 @@ function ThemeTab() {
   const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', effectiveOrganization?.id);
 
   // Editor state
-  const [mode, setMode] = useState<'overview' | 'editor'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, setMode] = useState<'overview' | 'editor'>(
+    searchParams.get('openEditor') === '1' ? 'editor' : 'overview'
+  );
   const [editorTab, setEditorTab] = useState('hero');
+  const [selectedPageId, setSelectedPageId] = useState('home');
   const [showPreview, setShowPreview] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+
+  // Honor ?openEditor=1 from external links (clear it after consuming so refresh = clean)
+  useEffect(() => {
+    if (searchParams.get('openEditor') === '1') {
+      setMode('editor');
+      const next = new URLSearchParams(searchParams);
+      next.delete('openEditor');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Look up the selected page title for the status bar
+  const { data: pagesConfig } = useWebsitePages();
+  const selectedPageTitle = pagesConfig?.pages?.find(p => p.id === selectedPageId)?.title ?? 'Home';
 
   const activeThemeId = activeThemeSetting?.theme_id || 'cream_classic';
   const activeTheme = themes?.find((t) => t.id === activeThemeId);
@@ -581,6 +601,8 @@ function ThemeTab() {
                   <WebsiteEditorSidebar
                     activeTab={editorTab}
                     onTabChange={setEditorTab}
+                    selectedPageId={selectedPageId}
+                    onPageChange={setSelectedPageId}
                   />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
@@ -597,7 +619,9 @@ function ThemeTab() {
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    Editing: {activeTheme?.name ?? 'Theme'}
+                    Editing: <span className="text-foreground font-medium">{selectedPageTitle}</span>
+                    <span className="mx-1.5 opacity-50">•</span>
+                    {TAB_LABELS[editorTab] ?? activeTheme?.name ?? 'Theme'}
                   </span>
                 </div>
                 <div className="flex-1 overflow-auto p-6">
@@ -1112,8 +1136,23 @@ export function WebsiteSettingsContent() {
   const handlePreviewClick = () => {
     if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer');
   };
+
+  // Honor ?tab=theme deep-link (set once on mount); ?openEditor=1 is consumed inside ThemeTab.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') ?? 'general';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleOpenEditor = () => {
+    // Switch to Theme tab and tell ThemeTab to flip into editor mode.
+    setActiveTab('theme');
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'theme');
+    next.set('openEditor', '1');
+    setSearchParams(next, { replace: true });
+  };
+
   return (
-    <Tabs defaultValue="general" className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <TabsList>
           <TabsTrigger value="general" className="gap-1.5">
@@ -1138,11 +1177,9 @@ export function WebsiteSettingsContent() {
           </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size={tokens.button.card} asChild>
-            <a href={dashPath('/admin/website-editor')}>
-              <ExternalLink className="w-4 h-4 mr-1.5" />
-              Editor
-            </a>
+          <Button variant="outline" size={tokens.button.card} onClick={handleOpenEditor}>
+            <ExternalLink className="w-4 h-4 mr-1.5" />
+            Editor
           </Button>
           <Button
             variant="outline"

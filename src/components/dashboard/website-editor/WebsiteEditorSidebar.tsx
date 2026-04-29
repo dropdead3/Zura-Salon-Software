@@ -466,22 +466,31 @@ export function WebsiteEditorSidebar({
         <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider px-1">Editing Page</p>
         <div className="flex items-center gap-2">
           <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
-            <SelectTrigger className="h-8 text-xs flex-1">
+            <SelectTrigger className="h-9 text-xs flex-1 rounded-full">
               <SelectValue placeholder="Select page" />
             </SelectTrigger>
             <SelectContent>
-              {pagesConfig?.pages.map(p => (
-                <SelectItem key={p.id} value={p.id}>
+              {pagesConfig?.pages?.length ? (
+                pagesConfig.pages.map(p => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-3 w-3" />
+                      <span>{p.title}</span>
+                      {!p.enabled && <span className="text-muted-foreground">(disabled)</span>}
+                    </div>
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="home">
                   <div className="flex items-center gap-2">
                     <FileText className="h-3 w-3" />
-                    <span>{p.title}</span>
-                    {!p.enabled && <span className="text-muted-foreground">(disabled)</span>}
+                    <span>Home</span>
                   </div>
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={onAddPage} title="Add Page">
+          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-full" onClick={onAddPage} title="Add Page">
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
