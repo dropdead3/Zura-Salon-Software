@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Mail, MessageSquare, AlertTriangle, Eye, Inbox } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useArchiveDeliveryReceipts } from '@/hooks/useArchiveDeliveryReceipts';
+import { IdentityBlock } from '@/components/dashboard/team-members/IdentityBlock';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +13,9 @@ interface Props {
   organizationId: string;
   archiveLogId: string;
   archivedAt: string;
+  fullName?: string;
+  employeeId?: string | null;
+  hireDate?: string | null;
 }
 
 /**
