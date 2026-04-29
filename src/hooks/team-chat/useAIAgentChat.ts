@@ -89,7 +89,6 @@ export function useAIAgentChat() {
       const { data, error } = await supabase.functions.invoke('ai-agent-chat', {
         body: {
           messages: history,
-          userId: user.id,
           organizationId: effectiveOrganization?.id,
         },
       });
