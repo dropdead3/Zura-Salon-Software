@@ -32,6 +32,7 @@ import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeats
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { QuickAssignRoleChip } from '@/components/dashboard/team-members/QuickAssignRoleChip';
+import { ArchiveMemberChip } from '@/components/dashboard/team-members/ArchiveMemberChip';
 
 type TeamView = 'roster' | 'invitations' | 'archived';
 const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
@@ -541,6 +542,7 @@ export default function TeamMembers() {
                                     user={m}
                                     hasPin={pinByUser.get(m.user_id)}
                                     onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                                    trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
                                   />
                                 ))}
                               </div>
@@ -555,6 +557,7 @@ export default function TeamMembers() {
                               user={m}
                               hasPin={pinByUser.get(m.user_id)}
                               onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                              trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
                             />
                           ))}
                         </div>
@@ -580,11 +583,14 @@ export default function TeamMembers() {
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
                           trailingSlot={
-                            <QuickAssignRoleChip
-                              userId={m.user_id}
-                              userName={m.display_name || m.full_name || 'this member'}
-                              suggestedRole={suggestedRole}
-                            />
+                            <div className="flex items-center gap-1.5">
+                              <QuickAssignRoleChip
+                                userId={m.user_id}
+                                userName={m.display_name || m.full_name || 'this member'}
+                                suggestedRole={suggestedRole}
+                              />
+                              {canManage && m.is_active && !m.is_super_admin && <ArchiveMemberChip member={m} />}
+                            </div>
                           }
                         />
                       ))}
@@ -605,6 +611,7 @@ export default function TeamMembers() {
                           user={m}
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                          trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
                         />
                       ))}
                     </div>
