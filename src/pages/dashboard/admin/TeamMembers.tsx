@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, AlertCircle, type LucideIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -267,15 +267,18 @@ export default function TeamMembers() {
    */
   const grouped = useMemo(() => {
     const byRole = new Map<string, OrganizationUser[]>();
-    const other: OrganizationUser[] = [];
+    const noRoles: OrganizationUser[] = [];
+    const otherRoles: OrganizationUser[] = [];
     for (const m of filtered) {
       const primary = primaryRoleOf(m.roles);
       if (primary) {
         const arr = byRole.get(primary) ?? [];
         arr.push(m);
         byRole.set(primary, arr);
+      } else if (!m.roles || m.roles.length === 0) {
+        noRoles.push(m);
       } else {
-        other.push(m);
+        otherRoles.push(m);
       }
     }
     const sections = Object.entries(ROLE_RANK)
@@ -287,8 +290,9 @@ export default function TeamMembers() {
         members: (byRole.get(role) ?? []).slice().sort(compareByName),
       }))
       .filter(s => s.members.length > 0);
-    other.sort(compareByName);
-    return { sections, other };
+    noRoles.sort(compareByName);
+    otherRoles.sort(compareByName);
+    return { sections, noRoles, otherRoles };
   }, [filtered]);
 
   /**
