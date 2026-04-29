@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useWebsiteMenus, usePublishMenu, type WebsiteMenu } from './useWebsiteMenus';
-import { useWebsitePages, type WebsitePagesConfig } from './useWebsitePages';
-import { usePageVersions, useSavePageVersion } from './usePageVersions';
+import { useWebsiteMenus, usePublishMenu } from './useWebsiteMenus';
+import { useWebsitePages } from './useWebsitePages';
+import { useSavePageVersion } from './usePageVersions';
+import { useSaveSiteVersion } from './useSiteVersions';
+import { useWebsiteThemeSettings } from './useWebsiteSettings';
+import { useAnnouncementBarSettings } from './useAnnouncementBar';
+import { useSiteSettings } from './useSiteSettings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
 export interface ChangeItem {
   id: string;
-  category: 'navigation' | 'page';
+  category: 'navigation' | 'page' | 'site';
   type: 'added' | 'modified' | 'removed' | 'status_change';
   label: string;
   detail?: string;
@@ -16,12 +20,16 @@ export interface ChangeItem {
 export function useChangelogSummary() {
   const { data: menus } = useWebsiteMenus();
   const { data: pagesConfig } = useWebsitePages();
+  const { data: theme } = useWebsiteThemeSettings();
+  const { data: announcement } = useAnnouncementBarSettings();
+  const { data: footer } = useSiteSettings('website_footer');
 
-  // We track menus and pages that exist — real diff requires version snapshots,
-  // so we surface a simplified summary of what will be published.
+  // Real diff requires version snapshots — we surface a simple
+  // "what will be published" summary based on what currently exists.
   const summary = useMemo(() => {
     const navChanges: ChangeItem[] = [];
     const pageChanges: ChangeItem[] = [];
+    const siteChanges: ChangeItem[] = [];
 
     if (menus && menus.length > 0) {
       menus.forEach(menu => {
@@ -47,13 +55,25 @@ export function useChangelogSummary() {
       });
     }
 
+    if (theme) {
+      siteChanges.push({ id: 'theme', category: 'site', type: 'modified', label: 'Theme', detail: 'Snapshot colors & typography' });
+    }
+    if (footer) {
+      siteChanges.push({ id: 'footer', category: 'site', type: 'modified', label: 'Footer', detail: 'Snapshot footer config' });
+    }
+    if (announcement) {
+      siteChanges.push({ id: 'announcement_bar', category: 'site', type: 'modified', label: 'Announcement Bar', detail: 'Snapshot announcement message' });
+    }
+
+    const totalChanges = navChanges.length + pageChanges.length + siteChanges.length;
     return {
       navChanges,
       pageChanges,
-      hasChanges: navChanges.length > 0 || pageChanges.length > 0,
-      totalChanges: navChanges.length + pageChanges.length,
+      siteChanges,
+      hasChanges: totalChanges > 0,
+      totalChanges,
     };
-  }, [menus, pagesConfig]);
+  }, [menus, pagesConfig, theme, footer, announcement]);
 
   return summary;
 }
@@ -62,9 +82,13 @@ export function usePublishAll() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
   const publishMenu = usePublishMenu();
-  const saveVersion = useSavePageVersion();
+  const savePageVersion = useSavePageVersion();
+  const saveSiteVersion = useSaveSiteVersion();
   const { data: menus } = useWebsiteMenus();
   const { data: pagesConfig } = useWebsitePages();
+  const { data: theme } = useWebsiteThemeSettings();
+  const { data: announcement } = useAnnouncementBarSettings();
+  const { data: footer } = useSiteSettings('website_footer');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -84,12 +108,35 @@ export function usePublishAll() {
       // 2. Save page version snapshots
       if (pagesConfig?.pages) {
         for (const page of pagesConfig.pages) {
-          await saveVersion.mutateAsync({
+          await savePageVersion.mutateAsync({
             page,
             organizationId: orgId,
             changeSummary: 'Bulk publish via changelog',
           });
         }
+      }
+
+      // 3. Save site-wide surface snapshots
+      if (theme) {
+        await saveSiteVersion.mutateAsync({
+          surface: 'theme',
+          snapshot: theme,
+          changeSummary: 'Bulk publish via changelog',
+        });
+      }
+      if (footer) {
+        await saveSiteVersion.mutateAsync({
+          surface: 'footer',
+          snapshot: footer,
+          changeSummary: 'Bulk publish via changelog',
+        });
+      }
+      if (announcement) {
+        await saveSiteVersion.mutateAsync({
+          surface: 'announcement_bar',
+          snapshot: announcement,
+          changeSummary: 'Bulk publish via changelog',
+        });
       }
     },
     onSuccess: () => {
@@ -97,6 +144,7 @@ export function usePublishAll() {
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
       queryClient.invalidateQueries({ queryKey: ['published-menu'] });
       queryClient.invalidateQueries({ queryKey: ['page-versions'] });
+      queryClient.invalidateQueries({ queryKey: ['site-versions'] });
     },
   });
 }

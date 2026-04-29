@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Navigation, FileText, Loader2, Check, Globe } from 'lucide-react';
+import { Navigation, FileText, Loader2, Check, Globe, Palette } from 'lucide-react';
 import { useChangelogSummary, usePublishAll } from '@/hooks/usePublishChangelog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ interface PublishChangelogProps {
 }
 
 export function PublishChangelog({ open, onOpenChange }: PublishChangelogProps) {
-  const { navChanges, pageChanges, totalChanges } = useChangelogSummary();
+  const { navChanges, pageChanges, siteChanges, totalChanges } = useChangelogSummary();
   const publishAll = usePublishAll();
   const [done, setDone] = useState(false);
 
@@ -87,6 +87,26 @@ export function PublishChangelog({ open, onOpenChange }: PublishChangelogProps) 
                       "w-1.5 h-1.5 rounded-full shrink-0",
                       c.type === 'status_change' ? "bg-muted-foreground/40" : "bg-primary/60"
                     )} />
+                    <span>{c.label}</span>
+                    {c.detail && <span className="text-muted-foreground/60">— {c.detail}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Site-wide Changes */}
+          {siteChanges.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Site-wide</span>
+                <Badge variant="secondary" className="text-[10px] h-5">{siteChanges.length}</Badge>
+              </div>
+              <div className="space-y-1 pl-6">
+                {siteChanges.map(c => (
+                  <div key={c.id} className="text-xs text-muted-foreground flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
                     <span>{c.label}</span>
                     {c.detail && <span className="text-muted-foreground/60">— {c.detail}</span>}
                   </div>
