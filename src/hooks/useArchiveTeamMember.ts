@@ -1,0 +1,140 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+// ----- Types -----
+
+export type ArchiveBucketKey =
+  | 'appointments'
+  | 'service_assignments'
+  | 'appointment_assistants'
+  | 'assistant_requests'
+  | 'operational_tasks'
+  | 'seo_tasks'
+  | 'shift_swaps'
+  | 'meeting_requests'
+  | 'employee_location_schedules'
+  | 'client_preferences'
+  | 'walk_in_queue';
+
+export type ArchiveAction = 'reassign' | 'cancel' | 'drop' | 'end_date';
+
+export type DestinationRole = 'stylist' | 'stylist_assistant' | 'manager' | 'any';
+
+export interface DependencyBucket {
+  key: ArchiveBucketKey;
+  label: string;
+  count: number;
+  items: Array<Record<string, unknown>>;
+  destinationRole: DestinationRole;
+  actions: ArchiveAction[];
+}
+
+export interface DependencyScan {
+  userId: string;
+  organizationId: string;
+  scannedAt: string;
+  totalBlocking: number;
+  buckets: DependencyBucket[];
+}
+
+export interface Reassignment {
+  bucket: ArchiveBucketKey;
+  itemId: string;
+  destinationUserId: string | null;
+  action: ArchiveAction;
+}
+
+// ----- Hooks -----
+
+export function useScanTeamMemberDependencies(
+  organizationId: string | undefined,
+  userId: string | undefined,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['team-member-archive-scan', organizationId, userId],
+    queryFn: async (): Promise<DependencyScan> => {
+      const { data, error } = await supabase.functions.invoke(
+        'scan-team-member-dependencies',
+        { body: { organizationId, userId } },
+      );
+      if (error) throw error;
+      return data as DependencyScan;
+    },
+    enabled: enabled && !!organizationId && !!userId,
+    staleTime: 30_000,
+  });
+}
+
+export function useArchiveTeamMember(organizationId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      userId: string;
+      reason: string;
+      effectiveDate?: string;
+      reassignments: Reassignment[];
+    }) => {
+      const { data, error } = await supabase.functions.invoke(
+        'archive-team-member',
+        { body: { organizationId, ...input } },
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['organization-users', organizationId] });
+      qc.invalidateQueries({ queryKey: ['team-member-archive-log', organizationId] });
+      toast.success('Team member archived');
+    },
+    onError: (err: Error) => {
+      toast.error('Archive failed', { description: err.message });
+    },
+  });
+}
+
+export function useUnarchiveTeamMember(organizationId: string | undefined) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke(
+        'unarchive-team-member',
+        { body: { organizationId, userId } },
+      );
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['organization-users', organizationId] });
+      qc.invalidateQueries({ queryKey: ['team-member-archive-log', organizationId] });
+      toast.success('Team member un-archived');
+    },
+    onError: (err: Error) => {
+      toast.error('Un-archive failed', { description: err.message });
+    },
+  });
+}
+
+export function useArchiveLogEntry(
+  organizationId: string | undefined,
+  userId: string | undefined,
+) {
+  return useQuery({
+    queryKey: ['team-member-archive-log', organizationId, userId],
+    queryFn: async () => {
+      if (!organizationId || !userId) return null;
+      const { data, error } = await supabase
+        .from('team_member_archive_log')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('user_id', userId)
+        .order('archived_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organizationId && !!userId,
+  });
+}
