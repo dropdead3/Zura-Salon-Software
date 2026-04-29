@@ -619,7 +619,9 @@ function ThemeTab() {
                     </Button>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    Editing: {activeTheme?.name ?? 'Theme'}
+                    Editing: <span className="text-foreground font-medium">{selectedPageTitle}</span>
+                    <span className="mx-1.5 opacity-50">•</span>
+                    {TAB_LABELS[editorTab] ?? activeTheme?.name ?? 'Theme'}
                   </span>
                 </div>
                 <div className="flex-1 overflow-auto p-6">
