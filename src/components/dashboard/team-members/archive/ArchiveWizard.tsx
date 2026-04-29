@@ -302,6 +302,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   // ---------- render ----------
 
   const name = member.display_name || member.full_name || 'this team member';
+  const fullName = member.full_name || member.display_name || 'this team member';
+  const employeeId = member.user_id ? member.user_id.slice(-8).toUpperCase() : null;
 
   return (
     <PremiumFloatingPanel
@@ -316,14 +318,20 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
         {/* Header */}
         <header className="px-6 pt-6 pb-5 border-b border-border/50 space-y-4">
           <div className="flex items-start justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="font-display text-xs tracking-[0.18em] text-muted-foreground uppercase">
                 Archive · Step {step} of 4
               </p>
-              <h2 className="font-display text-xl tracking-wide mt-1">
-                ARCHIVE {name.toUpperCase()}
+              <h2 className="font-display text-xl tracking-wide mt-1 truncate">
+                ARCHIVE {fullName.toUpperCase()}
               </h2>
-              <p className="font-sans text-xs text-muted-foreground mt-1">
+              {employeeId && (
+                <p className="font-sans text-[11px] text-muted-foreground mt-1 flex items-center gap-2">
+                  <span className="font-display tracking-[0.12em] uppercase">Employee ID</span>
+                  <span className="font-mono text-foreground/80 tracking-wider">{employeeId}</span>
+                </p>
+              )}
+              <p className="font-sans text-xs text-muted-foreground mt-1.5">
                 Historical data is preserved. You can un-archive within 90 days.
               </p>
             </div>
