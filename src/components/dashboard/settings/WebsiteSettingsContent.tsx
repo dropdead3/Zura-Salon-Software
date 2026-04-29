@@ -788,7 +788,6 @@ function BookingTab() {
 // ─── Retail Tab ───
 function RetailTab() {
   const { data: settings, isLoading } = useWebsiteRetailSettings();
-  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
   const updateRetail = useUpdateWebsiteRetailSettings();
   const { toast } = useToast();
   const [local, setLocal] = useState<WebsiteRetailSettings>({
