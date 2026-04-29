@@ -382,6 +382,62 @@ export type Database = {
           },
         ]
       }
+      ai_action_audit: {
+        Row: {
+          capability_id: string
+          conversation_id: string | null
+          created_at: string
+          error: string | null
+          executed_at: string | null
+          id: string
+          message_id: string | null
+          organization_id: string
+          params: Json
+          reasoning: string | null
+          result: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          capability_id: string
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          message_id?: string | null
+          organization_id: string
+          params?: Json
+          reasoning?: string | null
+          result?: Json | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          capability_id?: string
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          executed_at?: string | null
+          id?: string
+          message_id?: string | null
+          organization_id?: string
+          params?: Json
+          reasoning?: string | null
+          result?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_action_audit_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_actions: {
         Row: {
           action_params: Json
@@ -482,6 +538,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_capabilities: {
+        Row: {
+          category: string
+          confirmation_token_field: string | null
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          id: string
+          mutation: boolean
+          param_schema: Json
+          preview_template: string | null
+          required_permission: string | null
+          required_role: Database["public"]["Enums"]["app_role"][] | null
+          risk_level: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          confirmation_token_field?: string | null
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          id: string
+          mutation?: boolean
+          param_schema?: Json
+          preview_template?: string | null
+          required_permission?: string | null
+          required_role?: Database["public"]["Enums"]["app_role"][] | null
+          risk_level?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          confirmation_token_field?: string | null
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          id?: string
+          mutation?: boolean
+          param_schema?: Json
+          preview_template?: string | null
+          required_permission?: string | null
+          required_role?: Database["public"]["Enums"]["app_role"][] | null
+          risk_level?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       ai_personal_insights: {
         Row: {
