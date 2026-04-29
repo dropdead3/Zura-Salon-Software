@@ -228,10 +228,20 @@ async function dispatchTool(
     if (!cap.mutation) {
       return { result: { error: `"${capId}" is read-only. Use execute_capability instead.` } };
     }
+    // Org-level kill switch.
+    const kill = await isCapabilityKilled(supabase, organizationId, capId);
+    if (kill.killed) {
+      return { result: { error: `"${capId}" has been disabled for this organization${kill.reason ? `: ${kill.reason}` : '.'}` } };
+    }
     const handlers = getCapabilityHandlers(capId);
     if (!handlers?.propose) return { result: { error: `No propose handler registered for "${capId}".` } };
 
-    const params = (args.params as Record<string, unknown>) || {};
+    let params: Record<string, unknown>;
+    try {
+      params = validateCapabilityParams(capId, args.params || {});
+    } catch (e: any) {
+      return { result: { error: e?.message || 'Invalid parameters.' } };
+    }
     const reasoning = (args.reasoning as string | undefined) || null;
 
     // ---------- ENTITY-LEDGER GUARD ----------
@@ -244,6 +254,13 @@ async function dispatchTool(
         console.warn(`[capability-tool] propose blocked — UUID ${uuid} not in entity ledger`);
         return { result: { error: `Refusing to act on identifier "${uuid}" — it was not produced by find_entity in this conversation. Look up the entity first.` } };
       }
+    }
+
+    // ---------- RATE LIMIT (propose bucket) ----------
+    try {
+      await enforceRateLimit(supabase, organizationId, userId, 'propose');
+    } catch (rl: any) {
+      return { result: { error: rl?.message || 'Rate limit exceeded.' } };
     }
 
     try {
