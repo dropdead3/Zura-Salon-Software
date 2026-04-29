@@ -5,13 +5,35 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { validateBody, ValidationError, z } from "../_shared/validation.ts";
 
 const ExecuteActionSchema = z.object({
-  actionType: z.enum(["reschedule", "cancel", "confirm", "no_show"]),
+  actionType: z.enum([
+    "reschedule",
+    "cancel",
+    "confirm",
+    "no_show",
+    "deactivate_team_member",
+    "reactivate_team_member",
+  ]),
   params: z.record(z.unknown()),
   userId: z.string().uuid().optional(),
   organizationId: z.string().uuid().optional(),
   organization_id: z.string().uuid().optional(),
   actionId: z.string().uuid().optional(),
 });
+
+const HR_ACTION_TYPES = new Set(["deactivate_team_member", "reactivate_team_member"]);
+
+async function callerCanManageTeam(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  callerUserId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', callerUserId);
+  if (error || !data) return false;
+  return data.some((r: { role: string }) => r.role === 'admin' || r.role === 'super_admin');
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -158,6 +180,75 @@ serve(async (req) => {
         result = { 
           success: true, 
           message: `Successfully cancelled ${appointment.client_name}'s appointment` 
+        };
+        break;
+      }
+
+      case 'deactivate_team_member':
+      case 'reactivate_team_member': {
+        const orgId = (body.organizationId || body.organization_id)!;
+        const targetUserId = params.user_id as string | undefined;
+        const setActive = actionType === 'reactivate_team_member';
+
+        if (!targetUserId) {
+          result = { success: false, message: 'user_id is required.' };
+          break;
+        }
+
+        const canManage = await callerCanManageTeam(supabase, user.id);
+        if (!canManage) {
+          result = { success: false, message: 'You need an admin or owner role to manage team members.' };
+          break;
+        }
+
+        if (targetUserId === user.id) {
+          result = { success: false, message: 'You cannot change your own active status from chat.' };
+          break;
+        }
+
+        const { data: target, error: targetErr } = await supabase
+          .from('employee_profiles')
+          .select('user_id, full_name, display_name, is_active, is_super_admin, organization_id')
+          .eq('user_id', targetUserId)
+          .eq('organization_id', orgId)
+          .maybeSingle();
+
+        if (targetErr || !target) {
+          result = { success: false, message: 'Team member not found in this organization.' };
+          break;
+        }
+
+        if (target.is_super_admin && !setActive) {
+          result = { success: false, message: 'The Account Owner cannot be deactivated through chat. Use Settings → Team Members.' };
+          break;
+        }
+
+        if (target.is_active === setActive) {
+          result = { success: false, message: `${target.display_name || target.full_name} is already ${setActive ? 'active' : 'inactive'}.` };
+          break;
+        }
+
+        const { error: updateErr } = await supabase
+          .from('employee_profiles')
+          .update({ is_active: setActive })
+          .eq('user_id', targetUserId)
+          .eq('organization_id', orgId);
+
+        if (updateErr) {
+          console.error('Team-member status update error:', updateErr);
+          result = { success: false, message: `Failed to ${setActive ? 'reactivate' : 'deactivate'} team member.` };
+          break;
+        }
+
+        result = {
+          success: true,
+          message: setActive
+            ? `Reactivated ${target.display_name || target.full_name}. They can log in and be assigned work again.`
+            : `Deactivated ${target.display_name || target.full_name}. Login revoked, historical data preserved.`,
+          data: {
+            target_user_id: targetUserId,
+            new_is_active: setActive,
+          },
         };
         break;
       }

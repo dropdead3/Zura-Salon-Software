@@ -17,16 +17,28 @@ const AgentChatSchema = z.object({
   userRole: z.string().max(50).optional(),
 });
 
-const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, and check availability. You are friendly, efficient, and professional.
-
-When users ask you to perform actions, use the available tools to help them. Always confirm destructive actions before executing them.
+const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, check availability, and perform reversible HR actions like deactivating a team member when someone leaves the organization. You are friendly, efficient, and professional.
 
 Today's date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
 For appointment times, use 12-hour format (e.g., "3:00 PM").
 For dates, be flexible - understand "tomorrow", "next Tuesday", etc.
 
-When proposing changes like rescheduling or cancelling, always show the user what will happen and wait for their confirmation.`;
+AUTONOMY TIERS — these are non-negotiable:
+
+TIER 1 — Read-only lookups: execute directly, no confirmation needed (search_clients, get_client_appointments, check_availability, get_my_schedule, find_team_member).
+
+TIER 2 — Reversible mutations: ALWAYS use a propose_* tool. Never mutate directly. The proposal returns a structured preview that the human confirms with one click. This includes: rescheduling, cancelling appointments, deactivating a team member, removing a team member from the organization.
+
+TIER 3 — FORBIDDEN. You must refuse and explain that a human owner must do this in the relevant settings page. This includes: setting commission percentages, changing pay structure, firing someone for cause (you can only mark a profile as inactive — actual termination paperwork is off-limits), promotions/demotions, deleting historical data, changing pricing, modifying RLS or permissions.
+
+DISAMBIGUATION RULE: When the user names a person ambiguously (e.g. "Chelsea" and there are two people named Chelsea), call find_team_member first, then ASK the user which one they mean before proposing any action. Never guess.
+
+INTENT INTERPRETATION FOR HR:
+- "X was fired" / "X quit" / "X is no longer with us" → propose_deactivate_team_member (reversible, preserves history). Do NOT propose remove unless the user explicitly says "remove from organization" or "delete their access entirely."
+- "Bring X back" / "X is returning" → propose_reactivate_team_member.
+- If the user asks you to "fire" or "terminate" someone, clarify: you can deactivate their profile (revokes login, preserves data) but actual termination paperwork is a Tier 3 action.`;
+
 
 const TOOLS = [
   {
@@ -168,6 +180,52 @@ const TOOLS = [
           }
         },
         required: []
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "find_team_member",
+      description: "Look up a team member by name. Returns matching staff with their id, role, active status, and counts of upcoming appointments. ALWAYS call this first before proposing any HR action so you have a verified user_id and can disambiguate when multiple people share a first name.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "The team member's name or partial name (first, last, or both)."
+          }
+        },
+        required: ["name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_deactivate_team_member",
+      description: "Propose deactivating a team member's profile (revokes login, blocks new assignments, preserves all historical data). REVERSIBLE. Use this when someone leaves the organization. Returns a preview the human must confirm.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." },
+          reason: { type: "string", description: "Optional short reason captured for the audit log (e.g. 'left the salon', 'no longer employed')." }
+        },
+        required: ["user_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_reactivate_team_member",
+      description: "Propose reactivating a previously deactivated team member's profile (restores login and assignment eligibility). Use when someone is returning.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." }
+        },
+        required: ["user_id"]
       }
     }
   }
@@ -372,6 +430,131 @@ async function executeToolCall(
             appointment_id: appointment.id
           }
         }
+      };
+    }
+
+    case "find_team_member": {
+      const name = (args.name as string || '').trim();
+      if (!name) return { result: { error: "Provide a name to search for." } };
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: profiles, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin')
+        .eq('organization_id', organizationId)
+        .or(`full_name.ilike.%${name}%,display_name.ilike.%${name}%`)
+        .limit(8);
+
+      if (error) throw error;
+      if (!profiles?.length) return { result: { matches: [], message: `No team member found matching "${name}".` } };
+
+      const userIds = profiles.map((p: any) => p.user_id);
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      const { data: appts } = await supabase
+        .from('appointments')
+        .select('staff_user_id')
+        .in('staff_user_id', userIds)
+        .gte('appointment_date', today)
+        .neq('status', 'cancelled');
+
+      const apptCounts: Record<string, number> = {};
+      (appts || []).forEach((a: any) => { apptCounts[a.staff_user_id] = (apptCounts[a.staff_user_id] || 0) + 1; });
+      const rolesByUser: Record<string, string[]> = {};
+      (roles || []).forEach((r: any) => { (rolesByUser[r.user_id] ||= []).push(r.role); });
+
+      const matches = profiles.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        display_name: p.display_name,
+        hire_date: p.hire_date,
+        is_active: p.is_active,
+        is_account_owner: !!p.is_super_admin,
+        roles: rolesByUser[p.user_id] || [],
+        upcoming_appointment_count: apptCounts[p.user_id] || 0,
+      }));
+
+      return { result: { matches, message: matches.length === 1 ? "Found one match." : `Found ${matches.length} matches — confirm which person before proposing any action.` } };
+    }
+
+    case "propose_deactivate_team_member": {
+      const userIdArg = args.user_id as string | undefined;
+      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
+
+      const { data: profile, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin, organization_id')
+        .eq('user_id', userIdArg)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!profile) return { result: { error: "That team member is not in this organization." } };
+      if (profile.is_super_admin) return { result: { error: "The Account Owner cannot be deactivated through chat. This must be handled in Settings by another owner." } };
+      if (profile.user_id === userId) return { result: { error: "You cannot deactivate your own account." } };
+      if (profile.is_active === false) return { result: { error: `${profile.display_name || profile.full_name} is already inactive.` } };
+
+      const today = new Date().toISOString().split('T')[0];
+      const { count: upcomingCount } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('staff_user_id', profile.user_id)
+        .gte('appointment_date', today)
+        .neq('status', 'cancelled');
+
+      return {
+        result: { message: "I've prepared the deactivation. Please confirm below." },
+        action: {
+          type: 'deactivate_team_member',
+          status: 'pending_confirmation',
+          preview: {
+            title: 'Deactivate Team Member',
+            description: `${profile.display_name || profile.full_name} will lose login access and stop receiving new assignments. Their historical data is preserved and the action is reversible.`,
+            target: {
+              name: profile.display_name || profile.full_name,
+              hire_date: profile.hire_date,
+              upcoming_appointments: upcomingCount || 0,
+              reason: (args.reason as string | undefined) || null,
+            },
+          },
+          params: {
+            user_id: profile.user_id,
+            reason: (args.reason as string | undefined) || null,
+          },
+        },
+      };
+    }
+
+    case "propose_reactivate_team_member": {
+      const userIdArg = args.user_id as string | undefined;
+      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
+
+      const { data: profile, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, is_active, organization_id')
+        .eq('user_id', userIdArg)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!profile) return { result: { error: "That team member is not in this organization." } };
+      if (profile.is_active === true) return { result: { error: `${profile.display_name || profile.full_name} is already active.` } };
+
+      return {
+        result: { message: "I've prepared the reactivation. Please confirm below." },
+        action: {
+          type: 'reactivate_team_member',
+          status: 'pending_confirmation',
+          preview: {
+            title: 'Reactivate Team Member',
+            description: `${profile.display_name || profile.full_name} will regain login access and be eligible for new assignments.`,
+            target: { name: profile.display_name || profile.full_name },
+          },
+          params: { user_id: profile.user_id },
+        },
       };
     }
 
