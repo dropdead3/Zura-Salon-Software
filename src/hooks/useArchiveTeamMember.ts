@@ -30,6 +30,23 @@ export interface DependencyBucket {
   actions: ArchiveAction[];
 }
 
+export interface ServiceRef {
+  id: string | null;
+  name: string;
+}
+
+export interface EligibleStylist {
+  user_id: string;
+  display_name: string | null;
+  full_name: string | null;
+  stylist_level: string | null;
+  location_id: string | null;
+  hire_date: string | null;
+  /** 14-element array, daily appointment counts starting today. */
+  daily_load: number[];
+  qualified_service_ids: string[];
+}
+
 export interface DependencyScan {
   userId: string;
   organizationId: string;
@@ -37,6 +54,8 @@ export interface DependencyScan {
   totalBlocking: number;
   /** Stylist level of the archived user, used to recommend same-level successors. */
   stylistLevelOfArchived?: string | null;
+  /** Server-computed roster with capacity + skills baked in. */
+  eligibleStylists?: EligibleStylist[];
   buckets: DependencyBucket[];
 }
 
@@ -49,8 +68,13 @@ export interface ClientPreferenceItem {
   last_visit_with_stylist: string | null;
   visit_count: number;
   avg_ticket: number;
-  top_services: string[];
+  /** Top 3 service refs for this client with the archived stylist (id may be null
+   *  when the historical service_name no longer maps to a current `services` row). */
+  top_services: Array<ServiceRef | string>;
   location_id: string | null;
+  /** Reachability flags for Step 4 client soft-notify triage. */
+  has_email?: boolean;
+  has_phone?: boolean;
   recommended_user_id: string | null;
   recommendation_reason: string;
 }
@@ -92,6 +116,7 @@ export function useArchiveTeamMember(organizationId: string | undefined) {
       reason: string;
       effectiveDate?: string;
       reassignments: Reassignment[];
+      notifyReassignedClients?: boolean;
     }) => {
       const { data, error } = await supabase.functions.invoke(
         'archive-team-member',
