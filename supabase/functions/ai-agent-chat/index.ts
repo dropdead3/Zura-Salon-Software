@@ -433,6 +433,131 @@ async function executeToolCall(
       };
     }
 
+    case "find_team_member": {
+      const name = (args.name as string || '').trim();
+      if (!name) return { result: { error: "Provide a name to search for." } };
+      const today = new Date().toISOString().split('T')[0];
+
+      const { data: profiles, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin')
+        .eq('organization_id', organizationId)
+        .or(`full_name.ilike.%${name}%,display_name.ilike.%${name}%`)
+        .limit(8);
+
+      if (error) throw error;
+      if (!profiles?.length) return { result: { matches: [], message: `No team member found matching "${name}".` } };
+
+      const userIds = profiles.map((p: any) => p.user_id);
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      const { data: appts } = await supabase
+        .from('appointments')
+        .select('staff_user_id')
+        .in('staff_user_id', userIds)
+        .gte('appointment_date', today)
+        .neq('status', 'cancelled');
+
+      const apptCounts: Record<string, number> = {};
+      (appts || []).forEach((a: any) => { apptCounts[a.staff_user_id] = (apptCounts[a.staff_user_id] || 0) + 1; });
+      const rolesByUser: Record<string, string[]> = {};
+      (roles || []).forEach((r: any) => { (rolesByUser[r.user_id] ||= []).push(r.role); });
+
+      const matches = profiles.map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        display_name: p.display_name,
+        hire_date: p.hire_date,
+        is_active: p.is_active,
+        is_account_owner: !!p.is_super_admin,
+        roles: rolesByUser[p.user_id] || [],
+        upcoming_appointment_count: apptCounts[p.user_id] || 0,
+      }));
+
+      return { result: { matches, message: matches.length === 1 ? "Found one match." : `Found ${matches.length} matches — confirm which person before proposing any action.` } };
+    }
+
+    case "propose_deactivate_team_member": {
+      const userIdArg = args.user_id as string | undefined;
+      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
+
+      const { data: profile, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin, organization_id')
+        .eq('user_id', userIdArg)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!profile) return { result: { error: "That team member is not in this organization." } };
+      if (profile.is_super_admin) return { result: { error: "The Account Owner cannot be deactivated through chat. This must be handled in Settings by another owner." } };
+      if (profile.user_id === userId) return { result: { error: "You cannot deactivate your own account." } };
+      if (profile.is_active === false) return { result: { error: `${profile.display_name || profile.full_name} is already inactive.` } };
+
+      const today = new Date().toISOString().split('T')[0];
+      const { count: upcomingCount } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('staff_user_id', profile.user_id)
+        .gte('appointment_date', today)
+        .neq('status', 'cancelled');
+
+      return {
+        result: { message: "I've prepared the deactivation. Please confirm below." },
+        action: {
+          type: 'deactivate_team_member',
+          status: 'pending_confirmation',
+          preview: {
+            title: 'Deactivate Team Member',
+            description: `${profile.display_name || profile.full_name} will lose login access and stop receiving new assignments. Their historical data is preserved and the action is reversible.`,
+            target: {
+              name: profile.display_name || profile.full_name,
+              hire_date: profile.hire_date,
+              upcoming_appointments: upcomingCount || 0,
+              reason: (args.reason as string | undefined) || null,
+            },
+          },
+          params: {
+            user_id: profile.user_id,
+            reason: (args.reason as string | undefined) || null,
+          },
+        },
+      };
+    }
+
+    case "propose_reactivate_team_member": {
+      const userIdArg = args.user_id as string | undefined;
+      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
+
+      const { data: profile, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name, is_active, organization_id')
+        .eq('user_id', userIdArg)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!profile) return { result: { error: "That team member is not in this organization." } };
+      if (profile.is_active === true) return { result: { error: `${profile.display_name || profile.full_name} is already active.` } };
+
+      return {
+        result: { message: "I've prepared the reactivation. Please confirm below." },
+        action: {
+          type: 'reactivate_team_member',
+          status: 'pending_confirmation',
+          preview: {
+            title: 'Reactivate Team Member',
+            description: `${profile.display_name || profile.full_name} will regain login access and be eligible for new assignments.`,
+            target: { name: profile.display_name || profile.full_name },
+          },
+          params: { user_id: profile.user_id },
+        },
+      };
+    }
+
     default:
       return { result: { error: `Unknown tool: ${toolName}` } };
   }
