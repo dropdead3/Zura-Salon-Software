@@ -769,7 +769,8 @@ function Step3({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-3" />
-        <p className="font-sans text-sm text-foreground">No reassignments needed.</p>
+        <p className="font-sans text-sm text-foreground">All buckets handled.</p>
+        <p className="font-sans text-xs text-muted-foreground mt-1">Continue to review.</p>
       </div>
     );
   }
