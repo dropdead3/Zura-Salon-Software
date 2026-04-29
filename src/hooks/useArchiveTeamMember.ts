@@ -117,20 +117,29 @@ export function useArchiveTeamMember(organizationId: string | undefined) {
       effectiveDate?: string;
       reassignments: Reassignment[];
       notifyReassignedClients?: boolean;
+      suppressedClientIds?: string[];
     }) => {
       const { data, error } = await supabase.functions.invoke(
         'archive-team-member',
         { body: { organizationId, ...input } },
       );
       if (error) throw error;
-      return data;
+      return data as {
+        ok: boolean;
+        archive_log_id: string;
+        ledger: unknown[];
+        notify_summary?: {
+          internal_pings: number;
+          clients_emailed: number;
+          clients_sms: number;
+          clients_skipped: number;
+        };
+      };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['organization-users', organizationId] });
       qc.invalidateQueries({ queryKey: ['team-member-archive-log', organizationId] });
-      const s = data?.notify_summary as
-        | { internal_pings: number; clients_emailed: number; clients_sms: number; clients_skipped: number }
-        | undefined;
+      const s = data?.notify_summary;
       const clientTotal = (s?.clients_emailed ?? 0) + (s?.clients_sms ?? 0) + (s?.clients_skipped ?? 0);
       const teammates = s?.internal_pings ?? 0;
       const teammateLabel = `${teammates} teammate${teammates === 1 ? '' : 's'}`;
