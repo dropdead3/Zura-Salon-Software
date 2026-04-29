@@ -1100,18 +1100,32 @@ function formatMoney(n: number): string {
 // ============================================================
 
 function ClientPreferenceRow({
-  bucket: b, client, eligible, roster, decided, onItemPick,
+  bucket: b, client, eligible, roster, eligibleStylists, decided, onItemPick,
 }: {
   bucket: DependencyBucket;
   client: ClientPreferenceItem;
   eligible: OrganizationUser[];
   roster: OrganizationUser[];
+  eligibleStylists: EligibleStylist[];
   decided: Reassignment | undefined;
   onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
 }) {
-  const recName = client.recommended_user_id
+  const topServices = normalizeTopServices(client.top_services);
+  const recId = client.recommended_user_id;
+  const recProfile = recId ? eligibleStylists.find((e) => e.user_id === recId) : null;
+  const recQualified = new Set(recProfile?.qualified_service_ids ?? []);
+  // Skill gap: services with a known id that the recommended teammate isn't qualified for.
+  // Only meaningful when the org tracks qualifications at all (recQualified non-empty
+  // OR no qualifications anywhere in the roster — in which case we suppress the warning).
+  const orgUsesQualifications = eligibleStylists.some((e) => e.qualified_service_ids.length > 0);
+  const missingSkills = orgUsesQualifications
+    ? topServices.filter((s) => s.id && !recQualified.has(s.id))
+    : [];
+  const hasSkillGap = missingSkills.length > 0;
+
+  const recName = recId
     ? (() => {
-        const r = roster.find((u) => u.user_id === client.recommended_user_id);
+        const r = roster.find((u) => u.user_id === recId);
         return r?.display_name || r?.full_name || 'Suggested teammate';
       })()
     : null;
@@ -1138,15 +1152,19 @@ function ClientPreferenceRow({
             {' · avg '}
             <BlurredAmount>{formatMoney(client.avg_ticket)}</BlurredAmount>
           </p>
-          {client.top_services.length > 0 && (
+          {topServices.length > 0 && (
             <div className="flex flex-wrap items-center gap-1 mt-1.5">
-              {client.top_services.map((s) => (
+              {topServices.map((s) => (
                 <Badge
-                  key={s}
+                  key={s.name}
                   variant="outline"
-                  className="text-[10px] font-sans normal-case px-1.5 py-0 h-4"
+                  className={cn(
+                    'text-[10px] font-sans normal-case px-1.5 py-0 h-4',
+                    hasSkillGap && missingSkills.some((m) => m.name === s.name) &&
+                      'border-amber-500/40 text-amber-500',
+                  )}
                 >
-                  {s}
+                  {s.name}
                 </Badge>
               ))}
             </div>
@@ -1167,16 +1185,38 @@ function ClientPreferenceRow({
       </div>
 
       {/* Recommendation */}
-      {client.recommended_user_id && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] px-2.5 py-1.5">
+      {recId && (
+        <div
+          className={cn(
+            'flex items-center justify-between gap-3 rounded-lg border px-2.5 py-1.5',
+            hasSkillGap
+              ? 'border-amber-500/30 bg-amber-500/[0.04]'
+              : 'border-emerald-500/20 bg-emerald-500/[0.04]',
+          )}
+        >
           <div className="flex items-center gap-2 min-w-0">
-            <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+            {hasSkillGap ? (
+              <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
+            ) : (
+              <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+            )}
             <div className="min-w-0">
-              <p className="font-display text-[10px] uppercase tracking-wider text-emerald-500">
-                Recommended · {recName}
+              <p
+                className={cn(
+                  'font-display text-[10px] uppercase tracking-wider flex items-center gap-1.5',
+                  hasSkillGap ? 'text-amber-500' : 'text-emerald-500',
+                )}
+              >
+                <span>Recommended · {recName}</span>
+                {recProfile && <CapacitySparkline daily={recProfile.daily_load} />}
               </p>
               <p className="font-sans text-[10px] text-muted-foreground truncate">
                 {client.recommendation_reason}
+                {hasSkillGap && (
+                  <span className="text-amber-500">
+                    {' · Skill gap: '}{missingSkills.slice(0, 2).map((m) => m.name).join(', ')}
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -1185,14 +1225,21 @@ function ClientPreferenceRow({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-6 px-2 text-[11px] text-emerald-500 hover:text-emerald-400 shrink-0"
-                onClick={() => onItemPick(b, client.id, 'reassign', client.recommended_user_id)}
+                className={cn(
+                  'h-6 px-2 text-[11px] shrink-0',
+                  hasSkillGap
+                    ? 'text-amber-500 hover:text-amber-400'
+                    : 'text-emerald-500 hover:text-emerald-400',
+                )}
+                onClick={() => onItemPick(b, client.id, 'reassign', recId)}
               >
                 Use
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[260px] text-xs">
-              {ACTION_TOOLTIPS.use_recommendation}
+            <TooltipContent side="top" className="max-w-[280px] text-xs">
+              {hasSkillGap
+                ? `Heads up — ${recName} isn't qualified for ${missingSkills.map((m) => m.name).join(', ')}. Pick a different teammate or proceed knowing they'll need cross-training.`
+                : ACTION_TOOLTIPS.use_recommendation}
             </TooltipContent>
           </Tooltip>
         </div>
