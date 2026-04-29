@@ -58,5 +58,39 @@ export function useOrgPublicUrl() {
     [customDomain, slug],
   );
 
-  return { publicUrl, customDomain: customDomain ?? null, isUsingCustomDomain, isLoading };
+  const publicPageUrl = useCallback(
+    (
+      pageSlug?: string | null,
+      options?: {
+        preview?: boolean;
+        mode?: 'view' | 'edit';
+      },
+    ) => {
+      const base = publicUrl(pageSlug ? `/${pageSlug.replace(/^\/+/, '')}` : '');
+      if (!base) return null;
+
+      if (!options?.preview && !options?.mode) {
+        return base;
+      }
+
+      const url = new URL(base);
+      if (options.preview) {
+        url.searchParams.set('preview', 'true');
+      }
+      if (options.mode) {
+        url.searchParams.set('mode', options.mode);
+      }
+
+      return url.toString();
+    },
+    [publicUrl],
+  );
+
+  return {
+    publicUrl,
+    publicPageUrl,
+    customDomain: customDomain ?? null,
+    isUsingCustomDomain,
+    isLoading,
+  };
 }

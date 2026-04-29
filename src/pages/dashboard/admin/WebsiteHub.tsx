@@ -139,7 +139,7 @@ export default function WebsiteHub() {
             colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
           />
           <HubCard
-            to={dashPath('/admin/website-hub?tab=theme&openEditor=1')}
+            to={dashPath('/admin/website-hub?tab=theme')}
             icon={FileText}
             title="Pages"
             description="Manage Home, About, Contact, and custom pages"
