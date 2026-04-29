@@ -57,6 +57,7 @@ import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useW
 // useColorTheme already imported above
 // Website Editor components for embedded editor
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
+import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
