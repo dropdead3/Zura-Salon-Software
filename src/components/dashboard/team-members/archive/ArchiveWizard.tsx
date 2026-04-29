@@ -227,7 +227,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
     setPicks((prev) => {
       const next: Record<string, Reassignment> = {};
       // For per-item buckets, write a row per visible item.
-      if (b.items.length > 0 && b.key !== 'client_preferences') {
+      if (b.items.length > 0) {
         for (const it of b.items) {
           const id = (it as { id: string }).id;
           if (!id) continue;
@@ -239,7 +239,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           next['__bulk__'] = { bucket: b.key, itemId: '__bulk__', action, destinationUserId };
         }
       } else {
-        // Bulk-only buckets: client_preferences, schedules with no items, etc.
+        // Truly bulk-only buckets (no items returned).
         next['__bulk__'] = { bucket: b.key, itemId: '__bulk__', action, destinationUserId };
       }
       return { ...prev, [b.key]: next };
@@ -255,7 +255,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       for (const [itemId, r] of Object.entries(m)) {
         // Skip the synthetic '__bulk__' marker for per-item buckets where we
         // already enumerated each item; only keep it for true bulk buckets.
-        if (itemId === '__bulk__' && bucket.items.length > 0 && bucket.key !== 'client_preferences') {
+        if (itemId === '__bulk__' && bucket.items.length > 0) {
           continue;
         }
         out.push(r);
