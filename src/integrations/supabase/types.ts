@@ -30775,6 +30775,7 @@ export type Database = {
           id: string
           organization_id: string
           page_id: string
+          restored_from_version_id: string | null
           saved_at: string
           saved_by: string | null
           snapshot: Json
@@ -30786,6 +30787,7 @@ export type Database = {
           id?: string
           organization_id: string
           page_id: string
+          restored_from_version_id?: string | null
           saved_at?: string
           saved_by?: string | null
           snapshot?: Json
@@ -30797,6 +30799,7 @@ export type Database = {
           id?: string
           organization_id?: string
           page_id?: string
+          restored_from_version_id?: string | null
           saved_at?: string
           saved_by?: string | null
           snapshot?: Json
@@ -30809,6 +30812,67 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_page_versions_restored_from_version_id_fkey"
+            columns: ["restored_from_version_id"]
+            isOneToOne: false
+            referencedRelation: "website_page_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_site_versions: {
+        Row: {
+          change_summary: string | null
+          id: string
+          organization_id: string
+          restored_from_version_id: string | null
+          saved_at: string
+          saved_by: string | null
+          snapshot: Json
+          status: string
+          surface: string
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          id?: string
+          organization_id: string
+          restored_from_version_id?: string | null
+          saved_at?: string
+          saved_by?: string | null
+          snapshot: Json
+          status?: string
+          surface: string
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          id?: string
+          organization_id?: string
+          restored_from_version_id?: string | null
+          saved_at?: string
+          saved_by?: string | null
+          snapshot?: Json
+          status?: string
+          surface?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_site_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_site_versions_restored_from_version_id_fkey"
+            columns: ["restored_from_version_id"]
+            isOneToOne: false
+            referencedRelation: "website_site_versions"
             referencedColumns: ["id"]
           },
         ]
