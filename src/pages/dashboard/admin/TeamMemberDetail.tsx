@@ -10,10 +10,11 @@ import { Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
+import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import { TeamMemberHeader } from '@/components/dashboard/team-members/TeamMemberHeader';
 import { ArchiveDeliveryReceiptCard } from '@/components/dashboard/team-members/archive/ArchiveDeliveryReceiptCard';
 import { useArchiveLogEntry } from '@/hooks/useArchiveTeamMember';
+import { formatEmployeeId, formatHireDate } from '@/lib/employee-identity';
 
 const ProfileTab = lazy(() => import('@/components/dashboard/team-members/tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 const RoleAccessTab = lazy(() => import('@/components/dashboard/team-members/tabs/RoleAccessTab').then(m => ({ default: m.RoleAccessTab })));
