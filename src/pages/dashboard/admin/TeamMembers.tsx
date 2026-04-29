@@ -627,7 +627,7 @@ export default function TeamMembers() {
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
 
         {view === 'archived' && (
-          <ArchivedView orgId={effectiveOrganization?.id} onOpen={(uid) => navigate(dashPath(`/admin/team-members/${uid}`))} />
+          <ArchivedView orgId={effectiveOrganization?.id} onOpen={(uid) => navigate(dashPath(`/admin/team-members/${uid}`))} canManage={canManage} />
         )}
       </div>
 
