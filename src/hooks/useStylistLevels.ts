@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 
 export interface StylistLevel {
   id: string;
@@ -57,8 +58,7 @@ export function useStylistLevelsRealtime() {
 }
 
 export function useStylistLevels() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const orgId = useSettingsOrgId();
 
   useStylistLevelsRealtime();
   
