@@ -15,6 +15,7 @@ export interface OrganizationUser {
   is_active: boolean | null;
   is_super_admin: boolean | null;
   hire_date: string | null;
+  employee_number: string | null;
   stylist_level: string | null;
   location_id: string | null;
   location_ids: string[] | null;
@@ -43,7 +44,7 @@ export function useOrganizationUsers(
       // Get all employee profiles for the organization
       let query = supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, stylist_level, location_id, location_ids, archived_at, archive_reason')
+        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, employee_number, stylist_level, location_id, location_ids, archived_at, archive_reason')
         .eq('organization_id', organizationId)
         .order('full_name');
 
