@@ -375,7 +375,8 @@ function DashboardRoutes() {
       <Route path="admin/services" element={<Navigate to="../website-hub" relative="path" replace />} />
       <Route path="admin/announcement-bar" element={<Navigate to="../website-hub" relative="path" replace />} />
       <Route path="admin/locations" element={<Navigate to="../website-hub" relative="path" replace />} />
-      <Route path="admin/website-sections" element={<Navigate to="../website-hub" relative="path" replace />} />
+      <Route path="admin/website-editor" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteSectionsHub /></ProtectedRoute>} />
+      <Route path="admin/website-sections" element={<Navigate to="../website-editor" relative="path" replace />} />
       <Route path="admin/roles" element={<Navigate to="../access-hub?tab=role-config" relative="path" replace />} />
       <Route path="admin/accounts" element={<Navigate to="../team-members?view=invitations" relative="path" replace />} />
       <Route path="admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />

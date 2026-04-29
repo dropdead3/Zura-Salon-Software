@@ -1139,7 +1139,7 @@ export function WebsiteSettingsContent() {
         </TabsList>
         <div className="flex items-center gap-2">
           <Button variant="outline" size={tokens.button.card} asChild>
-            <a href={dashPath('/admin/website-sections')}>
+            <a href={dashPath('/admin/website-editor')}>
               <ExternalLink className="w-4 h-4 mr-1.5" />
               Editor
             </a>
