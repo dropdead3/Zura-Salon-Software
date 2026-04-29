@@ -495,6 +495,9 @@ function ThemeTab({
   const [selectedPageId, setSelectedPageId] = useState('home');
   const [showPreview, setShowPreview] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { hasChanges } = useChangelogSummary();
 
   useEffect(() => {
     if (!forceOpenEditor) return;
@@ -583,6 +586,27 @@ function ThemeTab({
             <Button
               variant="outline"
               size={tokens.button.card}
+              onClick={() => setHistoryOpen(true)}
+              title="View version history"
+            >
+              <History className="h-4 w-4 mr-1" />
+              History
+            </Button>
+            <Button
+              variant="default"
+              size={tokens.button.card}
+              onClick={() => setPublishOpen(true)}
+              className="relative"
+            >
+              <Globe className="h-4 w-4 mr-1" />
+              Publish Changes
+              {hasChanges && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size={tokens.button.card}
               onClick={() => orgPreviewUrl && window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer')}
               disabled={!orgPreviewUrl}
               title={orgPreviewUrl ?? 'No organization slug available'}
@@ -592,6 +616,9 @@ function ThemeTab({
             </Button>
           </div>
         </div>
+
+        <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
+        <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
         {/* Editor content with sidebar + preview */}
         <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 20rem)' }}>
