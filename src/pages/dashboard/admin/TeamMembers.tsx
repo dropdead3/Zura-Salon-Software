@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
@@ -31,6 +31,7 @@ import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar
 import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeatsDialog';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+import { QuickAssignRoleChip } from '@/components/dashboard/team-members/QuickAssignRoleChip';
 
 type TeamView = 'roster' | 'invitations' | 'archived';
 const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
@@ -91,7 +92,7 @@ function compareByName(a: OrganizationUser, b: OrganizationUser): number {
   return an.localeCompare(bn);
 }
 
-function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void }) {
+function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: OrganizationUser; hasPin: boolean | undefined; onClick: () => void; trailingSlot?: ReactNode }) {
   const name = user.display_name || user.full_name || 'Unnamed';
   const initials = name.split(' ').map(s => s[0]).join('').slice(0, 2).toUpperCase();
   const primaryRole = user.roles?.[0];
@@ -147,6 +148,7 @@ function MemberRow({ user, hasPin, onClick }: { user: OrganizationUser; hasPin: 
           </TooltipContent>
         </Tooltip>
       )}
+      {trailingSlot}
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
     </button>
   );
@@ -348,7 +350,35 @@ export default function TeamMembers() {
           backTo={dashPath('/admin/settings')}
           backLabel="Back to Settings"
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {(() => {
+                // Onboarding completeness: count members with zero roles among active members.
+                // Materiality gate: silent when fully onboarded (visibility contract doctrine).
+                const activeMembers = (members ?? []).filter(m => m.is_active);
+                const missing = activeMembers.filter(m => !m.roles || m.roles.length === 0).length;
+                const total = activeMembers.length;
+                if (missing === 0 || total === 0) return null;
+                const onboarded = total - missing;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('no-roles-section');
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/60 dark:hover:bg-amber-950/40 transition-colors"
+                    aria-label={`${missing} members missing roles — jump to section`}
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    <span className="font-display text-xs uppercase tracking-wider text-foreground">
+                      {onboarded} of {total} onboarded
+                    </span>
+                    <span className="text-xs font-sans text-amber-700 dark:text-amber-400">
+                      · {missing} missing role{missing === 1 ? '' : 's'}
+                    </span>
+                  </button>
+                );
+              })()}
               {isSuperAdmin && !capacity.isLoading && !capacity.users.isUnlimited && (
                 <Button variant="outline" size={tokens.button.card as any} onClick={() => setSeatsDialogOpen(true)} className="gap-1.5">
                   <UserPlus className="h-4 w-4" /> Add seats
@@ -506,7 +536,7 @@ export default function TeamMembers() {
                   );
                 })}
                 {grouped.noRoles.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-3" id="no-roles-section">
                     <div className="flex items-center gap-2 pb-2 border-b border-amber-500/30">
                       <AlertCircle className="h-4 w-4 text-amber-500" />
                       <h2 className="font-display text-sm uppercase tracking-wider text-foreground">No Roles Assigned</h2>
@@ -522,6 +552,12 @@ export default function TeamMembers() {
                           user={m}
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                          trailingSlot={
+                            <QuickAssignRoleChip
+                              userId={m.user_id}
+                              userName={m.display_name || m.full_name || 'this member'}
+                            />
+                          }
                         />
                       ))}
                     </div>

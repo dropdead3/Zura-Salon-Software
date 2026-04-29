@@ -1,62 +1,62 @@
-# Rename "Other Roles" → "No Roles Assigned" (with surfaced warning)
+# Onboarding Completeness — Sequenced Rollout
 
-## The actual bug
+Per doctrine ("P0s ship in separate waves, never bundled"), I'm splitting your four suggestions into two waves. Wave 1 ships the visibility + workflow improvements that are unambiguous and zero-risk. Wave 2 (enforcement + audit log) needs your input first because it touches data-layer guarantees and net-new infrastructure.
 
-The "Other Roles" bucket on **Team Members** and on **Settings → Roles** appears whenever `primaryRoleOf(member.roles)` returns `null`. Since `ROLE_RANK` already covers every operational role in the `app_role` enum, in practice **100% of the members shown there have `roles.length === 0`** — they're not "other," they're **unassigned**.
+## Wave 1 — Ship Now (Visibility + Workflow)
 
-That mislabel is a governance issue, not a copy nit:
+### 1. Onboarding completeness counter in page header
 
-- "Other Roles" reads as benign — "yeah, they have a role, just not a common one."
-- Reality is the opposite: these users can't be scheduled, can't be paid, can't access anything role-gated. They are an **onboarding gap that demands operator action**.
-- Per Visibility Contracts, silence is valid output; **mis-labeling a problem as a neutral state is not**.
+Add a compact counter next to the Team Members page title, materiality-gated:
 
-## What changes
+- **When all members onboarded:** render nothing (silence-when-clean per visibility contract doctrine).
+- **When ≥1 member has zero roles:** render `28 of 30 onboarded · 2 missing roles` as a subtitle/badge in `DashboardPageHeader`.
+- Click target: scrolls to the "No Roles Assigned" section (anchor link), so the header signal is operationally connected to the resolution surface.
+- Token compliance: `font-display` for the count, amber `text-amber-600` for the missing-roles fragment, no `font-bold`.
 
-Split the bucket honestly:
+### 2. Quick-assign role chip inline in No-Roles `MemberRow`
 
-| Member shape | Section header | Tone |
-|---|---|---|
-| `roles.length === 0` | `NO ROLES ASSIGNED` + amber warning icon + "Action required" hint | warning |
-| `roles.length > 0` but none in `ROLE_RANK` | `OTHER ROLES` (kept, but only renders when truly non-empty) | neutral |
+Inside the `noRoles.map(...)` render block (line 519 of `TeamMembers.tsx`), add an `Assign role →` button on the right side of each row:
 
-In practice the second bucket is almost always empty, so the visual default becomes the honest one.
+- Opens a lightweight `Popover` with a role picker (reuses the same role list from `UserRolesTab`).
+- Single click → role assignment via existing `user_roles` insert path → optimistic UI update → toast confirmation.
+- `e.stopPropagation()` so clicking the chip doesn't navigate into `TeamMemberDetail`.
+- Compresses 3 clicks (row → detail → roles tab → assign) down to 1.
 
-## File 1 — `src/pages/dashboard/admin/TeamMembers.tsx`
+### Wave 1 Files
+- `src/pages/dashboard/admin/TeamMembers.tsx` — counter in header `actions`/subtitle slot, chip in `noRoles` render block.
+- `src/components/dashboard/team-members/QuickAssignRoleChip.tsx` (new) — popover + role picker + mutation.
 
-1. Update the `grouped` memo (line ~268-292) to produce **two** terminal buckets:
-   ```ts
-   const noRoles: OrganizationUser[] = [];
-   const otherRoles: OrganizationUser[] = [];
-   for (const m of filtered) {
-     const primary = primaryRoleOf(m.roles);
-     if (primary) { /* push into byRole */ }
-     else if (m.roles.length === 0) noRoles.push(m);
-     else otherRoles.push(m);
-   }
-   ```
-2. Render order at the bottom of the page (after ranked sections):
-   - `noRoles` block first (the warning surface — operators should act on this).
-   - `otherRoles` block second, conditional on length > 0.
-3. Visual treatment for the `noRoles` header:
-   - Replace `Users` icon with `AlertCircle` (`text-amber-500`).
-   - Header text `NO ROLES ASSIGNED` in `font-display`.
-   - Trailing helper: `<span className="text-xs text-muted-foreground">Action required — assign a role to enable scheduling and access.</span>`
-   - Header border tinted amber: `border-amber-500/30`.
+---
 
-## File 2 — `src/components/dashboard/settings/SettingsCategoryDetail.tsx`
+## Wave 2 — Needs Your Input (Enforcement + Governance)
 
-Mirror the same split inside the `(() => { … })()` IIFE at line ~711:
-- Compute `noRoleUsers = users.filter(u => !u.role || u.role === '')` (this surface uses a single `u.role` field — verify the empty/null shape during execution).
-- Compute `otherRoleUsers = users.filter(u => u.role && !categorizedRoles.includes(u.role))`.
-- Render two distinct sections with the same visual treatment as File 1 (`AlertCircle` + amber border for the "no roles" block).
+### 3. Block scheduling for unassigned users
 
-## What stays the same
+This is **operational enforcement** and per doctrine should land at the data layer, not as a UI toast alone. Three open decisions:
 
-- The `OTHER ROLES` block is preserved — it's a real safety net for the case where an org adds a custom role before the rank registry is updated. It just becomes accurate (only shown when truly populated).
-- No schema changes, no migration, no copy/policy registry edits.
-- Click-through behavior, sort order, member rows — unchanged.
+- **Behavior:** soft warn (toast, allow proceed) or hard block (disable selection)? Soft warn is reversible and operator-respectful; hard block is structurally cleaner.
+- **Surface coverage:** there are ~15 appointment creation entry points (calendar drag, agenda quick-add, booking pipeline, Phorest sync, public booking, etc.). Should this gate apply universally, or only operator-initiated flows (excluding sync/public)?
+- **Anchor:** ideally a shared `useStaffSchedulability(userId)` hook returning `{ schedulable, reason }`, consumed by every entry point. This is a 2-3 day effort across surfaces.
 
-## Files touched
+I recommend: **soft warn on operator-initiated flows only**, via the shared hook. Public booking and Phorest sync should continue working (they're upstream of role assignment in real onboarding sequences).
 
-- **Edit:** `src/pages/dashboard/admin/TeamMembers.tsx`
-- **Edit:** `src/components/dashboard/settings/SettingsCategoryDetail.tsx`
+### 4. Audit log for `role_initial_assignment`
+
+There is **no existing `team_member_audit_log` table** in the codebase (verified — zero references in migrations or src). Building this means net-new infrastructure:
+
+- New table `team_member_audit_log` with columns: `id`, `organization_id`, `target_user_id`, `actor_user_id`, `event` (enum/text), `payload` (jsonb), `created_at`.
+- RLS: `is_org_member` for read, `is_org_admin` for insert (per tenant isolation doctrine).
+- Trigger or app-layer write on the first role insert (trigger is cleaner — survives all entry points including future bulk imports).
+- Initial event taxonomy: `role_initial_assignment`, plus reserve slots for `role_added`, `role_removed`, `archived`, `restored` so the offboarding wizard can reuse it.
+
+This is a foundational audit surface — worth doing right. Recommend pairing with a future `TeamMemberAuditTrailTab` so the data is actually visible somewhere.
+
+---
+
+## Recommended Sequencing
+
+1. **Today:** Approve Wave 1 — ship counter + quick-assign chip.
+2. **Next:** Confirm Wave 2 design decisions above (soft vs. hard, surface coverage), then I'll plan + ship the schedulability hook.
+3. **After:** Ship the audit log table + trigger + first event, with the offboarding wizard's existing flow as the second consumer.
+
+Approving this plan ships **Wave 1 only**. Wave 2 items become separate planned work once you answer the decisions above.
