@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { Calendar, Clock, User, Scissors, ArrowRight, X, Check, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, Scissors, ArrowRight, X, Check, Loader2, UserMinus, UserCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
