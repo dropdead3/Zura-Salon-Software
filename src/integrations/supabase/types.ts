@@ -389,6 +389,7 @@ export type Database = {
           created_at: string
           error: string | null
           executed_at: string | null
+          expected_confirmation_token_hash: string | null
           id: string
           message_id: string | null
           organization_id: string
@@ -404,6 +405,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           executed_at?: string | null
+          expected_confirmation_token_hash?: string | null
           id?: string
           message_id?: string | null
           organization_id: string
@@ -419,6 +421,7 @@ export type Database = {
           created_at?: string
           error?: string | null
           executed_at?: string | null
+          expected_confirmation_token_hash?: string | null
           id?: string
           message_id?: string | null
           organization_id?: string
@@ -549,6 +552,7 @@ export type Database = {
           enabled: boolean
           id: string
           mutation: boolean
+          ownership_scope: string
           param_schema: Json
           preview_template: string | null
           required_permission: string | null
@@ -565,6 +569,7 @@ export type Database = {
           enabled?: boolean
           id: string
           mutation?: boolean
+          ownership_scope?: string
           param_schema?: Json
           preview_template?: string | null
           required_permission?: string | null
@@ -581,6 +586,7 @@ export type Database = {
           enabled?: boolean
           id?: string
           mutation?: boolean
+          ownership_scope?: string
           param_schema?: Json
           preview_template?: string | null
           required_permission?: string | null
