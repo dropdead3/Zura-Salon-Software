@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
-import { BlurredAmount } from '@/components/privacy/BlurredAmount';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import {
