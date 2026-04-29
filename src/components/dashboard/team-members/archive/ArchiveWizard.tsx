@@ -439,6 +439,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           </div>
         </footer>
       </div>
+      </TooltipProvider>
     </PremiumFloatingPanel>
   );
 }
