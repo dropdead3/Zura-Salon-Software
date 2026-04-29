@@ -73,9 +73,38 @@ export interface ProposeContext {
   userId: string;           // verified from JWT
   capability: CapabilityRow;
   params: Record<string, unknown>;
+  /** Caller's roles. Handlers use this to enforce ownership_scope = 'self' for non-managers. */
+  roleSet?: Set<string>;
 }
 
 export interface ExecuteContext extends ProposeContext {}
+
+/**
+ * Generic ownership predicate. Handlers MUST call this before mutating any row
+ * that has a `staff_user_id` / `assigned_to` style column.
+ *
+ * - capability.ownership_scope === 'self' → caller must own the row.
+ * - capability.ownership_scope === 'org'  → caller must hold a manager role,
+ *   OR be the row owner.
+ * - capability.ownership_scope === 'any'  → no ownership check (logged).
+ */
+export function assertOwnership(
+  capability: CapabilityRow,
+  callerUserId: string,
+  rowOwnerUserId: string | null | undefined,
+  roleSet: Set<string> | undefined,
+): void {
+  if (capability.ownership_scope === 'any') return;
+  const isManager = isManagerRole(roleSet || new Set());
+  if (capability.ownership_scope === 'self') {
+    if (rowOwnerUserId && rowOwnerUserId === callerUserId) return;
+    throw new Error('You can only act on your own records.');
+  }
+  // 'org': managers OK; otherwise must be self-owned.
+  if (isManager) return;
+  if (rowOwnerUserId && rowOwnerUserId === callerUserId) return;
+  throw new Error('Only a manager can perform this on another team member.');
+}
 
 export interface ProposeResult {
   /** Free-text the model can show as the chat reply. */
