@@ -396,6 +396,10 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
               clientPreferenceItems={
                 (buckets.find((b) => b.key === 'client_preferences')?.items ?? []) as unknown as ClientPreferenceItem[]
               }
+              suppressedClientIds={suppressedClientIds}
+              setSuppressedClientIds={setSuppressedClientIds}
+              organizationId={orgId}
+              archivedMemberName={name}
             />
           )}
         </div>
@@ -1306,6 +1310,8 @@ function ClientPreferenceRow({
 function Step4({
   name, reason, effectiveDate, ledger, roster, confirmed, setConfirmed,
   notifyClients, setNotifyClients, clientPreferenceItems,
+  suppressedClientIds, setSuppressedClientIds,
+  organizationId, archivedMemberName,
 }: {
   name: string;
   reason: string;
@@ -1317,7 +1323,48 @@ function Step4({
   notifyClients: boolean;
   setNotifyClients: (v: boolean) => void;
   clientPreferenceItems: ClientPreferenceItem[];
+  suppressedClientIds: Set<string>;
+  setSuppressedClientIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  organizationId: string | undefined;
+  archivedMemberName: string;
 }) {
+  const { user } = useAuth();
+  const [smokeSending, setSmokeSending] = useState(false);
+  const [smokeResult, setSmokeResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  async function handleSmokeTest() {
+    if (!organizationId || !user?.email) return;
+    setSmokeSending(true);
+    setSmokeResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('archive-soft-notify-preview', {
+        body: {
+          organizationId,
+          archivedStylistName: archivedMemberName,
+          operatorEmail: user.email,
+          operatorPhone: (user as { phone?: string }).phone ?? null,
+        },
+      });
+      if (error) throw error;
+      const r = data as { email_sent?: boolean; sms_sent?: boolean; error?: string };
+      if (r.error) throw new Error(r.error);
+      const parts: string[] = [];
+      if (r.email_sent) parts.push('email');
+      if (r.sms_sent) parts.push('SMS');
+      setSmokeResult({
+        ok: true,
+        msg: parts.length > 0
+          ? `Sent ${parts.join(' + ')} to your contact info.`
+          : 'No channels available — add an email/phone to your profile.',
+      });
+    } catch (e) {
+      setSmokeResult({ ok: false, msg: (e as Error).message });
+    } finally {
+      setSmokeSending(false);
+    }
+  }
+
   const summaryByBucket = useMemo(() => {
     const m = new Map<string, { reassign: Map<string, number>; cancel: number; drop: number; endDate: number }>();
     for (const r of ledger) {
@@ -1404,7 +1451,7 @@ function Step4({
         const smsOnlyCount = reassignedItems.filter((c) => !c.has_email && c.has_phone).length;
         const skipCount = reassignedItems.filter((c) => !c.has_email && !c.has_phone).length;
         return (
-          <div className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-2">
+          <div className="rounded-xl border border-border/60 bg-card/60 p-4 space-y-3">
             <label className="flex items-start gap-3 cursor-pointer">
               <Checkbox
                 checked={notifyClients}
@@ -1421,9 +1468,96 @@ function Step4({
                 <p className="font-sans text-[11px] text-muted-foreground">
                   {emailCount} via email · {smsOnlyCount} via SMS
                   {skipCount > 0 && ` · ${skipCount} skipped (no contact)`}
+                  {suppressedClientIds.size > 0 && ` · ${suppressedClientIds.size} suppressed`}
                 </p>
               </div>
             </label>
+
+            {notifyClients && (
+              <>
+                {/* Smoke test */}
+                <div className="rounded-lg border border-border/40 bg-background/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="min-w-0">
+                      <p className="font-sans text-xs text-foreground">Send yourself a sample first</p>
+                      <p className="font-sans text-[11px] text-muted-foreground truncate">
+                        Fires one email{(user as { phone?: string } | null)?.phone ? ' + SMS' : ''} to {user?.email ?? 'you'} so you can sanity-check tone before the bulk send.
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={smokeSending || !user?.email}
+                      onClick={handleSmokeTest}
+                    >
+                      {smokeSending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Send myself a sample
+                    </Button>
+                  </div>
+                  {smokeResult && (
+                    <p className={cn('font-sans text-[11px]', smokeResult.ok ? 'text-emerald-500' : 'text-destructive')}>
+                      {smokeResult.msg}
+                    </p>
+                  )}
+                </div>
+
+                {/* Per-client preview & suppression */}
+                <Collapsible open={previewOpen} onOpenChange={setPreviewOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between h-8 px-2 -mx-1">
+                      <span className="font-sans text-xs text-foreground">
+                        Preview & suppress per client ({reassignedItems.length})
+                      </span>
+                      <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', previewOpen && 'rotate-90')} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 rounded-lg border border-border/40 divide-y divide-border/40 max-h-72 overflow-y-auto">
+                      {reassignedItems.map((c) => {
+                        const isSuppressed = suppressedClientIds.has(c.id);
+                        const channel = !c.has_email && !c.has_phone
+                          ? { label: 'no contact', tone: 'text-muted-foreground' }
+                          : c.has_email
+                            ? { label: 'email', tone: 'text-foreground' }
+                            : { label: 'SMS', tone: 'text-foreground' };
+                        const willSend = !isSuppressed && (c.has_email || c.has_phone);
+                        return (
+                          <div
+                            key={c.id}
+                            className={cn(
+                              'flex items-center justify-between gap-3 px-3 py-2',
+                              isSuppressed && 'opacity-50',
+                            )}
+                          >
+                            <div className="min-w-0">
+                              <p className="font-sans text-xs text-foreground truncate">
+                                {c.first_name} {c.last_name}
+                              </p>
+                              <p className={cn('font-sans text-[11px]', channel.tone)}>
+                                {willSend ? `via ${channel.label}` : isSuppressed ? 'suppressed' : channel.label}
+                              </p>
+                            </div>
+                            <Switch
+                              checked={!isSuppressed && (c.has_email || c.has_phone)}
+                              disabled={!c.has_email && !c.has_phone}
+                              onCheckedChange={(checked) => {
+                                setSuppressedClientIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (checked) next.delete(c.id);
+                                  else next.add(c.id);
+                                  return next;
+                                });
+                              }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </>
+            )}
           </div>
         );
       })()}
