@@ -1043,6 +1043,172 @@ function formatDate(v: unknown): string {
   }
 }
 
+function formatShortDate(v: unknown): string {
+  if (!v) return '—';
+  try {
+    const d = new Date(String(v));
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return String(v);
+  }
+}
+
+function formatMoney(n: number): string {
+  if (!n || Number.isNaN(n)) return '$0';
+  return `$${Math.round(n).toLocaleString()}`;
+}
+
+// ============================================================
+// ClientPreferenceRow — per-client picker for the
+// `client_preferences` bucket. Surfaces history with the
+// archived stylist and a recommended successor.
+// ============================================================
+
+function ClientPreferenceRow({
+  bucket: b, client, eligible, roster, decided, onItemPick,
+}: {
+  bucket: DependencyBucket;
+  client: ClientPreferenceItem;
+  eligible: OrganizationUser[];
+  roster: OrganizationUser[];
+  decided: Reassignment | undefined;
+  onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
+}) {
+  const recName = client.recommended_user_id
+    ? (() => {
+        const r = roster.find((u) => u.user_id === client.recommended_user_id);
+        return r?.display_name || r?.full_name || 'Suggested teammate';
+      })()
+    : null;
+
+  const fullName = `${client.first_name ?? ''} ${client.last_name ?? ''}`.trim() || 'Client';
+  const lastVisit = client.last_visit_with_stylist ?? client.last_visit_date;
+
+  const decidedName = decided?.destinationUserId
+    ? (() => {
+        const r = roster.find((u) => u.user_id === decided.destinationUserId);
+        return r?.display_name || r?.full_name || 'Selected';
+      })()
+    : null;
+
+  return (
+    <li className="px-4 py-3 space-y-2">
+      {/* History line */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-sans text-sm text-foreground truncate">{fullName}</p>
+          <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+            {client.visit_count || 0} {client.visit_count === 1 ? 'visit' : 'visits'}
+            {lastVisit ? ` · last ${formatShortDate(lastVisit)}` : ''}
+            {' · avg '}
+            <BlurredAmount>{formatMoney(client.avg_ticket)}</BlurredAmount>
+          </p>
+          {client.top_services.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-1.5">
+              {client.top_services.map((s) => (
+                <Badge
+                  key={s}
+                  variant="outline"
+                  className="text-[10px] font-sans normal-case px-1.5 py-0 h-4"
+                >
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+        {decided && (
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] gap-1 shrink-0',
+              decided.action === 'reassign' && 'border-emerald-500/40 text-emerald-500',
+              decided.action === 'drop' && 'border-muted-foreground/40 text-muted-foreground',
+            )}
+          >
+            {decided.action === 'reassign' ? `→ ${decidedName}` : 'Dropped'}
+          </Badge>
+        )}
+      </div>
+
+      {/* Recommendation */}
+      {client.recommended_user_id && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] px-2.5 py-1.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-display text-[10px] uppercase tracking-wider text-emerald-500">
+                Recommended · {recName}
+              </p>
+              <p className="font-sans text-[10px] text-muted-foreground truncate">
+                {client.recommendation_reason}
+              </p>
+            </div>
+          </div>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-emerald-500 hover:text-emerald-400 shrink-0"
+                onClick={() => onItemPick(b, client.id, 'reassign', client.recommended_user_id)}
+              >
+                Use
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px] text-xs">
+              {ACTION_TOOLTIPS.use_recommendation}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+
+      {/* Override row */}
+      <div className="flex items-center gap-2">
+        <span className="font-sans text-[11px] text-muted-foreground shrink-0">Or pick:</span>
+        <Select
+          value={decided?.action === 'reassign' ? (decided.destinationUserId ?? '') : ''}
+          onValueChange={(v) => onItemPick(b, client.id, 'reassign', v)}
+        >
+          <SelectTrigger className="h-7 flex-1 rounded-full text-[11px]">
+            <SelectValue placeholder="Override teammate…" />
+          </SelectTrigger>
+          <SelectContent>
+            {eligible.length === 0 && (
+              <div className="px-2 py-2 text-xs text-muted-foreground">No eligible stylist.</div>
+            )}
+            {eligible.map((u) => {
+              const lvl = u.stylist_level ? ` · L${u.stylist_level}` : '';
+              return (
+                <SelectItem key={u.user_id} value={u.user_id}>
+                  {(u.display_name || u.full_name) + lvl}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        {b.actions.includes('drop') && (
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                onClick={() => onItemPick(b, client.id, 'drop', null)}
+              >
+                Drop
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px] text-xs">
+              {ACTION_TOOLTIPS.drop_row}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </li>
+  );
+}
+
 // ============================================================
 // Step 4 — Review & confirm
 // ============================================================
