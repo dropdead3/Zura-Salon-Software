@@ -622,13 +622,13 @@ export default function TeamHub() {
 
         {/* 6. Marketing & Visibility */}
         <CategorySection title="Marketing & Visibility">
-          {!isFavorited(dashPath('/admin/website-sections')) && (
+          {!isFavorited(dashPath('/admin/website-hub')) && (
             <ManagementCard
-              href={dashPath('/admin/website-sections')}
+              href={dashPath('/admin/website-hub')}
               icon={Globe}
               title="Website Editor"
               description="Manage website sections, themes, and content"
-              {...favProps('/admin/website-sections', 'Website Editor', Globe)}
+              {...favProps('/admin/website-hub', 'Website Editor', Globe)}
             />
           )}
           {!isFavorited(dashPath('/admin/seo-workshop')) && (

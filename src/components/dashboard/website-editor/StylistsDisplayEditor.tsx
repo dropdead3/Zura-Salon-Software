@@ -43,7 +43,7 @@ export function StylistsDisplayEditor() {
           To manage which stylists appear on the homepage — approve requests, hide or show individuals — visit the Homepage Stylists manager.
         </p>
         <Link
-          to={dashPath('/admin/website-sections?tab=stylists')}
+          to={dashPath('/admin/website-hub?tab=stylists')}
           className="inline-flex items-center gap-1 mt-2 text-xs text-primary hover:underline font-sans"
         >
           Manage Homepage Stylists
