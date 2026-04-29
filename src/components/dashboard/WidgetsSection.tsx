@@ -14,6 +14,8 @@ import { HelpCenterWidget } from './HelpCenterWidget';
 import { AITasksWidget } from './AITasksWidget';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useDashboardLayout, useSaveDashboardLayout } from '@/hooks/useDashboardLayout';
+import { BentoGrid } from '@/components/ui/bento-grid';
+import type { ReactNode } from 'react';
 
 // Widget configuration - add more widgets here as needed
 const AVAILABLE_WIDGETS = [
