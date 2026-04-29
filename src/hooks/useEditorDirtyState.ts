@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 /**
  * Dispatches a custom event whenever the editor's dirty state changes,
- * so the WebsiteSectionsHub can intercept tab switches with unsaved work.
+ * so the embedded Website Editor host can intercept tab switches with unsaved work.
  */
 export function useEditorDirtyState(isDirty: boolean) {
   useEffect(() => {
