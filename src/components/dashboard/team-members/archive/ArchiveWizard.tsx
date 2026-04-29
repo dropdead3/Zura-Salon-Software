@@ -11,10 +11,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X,
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers, type OrganizationUser } from '@/hooks/useOrganizationUsers';
 import {
@@ -25,7 +29,41 @@ import {
   type DependencyBucket,
   type DestinationRole,
   type Reassignment,
+  type ClientPreferenceItem,
 } from '@/hooks/useArchiveTeamMember';
+
+// ============================================================
+// Action verb tooltips — single source of truth so wording stays
+// consistent across every bucket and bulk-vs-row variant.
+// ============================================================
+const ACTION_TOOLTIPS = {
+  reassign: 'Move all open work to the selected teammate. They become responsible going forward.',
+  reassign_row: 'Make this teammate responsible for this single item.',
+  drop_all: "Clear the link to the archived stylist on every item in this bucket without notifying or reassigning. For client preferences this empties the 'preferred stylist' field — clients can re-pick on their next booking.",
+  drop_row: "Clear the link on just this item. The client can re-pick a preferred stylist on their next visit.",
+  cancel_all: 'Cancel every record in this bucket. Clients / counterparts are notified per your existing cancellation policy.',
+  cancel_row: 'Cancel just this record. The client / counterpart is notified per your existing cancellation policy.',
+  end_date_all: "Set an end date on every recurring schedule so they stop generating new shifts after the archive's effective day.",
+  use_recommendation: 'Accept the recommended teammate for this client. You can still override below.',
+} as const;
+
+function HintedButton({
+  hint, children, ...rest
+}: React.ComponentProps<typeof Button> & { hint: string }) {
+  return (
+    <Tooltip delayDuration={150}>
+      <TooltipTrigger asChild>
+        <Button {...rest}>
+          {children}
+          <Info className="h-3 w-3 ml-1 opacity-50" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[280px] text-xs">
+        {hint}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 interface ArchiveWizardProps {
   open: boolean;
@@ -62,7 +100,9 @@ function isBucketHandled(
 ): boolean {
   if (b.count === 0) return true;
   const m = picks[b.key] ?? {};
-  const isBulkOnly = b.key === 'client_preferences' || b.items.length === 0;
+  // True bulk-only: no items returned (e.g. a recurring schedule bucket
+  // with end_date as the only action).
+  const isBulkOnly = b.items.length === 0;
   if (isBulkOnly) return !!m['__bulk__'];
   // Per-item: every visible item decided + bulk marker if there's overflow.
   const decidedCount = Object.keys(m).filter((k) => k !== '__bulk__').length;
@@ -187,7 +227,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
     setPicks((prev) => {
       const next: Record<string, Reassignment> = {};
       // For per-item buckets, write a row per visible item.
-      if (b.items.length > 0 && b.key !== 'client_preferences') {
+      if (b.items.length > 0) {
         for (const it of b.items) {
           const id = (it as { id: string }).id;
           if (!id) continue;
@@ -199,7 +239,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           next['__bulk__'] = { bucket: b.key, itemId: '__bulk__', action, destinationUserId };
         }
       } else {
-        // Bulk-only buckets: client_preferences, schedules with no items, etc.
+        // Truly bulk-only buckets (no items returned).
         next['__bulk__'] = { bucket: b.key, itemId: '__bulk__', action, destinationUserId };
       }
       return { ...prev, [b.key]: next };
@@ -215,7 +255,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       for (const [itemId, r] of Object.entries(m)) {
         // Skip the synthetic '__bulk__' marker for per-item buckets where we
         // already enumerated each item; only keep it for true bulk buckets.
-        if (itemId === '__bulk__' && bucket.items.length > 0 && bucket.key !== 'client_preferences') {
+        if (itemId === '__bulk__' && bucket.items.length > 0) {
           continue;
         }
         out.push(r);
@@ -249,6 +289,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       side="right"
       showCloseButton={false}
     >
+      <TooltipProvider delayDuration={150}>
       <div className="flex flex-col h-full">
         {/* Header */}
         <header className="px-6 pt-6 pb-4 border-b border-border/50">
@@ -398,6 +439,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
           </div>
         </footer>
       </div>
+      </TooltipProvider>
     </PremiumFloatingPanel>
   );
 }
@@ -592,7 +634,7 @@ function BucketWorkspace({
 }) {
   const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
   const decidedCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
-  const isBulkBucket = b.key === 'client_preferences' || b.items.length === 0;
+  const isBulkBucket = b.items.length === 0;
   const overflow = b.count - b.items.length;
   const handled = isBucketHandled(b, picks);
 
@@ -657,39 +699,61 @@ function BucketWorkspace({
           Apply
         </Button>
         {b.actions.includes('cancel') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.cancel_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-destructive"
             onClick={() => onApplyBulk(b, 'cancel', null)}
           >
             Cancel all
-          </Button>
+          </HintedButton>
         )}
         {b.actions.includes('drop') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.drop_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-muted-foreground"
             onClick={() => onApplyBulk(b, 'drop', null)}
           >
             Drop all
-          </Button>
+          </HintedButton>
         )}
         {b.actions.includes('end_date') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.end_date_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-muted-foreground"
             onClick={() => onApplyBulk(b, 'end_date', null)}
           >
             End-date all
-          </Button>
+          </HintedButton>
         )}
       </div>
 
       {/* Per-item rows */}
-      {!isBulkBucket && (
+      {!isBulkBucket && b.key === 'client_preferences' && (
+        <ul className="divide-y divide-border/40 max-h-[480px] overflow-y-auto">
+          {b.items.map((raw) => {
+            const client = raw as unknown as ClientPreferenceItem;
+            return (
+              <ClientPreferenceRow
+                key={client.id}
+                bucket={b}
+                client={client}
+                eligible={eligible}
+                roster={roster}
+                decided={picks[b.key]?.[client.id]}
+                onItemPick={onItemPick}
+              />
+            );
+          })}
+        </ul>
+      )}
+
+      {!isBulkBucket && b.key !== 'client_preferences' && (
         <ul className="divide-y divide-border/40 max-h-[420px] overflow-y-auto">
           {b.items.map((raw) => {
             const item = raw as Record<string, unknown>;
@@ -727,14 +791,21 @@ function BucketWorkspace({
                   </SelectContent>
                 </Select>
                 {b.actions.includes('cancel') && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-[11px]"
-                    onClick={() => onItemPick(b, id, 'cancel', null)}
-                  >
-                    Cancel
-                  </Button>
+                  <Tooltip delayDuration={150}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() => onItemPick(b, id, 'cancel', null)}
+                      >
+                        Cancel
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px] text-xs">
+                      {ACTION_TOOLTIPS.cancel_row}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </li>
             );
@@ -780,7 +851,7 @@ function Step3({
       {buckets.map((b) => {
         const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
         const handledCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
-        const isBulkBucket = b.key === 'client_preferences' || b.items.length === 0;
+        const isBulkBucket = b.items.length === 0;
         const overflow = b.count - b.items.length;
 
         return (
@@ -837,34 +908,37 @@ function Step3({
                 Apply
               </Button>
               {b.actions.includes('cancel') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.cancel_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-destructive"
                   onClick={() => onApplyBulk(b, 'cancel', null)}
                 >
                   Cancel all
-                </Button>
+                </HintedButton>
               )}
               {b.actions.includes('drop') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.drop_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-muted-foreground"
                   onClick={() => onApplyBulk(b, 'drop', null)}
                 >
                   Drop all
-                </Button>
+                </HintedButton>
               )}
               {b.actions.includes('end_date') && (
-                <Button
+                <HintedButton
+                  hint={ACTION_TOOLTIPS.end_date_all}
                   size="sm"
                   variant="ghost"
                   className="h-8 text-xs text-muted-foreground"
                   onClick={() => onApplyBulk(b, 'end_date', null)}
                 >
                   End-date all
-                </Button>
+                </HintedButton>
               )}
             </div>
 
@@ -967,6 +1041,172 @@ function formatDate(v: unknown): string {
   } catch {
     return String(v);
   }
+}
+
+function formatShortDate(v: unknown): string {
+  if (!v) return '—';
+  try {
+    const d = new Date(String(v));
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return String(v);
+  }
+}
+
+function formatMoney(n: number): string {
+  if (!n || Number.isNaN(n)) return '$0';
+  return `$${Math.round(n).toLocaleString()}`;
+}
+
+// ============================================================
+// ClientPreferenceRow — per-client picker for the
+// `client_preferences` bucket. Surfaces history with the
+// archived stylist and a recommended successor.
+// ============================================================
+
+function ClientPreferenceRow({
+  bucket: b, client, eligible, roster, decided, onItemPick,
+}: {
+  bucket: DependencyBucket;
+  client: ClientPreferenceItem;
+  eligible: OrganizationUser[];
+  roster: OrganizationUser[];
+  decided: Reassignment | undefined;
+  onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
+}) {
+  const recName = client.recommended_user_id
+    ? (() => {
+        const r = roster.find((u) => u.user_id === client.recommended_user_id);
+        return r?.display_name || r?.full_name || 'Suggested teammate';
+      })()
+    : null;
+
+  const fullName = `${client.first_name ?? ''} ${client.last_name ?? ''}`.trim() || 'Client';
+  const lastVisit = client.last_visit_with_stylist ?? client.last_visit_date;
+
+  const decidedName = decided?.destinationUserId
+    ? (() => {
+        const r = roster.find((u) => u.user_id === decided.destinationUserId);
+        return r?.display_name || r?.full_name || 'Selected';
+      })()
+    : null;
+
+  return (
+    <li className="px-4 py-3 space-y-2">
+      {/* History line */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-sans text-sm text-foreground truncate">{fullName}</p>
+          <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+            {client.visit_count || 0} {client.visit_count === 1 ? 'visit' : 'visits'}
+            {lastVisit ? ` · last ${formatShortDate(lastVisit)}` : ''}
+            {' · avg '}
+            <BlurredAmount>{formatMoney(client.avg_ticket)}</BlurredAmount>
+          </p>
+          {client.top_services.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-1.5">
+              {client.top_services.map((s) => (
+                <Badge
+                  key={s}
+                  variant="outline"
+                  className="text-[10px] font-sans normal-case px-1.5 py-0 h-4"
+                >
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+        {decided && (
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] gap-1 shrink-0',
+              decided.action === 'reassign' && 'border-emerald-500/40 text-emerald-500',
+              decided.action === 'drop' && 'border-muted-foreground/40 text-muted-foreground',
+            )}
+          >
+            {decided.action === 'reassign' ? `→ ${decidedName}` : 'Dropped'}
+          </Badge>
+        )}
+      </div>
+
+      {/* Recommendation */}
+      {client.recommended_user_id && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.04] px-2.5 py-1.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-display text-[10px] uppercase tracking-wider text-emerald-500">
+                Recommended · {recName}
+              </p>
+              <p className="font-sans text-[10px] text-muted-foreground truncate">
+                {client.recommendation_reason}
+              </p>
+            </div>
+          </div>
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px] text-emerald-500 hover:text-emerald-400 shrink-0"
+                onClick={() => onItemPick(b, client.id, 'reassign', client.recommended_user_id)}
+              >
+                Use
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px] text-xs">
+              {ACTION_TOOLTIPS.use_recommendation}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+
+      {/* Override row */}
+      <div className="flex items-center gap-2">
+        <span className="font-sans text-[11px] text-muted-foreground shrink-0">Or pick:</span>
+        <Select
+          value={decided?.action === 'reassign' ? (decided.destinationUserId ?? '') : ''}
+          onValueChange={(v) => onItemPick(b, client.id, 'reassign', v)}
+        >
+          <SelectTrigger className="h-7 flex-1 rounded-full text-[11px]">
+            <SelectValue placeholder="Override teammate…" />
+          </SelectTrigger>
+          <SelectContent>
+            {eligible.length === 0 && (
+              <div className="px-2 py-2 text-xs text-muted-foreground">No eligible stylist.</div>
+            )}
+            {eligible.map((u) => {
+              const lvl = u.stylist_level ? ` · L${u.stylist_level}` : '';
+              return (
+                <SelectItem key={u.user_id} value={u.user_id}>
+                  {(u.display_name || u.full_name) + lvl}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        {b.actions.includes('drop') && (
+          <Tooltip delayDuration={150}>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+                onClick={() => onItemPick(b, client.id, 'drop', null)}
+              >
+                Drop
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[260px] text-xs">
+              {ACTION_TOOLTIPS.drop_row}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </li>
+  );
 }
 
 // ============================================================

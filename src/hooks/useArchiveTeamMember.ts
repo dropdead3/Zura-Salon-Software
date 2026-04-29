@@ -35,7 +35,24 @@ export interface DependencyScan {
   organizationId: string;
   scannedAt: string;
   totalBlocking: number;
+  /** Stylist level of the archived user, used to recommend same-level successors. */
+  stylistLevelOfArchived?: string | null;
   buckets: DependencyBucket[];
+}
+
+/** Shape of an item inside the `client_preferences` bucket. */
+export interface ClientPreferenceItem {
+  id: string;
+  first_name: string;
+  last_name: string;
+  last_visit_date: string | null;
+  last_visit_with_stylist: string | null;
+  visit_count: number;
+  avg_ticket: number;
+  top_services: string[];
+  location_id: string | null;
+  recommended_user_id: string | null;
+  recommendation_reason: string;
 }
 
 export interface Reassignment {
