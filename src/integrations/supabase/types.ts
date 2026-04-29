@@ -382,6 +382,62 @@ export type Database = {
           },
         ]
       }
+      ai_action_anomalies: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          anomaly_type: string
+          capability_id: string | null
+          count: number
+          created_at: string
+          details: Json
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          organization_id: string
+          severity: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          anomaly_type: string
+          capability_id?: string | null
+          count?: number
+          created_at?: string
+          details?: Json
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          organization_id: string
+          severity?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          anomaly_type?: string
+          capability_id?: string | null
+          count?: number
+          created_at?: string
+          details?: Json
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          organization_id?: string
+          severity?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_action_anomalies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_action_audit: {
         Row: {
           capability_id: string
@@ -31589,6 +31645,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      acknowledge_ai_anomaly: {
+        Args: { p_anomaly: string }
+        Returns: undefined
+      }
       add_to_client_balance: {
         Args: {
           p_amount: number
@@ -32022,6 +32082,17 @@ export type Database = {
           sample_ids: string[]
           soft_deleted_count: number
         }[]
+      }
+      record_ai_anomaly: {
+        Args: {
+          p_capability: string
+          p_details: Json
+          p_org: string
+          p_severity: string
+          p_type: string
+          p_user: string
+        }
+        Returns: string
       }
       refresh_client_visit_stats: {
         Args: { p_organization_id?: string }
