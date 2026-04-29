@@ -468,7 +468,13 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 // ─── Theme Tab (Full Theme Management System) ───
-function ThemeTab({ forceOpenEditor = false }: { forceOpenEditor?: boolean }) {
+function ThemeTab({
+  forceOpenEditor = false,
+  onForceOpenConsumed,
+}: {
+  forceOpenEditor?: boolean;
+  onForceOpenConsumed?: () => void;
+}) {
   const { data: themes, isLoading: themesLoading } = useWebsiteThemes();
   const { data: activeThemeSetting, isLoading: activeLoading } = useActiveTheme();
   const activateTheme = useActivateTheme();
@@ -491,7 +497,8 @@ function ThemeTab({ forceOpenEditor = false }: { forceOpenEditor?: boolean }) {
   useEffect(() => {
     if (!forceOpenEditor) return;
     setMode('editor');
-  }, [forceOpenEditor]);
+    onForceOpenConsumed?.();
+  }, [forceOpenEditor, onForceOpenConsumed]);
 
   // Look up the selected page title for the status bar
   const { data: pagesConfig } = useWebsitePages();
