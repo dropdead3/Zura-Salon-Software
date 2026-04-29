@@ -18,23 +18,23 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeReadyRef = useRef(false);
   const pendingSectionRef = useRef<string | undefined>(undefined);
+  const previewOrigin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
 
   const sendScrollMessage = useCallback((sectionId: string) => {
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
-    const origin = window.location.origin;
     iframe.contentWindow.postMessage(
       { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
-      origin
+      previewOrigin
     );
     // Small delay then highlight
     setTimeout(() => {
       iframe.contentWindow?.postMessage(
         { type: 'PREVIEW_HIGHLIGHT_SECTION', sectionId },
-        origin
+        previewOrigin
       );
     }, 400);
-  }, []);
+  }, [previewOrigin]);
 
   // When activeSectionId changes, scroll (or queue if not ready)
   useEffect(() => {
