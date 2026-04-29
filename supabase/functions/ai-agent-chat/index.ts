@@ -17,6 +17,7 @@ import "../_shared/capability-handlers.ts";
 import { validateRegistry } from "../_shared/capability-invariants.ts";
 import { validateCapabilityParams } from "../_shared/capability-zod.ts";
 import { enforceRateLimit, isCapabilityKilled } from "../_shared/capability-rate-limit.ts";
+import { recordAnomaly } from "../_shared/capability-anomalies.ts";
 
 // NOTE: `userId` intentionally removed from the schema. The caller's identity
 // comes ONLY from the verified JWT (requireAuth → user.id). Any client-supplied
@@ -231,6 +232,11 @@ async function dispatchTool(
     // Org-level kill switch.
     const kill = await isCapabilityKilled(supabase, organizationId, capId);
     if (kill.killed) {
+      await recordAnomaly(supabase, {
+        organizationId, userId, type: 'kill_switch_attempt',
+        capabilityId: capId, severity: 'high',
+        details: { stage: 'propose', reason: kill.reason ?? null },
+      });
       return { result: { error: `"${capId}" has been disabled for this organization${kill.reason ? `: ${kill.reason}` : '.'}` } };
     }
     const handlers = getCapabilityHandlers(capId);
@@ -240,6 +246,11 @@ async function dispatchTool(
     try {
       params = validateCapabilityParams(capId, args.params || {});
     } catch (e: any) {
+      await recordAnomaly(supabase, {
+        organizationId, userId, type: 'invalid_param_burst',
+        capabilityId: capId, severity: 'medium',
+        details: { stage: 'propose', error: e?.message ?? 'invalid' },
+      });
       return { result: { error: e?.message || 'Invalid parameters.' } };
     }
     const reasoning = (args.reasoning as string | undefined) || null;
@@ -252,6 +263,11 @@ async function dispatchTool(
     for (const uuid of paramUuids) {
       if (!resolvedUuids.has(uuid)) {
         console.warn(`[capability-tool] propose blocked — UUID ${uuid} not in entity ledger`);
+        await recordAnomaly(supabase, {
+          organizationId, userId, type: 'invalid_param_burst',
+          capabilityId: capId, severity: 'high',
+          details: { stage: 'propose', reason: 'uuid_not_in_ledger', uuid },
+        });
         return { result: { error: `Refusing to act on identifier "${uuid}" — it was not produced by find_entity in this conversation. Look up the entity first.` } };
       }
     }
@@ -260,6 +276,11 @@ async function dispatchTool(
     try {
       await enforceRateLimit(supabase, organizationId, userId, 'propose');
     } catch (rl: any) {
+      await recordAnomaly(supabase, {
+        organizationId, userId, type: 'rate_limit_hit',
+        capabilityId: capId, severity: 'medium',
+        details: { bucket: 'propose' },
+      });
       return { result: { error: rl?.message || 'Rate limit exceeded.' } };
     }
 
