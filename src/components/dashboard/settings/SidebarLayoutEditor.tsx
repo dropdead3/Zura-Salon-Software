@@ -141,7 +141,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/booth-renters': { label: 'Renter Hub', icon: Store },
   
   // Website
-  '/dashboard/admin/website-sections': { label: 'Website Editor', icon: LayoutGrid },
+  '/dashboard/admin/website-hub': { label: 'Website Editor', icon: LayoutGrid },
   
   // Roles & Controls
   '/dashboard/admin/access-hub': { label: 'Roles & Controls Hub', icon: Shield },

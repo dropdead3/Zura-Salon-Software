@@ -355,7 +355,7 @@ export default function ManagementHub() {
         {/* Marketing & Visibility */}
         <CategorySection title="Marketing & Visibility">
           <ManagementCard
-            href={dashPath('/admin/website-sections')}
+            href={dashPath('/admin/website-hub')}
             icon={Globe}
             title="Website Editor"
             description="Edit homepage sections, stylists, testimonials, and locations"
