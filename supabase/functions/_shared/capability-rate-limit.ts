@@ -39,19 +39,7 @@ export async function enforceRateLimit(
 ): Promise<void> {
   const window_start = minuteWindow();
 
-  // Upsert + return new count via two-step (Postgres UPSERT with RETURNING isn't
-  // exposed cleanly through PostgREST). Insert, on conflict update count = count + 1.
-  const { data: upserted, error: upErr } = await supabase
-    .from('ai_action_rate_limits')
-    .upsert(
-      { organization_id: organizationId, user_id: userId, bucket, window_start, count: 1 },
-      { onConflict: 'organization_id,user_id,bucket,window_start', ignoreDuplicates: false },
-    )
-    .select('count')
-    .maybeSingle();
-
-  // If the row already existed, upsert returned its previous count (1 in our payload).
-  // We need a true increment. Do it explicitly:
+  // Atomic increment via SECURITY DEFINER RPC. Returns the new count.
   const { data: incremented, error: incErr } = await supabase.rpc('increment_ai_rate_limit', {
     p_org: organizationId,
     p_user: userId,
@@ -59,23 +47,12 @@ export async function enforceRateLimit(
     p_window: window_start,
   });
 
-  // Fallback if RPC isn't deployed: read + count manually.
-  let perMinuteCount = 0;
-  if (!incErr && typeof incremented === 'number') {
-    perMinuteCount = incremented;
-  } else {
-    const { data: row } = await supabase
-      .from('ai_action_rate_limits')
-      .select('count')
-      .eq('organization_id', organizationId)
-      .eq('user_id', userId)
-      .eq('bucket', bucket)
-      .eq('window_start', window_start)
-      .maybeSingle();
-    perMinuteCount = row?.count ?? 1;
+  if (incErr) {
+    console.warn('[rate-limit] increment RPC failed — failing open:', incErr);
+    return;
   }
 
-  if (upErr) console.warn('[rate-limit] upsert error:', upErr);
+  const perMinuteCount = typeof incremented === 'number' ? incremented : 1;
 
   if (perMinuteCount > config.perMinute) {
     throw {
