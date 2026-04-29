@@ -75,9 +75,9 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;
+      if (!['PREVIEW_SCROLL_TO_SECTION', 'PREVIEW_HIGHLIGHT_SECTION', 'PREVIEW_SET_ACTIVE_SECTION'].includes(msg.type)) return;
 
       if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
         const el = document.getElementById(`section-${msg.sectionId}`);
@@ -109,7 +109,7 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
       try {
         window.parent.postMessage(
           { type: 'PREVIEW_READY' },
-          window.location.origin
+          '*'
         );
       } catch {
         // Ignore cross-origin errors
