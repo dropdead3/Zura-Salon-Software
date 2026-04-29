@@ -504,6 +504,7 @@ serve(async (req) => {
         organizationId: orgId,
         scannedAt: nowIso,
         totalBlocking,
+        stylistLevelOfArchived,
         buckets,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
