@@ -227,6 +227,8 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
       : null;
     setBulkArchive({ members: targets, skippedSummary });
   };
+
+  const locationList = useMemo(() =>
     locations.map(l => ({ id: l.id, name: l.name })),
     [locations]
   );
