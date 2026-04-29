@@ -10,6 +10,8 @@
 
 import {
   registerCapability,
+  assertOwnership,
+  isManagerRole,
   type ProposeContext,
   type ExecuteContext,
   type ProposeResult,
@@ -194,9 +196,22 @@ registerCapability('team.deactivate_member', {
       confirmation_token: firstName,
     };
   },
-  execute: async ({ supabase, organizationId, params }: ExecuteContext): Promise<ExecuteResult> => {
+  execute: async ({ supabase, organizationId, userId, params }: ExecuteContext): Promise<ExecuteResult> => {
     const memberId = String(params.member_id || '');
     const memberName = String(params.member_name || 'team member');
+
+    if (memberId === userId) {
+      return { success: false, message: 'You cannot deactivate your own account from chat.' };
+    }
+
+    const { data: target } = await supabase
+      .from('employee_profiles')
+      .select('user_id, is_super_admin, organization_id')
+      .eq('user_id', memberId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (!target) return { success: false, message: 'That team member is not in this organization.' };
+    if (target.is_super_admin) return { success: false, message: 'The Account Owner cannot be deactivated through chat.' };
 
     const { error } = await supabase
       .from('employee_profiles')
@@ -301,21 +316,26 @@ registerCapability('appointments.find_today', {
 registerCapability('appointments.reschedule', {
   propose: async ({
     supabase,
+    organizationId,
+    userId,
     capability,
     params,
+    roleSet,
   }: ProposeContext): Promise<ProposeResult> => {
     const appointmentId = String(params.appointment_id || '');
     if (!appointmentId) throw new Error('appointment_id is required.');
 
     const { data: appointment, error } = await supabase
       .from('appointments')
-      .select('id, client_name, service_name, appointment_date, start_time, end_time, staff_name, staff_user_id, location_id, status')
+      .select('id, client_name, service_name, appointment_date, start_time, end_time, staff_name, staff_user_id, location_id, status, organization_id')
       .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
       .maybeSingle();
 
     if (error) throw error;
-    if (!appointment) throw new Error('Appointment not found.');
+    if (!appointment) throw new Error('Appointment not found in your organization.');
     if (appointment.status === 'cancelled') throw new Error('Appointment is already cancelled.');
+    assertOwnership(capability, userId, appointment.staff_user_id, roleSet);
 
     const newDate = parseDateString(String(params.new_date));
     const newTime = parseTimeString(String(params.new_time));
@@ -355,11 +375,24 @@ registerCapability('appointments.reschedule', {
       },
     };
   },
-  execute: async ({ supabase, params }: ExecuteContext): Promise<ExecuteResult> => {
+  execute: async ({ supabase, organizationId, userId, capability, params, roleSet }: ExecuteContext): Promise<ExecuteResult> => {
     const appointmentId = String(params.appointment_id || '');
     const newDate = String(params.new_date);
     const newTime = String(params.new_time);
-    const staffUserId = params.staff_user_id as string | undefined;
+
+    // Re-verify org + ownership at execute time (defense in depth).
+    const { data: appt, error: apptErr } = await supabase
+      .from('appointments')
+      .select('id, staff_user_id, status, organization_id')
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (apptErr || !appt) return { success: false, message: 'Appointment not found in your organization.' };
+    if (appt.status === 'cancelled') return { success: false, message: 'Appointment is already cancelled.' };
+    try { assertOwnership(capability, userId, appt.staff_user_id, roleSet); }
+    catch (e: any) { return { success: false, message: e.message }; }
+
+    const staffUserId = (params.staff_user_id as string | undefined) || appt.staff_user_id;
 
     const start = new Date(`2000-01-01T${newTime}`);
     const end = new Date(start.getTime() + 60 * 60 * 1000);
@@ -369,6 +402,7 @@ registerCapability('appointments.reschedule', {
       const { data: conflicts } = await supabase
         .from('appointments')
         .select('id')
+        .eq('organization_id', organizationId)
         .eq('staff_user_id', staffUserId)
         .eq('appointment_date', newDate)
         .neq('id', appointmentId)
@@ -390,7 +424,8 @@ registerCapability('appointments.reschedule', {
         end_time: endTime,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', appointmentId);
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId);
 
     if (error) return { success: false, message: 'Failed to reschedule appointment.' };
     return {
@@ -406,21 +441,26 @@ registerCapability('appointments.reschedule', {
 registerCapability('appointments.cancel', {
   propose: async ({
     supabase,
+    organizationId,
+    userId,
     capability,
     params,
+    roleSet,
   }: ProposeContext): Promise<ProposeResult> => {
     const appointmentId = String(params.appointment_id || '');
     if (!appointmentId) throw new Error('appointment_id is required.');
 
     const { data: appointment, error } = await supabase
       .from('appointments')
-      .select('id, client_name, service_name, appointment_date, start_time, staff_name, status')
+      .select('id, client_name, service_name, appointment_date, start_time, staff_name, staff_user_id, status, organization_id')
       .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
       .maybeSingle();
 
     if (error) throw error;
-    if (!appointment) throw new Error('Appointment not found.');
+    if (!appointment) throw new Error('Appointment not found in your organization.');
     if (appointment.status === 'cancelled') throw new Error('Appointment is already cancelled.');
+    assertOwnership(capability, userId, appointment.staff_user_id, roleSet);
 
     const reason = (params.reason as string | undefined) || null;
 
@@ -448,12 +488,25 @@ registerCapability('appointments.cancel', {
       },
     };
   },
-  execute: async ({ supabase, params }: ExecuteContext): Promise<ExecuteResult> => {
+  execute: async ({ supabase, organizationId, userId, capability, params, roleSet }: ExecuteContext): Promise<ExecuteResult> => {
     const appointmentId = String(params.appointment_id || '');
+
+    const { data: appt, error: apptErr } = await supabase
+      .from('appointments')
+      .select('id, staff_user_id, status, organization_id')
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (apptErr || !appt) return { success: false, message: 'Appointment not found in your organization.' };
+    if (appt.status === 'cancelled') return { success: false, message: 'Appointment is already cancelled.' };
+    try { assertOwnership(capability, userId, appt.staff_user_id, roleSet); }
+    catch (e: any) { return { success: false, message: e.message }; }
+
     const { error } = await supabase
       .from('appointments')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', appointmentId);
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId);
     if (error) return { success: false, message: 'Failed to cancel appointment.' };
     return {
       success: true,

@@ -8,6 +8,8 @@ import {
   userCanInvoke,
   recordAudit,
   updateAuditStatus,
+  hashConfirmationToken,
+  constantTimeEquals,
   type CapabilityRow,
 } from "../_shared/capability-runtime.ts";
 // IMPORTANT: importing this file registers all capability handlers.
@@ -26,14 +28,16 @@ const ExecuteSchema = z.object({
 
 // deno-lint-ignore no-explicit-any
 async function getCallerRolesAndPermissions(supabase: any, userId: string) {
-  const [{ data: roleRows }, { data: permRows }] = await Promise.all([
+  const [{ data: roleRows }, { data: permRows }, { data: prof }] = await Promise.all([
     supabase.from('user_roles').select('role').eq('user_id', userId),
     supabase
       .from('user_roles')
       .select('role, role_permissions:role_permissions!inner(permission_id, permissions:permission_id(name))')
       .eq('user_id', userId),
+    supabase.from('employee_profiles').select('is_super_admin').eq('user_id', userId).maybeSingle(),
   ]);
   const roleSet = new Set<string>((roleRows || []).map((r: any) => r.role));
+  if (prof?.is_super_admin) roleSet.add('super_admin');
   const permSet = new Set<string>();
   (permRows || []).forEach((row: any) => {
     const rps = row?.role_permissions;
@@ -107,11 +111,42 @@ serve(async (req) => {
       });
     }
 
-    // ---------- HIGH-RISK CONFIRMATION TOKEN ----------
+    // ---------- HIGH-RISK CONFIRMATION TOKEN — verify against stored hash ----------
     if (capability.risk_level === 'high' && capability.confirmation_token_field) {
-      // The expected token was returned at proposal time; the client must echo it.
       if (!confirmation_token || !confirmation_token.trim()) {
         return new Response(JSON.stringify({ success: false, message: "Confirmation required for this high-risk action." }), {
+          status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      if (!audit_id) {
+        return new Response(JSON.stringify({ success: false, message: "High-risk actions must come from a proposal." }), {
+          status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      const { data: auditRow } = await supabase
+        .from('ai_action_audit')
+        .select('id, status, expected_confirmation_token_hash, organization_id, user_id, capability_id')
+        .eq('id', audit_id)
+        .maybeSingle();
+
+      if (!auditRow || auditRow.organization_id !== orgId || auditRow.user_id !== user.id || auditRow.capability_id !== capability_id) {
+        return new Response(JSON.stringify({ success: false, message: "Proposal could not be verified." }), {
+          status: 403, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      if (auditRow.status !== 'proposed') {
+        return new Response(JSON.stringify({ success: false, message: "This proposal has already been resolved." }), {
+          status: 409, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      if (!auditRow.expected_confirmation_token_hash) {
+        return new Response(JSON.stringify({ success: false, message: "Proposal is missing its confirmation token." }), {
+          status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      const providedHash = await hashConfirmationToken(confirmation_token);
+      if (!constantTimeEquals(providedHash, auditRow.expected_confirmation_token_hash)) {
+        return new Response(JSON.stringify({ success: false, message: "Confirmation text did not match. Please re-type it exactly." }), {
           status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
         });
       }
@@ -128,15 +163,13 @@ serve(async (req) => {
 
     let result: { success: boolean; message: string; data?: unknown };
     try {
-      // For execute handlers we use the typed signature. For read-only direct
-      // execution we adapt the ReadResult shape to ExecuteResult.
       if (handlers?.execute) {
         result = await handlers.execute({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {},
+          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
         });
       } else if (handlers?.read) {
         const r = await handlers.read({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {},
+          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
         });
         result = { success: true, message: r.message || "Done.", data: r.data };
       } else {
@@ -156,7 +189,6 @@ serve(async (req) => {
         executed_at: result.success ? new Date().toISOString() : null,
       });
     } else {
-      // No audit row from proposal (read-only execute_capability) — still log it.
       await recordAudit(supabase, {
         organization_id: orgId,
         user_id: user.id,

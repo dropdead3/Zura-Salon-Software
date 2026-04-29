@@ -28,6 +28,43 @@ export interface CapabilityRow {
   risk_level: 'low' | 'med' | 'high';
   confirmation_token_field: string | null;
   enabled: boolean;
+  /** 'self' = caller may only act on rows they own; 'org' = any row in their org; 'any' = unscoped (avoid). */
+  ownership_scope: 'self' | 'org' | 'any';
+}
+
+// ============================================================
+// Manager-role taxonomy. Anyone NOT holding one of these is
+// treated as a stylist for ownership-scope enforcement.
+// ============================================================
+export const MANAGER_ROLES = new Set<string>([
+  'admin',
+  'super_admin',
+  'manager',
+  'owner',
+]);
+
+export function isManagerRole(roleSet: Set<string>): boolean {
+  for (const r of roleSet) if (MANAGER_ROLES.has(r)) return true;
+  return false;
+}
+
+// ============================================================
+// Confirmation-token hashing (server-verifiable).
+// ============================================================
+export async function hashConfirmationToken(token: string): Promise<string> {
+  const data = new TextEncoder().encode(token.trim().toLowerCase());
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Constant-time string compare to avoid timing leaks. */
+export function constantTimeEquals(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 export interface ProposeContext {
@@ -36,9 +73,38 @@ export interface ProposeContext {
   userId: string;           // verified from JWT
   capability: CapabilityRow;
   params: Record<string, unknown>;
+  /** Caller's roles. Handlers use this to enforce ownership_scope = 'self' for non-managers. */
+  roleSet?: Set<string>;
 }
 
 export interface ExecuteContext extends ProposeContext {}
+
+/**
+ * Generic ownership predicate. Handlers MUST call this before mutating any row
+ * that has a `staff_user_id` / `assigned_to` style column.
+ *
+ * - capability.ownership_scope === 'self' → caller must own the row.
+ * - capability.ownership_scope === 'org'  → caller must hold a manager role,
+ *   OR be the row owner.
+ * - capability.ownership_scope === 'any'  → no ownership check (logged).
+ */
+export function assertOwnership(
+  capability: CapabilityRow,
+  callerUserId: string,
+  rowOwnerUserId: string | null | undefined,
+  roleSet: Set<string> | undefined,
+): void {
+  if (capability.ownership_scope === 'any') return;
+  const isManager = isManagerRole(roleSet || new Set());
+  if (capability.ownership_scope === 'self') {
+    if (rowOwnerUserId && rowOwnerUserId === callerUserId) return;
+    throw new Error('You can only act on your own records.');
+  }
+  // 'org': managers OK; otherwise must be self-owned.
+  if (isManager) return;
+  if (rowOwnerUserId && rowOwnerUserId === callerUserId) return;
+  throw new Error('Only a manager can perform this on another team member.');
+}
 
 export interface ProposeResult {
   /** Free-text the model can show as the chat reply. */
@@ -107,16 +173,18 @@ export async function loadCapabilitiesForUser(
 
   if (error || !caps) return [];
 
-  // Fetch caller roles + permissions once.
-  const [{ data: roleRows }, { data: permRows }] = await Promise.all([
+  // Fetch caller roles + permissions + Account Owner flag once.
+  const [{ data: roleRows }, { data: permRows }, { data: prof }] = await Promise.all([
     supabase.from('user_roles').select('role').eq('user_id', userId),
     supabase
       .from('user_roles')
       .select('role, role_permissions:role_permissions!inner(permission_id, permissions:permission_id(name))')
       .eq('user_id', userId),
+    supabase.from('employee_profiles').select('is_super_admin').eq('user_id', userId).maybeSingle(),
   ]);
 
   const roleSet = new Set<string>((roleRows || []).map((r: any) => r.role));
+  if (prof?.is_super_admin) roleSet.add('super_admin');
   const permSet = new Set<string>();
   (permRows || []).forEach((row: any) => {
     const rps = row?.role_permissions;
@@ -167,6 +235,9 @@ export async function recordAudit(
     result?: unknown;
     error?: string | null;
     executed_at?: string | null;
+    expected_confirmation_token_hash?: string | null;
+    conversation_id?: string | null;
+    message_id?: string | null;
   },
 ): Promise<{ id?: string }> {
   const { data, error } = await supabase
@@ -181,6 +252,9 @@ export async function recordAudit(
       result: row.result ?? null,
       error: row.error ?? null,
       executed_at: row.executed_at ?? null,
+      expected_confirmation_token_hash: row.expected_confirmation_token_hash ?? null,
+      conversation_id: row.conversation_id ?? null,
+      message_id: row.message_id ?? null,
     })
     .select('id')
     .single();
