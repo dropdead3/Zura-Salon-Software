@@ -35,6 +35,7 @@ interface Body {
   reason: string;
   effectiveDate?: string; // YYYY-MM-DD
   reassignments: Reassignment[];
+  notifyReassignedClients?: boolean;
 }
 
 async function applyReassignment(
