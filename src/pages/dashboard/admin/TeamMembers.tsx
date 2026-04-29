@@ -583,11 +583,14 @@ export default function TeamMembers() {
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
                           trailingSlot={
-                            <QuickAssignRoleChip
-                              userId={m.user_id}
-                              userName={m.display_name || m.full_name || 'this member'}
-                              suggestedRole={suggestedRole}
-                            />
+                            <div className="flex items-center gap-1.5">
+                              <QuickAssignRoleChip
+                                userId={m.user_id}
+                                userName={m.display_name || m.full_name || 'this member'}
+                                suggestedRole={suggestedRole}
+                              />
+                              {canManage && m.is_active && !m.is_super_admin && <ArchiveMemberChip member={m} />}
+                            </div>
                           }
                         />
                       ))}
