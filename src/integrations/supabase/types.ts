@@ -8500,6 +8500,7 @@ export type Database = {
           email: string | null
           emergency_contact: string | null
           emergency_phone: string | null
+          employee_number: string | null
           extensions_certified: boolean | null
           full_name: string
           highlighted_services: string[] | null
@@ -8562,6 +8563,7 @@ export type Database = {
           email?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          employee_number?: string | null
           extensions_certified?: boolean | null
           full_name: string
           highlighted_services?: string[] | null
@@ -8624,6 +8626,7 @@ export type Database = {
           email?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          employee_number?: string | null
           extensions_certified?: boolean | null
           full_name?: string
           highlighted_services?: string[] | null
