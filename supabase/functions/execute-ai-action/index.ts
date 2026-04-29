@@ -184,6 +184,75 @@ serve(async (req) => {
         break;
       }
 
+      case 'deactivate_team_member':
+      case 'reactivate_team_member': {
+        const orgId = (body.organizationId || body.organization_id)!;
+        const targetUserId = params.user_id as string | undefined;
+        const setActive = actionType === 'reactivate_team_member';
+
+        if (!targetUserId) {
+          result = { success: false, message: 'user_id is required.' };
+          break;
+        }
+
+        const canManage = await callerCanManageTeam(supabase, user.id);
+        if (!canManage) {
+          result = { success: false, message: 'You need an admin or owner role to manage team members.' };
+          break;
+        }
+
+        if (targetUserId === user.id) {
+          result = { success: false, message: 'You cannot change your own active status from chat.' };
+          break;
+        }
+
+        const { data: target, error: targetErr } = await supabase
+          .from('employee_profiles')
+          .select('user_id, full_name, display_name, is_active, is_super_admin, organization_id')
+          .eq('user_id', targetUserId)
+          .eq('organization_id', orgId)
+          .maybeSingle();
+
+        if (targetErr || !target) {
+          result = { success: false, message: 'Team member not found in this organization.' };
+          break;
+        }
+
+        if (target.is_super_admin && !setActive) {
+          result = { success: false, message: 'The Account Owner cannot be deactivated through chat. Use Settings → Team Members.' };
+          break;
+        }
+
+        if (target.is_active === setActive) {
+          result = { success: false, message: `${target.display_name || target.full_name} is already ${setActive ? 'active' : 'inactive'}.` };
+          break;
+        }
+
+        const { error: updateErr } = await supabase
+          .from('employee_profiles')
+          .update({ is_active: setActive })
+          .eq('user_id', targetUserId)
+          .eq('organization_id', orgId);
+
+        if (updateErr) {
+          console.error('Team-member status update error:', updateErr);
+          result = { success: false, message: `Failed to ${setActive ? 'reactivate' : 'deactivate'} team member.` };
+          break;
+        }
+
+        result = {
+          success: true,
+          message: setActive
+            ? `Reactivated ${target.display_name || target.full_name}. They can log in and be assigned work again.`
+            : `Deactivated ${target.display_name || target.full_name}. Login revoked, historical data preserved.`,
+          data: {
+            target_user_id: targetUserId,
+            new_is_active: setActive,
+          },
+        };
+        break;
+      }
+
       default:
         result = { success: false, message: `Unknown action type: ${actionType}` };
     }
