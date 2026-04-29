@@ -48,6 +48,7 @@ import {
 } from '@/hooks/useAnnouncementBar';
 import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
+import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { CancellationFeePoliciesSettings } from './CancellationFeePoliciesSettings';
 import { DisputePolicySettings } from './DisputePolicySettings';
 import { TipDistributionPolicySettings } from './TipDistributionPolicySettings';
@@ -532,9 +533,8 @@ function ThemeTab() {
     }
   };
 
-  const orgPreviewUrl = effectiveOrganization?.slug
-    ? `${window.location.origin}/org/${effectiveOrganization.slug}`
-    : null;
+  const { publicUrl: getPublicUrl } = useOrgPublicUrl();
+  const orgPreviewUrl = getPublicUrl();
   const handlePreview = (_themeId?: string) => {
     if (orgPreviewUrl) window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer');
   };
@@ -817,10 +817,8 @@ function RetailTab() {
     );
   };
 
-  const orgForLink = effectiveOrganization || currentOrganization;
-  const storeUrl = orgForLink?.slug
-    ? `${window.location.origin}/org/${orgForLink.slug}/shop`
-    : '';
+  const { publicUrl: getPublicUrl } = useOrgPublicUrl();
+  const storeUrl = getPublicUrl('/shop') ?? '';
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(storeUrl);
@@ -1128,11 +1126,11 @@ function SeoLegalTab() {
 // ─── Main Export ───
 export function WebsiteSettingsContent() {
   const { dashPath } = useOrgDashboardPath();
-  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
-  const orgForLink = effectiveOrganization || currentOrganization;
-  const previewUrl = orgForLink?.slug
-    ? `${window.location.origin}/org/${orgForLink.slug}`
-    : null;
+  const { publicUrl: getPublicUrl, customDomain, isUsingCustomDomain } = useOrgPublicUrl();
+  const previewUrl = getPublicUrl();
+  const previewTooltip = isUsingCustomDomain
+    ? `Live at ${customDomain}`
+    : (previewUrl ?? 'No organization slug available');
   const handlePreviewClick = () => {
     if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer');
   };
