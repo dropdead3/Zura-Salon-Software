@@ -78,7 +78,7 @@ export function AccountUsersTab({ organizationId, organizationName }: AccountUse
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<OrganizationUser | null>(null);
   
-  const { data: users = [], isLoading } = useOrganizationUsers(organizationId);
+  const { data: users = [], isLoading } = useOrganizationUsers(organizationId, { includeArchived: true });
   const removeUser = useRemoveOrganizationUser(organizationId);
   const toggleActive = useToggleUserActive(organizationId);
 

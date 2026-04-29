@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Search, Shield, Cog, Users, Loader2, UserPlus, Mail, Key, LayoutGrid, Table as TableIcon, Crown, ClipboardList, Headphones, Phone, Briefcase, MapPin, Archive, type LucideIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -32,8 +32,8 @@ import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeats
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 
-type TeamView = 'roster' | 'invitations';
-const VALID_VIEWS: TeamView[] = ['roster', 'invitations'];
+type TeamView = 'roster' | 'invitations' | 'archived';
+const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
 type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
@@ -369,6 +369,10 @@ export default function TeamMembers() {
               <Mail className="h-4 w-4" />
               Invitations
             </TabsTrigger>
+            <TabsTrigger value="archived" className="gap-2">
+              <Archive className="h-4 w-4" />
+              Archived
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -522,9 +526,63 @@ export default function TeamMembers() {
         )}
 
         {view === 'invitations' && <InvitationsTab canManage={canManage} />}
+
+        {view === 'archived' && (
+          <ArchivedView orgId={effectiveOrganization?.id} onOpen={(uid) => navigate(dashPath(`/admin/team-members/${uid}`))} />
+        )}
       </div>
 
       <AddUserSeatsDialog open={seatsDialogOpen} onOpenChange={setSeatsDialogOpen} capacity={capacity} />
     </DashboardLayout>
+  );
+}
+
+function ArchivedView({ orgId, onOpen }: { orgId: string | undefined; onOpen: (userId: string) => void }) {
+  const { data: archived = [], isLoading } = useOrganizationUsers(orgId, { onlyArchived: true });
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+  if (archived.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Archive className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+          <p className={tokens.body.muted}>No archived team members.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {archived.map((m) => {
+        const name = m.display_name || m.full_name || 'Unnamed';
+        const initials = name.split(' ').map((s) => s[0]).join('').slice(0, 2).toUpperCase();
+        return (
+          <button
+            key={m.user_id}
+            type="button"
+            onClick={() => onOpen(m.user_id)}
+            className={cn(
+              'w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/40',
+              'hover:bg-foreground/5 hover:border-border transition-colors text-left',
+            )}
+          >
+            <Avatar className="h-10 w-10 shrink-0 opacity-70">
+              <AvatarImage src={m.photo_url ?? undefined} alt={name} />
+              <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-sans text-sm font-medium text-foreground truncate">{name}</span>
+                <Badge variant="outline" className="text-[10px]">Archived</Badge>
+                {m.archive_reason && <span className="font-sans text-[11px] text-muted-foreground">· {m.archive_reason}</span>}
+              </div>
+              {m.email && <p className="font-sans text-xs text-muted-foreground truncate mt-0.5">{m.email}</p>}
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+          </button>
+        );
+      })}
+    </div>
   );
 }

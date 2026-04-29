@@ -18,21 +18,42 @@ export interface OrganizationUser {
   stylist_level: string | null;
   location_id: string | null;
   location_ids: string[] | null;
+  archived_at: string | null;
+  archive_reason: string | null;
   roles: AppRole[];
 }
 
-export function useOrganizationUsers(organizationId: string | undefined) {
+export interface UseOrganizationUsersOptions {
+  /** Include archived members. Defaults to false — archived users are stripped from rosters/pickers. */
+  includeArchived?: boolean;
+  /** Return ONLY archived members (for the Archived view). */
+  onlyArchived?: boolean;
+}
+
+export function useOrganizationUsers(
+  organizationId: string | undefined,
+  options: UseOrganizationUsersOptions = {},
+) {
+  const { includeArchived = false, onlyArchived = false } = options;
   return useQuery({
-    queryKey: ['organization-users', organizationId],
+    queryKey: ['organization-users', organizationId, { includeArchived, onlyArchived }],
     queryFn: async () => {
       if (!organizationId) return [];
 
       // Get all employee profiles for the organization
-      const { data: profiles, error: profilesError } = await supabase
+      let query = supabase
         .from('employee_profiles')
-        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, stylist_level, location_id, location_ids')
+        .select('user_id, full_name, display_name, email, photo_url, phone, is_active, is_super_admin, hire_date, stylist_level, location_id, location_ids, archived_at, archive_reason')
         .eq('organization_id', organizationId)
         .order('full_name');
+
+      if (onlyArchived) {
+        query = query.not('archived_at', 'is', null);
+      } else if (!includeArchived) {
+        query = query.is('archived_at', null);
+      }
+
+      const { data: profiles, error: profilesError } = await query;
 
       if (profilesError) throw profilesError;
 
