@@ -183,7 +183,50 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     }
   };
 
-  const locationList = useMemo(() => 
+  /**
+   * Open the bulk-archive wizard for the current selection. Filters out
+   * unsafe targets (self, super_admin) before opening so the wizard
+   * never sees them. Note: useAllUsersWithRoles already excludes
+   * already-archived members (is_active=true filter), so no extra
+   * archived-state guard needed here.
+   */
+  const handleBulkArchive = () => {
+    const targets: BulkArchiveTarget[] = [];
+    let skippedSelf = 0;
+    let skippedOwner = 0;
+    for (const id of selectedUsers) {
+      if (id === currentUser?.id) {
+        skippedSelf += 1;
+        continue;
+      }
+      const accountInfo = getAccountInfo(id);
+      if (accountInfo?.is_super_admin) {
+        skippedOwner += 1;
+        continue;
+      }
+      const u = users.find(x => x.user_id === id);
+      if (!u) continue;
+      targets.push({
+        user_id: u.user_id,
+        display_name: u.display_name,
+        full_name: u.full_name,
+        photo_url: u.photo_url,
+      });
+    }
+    if (targets.length === 0) {
+      toast.info('Nothing to archive', {
+        description: 'Selection contains only protected members (yourself or super admins).',
+      });
+      return;
+    }
+    const skippedParts: string[] = [];
+    if (skippedSelf > 0) skippedParts.push(`${skippedSelf} self`);
+    if (skippedOwner > 0) skippedParts.push(`${skippedOwner} super admin${skippedOwner === 1 ? '' : 's'}`);
+    const skippedSummary = skippedParts.length > 0
+      ? `Skipped ${skippedParts.reduce((a, b) => a + b, 0).toString()}: ${skippedParts.join(', ')}.`
+      : null;
+    setBulkArchive({ members: targets, skippedSummary });
+  };
     locations.map(l => ({ id: l.id, name: l.name })),
     [locations]
   );
