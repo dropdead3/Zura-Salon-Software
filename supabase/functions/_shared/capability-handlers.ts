@@ -428,21 +428,26 @@ registerCapability('appointments.reschedule', {
 registerCapability('appointments.cancel', {
   propose: async ({
     supabase,
+    organizationId,
+    userId,
     capability,
     params,
+    roleSet,
   }: ProposeContext): Promise<ProposeResult> => {
     const appointmentId = String(params.appointment_id || '');
     if (!appointmentId) throw new Error('appointment_id is required.');
 
     const { data: appointment, error } = await supabase
       .from('appointments')
-      .select('id, client_name, service_name, appointment_date, start_time, staff_name, status')
+      .select('id, client_name, service_name, appointment_date, start_time, staff_name, staff_user_id, status, organization_id')
       .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
       .maybeSingle();
 
     if (error) throw error;
-    if (!appointment) throw new Error('Appointment not found.');
+    if (!appointment) throw new Error('Appointment not found in your organization.');
     if (appointment.status === 'cancelled') throw new Error('Appointment is already cancelled.');
+    assertOwnership(capability, userId, appointment.staff_user_id, roleSet);
 
     const reason = (params.reason as string | undefined) || null;
 
@@ -470,12 +475,25 @@ registerCapability('appointments.cancel', {
       },
     };
   },
-  execute: async ({ supabase, params }: ExecuteContext): Promise<ExecuteResult> => {
+  execute: async ({ supabase, organizationId, userId, capability, params, roleSet }: ExecuteContext): Promise<ExecuteResult> => {
     const appointmentId = String(params.appointment_id || '');
+
+    const { data: appt, error: apptErr } = await supabase
+      .from('appointments')
+      .select('id, staff_user_id, status, organization_id')
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (apptErr || !appt) return { success: false, message: 'Appointment not found in your organization.' };
+    if (appt.status === 'cancelled') return { success: false, message: 'Appointment is already cancelled.' };
+    try { assertOwnership(capability, userId, appt.staff_user_id, roleSet); }
+    catch (e: any) { return { success: false, message: e.message }; }
+
     const { error } = await supabase
       .from('appointments')
       .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', appointmentId);
+      .eq('id', appointmentId)
+      .eq('organization_id', organizationId);
     if (error) return { success: false, message: 'Failed to cancel appointment.' };
     return {
       success: true,
