@@ -699,39 +699,61 @@ function BucketWorkspace({
           Apply
         </Button>
         {b.actions.includes('cancel') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.cancel_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-destructive"
             onClick={() => onApplyBulk(b, 'cancel', null)}
           >
             Cancel all
-          </Button>
+          </HintedButton>
         )}
         {b.actions.includes('drop') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.drop_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-muted-foreground"
             onClick={() => onApplyBulk(b, 'drop', null)}
           >
             Drop all
-          </Button>
+          </HintedButton>
         )}
         {b.actions.includes('end_date') && (
-          <Button
+          <HintedButton
+            hint={ACTION_TOOLTIPS.end_date_all}
             size="sm"
             variant="ghost"
             className="h-8 text-xs text-muted-foreground"
             onClick={() => onApplyBulk(b, 'end_date', null)}
           >
             End-date all
-          </Button>
+          </HintedButton>
         )}
       </div>
 
       {/* Per-item rows */}
-      {!isBulkBucket && (
+      {!isBulkBucket && b.key === 'client_preferences' && (
+        <ul className="divide-y divide-border/40 max-h-[480px] overflow-y-auto">
+          {b.items.map((raw) => {
+            const client = raw as unknown as ClientPreferenceItem;
+            return (
+              <ClientPreferenceRow
+                key={client.id}
+                bucket={b}
+                client={client}
+                eligible={eligible}
+                roster={roster}
+                decided={picks[b.key]?.[client.id]}
+                onItemPick={onItemPick}
+              />
+            );
+          })}
+        </ul>
+      )}
+
+      {!isBulkBucket && b.key !== 'client_preferences' && (
         <ul className="divide-y divide-border/40 max-h-[420px] overflow-y-auto">
           {b.items.map((raw) => {
             const item = raw as Record<string, unknown>;
@@ -769,14 +791,21 @@ function BucketWorkspace({
                   </SelectContent>
                 </Select>
                 {b.actions.includes('cancel') && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-[11px]"
-                    onClick={() => onItemPick(b, id, 'cancel', null)}
-                  >
-                    Cancel
-                  </Button>
+                  <Tooltip delayDuration={150}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() => onItemPick(b, id, 'cancel', null)}
+                      >
+                        Cancel
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[260px] text-xs">
+                      {ACTION_TOOLTIPS.cancel_row}
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </li>
             );
