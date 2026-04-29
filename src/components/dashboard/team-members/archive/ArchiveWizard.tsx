@@ -1728,3 +1728,64 @@ function SmartSplitRow({
     </div>
   );
 }
+
+// ============================================================
+// ArchiveWizardStepper — horizontal numbered progress visual.
+// Display-only (validation gates between steps prevent jumps).
+// ============================================================
+
+const STEPPER_STEPS = [
+  { n: 1, label: 'Reason' },
+  { n: 2, label: 'Impact' },
+  { n: 3, label: 'Cleanup' },
+  { n: 4, label: 'Confirm' },
+] as const;
+
+function ArchiveWizardStepper({ currentStep }: { currentStep: 1 | 2 | 3 | 4 }) {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2">
+      {STEPPER_STEPS.map((step, idx) => {
+        const isComplete = step.n < currentStep;
+        const isCurrent = step.n === currentStep;
+        const isLast = idx === STEPPER_STEPS.length - 1;
+
+        return (
+          <div key={step.n} className="flex items-center flex-1 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={cn(
+                  'relative flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-sans font-medium transition-all duration-200 flex-shrink-0',
+                  isComplete && 'bg-primary text-primary-foreground',
+                  isCurrent && 'bg-primary text-primary-foreground ring-4 ring-primary/15',
+                  !isComplete && !isCurrent && 'bg-muted text-muted-foreground border border-border',
+                )}
+              >
+                {isComplete ? <Check className="w-3.5 h-3.5" /> : step.n}
+              </span>
+              <span
+                className={cn(
+                  'font-sans text-xs whitespace-nowrap transition-colors hidden sm:inline',
+                  isCurrent && 'text-foreground font-medium',
+                  isComplete && !isCurrent && 'text-foreground',
+                  !isCurrent && !isComplete && 'text-muted-foreground',
+                )}
+              >
+                {step.label}
+              </span>
+            </div>
+            {!isLast && (
+              <div className="flex-1 px-2 min-w-[8px]">
+                <div
+                  className={cn(
+                    'h-px w-full transition-colors duration-200',
+                    isComplete ? 'bg-primary/60' : 'bg-border',
+                  )}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
