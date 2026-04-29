@@ -239,13 +239,13 @@ export function AIHelpTab() {
         <ScrollArea className="absolute inset-0 px-4" ref={scrollRef}>
           <div className="py-4 space-y-4">
             {isHydrating ? (
-              <div className="flex flex-col items-center justify-center h-[420px] text-center pt-8 gap-3">
+              <div className="flex flex-col items-center justify-center min-h-[360px] text-center pt-6 gap-3">
                 <ZuraZIcon className="w-7 h-7 text-primary/60 animate-pulse" />
                 <p className="text-xs text-muted-foreground/70">Loading conversation…</p>
               </div>
             ) : isEmpty ? (
-              <div className="flex flex-col items-center justify-center h-[420px] text-center pt-8">
-                <div className="relative mb-5">
+              <div className="flex flex-col items-center text-center pt-4 pb-2">
+                <div className="relative mb-4">
                   <div className="absolute inset-0 -m-6 rounded-full bg-primary/15 blur-2xl animate-pulse" />
                   <div className="relative w-14 h-14 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center">
                     <ZuraZIcon className="w-7 h-7 text-primary" />
@@ -254,7 +254,7 @@ export function AIHelpTab() {
                 <h3 className="font-display text-lg tracking-wide uppercase mb-2">
                   {AI_ASSISTANT_NAME_DEFAULT}
                 </h3>
-                <p className="text-sm text-muted-foreground/70 mb-10 max-w-[260px]">
+                <p className="text-sm text-muted-foreground/70 mb-5 max-w-[260px]">
                   Your AI assistant. Ask questions or request actions — anything destructive needs your approval.
                 </p>
                 <div className="w-full space-y-1.5">
