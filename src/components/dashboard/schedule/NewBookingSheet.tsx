@@ -227,6 +227,12 @@ export function NewBookingSheet({
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [showInlineSigningDialog, setShowInlineSigningDialog] = useState(false);
 
+  // Onboarding wave: soft-warn if the selected stylist has no role assigned.
+  // We do NOT hard-block — operators may need to schedule before onboarding completes.
+  // Tracks whether the operator has acknowledged the warning so the second click proceeds.
+  const schedulability = useStaffSchedulability(selectedStylist || null);
+  const [schedulabilityAcknowledged, setSchedulabilityAcknowledged] = useState(false);
+
   const { data: fullRequirements = [] } = useQuery({
     queryKey: ['full-requirements-for-booking', selectedServiceRowIds.join(',')],
     queryFn: async () => {
