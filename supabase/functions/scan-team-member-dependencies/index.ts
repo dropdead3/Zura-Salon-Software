@@ -574,6 +574,7 @@ serve(async (req) => {
         scannedAt: nowIso,
         totalBlocking,
         stylistLevelOfArchived,
+        eligibleStylists: eligibleStylistsPayload,
         buckets,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
