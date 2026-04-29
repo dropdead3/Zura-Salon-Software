@@ -32,8 +32,8 @@ import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeats
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 
-type TeamView = 'roster' | 'invitations';
-const VALID_VIEWS: TeamView[] = ['roster', 'invitations'];
+type TeamView = 'roster' | 'invitations' | 'archived';
+const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
 type RosterMode = 'card' | 'table';
 const VIEW_MODE_KEY = 'zura-team-roster-mode';
 
