@@ -504,7 +504,8 @@ function ThemeTab() {
 
   // Look up the selected page title for the status bar
   const { data: pagesConfig } = useWebsitePages();
-  const selectedPageTitle = pagesConfig?.pages?.find(p => p.id === selectedPageId)?.title ?? 'Home';
+  const selectedPage = pagesConfig?.pages?.find((p) => p.id === selectedPageId);
+  const selectedPageTitle = selectedPage?.title ?? 'Home';
 
   const activeThemeId = activeThemeSetting?.theme_id || 'cream_classic';
   const activeTheme = themes?.find((t) => t.id === activeThemeId);
@@ -533,8 +534,9 @@ function ThemeTab() {
     }
   };
 
-  const { publicUrl: getPublicUrl } = useOrgPublicUrl();
+  const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
   const orgPreviewUrl = getPublicUrl();
+  const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true, mode: 'view' });
   const handlePreview = (_themeId?: string) => {
     if (orgPreviewUrl) window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer');
   };
@@ -639,7 +641,7 @@ function ThemeTab() {
               <>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                  <LivePreviewPanel />
+                  <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
                 </ResizablePanel>
               </>
             )}
