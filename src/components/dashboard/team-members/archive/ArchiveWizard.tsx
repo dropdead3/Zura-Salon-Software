@@ -687,6 +687,17 @@ function BucketWorkspace({
         )}
       </header>
 
+      {/* Smart Split — only for client_preferences with enough capacity */}
+      {b.key === 'client_preferences' && b.items.length >= 3 && (
+        <SmartSplitRow
+          bucket={b}
+          items={b.items as unknown as ClientPreferenceItem[]}
+          eligibleStylists={eligibleStylists}
+          roster={roster}
+          setPicks={setPicks}
+        />
+      )}
+
       {/* Bulk control */}
       <div className="px-4 py-3 bg-muted/20 border-b border-border/40 flex items-center gap-2 flex-wrap">
         <span className="font-sans text-xs text-muted-foreground">
