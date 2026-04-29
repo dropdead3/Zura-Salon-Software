@@ -1151,15 +1151,6 @@ export function WebsiteSettingsContent() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const handleOpenEditor = () => {
-    // Switch to Theme tab and tell ThemeTab to flip into editor mode.
-    setActiveTab('theme');
-    const next = new URLSearchParams(searchParams);
-    next.set('tab', 'theme');
-    next.set('openEditor', '1');
-    setSearchParams(next, { replace: true });
-  };
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1186,10 +1177,6 @@ export function WebsiteSettingsContent() {
           </TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size={tokens.button.card} onClick={handleOpenEditor}>
-            <ExternalLink className="w-4 h-4 mr-1.5" />
-            Editor
-          </Button>
           <Button
             variant="outline"
             size={tokens.button.card}
