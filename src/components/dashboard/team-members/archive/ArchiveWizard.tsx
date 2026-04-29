@@ -643,15 +643,17 @@ function Step2({
 // ============================================================
 
 function BucketWorkspace({
-  bucket: b, roster, picks, bulkDest, setBulkDest, onItemPick, onApplyBulk,
+  bucket: b, roster, eligibleStylists, picks, bulkDest, setBulkDest, onItemPick, onApplyBulk, setPicks,
 }: {
   bucket: DependencyBucket;
   roster: OrganizationUser[];
+  eligibleStylists: EligibleStylist[];
   picks: Record<string, Record<string, Reassignment>>;
   bulkDest: Record<string, string>;
   setBulkDest: (v: Record<string, string>) => void;
   onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
   onApplyBulk: (b: DependencyBucket, action: ArchiveAction, dest: string | null) => void;
+  setPicks: React.Dispatch<React.SetStateAction<Record<string, Record<string, Reassignment>>>>;
 }) {
   const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
   const decidedCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
