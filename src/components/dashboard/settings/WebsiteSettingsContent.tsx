@@ -1095,6 +1095,14 @@ function SeoLegalTab() {
 // ─── Main Export ───
 export function WebsiteSettingsContent() {
   const { dashPath } = useOrgDashboardPath();
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
+  const orgForLink = effectiveOrganization || currentOrganization;
+  const previewUrl = orgForLink?.slug
+    ? `${window.location.origin}/org/${orgForLink.slug}`
+    : null;
+  const handlePreviewClick = () => {
+    if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer');
+  };
   return (
     <Tabs defaultValue="general" className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1127,7 +1135,13 @@ export function WebsiteSettingsContent() {
               Editor
             </a>
           </Button>
-          <Button variant="outline" size={tokens.button.card} onClick={() => window.open('/', '_blank')}>
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            onClick={handlePreviewClick}
+            disabled={!previewUrl}
+            title={previewUrl ?? 'No organization slug available'}
+          >
             <Eye className="w-4 h-4 mr-1.5" />
             Preview
           </Button>
