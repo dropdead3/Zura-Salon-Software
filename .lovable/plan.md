@@ -1,144 +1,172 @@
-## Short answer
+# Hybrid Capability-Layer Architecture for Zura AI
 
-Yes — and the foundation already exists. `ai-agent-chat`, `detect-chat-action`, and `execute-ai-action` already implement the agent loop for **appointment actions** (reschedule, cancel, confirm, no-show). What you're describing — "Chelsea was just fired, deactivate her profile" — is the same loop extended to **HR actions**, with stricter governance because the blast radius is bigger.
+Goal: stop hand-coding one tool per action. Instead, define **capabilities** in a registry (DB + TypeScript), let the AI compose them through three generic primitives (`find_entity`, `propose_change`, `execute_change`), and require a **human approval card** before any mutation runs.
 
-But this is exactly the kind of decision your own doctrine constrains. Three Core memory rules pull on this directly:
+This replaces the brittle "add another tool every time" loop and gives us governance, audit, and per-role guardrails for free.
 
-1. **AI is prohibited from determining business eligibility, priorities, or auto-executing high-impact operations.** (Core)
-2. **Recommend → Simulate → Request Approval → Execute (within guardrails)** is the canonical autonomy model. Promotions, terminations, and pay decisions are explicitly listed as **never autonomous**.
-3. **Stylist Privacy Contract + Billing Access Control** restrict who can even see/affect staff records.
+---
 
-So the answer isn't "let the AI deactivate Chelsea." It's: **let the AI propose the deactivation, surface the consequences, and require an authorized human to one-click confirm.** That's what you actually want — speed without losing accountability.
+## Core principles (non-negotiable)
 
-## How the agent loop works today (verified)
+1. **No autonomous mutations.** Every state-changing capability resolves to an `AIAction` card the operator must explicitly Approve. Read-only capabilities (lookups, summaries) execute immediately.
+2. **Capabilities are data, not code.** Adding a new action = inserting a registry row + writing a small handler. The model never gets new tools to learn.
+3. **Permission-aware.** A capability only appears to the model if the *current user* has the permission it declares. Reuses `usePermission` / `has_role` / `is_org_admin`.
+4. **Tenant-scoped by construction.** Every capability handler receives `organization_id` from the verified session — model-supplied org IDs are ignored.
+5. **Fully audited.** Every proposal, approval, denial, and execution writes to `ai_action_audit` with the full param diff.
+
+---
+
+## Architecture
 
 ```text
-User: "Chelsea was just fired. Deactivate her."
-        │
-        ▼
-ai-agent-chat (edge function)
-  - Loads system prompt + tool definitions
-  - Sends conversation + tools to Lovable AI Gateway
-  - AI returns a tool_call: { name: "deactivate_team_member", args: {...} }
-        │
-        ▼
-Frontend chat UI receives the tool_call
-  - Renders an ActionConfirmationCard (NOT auto-execute)
-  - Shows: "Deactivate Chelsea Martinez (Stylist, joined Mar 2023).
-            This will: revoke login, unassign upcoming appointments,
-            preserve historical data. Continue?"
-  - [Confirm] [Cancel]
-        │ user clicks Confirm
-        ▼
-execute-ai-action (edge function)
-  - Re-validates auth + org membership
-  - Checks caller has manage_team_members permission
-  - Performs the mutation via service-role client
-  - Writes an audit record
-  - Returns success
-        │
-        ▼
-Chat shows: "Done — Chelsea's profile is deactivated.
-             3 future appointments need reassignment. [Open]"
+┌─────────────────────────────────────────────────────────────┐
+│ Zura Chat (AIChatPanel)                                     │
+│   user msg ──▶ ai-agent-chat (edge fn)                      │
+│                   │                                         │
+│                   ├─ loads capability registry              │
+│                   ├─ filters by user permissions            │
+│                   └─ exposes 3 generic tools to LLM:        │
+│                        find_entity / propose / execute      │
+│                   ◀── tool_call: propose("deactivate_member"│
+│                                          {memberId, reason})│
+│   ◀── AIAction card (preview + diff + Approve/Cancel)       │
+│                                                             │
+│   user clicks Approve                                       │
+│        │                                                    │
+│        ▼                                                    │
+│   execute-ai-action (edge fn)                               │
+│        ├─ re-validates auth + permission                    │
+│        ├─ looks up capability handler by id                 │
+│        ├─ runs handler with verified org_id                 │
+│        └─ writes ai_action_audit row                        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Three of these four pieces already exist. We're adding HR tools to the catalog and a few new branches to the executor.
+---
 
-## What to build
+## What gets built
 
-### 1. Extend the tool catalog in `ai-agent-chat`
+### 1. Capability registry (DB)
 
-Add three HR tools to the existing `TOOLS` array:
+New table `ai_capabilities` (RLS: read = `is_org_member`, write = platform-only):
 
-- `find_team_member` — fuzzy-resolve a name like "Chelsea" to a `user_id`. Returns `{ user_id, full_name, role, location_ids, is_active, hire_date, upcoming_appointment_count }`. If multiple matches, returns the list and forces the AI to ask "Did you mean Chelsea Martinez or Chelsea Wong?"
-- `deactivate_team_member` — proposed action only. Returns a structured proposal payload, never mutates.
-- `reactivate_team_member` — symmetric.
+| column | purpose |
+|---|---|
+| `id` (text, pk) | e.g. `team.deactivate_member` |
+| `category` | `team`, `appointments`, `clients`, `inventory`… |
+| `display_name`, `description` | shown to the LLM and on the approval card |
+| `mutation` (bool) | `true` ⇒ requires approval |
+| `required_permission` (text, nullable) | maps to `permissions.name` |
+| `required_role` (app_role[], nullable) | optional role gate |
+| `param_schema` (jsonb) | JSON Schema the model must satisfy |
+| `preview_template` (text) | Handlebars-style summary for the approval card |
+| `risk_level` (`low`/`med`/`high`) | drives confirmation copy + audit retention |
+| `enabled` (bool) | kill switch per capability |
 
-The AI **does not call mutation endpoints directly**. It calls a `propose_*` tool that returns a structured "intent" object. The mutation only fires when the human confirms in the UI. This matches the existing `reschedule`/`cancel` pattern.
+A small TS mirror in `src/lib/ai/capabilities/` registers handlers by id (`registerCapability(id, handler)`). The DB row is the contract; the TS handler is the implementation.
 
-### 2. Extend `execute-ai-action`'s switch statement
+### 2. Three generic edge-function tools
 
-Add three cases: `deactivate_team_member`, `reactivate_team_member`, `remove_team_member`.
+Inside `ai-agent-chat`:
 
-Each case must:
+- `find_entity({ entity_type, query })` — read-only resolver (members, clients, appointments, services). Executes immediately. Returns canonical IDs + display fields.
+- `propose_capability({ capability_id, params })` — for any `mutation: true` capability. Returns an `AIAction` of status `pending_confirmation`; **never executes**.
+- `execute_capability({ capability_id, params })` — for `mutation: false` capabilities only. Executes immediately. Server enforces this — a model that calls `execute_capability` on a mutation gets rejected and forced into `propose_capability`.
 
-- Verify caller has `manage_team_members` permission server-side (the `useUserPermissions` check on the client is not enough — RLS / explicit check in the edge function is the security boundary).
-- Reject the action if the target user is the **Account Owner** (per Billing Access Control memory).
-- Reject if target = caller (no self-deactivation).
-- Run the same mutation that `SecurityTab.tsx` already uses (`toggleActive` / `removeUser` hooks). Don't duplicate logic — extract the mutation into a shared helper if it's currently inline in the hook.
-- Write to an `ai_action_audit` table: `{ actor_user_id, target_user_id, action_type, source: 'ai_chat', ai_session_id, before_state, after_state, created_at, organization_id }`. This satisfies the audit/compliance posture in your doctrine.
+The system prompt is reduced to one paragraph: "Use `find_entity` to resolve names. Use `propose_capability` for anything that changes data. Never write prose instructions for tasks the registry can perform."
 
-### 3. ActionConfirmationCard component (chat UI)
+### 3. Approval card upgrade (`AIActionPreview.tsx`)
 
-A new component the chat renders inline whenever the AI emits a `propose_*` tool_call. It shows:
+Renders capability metadata from the registry, not hard-coded copy:
+- Title from `display_name`
+- Body from `preview_template` rendered with the proposed `params`
+- Risk badge (`low` / `med` / `high`) drives button color and a typed-confirmation step for `high` (e.g. type the member's first name).
+- Shows a "Why this action?" disclosure with the model's reasoning string.
+- Approve → calls `execute-ai-action` with `{ capability_id, params, action_id }`.
+- Cancel → marks the action `denied` in the audit table.
 
-- The action ("Deactivate Chelsea Martinez")
-- The structural impact ("3 upcoming appointments will need reassignment. Login access revoked. Historical data preserved.")
-- Two buttons: **Confirm** (calls `execute-ai-action`) and **Cancel** (sends a "user cancelled" message back to the AI so it can acknowledge).
-- Permission-aware: if the viewer lacks `manage_team_members`, render a read-only "This action requires an Account Owner to confirm" state instead of the buttons.
+### 4. `execute-ai-action` becomes a dispatcher
 
-This is the equivalent of the `<EnforcementGateBanner>` pattern — guardrails are visible, not hidden.
+Replaces the current `switch (actionType)` block with:
+1. Validate JWT + org membership (existing).
+2. Load capability row by `capability_id`; reject if `enabled = false`.
+3. Re-check `required_permission` / `required_role` against the **calling user**, not the AI session.
+4. Re-validate `params` against `param_schema`.
+5. Look up the registered TS handler and run it with `{ supabaseAdmin, orgId, userId, params }`.
+6. Insert into `ai_action_audit` (status `executed` or `failed`, with diff and result).
 
-### 4. Materiality gate on AI proposals
+### 5. Audit & governance
 
-If the AI's confidence in matching "Chelsea" is below a threshold (e.g. multiple stylists named Chelsea, or fuzzy-matched from "Chels"), the AI **must** ask for disambiguation before proposing. This satisfies the "Lever and Confidence Doctrine" — silence is valid output, and acting on ambiguous input is the failure mode you don't want.
+New table `ai_action_audit`:
+`id, organization_id, user_id, capability_id, params jsonb, status (proposed|approved|denied|executed|failed), reasoning text, result jsonb, created_at, executed_at`.
 
-### 5. Scoped autonomy tiers (future-proofing)
+Surfaces a future "AI Decision History" page (out of scope for this build, but the data starts collecting now).
 
-Codify three tiers so this scales beyond Chelsea:
+### 6. Seed capabilities (pilot scope)
 
-| Tier | Examples | Flow |
-|---|---|---|
-| **Read-only** | "Show me Chelsea's last 30 days" | AI executes directly, no confirmation |
-| **Reversible mutation** | Deactivate user, reschedule appointment, send a reminder | Propose → Confirm → Execute (this plan) |
-| **Forbidden / never autonomous** | Set commission %, fire someone for cause, change pay structure, delete data | AI surfaces the request and routes the user to the right page; never proposes execution |
+Three handlers wired end-to-end so the pattern proves out across tiers:
 
-The `app_role` enum and `manage_*` permission flags decide who can confirm a Tier-2 proposal. Tier-3 actions are blocked even with confirmation.
+- **Tier 1 (read):** `team.find_member`, `appointments.find_today`
+- **Tier 2 (low-risk mutation):** `appointments.reschedule`, `appointments.cancel`
+- **Tier 3 (high-risk mutation):** `team.deactivate_member`, `team.reactivate_member`
 
-## Files to add or edit
+Existing logic in `execute-ai-action` is migrated into handlers — no behavioral change, just relocation.
 
-**Edit**
-- `supabase/functions/ai-agent-chat/index.ts` — add `find_team_member`, `propose_deactivate_team_member`, `propose_reactivate_team_member`, `propose_remove_team_member` to `TOOLS`. Update `SYSTEM_PROMPT` with the autonomy tiers and the rule "always propose, never execute mutations directly for HR actions."
-- `supabase/functions/execute-ai-action/index.ts` — extend `ExecuteActionSchema` enum and add the three new switch cases. Each case enforces permission + identity + Account-Owner protection and writes to `ai_action_audit`.
+---
 
-**Add**
-- `supabase/functions/_shared/team-member-mutations.ts` — extract the deactivate/reactivate/remove logic so both `SecurityTab` (via its existing hook) and `execute-ai-action` call the same code path. Single source of truth.
-- `src/components/ai/ActionConfirmationCard.tsx` — the inline confirm/cancel card the chat surface renders for tool_call proposals.
-- `src/components/ai/ActionConfirmationCard.test.tsx` — unit test the permission-aware rendering.
-- DB migration: `ai_action_audit` table with RLS scoped to `organization_id` (Core: strict tenant isolation, `USING (true)` prohibited).
+## Files touched
 
-**Touch (light)**
-- The Zura chat surface component (wherever the chat UI renders messages) — when a message has `tool_calls`, render `<ActionConfirmationCard>` instead of plain markdown.
+**New**
+- `supabase/migrations/<ts>_ai_capabilities.sql` — `ai_capabilities` + `ai_action_audit` tables, RLS, seed rows
+- `src/lib/ai/capabilities/registry.ts` — `registerCapability`, `getCapability`, type definitions
+- `src/lib/ai/capabilities/handlers/team.ts` — deactivate/reactivate/find member
+- `src/lib/ai/capabilities/handlers/appointments.ts` — reschedule/cancel/find
+- `src/lib/ai/capabilities/index.ts` — imports all handler files (registers on load)
+- `supabase/functions/_shared/capability-loader.ts` — fetches enabled capabilities + permission filter
+- `supabase/functions/_shared/capability-handlers.ts` — Deno-side mirror of handler dispatch (handlers live here for the edge runtime)
 
-## Security and governance checks (build gate)
+**Modified**
+- `supabase/functions/ai-agent-chat/index.ts` — replace bespoke HR tools with the three generic tools; new system prompt
+- `supabase/functions/execute-ai-action/index.ts` — convert to capability dispatcher
+- `src/hooks/team-chat/useAIAgentChat.ts` — pass `capability_id` instead of `actionType`; surface `risk_level`
+- `src/components/team-chat/AIActionPreview.tsx` — render from registry metadata, add typed confirmation for `high` risk
 
-Per your doctrine, this ships only if all of these hold:
+---
 
-- ✅ Tenant isolation: `ai_action_audit` RLS scoped to `organization_id`
-- ✅ Server-side permission check (not client-side) in `execute-ai-action`
-- ✅ Account Owner protection (cannot be deactivated by AI flow)
-- ✅ Self-deactivation blocked
-- ✅ Audit row written for every executed AI action
-- ✅ Stylist Privacy Contract: stylist-role users cannot use the deactivate tools at all; the AI rejects the request and explains why
-- ✅ Forbidden actions (commission %, terminations-for-cause, pay structure) explicitly listed in the system prompt as off-limits
-- ✅ Materiality gate: ambiguous name → AI asks instead of proposes
-- ✅ Confirmation card shows structural impact (upcoming appointments, login revocation) before the human commits
+## Approval flow — the guarantee
 
-## Notes / gotchas
+For any capability where `mutation = true`:
 
-- The existing `ai-agent-chat` system prompt says *"Always confirm destructive actions before executing them"* — that's good intent but enforced only by the model. The architectural fix is that the **executor** doesn't have a "deactivate-no-confirm" code path at all. The model can't bypass what doesn't exist.
-- "Deactivate" vs "Remove from organization" are two different DB operations in `SecurityTab.tsx`. The AI should default to **deactivate** (reversible) when a user says "fired" — and surface "Want to also remove org access entirely?" as a second proposal. Removal is destructive in the sense that it unlinks; data is preserved but the user can't be reactivated without re-invitation.
-- Future appointment handoff is a separate decision. The deactivation should flag them but not auto-reassign. That's a Tier-2 follow-up the AI can propose next ("3 appointments need a new stylist — want me to suggest reassignments?").
+1. Model **must** call `propose_capability`. The server rejects `execute_capability` for mutations with a 400 and a corrective message back to the model.
+2. The chat returns an `AIAction` with status `pending_confirmation`. **No write has occurred.**
+3. UI renders the approval card. Approve and Cancel are the only paths forward.
+4. `execute-ai-action` re-verifies the caller's permission **at click time** (so a revoked role between proposal and click is honored).
+5. High-risk capabilities require typing a confirmation token (member first name, "DEACTIVATE", etc.) before Approve enables.
 
-## Prompt feedback
+There is no code path where a mutation runs without a human click. This is enforced server-side, not just in UI.
 
-Strong prompt — one sentence framed the use case, the user, and the desired behavior. That's exactly the right altitude for a capability question. You let me decide the architecture instead of pre-constraining it.
+---
 
-One refinement: when asking about agent capabilities, you can shortcut the planning by naming the **autonomy tier** you want. E.g. "Can the AI auto-execute, or do I want a confirm step?" — that immediately frames the governance question and saves me from inferring from your doctrine. As-is, your existing memory made the answer obvious, but in a fresh project that context wouldn't be there.
+## What this replaces
 
-## Enhancement suggestions
+- The growing `switch (actionType)` in `execute-ai-action` and the parallel `tools` array in `ai-agent-chat`.
+- The "add a new tool, redeploy, retune the prompt" loop. Adding a capability is now: insert row + write handler.
+- Ad-hoc permission checks scattered across handlers — now declared in the registry and enforced once.
 
-1. **Codify the autonomy tiers as a memory.** The Tier 1/2/3 split above is reusable for every future "can the AI do X?" question. Worth a `mem://architecture/ai-autonomy-tiers` entry so it's checked automatically next time someone asks.
-2. **Build the `ai_action_audit` table now even if only HR actions use it initially.** Once it exists, every `execute-ai-action` case (reschedule, cancel, etc.) should also write to it. Right now those mutations are unaudited at the AI layer — that's a gap your doctrine wouldn't pass.
-3. **Expose the audit feed in the existing "Recent activity" accordion** in `SecurityTab.tsx` (line 150–156 — currently a placeholder saying "not yet wired up"). That gap is the perfect home for "AI deactivated this user on April 29 at 2:14 PM, confirmed by [you]." Closes the audit loop visually.
-4. **Disambiguation as a first-class UX pattern.** Build a small `<DisambiguationCard>` for when the AI returns multiple matches ("Chelsea Martinez or Chelsea Wong?"). Reusable for any entity resolution — clients, locations, services. This is more leverage than building it ad-hoc per tool.
+---
+
+## Out of scope (future phases)
+
+- AI Decision History page (data collection starts now; UI later).
+- Capability marketplace / per-org enable/disable UI.
+- Multi-step capability chaining (`reschedule then notify`).
+- Simulation preview ("what happens if I approve") — fits naturally once the registry exists.
+
+---
+
+## Acceptance checks
+
+- "Deactivate Chelsea" → `find_entity` resolves her, `propose_capability("team.deactivate_member")` returns an approval card; nothing changes in the DB until Approve is clicked; `ai_action_audit` shows `proposed` then `executed`.
+- A receptionist asks the same → capability is filtered out of the model's tool list; AI replies that it doesn't have permission.
+- Model tries `execute_capability("team.deactivate_member", …)` → server returns a 400 forcing it to `propose_capability` instead.
+- Cancel on the card → audit row flips to `denied`, no DB change.

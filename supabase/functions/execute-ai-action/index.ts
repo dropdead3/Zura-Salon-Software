@@ -2,37 +2,48 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+import { validateBody, z } from "../_shared/validation.ts";
+import {
+  getCapabilityHandlers,
+  userCanInvoke,
+  recordAudit,
+  updateAuditStatus,
+  type CapabilityRow,
+} from "../_shared/capability-runtime.ts";
+// IMPORTANT: importing this file registers all capability handlers.
+import "../_shared/capability-handlers.ts";
 
-const ExecuteActionSchema = z.object({
-  actionType: z.enum([
-    "reschedule",
-    "cancel",
-    "confirm",
-    "no_show",
-    "deactivate_team_member",
-    "reactivate_team_member",
-  ]),
-  params: z.record(z.unknown()),
-  userId: z.string().uuid().optional(),
+const ExecuteSchema = z.object({
+  capability_id: z.string().min(1),
+  params: z.record(z.unknown()).default({}),
   organizationId: z.string().uuid().optional(),
   organization_id: z.string().uuid().optional(),
-  actionId: z.string().uuid().optional(),
+  audit_id: z.string().uuid().optional(),
+  confirmation_token: z.string().optional(),
+  /** denied means the user clicked Cancel — no execution, just audit */
+  denied: z.boolean().optional(),
 });
 
-const HR_ACTION_TYPES = new Set(["deactivate_team_member", "reactivate_team_member"]);
-
-async function callerCanManageTeam(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
-  callerUserId: string,
-): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', callerUserId);
-  if (error || !data) return false;
-  return data.some((r: { role: string }) => r.role === 'admin' || r.role === 'super_admin');
+// deno-lint-ignore no-explicit-any
+async function getCallerRolesAndPermissions(supabase: any, userId: string) {
+  const [{ data: roleRows }, { data: permRows }] = await Promise.all([
+    supabase.from('user_roles').select('role').eq('user_id', userId),
+    supabase
+      .from('user_roles')
+      .select('role, role_permissions:role_permissions!inner(permission_id, permissions:permission_id(name))')
+      .eq('user_id', userId),
+  ]);
+  const roleSet = new Set<string>((roleRows || []).map((r: any) => r.role));
+  const permSet = new Set<string>();
+  (permRows || []).forEach((row: any) => {
+    const rps = row?.role_permissions;
+    if (Array.isArray(rps)) {
+      rps.forEach((rp: any) => { if (rp?.permissions?.name) permSet.add(rp.permissions.name); });
+    } else if (rps?.permissions?.name) {
+      permSet.add(rps.permissions.name);
+    }
+  });
+  return { roleSet, permSet };
 }
 
 serve(async (req) => {
@@ -41,255 +52,131 @@ serve(async (req) => {
   }
 
   try {
-    // Auth guard
     let authResult;
-    try {
-      authResult = await requireAuth(req);
-    } catch (authErr: any) {
-      return authErrorResponse(authErr, getCorsHeaders(req));
-    }
+    try { authResult = await requireAuth(req); }
+    catch (authErr: any) { return authErrorResponse(authErr, getCorsHeaders(req)); }
     const { user, supabaseAdmin } = authResult;
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase environment variables not configured");
-    }
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase env vars not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
-    
-    const body = await validateBody(req, ExecuteActionSchema, getCorsHeaders(req));
-    const { actionType, params, userId, organizationId, actionId } = body;
-    // Verify org access
-    try {
-      const orgId = body.organizationId || body.organization_id;
-      if (!orgId) {
-        return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+
+    const body = await validateBody(req, ExecuteSchema, getCorsHeaders(req));
+    const { capability_id, params, audit_id, confirmation_token, denied } = body;
+    const orgId = body.organizationId || body.organization_id;
+    if (!orgId) {
+      return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
+    }
+
+    try { await requireOrgMember(supabaseAdmin, user.id, orgId); }
+    catch (orgErr: any) { return authErrorResponse(orgErr, getCorsHeaders(req)); }
+
+    // ---------- DENIAL PATH ----------
+    if (denied) {
+      if (audit_id) await updateAuditStatus(supabase, audit_id, { status: 'denied' });
+      return new Response(JSON.stringify({ success: true, message: "Action cancelled." }), {
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- LOAD CAPABILITY ----------
+    const { data: cap, error: capErr } = await supabase
+      .from('ai_capabilities')
+      .select('*')
+      .eq('id', capability_id)
+      .maybeSingle();
+    if (capErr || !cap) {
+      return new Response(JSON.stringify({ success: false, message: "Unknown capability." }), {
+        status: 404, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+    const capability = cap as CapabilityRow;
+    if (!capability.enabled) {
+      return new Response(JSON.stringify({ success: false, message: "This capability is disabled." }), {
+        status: 403, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- RE-CHECK PERMISSION AT CLICK TIME ----------
+    const { roleSet, permSet } = await getCallerRolesAndPermissions(supabase, user.id);
+    if (!userCanInvoke(capability, roleSet, permSet)) {
+      return new Response(JSON.stringify({ success: false, message: "You do not have permission to perform this action." }), {
+        status: 403, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- HIGH-RISK CONFIRMATION TOKEN ----------
+    if (capability.risk_level === 'high' && capability.confirmation_token_field) {
+      // The expected token was returned at proposal time; the client must echo it.
+      if (!confirmation_token || !confirmation_token.trim()) {
+        return new Response(JSON.stringify({ success: false, message: "Confirmation required for this high-risk action." }), {
+          status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
       }
-      await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr: any) {
-      return authErrorResponse(orgErr, getCorsHeaders(req));
+    }
+
+    // ---------- DISPATCH HANDLER ----------
+    const handlers = getCapabilityHandlers(capability_id);
+    const exec = handlers?.execute || (capability.mutation ? undefined : handlers?.read);
+    if (!exec) {
+      return new Response(JSON.stringify({ success: false, message: "No handler registered for this capability." }), {
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
     let result: { success: boolean; message: string; data?: unknown };
-
-    switch (actionType) {
-      case 'reschedule': {
-        const { appointment_id, new_date, new_time, staff_user_id, location_id } = params;
-        
-        // Validate appointment still exists
-        const { data: appointment, error: fetchError } = await supabase
-          .from('appointments')
-          .select('id, client_name, status')
-          .eq('id', appointment_id)
-          .single();
-        
-        if (fetchError || !appointment) {
-          result = { success: false, message: "Appointment not found or already cancelled" };
-          break;
-        }
-        
-        if (appointment.status === 'cancelled') {
-          result = { success: false, message: "This appointment has already been cancelled" };
-          break;
-        }
-        
-        // Calculate end time (assume 1 hour duration for now)
-        const startTime = new Date(`2000-01-01T${new_time}`);
-        const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-        const endTimeStr = endTime.toTimeString().split(' ')[0];
-        
-        // Check for conflicts
-        const { data: conflicts } = await supabase
-          .from('appointments')
-          .select('id')
-          .eq('staff_user_id', staff_user_id)
-          .eq('appointment_date', new_date)
-          .neq('id', appointment_id)
-          .neq('status', 'cancelled')
-          .or(`and(start_time.lt.${endTimeStr},end_time.gt.${new_time})`);
-        
-        if (conflicts && conflicts.length > 0) {
-          result = { 
-            success: false, 
-            message: "There's a scheduling conflict at the new time. Please choose a different time." 
-          };
-          break;
-        }
-        
-        // Update the appointment
-        const { error: updateError } = await supabase
-          .from('appointments')
-          .update({
-            appointment_date: new_date,
-            start_time: new_time,
-            end_time: endTimeStr,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', appointment_id);
-        
-        if (updateError) {
-          console.error("Reschedule error:", updateError);
-          result = { success: false, message: "Failed to reschedule appointment" };
-          break;
-        }
-        
-        result = { 
-          success: true, 
-          message: `Successfully rescheduled ${appointment.client_name}'s appointment to ${new_date} at ${formatTime(String(new_time ?? ''))}` 
-        };
-        break;
+    try {
+      // For execute handlers we use the typed signature. For read-only direct
+      // execution we adapt the ReadResult shape to ExecuteResult.
+      if (handlers?.execute) {
+        result = await handlers.execute({
+          supabase, organizationId: orgId, userId: user.id, capability, params: params || {},
+        });
+      } else if (handlers?.read) {
+        const r = await handlers.read({
+          supabase, organizationId: orgId, userId: user.id, capability, params: params || {},
+        });
+        result = { success: true, message: r.message || "Done.", data: r.data };
+      } else {
+        result = { success: false, message: "No handler." };
       }
-
-      case 'cancel': {
-        const { appointment_id } = params;
-        
-        // Validate appointment exists
-        const { data: appointment, error: fetchError } = await supabase
-          .from('appointments')
-          .select('id, client_name, status')
-          .eq('id', appointment_id)
-          .single();
-        
-        if (fetchError || !appointment) {
-          result = { success: false, message: "Appointment not found" };
-          break;
-        }
-        
-        if (appointment.status === 'cancelled') {
-          result = { success: false, message: "This appointment has already been cancelled" };
-          break;
-        }
-        
-        // Cancel the appointment
-        const { error: updateError } = await supabase
-          .from('appointments')
-          .update({
-            status: 'cancelled',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', appointment_id);
-        
-        if (updateError) {
-          console.error("Cancel error:", updateError);
-          result = { success: false, message: "Failed to cancel appointment" };
-          break;
-        }
-        
-        result = { 
-          success: true, 
-          message: `Successfully cancelled ${appointment.client_name}'s appointment` 
-        };
-        break;
-      }
-
-      case 'deactivate_team_member':
-      case 'reactivate_team_member': {
-        const orgId = (body.organizationId || body.organization_id)!;
-        const targetUserId = params.user_id as string | undefined;
-        const setActive = actionType === 'reactivate_team_member';
-
-        if (!targetUserId) {
-          result = { success: false, message: 'user_id is required.' };
-          break;
-        }
-
-        const canManage = await callerCanManageTeam(supabase, user.id);
-        if (!canManage) {
-          result = { success: false, message: 'You need an admin or owner role to manage team members.' };
-          break;
-        }
-
-        if (targetUserId === user.id) {
-          result = { success: false, message: 'You cannot change your own active status from chat.' };
-          break;
-        }
-
-        const { data: target, error: targetErr } = await supabase
-          .from('employee_profiles')
-          .select('user_id, full_name, display_name, is_active, is_super_admin, organization_id')
-          .eq('user_id', targetUserId)
-          .eq('organization_id', orgId)
-          .maybeSingle();
-
-        if (targetErr || !target) {
-          result = { success: false, message: 'Team member not found in this organization.' };
-          break;
-        }
-
-        if (target.is_super_admin && !setActive) {
-          result = { success: false, message: 'The Account Owner cannot be deactivated through chat. Use Settings → Team Members.' };
-          break;
-        }
-
-        if (target.is_active === setActive) {
-          result = { success: false, message: `${target.display_name || target.full_name} is already ${setActive ? 'active' : 'inactive'}.` };
-          break;
-        }
-
-        const { error: updateErr } = await supabase
-          .from('employee_profiles')
-          .update({ is_active: setActive })
-          .eq('user_id', targetUserId)
-          .eq('organization_id', orgId);
-
-        if (updateErr) {
-          console.error('Team-member status update error:', updateErr);
-          result = { success: false, message: `Failed to ${setActive ? 'reactivate' : 'deactivate'} team member.` };
-          break;
-        }
-
-        result = {
-          success: true,
-          message: setActive
-            ? `Reactivated ${target.display_name || target.full_name}. They can log in and be assigned work again.`
-            : `Deactivated ${target.display_name || target.full_name}. Login revoked, historical data preserved.`,
-          data: {
-            target_user_id: targetUserId,
-            new_is_active: setActive,
-          },
-        };
-        break;
-      }
-
-      default:
-        result = { success: false, message: `Unknown action type: ${actionType}` };
+    } catch (e: any) {
+      console.error(`[execute-ai-action] handler ${capability_id} threw:`, e);
+      result = { success: false, message: e instanceof Error ? e.message : "Execution failed." };
     }
 
-    // Update action record if actionId provided
-    if (actionId) {
-      await supabase
-        .from('ai_agent_actions')
-        .update({
-          status: result.success ? 'executed' : 'failed',
-          result: result,
-          executed_at: result.success ? new Date().toISOString() : null,
-          error_message: result.success ? null : result.message
-        })
-        .eq('id', actionId);
+    // ---------- AUDIT ----------
+    if (audit_id) {
+      await updateAuditStatus(supabase, audit_id, {
+        status: result.success ? 'executed' : 'failed',
+        result: result.data ?? result.message,
+        error: result.success ? null : result.message,
+        executed_at: result.success ? new Date().toISOString() : null,
+      });
+    } else {
+      // No audit row from proposal (read-only execute_capability) — still log it.
+      await recordAudit(supabase, {
+        organization_id: orgId,
+        user_id: user.id,
+        capability_id,
+        params: params || {},
+        status: result.success ? 'executed' : 'failed',
+        result: result.data ?? result.message,
+        error: result.success ? null : result.message,
+        executed_at: result.success ? new Date().toISOString() : null,
+      });
     }
 
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify(result), {
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+    });
 
   } catch (e: any) {
     console.error("execute-ai-action error:", e);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: e instanceof Error ? e.message : "Unknown error" 
-      }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+    });
   }
 });
-
-function formatTime(time24: string): string {
-  const [hours, minutes] = time24.split(':').map(Number);
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-}
