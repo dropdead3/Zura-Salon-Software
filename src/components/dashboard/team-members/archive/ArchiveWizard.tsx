@@ -460,12 +460,16 @@ function Step1({
 // ============================================================
 
 function Step2({
-  loading, buckets, totalBlocking, onRescan,
+  loading, buckets, totalBlocking, onRescan, picks, roster, handledCount, onOpenBucket,
 }: {
   loading: boolean;
   buckets: DependencyBucket[];
   totalBlocking: number;
   onRescan: () => void;
+  picks: Record<string, Record<string, Reassignment>>;
+  roster: OrganizationUser[];
+  handledCount: number;
+  onOpenBucket: (key: ArchiveBucketKey) => void;
 }) {
   if (loading) {
     return (
@@ -492,29 +496,257 @@ function Step2({
             <span>{totalBlocking} time-sensitive items (appointments / pairings) require reassignment.</span>
           </div>
         )}
+        {nonEmpty.length > 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <div className="h-1.5 flex-1 rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full bg-emerald-500/70 transition-all"
+                style={{ width: `${(handledCount / nonEmpty.length) * 100}%` }}
+              />
+            </div>
+            <span className="font-sans text-[11px] text-muted-foreground tabular-nums">
+              {handledCount} / {nonEmpty.length} handled
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {buckets.map((b) => (
-          <div
-            key={b.key}
-            className={cn(
-              'rounded-lg border px-3 py-2 flex items-center justify-between',
-              b.count > 0 ? 'border-border bg-card/60' : 'border-border/40 bg-muted/20 opacity-60',
-            )}
-          >
-            <span className="font-sans text-xs text-foreground">{b.label}</span>
-            <Badge variant={b.count > 0 ? 'secondary' : 'outline'} className="text-[11px]">
-              {b.count}
-            </Badge>
-          </div>
-        ))}
+        {buckets.map((b) => {
+          const handled = isBucketHandled(b, picks);
+          const summary = handled && b.count > 0 ? summarizeBucketDecisions(b, picks, roster) : '';
+          const interactive = b.count > 0;
+
+          if (!interactive) {
+            return (
+              <div
+                key={b.key}
+                className="rounded-lg border border-border/40 bg-muted/20 opacity-60 px-3 py-2 flex items-center justify-between"
+              >
+                <span className="font-sans text-xs text-foreground">{b.label}</span>
+                <Badge variant="outline" className="text-[11px]">0</Badge>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={b.key}
+              type="button"
+              onClick={() => onOpenBucket(b.key)}
+              className={cn(
+                'group rounded-lg border bg-card/60 hover:bg-card/80 text-left px-3 py-2.5 transition-colors',
+                handled ? 'border-emerald-500/40' : 'border-border',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-sans text-xs text-foreground truncate">{b.label}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {handled ? (
+                    <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      {b.count}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[11px]">{b.count}</Badge>
+                  )}
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground" />
+                </div>
+              </div>
+              {handled ? (
+                <p className="font-sans text-[11px] text-emerald-500/90 mt-1 truncate">
+                  {summary || 'Handled'}
+                </p>
+              ) : (
+                <p className="font-sans text-[11px] text-muted-foreground mt-1">
+                  Tap to reassign
+                </p>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <Button variant="ghost" size="sm" onClick={onRescan} className="text-xs">
         Re-scan
       </Button>
     </div>
+  );
+}
+
+// ============================================================
+// BucketWorkspace — focused per-bucket reassignment view
+// (rendered in-place on Step 2 when a bucket is opened)
+// ============================================================
+
+function BucketWorkspace({
+  bucket: b, roster, picks, bulkDest, setBulkDest, onItemPick, onApplyBulk,
+}: {
+  bucket: DependencyBucket;
+  roster: OrganizationUser[];
+  picks: Record<string, Record<string, Reassignment>>;
+  bulkDest: Record<string, string>;
+  setBulkDest: (v: Record<string, string>) => void;
+  onItemPick: (b: DependencyBucket, itemId: string, action: ArchiveAction, dest: string | null) => void;
+  onApplyBulk: (b: DependencyBucket, action: ArchiveAction, dest: string | null) => void;
+}) {
+  const eligible = roster.filter((u) => rosterMatchesRole(u, b.destinationRole));
+  const decidedCount = Object.keys(picks[b.key] ?? {}).filter((k) => k !== '__bulk__').length;
+  const isBulkBucket = b.key === 'client_preferences' || b.items.length === 0;
+  const overflow = b.count - b.items.length;
+  const handled = isBucketHandled(b, picks);
+
+  return (
+    <section className="rounded-xl border border-border/60 bg-card/40 overflow-hidden">
+      <header className="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <p className="font-display text-xs tracking-wider uppercase text-foreground">
+            {b.label}
+          </p>
+          <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+            {b.count} {b.count === 1 ? 'item' : 'items'}
+            {b.destinationRole !== 'any' && ` · destination role: ${b.destinationRole.replace('_', ' ')}`}
+          </p>
+        </div>
+        {handled ? (
+          <Badge variant="outline" className="text-[10px] border-emerald-500/40 text-emerald-500 gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Handled
+          </Badge>
+        ) : !isBulkBucket ? (
+          <Badge variant="outline" className="text-[10px]">
+            {decidedCount} / {b.items.length} decided
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-[10px]">Needs decision</Badge>
+        )}
+      </header>
+
+      {/* Bulk control */}
+      <div className="px-4 py-3 bg-muted/20 border-b border-border/40 flex items-center gap-2 flex-wrap">
+        <span className="font-sans text-xs text-muted-foreground">
+          {isBulkBucket ? 'Reassign all to' : 'Bulk reassign to'}
+        </span>
+        <Select
+          value={bulkDest[b.key] ?? ''}
+          onValueChange={(v) => setBulkDest({ ...bulkDest, [b.key]: v })}
+        >
+          <SelectTrigger className="h-8 w-[200px] rounded-full text-xs">
+            <SelectValue placeholder="Pick a teammate…" />
+          </SelectTrigger>
+          <SelectContent>
+            {eligible.length === 0 && (
+              <div className="px-2 py-2 text-xs text-muted-foreground">
+                No eligible {b.destinationRole.replace('_', ' ')}.
+              </div>
+            )}
+            {eligible.map((u) => (
+              <SelectItem key={u.user_id} value={u.user_id}>
+                {u.display_name || u.full_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-8 text-xs"
+          disabled={!bulkDest[b.key]}
+          onClick={() => onApplyBulk(b, 'reassign', bulkDest[b.key])}
+        >
+          Apply
+        </Button>
+        {b.actions.includes('cancel') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-destructive"
+            onClick={() => onApplyBulk(b, 'cancel', null)}
+          >
+            Cancel all
+          </Button>
+        )}
+        {b.actions.includes('drop') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => onApplyBulk(b, 'drop', null)}
+          >
+            Drop all
+          </Button>
+        )}
+        {b.actions.includes('end_date') && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 text-xs text-muted-foreground"
+            onClick={() => onApplyBulk(b, 'end_date', null)}
+          >
+            End-date all
+          </Button>
+        )}
+      </div>
+
+      {/* Per-item rows */}
+      {!isBulkBucket && (
+        <ul className="divide-y divide-border/40 max-h-[420px] overflow-y-auto">
+          {b.items.map((raw) => {
+            const item = raw as Record<string, unknown>;
+            const id = String(item.id);
+            const decided = picks[b.key]?.[id];
+            return (
+              <li key={id} className="px-4 py-2 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-sans text-xs text-foreground truncate">
+                    {describeItem(b.key, item)}
+                  </p>
+                  {decided && (
+                    <p className="font-sans text-[11px] text-muted-foreground mt-0.5">
+                      {decided.action === 'reassign'
+                        ? `→ ${roster.find((u) => u.user_id === decided.destinationUserId)?.display_name || roster.find((u) => u.user_id === decided.destinationUserId)?.full_name || 'Selected'}`
+                        : decided.action === 'cancel' ? 'Will be cancelled'
+                        : decided.action === 'drop' ? 'Will be dropped'
+                        : 'Will be end-dated'}
+                    </p>
+                  )}
+                </div>
+                <Select
+                  value={decided?.destinationUserId ?? ''}
+                  onValueChange={(v) => onItemPick(b, id, 'reassign', v)}
+                >
+                  <SelectTrigger className="h-7 w-[160px] rounded-full text-[11px]">
+                    <SelectValue placeholder="Reassign to…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligible.map((u) => (
+                      <SelectItem key={u.user_id} value={u.user_id}>
+                        {u.display_name || u.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {b.actions.includes('cancel') && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[11px]"
+                    onClick={() => onItemPick(b, id, 'cancel', null)}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {overflow > 0 && (
+        <p className="px-4 py-2 text-[11px] text-muted-foreground bg-muted/10">
+          +{overflow} more items beyond preview — bulk action will apply to all.
+        </p>
+      )}
+    </section>
   );
 }
 
