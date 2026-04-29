@@ -285,6 +285,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       reason,
       effectiveDate,
       reassignments: ledger,
+      notifyReassignedClients: notifyClients,
     });
     onArchived?.();
     onOpenChange(false);
