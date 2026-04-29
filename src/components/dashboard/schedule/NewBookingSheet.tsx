@@ -71,6 +71,7 @@ import {
 import { FormSigningDialog } from '@/components/dashboard/forms/FormSigningDialog';
 import { differenceInYears } from 'date-fns';
 import type { ServiceFormRequirement } from '@/hooks/useServiceFormRequirements';
+import { useStaffSchedulability } from '@/hooks/useStaffSchedulability';
 
 interface NewBookingSheetProps {
   open: boolean;
