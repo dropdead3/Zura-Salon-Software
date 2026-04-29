@@ -102,7 +102,7 @@ function MemberRow({ user, hasPin, onClick, trailingSlot }: { user: Organization
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/60',
+        'group w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-border/60 bg-card/60',
         'hover:bg-foreground/5 hover:border-border transition-colors text-left',
         !user.is_active && 'opacity-60',
       )}
