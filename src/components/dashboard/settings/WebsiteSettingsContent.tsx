@@ -1184,7 +1184,7 @@ export function WebsiteSettingsContent() {
             size={tokens.button.card}
             onClick={handlePreviewClick}
             disabled={!previewUrl}
-            title={previewUrl ?? 'No organization slug available'}
+            title={previewTooltip}
           >
             <Eye className="w-4 h-4 mr-1.5" />
             Preview
