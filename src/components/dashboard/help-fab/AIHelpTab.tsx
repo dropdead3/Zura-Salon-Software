@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Send, ChevronRight } from 'lucide-react';
+import { Send, ChevronRight, Clock, Plus } from 'lucide-react';
 import { ZuraZIcon } from '@/components/icons/ZuraZIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAIAgentChat } from '@/hooks/team-chat/useAIAgentChat';
 import { AIActionPreview } from '@/components/team-chat/AIActionPreview';
+import { AIHistoryPanel } from './AIHistoryPanel';
 import { DotsLoader } from '@/components/ui/loaders/DotsLoader';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
@@ -60,12 +61,16 @@ export function AIHelpTab() {
     messages,
     isLoading,
     pendingAction,
+    conversationId,
     sendMessage,
     confirmAction,
     cancelAction,
+    startNewChat,
+    loadConversation,
   } = useAIAgentChat();
 
   const [inputValue, setInputValue] = useState('');
+  const [historyOpen, setHistoryOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
