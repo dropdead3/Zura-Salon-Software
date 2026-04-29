@@ -369,15 +369,15 @@ function DashboardRoutes() {
       <Route path="admin/handbook" element={<Navigate to="../handbooks?tab=wizard" replace />} />
       <Route path="admin/announcements" element={<ProtectedRoute requiredPermission="manage_announcements"><AdminAnnouncements /></ProtectedRoute>} />
       <Route path="admin/website-hub" element={<ProtectedRoute requiredPermission="manage_settings"><WebsiteHub /></ProtectedRoute>} />
-      <Route path="admin/homepage-stylists" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/testimonials" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/gallery" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/services" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/announcement-bar" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/locations" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/website-sections" element={<Navigate to="admin/website-hub" replace />} />
-      <Route path="admin/roles" element={<Navigate to="admin/access-hub?tab=role-config" replace />} />
-      <Route path="admin/accounts" element={<Navigate to="admin/team-members?view=invitations" replace />} />
+      <Route path="admin/homepage-stylists" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/testimonials" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/gallery" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/services" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/announcement-bar" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/locations" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/website-sections" element={<Navigate to="../website-hub" replace />} />
+      <Route path="admin/roles" element={<Navigate to="../access-hub?tab=role-config" replace />} />
+      <Route path="admin/accounts" element={<Navigate to="../team-members?view=invitations" replace />} />
       <Route path="admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
       <Route path="admin/compensation" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationHub /></ProtectedRoute>} />
       <Route path="admin/compensation/:planId" element={<ProtectedRoute requiredPermission="manage_settings"><CompensationPlanEditor /></ProtectedRoute>} />
