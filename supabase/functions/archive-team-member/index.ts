@@ -35,6 +35,7 @@ interface Body {
   reason: string;
   effectiveDate?: string; // YYYY-MM-DD
   reassignments: Reassignment[];
+  notifyReassignedClients?: boolean;
 }
 
 async function applyReassignment(
@@ -331,11 +332,145 @@ serve(async (req) => {
       .single();
     if (logErr) throw logErr;
 
+    // -------------------------------------------------------------------
+    // Post-archive side effects: internal teammate pings + client soft-notify.
+    // Failures here are non-fatal — the archive itself already succeeded.
+    // -------------------------------------------------------------------
+    const notifySummary: {
+      internal_pings: number;
+      clients_emailed: number;
+      clients_sms: number;
+      clients_skipped: number;
+    } = { internal_pings: 0, clients_emailed: 0, clients_sms: 0, clients_skipped: 0 };
+
+    try {
+      // Resolve archived stylist's display name for messaging.
+      const { data: archivedProfile } = await supabaseAdmin
+        .from("employee_profiles")
+        .select("first_name, last_name")
+        .eq("user_id", body.userId)
+        .maybeSingle();
+      const archivedName =
+        [archivedProfile?.first_name, archivedProfile?.last_name]
+          .filter(Boolean)
+          .join(" ") || "your previous stylist";
+
+      // 1) Internal pings to receiving teammates (one per unique destination).
+      const recipients = new Set<string>();
+      for (const r of ledger) {
+        if (r.ok && r.action === "reassign" && r.destinationUserId) {
+          recipients.add(r.destinationUserId);
+        }
+      }
+      if (recipients.size > 0) {
+        const rows = Array.from(recipients).map((uid) => ({
+          user_id: uid,
+          type: "team_reassignment",
+          title: "New work assigned to you",
+          message: `${archivedName} was archived. Items previously theirs were reassigned to you.`,
+          link: "/dashboard/schedule",
+          is_read: false,
+          metadata: {
+            organization_id: body.organizationId,
+            archived_user_id: body.userId,
+            archive_log_id: logRow.id,
+          },
+        }));
+        const { error: notifErr } = await supabaseAdmin
+          .from("notifications")
+          .insert(rows);
+        if (!notifErr) notifySummary.internal_pings = rows.length;
+      }
+
+      // 2) Client soft-notify (opt-in via flag).
+      if (body.notifyReassignedClients) {
+        // Build map of client → new stylist from the client_preferences ledger row.
+        const prefRow = ledger.find(
+          (l) => l.ok && l.bucket === "client_preferences" && l.action === "reassign" && l.destinationUserId,
+        );
+        if (prefRow?.destinationUserId) {
+          const newStylistId = prefRow.destinationUserId;
+          const { data: newStylist } = await supabaseAdmin
+            .from("employee_profiles")
+            .select("first_name, last_name")
+            .eq("user_id", newStylistId)
+            .maybeSingle();
+          const newStylistName =
+            [newStylist?.first_name, newStylist?.last_name]
+              .filter(Boolean)
+              .join(" ") || "a new stylist";
+
+          // Pull the clients now pointing to the new stylist (post-reassignment).
+          const { data: affectedClients } = await supabaseAdmin
+            .from("clients")
+            .select("id, first_name, email, mobile, phone, reminder_email_opt_in, reminder_sms_opt_in")
+            .eq("organization_id", body.organizationId)
+            .eq("preferred_stylist_id", newStylistId)
+            .eq("is_active", true);
+
+          const subject = `A quick update about your stylist`;
+          const buildBody = (firstName: string | null) =>
+            `Hi${firstName ? ` ${firstName}` : ""}, we wanted to let you know that ${archivedName} is no longer with us. ` +
+            `${newStylistName} will be taking great care of you going forward — same level, same pricing. ` +
+            `We can't wait to see you at your next visit.`;
+
+          const smsRows: any[] = [];
+          for (const c of affectedClients ?? []) {
+            const fname = c.first_name ?? null;
+            const message = buildBody(fname);
+            const hasEmail = c.email && c.reminder_email_opt_in !== false;
+            const phone = c.mobile || c.phone;
+            const hasSms = phone && c.reminder_sms_opt_in !== false;
+
+            if (hasEmail) {
+              await supabaseAdmin.from("email_send_log").insert({
+                template_name: "stylist-reassignment-soft-notify",
+                recipient_email: c.email,
+                status: "pending",
+                metadata: {
+                  organization_id: body.organizationId,
+                  client_id: c.id,
+                  archived_user_id: body.userId,
+                  new_stylist_user_id: newStylistId,
+                  archive_log_id: logRow.id,
+                  subject,
+                  body: message,
+                },
+              });
+              notifySummary.clients_emailed++;
+            } else if (hasSms) {
+              smsRows.push({
+                organization_id: body.organizationId,
+                client_id: c.id,
+                channel: "sms",
+                direction: "outbound",
+                to_phone: phone,
+                body: message,
+                template_key: "stylist-reassignment-soft-notify",
+                status: "pending",
+                sent_by_user_id: user.id,
+              });
+              notifySummary.clients_sms++;
+            } else {
+              notifySummary.clients_skipped++;
+            }
+          }
+          if (smsRows.length > 0) {
+            await supabaseAdmin.from("client_communications").insert(smsRows);
+          }
+        }
+      }
+    } catch (sideErr) {
+      // Swallow — archive itself succeeded; surface in response for visibility.
+      console.error("[archive-team-member] side-effect error", sideErr);
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
         archive_log_id: logRow.id,
         ledger,
+        notify_summary: notifySummary,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
