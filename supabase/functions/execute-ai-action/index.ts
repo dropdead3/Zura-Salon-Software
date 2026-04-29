@@ -204,11 +204,11 @@ serve(async (req) => {
     try {
       if (handlers?.execute) {
         result = await handlers.execute({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
+          supabase, organizationId: orgId, userId: user.id, capability, params: validatedParams, roleSet,
         });
       } else if (handlers?.read) {
         const r = await handlers.read({
-          supabase, organizationId: orgId, userId: user.id, capability, params: params || {}, roleSet,
+          supabase, organizationId: orgId, userId: user.id, capability, params: validatedParams, roleSet,
         });
         result = { success: true, message: r.message || "Done.", data: r.data };
       } else {
@@ -232,7 +232,7 @@ serve(async (req) => {
         organization_id: orgId,
         user_id: user.id,
         capability_id,
-        params: params || {},
+        params: validatedParams,
         status: result.success ? 'executed' : 'failed',
         result: result.data ?? result.message,
         error: result.success ? null : result.message,
