@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, KeyRound, AlertTriangle, Bell } from 'lucide-react';
+import { Loader2, Shield, KeyRound, AlertTriangle, Bell, Archive, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { tokens } from '@/lib/design-tokens';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useToggleUserActive, useRemoveOrganizationUser } from '@/hooks/useOrganizationUsers';
+import { useToggleUserActive, useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { useUserPinStatus, useAdminSetUserPin } from '@/hooks/useUserPin';
+import { useUnarchiveTeamMember, useArchiveLogEntry } from '@/hooks/useArchiveTeamMember';
+import { ArchiveWizard } from '@/components/dashboard/team-members/archive/ArchiveWizard';
 
 interface Props {
   userId: string;
@@ -24,7 +26,13 @@ export function SecurityTab({ userId, profile }: Props) {
   const queryClient = useQueryClient();
   const { effectiveOrganization } = useOrganizationContext();
   const toggleActive = useToggleUserActive(effectiveOrganization?.id);
-  const removeUser = useRemoveOrganizationUser(effectiveOrganization?.id);
+  const unarchive = useUnarchiveTeamMember(effectiveOrganization?.id);
+  const { data: archiveLog } = useArchiveLogEntry(effectiveOrganization?.id, userId);
+  // Need the full member shape for the archive wizard. Fetch from roster (includes archived).
+  const { data: roster = [] } = useOrganizationUsers(effectiveOrganization?.id, { includeArchived: true });
+  const member = roster.find((m) => m.user_id === userId);
+  const isArchived = !!profile?.archived_at;
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const { data: pinStatus } = useUserPinStatus(userId);
   const adminSetPin = useAdminSetUserPin();
   const [newPin, setNewPin] = useState('');
