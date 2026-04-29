@@ -1151,15 +1151,6 @@ export function WebsiteSettingsContent() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const handleOpenEditor = () => {
-    // Switch to Theme tab and tell ThemeTab to flip into editor mode.
-    setActiveTab('theme');
-    const next = new URLSearchParams(searchParams);
-    next.set('tab', 'theme');
-    next.set('openEditor', '1');
-    setSearchParams(next, { replace: true });
-  };
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
