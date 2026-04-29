@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, memo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Monitor, Smartphone, RefreshCw, Copy, ExternalLink } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Maximize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -9,16 +9,69 @@ interface LivePreviewPanelProps {
   previewUrl?: string;
 }
 
+type DeviceMode = 'desktop' | 'tablet' | 'mobile' | 'fit';
+type Orientation = 'portrait' | 'landscape';
+
+// True viewport sizes — iframe always renders at these widths so the site uses
+// its REAL responsive breakpoints. We CSS-scale the result to fit the pane.
+const DEVICE_PRESETS: Record<Exclude<DeviceMode, 'fit'>, { w: number; h: number; label: string }> = {
+  desktop: { w: 1440, h: 900, label: 'Desktop' },
+  tablet: { w: 834, h: 1194, label: 'iPad' },
+  mobile: { w: 390, h: 844, label: 'iPhone' },
+};
+
+const VIEWPORT_KEY = 'website-editor:device';
+const ORIENTATION_KEY = 'website-editor:orientation';
+
+function readDevice(): DeviceMode {
+  try {
+    const v = localStorage.getItem(VIEWPORT_KEY);
+    if (v === 'desktop' || v === 'tablet' || v === 'mobile' || v === 'fit') return v;
+  } catch {}
+  return 'desktop';
+}
+
+function readOrientation(): Orientation {
+  try {
+    const v = localStorage.getItem(ORIENTATION_KEY);
+    if (v === 'portrait' || v === 'landscape') return v;
+  } catch {}
+  return 'portrait';
+}
+
 export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>(() => {
-    return (localStorage.getItem('preview-viewport') as 'desktop' | 'mobile') || 'desktop';
-  });
+  const [device, setDeviceState] = useState<DeviceMode>(readDevice);
+  const [orientation, setOrientationState] = useState<Orientation>(readOrientation);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [paneSize, setPaneSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
+  const stageRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeReadyRef = useRef(false);
   const pendingSectionRef = useRef<string | undefined>(undefined);
   const previewOrigin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
+
+  const setDevice = useCallback((d: DeviceMode) => {
+    setDeviceState(d);
+    try { localStorage.setItem(VIEWPORT_KEY, d); } catch {}
+  }, []);
+  const setOrientation = useCallback((o: Orientation) => {
+    setOrientationState(o);
+    try { localStorage.setItem(ORIENTATION_KEY, o); } catch {}
+  }, []);
+
+  // Observe pane size — recompute scale on splitter drag / window resize
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setPaneSize({ w: width, h: height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const sendScrollMessage = useCallback((sectionId: string) => {
     const iframe = iframeRef.current;
@@ -27,7 +80,6 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
       previewOrigin
     );
-    // Small delay then highlight
     setTimeout(() => {
       iframe.contentWindow?.postMessage(
         { type: 'PREVIEW_HIGHLIGHT_SECTION', sectionId },
@@ -36,7 +88,6 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     }, 400);
   }, [previewOrigin]);
 
-  // When activeSectionId changes, scroll (or queue if not ready)
   useEffect(() => {
     if (!activeSectionId) return;
     if (iframeReadyRef.current) {
@@ -49,25 +100,20 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const handleIframeLoad = useCallback(() => {
     setIsLoading(false);
     iframeReadyRef.current = true;
-    // Flush pending scroll
     if (pendingSectionRef.current) {
       sendScrollMessage(pendingSectionRef.current);
       pendingSectionRef.current = undefined;
     }
   }, [sendScrollMessage]);
 
-  // Auto-refresh on data saves
   useEffect(() => {
     const handleStorageChange = () => {
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
       iframeReadyRef.current = false;
     };
-
     window.addEventListener('website-preview-refresh', handleStorageChange);
-    return () => {
-      window.removeEventListener('website-preview-refresh', handleStorageChange);
-    };
+    return () => window.removeEventListener('website-preview-refresh', handleStorageChange);
   }, []);
 
   const handleRefresh = () => {
@@ -76,6 +122,36 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     setIsLoading(true);
     iframeReadyRef.current = false;
   };
+
+  // ── Compute iframe dimensions and scale ──
+  // Reserve a little padding inside the stage so the device doesn't kiss the edges.
+  const STAGE_PAD = 24;
+  const availW = Math.max(paneSize.w - STAGE_PAD * 2, 0);
+  const availH = Math.max(paneSize.h - STAGE_PAD * 2, 0);
+
+  let iframeW: number;
+  let iframeH: number;
+  let scale: number;
+
+  if (device === 'fit') {
+    iframeW = Math.max(availW, 320);
+    iframeH = Math.max(availH, 320);
+    scale = 1;
+  } else {
+    const preset = DEVICE_PRESETS[device];
+    const portrait = orientation === 'portrait' || device === 'desktop';
+    iframeW = portrait ? preset.w : preset.h;
+    iframeH = portrait ? preset.h : preset.w;
+    if (availW > 0 && availH > 0) {
+      scale = Math.min(availW / iframeW, availH / iframeH, 1);
+    } else {
+      scale = 1;
+    }
+  }
+
+  const scaledW = iframeW * scale;
+  const scaledH = iframeH * scale;
+  const scalePct = Math.round(scale * 100);
 
   const previewMeta = previewUrl
     ? (() => {
@@ -88,82 +164,85 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             displayUrl: previewUrl,
           };
         } catch {
-          return {
-            status: isLoading ? 'Loading preview' : 'Preview ready',
-            channel: 'Org route',
-            displayUrl: previewUrl,
-          };
+          return { status: isLoading ? 'Loading preview' : 'Preview ready', channel: 'Org route', displayUrl: previewUrl };
         }
       })()
-    : {
-        status: 'Resolving preview URL',
-        channel: 'Waiting for org context',
-        displayUrl: null,
-      };
+    : { status: 'Resolving preview URL', channel: 'Waiting for org context', displayUrl: null };
 
   const handleCopyUrl = async () => {
     if (!previewMeta.displayUrl) return;
     await navigator.clipboard.writeText(previewMeta.displayUrl);
   };
 
+  const showOrientation = device === 'tablet' || device === 'mobile';
+  const showDeviceFrame = device === 'tablet' || device === 'mobile';
+
   return (
     <div className="flex flex-col h-full bg-muted/30 border-l border-border">
-      {/* Preview Header */}
-      <div className="flex items-center justify-between p-3 border-b border-border bg-card">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Live Preview</span>
-          {isLoading && (
-            <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-          )}
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-2 p-3 border-b border-border bg-card">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-medium shrink-0">Live Preview</span>
+          {isLoading && <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />}
         </div>
-        
+
         <div className="flex items-center gap-2">
-          {/* Device Toggle */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <Button
-              variant="ghost"
-              size={tokens.button.inline}
-              className={cn(
-                "h-7 px-2",
-                viewMode === 'desktop' && "bg-background shadow-sm"
-              )}
-              onClick={() => { setViewMode('desktop'); localStorage.setItem('preview-viewport', 'desktop'); }}
-            >
+          {/* Device segmented control */}
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
+            <DeviceButton active={device === 'desktop'} onClick={() => setDevice('desktop')} title="Desktop (1440px)">
               <Monitor className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size={tokens.button.inline}
-              className={cn(
-                "h-7 px-2",
-                viewMode === 'mobile' && "bg-background shadow-sm"
-              )}
-              onClick={() => { setViewMode('mobile'); localStorage.setItem('preview-viewport', 'mobile'); }}
-            >
+            </DeviceButton>
+            <DeviceButton active={device === 'tablet'} onClick={() => setDevice('tablet')} title="Tablet (834px)">
+              <Tablet className="h-4 w-4" />
+            </DeviceButton>
+            <DeviceButton active={device === 'mobile'} onClick={() => setDevice('mobile')} title="Mobile (390px)">
               <Smartphone className="h-4 w-4" />
-            </Button>
+            </DeviceButton>
+            <DeviceButton active={device === 'fit'} onClick={() => setDevice('fit')} title="Fit to pane">
+              <Maximize2 className="h-4 w-4" />
+            </DeviceButton>
           </div>
 
-          {/* Refresh Button */}
+          {/* Orientation toggle */}
+          {showOrientation && (
+            <Button
+              variant="ghost"
+              size={tokens.button.inline}
+              onClick={() => setOrientation(orientation === 'portrait' ? 'landscape' : 'portrait')}
+              className="h-7 w-7 p-0"
+              title={`Rotate (${orientation})`}
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Refresh */}
           <Button
             variant="ghost"
             size={tokens.button.inline}
             onClick={handleRefresh}
             className="h-7 w-7 p-0"
+            title="Reload preview"
           >
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
-
         </div>
       </div>
 
-      <div className="border-b border-border bg-card/60 px-3 py-2 space-y-1.5">
+      {/* Status + URL strip */}
+      <div className="border-b border-border bg-card/60 px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[11px] font-display uppercase tracking-wide text-muted-foreground">
               <span>{previewMeta.status}</span>
               <span className="opacity-40">•</span>
               <span>{previewMeta.channel}</span>
+              {device !== 'fit' && (
+                <>
+                  <span className="opacity-40">•</span>
+                  <span>{iframeW} × {iframeH} · {scalePct}%</span>
+                </>
+              )}
             </div>
             <p className="truncate text-xs text-foreground/80" title={previewMeta.displayUrl ?? previewMeta.status}>
               {previewMeta.displayUrl ?? 'Waiting for organization public URL...'}
@@ -172,13 +251,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
 
           {previewMeta.displayUrl && (
             <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size={tokens.button.inline}
-                className="h-7 w-7 p-0"
-                onClick={handleCopyUrl}
-                title="Copy preview URL"
-              >
+              <Button variant="ghost" size={tokens.button.inline} className="h-7 w-7 p-0" onClick={handleCopyUrl} title="Copy preview URL">
                 <Copy className="h-3.5 w-3.5" />
               </Button>
               <Button
@@ -186,7 +259,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
                 size={tokens.button.inline}
                 className="h-7 w-7 p-0"
                 onClick={() => window.open(previewMeta.displayUrl!, '_blank', 'noopener,noreferrer')}
-                title="Open preview URL"
+                title="Open preview in new tab"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -195,35 +268,77 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         </div>
       </div>
 
-      {/* Preview Container */}
-      <div className="flex-1 overflow-hidden">
-        <div 
-          className={cn(
-            "mx-auto h-full bg-background",
-            viewMode === 'mobile' ? "max-w-[390px] my-4 rounded-lg overflow-hidden border border-border shadow-lg" : "w-full"
-          )}
-        >
-          {previewUrl ? (
-            <iframe
-              ref={iframeRef}
-              key={refreshKey}
-              src={previewUrl}
-              className="w-full h-full border-0"
-              title="Website Preview"
-              onLoad={handleIframeLoad}
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              Waiting for organization preview URL…
+      {/* Stage — observed for size, hosts the scaled iframe */}
+      <div ref={stageRef} className="flex-1 overflow-hidden bg-[hsl(var(--muted)/0.4)] relative">
+        {previewUrl ? (
+          paneSize.w > 0 && (
+            <div
+              className="absolute"
+              style={{
+                left: '50%',
+                top: '50%',
+                width: scaledW,
+                height: scaledH,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div
+                className={cn(
+                  'origin-top-left bg-background overflow-hidden',
+                  showDeviceFrame ? 'rounded-[2.25rem] border-[10px] border-foreground/80 shadow-2xl' : 'rounded-lg border border-border shadow-xl',
+                )}
+                style={{
+                  width: iframeW,
+                  height: iframeH,
+                  transform: `scale(${scale})`,
+                }}
+              >
+                <iframe
+                  ref={iframeRef}
+                  key={refreshKey}
+                  src={previewUrl}
+                  className="w-full h-full border-0 block bg-background"
+                  title="Website Preview"
+                  onLoad={handleIframeLoad}
+                />
+              </div>
             </div>
-          )}
-        </div>
+          )
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+            Waiting for organization preview URL…
+          </div>
+        )}
       </div>
     </div>
   );
 });
 
-// Helper function to trigger preview refresh from anywhere
+function DeviceButton({
+  active,
+  onClick,
+  title,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size={tokens.button.inline}
+      className={cn('h-7 w-8 p-0', active && 'bg-background shadow-sm text-foreground')}
+      onClick={onClick}
+      title={title}
+    >
+      {children}
+    </Button>
+  );
+}
+
+// Helper to trigger preview refresh from anywhere
 export function triggerPreviewRefresh() {
   window.dispatchEvent(new CustomEvent('website-preview-refresh'));
 }
