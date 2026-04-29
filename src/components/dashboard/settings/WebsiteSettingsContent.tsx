@@ -603,6 +603,7 @@ function ThemeTab({
                     onTabChange={setEditorTab}
                     selectedPageId={selectedPageId}
                     onPageChange={setSelectedPageId}
+                    onToggleCollapse={() => setShowSidebar(false)}
                   />
                 </ResizablePanel>
                 <ResizableHandle withHandle />
