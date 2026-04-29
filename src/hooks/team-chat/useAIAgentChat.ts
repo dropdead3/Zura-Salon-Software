@@ -30,10 +30,22 @@ export interface AIActionPreview {
     service?: string;
     stylist?: string;
   };
+  // Generic target shape used by HR / non-appointment proposals.
+  target?: {
+    name?: string;
+    hire_date?: string | null;
+    upcoming_appointments?: number;
+    reason?: string | null;
+  };
 }
 
 export interface AIAction {
-  type: 'reschedule' | 'cancel' | 'create_booking';
+  type:
+    | 'reschedule'
+    | 'cancel'
+    | 'create_booking'
+    | 'deactivate_team_member'
+    | 'reactivate_team_member';
   status: 'pending_confirmation' | 'confirmed' | 'cancelled' | 'executed' | 'failed';
   preview: AIActionPreview;
   params: Record<string, unknown>;
