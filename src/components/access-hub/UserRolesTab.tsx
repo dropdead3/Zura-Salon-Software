@@ -877,6 +877,18 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
 
       {/* PIN Activity panel — collapsible org-wide change history */}
       {canManage && <PinActivityPanel />}
+
+      {/* Bulk Archive Wizard — single-step, shared reason+date.
+          Per-member dependency reassignment is intentionally out of
+          scope here; falls back to the per-row chip / ArchiveWizard. */}
+      <BulkArchiveWizard
+        open={!!bulkArchive}
+        onOpenChange={(open) => { if (!open) setBulkArchive(null); }}
+        organizationId={effectiveOrganization?.id}
+        members={bulkArchive?.members ?? []}
+        skippedSummary={bulkArchive?.skippedSummary ?? null}
+        onComplete={() => setSelectedUsers(new Set())}
+      />
     </div>
   );
 }
