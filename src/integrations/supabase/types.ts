@@ -31929,6 +31929,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ai_rate_limit: {
+        Args: {
+          p_bucket: string
+          p_org: string
+          p_user: string
+          p_window: string
+        }
+        Returns: number
+      }
       increment_kb_article_views: {
         Args: { article_id: string }
         Returns: undefined
