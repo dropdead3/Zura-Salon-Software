@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Globe, Copy, Check, Loader2, Trash2, RefreshCw, AlertCircle, Pencil } from 'lucide-react';
+import { Globe, Copy, Check, Loader2, Trash2, RefreshCw, AlertCircle, Pencil, ArrowUpRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganizationDomain, useSaveDomain, useRemoveDomain, useVerifyDomain } from '@/hooks/useOrganizationDomain';
+import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +58,7 @@ export function DomainConfigCard({ organizationId }: DomainConfigCardProps) {
   const saveDomain = useSaveDomain();
   const removeDomain = useRemoveDomain();
   const verifyDomain = useVerifyDomain();
+  const { publicUrl, isLoading: isPublicUrlLoading } = useOrgPublicUrl();
   const { toast } = useToast();
   const [domainInput, setDomainInput] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -243,14 +245,34 @@ export function DomainConfigCard({ organizationId }: DomainConfigCardProps) {
               </div>
             )}
 
-            {domain!.status === 'active' && (
-              <div className="rounded-lg bg-accent/50 border border-primary/20 p-3">
-                <p className="text-sm text-primary flex items-center gap-2">
-                  <Check className="w-4 h-4" />
-                  Your domain is verified and active. DNS is pointing correctly.
-                </p>
-              </div>
-            )}
+            {domain!.status === 'active' && (() => {
+              const expected = `https://${domain!.domain}`;
+              const loopClosed = !isPublicUrlLoading && publicUrl() === expected;
+              return (
+                <div className="rounded-lg bg-accent/50 border border-primary/20 p-3 space-y-2">
+                  <p className="text-sm text-primary flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    Your domain is verified and active. DNS is pointing correctly.
+                  </p>
+                  {loopClosed && (
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-primary/10">
+                      <p className="text-xs text-muted-foreground">
+                        Preview opens at this domain.
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(expected, '_blank', 'noopener,noreferrer')}
+                        className="h-7 text-xs"
+                      >
+                        Open site
+                        <ArrowUpRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Actions */}
             <div className="flex gap-2">
