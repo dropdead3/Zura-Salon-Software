@@ -5718,6 +5718,7 @@ export type Database = {
       client_communications: {
         Row: {
           appointment_id: string | null
+          archive_log_id: string | null
           body: string | null
           channel: string
           client_id: string | null
@@ -5735,6 +5736,7 @@ export type Database = {
         }
         Insert: {
           appointment_id?: string | null
+          archive_log_id?: string | null
           body?: string | null
           channel: string
           client_id?: string | null
@@ -5752,6 +5754,7 @@ export type Database = {
         }
         Update: {
           appointment_id?: string | null
+          archive_log_id?: string | null
           body?: string | null
           channel?: string
           client_id?: string | null
@@ -5768,6 +5771,13 @@ export type Database = {
           twilio_sid?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "client_communications_archive_log_id_fkey"
+            columns: ["archive_log_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_archive_log"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "client_communications_client_id_fkey"
             columns: ["client_id"]
@@ -8092,6 +8102,7 @@ export type Database = {
       }
       email_send_log: {
         Row: {
+          archive_log_id: string | null
           client_id: string | null
           email_type: string
           id: string
@@ -8100,6 +8111,7 @@ export type Database = {
           sent_at: string
         }
         Insert: {
+          archive_log_id?: string | null
           client_id?: string | null
           email_type?: string
           id?: string
@@ -8108,6 +8120,7 @@ export type Database = {
           sent_at?: string
         }
         Update: {
+          archive_log_id?: string | null
           client_id?: string | null
           email_type?: string
           id?: string
@@ -8116,6 +8129,13 @@ export type Database = {
           sent_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "email_send_log_archive_log_id_fkey"
+            columns: ["archive_log_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_archive_log"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "email_send_log_organization_id_fkey"
             columns: ["organization_id"]

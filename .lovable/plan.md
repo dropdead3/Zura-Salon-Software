@@ -1,92 +1,120 @@
 ## Goal
 
-Replace the placeholder `email_send_log` rows currently inserted by `archive-team-member` with real, branded sends through the project's existing org email + SMS pipeline, and surface the resulting counts to the operator on success.
+Close the trust loop on the team-member archive soft-notify pipeline with four operator-facing controls: pre-flight visibility, pre-flight smoke test, post-flight delivery watch, and admin template editing.
 
-## Why use the existing pipeline (not the Lovable transactional scaffold)
+## Status check on the four enhancements
 
-This codebase already has a multi-tenant email infrastructure:
-- `supabase/functions/_shared/email-sender.ts` → `sendOrgEmail()` (Resend, org-branded, opt-out aware)
-- `supabase/functions/_shared/sms-sender.ts` → `sendSms()` (per-org Twilio, template-driven)
+| # | Item | Status | Notes |
+|---|------|--------|-------|
+| 1 | Per-client preview before commit | Build | New collapsible list in Step 4 |
+| 2 | Delivery receipt watch | **Build (scoped)** | See "Reality check" below |
+| 3 | Surface SMS template in editor | **Already shipped** | `stylist-reassignment-soft-notify` row inserted by prior migration is automatically picked up by `SmsTemplatesManager` mounted at Settings → Communications. No further work needed beyond a one-line description on the template row so admins know what triggers it. |
+| 4 | Smoke test "Send myself a sample" | Build | New edge function + Step 4 button |
 
-Introducing `send-transactional-email` (Lovable scaffold) would create a parallel email system, fight existing org-branding, and break the project's domain model. We use what's already wired in.
+## Reality check on Enhancement #2
+
+The codebase's `email_send_log` table is a minimal **send-counter** (`organization_id`, `client_id`, `email_type`, `message_id`, `sent_at`) — it does **not** carry `status`, `error_message`, `bounced`, or `complained` columns. The Lovable email-infrastructure schema referenced in the platform docs is **not** what this project uses; instead, sends go through `sendOrgEmail` (Resend) and writes a single row here on success.
+
+What signal actually exists today:
+- **Email**: only "we attempted a send" (row in `email_send_log`) + open/click events in `email_tracking_events`. No bounce, no complaint, no failure.
+- **SMS**: `client_communications.status` + `error_message` + `twilio_sid` — real delivery state.
+
+Two honest options for #2:
+
+**Option A — Ship what's true today (recommended):**
+- Add `archive_log_id` (nullable uuid) to `email_send_log` and `client_communications`.
+- Edge function stamps it on every soft-notify send.
+- Profile timeline tile shows: "X emails sent · Y SMS sent · Z SMS failed (with reason)" + open-rate from `email_tracking_events`. Honest about what we can see.
+
+**Option B — Wire real bounce capture (out of scope):**
+Requires Resend webhook handler + new `email_delivery_events` table + suppression sync. Significant infrastructure work — propose as a separate wave.
+
+This plan ships Option A.
 
 ## Changes
 
-### 1. New SMS template seed (DB migration)
+### 1. Per-client preview (Step 4 expandable list)
 
-Insert one row into `sms_templates`:
-- `template_key`: `stylist-reassignment-soft-notify`
-- `message_body`: `Hi {{first_name}}, {{archived_stylist}} is no longer with us. {{new_stylist}} will be taking great care of you — same level, same pricing. See you at your next visit! — {{org_name}}`
-- `is_active`: true
+In `ArchiveWizard.tsx` Step 4, replace the static `"{emailCount} via email · {smsOnlyCount} via SMS"` line with a `<Collapsible>` that expands to show every reassigned client as a row:
 
-### 2. Inline branded HTML email (no new shared template file)
+- Avatar + name
+- Channel badge: `Email`, `SMS`, or `No contact`
+- Per-row `Switch` to suppress that client (defaults on)
 
-Inside `archive-team-member/index.ts`, build a small inline HTML body matching the brand voice (white background, brand color H1, plain copy, no unsubscribe footer — `sendOrgEmail` appends the org footer/unsubscribe automatically).
+Wizard state gains `suppressedClientIds: Set<string>`. Passed to the mutation; edge function skips any client in this set.
 
-Subject: `A quick update about your stylist`
+UI rules: Termina label, Aeonik body, `tokens.card` patterns, `Switch` from `@/components/ui/switch`. No bold weights.
 
-Body interpolates: client first name, archived stylist name, new stylist name, org name.
+### 2. Smoke test button (Step 4)
 
-### 3. Rewrite the soft-notify block in `archive-team-member/index.ts`
+New edge function `archive-soft-notify-preview`:
+- Inputs: `organizationId`, `archivedStylistName` (preview value), `successorStylistName` (first reassignment destination), `recipientEmail`, `recipientPhone`.
+- Resolves caller's identity via JWT, validates membership.
+- Sends ONE email via `sendOrgEmail` with `[PREVIEW]` subject prefix and the same branded HTML.
+- Sends ONE SMS via `sendSms` with the `stylist-reassignment-soft-notify` template, prefixed `[PREVIEW] `.
+- Returns `{ email_sent, sms_sent, errors }`.
 
-Replace the current `email_send_log.insert(...)` placeholder path with real dispatch:
+Step 4 UI: small `"Send myself a sample"` button next to the notify checkbox. Pulls operator's email/phone from `useAuth()` + `team_members` row. Shows result inline (`Sent to you@example.com and (555) ...`). Disabled while in flight.
 
-For each affected client (those whose `preferred_stylist_id` now equals the new stylist):
-- If they have an opted-in email (`reminder_email_opt_in !== false`):
-  - Call `sendOrgEmail(supabaseAdmin, organizationId, { to: [email], subject, html, clientId, emailType: 'transactional' })`
-  - On `success && !skipped` → increment `clients_emailed`
-  - On `skipped` (opt-out / rate-limit) → increment `clients_skipped`
-  - On error → increment `clients_skipped`, log
-- Else if they have an opted-in phone (`reminder_sms_opt_in !== false`):
-  - Call `sendSms(supabaseAdmin, organizationId, { to: phone, templateKey: 'stylist-reassignment-soft-notify', variables: { first_name, archived_stylist, new_stylist, org_name } })`
-  - On `success` → increment `clients_sms`, else `clients_skipped`
-- Else → increment `clients_skipped`
+### 3. Delivery receipt watch (scoped to Option A)
 
-Keep all sends inside the existing try/catch so failures stay non-fatal to the archive.
-
-The returned `notify_summary` shape stays the same:
-`{ internal_pings, clients_emailed, clients_sms, clients_skipped }`
-
-### 4. Surface `notify_summary` in the success toast
-
-`src/hooks/useArchiveTeamMember.ts`:
-- Capture `data.notify_summary` from the mutation response
-- In `onSuccess`, build a description string conditionally:
-  - If `clients_emailed + clients_sms + clients_skipped > 0`:
-    `Notified ${emailed} by email, ${sms} by SMS, ${skipped} skipped. Pinged ${internal_pings} teammate${internal_pings === 1 ? '' : 's'}.`
-  - Else if `internal_pings > 0`:
-    `Pinged ${internal_pings} teammate${...}.`
-  - Else: omit description
-- Pass as `toast.success('Team member archived', { description })`
-
-### 5. Resolve org name once, up-front
-
-Add a single lookup at the top of the side-effect block:
-```ts
-const { data: org } = await supabaseAdmin
-  .from('organizations')
-  .select('name')
-  .eq('id', body.organizationId)
-  .maybeSingle();
-const orgName = org?.name ?? 'Our team';
+Migration:
+```sql
+ALTER TABLE email_send_log     ADD COLUMN archive_log_id uuid REFERENCES team_member_archive_log(id) ON DELETE SET NULL;
+ALTER TABLE client_communications ADD COLUMN archive_log_id uuid REFERENCES team_member_archive_log(id) ON DELETE SET NULL;
+CREATE INDEX idx_email_send_log_archive ON email_send_log(archive_log_id) WHERE archive_log_id IS NOT NULL;
+CREATE INDEX idx_client_comms_archive   ON client_communications(archive_log_id) WHERE archive_log_id IS NOT NULL;
 ```
-Used in both email HTML and SMS template variables.
+
+Edge function (`archive-team-member`): pass `archive_log_id` into both `sendOrgEmail` (via metadata path that `email_send_log.insert` already uses) and `sendSms` so rows are tagged. Where the existing senders don't accept this field, write a follow-up `UPDATE` keyed on `message_id` / `twilio_sid` immediately after dispatch.
+
+New hook `useArchiveDeliveryReceipts(archiveLogId)`:
+- Counts from `email_send_log` (sent count).
+- Counts from `client_communications` grouped by `status` (sent / failed) + first 3 error messages.
+- Open-rate from `email_tracking_events` joined via `message_id`.
+
+New profile tile `ArchiveDeliveryReceiptCard.tsx` rendered on the archived team-member's profile under the existing reassignment ledger:
+- "Delivery — last 24h" header (Termina), refreshes every 60s while < 24h old.
+- Stat row: Email sent · SMS sent · SMS failed · Opens.
+- Expandable list of failed SMS with reason.
+- Honest empty state when nothing was dispatched.
+
+### 4. SMS template description (one-liner)
+
+A single `UPDATE sms_templates SET description = 'Sent automatically to clients reassigned during a team-member archive. Triggered from Team → Archive wizard.' WHERE template_key = 'stylist-reassignment-soft-notify';` so the row reads cleanly inside the existing `SmsTemplatesManager` UI without changing that component.
 
 ## Files Touched
 
-- `supabase/migrations/<new>.sql` — insert SMS template (idempotent: `ON CONFLICT (template_key) DO NOTHING`)
-- `supabase/functions/archive-team-member/index.ts` — replace placeholder dispatch with `sendOrgEmail` / `sendSms`; add org-name lookup
-- `src/hooks/useArchiveTeamMember.ts` — surface `notify_summary` in toast description
+**New**
+- `supabase/migrations/<ts>_archive_delivery_tracking.sql` — `archive_log_id` columns + indexes + template description update
+- `supabase/functions/archive-soft-notify-preview/index.ts` — smoke test sender
+- `src/hooks/useArchiveDeliveryReceipts.ts`
+- `src/components/dashboard/team-members/archive/ArchiveDeliveryReceiptCard.tsx`
+
+**Edited**
+- `src/components/dashboard/team-members/archive/ArchiveWizard.tsx` — collapsible per-client preview, suppression toggles, smoke-test button, plumb `suppressedClientIds`
+- `src/hooks/useArchiveTeamMember.ts` — pass `suppressedClientIds` through; expose returned `archive_log_id`
+- `supabase/functions/archive-team-member/index.ts` — accept `suppressedClientIds`, skip them; stamp `archive_log_id` on email + SMS rows; return `archive_log_id` in response
+- Whichever profile component renders the archived team-member view — mount `<ArchiveDeliveryReceiptCard>` (will locate during build)
 
 ## Out of Scope
 
-- Bulk-by-load smart split UI changes (already shipped earlier)
-- Adding new email templates to a shared template directory — inline HTML is sufficient and matches existing transactional patterns in this codebase
-- Lovable transactional email scaffold (`send-transactional-email`) — incompatible with the project's existing org-branded pipeline
-- Undo window and ledger replay view — captured as future enhancements
+- Real bounce/complaint capture from Resend (separate wave; requires webhook + new event table)
+- 24h+ historical analytics — receipts tile is intentionally short-window
+- Editing the email body in a UI (no email-template editor exists for this template; SMS only)
+- Re-send / retry from the receipts tile
+
+## Build Gate Checklist
+
+- Tenant scope: every query & mutation filters by `organization_id`; new columns nullable so existing data is unaffected
+- RLS: new columns inherit existing table policies (already org-scoped)
+- Phase: no AI/forecasting; pure observability + opt-in safety
+- Autonomy: smoke test requires explicit operator click; suppression toggles default to on
+- UI canon: Termina labels, Aeonik body, no `font-bold`/`font-semibold`, `tokens.card`, `Switch` primitive, calm copy
 
 ## Enhancement Suggestions (post-merge)
 
-1. **Per-client preview before commit** — Step 4 expandable list showing exactly which 8 clients get email vs which 3 get SMS, with per-row toggles to suppress.
-2. **Delivery receipt watch** — track `notify_summary.archive_log_id` against `email_send_log` / `client_communications` over the next 24h and surface bounce/failure counts on the archived team member's profile.
-3. **SMS template management UI** — expose `stylist-reassignment-soft-notify` in the existing SMS template editor so org admins can tweak the message voice without a code change.
+1. **Resend webhook handler** — capture real bounce/complaint events into a new `email_delivery_events` table; flips the receipts tile from "sent" to "delivered/bounced" semantics.
+2. **Receipts → audit timeline merge** — fold the delivery tile into a single "Archive activity" timeline alongside the existing reassignment ledger so operators see one chronological story.
+3. **Suppression memory** — when the operator suppresses a client at Step 4, remember the reason ("VIP — call personally") on the client record so future automations skip them too.
+4. **Smoke-test rate-limit** — hard cap of 3 previews per operator per hour to prevent cost runaway when someone repeatedly clicks during a long review.
