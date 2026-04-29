@@ -273,10 +273,20 @@ serve(async (req) => {
     }
 
     // ---------- 10) Client preferences referencing this stylist ----------
-    // Enriched: per-client history (visits, top services, avg ticket) plus a
-    // recommended successor (same stylist_level, same location, lowest forward
-    // load, earliest hire_date).
+    // Enriched: per-client history (visits, top services with IDs, avg ticket,
+    // contact reachability) plus a recommended successor (same stylist_level,
+    // same location, lowest forward load, earliest hire_date).
     let stylistLevelOfArchived: string | null = null;
+    let eligibleStylistsPayload: Array<{
+      user_id: string;
+      display_name: string | null;
+      full_name: string | null;
+      stylist_level: string | null;
+      location_id: string | null;
+      hire_date: string | null;
+      daily_load: number[];
+      qualified_service_ids: string[];
+    }> = [];
     {
       // 10a) Total count (for overflow display)
       const { count: totalCount } = await supabaseAdmin
@@ -285,11 +295,11 @@ serve(async (req) => {
         .eq("organization_id", orgId)
         .eq("preferred_stylist_id", targetUserId);
 
-      // 10b) Sample of clients (limited)
+      // 10b) Sample of clients (limited) — include contact fields for soft-notify triage
       const { data: clientRows } = await supabaseAdmin
         .from("clients")
         .select(
-          "id, first_name, last_name, last_visit_date, visit_count, total_spend, average_spend, location_id",
+          "id, first_name, last_name, last_visit_date, visit_count, total_spend, average_spend, location_id, email_normalized, phone_normalized",
         )
         .eq("organization_id", orgId)
         .eq("preferred_stylist_id", targetUserId)
