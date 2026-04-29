@@ -32,6 +32,7 @@ import { AddUserSeatsDialog } from '@/components/dashboard/settings/AddUserSeats
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { QuickAssignRoleChip } from '@/components/dashboard/team-members/QuickAssignRoleChip';
+import { ArchiveMemberChip } from '@/components/dashboard/team-members/ArchiveMemberChip';
 
 type TeamView = 'roster' | 'invitations' | 'archived';
 const VALID_VIEWS: TeamView[] = ['roster', 'invitations', 'archived'];
