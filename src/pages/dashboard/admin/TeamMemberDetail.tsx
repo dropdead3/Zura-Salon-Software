@@ -12,6 +12,8 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
 import { TeamMemberHeader } from '@/components/dashboard/team-members/TeamMemberHeader';
+import { ArchiveDeliveryReceiptCard } from '@/components/dashboard/team-members/archive/ArchiveDeliveryReceiptCard';
+import { useArchiveLogEntry } from '@/hooks/useArchiveTeamMember';
 
 const ProfileTab = lazy(() => import('@/components/dashboard/team-members/tabs/ProfileTab').then(m => ({ default: m.ProfileTab })));
 const RoleAccessTab = lazy(() => import('@/components/dashboard/team-members/tabs/RoleAccessTab').then(m => ({ default: m.RoleAccessTab })));
@@ -110,6 +112,13 @@ export default function TeamMemberDetail() {
           backLabel="Back to Team Members"
         />
         <TeamMemberHeader member={member} profile={profile} />
+
+        {member.archived_at && (
+          <ArchiveLogReceipts
+            organizationId={effectiveOrganization?.id}
+            userId={userId}
+          />
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex-wrap h-auto justify-start gap-1 bg-muted/50 p-1">
