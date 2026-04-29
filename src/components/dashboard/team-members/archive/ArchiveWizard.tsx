@@ -14,7 +14,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles,
+  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -30,7 +30,16 @@ import {
   type DestinationRole,
   type Reassignment,
   type ClientPreferenceItem,
+  type EligibleStylist,
+  type ServiceRef,
 } from '@/hooks/useArchiveTeamMember';
+
+// Normalize the back-compat-shaped top_services field into ServiceRef[].
+function normalizeTopServices(raw: ClientPreferenceItem['top_services']): ServiceRef[] {
+  return (raw ?? []).map((s) =>
+    typeof s === 'string' ? { id: null, name: s } : s,
+  );
+}
 
 // ============================================================
 // Action verb tooltips — single source of truth so wording stays
