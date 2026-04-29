@@ -116,6 +116,7 @@ export function useArchiveTeamMember(organizationId: string | undefined) {
       reason: string;
       effectiveDate?: string;
       reassignments: Reassignment[];
+      notifyReassignedClients?: boolean;
     }) => {
       const { data, error } = await supabase.functions.invoke(
         'archive-team-member',
