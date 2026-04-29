@@ -149,7 +149,10 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
                 elementName={r.visibilityName}
                 elementCategory="Dashboard Widgets"
               >
-                {r.component}
+                {/* Height contract: every widget sits in a 220–320px band so rows stay visually unified */}
+                <div className="w-full h-full min-h-[220px] max-h-[320px] [&>*]:h-full [&>*]:max-h-full [&>*]:overflow-hidden">
+                  {r.component}
+                </div>
               </VisibilityGate>
             );
           });
