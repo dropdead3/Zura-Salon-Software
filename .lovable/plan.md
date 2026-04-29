@@ -1,108 +1,74 @@
-# Zura AI Chat Modal — Audit + Fix Plan
+# Fix: Zura claimed "Done." without an approval card
 
-## Audit findings (priority order)
+## What actually happened
 
-### P0 — Bugs (correctness)
+Edge logs for the `deactivate chelsea` turn show exactly one tool call:
 
-1. **Conversation context corruption.** `useAIAgentChat.sendMessage` builds `history` from local `messages` *after* the loading bubble has been pushed. The loading message has `content: ''` and `role: 'assistant'`, so every turn after the first sends an empty assistant turn to the model. **Fix:** filter `m.isLoading` out before mapping, or build history from a snapshot taken before the loading bubble is appended.
+```
+[capability-tool] find_entity { entity_type: "team_member", query: "chelsea" }
+```
 
-2. **Auto-scroll never reaches the viewport.** `scrollRef` is attached to the shadcn `<ScrollArea>` (wrapper), but the actual scroll container is `[data-radix-scroll-area-viewport]` inside it. Setting `scrollTop` on the wrapper is a no-op, so long threads do not auto-scroll to the latest message. **Fix:** query the inner viewport (`scrollRef.current?.querySelector('[data-radix-scroll-area-viewport]')`) and scroll that, or use a sentinel `<div>` at the bottom with `scrollIntoView`.
+That's it. The model resolved Chelsea's ID, then **never called `propose_capability`**. It just wrote a follow-up message and returned. Two things then combined to produce the "Done." bubble:
 
-3. **`+ New` button has no visible effect when the thread is already empty (the user's complaint).** It clears local state and `conversationId`, but if you're already on the empty state nothing changes — looks broken. Same when a conversation is mid-load (`isLoading` disables it silently). **Fix below.**
+1. **The model hallucinated completion.** With no mutation tool called, it still answered as if the action had run. This is the autonomy-doctrine violation: silent claim of execution.
+2. **The follow-up fallback in `ai-agent-chat/index.ts` line 496** is `const finalMessage = followUpResult.choices?.[0]?.message?.content || "Done."`. So even if the model returned an empty content (which is plausible after a single read-only tool call), the server *defaults the user-visible string to literally the word "Done."* That default is what the user saw — and it reads like confirmation of execution. **Chelsea was not deactivated** (no `proposed`/`executed` audit row exists for that turn).
 
-4. **Loaded action previews render without status context.** `loadConversation` sets `status: 'executed'` on every persisted action, but `confirmAction`/`cancelAction` persist a *text* result without the action snapshot, so the original preview card never re-renders on reload — only the bare ✅/❌ string. **Fix:** persist the assistant result message with the action payload (status `executed` or `cancelled`).
+So the bug is layered: model didn't propose → server's fallback string lied for it → UI had no `action` payload to render an approval card → user reasonably assumed it ran.
 
-5. **Empty-state flicker on history load.** `loadConversation` sets `isLoading=true` then awaits the query; during that window `messages.length === 0` and the empty-state hero + suggestion prompts flash before the thread hydrates. **Fix:** track a `isHydrating` flag and show a thin loading row instead of the hero.
+## Fix plan
 
-### P1 — UX gaps
+### 1. Kill the "Done." fallback (P0 — root cause of the lie)
 
-6. **No streaming.** Zura uses `supabase.functions.invoke` (buffered), while the rest of the platform streams (`useAIAssistant`). A reply that takes 6–8s feels frozen. **Fix:** switch the chat path to the streaming `fetch` pattern already proven in `useAIAssistant`, persisting the final string when the stream closes. Action payloads still arrive at the end as a structured trailer (already supported by `ai-agent-chat`).
+In `supabase/functions/ai-agent-chat/index.ts`:
 
-7. **Suggested prompts vanish forever after the first message.** Once a thread starts, there's no way back to the role-based prompts without explicitly hitting "+ New". **Fix:** show a compact "Suggested" chip row above the input on a fresh thread (≤ 1 user turn), then collapse it.
+- Replace `|| "Done."` with a neutral, non-committal fallback when the model returns empty content after tool use.
+- If the only tools called this turn were **read-only** (`find_entity`, `execute_capability`) AND no `action` was produced AND the model's text is empty/whitespace, return: *"I looked that up but didn't take any action. What would you like to do?"*
+- If a mutation-class verb appears in the user's last message (deactivate, delete, cancel, refund, fire, remove, archive, reschedule, void) AND no `propose_capability` action was produced, return a **doctrinal refusal**: *"I can't do that without staging an approval first. Try again and I'll prepare a card you can confirm."* This is the same shape as the existing rate-limit/anomaly returns.
 
-8. **Title never refines.** Plan called for an auto-summarized 4–6 word title after the first assistant reply; never implemented. Titles stay as the truncated first message forever. **Fix:** after the first successful assistant turn on a new conversation, fire a lightweight `summarize_title: true` call to `ai-assistant` and `update` the row. Silent fallback on 429.
+### 2. Harden the system prompt (P0 — prevent the hallucination)
 
-9. **No "scroll to bottom" affordance.** Once a user scrolls up to read history, new messages push off-screen with no jump-to-latest pill.
+Add an explicit clause to `buildSystemPrompt` in the same file:
 
-10. **`+ New` clears without confirmation in the middle of a pending action.** Currently disabled while `isLoading` is true, but not while `pendingAction` is set. Switching threads mid-approval drops the action server-side eventually but is confusing. **Fix:** disable "+ New" and history-row clicks while `pendingAction` is set, with a tooltip ("Resolve the pending action first").
+- **"NEVER claim an action was performed unless you actually called `propose_capability` AND the user approved it. After a read-only tool, summarize what you found — do not say 'Done', 'Completed', or 'I deactivated…'."**
+- **"If the user asks for a mutation, your turn MUST end with a `propose_capability` tool call. If you can't (missing IDs, ambiguous match), ask a clarifying question instead — never narrate a fake completion."**
 
-### P2 — Polish
+Move these to the top of HARD RULES so they outrank tool-choice freedom.
 
-11. **No timestamps, no copy-message, no regenerate** on assistant bubbles. Standard chat affordances.
-12. **History panel:** no search, no date grouping (Today / Yesterday / This week / Older). With 100 conversations the list becomes unreadable.
-13. **`+ New` icon-only on small widths** would save space; current "+ New" + "History" eats the full top row.
-14. **Send button missing `aria-label`** ("Send message"); History/New buttons fine.
-15. **`isLoading` disables the Input** even while waiting for `loadConversation` — user can't queue a question. Acceptable but worth a subtle skeleton.
-16. **No keyboard shortcuts** (`⌘K` new chat, `⌘/` history) — minor.
+### 3. Server-side tripwire (P1 — defense in depth)
 
-### Out of scope (acknowledge, defer)
+In the tool-handling block (around line 455), detect the failure mode before responding:
 
-- Full-text search across history (needs `tsvector`).
-- Export thread as Markdown.
-- Per-conversation pinning / archiving.
-- Sharing threads with teammates (governance work).
+- If the user's most recent message matches a mutation-intent regex AND no `propose_capability` ran this turn AND no `action` was produced, log an `autonomy_violation` anomaly via `recordAnomaly` and override the response with the doctrinal refusal from step 1. This guarantees the rule is enforced even if a future model regresses.
 
----
+### 4. UI affordance (P1 — make silent claims impossible to miss)
 
-## Fix plan (what to ship)
+In `src/components/dashboard/help-fab/AIHelpTab.tsx`:
 
-Ordered by leverage. Ship as a single wave; all changes are inside the help-fab module + `useAIAgentChat` + one tiny edge-function addition.
+- When an assistant message contains words like "deactivated", "deleted", "cancelled", "refunded", "removed", "rescheduled" but **has no `action` attached and no preceding executed action in this conversation**, render a small amber inline notice under the bubble: *"This was a description only — no action was taken."* This catches any leftover hallucinations that slip past the server.
 
-### 1. Make "+ New" meaningful
-- Disable when thread is already empty *and* no `conversationId` is set (nothing to clear).
-- Disable while `pendingAction` is set, with tooltip.
-- On click from a non-empty state, animate the thread out and toast `New conversation started`.
-- Keep label as `New` (icon + text); add tooltip `Start a new chat` so the affordance is obvious.
+### 5. Audit trail visibility (P2)
 
-### 2. Fix the conversation-context bug
-In `sendMessage`, build `history` from `messages.filter(m => !m.isLoading)` *before* appending the loading bubble.
-
-### 3. Fix auto-scroll
-Replace `scrollRef.current.scrollTop = …` with a bottom sentinel (`<div ref={bottomRef} />`) and `bottomRef.current?.scrollIntoView({ block: 'end' })`. Trigger on `messages`, `pendingAction`, and `isLoading` changes.
-
-### 4. Persist action snapshots on result messages
-In `confirmAction` and `cancelAction`, pass the resolved action (with `status: 'executed' | 'cancelled'`) into `persistMessage` so reloads restore the preview card.
-
-### 5. Add streaming
-Port `useAIAssistant`'s SSE reader into `useAIAgentChat.sendMessage`. Accumulate into the in-place loading bubble (replace `isLoading: true` placeholder with progressive text). On stream close, parse the trailing JSON envelope from `ai-agent-chat` for `action`. Persist the final assembled string + action.
-
-### 6. Suggested-prompt chip strip
-While `messages.length <= 1` (just the first user turn or empty), render a horizontal chip row above the input with the role-scoped prompts. Hide once the thread has progressed.
-
-### 7. Auto-title refinement
-After the first assistant turn on a new conversation, call `ai-assistant` with `{ summarize_title: true, messages: [first user, first assistant] }`. Update the `ai_conversations` row title (≤ 60 chars, ≤ 6 words). Edge-function branch: ~10 lines, reuses existing auth path.
-
-### 8. Hydration state for `loadConversation`
-Add a `isHydrating` flag (separate from `isLoading`); render a one-line "Loading conversation…" placeholder instead of the empty-state hero while it's true.
-
-### 9. History panel polish
-- Group by `Today / Yesterday / This week / Older` (computed from `last_message_at`).
-- Add a search input at the top (client-side `includes` filter on `title`).
-- Show kebab menu always (not only on hover) for touch users.
-
-### 10. Affordances
-- Bottom sentinel doubles as a "scroll to latest" pill when user has scrolled up ≥ 200px.
-- Copy-message button on hover for assistant bubbles.
-- Send button `aria-label="Send message"`.
-
----
+The current AI Audit Trail (`src/pages/dashboard/admin/AIAuditTrail.tsx`) only shows rows that reached `proposed` status. Add a "Hallucinated completions" filter sourced from the new `autonomy_violation` anomaly type, so account owners can see when the model claimed action without staging one.
 
 ## Files touched
 
-Edit:
-- `src/hooks/team-chat/useAIAgentChat.ts` — streaming, history fix, action-snapshot persistence, hydration state, title refinement trigger.
-- `src/components/dashboard/help-fab/AIHelpTab.tsx` — bottom sentinel + scroll, suggested chips while empty/short, "+ New" tooltip + disable rules, copy-message, scroll-to-latest pill.
-- `src/components/dashboard/help-fab/AIHistoryPanel.tsx` — search + date grouping, always-visible kebab.
-- `supabase/functions/ai-assistant/index.ts` — `summarize_title` branch (small).
+- `supabase/functions/ai-agent-chat/index.ts` — fallback string, system prompt clauses, tripwire
+- `src/components/dashboard/help-fab/AIHelpTab.tsx` — inline "no action taken" notice
+- `src/pages/dashboard/admin/AIAuditTrail.tsx` — anomaly filter
 
-No DB migration needed — schema already supports the action snapshot column.
+No DB migration required — `recordAnomaly` already supports arbitrary `type` strings.
+
+## What you'll see after
+
+- Same prompt ("deactivate chelsea") will return either a proper approval card *or* a refusal asking you to retry — never a silent "Done."
+- Account owners can audit any hallucinated-completion attempts under AI Audit Trail.
 
 ---
 
-## Open questions
+## Enhancement suggestions (per project doctrine)
 
-1. **Streaming priority** — adopting streaming touches the action-trailer parsing and is the biggest change. Ship it now (recommended), or defer and only fix the P0 bugs in this wave?
-2. **History grouping vs search** — both, or just one for this wave?
-3. **"+ New" behavior on empty state** — disable (current proposal) or repurpose as "Show suggestions" to give it a job? Recommend: disable, since suggestions return automatically via the chip strip in fix #6.
+1. **Confidence qualification on mutation proposals.** Today `propose_capability` always stages the action if the model picks the right tool. Consider adding a server-side confidence check: for `risk_level: 'high'` capabilities (terminations, refunds, mass deletes), require the model to also pass a short `confidence_factors` array (e.g., "exact name match", "user used explicit verb 'fired'"). If fewer than 2 factors, return a clarifying question instead of a card. Aligns with the doctrine's "If confidence is low, Zura remains silent."
 
-Will proceed with all 10 fixes above unless you say otherwise.
+2. **Turn the "+ New" button into a real reset signal.** Right now it only matters when a thread exists. Repurpose its disabled state into an *empty-state hint*: "Pick a suggestion below to start" — gives it a job even on a fresh chat.
+
+3. **Pending-action persistence across reload.** If the user closes the FAB while a card is pending, the card disappears and the audit row sits in `proposed` forever. On hydrate, re-surface any `proposed` row from the last 15 minutes for the active conversation so approval state survives navigation.
