@@ -16,6 +16,7 @@ export interface AIMessage {
 export interface AIActionPreview {
   title: string;
   description: string;
+  risk_level?: 'low' | 'med' | 'high';
   before?: {
     date?: string;
     time?: string;
@@ -30,7 +31,6 @@ export interface AIActionPreview {
     service?: string;
     stylist?: string;
   };
-  // Generic target shape used by HR / non-appointment proposals.
   target?: {
     name?: string;
     hire_date?: string | null;
@@ -40,16 +40,18 @@ export interface AIActionPreview {
 }
 
 export interface AIAction {
-  type:
-    | 'reschedule'
-    | 'cancel'
-    | 'create_booking'
-    | 'deactivate_team_member'
-    | 'reactivate_team_member';
+  /** capability id (e.g. "team.deactivate_member"). */
+  capability_id?: string;
+  /** legacy alias of capability_id used by older preview UI. */
+  type: string;
   status: 'pending_confirmation' | 'confirmed' | 'cancelled' | 'executed' | 'failed';
   preview: AIActionPreview;
   params: Record<string, unknown>;
-  actionId?: string;
+  reasoning?: string | null;
+  risk_level?: 'low' | 'med' | 'high';
+  confirmation_token?: string | null;
+  confirmation_token_field?: string | null;
+  audit_id?: string | null;
 }
 
 export function useAIAgentChat() {
@@ -81,11 +83,7 @@ export function useAIAgentChat() {
     setIsLoading(true);
 
     try {
-      // Build conversation history for context
-      const history = messages.map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      const history = messages.map(m => ({ role: m.role, content: m.content }));
       history.push({ role: 'user', content: content.trim() });
 
       const { data, error } = await supabase.functions.invoke('ai-agent-chat', {
@@ -106,81 +104,64 @@ export function useAIAgentChat() {
         action: data.action || null,
       };
 
-      // Replace loading message with actual response
-      setMessages(prev => 
-        prev.filter(m => !m.isLoading).concat(assistantMessage)
-      );
+      setMessages(prev => prev.filter(m => !m.isLoading).concat(assistantMessage));
 
-      // If there's a pending action, track it
       if (data.action?.status === 'pending_confirmation') {
         setPendingAction(data.action);
-        
-        // Store action in database for tracking
-        await supabase.from('ai_agent_actions').insert({
-          organization_id: effectiveOrganization?.id,
-          user_id: user.id,
-          action_type: data.action.type,
-          action_params: data.action.params,
-          status: 'pending',
-        });
       }
-
     } catch (error) {
       console.error('AI Agent error:', error);
-      
-      // Replace loading message with error
       const errorMessage: AIMessage = {
         id: `error-${Date.now()}`,
         role: 'assistant',
         content: "I'm sorry, I encountered an error. Please try again.",
         timestamp: new Date(),
       };
-      
-      setMessages(prev => 
-        prev.filter(m => !m.isLoading).concat(errorMessage)
-      );
-      
+      setMessages(prev => prev.filter(m => !m.isLoading).concat(errorMessage));
       toast.error('Failed to get AI response');
     } finally {
       setIsLoading(false);
     }
   }, [user?.id, effectiveOrganization?.id, messages]);
 
-  const confirmAction = useCallback(async () => {
+  const confirmAction = useCallback(async (confirmationInput?: string) => {
     if (!pendingAction || !user?.id) return;
 
-    setIsLoading(true);
+    // Local confirmation-token check for high-risk actions before round-tripping.
+    if (
+      pendingAction.risk_level === 'high' &&
+      pendingAction.confirmation_token &&
+      (confirmationInput || '').trim().toLowerCase() !==
+        pendingAction.confirmation_token.trim().toLowerCase()
+    ) {
+      toast.error('Confirmation text does not match.');
+      return;
+    }
 
+    setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('execute-ai-action', {
         body: {
-          actionType: pendingAction.type,
+          capability_id: pendingAction.capability_id || pendingAction.type,
           params: pendingAction.params,
-          userId: user.id,
           organizationId: effectiveOrganization?.id,
+          audit_id: pendingAction.audit_id ?? undefined,
+          confirmation_token: confirmationInput,
         },
       });
-
       if (error) throw error;
 
       const resultMessage: AIMessage = {
         id: `result-${Date.now()}`,
         role: 'assistant',
-        content: data.success 
-          ? `✅ ${data.message}` 
-          : `❌ ${data.message}`,
+        content: data.success ? `✅ ${data.message}` : `❌ ${data.message}`,
         timestamp: new Date(),
       };
-
       setMessages(prev => [...prev, resultMessage]);
       setPendingAction(null);
 
-      if (data.success) {
-        toast.success(data.message);
-      } else {
-        toast.error(data.message);
-      }
-
+      if (data.success) toast.success(data.message);
+      else toast.error(data.message);
     } catch (error) {
       console.error('Execute action error:', error);
       toast.error('Failed to execute action');
@@ -192,16 +173,31 @@ export function useAIAgentChat() {
   const cancelAction = useCallback(async () => {
     if (!pendingAction) return;
 
+    // Tell the backend to flip the audit row to "denied".
+    try {
+      await supabase.functions.invoke('execute-ai-action', {
+        body: {
+          capability_id: pendingAction.capability_id || pendingAction.type,
+          params: pendingAction.params,
+          organizationId: effectiveOrganization?.id,
+          audit_id: pendingAction.audit_id ?? undefined,
+          denied: true,
+        },
+      });
+    } catch (e) {
+      // Best-effort; the user-visible state still proceeds.
+      console.warn('Audit denial failed:', e);
+    }
+
     const cancelMessage: AIMessage = {
       id: `cancel-${Date.now()}`,
       role: 'assistant',
-      content: "Action cancelled. Is there anything else I can help you with?",
+      content: 'Action cancelled. Anything else?',
       timestamp: new Date(),
     };
-
     setMessages(prev => [...prev, cancelMessage]);
     setPendingAction(null);
-  }, [pendingAction]);
+  }, [pendingAction, effectiveOrganization?.id]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
