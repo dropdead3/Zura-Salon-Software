@@ -4,7 +4,15 @@ import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-lo
 import { AI_ASSISTANT_NAME_DEFAULT as AI_ASSISTANT_NAME } from "../_shared/brand.ts";
 import { requireAuth, requireOrgMember, authErrorResponse } from "../_shared/auth.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
-import { validateBody, ValidationError, z } from "../_shared/validation.ts";
+import { validateBody, z } from "../_shared/validation.ts";
+import {
+  loadCapabilitiesForUser,
+  getCapabilityHandlers,
+  recordAudit,
+  type CapabilityRow,
+} from "../_shared/capability-runtime.ts";
+// IMPORTANT: importing this file registers all capability handlers.
+import "../_shared/capability-handlers.ts";
 
 const AgentChatSchema = z.object({
   messages: z.array(z.object({
@@ -17,799 +25,368 @@ const AgentChatSchema = z.object({
   userRole: z.string().max(50).optional(),
 });
 
-const SYSTEM_PROMPT = `You are ${AI_ASSISTANT_NAME}, the AI assistant for a salon management system. Users may address you as "${AI_ASSISTANT_NAME}" or "Hey ${AI_ASSISTANT_NAME}". You help staff members manage appointments, look up client information, check availability, and perform reversible HR actions like deactivating a team member when someone leaves the organization. You are friendly, efficient, and professional.
-
-Today's date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
-
-For appointment times, use 12-hour format (e.g., "3:00 PM").
-For dates, be flexible - understand "tomorrow", "next Tuesday", etc.
-
-AUTONOMY TIERS — these are non-negotiable:
-
-TIER 1 — Read-only lookups: execute directly, no confirmation needed (search_clients, get_client_appointments, check_availability, get_my_schedule, find_team_member).
-
-TIER 2 — Reversible mutations: ALWAYS use a propose_* tool. Never mutate directly. The proposal returns a structured preview that the human confirms with one click. This includes: rescheduling, cancelling appointments, deactivating a team member, removing a team member from the organization.
-
-TIER 3 — FORBIDDEN. You must refuse and explain that a human owner must do this in the relevant settings page. This includes: setting commission percentages, changing pay structure, firing someone for cause (you can only mark a profile as inactive — actual termination paperwork is off-limits), promotions/demotions, deleting historical data, changing pricing, modifying RLS or permissions.
-
-DISAMBIGUATION RULE: When the user names a person ambiguously (e.g. "Chelsea" and there are two people named Chelsea), call find_team_member first, then ASK the user which one they mean before proposing any action. Never guess.
-
-INTENT INTERPRETATION FOR HR:
-- "X was fired" / "X quit" / "X is no longer with us" → propose_deactivate_team_member (reversible, preserves history). Do NOT propose remove unless the user explicitly says "remove from organization" or "delete their access entirely."
-- "Bring X back" / "X is returning" → propose_reactivate_team_member.
-- If the user asks you to "fire" or "terminate" someone, clarify: you can deactivate their profile (revokes login, preserves data) but actual termination paperwork is a Tier 3 action.`;
-
-
-const TOOLS = [
-  {
-    type: "function",
-    function: {
-      name: "search_clients",
-      description: "Search for clients by name, phone number, or email",
-      parameters: {
-        type: "object",
-        properties: {
-          query: { 
-            type: "string", 
-            description: "The search query - can be client name, phone, or email" 
-          }
-        },
-        required: ["query"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_client_appointments",
-      description: "Get upcoming appointments for a specific client",
-      parameters: {
-        type: "object",
-        properties: {
-          client_name: { 
-            type: "string", 
-            description: "The client's name to search for appointments" 
-          }
-        },
-        required: ["client_name"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "check_availability",
-      description: "Check if a staff member is available at a specific date and time",
-      parameters: {
-        type: "object",
-        properties: {
-          staff_name: { 
-            type: "string", 
-            description: "The staff member's name" 
-          },
-          date: { 
-            type: "string", 
-            description: "The date to check (YYYY-MM-DD format or natural language like 'tomorrow')" 
-          },
-          time: { 
-            type: "string", 
-            description: "The time to check (e.g., '3:00 PM')" 
-          }
-        },
-        required: ["date"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "propose_reschedule",
-      description: "Propose rescheduling an appointment to a new date/time. This will show the user a preview and require their confirmation.",
-      parameters: {
-        type: "object",
-        properties: {
-          appointment_id: { 
-            type: "string", 
-            description: "The ID of the appointment to reschedule" 
-          },
-          client_name: {
-            type: "string",
-            description: "The client's name (used to find the appointment if ID not provided)"
-          },
-          current_date: {
-            type: "string",
-            description: "The current appointment date (to identify which appointment)"
-          },
-          current_time: {
-            type: "string",
-            description: "The current appointment time (to identify which appointment)"
-          },
-          new_date: { 
-            type: "string", 
-            description: "The new date for the appointment (YYYY-MM-DD format)" 
-          },
-          new_time: { 
-            type: "string", 
-            description: "The new time for the appointment (e.g., '2:00 PM')" 
-          }
-        },
-        required: ["new_date", "new_time"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "propose_cancel_appointment",
-      description: "Propose cancelling an appointment. This will show the user a preview and require their confirmation.",
-      parameters: {
-        type: "object",
-        properties: {
-          appointment_id: { 
-            type: "string", 
-            description: "The ID of the appointment to cancel" 
-          },
-          client_name: {
-            type: "string",
-            description: "The client's name (used to find the appointment if ID not provided)"
-          },
-          appointment_date: {
-            type: "string",
-            description: "The appointment date (to identify which appointment)"
-          },
-          appointment_time: {
-            type: "string",
-            description: "The appointment time (to identify which appointment)"
-          }
-        },
-        required: []
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_my_schedule",
-      description: "Get the current user's appointments for today or a specific date",
-      parameters: {
-        type: "object",
-        properties: {
-          date: { 
-            type: "string", 
-            description: "The date to check (YYYY-MM-DD format or 'today'). Defaults to today." 
-          }
-        },
-        required: []
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "find_team_member",
-      description: "Look up a team member by name. Returns matching staff with their id, role, active status, and counts of upcoming appointments. ALWAYS call this first before proposing any HR action so you have a verified user_id and can disambiguate when multiple people share a first name.",
-      parameters: {
-        type: "object",
-        properties: {
-          name: {
-            type: "string",
-            description: "The team member's name or partial name (first, last, or both)."
-          }
-        },
-        required: ["name"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "propose_deactivate_team_member",
-      description: "Propose deactivating a team member's profile (revokes login, blocks new assignments, preserves all historical data). REVERSIBLE. Use this when someone leaves the organization. Returns a preview the human must confirm.",
-      parameters: {
-        type: "object",
-        properties: {
-          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." },
-          reason: { type: "string", description: "Optional short reason captured for the audit log (e.g. 'left the salon', 'no longer employed')." }
-        },
-        required: ["user_id"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "propose_reactivate_team_member",
-      description: "Propose reactivating a previously deactivated team member's profile (restores login and assignment eligibility). Use when someone is returning.",
-      parameters: {
-        type: "object",
-        properties: {
-          user_id: { type: "string", description: "The team member's user_id (obtained from find_team_member)." }
-        },
-        required: ["user_id"]
-      }
-    }
-  }
-];
-
 interface Message {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
+  // deno-lint-ignore no-explicit-any
+  tool_calls?: any;
+  tool_call_id?: string;
 }
 
-async function executeToolCall(
-  toolName: string, 
-  args: Record<string, unknown>,
+// ============================================================
+// System prompt — short, generic, capability-driven.
+// ============================================================
+function buildSystemPrompt(capabilities: CapabilityRow[]): string {
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  const readList = capabilities.filter(c => !c.mutation).map(c => `- ${c.id}: ${c.description}`).join('\n');
+  const mutationList = capabilities.filter(c => c.mutation).map(c => `- ${c.id} [${c.risk_level}]: ${c.description}`).join('\n');
+
+  return `You are ${AI_ASSISTANT_NAME}, an operations agent for a salon management platform. Today is ${today}.
+
+You operate through THREE generic tools:
+- find_entity: read-only lookups (resolve names → IDs).
+- propose_capability: stage a state change. The user MUST approve it before anything happens.
+- execute_capability: run a read-only capability immediately.
+
+HARD RULES:
+1. For ANY capability whose id appears under "Mutations" below, you MUST use propose_capability. NEVER use execute_capability for these — the server will reject it.
+2. Resolve people, appointments, and other entities via find_entity FIRST. Never guess IDs.
+3. If find_entity returns multiple matches, ASK the user which one they mean. Do not propose anything yet.
+4. Never write prose telling the user to "go to settings and click X" if a capability can do it. Use the capability.
+5. If you don't have a capability for what the user wants, say so plainly.
+
+Read-only capabilities (use execute_capability or find_entity):
+${readList || '(none available to this user)'}
+
+Mutations (REQUIRE propose_capability + human approval):
+${mutationList || '(none available to this user)'}
+
+For times use 12-hour format. For dates accept "today", "tomorrow", "next Tuesday", or YYYY-MM-DD.`;
+}
+
+// ============================================================
+// Generic tool schemas exposed to the LLM.
+// ============================================================
+const GENERIC_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "find_entity",
+      description: "Resolve a person, appointment, client, or other entity to its canonical ID. Use BEFORE any propose_capability call.",
+      parameters: {
+        type: "object",
+        properties: {
+          entity_type: {
+            type: "string",
+            enum: ["team_member", "appointment", "client"],
+            description: "What kind of entity to find.",
+          },
+          query: { type: "string", description: "Name, email, phone, or partial match." },
+        },
+        required: ["entity_type", "query"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "propose_capability",
+      description: "Stage a state-changing capability. Returns an approval card to the user. NOTHING is changed until the user clicks Approve.",
+      parameters: {
+        type: "object",
+        properties: {
+          capability_id: { type: "string", description: "The capability id, e.g. 'team.deactivate_member'." },
+          params: { type: "object", description: "Capability parameters matching its param_schema." },
+          reasoning: { type: "string", description: "One short sentence: why this action, in plain English." },
+        },
+        required: ["capability_id", "params"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "execute_capability",
+      description: "Run a READ-ONLY capability immediately. Server will reject this for mutations — use propose_capability for those.",
+      parameters: {
+        type: "object",
+        properties: {
+          capability_id: { type: "string" },
+          params: { type: "object" },
+        },
+        required: ["capability_id"],
+      },
+    },
+  },
+];
+
+// ============================================================
+// Map find_entity -> capability id.
+// ============================================================
+function resolveFinder(entityType: string): string | null {
+  switch (entityType) {
+    case 'team_member': return 'team.find_member';
+    case 'appointment': return 'appointments.find_today';
+    // client lookup intentionally omitted from pilot scope
+    default: return null;
+  }
+}
+
+// ============================================================
+// Tool dispatcher
+// ============================================================
+async function dispatchTool(
+  toolName: string,
+  // deno-lint-ignore no-explicit-any
+  args: any,
   // deno-lint-ignore no-explicit-any
   supabase: any,
   userId: string,
-  organizationId: string
+  organizationId: string,
+  capabilities: CapabilityRow[],
 ): Promise<{ result: unknown; action?: unknown }> {
-  switch (toolName) {
-    case "search_clients": {
-      const query = args.query as string;
-      const { data, error } = await supabase
-        .from('phorest_clients')
-        .select('id, first_name, last_name, mobile, email')
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,mobile.ilike.%${query}%,email.ilike.%${query}%`)
-        .limit(5);
-      
-      if (error) throw error;
-      return { result: data || [] };
+  if (toolName === 'find_entity') {
+    const capId = resolveFinder(String(args.entity_type || ''));
+    if (!capId) return { result: { error: `Cannot find entity of type "${args.entity_type}".` } };
+    const cap = capabilities.find(c => c.id === capId);
+    if (!cap) return { result: { error: `Lookup capability "${capId}" not enabled for you.` } };
+    const handlers = getCapabilityHandlers(capId);
+    if (!handlers?.read) return { result: { error: `No read handler registered for "${capId}".` } };
+    try {
+      const { data, message } = await handlers.read({
+        supabase, organizationId, userId, capability: cap,
+        params: { query: args.query },
+      });
+      return { result: { ...((data && typeof data === 'object') ? data : { value: data }), message } };
+    } catch (e) {
+      return { result: { error: e instanceof Error ? e.message : 'Lookup failed.' } };
     }
-
-    case "get_client_appointments": {
-      const clientName = args.client_name as string;
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('id, client_name, service_name, appointment_date, start_time, end_time, staff_name, status')
-        .ilike('client_name', `%${clientName}%`)
-        .gte('appointment_date', today)
-        .order('appointment_date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(10);
-      
-      if (error) throw error;
-      return { result: data || [] };
-    }
-
-    case "check_availability": {
-      const date = parseDateString(args.date as string);
-      const staffName = args.staff_name as string | undefined;
-      const time = args.time as string | undefined;
-      
-      let query = supabase
-        .from('appointments')
-        .select('id, staff_name, start_time, end_time, client_name')
-        .eq('appointment_date', date)
-        .neq('status', 'cancelled');
-      
-      if (staffName) {
-        query = query.ilike('staff_name', `%${staffName}%`);
-      }
-      
-      const { data, error } = await query.order('start_time', { ascending: true });
-      
-      if (error) throw error;
-      
-      // Return existing appointments so AI can determine availability
-      return { 
-        result: {
-          date,
-          existing_appointments: data || [],
-          message: data?.length ? `Found ${data.length} appointments on ${date}` : `No appointments found on ${date}`
-        }
-      };
-    }
-
-    case "get_my_schedule": {
-      const date = args.date ? parseDateString(args.date as string) : new Date().toISOString().split('T')[0];
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('id, client_name, service_name, appointment_date, start_time, end_time, status')
-        .eq('staff_user_id', userId)
-        .eq('appointment_date', date)
-        .neq('status', 'cancelled')
-        .order('start_time', { ascending: true });
-      
-      if (error) throw error;
-      return { result: data || [] };
-    }
-
-    case "propose_reschedule": {
-      // Find the appointment
-      let appointmentQuery = supabase
-        .from('appointments')
-        .select('id, client_name, service_name, appointment_date, start_time, end_time, staff_name, staff_user_id, location_id')
-        .neq('status', 'cancelled');
-      
-      if (args.appointment_id) {
-        appointmentQuery = appointmentQuery.eq('id', args.appointment_id);
-      } else if (args.client_name) {
-        appointmentQuery = appointmentQuery.ilike('client_name', `%${args.client_name}%`);
-        if (args.current_date) {
-          appointmentQuery = appointmentQuery.eq('appointment_date', parseDateString(args.current_date as string));
-        }
-      }
-      
-      const { data: appointments, error } = await appointmentQuery.limit(1);
-      
-      if (error) throw error;
-      if (!appointments?.length) {
-        return { result: { error: "No matching appointment found" } };
-      }
-      
-      const appointment = appointments[0];
-      const newDate = parseDateString(args.new_date as string);
-      const newTime = parseTimeString(args.new_time as string);
-      
-      // Create action proposal
-      return {
-        result: { 
-          message: "I've prepared the reschedule. Please confirm the change below."
-        },
-        action: {
-          type: 'reschedule',
-          status: 'pending_confirmation',
-          preview: {
-            title: 'Reschedule Appointment',
-            description: `Move ${appointment.client_name}'s appointment`,
-            before: {
-              date: appointment.appointment_date,
-              time: appointment.start_time,
-              client: appointment.client_name,
-              service: appointment.service_name,
-              stylist: appointment.staff_name
-            },
-            after: {
-              date: newDate,
-              time: newTime,
-              client: appointment.client_name,
-              service: appointment.service_name,
-              stylist: appointment.staff_name
-            }
-          },
-          params: {
-            appointment_id: appointment.id,
-            new_date: newDate,
-            new_time: newTime,
-            staff_user_id: appointment.staff_user_id,
-            location_id: appointment.location_id
-          }
-        }
-      };
-    }
-
-    case "propose_cancel_appointment": {
-      let appointmentQuery = supabase
-        .from('appointments')
-        .select('id, client_name, service_name, appointment_date, start_time, staff_name')
-        .neq('status', 'cancelled');
-      
-      if (args.appointment_id) {
-        appointmentQuery = appointmentQuery.eq('id', args.appointment_id);
-      } else if (args.client_name) {
-        appointmentQuery = appointmentQuery.ilike('client_name', `%${args.client_name}%`);
-        if (args.appointment_date) {
-          appointmentQuery = appointmentQuery.eq('appointment_date', parseDateString(args.appointment_date as string));
-        }
-      }
-      
-      const { data: appointments, error } = await appointmentQuery
-        .order('appointment_date', { ascending: true })
-        .limit(1);
-      
-      if (error) throw error;
-      if (!appointments?.length) {
-        return { result: { error: "No matching appointment found" } };
-      }
-      
-      const appointment = appointments[0];
-      
-      return {
-        result: { 
-          message: "I've prepared the cancellation. Please confirm below."
-        },
-        action: {
-          type: 'cancel',
-          status: 'pending_confirmation',
-          preview: {
-            title: 'Cancel Appointment',
-            description: `Cancel ${appointment.client_name}'s appointment`,
-            before: {
-              date: appointment.appointment_date,
-              time: appointment.start_time,
-              client: appointment.client_name,
-              service: appointment.service_name,
-              stylist: appointment.staff_name
-            }
-          },
-          params: {
-            appointment_id: appointment.id
-          }
-        }
-      };
-    }
-
-    case "find_team_member": {
-      const name = (args.name as string || '').trim();
-      if (!name) return { result: { error: "Provide a name to search for." } };
-      const today = new Date().toISOString().split('T')[0];
-
-      const { data: profiles, error } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin')
-        .eq('organization_id', organizationId)
-        .or(`full_name.ilike.%${name}%,display_name.ilike.%${name}%`)
-        .limit(8);
-
-      if (error) throw error;
-      if (!profiles?.length) return { result: { matches: [], message: `No team member found matching "${name}".` } };
-
-      const userIds = profiles.map((p: any) => p.user_id);
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .in('user_id', userIds);
-
-      const { data: appts } = await supabase
-        .from('appointments')
-        .select('staff_user_id')
-        .in('staff_user_id', userIds)
-        .gte('appointment_date', today)
-        .neq('status', 'cancelled');
-
-      const apptCounts: Record<string, number> = {};
-      (appts || []).forEach((a: any) => { apptCounts[a.staff_user_id] = (apptCounts[a.staff_user_id] || 0) + 1; });
-      const rolesByUser: Record<string, string[]> = {};
-      (roles || []).forEach((r: any) => { (rolesByUser[r.user_id] ||= []).push(r.role); });
-
-      const matches = profiles.map((p: any) => ({
-        user_id: p.user_id,
-        full_name: p.full_name,
-        display_name: p.display_name,
-        hire_date: p.hire_date,
-        is_active: p.is_active,
-        is_account_owner: !!p.is_super_admin,
-        roles: rolesByUser[p.user_id] || [],
-        upcoming_appointment_count: apptCounts[p.user_id] || 0,
-      }));
-
-      return { result: { matches, message: matches.length === 1 ? "Found one match." : `Found ${matches.length} matches — confirm which person before proposing any action.` } };
-    }
-
-    case "propose_deactivate_team_member": {
-      const userIdArg = args.user_id as string | undefined;
-      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
-
-      const { data: profile, error } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, hire_date, is_active, is_super_admin, organization_id')
-        .eq('user_id', userIdArg)
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!profile) return { result: { error: "That team member is not in this organization." } };
-      if (profile.is_super_admin) return { result: { error: "The Account Owner cannot be deactivated through chat. This must be handled in Settings by another owner." } };
-      if (profile.user_id === userId) return { result: { error: "You cannot deactivate your own account." } };
-      if (profile.is_active === false) return { result: { error: `${profile.display_name || profile.full_name} is already inactive.` } };
-
-      const today = new Date().toISOString().split('T')[0];
-      const { count: upcomingCount } = await supabase
-        .from('appointments')
-        .select('id', { count: 'exact', head: true })
-        .eq('staff_user_id', profile.user_id)
-        .gte('appointment_date', today)
-        .neq('status', 'cancelled');
-
-      return {
-        result: { message: "I've prepared the deactivation. Please confirm below." },
-        action: {
-          type: 'deactivate_team_member',
-          status: 'pending_confirmation',
-          preview: {
-            title: 'Deactivate Team Member',
-            description: `${profile.display_name || profile.full_name} will lose login access and stop receiving new assignments. Their historical data is preserved and the action is reversible.`,
-            target: {
-              name: profile.display_name || profile.full_name,
-              hire_date: profile.hire_date,
-              upcoming_appointments: upcomingCount || 0,
-              reason: (args.reason as string | undefined) || null,
-            },
-          },
-          params: {
-            user_id: profile.user_id,
-            reason: (args.reason as string | undefined) || null,
-          },
-        },
-      };
-    }
-
-    case "propose_reactivate_team_member": {
-      const userIdArg = args.user_id as string | undefined;
-      if (!userIdArg) return { result: { error: "user_id is required. Call find_team_member first." } };
-
-      const { data: profile, error } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, is_active, organization_id')
-        .eq('user_id', userIdArg)
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!profile) return { result: { error: "That team member is not in this organization." } };
-      if (profile.is_active === true) return { result: { error: `${profile.display_name || profile.full_name} is already active.` } };
-
-      return {
-        result: { message: "I've prepared the reactivation. Please confirm below." },
-        action: {
-          type: 'reactivate_team_member',
-          status: 'pending_confirmation',
-          preview: {
-            title: 'Reactivate Team Member',
-            description: `${profile.display_name || profile.full_name} will regain login access and be eligible for new assignments.`,
-            target: { name: profile.display_name || profile.full_name },
-          },
-          params: { user_id: profile.user_id },
-        },
-      };
-    }
-
-    default:
-      return { result: { error: `Unknown tool: ${toolName}` } };
   }
+
+  if (toolName === 'execute_capability') {
+    const capId = String(args.capability_id || '');
+    const cap = capabilities.find(c => c.id === capId);
+    if (!cap) return { result: { error: `Capability "${capId}" not enabled for you.` } };
+    if (cap.mutation) {
+      return { result: { error: `"${capId}" is a mutation and requires propose_capability. The user must approve it before it can run.` } };
+    }
+    const handlers = getCapabilityHandlers(capId);
+    if (!handlers?.read) return { result: { error: `No handler registered for "${capId}".` } };
+    try {
+      const { data, message } = await handlers.read({
+        supabase, organizationId, userId, capability: cap,
+        params: (args.params as Record<string, unknown>) || {},
+      });
+      return { result: { ...((data && typeof data === 'object') ? data : { value: data }), message } };
+    } catch (e) {
+      return { result: { error: e instanceof Error ? e.message : 'Execution failed.' } };
+    }
+  }
+
+  if (toolName === 'propose_capability') {
+    const capId = String(args.capability_id || '');
+    const cap = capabilities.find(c => c.id === capId);
+    if (!cap) return { result: { error: `Capability "${capId}" not enabled for you.` } };
+    if (!cap.mutation) {
+      return { result: { error: `"${capId}" is read-only. Use execute_capability instead.` } };
+    }
+    const handlers = getCapabilityHandlers(capId);
+    if (!handlers?.propose) return { result: { error: `No propose handler registered for "${capId}".` } };
+
+    const params = (args.params as Record<string, unknown>) || {};
+    const reasoning = (args.reasoning as string | undefined) || null;
+
+    try {
+      const proposal = await handlers.propose({
+        supabase, organizationId, userId, capability: cap, params,
+      });
+
+      // Record proposal in audit log; surface its id so execute can flip status.
+      const audit = await recordAudit(supabase, {
+        organization_id: organizationId,
+        user_id: userId,
+        capability_id: capId,
+        params: proposal.params,
+        status: 'proposed',
+        reasoning,
+      });
+
+      const action = {
+        // Stable identifiers used by the UI + execute-ai-action.
+        capability_id: capId,
+        risk_level: cap.risk_level,
+        confirmation_token: proposal.confirmation_token ?? null,
+        confirmation_token_field: cap.confirmation_token_field,
+        status: 'pending_confirmation',
+        reasoning,
+        audit_id: audit.id ?? null,
+        // Back-compat aliases the existing UI reads:
+        type: capId,
+        preview: proposal.preview,
+        params: proposal.params,
+      };
+      return { result: { message: proposal.message }, action };
+    } catch (e) {
+      return { result: { error: e instanceof Error ? e.message : 'Could not prepare action.' } };
+    }
+  }
+
+  return { result: { error: `Unknown tool: ${toolName}` } };
 }
 
-function parseDateString(dateStr: string): string {
-  const today = new Date();
-  const lower = dateStr.toLowerCase().trim();
-  
-  if (lower === 'today') {
-    return today.toISOString().split('T')[0];
-  }
-  if (lower === 'tomorrow') {
-    today.setDate(today.getDate() + 1);
-    return today.toISOString().split('T')[0];
-  }
-  if (lower.startsWith('next ')) {
-    const dayName = lower.replace('next ', '');
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const targetDay = days.indexOf(dayName);
-    if (targetDay !== -1) {
-      const currentDay = today.getDay();
-      let daysUntil = targetDay - currentDay;
-      if (daysUntil <= 0) daysUntil += 7;
-      today.setDate(today.getDate() + daysUntil);
-      return today.toISOString().split('T')[0];
-    }
-  }
-  
-  // Try parsing as ISO date
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return dateStr;
-  }
-  
-  // Try parsing natural date
-  const parsed = new Date(dateStr);
-  if (!isNaN(parsed.getTime())) {
-    return parsed.toISOString().split('T')[0];
-  }
-  
-  return today.toISOString().split('T')[0];
-}
-
-function parseTimeString(timeStr: string): string {
-  // Convert "3:00 PM" to "15:00:00"
-  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm)?/i);
-  if (!match) return timeStr;
-  
-  let hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
-  const period = match[3]?.toLowerCase();
-  
-  if (period === 'pm' && hours !== 12) hours += 12;
-  if (period === 'am' && hours === 12) hours = 0;
-  
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-}
-
+// ============================================================
+// HTTP handler
+// ============================================================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: getCorsHeaders(req) });
   }
 
   try {
-    // Auth guard
     let authResult;
-    try {
-      authResult = await requireAuth(req);
-    } catch (authErr: any) {
-      return authErrorResponse(authErr, getCorsHeaders(req));
-    }
+    try { authResult = await requireAuth(req); }
+    catch (authErr: any) { return authErrorResponse(authErr, getCorsHeaders(req)); }
     const { user, supabaseAdmin } = authResult;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase environment variables not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase env vars not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) as any;
-    
+
     const body = await validateBody(req, AgentChatSchema, getCorsHeaders(req));
     const { messages, userId, organizationId, userRole } = body;
     const orgId = body.organizationId || body.organization_id;
-    if (!orgId) {
-      return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
-    }
-    // Verify org access
-    try {
-      await requireOrgMember(supabaseAdmin, user.id, orgId);
-    } catch (orgErr: any) {
-      return authErrorResponse(orgErr, getCorsHeaders(req));
-    }
+    if (!orgId) return authErrorResponse({ status: 400, message: "organizationId is required" }, getCorsHeaders(req));
 
-    // Load dynamic Zura config
-    let dynamicSystemPrompt = SYSTEM_PROMPT;
+    try { await requireOrgMember(supabaseAdmin, user.id, orgId); }
+    catch (orgErr: any) { return authErrorResponse(orgErr, getCorsHeaders(req)); }
+
+    // ---------- capability filtering by user permission ----------
+    const capabilities = await loadCapabilitiesForUser(supabase, user.id);
+
+    // ---------- system prompt ----------
+    let systemPrompt = buildSystemPrompt(capabilities);
     if (organizationId) {
       try {
         const config = await loadZuraConfig(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, organizationId, "ai-agent-chat", userRole || null);
         const prefix = buildZuraPromptPrefix(config);
-        if (prefix) {
-          dynamicSystemPrompt = prefix + SYSTEM_PROMPT;
-        }
+        if (prefix) systemPrompt = prefix + systemPrompt;
         if (config.personality?.display_name && config.personality.display_name !== AI_ASSISTANT_NAME) {
-          dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
-          dynamicSystemPrompt = dynamicSystemPrompt.replace(new RegExp(`"${AI_ASSISTANT_NAME}"`, 'g'), `"${config.personality.display_name}"`);
+          systemPrompt = systemPrompt.replace(new RegExp(`You are ${AI_ASSISTANT_NAME}`, 'g'), `You are ${config.personality.display_name}`);
         }
-      } catch (e: any) {
-        console.error("Failed to load AI config:", e);
+      } catch (e) {
+        console.error("Failed to load Zura config:", e);
       }
     }
 
-    // Build messages with system prompt
     const aiMessages: Message[] = [
-      { role: "system", content: dynamicSystemPrompt },
-      ...messages
+      { role: "system", content: systemPrompt },
+      ...messages,
     ];
 
-    // Call AI with tools
+    // ---------- first AI call ----------
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: aiMessages,
-        tools: TOOLS,
+        tools: GENERIC_TOOLS,
         tool_choice: "auto",
       }),
     });
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-        );
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again." }), {
+          status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "AI service temporarily unavailable" }),
-        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in workspace settings." }), {
+          status: 402, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      console.error("AI gateway error:", response.status, await response.text());
+      return new Response(JSON.stringify({ error: "AI service temporarily unavailable" }), {
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
     const aiResponse = await response.json();
     const choice = aiResponse.choices?.[0];
-    
     if (!choice) {
-      return new Response(
-        JSON.stringify({ error: "No response from AI" }),
-        { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "No response from AI" }), {
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
     }
 
-    // Check if AI wants to call tools
+    // ---------- handle tool calls ----------
     if (choice.message?.tool_calls?.length > 0) {
-      const toolResults: unknown[] = [];
+      const toolResults: any[] = [];
       let action: unknown = null;
 
       for (const toolCall of choice.message.tool_calls) {
         const toolName = toolCall.function.name;
-        const toolArgs = JSON.parse(toolCall.function.arguments);
-        
-        console.log(`Executing tool: ${toolName}`, toolArgs);
-        
-        const { result, action: toolAction } = await executeToolCall(
-          toolName, 
-          toolArgs, 
-          supabase, 
-          userId || user.id, 
-          orgId
+        let toolArgs: any = {};
+        try { toolArgs = JSON.parse(toolCall.function.arguments || '{}'); }
+        catch { toolArgs = {}; }
+        console.log(`[capability-tool] ${toolName}`, toolArgs);
+
+        const { result, action: toolAction } = await dispatchTool(
+          toolName, toolArgs, supabase, userId || user.id, orgId, capabilities,
         );
-        
-        toolResults.push({
-          tool_call_id: toolCall.id,
-          name: toolName,
-          result
-        });
-        
-        if (toolAction) {
-          action = toolAction;
-        }
+        toolResults.push({ tool_call_id: toolCall.id, name: toolName, result });
+        if (toolAction) action = toolAction;
       }
 
-      // Call AI again with tool results to get final response
       const followUpMessages = [
         ...aiMessages,
         choice.message,
-        ...toolResults.map((tr: any) => ({
+        ...toolResults.map((tr) => ({
           role: "tool" as const,
-          tool_call_id: (tr as { tool_call_id: string }).tool_call_id,
-          content: JSON.stringify((tr as { result: unknown }).result)
-        }))
+          tool_call_id: tr.tool_call_id,
+          content: JSON.stringify(tr.result),
+        })),
       ];
 
-      const followUpResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const followUp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: followUpMessages,
-        }),
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "google/gemini-2.5-pro", messages: followUpMessages }),
       });
 
-      if (!followUpResponse.ok) {
-        const errorText = await followUpResponse.text();
-        console.error("Follow-up AI error:", followUpResponse.status, errorText);
-        return new Response(
-          JSON.stringify({ error: "AI service error during follow-up" }),
-          { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-        );
+      if (!followUp.ok) {
+        console.error("Follow-up AI error:", followUp.status, await followUp.text());
+        return new Response(JSON.stringify({ error: "AI service error during follow-up" }), {
+          status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        });
       }
+      const followUpResult = await followUp.json();
+      const finalMessage = followUpResult.choices?.[0]?.message?.content || "Done.";
 
-      const followUpResult = await followUpResponse.json();
-      const finalMessage = followUpResult.choices?.[0]?.message?.content || "I completed the operation.";
-
-      return new Response(
-        JSON.stringify({
-          message: finalMessage,
-          action,
-          toolsUsed: toolResults.map((tr: any) => (tr as { name: string }).name)
-        }),
-        { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({
+        message: finalMessage,
+        action,
+        toolsUsed: toolResults.map(tr => tr.name),
+      }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
     }
 
-    // No tools called, return direct response
-    return new Response(
-      JSON.stringify({
-        message: choice.message?.content || "I'm not sure how to help with that.",
-        action: null
-      }),
-      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({
+      message: choice.message?.content || "I'm not sure how to help with that.",
+      action: null,
+    }), { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } });
 
   } catch (e: any) {
     console.error("ai-agent-chat error:", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
+      status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+    });
   }
 });
