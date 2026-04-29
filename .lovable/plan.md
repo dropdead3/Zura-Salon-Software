@@ -1,33 +1,101 @@
-# Onboarding Completeness — Waves 1.5 / 2 / 3 Shipped
+# Archive UX Refinements — Wave 4
 
-## Wave 1.5 — Quick-Assign Polish ✅
-- `QuickAssignRoleChip` now accepts `suggestedRole` and surfaces it at the top of the list with a Sparkles icon, "Suggested" label, and `autoFocus` so a single Enter assigns it.
-- `TeamMembers.tsx` derives `suggestedRole` from the most-frequently-assigned non-elevated role across active members (excludes `admin`/`super_admin`), falls back to `stylist`.
+Four small, additive changes that tighten the archive flow without changing the underlying wizard or mutations. All four reuse existing infrastructure (`ArchiveWizard`, `useUnarchiveTeamMember`, `useAuth`, `selectedUsers` set in `UserRolesTab`).
 
-**Deferred (with rationale):**
-- AccessHub / Settings-card badge — Settings.tsx renders cards from a generic `categoriesMap` registry without per-card badge support. Plumbing badge state through that registry just for this one signal is overkill; the existing TeamMembers header counter already surfaces this gap on the destination page. Revisit if a second badge consumer (notifications, sidebar, command palette) emerges.
-- Multi-select bulk assignment — single-click default-selection collapses the common case to one keystroke. Revisit when >5 unassigned members regularly.
+---
 
-## Wave 2 — Schedulability Soft Warn ✅
-- New `useStaffSchedulability(userId)` hook returns `{ schedulable, reason, warning }` over the already-cached `organization-users` query. Reasons: `no_roles`, `archived`, `inactive`, `unknown`.
-- Wired into `NewBookingSheet.tsx` (the main operator appointment-create flow) at the datetime→confirm transition: shows a `sonner` toast with "Continue anyway" action, tracks `schedulabilityAcknowledged` so a second click proceeds. Acknowledgement resets when the stylist selection changes.
-- Dev-only suppression log via kebab-case taxonomy: `staff-schedulability.warned`.
+## 1. Hover-reveal the archive chip (Card mode)
 
-**Surfaces NOT wired (with rationale):**
-- `AddTimeBlockForm` — schedules breaks/blocks for the user themselves, not stylist-for-service. Schedulability semantics don't apply.
-- `MeetingSchedulerWizard` — meetings don't require service-eligibility roles. Attending a meeting ≠ being booked for a service.
-- `DockNewBookingSheet` — already filters team list to stylist/assistant roles only at line 220, so unassigned users don't surface.
-- Public booking + Phorest sync — explicitly out of scope per upstream-of-onboarding doctrine.
+**File:** `src/components/dashboard/team-members/ArchiveMemberChip.tsx`
 
-## Wave 3 — Audit Trail Tab ✅
-- New `useTeamMemberAuditTrail(userId)` hook reads `account_approval_logs` (the existing table that `useUserRoles.ts` already writes `role_added:<role>` / `role_removed:<role>` to). Joins `performed_by` against `employee_profiles` for actor display.
-- Parses `action` strings into a typed `AuditEvent` discriminated union with human-readable labels.
-- Derives `isInitialAssignment: true` at read-time on the chronologically-first `role_added:*` row per user — no SQL view, no schema changes.
-- New `AuditTrailTab.tsx` renders a newest-first timeline with actor avatar/name, action label, relative timestamp, color-toned by event kind (emerald for grants, amber for revokes), and a "First role" Sparkles pill on the initial assignment.
-- Registered as a new `Audit` tab on `TeamMemberDetail.tsx`.
+Add `opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity` to the button. Keyboard focus must still reveal it (a11y), so include `focus-visible:opacity-100`.
 
-**No database migrations.** All three waves are additive on top of existing schema.
+**File:** `src/pages/dashboard/admin/TeamMembers.tsx` — MemberRow
 
-## Future-Proofing (Not Built)
-- When the offboarding wizard ships, write `archived:<reason>` and `restored` actions to the same `account_approval_logs` table — the audit hook's `parseAction` will need two new branches but the rendering layer is already generic.
-- Adding `organization_id` + `metadata jsonb` to `account_approval_logs` is a P2 schema enhancement — not needed for the current audit tab to work.
+Add the `group` class to the row button so Tailwind's `group-hover` resolves. The Quick-Assign chip in the No-Roles section stays always-visible (it's a primary CTA, not a destructive one) — only the archive chip fades.
+
+Calm-at-rest: roster reads as identity + role, not a wall of destructive icons.
+
+---
+
+## 2. Self-archive guard
+
+**File:** `src/pages/dashboard/admin/TeamMembers.tsx`
+
+Pull `user` from `useAuth()` (already imported). Tighten the existing chip predicate at all four MemberRow callsites:
+
+```ts
+canManage && m.is_active && !m.is_super_admin && m.user_id !== user?.id
+```
+
+Rationale: prevents accidental self-lockout. Owners must use a different operator's session (or platform support) to archive themselves — a deliberate friction point, not a bug.
+
+---
+
+## 3. Bulk archive in Table mode
+
+**File:** `src/components/access-hub/UserRolesTab.tsx`
+
+The Bulk Actions Bar (lines 668-704) already exists and already filters out super_admin in role assignment. Add an "Archive selected (N)…" button next to "Clear PINs":
+
+- Resolves the selected user_ids to `OrganizationUser` records from the in-scope `users` array.
+- Excludes the current user, super_admins, and already-archived members from the selection (toast a one-line summary if any were dropped: "Skipped 2: 1 self, 1 owner").
+- Opens a new `BulkArchiveWizard` (see Technical section) — **not** N copies of the single-member wizard.
+
+**Out of scope for this wave:** running the full per-member dependency-reassignment flow N times. The wizard architecture today is built around one member's dependency buckets; making it batch-aware is a Phase-2 effort. For Wave 4, the bulk flow handles the two cleanest cases:
+
+- **Reason + effective date are uniform across the batch** (seasonal layoff, location closure).
+- **Reassignment defaults to "drop" or single shared destination** (one supervisor inherits everything, or work just gets cancelled).
+
+If an operator needs per-member nuance, they fall back to the per-row chip. The bulk flow is for the homogeneous case it actually solves.
+
+---
+
+## 4. Inline Restore on Archived tab
+
+**File:** `src/pages/dashboard/admin/TeamMembers.tsx` — `ArchivedView`
+
+Add a `RestoreMemberChip` trailing slot to each archived row, mirroring the symmetry of the live roster's archive chip. Same hover-reveal treatment.
+
+- Uses existing `useUnarchiveTeamMember(orgId)` from `src/hooks/useArchiveTeamMember.ts`.
+- One-click restore (no wizard) — restoring is non-destructive and reversible by re-archiving.
+- Confirms with a sonner toast: "Restored {name}. Reassigned work was not undone."
+- Disabled (with tooltip "Restore window expired") when the member was archived more than 90 days ago, matching the existing SecurityTab copy: "Available for 90 days after archive."
+
+---
+
+## Technical Section
+
+### New files
+
+- `src/components/dashboard/team-members/RestoreMemberChip.tsx` — mirrors `ArchiveMemberChip` shape; calls `useUnarchiveTeamMember.mutate(userId)`; 90-day gate computed from `archived_at`.
+- `src/components/dashboard/team-members/archive/BulkArchiveWizard.tsx` — slim wizard (one step) with shared reason, effective date, and a single fallback action (`drop` | `reassign-to-one-person`). On submit, loops `useArchiveTeamMember` per member with the shared payload. Shows per-member success/failure in a final receipt list.
+
+### Modified files
+
+- `src/components/dashboard/team-members/ArchiveMemberChip.tsx` — add hover-reveal classes.
+- `src/pages/dashboard/admin/TeamMembers.tsx` — destructure `user` from `useAuth`; tighten chip predicate (4 callsites); add `group` class to MemberRow button; render `RestoreMemberChip` in `ArchivedView`.
+- `src/components/access-hub/UserRolesTab.tsx` — add Archive button to Bulk Actions Bar + state for `bulkArchiveOpen`; render `BulkArchiveWizard`.
+
+### Doctrine alignment
+
+- **Visibility contract:** chip is silent at rest (hover-only), surfaces on intent.
+- **Governance:** self-archive guard + super_admin exclusion preserves owner-protection.
+- **Audit trail:** unchanged — `account_approval_logs` continues to receive `archive_*` / `restore_*` events from existing mutations.
+- **No new RLS, no new tables, no new edge functions.**
+
+### Deferred (with revisit triggers)
+
+| Deferred | Revisit when |
+|---|---|
+| Per-member dependency picker inside `BulkArchiveWizard` | First operator complaint that bulk forces over-cancellation, OR a batch ≥ 5 members triggers the bulk path more than 3 times in 30 days |
+| Restore-with-reason audit field on inline restore | Compliance review or a restore-then-re-archive loop pattern shows up in `account_approval_logs` |
+
+---
+
+## What stays unchanged
+
+- `ArchiveWizard.tsx` (single-member flow) — untouched.
+- `useArchiveTeamMember`, `useUnarchiveTeamMember` hooks — untouched.
+- DB schema, RLS, edge functions — untouched.
+- The `is_super_admin` permission model — untouched.
