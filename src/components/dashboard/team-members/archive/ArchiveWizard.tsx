@@ -168,6 +168,8 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const [bulkDest, setBulkDest] = useState<Record<string, string>>({});
   // When set on Step 2, swaps the tile grid for the per-bucket workspace.
   const [activeBucket, setActiveBucket] = useState<ArchiveBucketKey | null>(null);
+  // Step 4 opt-in: send a one-time intro note to reassigned clients.
+  const [notifyClients, setNotifyClients] = useState(false);
 
   const { data: roster = [] } = useOrganizationUsers(orgId);
   const eligibleRoster = useMemo(
@@ -178,6 +180,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
   const { data: scan, isLoading: scanLoading, refetch } = useScanTeamMemberDependencies(
     orgId, member.user_id, open && step >= 2,
   );
+  const eligibleStylists = scan?.eligibleStylists ?? [];
 
   const archive = useArchiveTeamMember(orgId);
 
