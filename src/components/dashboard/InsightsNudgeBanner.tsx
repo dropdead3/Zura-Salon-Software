@@ -111,7 +111,10 @@ export function InsightsNudgeBanner({
           <Button
             size={tokens.button.card}
             variant="outline"
-            onClick={() => window.dispatchEvent(new CustomEvent('open-insights-panel'))}
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-insights-panel'));
+              setDismissed(true);
+            }}
             className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50"
           >
             View Insights
