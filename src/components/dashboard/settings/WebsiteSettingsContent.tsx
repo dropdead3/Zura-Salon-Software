@@ -480,10 +480,29 @@ function ThemeTab() {
   const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', effectiveOrganization?.id);
 
   // Editor state
-  const [mode, setMode] = useState<'overview' | 'editor'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [mode, setMode] = useState<'overview' | 'editor'>(
+    searchParams.get('openEditor') === '1' ? 'editor' : 'overview'
+  );
   const [editorTab, setEditorTab] = useState('hero');
+  const [selectedPageId, setSelectedPageId] = useState('home');
   const [showPreview, setShowPreview] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+
+  // Honor ?openEditor=1 from external links (clear it after consuming so refresh = clean)
+  useEffect(() => {
+    if (searchParams.get('openEditor') === '1') {
+      setMode('editor');
+      const next = new URLSearchParams(searchParams);
+      next.delete('openEditor');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Look up the selected page title for the status bar
+  const { data: pagesConfig } = useWebsitePages();
+  const selectedPageTitle = pagesConfig?.pages?.find(p => p.id === selectedPageId)?.title ?? 'Home';
 
   const activeThemeId = activeThemeSetting?.theme_id || 'cream_classic';
   const activeTheme = themes?.find((t) => t.id === activeThemeId);
