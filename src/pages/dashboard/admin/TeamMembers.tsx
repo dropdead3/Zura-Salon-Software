@@ -611,6 +611,7 @@ export default function TeamMembers() {
                           user={m}
                           hasPin={pinByUser.get(m.user_id)}
                           onClick={() => navigate(dashPath(`/admin/team-members/${m.user_id}`))}
+                          trailingSlot={canManage && m.is_active && !m.is_super_admin ? <ArchiveMemberChip member={m} /> : undefined}
                         />
                       ))}
                     </div>
