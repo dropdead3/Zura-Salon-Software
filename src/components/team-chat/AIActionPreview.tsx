@@ -85,6 +85,36 @@ export function AIActionPreview({ action, onConfirm, onCancel, isExecuting }: AI
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* HR / team-member preview branch */}
+        {(action.type === 'deactivate_team_member' || action.type === 'reactivate_team_member') && preview.target && (
+          <div className="space-y-3">
+            <div className={cn(
+              "p-3 rounded-lg border space-y-2",
+              action.type === 'deactivate_team_member' ? "bg-destructive/5 border-destructive/20" : "bg-emerald-500/5 border-emerald-500/20"
+            )}>
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{preview.target.name}</span>
+              </div>
+              {preview.target.hire_date && (
+                <div className="text-xs text-muted-foreground">Hired {formatDate(preview.target.hire_date)}</div>
+              )}
+              {preview.target.reason && (
+                <div className="text-xs text-muted-foreground italic">Reason: {preview.target.reason}</div>
+              )}
+            </div>
+            {action.type === 'deactivate_team_member' && (preview.target.upcoming_appointments ?? 0) > 0 && (
+              <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-xs text-foreground">
+                  <span className="font-medium">{preview.target.upcoming_appointments} upcoming appointment{preview.target.upcoming_appointments === 1 ? '' : 's'}</span> will need reassignment. Historical data is preserved.
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">{preview.description}</p>
+          </div>
+        )}
+
         {/* Before state */}
         {preview.before && (
           <div className="space-y-2">
