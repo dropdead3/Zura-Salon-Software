@@ -159,7 +159,8 @@ export default function TeamMembers() {
   const navigate = useNavigate();
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
-  const { roles, isPlatformUser } = useAuth();
+  const { user, roles, isPlatformUser } = useAuth();
+  const currentUserId = user?.id;
   const { data: members, isLoading } = useOrganizationUsers(effectiveOrganization?.id);
   const { data: activeLocations = [] } = useActiveLocations(effectiveOrganization?.id);
   const { data: pinTeam = [] } = useTeamPinStatus();
