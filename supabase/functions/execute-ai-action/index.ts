@@ -114,6 +114,42 @@ serve(async (req) => {
       });
     }
 
+    // ---------- INVARIANTS: refuse to run capabilities with a broken contract ----------
+    const violations = validateCapability(capability);
+    if (violations.length > 0) {
+      console.error('[execute-ai-action] capability violates invariants:', violations);
+      return new Response(JSON.stringify({ success: false, message: "This capability is misconfigured and has been blocked. Please contact support." }), {
+        status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- KILL SWITCH ----------
+    const kill = await isCapabilityKilled(supabase, orgId, capability_id);
+    if (kill.killed) {
+      return new Response(JSON.stringify({ success: false, message: `This action has been disabled for your organization${kill.reason ? `: ${kill.reason}` : '.'}` }), {
+        status: 423, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- ZOD PARAM VALIDATION ----------
+    let validatedParams: Record<string, unknown>;
+    try {
+      validatedParams = validateCapabilityParams(capability_id, params || {});
+    } catch (e: any) {
+      return new Response(JSON.stringify({ success: false, message: e?.message || 'Invalid parameters.' }), {
+        status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // ---------- RATE LIMIT (execute bucket) ----------
+    try {
+      await enforceRateLimit(supabase, orgId, user.id, 'execute');
+    } catch (rl: any) {
+      return new Response(JSON.stringify({ success: false, message: rl?.message || 'Rate limit exceeded.' }), {
+        status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     // ---------- HIGH-RISK CONFIRMATION TOKEN — verify against stored hash ----------
     if (capability.risk_level === 'high' && capability.confirmation_token_field) {
       if (!confirmation_token || !confirmation_token.trim()) {
