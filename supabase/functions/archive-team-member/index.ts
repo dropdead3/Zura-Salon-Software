@@ -450,7 +450,13 @@ serve(async (req) => {
 </body></html>`;
           };
 
+          const suppressed = new Set(body.suppressedClientIds ?? []);
+
           for (const c of affectedClients ?? []) {
+            if (suppressed.has(c.id as string)) {
+              notifySummary.clients_skipped++;
+              continue;
+            }
             const fname = (c.first_name as string | null) ?? null;
             const hasEmail = c.email && c.reminder_email_opt_in !== false;
             const phone = c.mobile || c.phone;
@@ -467,6 +473,15 @@ serve(async (req) => {
                 });
                 if (result.success && !result.skipped) {
                   notifySummary.clients_emailed++;
+                  // Tag the just-inserted email_send_log row with this archive event
+                  // so the profile receipts tile can find it.
+                  if (result.messageId) {
+                    await supabaseAdmin
+                      .from("email_send_log")
+                      .update({ archive_log_id: logRow.id })
+                      .eq("organization_id", body.organizationId)
+                      .eq("message_id", result.messageId);
+                  }
                 } else {
                   notifySummary.clients_skipped++;
                   if (result.error) {
@@ -493,6 +508,23 @@ serve(async (req) => {
                   },
                   body.organizationId,
                 );
+                // Write the client_communications row ourselves so the receipts
+                // tile can join it back to this archive event. sendSms doesn't
+                // log to client_communications.
+                await supabaseAdmin.from("client_communications").insert({
+                  organization_id: body.organizationId,
+                  client_id: c.id as string,
+                  channel: "sms",
+                  direction: "outbound",
+                  to_phone: phone as string,
+                  body: result.message ?? null,
+                  template_key: "stylist-reassignment-soft-notify",
+                  twilio_sid: result.sid ?? null,
+                  status: result.success ? "sent" : "failed",
+                  error_message: result.success ? null : (result.error ?? "send failed"),
+                  sent_by_user_id: user.id,
+                  archive_log_id: logRow.id,
+                });
                 if (result.success) {
                   notifySummary.clients_sms++;
                 } else {
