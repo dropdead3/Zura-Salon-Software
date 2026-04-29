@@ -100,7 +100,9 @@ function isBucketHandled(
 ): boolean {
   if (b.count === 0) return true;
   const m = picks[b.key] ?? {};
-  const isBulkOnly = b.key === 'client_preferences' || b.items.length === 0;
+  // True bulk-only: no items returned (e.g. a recurring schedule bucket
+  // with end_date as the only action).
+  const isBulkOnly = b.items.length === 0;
   if (isBulkOnly) return !!m['__bulk__'];
   // Per-item: every visible item decided + bulk marker if there's overflow.
   const decidedCount = Object.keys(m).filter((k) => k !== '__bulk__').length;
