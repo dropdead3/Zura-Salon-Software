@@ -82,7 +82,7 @@ export function ArchiveDeliveryReceiptCard({ organizationId, archiveLogId, archi
             icon={<AlertTriangle className="h-4 w-4" />}
             label="SMS failed"
             value={data?.smsFailed ?? 0}
-            tone={data && data.smsFailed > 0 ? 'destructive' : 'muted'}
+            tone={data && data.smsFailed > 0 ? 'destructive' : 'default'}
           />
         </div>
 
