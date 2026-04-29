@@ -921,12 +921,10 @@ function DashboardSections({
                   onCompactChange={onCompactChange}
                   roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
                 />
+                {/* Simple view: 6-card cap → fixed 3x2 on md+, 1-col on mobile. Do NOT switch back to auto-fit. */}
                 <div
                   id="section-analytics"
-                  className="grid gap-4 scroll-mt-24"
-                  style={{
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  }}
+                  className="grid gap-4 scroll-mt-24 grid-cols-1 md:grid-cols-3"
                 >
                   {renderedPinnedCardIds.map(cId => (
                     <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />

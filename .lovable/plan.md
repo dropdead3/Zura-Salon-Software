@@ -1,65 +1,59 @@
-## Diagnosis
+## Problem
 
-The "Available Analytics" cards in the screenshot are all already marked **`is_visible = true`** in `dashboard_element_visibility` for the leadership roles (`super_admin`, `admin`, `manager`) — but they are not in the operator's layout `pinnedCards` array. That mismatch creates a two-click bug:
+In the dashboard's Simple view, the 6 featured analytics cards currently flow through an `auto-fit, minmax(260px, 1fr)` CSS grid. At the user's current viewport (~1076px), that auto-fit math produces a **4-column** row, leaving an awkward 4-on-top / 2-on-bottom layout (visible in the uploaded screenshot). The intent is a clean **3x2 grid** on tablet and desktop.
 
-1. `isCardPinned(cardId)` returns **true** (visibility row says yes).
-2. So `handleTogglePinnedCard` interprets the click as an **unpin**: it writes `is_visible: false` and skips the layout `pinnedCards.push(...)` step.
-3. The toast says "Unpinned from dashboard," and the row stays in "Available."
-4. A second toggle is required to actually pin.
+## Root cause
 
-Network/console show no errors — the upsert succeeds. The bug is logical.
+`src/pages/dashboard/DashboardHome.tsx` (lines ~924–934), Simple-view branch:
 
-There is also a **second, structural problem** uncovered while debugging: `public.dashboard_element_visibility` has **no `organization_id`** column. The `(element_key, role)` unique constraint is global, so any leadership user toggling a card here mutates rows that leak across every tenant. This violates the Strict Tenant Isolation core rule. Until this is fixed, "pinning" isn't really per-org at all — it's a platform-wide preference masquerading as per-user.
+```tsx
+<div
+  id="section-analytics"
+  className="grid gap-4 scroll-mt-24"
+  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}
+>
+  {renderedPinnedCardIds.map(...)}
+</div>
+```
 
-These two problems must be solved together, because the right toggle semantics depend on the right storage model.
+`auto-fit + minmax(260px, 1fr)` lets the browser pack as many columns as fit — so 4 columns appear once container width ≥ ~1080px, and 5 once ≥ ~1340px. Column count is unpredictable.
 
-## Plan
+## Fix
 
-Two waves. Both are P0; ship them in separate migrations + commits per doctrine ("P0s ship in separate waves, never bundled").
+Replace the auto-fit grid with explicit, breakpoint-driven column counts so the Simple view's 6 cards always render as **3x2 on tablet (md) and desktop (lg+)**, stacking gracefully on small screens:
 
-### Wave 1 — Fix the toggle UX bug (immediate, no schema change)
+- `< md` (mobile, <768px): 1 column (6 rows)
+- `md` (tablet, ≥768px): **3 columns** → 3x2
+- `lg+` (desktop, ≥1024px): **3 columns** → 3x2
 
-The visibility table is a **role-default** registry ("can this role ever see this card?"), not a per-operator pinned state. Conflating the two is the source of the bug. Decouple:
+Implementation: drop the inline `style` and use Tailwind utility classes.
 
-**`src/components/dashboard/DashboardCustomizeMenu.tsx`**
+```tsx
+<div
+  id="section-analytics"
+  className="grid gap-4 scroll-mt-24 grid-cols-1 md:grid-cols-3"
+>
+  {renderedPinnedCardIds.map(...)}
+</div>
+```
 
-- Introduce `isCardPinnedInLayout(cardId)` helper that **only** checks `layout.pinnedCards` (and `sectionOrder` pinned entries). This is the operator's personal pinned state and the source of truth for the toggle.
-- Keep the existing `isCardPinned` for visibility-gating only (e.g., to suppress cards an operator's role isn't allowed to see at all). Rename the existing function to `isCardVisibleToRole` to make the distinction obvious.
-- `handleTogglePinnedCard`: compute `isPinned = isCardPinnedInLayout(cardId)` (NOT the role-visibility check). The toggle direction now correctly mirrors what the operator sees in their drawer.
-- The visibility upsert step is preserved for now (still drives some role-gating elsewhere) but is **only** flipped to `true` on pin and **never** flipped to `false` on unpin from this surface — unpinning is a personal layout action, not a role-gating action.
-- The "Available Analytics" `SortablePinnedCardItem` already passes `isPinned={isCardPinned(card.id)}` — switch this to `isPinned={isCardPinnedInLayout(card.id)}` so the optimistic switch reflects the layout state, not the global visibility row.
-- `unpinnedCards` derivation switches to `isCardPinnedInLayout` so cards aren't filtered out of "Available" just because the global visibility row says true.
+Notes:
+- Simple view is already capped at 6 cards (`SIMPLE_VIEW_CARD_LIMIT`), so 3 cols × 2 rows fits perfectly.
+- If fewer than 6 are pinned, the grid still renders 3 columns and any remaining cells stay empty — preserving alignment with the 3x2 expectation. (If you'd rather have fewer-than-6 collapse to a tighter row, say so and I'll switch the rule to `grid-cols-1 sm:grid-cols-2 md:grid-cols-3`.)
+- Detailed view's pair/full grouping logic is untouched.
 
-Result: one click to pin, one click to unpin, with no second-click weirdness. Cards in the screenshot become togglable on the first try.
+## Files to edit
 
-### Wave 2 — Tenant-scope `dashboard_element_visibility` (separate commit)
+- `src/pages/dashboard/DashboardHome.tsx` — Simple-view analytics grid container (single `<div id="section-analytics">` block inside the `if (compact)` branch).
 
-Migration:
+## Prompt feedback
 
-1. Add `organization_id uuid` to `dashboard_element_visibility` (nullable for backfill window).
-2. Backfill: for each existing row, fan out per organization (one row per org per `element_key, role`). This is safe because today the rows are role defaults that should apply per-org.
-3. Drop the global `(element_key, role)` unique constraint; add new `(organization_id, element_key, role)` unique constraint.
-4. Set `organization_id NOT NULL` after backfill.
-5. Add CASCADE FK to `organizations(id)`.
-6. Replace RLS:
-   - SELECT: `is_org_member(auth.uid(), organization_id)` (drop the `USING (true)` policy — strictly prohibited per core rules).
-   - ALL (manage): `is_org_admin(auth.uid(), organization_id) OR is_platform_user(auth.uid())` and require manager check via `has_role(...)` AND `organization_id = (select current effective org for the user)`.
+Strong, specific prompt — you named the surface ("6 featured analytic cards"), the mode ("simple view"), the desired layout ("3x2"), and the breakpoints ("desktop and tablet"). That's exactly the kind of constraint set that makes a single-shot fix safe.
 
-Code:
+One small enhancement next time: state the **mobile fallback** too (e.g. "stack to 1 column under 768px") so there's zero ambiguity on the smallest breakpoint. I'm defaulting to 1-col stacked on mobile here based on convention.
 
-- `useDashboardVisibility` (and any sibling reader/upserter): scope all queries by `effectiveOrganization.id`; include it in the cache key.
-- `handleTogglePinnedCard` upsert: include `organization_id` in `rows` and switch `onConflict` to `'organization_id,element_key,role'`.
-- `handleBulkPinAll` upsert: same.
+## Enhancement suggestions
 
-### Out of scope
-
-- No change to which cards exist (`PINNABLE_CARDS` / `PINNABLE_CARD_IDS`).
-- No change to Detailed/Simple cap, ConfigurationStubCard, dismissedStubs, or sectionOrder mechanics.
-- No change to non-Analytics visibility surfaces in Wave 1 (Wave 2 covers them by widening the table's tenant scope).
-
-## Why this shape
-
-- **Single source of truth per concern:** `layout.pinnedCards` = operator's personal selection. `dashboard_element_visibility` = role-default eligibility (and after Wave 2, properly tenant-scoped). Today they're confusingly merged in one boolean check, which causes the two-click bug.
-- **Wave 1 is reversible & contained** — pure logic change in one component. Fixes the visible bug today.
-- **Wave 2 closes a real tenant-isolation hole** discovered during diagnosis. Must ship before the next operator onboarding to prevent cross-tenant leakage from compounding.
-- **Doctrine-aligned:** Strict tenant isolation (Core); Signal Preservation (don't conflate "visible to role" with "pinned by operator"); Audit findings receive priority + doctrine anchor (P0 / Tenant Isolation).
+1. **Lock the rule structurally**: add a brief comment above the grid (`// Simple view: 6-card cap → 3x2 on md+, 1-col on mobile`) so future refactors don't reintroduce auto-fit drift.
+2. **Container-aware variant**: per the Container-Aware Responsiveness canon, this dashboard column could eventually use a `SpatialColumns`-style primitive measured against its own container instead of the viewport — useful if the dashboard ever sits next to a side panel that narrows the available width.
+3. **Detailed view audit**: while we're here, worth confirming Detailed view's pair grouping still reads cleanly at the same 1076px width — happy to spot-check in a follow-up.
