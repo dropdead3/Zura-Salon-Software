@@ -17,6 +17,7 @@ import "../_shared/capability-handlers.ts";
 import { validateCapability } from "../_shared/capability-invariants.ts";
 import { validateCapabilityParams } from "../_shared/capability-zod.ts";
 import { enforceRateLimit, isCapabilityKilled } from "../_shared/capability-rate-limit.ts";
+import { recordAnomaly, checkRepeatedDenialsBurst } from "../_shared/capability-anomalies.ts";
 
 const ExecuteSchema = z.object({
   capability_id: z.string().min(1),
@@ -27,6 +28,8 @@ const ExecuteSchema = z.object({
   confirmation_token: z.string().optional(),
   /** denied means the user clicked Cancel — no execution, just audit */
   denied: z.boolean().optional(),
+  /** simulate=true runs validation + handler-free dry run, mutates nothing */
+  simulate: z.boolean().optional(),
 });
 
 // deno-lint-ignore no-explicit-any
