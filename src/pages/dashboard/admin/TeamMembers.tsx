@@ -369,6 +369,10 @@ export default function TeamMembers() {
               <Mail className="h-4 w-4" />
               Invitations
             </TabsTrigger>
+            <TabsTrigger value="archived" className="gap-2">
+              <Archive className="h-4 w-4" />
+              Archived
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
