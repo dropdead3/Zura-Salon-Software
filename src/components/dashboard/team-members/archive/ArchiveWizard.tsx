@@ -396,6 +396,10 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
               clientPreferenceItems={
                 (buckets.find((b) => b.key === 'client_preferences')?.items ?? []) as unknown as ClientPreferenceItem[]
               }
+              suppressedClientIds={suppressedClientIds}
+              setSuppressedClientIds={setSuppressedClientIds}
+              organizationId={orgId}
+              archivedMemberName={name}
             />
           )}
         </div>
