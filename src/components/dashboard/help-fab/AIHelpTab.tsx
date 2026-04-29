@@ -224,6 +224,17 @@ export function AIHelpTab() {
           </Button>
         </div>
       </div>
+
+      {historyOpen && (
+        <AIHistoryPanel
+          activeConversationId={conversationId}
+          onSelect={(id) => {
+            setHistoryOpen(false);
+            loadConversation(id);
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
     </div>
   );
 }
