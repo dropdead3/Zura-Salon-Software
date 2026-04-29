@@ -222,8 +222,9 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     const skippedParts: string[] = [];
     if (skippedSelf > 0) skippedParts.push(`${skippedSelf} self`);
     if (skippedOwner > 0) skippedParts.push(`${skippedOwner} super admin${skippedOwner === 1 ? '' : 's'}`);
-    const skippedSummary = skippedParts.length > 0
-      ? `Skipped ${skippedParts.reduce((a, b) => a + b, 0).toString()}: ${skippedParts.join(', ')}.`
+    const skippedTotal = skippedSelf + skippedOwner;
+    const skippedSummary = skippedTotal > 0
+      ? `Skipped ${skippedTotal}: ${skippedParts.join(', ')}.`
       : null;
     setBulkArchive({ members: targets, skippedSummary });
   };
