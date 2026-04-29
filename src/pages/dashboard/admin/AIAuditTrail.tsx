@@ -103,11 +103,16 @@ export default function AIAuditTrail() {
         description="Every action proposed, approved, executed, or refused by the agent."
       />
       <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto">
+        <AnomalyBanner orgId={orgId} />
         <Tabs defaultValue="audit" className="w-full">
           <ResponsiveTabsList>
             <TabsTrigger value="audit">
               <History className="w-4 h-4 mr-2" />
               Action Log
+            </TabsTrigger>
+            <TabsTrigger value="anomalies">
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Anomalies
             </TabsTrigger>
             <TabsTrigger value="killswitches">
               <Power className="w-4 h-4 mr-2" />
@@ -117,6 +122,10 @@ export default function AIAuditTrail() {
 
           <TabsContent value="audit" className="mt-6">
             <AuditLogPanel orgId={orgId} />
+          </TabsContent>
+
+          <TabsContent value="anomalies" className="mt-6">
+            <AnomalyPanel orgId={orgId} />
           </TabsContent>
 
           <TabsContent value="killswitches" className="mt-6">
