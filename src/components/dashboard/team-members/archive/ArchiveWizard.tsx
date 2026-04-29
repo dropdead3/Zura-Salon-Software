@@ -18,7 +18,7 @@ import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, X, Info, Sparkles, Zap,
+  Loader2, AlertTriangle, ChevronLeft, ChevronRight, Archive, CheckCircle2, Check, X, Info, Sparkles, Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -314,7 +314,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
       <TooltipProvider delayDuration={150}>
       <div className="flex flex-col h-full">
         {/* Header */}
-        <header className="px-6 pt-6 pb-4 border-b border-border/50">
+        <header className="px-6 pt-6 pb-5 border-b border-border/50 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-display text-xs tracking-[0.18em] text-muted-foreground uppercase">
@@ -331,6 +331,7 @@ export function ArchiveWizard({ open, onOpenChange, member, onArchived }: Archiv
               <X className="h-4 w-4" />
             </Button>
           </div>
+          <ArchiveWizardStepper currentStep={step} />
         </header>
 
         {/* Body */}
