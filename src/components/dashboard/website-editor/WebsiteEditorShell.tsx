@@ -1268,7 +1268,7 @@ function WebsiteEditorShellInner() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDiscardOpen(true)}
-                disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
+                disabled={!hasChanges || discardMutation.isPending}
                 className="text-destructive focus:text-destructive"
               >
                 <RotateCcw className="h-4 w-4 mr-2" />
