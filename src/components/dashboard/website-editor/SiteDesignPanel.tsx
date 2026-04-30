@@ -578,3 +578,100 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     </div>
   );
 }
+
+// ─── Brand looks gallery ───
+// Surfaces the first ~4 available themes as 1-tap presets right inside the
+// Site Design panel, so operators don't have to leave for the Theme tab to
+// switch global brand looks. Activating a theme is a top-level move (it
+// resets every override); we expose "Browse all" → Theme tab for the deeper
+// gallery and per-theme detail.
+function BrandLooksRow({ goToThemeTab }: { goToThemeTab: () => void }) {
+  const { toast } = useToast();
+  const { data: themes, isLoading } = useWebsiteThemes();
+  const { data: activeTheme } = useActiveTheme();
+  const activate = useActivateTheme();
+
+  const visible = (themes ?? []).filter((t) => t.is_available).slice(0, 4);
+  if (isLoading) {
+    return (
+      <section className="space-y-3">
+        <h4 className="font-display text-[11px] tracking-wider uppercase text-muted-foreground">
+          Brand looks
+        </h4>
+        <div className="grid grid-cols-2 gap-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-16 rounded-lg bg-muted/40 animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+  if (!visible.length) return null;
+
+  const handleActivate = async (themeId: string, name: string) => {
+    try {
+      await activate.mutateAsync(themeId);
+      toast({ title: 'Brand look applied', description: name });
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Could not apply look',
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="font-display text-[11px] tracking-wider uppercase text-muted-foreground">
+          Brand looks · 1-tap
+        </h4>
+        <button
+          type="button"
+          onClick={goToThemeTab}
+          className="text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+        >
+          Browse all →
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {visible.map((t) => {
+          const isActive = activeTheme?.theme_id === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => handleActivate(t.id, t.name)}
+              disabled={activate.isPending}
+              className={cnLocal(
+                'group relative h-16 rounded-lg border text-left px-3 py-2 transition-all',
+                'flex flex-col justify-between',
+                isActive
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                  : 'border-border/60 bg-card hover:border-primary/40 hover:bg-muted/30',
+                activate.isPending && 'opacity-60 cursor-not-allowed',
+              )}
+              title={t.description ?? t.name}
+            >
+              <span className="text-[11px] font-display tracking-wide uppercase truncate text-foreground">
+                {t.name}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {isActive ? 'Active' : t.category || t.color_scheme}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-muted-foreground/80">
+        A brand look replaces your active theme. Color &amp; typography overrides below
+        layer on top.
+      </p>
+    </section>
+  );
+}
+
+function cnLocal(...parts: (string | false | null | undefined)[]): string {
+  return parts.filter(Boolean).join(' ');
+}
