@@ -1172,6 +1172,13 @@ export function WebsiteEditorShell() {
       <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
       <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
+      {/* Site Design — global look & feel overrides (lives in a right-side sheet) */}
+      <Sheet open={siteDesignOpen} onOpenChange={setSiteDesignOpen}>
+        <SheetContent side="right" className="p-0 w-full sm:w-[440px] sm:max-w-[440px] overflow-y-auto">
+          <SheetTitle className="sr-only">Site Design</SheetTitle>
+          <SiteDesignPanel />
+        </SheetContent>
+      </Sheet>
       {/* Mobile sidebar Sheet — hosts list OR editor depending on mode */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="p-0 w-[340px] max-w-[90vw]">
