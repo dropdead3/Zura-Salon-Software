@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Trash2, GripVertical, Upload, X, Coffee } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useDrinkMenuConfig, type DrinkMenuConfig, type Drink, DEFAULT_DRINK_MENU } from '@/hooks/useSectionConfig';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -151,6 +153,10 @@ export function DrinksManager() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  // Live-edit bridge — stream in-memory edits into the preview iframe.
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_drink_menu', localConfig);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -168,11 +174,12 @@ export function DrinksManager() {
     try {
       await update(localConfig);
       toast.success('Drink Menu saved successfully');
+      clearPreviewOverride('section_drink_menu', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save drink menu');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 

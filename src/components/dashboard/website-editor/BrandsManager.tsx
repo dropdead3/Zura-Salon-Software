@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus, Trash2, GripVertical, Upload, X, ImageIcon, Tag } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useBrandsConfig, type Brand, DEFAULT_BRANDS } from '@/hooks/useSectionConfig';
 import { supabase } from '@/integrations/supabase/client';
@@ -173,6 +175,10 @@ export function BrandsManager() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  // Live-edit bridge — stream in-memory edits into the preview iframe.
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_brands', localConfig);
+
   if (data && !hasInitialized && !isLoading) {
     setLocalConfig(data);
     setHasInitialized(true);
@@ -260,11 +266,12 @@ export function BrandsManager() {
       );
       await update({ ...localConfig, brands: validBrands });
       toast.success('Brands section saved');
+      clearPreviewOverride('section_brands', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 
