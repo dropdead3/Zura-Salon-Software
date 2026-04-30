@@ -239,6 +239,7 @@ export function PromotionalPopupEditor() {
   const redemptionSeries = redemptionData?.series ?? [];
   const redemptionLast24h = redemptionData?.last24h ?? 0;
   const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
+  const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
   useEffect(() => {
     if (settings) {
