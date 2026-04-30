@@ -62,6 +62,17 @@ function applyPatch<T extends Record<string, any>>(obj: T, path: string, value: 
   return next;
 }
 
+/** Read a dot-path value from a config object (returns '' if missing). */
+function readPath(obj: any, path: string): string {
+  const segments = path.split('.');
+  let cursor: any = obj;
+  for (const key of segments) {
+    if (cursor == null) return '';
+    cursor = cursor[key];
+  }
+  return typeof cursor === 'string' ? cursor : cursor == null ? '' : String(cursor);
+}
+
 export function InlineEditCommitHandler() {
   const { toast } = useToast();
   const hero = useHeroConfig();
