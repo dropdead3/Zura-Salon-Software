@@ -22,6 +22,9 @@ const DEVICE_PRESETS: Record<Exclude<DeviceMode, 'fit'>, { w: number; h: number;
 
 const VIEWPORT_KEY = 'website-editor:device';
 const ORIENTATION_KEY = 'website-editor:orientation';
+const CANVAS_MODE_KEY = 'website-editor:canvas-mode';
+
+type CanvasMode = 'edit' | 'view';
 
 function readDevice(): DeviceMode {
   try {
@@ -39,6 +42,16 @@ function readOrientation(): Orientation {
     if (v === 'portrait' || v === 'landscape') return v;
   } catch {}
   return 'portrait';
+}
+
+function readCanvasMode(): CanvasMode {
+  try {
+    const v = localStorage.getItem(CANVAS_MODE_KEY);
+    if (v === 'edit' || v === 'view') return v;
+  } catch {}
+  // Default to edit so click-to-select sections + click-to-edit text are active
+  // out of the box. Operators can flip to clean Preview from the toolbar.
+  return 'edit';
 }
 
 export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
