@@ -329,6 +329,26 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Edit / Preview segmented control — Edit is the default and unlocks
+              click-to-select sections + click-to-edit text in the canvas.
+              Preview shows a clean visitor-style render with no chrome. */}
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
+            <DeviceButton
+              active={canvasMode === 'edit'}
+              onClick={() => setCanvasMode('edit')}
+              title="Edit — click sections and text to modify"
+            >
+              <MousePointerClick className="h-4 w-4" />
+            </DeviceButton>
+            <DeviceButton
+              active={canvasMode === 'view'}
+              onClick={() => setCanvasMode('view')}
+              title="Preview — clean visitor view (no edit chrome)"
+            >
+              <Eye className="h-4 w-4" />
+            </DeviceButton>
+          </div>
+
           {/* Device segmented control */}
           <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
             <DeviceButton active={device === 'desktop'} onClick={() => setDevice('desktop')} title="Desktop (1440px)">
