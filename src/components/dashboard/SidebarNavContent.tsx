@@ -30,6 +30,7 @@ import { useAnalyticsSubtabFavorites } from '@/hooks/useAnalyticsSubtabFavorites
 import { useOpsHubFavorites } from '@/hooks/useOpsHubFavorites';
 
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
+import { useChangelogSummary } from '@/hooks/usePublishChangelog';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
