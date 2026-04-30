@@ -179,9 +179,22 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
   }, [isLoading, persisted]);
 
   // Live-broadcast on every draft change so the iframe reflects edits instantly.
+  // rAF-throttled so rapid slider/color-picker drags can't flood the postMessage
+  // bridge (60fps cap; coalesces multi-field updates into a single frame).
+  const rafRef = useRef<number | null>(null);
   useEffect(() => {
     if (!initRef.current) return;
-    broadcastToPreview(draft);
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      broadcastToPreview(draft);
+      rafRef.current = null;
+    });
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
   }, [draft]);
 
   const setField = useCallback(<K extends keyof DesignOverrides>(key: K, value: DesignOverrides[K]) => {
