@@ -329,6 +329,14 @@ export function PromotionalPopupEditor() {
 
       {/* Content */}
       <Section title="Content">
+        <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
+          <Input
+            value={formData.eyebrow ?? ''}
+            onChange={(e) => handleChange('eyebrow', e.target.value)}
+            placeholder="Limited time offer"
+            maxLength={32}
+          />
+        </Field>
         <Field label="Headline" hint="Keep it short — appears in display type.">
           <Input
             ref={headlineRef}

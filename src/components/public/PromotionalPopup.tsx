@@ -368,6 +368,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
+            {cfg.eyebrow && (
+              <p
+                className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-0.5 truncate"
+                style={{ color: accent }}
+              >
+                {cfg.eyebrow}
+              </p>
+            )}
             <p
               id="promo-popup-title"
               className="font-display uppercase tracking-wide text-sm sm:text-base text-foreground truncate"
@@ -459,6 +467,17 @@ function PromoBody({
         >
           <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
+      )}
+      {cfg.eyebrow && (
+        <p
+          className={cn(
+            'font-display uppercase tracking-[0.2em] mb-2',
+            compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
+          )}
+          style={{ color: accent }}
+        >
+          {cfg.eyebrow}
+        </p>
       )}
       <h2
         id="promo-popup-title"

@@ -14,6 +14,9 @@ export type FabPosition = 'bottom-right' | 'bottom-left';
 export interface PromotionalPopupSettings {
   enabled: boolean;
   // Content
+  /** Small uppercase tag rendered above the headline. Optional — empty
+   *  string hides the eyebrow row entirely. */
+  eyebrow?: string;
   headline: string;
   body: string;
   ctaAcceptLabel: string;
@@ -47,6 +50,7 @@ export interface PromotionalPopupSettings {
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   enabled: false,
+  eyebrow: 'Limited time offer',
   headline: 'Free Haircut with Any Color Service',
   body: 'Book a color appointment this month and your haircut is on us.',
   ctaAcceptLabel: 'Claim Offer',
