@@ -38,6 +38,7 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
+import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 // ─── Schema ───
