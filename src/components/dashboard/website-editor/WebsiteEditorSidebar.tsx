@@ -561,7 +561,7 @@ export function WebsiteEditorSidebar({
 
       {/* Navigation — Zone 1 (this page) → Zone 2 (chrome) → Zone 3 (library) */}
       <ScrollArea className="flex-1">
-        <div className="py-2">
+        <div className="py-2 pr-4">
           {/* ─────────────────────────────────────────────────────────
               ZONE 1: THIS PAGE — promoted to the top.
               The most-edited surface should be the easiest to reach.
