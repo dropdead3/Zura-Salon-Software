@@ -3,6 +3,9 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import { Star, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { useVisibleTestimonials } from "@/hooks/useTestimonials";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { useExtensionReviewsConfig, DEFAULT_EXTENSION_REVIEWS } from "@/hooks/useSectionConfig";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
+import { InlineEditableText } from "./InlineEditableText";
 
 interface ReviewItem {
   id: string;
@@ -13,44 +16,6 @@ interface ReviewItem {
   source_url: string | null;
   sort_order: number;
 }
-
-const FALLBACK_REVIEWS: ReviewItem[] = [
-  {
-    id: 'fallback-1',
-    title: "Best wefts ever!!",
-    author: "Lexi K.",
-    body: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
-    rating: 5,
-    source_url: null,
-    sort_order: 0,
-  },
-  {
-    id: 'fallback-2',
-    title: "Best extensions I've used.",
-    author: "Darian F.",
-    body: "These extensions were so easy to use. 2 packs easily filled my clients hair making it very thick and long. It took very little cutting to blend the extensions with the hair and I'm overall very pleased with the product.",
-    rating: 5,
-    source_url: null,
-    sort_order: 1,
-  },
-  {
-    id: 'fallback-3',
-    title: "Game changer for my salon",
-    author: "Rachel M.",
-    body: "The signature method has completely transformed how I approach extensions. My clients are happier, appointments are faster, and the results speak for themselves. Truly the best investment I've made.",
-    rating: 5,
-    source_url: null,
-    sort_order: 2,
-  },
-];
-
-const extensionTypes = [
-  "Blondes",
-  "Dimensional Brunettes",
-  "Vivid & Fashion Colors",
-  "Warm Tones",
-  "High Contrast"
-];
 
 const StarRating = () => (
   <div className="flex gap-0.5">
