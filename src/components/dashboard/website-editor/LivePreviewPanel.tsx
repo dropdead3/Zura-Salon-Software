@@ -171,6 +171,8 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       window.removeEventListener('editor-commit-order', onCommitOrder);
     };
   }, [previewOrigin]);
+
+  const handleRefresh = () => {
     if (!previewUrl) return;
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
