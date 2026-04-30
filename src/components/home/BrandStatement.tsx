@@ -1,21 +1,16 @@
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
-
-const rotatingWords = [
-  "Average",
-  "Boring",
-  "Mother's",
-  "Standard",
-  "Typical",
-  "Basic",
-  "Ordinary",
-];
+import { useBrandStatementConfig } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
 export function BrandStatement() {
   const isPreview = useIsEditorPreview();
+  const { data: dbConfig } = useBrandStatementConfig();
+  const config = useLiveOverride('section_brand_statement', dbConfig) ?? dbConfig;
+
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const isInView = useInView(contentRef, { once: true, margin: "-100px" });
@@ -23,7 +18,11 @@ export function BrandStatement() {
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Scroll-based opacity and blur: starts transparent/blurred, fully visible sooner
+  const rotatingWords = config.show_headline && config.rotating_words.length > 0
+    ? config.rotating_words
+    : [""];
+
+  // Scroll-based opacity and blur
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "start 0.6"]
@@ -34,49 +33,50 @@ export function BrandStatement() {
   const blurFilter = useTransform(blur, (v) => `blur(${v}px)`);
   const y = useTransform(scrollYProgress, [0, 0.7], [40, 0]);
 
+  // Reset typewriter index if rotating-words list shrinks while editing
+  useEffect(() => {
+    if (currentWordIndex >= rotatingWords.length) {
+      setCurrentWordIndex(0);
+      setDisplayText("");
+      setIsDeleting(false);
+    }
+  }, [rotatingWords.length, currentWordIndex]);
+
   // Typewriter effect with natural variation
   useEffect(() => {
-    const currentWord = rotatingWords[currentWordIndex];
-    const baseTypingSpeed = 100;
+    const currentWord = rotatingWords[currentWordIndex] ?? "";
+    const baseTypingSpeed = config.typewriter_speed ?? 100;
     const baseDeletingSpeed = 60;
-    const pauseDuration = 2500;
+    const pauseDuration = (config.typewriter_pause ?? 2) * 1000;
 
-    // Add random variation for natural feel
-    const getTypingSpeed = () => baseTypingSpeed + Math.random() * 80 - 40; // 60-140ms
-    const getDeletingSpeed = () => baseDeletingSpeed + Math.random() * 30 - 15; // 45-75ms
+    const getTypingSpeed = () => baseTypingSpeed + Math.random() * 80 - 40;
+    const getDeletingSpeed = () => baseDeletingSpeed + Math.random() * 30 - 15;
 
     let timeout: NodeJS.Timeout;
 
     if (!isDeleting) {
-      // Typing
       if (displayText.length < currentWord.length) {
         timeout = setTimeout(() => {
           setDisplayText(currentWord.slice(0, displayText.length + 1));
         }, getTypingSpeed());
       } else {
-        // Word complete, pause then start deleting
         timeout = setTimeout(() => {
           setIsDeleting(true);
         }, pauseDuration);
       }
     } else {
-      // Deleting
       if (displayText.length > 0) {
         timeout = setTimeout(() => {
           setDisplayText(displayText.slice(0, -1));
         }, getDeletingSpeed());
       } else {
-        // Word deleted, move to next word
         setIsDeleting(false);
         setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
       }
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentWordIndex]);
-
-  // Find the longest word to set a fixed width
-  const longestWord = rotatingWords.reduce((a, b) => a.length > b.length ? a : b);
+  }, [displayText, isDeleting, currentWordIndex, rotatingWords, config.typewriter_speed, config.typewriter_pause]);
 
   return (
     <Section className="bg-background" theme="light">
@@ -93,34 +93,46 @@ export function BrandStatement() {
             animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <Eyebrow className="text-background/60 mb-4">
-              We are
-            </Eyebrow>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
-              Not Your
-              <br />
-              <span className="font-light">
-                {displayText}
-              </span>
-              <br />
-              <span className="font-light">Salon</span>
-            </h2>
+            {config.show_eyebrow && config.eyebrow && (
+              <Eyebrow className="text-background/60 mb-4">
+                {config.eyebrow}
+              </Eyebrow>
+            )}
+            {config.show_headline && (
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+                {config.headline_prefix}
+                <br />
+                <span className="font-light">
+                  {displayText}
+                  {config.show_typewriter_cursor && (
+                    <span className="inline-block w-[2px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
+                  )}
+                </span>
+                {config.headline_suffix && (
+                  <>
+                    <br />
+                    <span className="font-light">{config.headline_suffix}</span>
+                  </>
+                )}
+              </h2>
+            )}
           </motion.div>
 
           {/* Right side - Description */}
-          <motion.div
-            initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-            animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
-            transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-            className="space-y-6"
-          >
-            <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-              Located in the heart of Mesa and Gilbert, Arizona, our salon has become the Phoenix Valley's destination for transformative hair experiences. Clients travel from Scottsdale, Chandler, Tempe, and across the East Valley to experience our artistry.
-            </p>
-            <p className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-              Experience an extensive range of innovative treatments meticulously crafted by our artist-led team—where science meets beauty in Arizona's premier luxury salon.
-            </p>
-          </motion.div>
+          {config.show_paragraphs && config.paragraphs.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+              animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+              transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+              className="space-y-6"
+            >
+              {config.paragraphs.map((paragraph, i) => (
+                <p key={i} className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
+                  {paragraph}
+                </p>
+              ))}
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </Section>
