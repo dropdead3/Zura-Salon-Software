@@ -1391,6 +1391,31 @@ function WebsiteEditorShellInner() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Exit Editor confirm — guards unsaved/unpublished changes */}
+      <AlertDialog open={exitConfirmOpen} onOpenChange={setExitConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit editor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDirty
+                ? 'You have unsaved changes in the current section. Exiting now will discard them.'
+                : `You have ${totalChanges} unpublished change${totalChanges === 1 ? '' : 's'}. They will remain saved as a draft and can be published later from Website Hub.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setExitConfirmOpen(false);
+                performExit();
+              }}
+            >
+              Exit Editor
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Add page dialog */}
       <Dialog open={addPageOpen} onOpenChange={setAddPageOpen}>
         <DialogContent>
