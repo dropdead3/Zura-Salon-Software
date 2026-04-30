@@ -103,8 +103,9 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // In preview/editor mode, render static HTML — no Framer Motion at all
   if (isPreview) {
     return (
-      <section data-theme="light" className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
-        <div className="flex-1 flex items-start justify-center relative z-0 pt-16 pb-16">
+      <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
+        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+        <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
               {showEyebrow && (
@@ -169,9 +170,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   }
 
   return (
-    <section ref={sectionRef} data-theme="light" className="relative flex flex-col overflow-hidden min-h-screen">
-      {/* Video Background */}
-      {videoSrc && (
+    <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-screen">
+      {/* Operator-configured background (image or video) */}
+      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+
+      {/* Legacy explicit videoSrc prop (back-compat) */}
+      {!hasMediaBackground && videoSrc && (
         <motion.div 
           className="absolute inset-0 z-0"
           initial={{ opacity: 0, scale: 1.1 }}
