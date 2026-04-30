@@ -3,6 +3,8 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
+  Check,
+  Circle,
   ExternalLink,
   Globe,
   History,
@@ -137,6 +139,24 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   pages: PagesManager,
 };
 
+// Map home built-in section TYPES → editor tab keys (mirrors sidebar).
+// Used by canvas click-to-edit to resolve postMessage section IDs into tabs.
+const BUILTIN_TYPE_TO_TAB: Record<string, string> = {
+  hero: 'hero',
+  brand_statement: 'brand',
+  testimonials: 'testimonials-section',
+  services_preview: 'services-preview',
+  popular_services: 'popular-services',
+  gallery: 'gallery-section',
+  new_client: 'new-client',
+  stylists: 'stylists-section',
+  locations: 'locations-section',
+  faq: 'faq',
+  extensions: 'extensions',
+  brands: 'brands',
+  drink_menu: 'drinks',
+};
+
 const TAB_LABELS: Record<string, string> = {
   services: 'Services Manager',
   testimonials: 'Testimonials Manager',
@@ -214,6 +234,18 @@ export function WebsiteEditorShell() {
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const pagePickerRef = useRef<HTMLButtonElement>(null);
 
+  // Wave 3: dirty + saving + last-saved tracking from active editor surfaces.
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [, setSavedTick] = useState(0); // forces re-render of relative timestamp
+  // Pending navigation when an unsaved-changes guard intercepts a tab/page switch.
+  const [pendingNav, setPendingNav] = useState<
+    | { type: 'tab'; tab: string }
+    | { type: 'page'; pageId: string }
+    | null
+  >(null);
+
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
   const discardMutation = useDiscardToLastPublished();
@@ -278,6 +310,65 @@ export function WebsiteEditorShell() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  // ─── Wave 3: dirty + saving listeners (from CustomSectionEditor / PageSettingsEditor) ───
+  useEffect(() => {
+    const onDirty = (e: Event) => {
+      const dirty = !!(e as CustomEvent).detail?.dirty;
+      setIsDirty(dirty);
+      if (!dirty) setLastSavedAt(Date.now());
+    };
+    const onSaving = (e: Event) => setIsSaving(!!(e as CustomEvent).detail?.saving);
+    window.addEventListener('editor-dirty-state', onDirty);
+    window.addEventListener('editor-saving-state', onSaving);
+    return () => {
+      window.removeEventListener('editor-dirty-state', onDirty);
+      window.removeEventListener('editor-saving-state', onSaving);
+    };
+  }, []);
+
+  // Tick the "Saved 2s ago" label every 30s so it stays current without spamming renders.
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const t = setInterval(() => setSavedTick((x) => x + 1), 30_000);
+    return () => clearInterval(t);
+  }, [lastSavedAt]);
+
+  // Browser-level guard: warn before unloading the page with unsaved changes.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  // Guarded navigation — used by sidebar tab change, page picker, and click-to-edit.
+  const requestTabChange = useCallback(
+    (tab: string) => {
+      if (tab === editorTab) return;
+      if (isDirty) {
+        setPendingNav({ type: 'tab', tab });
+        return;
+      }
+      setEditorTab(tab);
+    },
+    [editorTab, isDirty],
+  );
+
+  const requestPageChange = useCallback(
+    (pageId: string) => {
+      if (pageId === selectedPageId) return;
+      if (isDirty) {
+        setPendingNav({ type: 'page', pageId });
+        return;
+      }
+      setSelectedPageId(pageId);
+    },
+    [selectedPageId, isDirty],
+  );
 
   // ─── Page CRUD ───
   const handleCreatePage = useCallback(async () => {
@@ -447,6 +538,111 @@ export function WebsiteEditorShell() {
     [updateSelectedPage, toast],
   );
 
+  // ─── Wave 2: canvas → editor bridge (click-to-edit, hover toggle, duplicate, delete, add) ───
+  // Resolves a SectionConfig.id arriving from the iframe into an editor tab key.
+  const resolveSectionTab = useCallback(
+    (sectionId: string): string | null => {
+      // Per-page sections (non-home) carry random IDs and use custom-<id>.
+      const pageSection = selectedPage?.sections.find((s) => s.id === sectionId);
+      if (pageSection) {
+        if (isBuiltinSection(pageSection.type)) {
+          return BUILTIN_TYPE_TO_TAB[pageSection.type] ?? null;
+        }
+        return `custom-${pageSection.id}`;
+      }
+      // Home page: built-in section IDs equal their type ('hero', 'gallery', …).
+      const homeSection = pagesConfig?.pages
+        .find((p) => p.id === 'home')
+        ?.sections.find((s) => s.id === sectionId);
+      if (homeSection) {
+        if (isBuiltinSection(homeSection.type)) {
+          return BUILTIN_TYPE_TO_TAB[homeSection.type] ?? null;
+        }
+        return `custom-${homeSection.id}`;
+      }
+      // Defensive fallback: maybe sectionId IS a built-in type.
+      return BUILTIN_TYPE_TO_TAB[sectionId] ?? null;
+    },
+    [pagesConfig, selectedPage],
+  );
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') return;
+      if (!msg.type.startsWith('EDITOR_')) return;
+      const sectionId: string | undefined = msg.sectionId;
+
+      switch (msg.type) {
+        case 'EDITOR_SELECT_SECTION': {
+          if (!sectionId) return;
+          const tab = resolveSectionTab(sectionId);
+          if (tab) requestTabChange(tab);
+          break;
+        }
+        case 'EDITOR_TOGGLE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          // Only meaningful on per-page sections; home built-ins are managed in sidebar.
+          const onPage = selectedPage.sections.some((s) => s.id === sectionId);
+          if (onPage) handlePageSectionToggle(sectionId, !!msg.enabled);
+          break;
+        }
+        case 'EDITOR_DUPLICATE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          const section = selectedPage.sections.find((s) => s.id === sectionId);
+          if (section) handlePageSectionDuplicate(section);
+          break;
+        }
+        case 'EDITOR_DELETE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          const onPage = selectedPage.sections.some((s) => s.id === sectionId);
+          if (onPage) handlePageSectionDelete(sectionId);
+          break;
+        }
+        case 'EDITOR_ADD_SECTION_AT': {
+          // Open the page-settings/sections manager for now; granular insertion
+          // would require lifting the AddSectionDialog into the shell.
+          if (!isHomePage) requestTabChange('page-settings');
+          break;
+        }
+        default:
+          break;
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [
+    resolveSectionTab,
+    requestTabChange,
+    selectedPage,
+    isHomePage,
+    handlePageSectionToggle,
+    handlePageSectionDuplicate,
+    handlePageSectionDelete,
+  ]);
+
+  // Sidebar → canvas: highlight the active section in the iframe whenever the tab changes.
+  useEffect(() => {
+    // Find a sectionId that maps back to this tab so we can post it.
+    const allSections: SectionConfig[] = [
+      ...(selectedPage?.sections ?? []),
+      ...(pagesConfig?.pages.find((p) => p.id === 'home')?.sections ?? []),
+    ];
+    let activeSectionId: string | undefined;
+    if (editorTab.startsWith('custom-')) {
+      activeSectionId = editorTab.replace('custom-', '');
+    } else {
+      const match = allSections.find(
+        (s) => isBuiltinSection(s.type) && BUILTIN_TYPE_TO_TAB[s.type] === editorTab,
+      );
+      activeSectionId = match?.id;
+    }
+    if (!activeSectionId) return;
+    // Broadcast — LivePreviewPanel posts to its iframe; we also fire a window event
+    // for any embedded preview that listens directly.
+    window.postMessage({ type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId: activeSectionId }, '*');
+  }, [editorTab, pagesConfig, selectedPage]);
+
   // ─── Resolve current editor component ───
   const renderActiveEditor = () => {
     // Custom section editor (matches both home custom_* and per-page sections)
@@ -516,12 +712,12 @@ export function WebsiteEditorShell() {
     <WebsiteEditorSidebar
       activeTab={editorTab}
       onTabChange={(t) => {
-        setEditorTab(t);
+        requestTabChange(t);
         if (isMobile) setMobileSidebarOpen(false);
       }}
       selectedPageId={selectedPageId}
       onPageChange={(p) => {
-        setSelectedPageId(p);
+        requestPageChange(p);
         if (isMobile) setMobileSidebarOpen(false);
       }}
       onToggleCollapse={() => setShowSidebar(false)}
@@ -557,7 +753,7 @@ export function WebsiteEditorShell() {
           )}
 
           {/* Page picker — always visible */}
-          <Select value={selectedPageId} onValueChange={setSelectedPageId}>
+          <Select value={selectedPageId} onValueChange={requestPageChange}>
             <SelectTrigger
               ref={pagePickerRef}
               className="h-9 text-xs min-w-[160px] max-w-[260px] rounded-full"
@@ -600,6 +796,9 @@ export function WebsiteEditorShell() {
             <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
             <span className="truncate text-foreground font-medium">{sectionLabel}</span>
           </nav>
+
+          {/* Save status pill */}
+          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -808,6 +1007,39 @@ export function WebsiteEditorShell() {
         onSelect={handleApplyPageTemplate}
       />
 
+      {/* Unsaved-changes guard */}
+      <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved edits in this section. Switching now will discard them. Save first
+              to keep your work.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on this section</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (!pendingNav) return;
+                // Tell the active editor to drop its dirty state.
+                window.dispatchEvent(
+                  new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
+                );
+                setIsDirty(false);
+                if (pendingNav.type === 'tab') setEditorTab(pendingNav.tab);
+                else setSelectedPageId(pendingNav.pageId);
+                setPendingNav(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard & continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Editor canvas */}
       <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 18rem)' }}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -867,5 +1099,55 @@ export function WebsiteEditorShell() {
         </ResizablePanelGroup>
       </div>
     </div>
+  );
+}
+
+// ─── Save status pill ───
+function formatRelative(ts: number): string {
+  const diff = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diff < 5) return 'just now';
+  if (diff < 60) return `${diff}s ago`;
+  const m = Math.floor(diff / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
+function SaveStatusPill({
+  isDirty,
+  isSaving,
+  lastSavedAt,
+}: {
+  isDirty: boolean;
+  isSaving: boolean;
+  lastSavedAt: number | null;
+}) {
+  let label: string;
+  let icon: React.ReactNode;
+  let tone: string;
+  if (isSaving) {
+    label = 'Saving…';
+    icon = <Loader2 className="h-3 w-3 animate-spin" />;
+    tone = 'text-muted-foreground bg-muted/60';
+  } else if (isDirty) {
+    label = 'Unsaved changes';
+    icon = <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />;
+    tone = 'text-amber-700 dark:text-amber-300 bg-amber-500/10';
+  } else if (lastSavedAt) {
+    label = `Saved ${formatRelative(lastSavedAt)}`;
+    icon = <Check className="h-3 w-3 text-emerald-500" />;
+    tone = 'text-muted-foreground bg-muted/60';
+  } else {
+    return null;
+  }
+  return (
+    <span
+      className={`hidden md:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${tone}`}
+      role="status"
+      aria-live="polite"
+    >
+      {icon}
+      {label}
+    </span>
   );
 }
