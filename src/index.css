@@ -31,6 +31,20 @@ html, body, #root {
    All colors MUST be HSL.
 */
 
+/* ─── Section style override hooks ─────────────────────────────────────────
+   Driven by SectionStyleWrapper + the section-level chip rail (Eb / H chips)
+   in EditorSectionCard. Both knobs ship as opt-in conventions so individual
+   sections can adopt them without breaking sections that haven't migrated.
+
+   • `--section-heading-scale` — multiplier (0.85–1.4) exposed by the wrapper.
+     Components opt in by sizing headings with calc(... * var(--section-heading-scale,1)).
+   • `[data-eyebrow="off"] .section-eyebrow` — global hide rule. Any element
+     tagged `.section-eyebrow` (the shared <Eyebrow /> primitive does this for
+     free) disappears when the operator toggles eyebrows off on a section.
+*/
+[data-eyebrow="off"] .section-eyebrow {
+  display: none !important;
+}
 
 /* Custom Font Faces */
 @font-face {

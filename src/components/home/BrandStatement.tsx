@@ -100,7 +100,12 @@ export function BrandStatement() {
               </Eyebrow>
             )}
             {config.show_headline && (
-              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+              <h2
+                className="font-display font-normal tracking-tight leading-[1.1]"
+                // Heading scale opt-in — multiplies the base size via the
+                // `--section-heading-scale` CSS var on the section wrapper.
+                style={{ fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))' }}
+              >
                 <InlineEditableText
                   as="span"
                   value={config.headline_prefix}

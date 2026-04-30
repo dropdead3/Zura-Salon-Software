@@ -132,7 +132,11 @@ export function FAQSection() {
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             className="lg:sticky lg:top-32 lg:self-start"
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
+            <h2
+              className="font-display mb-6"
+              // Heading scale opt-in — see SectionStyleWrapper for the var.
+              style={{ fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))' }}
+            >
               Frequently<br />
               {config.show_rotating_words && (
                 <>
