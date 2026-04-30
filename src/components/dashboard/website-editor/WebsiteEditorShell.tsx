@@ -185,6 +185,7 @@ const TAB_LABELS: Record<string, string> = {
   stylists: 'Stylists Manager',
   locations: 'Locations Manager',
   banner: 'Announcement Banner',
+  promotions: 'Promotional Popup',
   hero: 'Hero Section',
   brand: 'Brand Statement',
   'testimonials-section': 'Testimonials Display',
