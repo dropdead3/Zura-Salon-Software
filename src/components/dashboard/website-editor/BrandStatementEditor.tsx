@@ -3,6 +3,8 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, Plus, Trash2, RotateCcw, GripVertical, Type } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
