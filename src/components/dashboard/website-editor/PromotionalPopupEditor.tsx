@@ -238,6 +238,7 @@ export function PromotionalPopupEditor() {
   const redemptionCount = redemptionData?.count ?? 0;
   const redemptionSeries = redemptionData?.series ?? [];
   const redemptionLast24h = redemptionData?.last24h ?? 0;
+  const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
 
   useEffect(() => {
     if (settings) {
