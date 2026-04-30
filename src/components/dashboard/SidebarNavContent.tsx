@@ -306,12 +306,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     label, 
     icon: Icon, 
     badgeCount,
+    showDot = false,
     inFooter = false
   }: { 
     href: string; 
     label: string; 
     icon: React.ComponentType<{ className?: string }>; 
     badgeCount?: number;
+    showDot?: boolean;
     inFooter?: boolean;
   }) => {
     const resolvedHref = dashPath(href.replace(/^\/dashboard/, ''));
@@ -350,8 +352,20 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
           <NavBadge count={badgeCount} isActive={isActive} />
         )}
+        {!isCollapsed && showDot && (badgeCount === undefined || badgeCount === 0) && (
+          <span
+            className="w-2 h-2 rounded-full bg-primary animate-pulse"
+            aria-label="Unpublished changes"
+          />
+        )}
         {isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
           <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+        )}
+        {isCollapsed && showDot && (badgeCount === undefined || badgeCount === 0) && (
+          <span
+            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-background animate-pulse"
+            aria-label="Unpublished changes"
+          />
         )}
       </a>
     );
@@ -367,6 +381,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           <TooltipContent side="right" sideOffset={8} className="font-sans">
             {displayLabel}
             {badgeCount !== undefined && badgeCount > 0 && ` (${badgeCount})`}
+            {showDot && (badgeCount === undefined || badgeCount === 0) && ' • Unpublished changes'}
           </TooltipContent>
         </Tooltip>
       );
