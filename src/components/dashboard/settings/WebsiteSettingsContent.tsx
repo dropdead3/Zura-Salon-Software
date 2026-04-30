@@ -725,40 +725,55 @@ function SeoLegalTab() {
 }
 
 // ─── Main Export ───
+const TAB_ALIASES: Record<string, string> = {
+  general: 'domain',   // old "General" was domain + announcement + social
+  retail: 'store',     // rename
+  social: 'integrations',
+};
+
 export function WebsiteSettingsContent() {
-  const { dashPath } = useOrgDashboardPath();
-  const { publicUrl: getPublicUrl, customDomain, isUsingCustomDomain } = useOrgPublicUrl();
-  const previewUrl = getPublicUrl();
-  const previewTooltip = isUsingCustomDomain
-    ? `Live at ${customDomain}`
-    : (previewUrl ?? 'No organization slug available');
-  const handlePreviewClick = () => {
-    if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  // Honor ?tab=theme deep-link (set once on mount); ?openEditor=1 is consumed inside ThemeTab.
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') ?? 'general';
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [forceThemeEditor, setForceThemeEditor] = useState(searchParams.get('openEditor') === '1');
 
+  // Back-compat: normalize legacy query params (?tab=general/retail/social, ?openEditor=1)
+  // to the new tab IDs. Keeps old links working without a redirect round-trip.
   useEffect(() => {
-    if (searchParams.get('openEditor') !== '1') return;
-
-    setForceThemeEditor(true);
+    const rawTab = searchParams.get('tab');
+    const openEditor = searchParams.get('openEditor') === '1';
+    const aliased = rawTab ? TAB_ALIASES[rawTab] : undefined;
+    if (!openEditor && !aliased) return;
 
     const next = new URLSearchParams(searchParams);
-    next.delete('openEditor');
+    if (openEditor) {
+      next.set('tab', 'editor');
+      next.delete('openEditor');
+    } else if (aliased) {
+      next.set('tab', aliased);
+    }
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
+  const rawTab = searchParams.get('tab');
+  const initialTab =
+    (rawTab && TAB_ALIASES[rawTab]) ||
+    (searchParams.get('openEditor') === '1' ? 'editor' : rawTab) ||
+    'editor';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', value);
+    next.delete('openEditor');
+    setSearchParams(next, { replace: false });
+  };
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <TabsList>
-          <TabsTrigger value="general" className="gap-1.5">
-            <Globe className="w-4 h-4" />
-            General
+          <TabsTrigger value="editor" className="gap-1.5">
+            <LayoutGrid className="w-4 h-4" />
+            Editor
           </TabsTrigger>
           <TabsTrigger value="theme" className="gap-1.5">
             <Palette className="w-4 h-4" />
@@ -768,22 +783,33 @@ export function WebsiteSettingsContent() {
             <Calendar className="w-4 h-4" />
             Booking
           </TabsTrigger>
-          <TabsTrigger value="retail" className="gap-1.5">
+          <TabsTrigger value="store" className="gap-1.5">
             <ShoppingBag className="w-4 h-4" />
-            Retail
+            Store
+          </TabsTrigger>
+          <TabsTrigger value="domain" className="gap-1.5">
+            <Globe className="w-4 h-4" />
+            Domain
           </TabsTrigger>
           <TabsTrigger value="seo" className="gap-1.5">
             <Scale className="w-4 h-4" />
             SEO & Legal
           </TabsTrigger>
+          <TabsTrigger value="integrations" className="gap-1.5">
+            <Share2 className="w-4 h-4" />
+            Integrations
+          </TabsTrigger>
         </TabsList>
       </div>
 
-      <TabsContent value="general"><GeneralTab /></TabsContent>
-      <TabsContent value="theme"><ThemeTab forceOpenEditor={forceThemeEditor} onForceOpenConsumed={() => setForceThemeEditor(false)} /></TabsContent>
+      <TabsContent value="editor"><EditorTab /></TabsContent>
+      <TabsContent value="theme"><ThemeTab /></TabsContent>
       <TabsContent value="booking"><BookingTab /></TabsContent>
-      <TabsContent value="retail"><RetailTab /></TabsContent>
+      <TabsContent value="store"><RetailTab /></TabsContent>
+      <TabsContent value="domain"><DomainTab /></TabsContent>
       <TabsContent value="seo"><SeoLegalTab /></TabsContent>
+      <TabsContent value="integrations"><IntegrationsTab /></TabsContent>
     </Tabs>
   );
 }
+
