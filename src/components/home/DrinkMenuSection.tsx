@@ -10,9 +10,11 @@ interface DrinkCardProps {
   index?: number;
   isInView?: boolean;
   animated?: boolean;
+  /** When set, renders the name+ingredients as inline-editable using `drinks.<inlineEditIndex>.<field>`. Pass on the first set only (avoids duplicate edit handlers in the marquee loop). */
+  inlineEditIndex?: number;
 }
 
-const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: DrinkCardProps) => {
+const DrinkCard = ({ drink, index = 0, isInView = true, animated = true, inlineEditIndex }: DrinkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const ingredientsList = drink.ingredients.split(", ");
@@ -88,7 +90,13 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
       </div>
       
       <h3 className="font-display text-xl md:text-2xl lg:text-3xl text-foreground whitespace-nowrap">
-        {drink.name}
+        {inlineEditIndex !== undefined ? (
+          <InlineEditableText
+            value={drink.name}
+            sectionKey="section_drink_menu"
+            fieldPath={`drinks.${inlineEditIndex}.name`}
+          />
+        ) : drink.name}
       </h3>
     </Wrapper>
   );
