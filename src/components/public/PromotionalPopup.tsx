@@ -345,6 +345,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
+    // Corner-card is the densest surface — operators can hide the image here
+    // via `hidden-on-corner` so it doesn't crush headline + body. `side`
+    // collapses to `top` (no room for a left rail at 360px).
+    const cornerImageMode: 'top' | 'none' =
+      !cfg.imageUrl || cfg.imageTreatment === 'hidden-on-corner' ? 'none' : 'top';
     return (
       <div
         role="dialog"
@@ -353,7 +358,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 animate-in fade-in slide-in-from-bottom-4"
         style={{ borderTopColor: accent, borderTopWidth: 3 }}
       >
-        <PromoBody cfg={cfg} accent={accent} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
+        <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
       </div>
     );
   }
@@ -420,6 +425,16 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   }
 
   // ── Variant: modal (default) ──
+  // Image modes:
+  //   - none: no image to render
+  //   - top:  full-width strip above the headline (default `cover` behavior)
+  //   - side: left rail (modal widens to max-w-2xl + grid layout)
+  const modalImageMode: 'top' | 'side' | 'none' = !cfg.imageUrl
+    ? 'none'
+    : cfg.imageTreatment === 'side'
+      ? 'side'
+      : 'top';
+  const modalWide = modalImageMode === 'side';
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
@@ -431,17 +446,37 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="promo-popup-title"
-        className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 sm:p-8 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out"
+        className={cn(
+          'relative w-full rounded-2xl bg-card border border-border shadow-2xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          modalWide ? 'max-w-2xl' : 'max-w-md',
+        )}
         style={{ borderTopColor: accent, borderTopWidth: 4 }}
       >
         <button
           onClick={handleSoftClose}
           aria-label="Close"
-          className="absolute top-3 right-3 text-muted-foreground hover:text-foreground p-1"
+          className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground p-1 rounded-full bg-card/60 backdrop-blur"
         >
           <X className="h-4 w-4" />
         </button>
-        <PromoBody cfg={cfg} accent={accent} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
+        {modalWide ? (
+          <div className="grid grid-cols-[200px_1fr]">
+            <div className="bg-muted">
+              <img
+                src={cfg.imageUrl}
+                alt={cfg.imageAlt ?? ''}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-6 sm:p-8">
+              <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 sm:p-8">
+            <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -453,6 +488,7 @@ function PromoBody({
   onAccept,
   onDecline,
   compact = false,
+  imageMode = 'top',
 }: {
   cfg: PromotionalPopupSettings;
   accent: string;
@@ -460,17 +496,25 @@ function PromoBody({
   onDecline: () => void;
   onClose: () => void;
   compact?: boolean;
+  /** How (or whether) to render the image inline. `side` is handled by the
+   *  parent layout (modal grid) and renders nothing here. */
+  imageMode?: 'top' | 'side' | 'none';
 }) {
+  const renderTopImage = imageMode === 'top' && cfg.imageUrl;
   return (
     <>
-      {cfg.imageUrl && (
+      {renderTopImage && (
         <div
           className={cn(
             'mb-4 overflow-hidden rounded-xl bg-muted',
             compact ? 'h-24' : 'h-32 sm:h-40',
           )}
         >
-          <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
+          <img
+            src={cfg.imageUrl}
+            alt={cfg.imageAlt ?? ''}
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
       {cfg.eyebrow && (() => {

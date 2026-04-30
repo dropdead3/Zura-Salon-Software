@@ -12,6 +12,12 @@ export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
 export type FabPosition = 'bottom-right' | 'bottom-left';
 /** Curated companion glyph for the eyebrow tag. `none` hides the icon. */
 export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles';
+/** Per-layout image treatment.
+ *  - `cover`: full-width image strip above the headline (default).
+ *  - `side`: image rendered as a left rail on modal (ignored on corner-card).
+ *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card,
+ *    where vertical room is the tightest. */
+export type ImageTreatment = 'cover' | 'side' | 'hidden-on-corner';
 
 export interface PromotionalPopupSettings {
   enabled: boolean;
@@ -27,6 +33,12 @@ export interface PromotionalPopupSettings {
   ctaDeclineLabel: string;
   disclaimer?: string;
   imageUrl?: string;
+  /** Accessible alt text for the image. When omitted the image is treated as
+   *  decorative (`alt=""`). Operators should set this for booking-page SEO and
+   *  screen-reader users. */
+  imageAlt?: string;
+  /** How the image renders per layout. Defaults to `cover`. */
+  imageTreatment?: ImageTreatment;
   // Offer
   offerCode: string;
   // Behavior
@@ -70,6 +82,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   startsAt: null,
   endsAt: null,
   frequency: 'once-per-session',
+  imageTreatment: 'cover',
   fabPosition: 'bottom-right',
 };
 
