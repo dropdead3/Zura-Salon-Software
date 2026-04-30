@@ -145,7 +145,7 @@ export function ColorBarInventoryValuationCard({ locationId }: { locationId?: st
               </CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleExport} className="h-9 px-4 rounded-full font-sans text-xs gap-1.5">
+          <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1.5">
             <Download className="w-3.5 h-3.5" /> Export
           </Button>
         </div>

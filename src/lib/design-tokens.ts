@@ -104,6 +104,9 @@ export const tokens = {
   button: {
     /** Inline / table-row actions — compact */
     inline: 'sm' as const,
+    /** Ultra-dense — table-row chips, inline filters, micro-toolbars.
+     *  Use instead of ad-hoc `h-6`/`h-7` overrides. */
+    dense: 'pill' as const,
     /** Card-level CTAs, secondary actions */
     card: 'sm' as const,
     /** Page header primary actions (default) */

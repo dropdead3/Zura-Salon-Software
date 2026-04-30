@@ -2916,7 +2916,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                         else setIsCreateThemeOpen(true);
                       }}>
                         <DialogTrigger asChild>
-                          <Button variant="outline" className="gap-1.5 px-4 h-10 text-xs rounded-full shadow-sm">
+                          <Button variant="outline" size="sm" className="gap-1.5 shadow-sm">
                             <Plus className="w-3.5 h-3.5" />
                             New Custom Theme
                           </Button>

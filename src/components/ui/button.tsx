@@ -19,6 +19,9 @@ const buttonVariants = cva(
       size: {
         default: "h-9 px-5 py-2",
         sm: "h-8 px-3.5 text-xs",
+        /** Ultra-dense pill — table-row actions, chip toolbars, inline filters.
+         *  Replaces ad-hoc `h-6`/`h-7` overrides. */
+        pill: "h-7 px-3 text-[11px] [&_svg]:size-3.5",
         lg: "h-10 px-8",
         icon: "h-9 w-9",
       },
