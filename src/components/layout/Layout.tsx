@@ -5,6 +5,7 @@ import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
+import { PromotionalPopup } from "@/components/public/PromotionalPopup";
 
 // CSS variable prefixes owned by Site Design overrides — must survive the
 // per-mount theme wipe so live-preview + persisted overrides keep applying.
@@ -154,6 +155,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
         <FooterCTA />
         <Footer />
+        <PromotionalPopup surface="all-public" />
       </div>
     );
   }
@@ -187,6 +189,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       <StickyFooterBar />
+      <PromotionalPopup surface="all-public" />
     </div>
   );
 }

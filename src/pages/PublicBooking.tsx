@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Tag } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -72,6 +74,8 @@ export default function PublicBooking() {
   const [booking, setBooking] = useState<BookingState>(INITIAL_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [searchParams] = useSearchParams();
+  const promoCode = searchParams.get('promo')?.trim() || null;
 
   const { data: locations = [] } = useActiveLocations();
   
@@ -334,6 +338,21 @@ export default function PublicBooking() {
         description="Book your next salon appointment online"
       />
       <div className="min-h-[60vh] px-4 py-8 md:py-16 max-w-4xl mx-auto">
+        {promoCode && (
+          <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <Tag className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-display uppercase tracking-wide text-xs text-primary">Offer Applied</p>
+                <p className="font-sans text-sm text-foreground truncate">
+                  Code <span className="font-medium">{promoCode}</span> will be honored at checkout.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-2 mb-8">
           {['service', 'location', 'stylist', 'datetime', 'details', 'confirm'].map((s, idx) => (
