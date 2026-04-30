@@ -1488,3 +1488,32 @@ function SaveStatusPill({
     </span>
   );
 }
+
+// ─── Undo / Redo toolbar controls ───
+function UndoRedoControls() {
+  const { canUndo, canRedo, undo, redo, lastLabel, nextLabel } = useEditorHistory();
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 rounded-full"
+        onClick={undo}
+        disabled={!canUndo}
+        title={canUndo ? `Undo ${lastLabel ?? 'change'} (⌘Z)` : 'Nothing to undo'}
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 rounded-full"
+        onClick={redo}
+        disabled={!canRedo}
+        title={canRedo ? `Redo ${nextLabel ?? 'change'} (⌘⇧Z)` : 'Nothing to redo'}
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
