@@ -4,6 +4,22 @@ import { Footer } from "./Footer";
 import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
+import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
+
+// CSS variable prefixes owned by Site Design overrides — must survive the
+// per-mount theme wipe so live-preview + persisted overrides keep applying.
+const DESIGN_OVERRIDE_VARS = new Set([
+  '--primary',
+  '--secondary',
+  '--accent',
+  '--background',
+  '--font-display',
+  '--font-sans',
+  '--zura-density-scale',
+  '--zura-button-radius',
+  '--zura-hero-overlay',
+  '--zura-section-tint',
+]);
 
 const DASHBOARD_THEME_CLASSES = [
   'theme-zura',
