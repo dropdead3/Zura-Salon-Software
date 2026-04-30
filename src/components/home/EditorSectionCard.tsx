@@ -33,8 +33,11 @@ import {
   Paintbrush,
   Type,
   Tag,
+  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 interface EditorSectionCardProps {
