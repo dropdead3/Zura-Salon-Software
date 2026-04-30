@@ -1532,21 +1532,45 @@ function WebsiteEditorShellInner() {
         </div>
       </PremiumFloatingPanel>
 
-      {/* Unsaved-changes guard */}
+      {/* Unsaved-changes guard ──
+          UI rules applied here:
+            • Title uses font-display (Termina) — never font-bold/semibold
+              (typography canon: max weight font-medium).
+            • Visual hierarchy reads left → right: passive (Stay) → cautious
+              (Discard) → primary action (Save). Filled accent reserved for
+              Save so the recommended path is obvious without screaming.
+            • Discard uses ghost-destructive, not solid red — the previous
+              solid red was louder than the primary, inverting hierarchy
+              and making operators reflex-click destructive paths.
+            • Buttons sized via the canonical `Button` size token (default
+              h-9), not raw AlertDialogAction (which used hero-sized fills). */}
       <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved edits in this section. Save them as a draft first, or discard
-              and continue. (Drafts stay private until you Publish from Website Hub.)
+        <AlertDialogContent className="max-w-md gap-4">
+          <AlertDialogHeader className="space-y-2">
+            <AlertDialogTitle className="font-display text-base tracking-wide uppercase">
+              Unsaved changes
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-sans text-sm leading-relaxed">
+              You have unsaved edits in this section. Save them as a draft
+              first, or discard and continue.
+              <span className="block mt-1.5 text-xs text-muted-foreground/80">
+                Drafts stay private until you Publish from Website Hub.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Stay on this section</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 sm:gap-0">
+            {/* Passive escape — ghost, no fill, sits leftmost. */}
+            <AlertDialogCancel asChild>
+              <Button variant="ghost" size="default" className="rounded-full">
+                Stay here
+              </Button>
+            </AlertDialogCancel>
+            {/* Cautious destructive — outline so it doesn't outshout primary. */}
+            <Button
+              variant="outline"
+              size="default"
+              className="rounded-full text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/60"
+              onClick={() => {
                 if (!pendingNav) return;
                 window.dispatchEvent(
                   new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
@@ -1556,13 +1580,15 @@ function WebsiteEditorShellInner() {
                 else setSelectedPageId(pendingNav.pageId);
                 setPendingNav(null);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Discard & continue
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
+              Discard changes
+            </Button>
+            {/* Recommended path — filled primary, rightmost. */}
+            <Button
+              variant="default"
+              size="default"
+              className="rounded-full"
+              onClick={() => {
                 if (!pendingNav) return;
                 // Trigger the active editor's save handler. When it finishes
                 // (editor-saving-state flips back to false), run the deferred
@@ -1586,7 +1612,7 @@ function WebsiteEditorShellInner() {
               }}
             >
               Save & continue
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
