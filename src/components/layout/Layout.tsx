@@ -93,7 +93,7 @@ export function Layout({ children }: LayoutProps) {
     for (let i = 0; i < style.length; i++) {
       const prop = style[i];
       // Only remove custom properties that could be from dashboard theme
-      if (prop.startsWith('--') && !prop.includes('radix')) {
+      if (prop.startsWith('--') && !prop.includes('radix') && !DESIGN_OVERRIDE_VARS.has(prop)) {
         propsToRemove.push(prop);
       }
     }
