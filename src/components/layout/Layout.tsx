@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { FooterCTA } from "./FooterCTA";
@@ -6,6 +7,24 @@ import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
 import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
 import { PromotionalPopup } from "@/components/public/PromotionalPopup";
+import type { PopupSurface } from "@/hooks/usePromotionalPopup";
+
+/**
+ * Map the current public route to a promotional-popup surface key.
+ * Operators target popups by logical surface (home / services / booking),
+ * so the Layout must pass the actual page identity — not a hardcoded
+ * 'all-public' that only matches when the operator opts site-wide.
+ */
+function resolvePopupSurface(pathname: string): PopupSurface {
+  // Strip /org/:slug prefix so we can match against logical paths.
+  const stripped = pathname.replace(/^\/org\/[^/]+/, "") || "/";
+  if (stripped === "/" || stripped === "") return "home";
+  if (stripped.startsWith("/booking")) return "booking";
+  if (stripped.startsWith("/services")) return "services";
+  // Anything else (about, contact, dynamic pages) only fires when the
+  // operator chose 'all-public'. isPopupActive handles that match.
+  return "all-public";
+}
 
 // CSS variable prefixes owned by Site Design overrides — must survive the
 // per-mount theme wipe so live-preview + persisted overrides keep applying.
@@ -60,6 +79,8 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
+  const location = useLocation();
+  const popupSurface = resolvePopupSurface(location.pathname);
   const [footerHeight, setFooterHeight] = useState(0);
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -155,7 +176,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
         <FooterCTA />
         <Footer />
-        <PromotionalPopup surface="all-public" />
+        <PromotionalPopup surface={popupSurface} />
       </div>
     );
   }
@@ -189,7 +210,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       <StickyFooterBar />
-      <PromotionalPopup surface="all-public" />
+      <PromotionalPopup surface={popupSurface} />
     </div>
   );
 }

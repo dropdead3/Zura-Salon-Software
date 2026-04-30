@@ -8,6 +8,7 @@ import {
   type PromotionalPopupSettings,
 } from '@/hooks/usePromotionalPopup';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
@@ -124,6 +125,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: cfg } = usePromotionalPopup();
+  // Editor-preview QA mode: bypass frequency caps + force immediate trigger
+  // so operators can faithfully QA enable/disable + content. Real visitor
+  // suppression rules (sessionStorage caps, analytics writes) are skipped.
+  const isPreview = useIsEditorPreview();
 
   const [open, setOpen] = useState(false);
   const triggeredRef = useRef(false);
@@ -143,8 +148,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (triggeredRef.current) return;
     if (promoQueryParam && promoQueryParam === code) return;
 
-    const dismissal = readDismissal(orgId, code);
-    if (shouldRespectDismissal(cfg, dismissal)) return;
+    // In editor preview, bypass dismissal so reloads always re-show the popup.
+    if (!isPreview) {
+      const dismissal = readDismissal(orgId, code);
+      if (shouldRespectDismissal(cfg, dismissal)) return;
+    }
 
     let cleanup: (() => void) | undefined;
 
@@ -154,7 +162,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       setOpen(true);
     };
 
-    switch (cfg.trigger) {
+    // In editor preview, force immediate trigger — delay/scroll/exit-intent
+    // are unreliable inside a scaled iframe and would make QA feel broken.
+    const effectiveTrigger = isPreview ? 'immediate' : cfg.trigger;
+
+    switch (effectiveTrigger) {
       case 'immediate':
         fire();
         break;
@@ -183,7 +195,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }
 
     return cleanup;
-  }, [active, cfg, code, orgId, promoQueryParam]);
+  }, [active, cfg, code, orgId, promoQueryParam, isPreview]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
@@ -201,10 +213,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accent = cfg.accentColor || 'hsl(var(--primary))';
 
   function handleAccept() {
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    if (!isPreview) {
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    }
     setOpen(false);
+    if (isPreview) return; // Don't navigate the editor iframe — operator is QA'ing.
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
     const target = orgPath('/booking');
@@ -214,17 +229,21 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   }
 
   function handleDecline() {
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
+    if (!isPreview) {
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
+    }
     setOpen(false);
   }
 
   function handleSoftClose() {
-    // Soft dismiss respects the frequency cap but isn't a recorded decline.
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
+    if (!isPreview) {
+      // Soft dismiss respects the frequency cap but isn't a recorded decline.
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
+    }
     setOpen(false);
   }
 
