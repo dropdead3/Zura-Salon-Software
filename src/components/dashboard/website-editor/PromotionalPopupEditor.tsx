@@ -160,12 +160,16 @@ function EyebrowUrgencySuggestion({
 function collectOverflows(data: PromotionalPopupSettings): OverflowFinding[] {
   const findings: OverflowFinding[] = [];
   const layout = data.appearance === 'corner-card' ? 'corner card' : data.appearance;
+  // Banner truly hard-truncates (single-line `truncate`). Modal + corner-card
+  // wrap to two+ lines and start crowding the CTA — annoying but not silent
+  // data loss. Distinct verbs so operators read the correct severity.
+  const verb = data.appearance === 'banner' ? 'truncate' : 'wrap past the safe limit';
 
   const headlineCeiling = HEADLINE_CEILINGS[data.appearance];
   if (data.headline.length > headlineCeiling) {
     findings.push({
       field: 'headline',
-      message: `Headline (${data.headline.length}/${headlineCeiling}) will truncate on ${layout}.`,
+      message: `Headline (${data.headline.length}/${headlineCeiling}) will ${verb} on ${layout}.`,
     });
   }
 
@@ -173,7 +177,7 @@ function collectOverflows(data: PromotionalPopupSettings): OverflowFinding[] {
   if (data.body.length > bodyCeiling) {
     findings.push({
       field: 'body',
-      message: `Body (${data.body.length}/${bodyCeiling}) will truncate on ${layout}.`,
+      message: `Body (${data.body.length}/${bodyCeiling}) will ${verb} on ${layout}.`,
     });
   }
 
