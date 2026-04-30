@@ -883,6 +883,7 @@ function AppearancePreviewSwatch({
           <>
             <div className="absolute inset-0 top-3 bg-black/30 backdrop-blur-[1px]" />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-14 rounded-md bg-card border border-border shadow-lg p-1.5 flex flex-col gap-0.5">
+              {eyebrowStrip}
               <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
                 {trim(28)}
               </span>
@@ -895,17 +896,23 @@ function AppearancePreviewSwatch({
         )}
         {appearance === 'banner' && (
           <div
-            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1 text-primary-foreground"
+            className="absolute top-3 inset-x-0 flex items-center px-1.5 gap-1 text-primary-foreground py-0.5"
             style={{ backgroundColor: accentColor }}
           >
-            <span className="font-display uppercase tracking-wider text-[7px] truncate flex-1">
-              {trim(26)}
-            </span>
+            <div className="flex flex-col flex-1 min-w-0">
+              {eyebrowStrip && (
+                <span className="text-white/80 [&>*]:text-white/80">{eyebrowStrip}</span>
+              )}
+              <span className="font-display uppercase tracking-wider text-[7px] truncate">
+                {trim(26)}
+              </span>
+            </div>
             <span className="h-1.5 w-5 rounded-full bg-white/30 shrink-0" />
           </div>
         )}
         {appearance === 'corner-card' && (
           <div className="absolute bottom-1.5 right-1.5 w-24 h-14 rounded-md bg-card border border-border shadow-md p-1.5 flex flex-col gap-0.5">
+            {eyebrowStrip}
             <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
               {trim(22)}
             </span>
