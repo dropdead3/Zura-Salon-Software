@@ -13,6 +13,7 @@ import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
+import { readableForegroundFor } from '@/lib/color-contrast';
 
 interface Props {
   /**
