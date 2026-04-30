@@ -24,6 +24,7 @@ import {
   useNewClientConfig,
 } from '@/hooks/useSectionConfig';
 import { useToast } from '@/hooks/use-toast';
+import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 type CommitMessage = {
   type: 'INLINE_EDIT_COMMIT';
