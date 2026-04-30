@@ -144,10 +144,29 @@ export function InlineEditCommitHandler() {
       if (!pathAllowed) return; // unknown field — silently drop
 
       try {
-        const patched = applyPatch(entry.data ?? {}, msg.fieldPath, msg.value);
+        const before = readPath(entry.data ?? {}, msg.fieldPath);
+        const after = msg.value;
+        const patched = applyPatch(entry.data ?? {}, msg.fieldPath, after);
         await entry.update(patched);
         // Mark draft as freshly saved; mirrors the editor-side dirty pulse.
         window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
+        // Register undo entry — re-applies the previous text via the same
+        // update fn. We capture `entry.data` & `entry.update` in the closure;
+        // the registry is rebuilt on every commit so these stay current.
+        if (before !== after) {
+          const inverseEntry = entry;
+          pushEditorHistoryEntry({
+            label: 'Edit text',
+            undo: async () => {
+              const reverted = applyPatch(inverseEntry.data ?? {}, msg.fieldPath, before);
+              await inverseEntry.update(reverted);
+            },
+            redo: async () => {
+              const reapplied = applyPatch(inverseEntry.data ?? {}, msg.fieldPath, after);
+              await inverseEntry.update(reapplied);
+            },
+          });
+        }
       } catch (err) {
         toast({
           variant: 'destructive',
