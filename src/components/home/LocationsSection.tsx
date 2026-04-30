@@ -6,6 +6,10 @@ import { ArrowRight, Phone, MapPin, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { useLocationsSectionConfig, DEFAULT_LOCATIONS_SECTION } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "./InlineEditableText";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { 
   useActiveLocations, 
   formatHoursForDisplay, 
