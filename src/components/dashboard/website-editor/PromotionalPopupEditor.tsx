@@ -324,6 +324,7 @@ export function PromotionalPopupEditor() {
             <AppearancePreviewSwatch
               appearance={formData.appearance}
               accent={formData.accentColor}
+              headline={formData.headline}
             />
           </div>
         </Field>
