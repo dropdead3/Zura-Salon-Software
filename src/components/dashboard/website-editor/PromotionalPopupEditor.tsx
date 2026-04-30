@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
