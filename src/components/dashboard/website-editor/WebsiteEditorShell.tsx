@@ -242,6 +242,7 @@ export function WebsiteEditorShell() {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [siteDesignOpen, setSiteDesignOpen] = useState(false);
   // Wave 4: insert-at and style inspector
   const [addSectionState, setAddSectionState] = useState<
     | { open: false }
