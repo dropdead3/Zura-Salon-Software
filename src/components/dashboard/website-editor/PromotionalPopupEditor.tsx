@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -272,8 +272,11 @@ export function PromotionalPopupEditor() {
 
       {/* Behavior */}
       <Section title="Behavior">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Appearance">
+        <Field
+          label="Appearance"
+          hint="How the offer enters the page. Pick the layout that matches your brand's tone."
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start">
             <Select
               value={formData.appearance}
               onValueChange={(v) => handleChange('appearance', v as PromotionalPopupSettings['appearance'])}
@@ -285,22 +288,26 @@ export function PromotionalPopupEditor() {
                 <SelectItem value="corner-card">Bottom-right card</SelectItem>
               </SelectContent>
             </Select>
-          </Field>
-          <Field label="Trigger">
-            <Select
-              value={formData.trigger}
-              onValueChange={(v) => handleChange('trigger', v as PromotionalPopupSettings['trigger'])}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="immediate">Immediately on load</SelectItem>
-                <SelectItem value="delay">After a delay</SelectItem>
-                <SelectItem value="scroll">After scrolling</SelectItem>
-                <SelectItem value="exit-intent">On exit intent (desktop)</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+            <AppearancePreviewSwatch
+              appearance={formData.appearance}
+              accent={formData.accentColor}
+            />
+          </div>
+        </Field>
+        <Field label="Trigger">
+          <Select
+            value={formData.trigger}
+            onValueChange={(v) => handleChange('trigger', v as PromotionalPopupSettings['trigger'])}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="immediate">Immediately on load</SelectItem>
+              <SelectItem value="delay">After a delay</SelectItem>
+              <SelectItem value="scroll">After scrolling</SelectItem>
+              <SelectItem value="exit-intent">On exit intent (desktop)</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
         {(formData.trigger === 'delay' || formData.trigger === 'scroll') && (
           <Field
             label={formData.trigger === 'delay' ? 'Delay (milliseconds)' : 'Scroll distance (pixels)'}
@@ -332,6 +339,36 @@ export function PromotionalPopupEditor() {
               <SelectItem value="always">Every page load (testing only)</SelectItem>
             </SelectContent>
           </Select>
+        </Field>
+        <Field
+          label="Accent color"
+          hint="Drives the FAB and CTA accents. Match this to your brand's primary color."
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              aria-label="Accent color"
+              value={normalizeHex(formData.accentColor)}
+              onChange={(e) => handleChange('accentColor', e.target.value)}
+              className="h-9 w-12 rounded-md border border-border bg-transparent cursor-pointer p-0.5"
+            />
+            <Input
+              value={formData.accentColor ?? ''}
+              onChange={(e) => handleChange('accentColor', e.target.value || undefined)}
+              placeholder="#7C3AED or hsl(...) — leave blank for theme primary"
+              className="flex-1"
+            />
+            {formData.accentColor && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleChange('accentColor', undefined)}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
         </Field>
         <Field
           label="Reminder button position"
@@ -459,6 +496,19 @@ function FabPreviewSwatch({
 }) {
   const accentColor = accent || 'hsl(var(--primary))';
   const truncated = headline.length > 22 ? `${headline.slice(0, 22)}…` : headline;
+  const [pulsing, setPulsing] = useState(false);
+  const stopRef = useRef<number | null>(null);
+
+  const playPulse = useCallback(() => {
+    if (stopRef.current) window.clearTimeout(stopRef.current);
+    setPulsing(true);
+    // 3 cycles × ~800ms — matches the public FAB hint duration.
+    stopRef.current = window.setTimeout(() => setPulsing(false), 2400);
+  }, []);
+
+  useEffect(() => () => {
+    if (stopRef.current) window.clearTimeout(stopRef.current);
+  }, []);
 
   return (
     <div className="space-y-1.5">
@@ -477,6 +527,7 @@ function FabPreviewSwatch({
           className={cn(
             'absolute bottom-1.5 flex items-center gap-1 rounded-full pl-1 pr-1.5 h-5 shadow-md text-primary-foreground',
             position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
+            pulsing && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
           )}
           style={{ backgroundColor: accentColor }}
         >
@@ -489,11 +540,101 @@ function FabPreviewSwatch({
           <ChevronRight className="h-2 w-2 opacity-80" />
         </div>
       </div>
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-sans text-[10px] text-muted-foreground">Live preview</p>
+        <button
+          type="button"
+          onClick={playPulse}
+          className="font-sans text-[10px] text-primary hover:underline inline-flex items-center gap-1"
+        >
+          <Sparkles className="h-2.5 w-2.5" />
+          Play pulse
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Live appearance swatch ──
+// Mini-mock of the three popup layouts (modal / banner / corner-card) so the
+// Appearance selector communicates intent without an iframe round-trip.
+function AppearancePreviewSwatch({
+  appearance,
+  accent,
+}: {
+  appearance: PromotionalPopupSettings['appearance'];
+  accent?: string;
+}) {
+  const accentColor = accent || 'hsl(var(--primary))';
+  return (
+    <div className="space-y-1.5">
+      <div
+        aria-hidden="true"
+        className="relative w-44 h-24 rounded-md border border-border bg-gradient-to-br from-muted/60 to-muted/30 overflow-hidden shadow-inner"
+      >
+        {/* Faux browser chrome */}
+        <div className="absolute top-0 inset-x-0 h-3 bg-foreground/5 border-b border-border/60 flex items-center gap-1 px-1.5">
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+        </div>
+        {appearance === 'modal' && (
+          <>
+            <div className="absolute inset-0 top-3 bg-black/30 backdrop-blur-[1px]" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-12 rounded-md bg-card border border-border shadow-lg p-1 flex flex-col gap-0.5">
+              <span className="h-1 w-12 rounded-full bg-foreground/40" />
+              <span className="h-0.5 w-16 rounded-full bg-foreground/20" />
+              <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+              <span
+                className="mt-auto h-1.5 w-10 rounded-full"
+                style={{ backgroundColor: accentColor }}
+              />
+            </div>
+          </>
+        )}
+        {appearance === 'banner' && (
+          <div
+            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1"
+            style={{ backgroundColor: accentColor }}
+          >
+            <span className="h-1 w-12 rounded-full bg-white/70" />
+            <span className="ml-auto h-1.5 w-6 rounded-full bg-white/30" />
+          </div>
+        )}
+        {appearance === 'corner-card' && (
+          <div className="absolute bottom-1.5 right-1.5 w-20 h-12 rounded-md bg-card border border-border shadow-md p-1 flex flex-col gap-0.5">
+            <span className="h-1 w-10 rounded-full bg-foreground/40" />
+            <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+            <span
+              className="mt-auto h-1.5 w-8 rounded-full"
+              style={{ backgroundColor: accentColor }}
+            />
+          </div>
+        )}
+      </div>
       <p className="font-sans text-[10px] text-muted-foreground text-center">
         Live preview
       </p>
     </div>
   );
+}
+
+// Coerce arbitrary CSS color strings into a `#rrggbb` value the native color
+// input can render. Falls back to a neutral primary when the value isn't a
+// 6-digit hex (the swatch text input still accepts hsl(...) etc.).
+function normalizeHex(value: string | undefined): string {
+  if (!value) return '#7c3aed';
+  const trimmed = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed;
+  if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+    // Expand #abc → #aabbcc
+    return `#${trimmed
+      .slice(1)
+      .split('')
+      .map((c) => c + c)
+      .join('')}`;
+  }
+  return '#7c3aed';
 }
 
 // ── datetime-local <-> ISO helpers ──
