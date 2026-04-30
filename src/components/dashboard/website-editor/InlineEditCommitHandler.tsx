@@ -254,7 +254,7 @@ export function InlineEditCommitHandler() {
         });
       }
     },
-    [hero, brand, faq, footerCta, newClient, testimonials, extensions, toast],
+    [hero, brand, faq, footerCta, newClient, testimonials, extensions, gallery, locations, stylists, toast],
   );
 
   useEffect(() => {
