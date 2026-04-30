@@ -68,6 +68,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useNavigate } from 'react-router-dom';
 import {
   useWebsitePages,
   useUpdateWebsitePages,
@@ -292,6 +294,13 @@ function WebsiteEditorShellInner() {
     | { type: 'page'; pageId: string }
     | null
   >(null);
+  // Exit Editor confirm dialog (only opens when there are unsaved/unpublished changes).
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
+  const performExit = useCallback(() => {
+    navigate(dashPath('/admin/website-hub'));
+  }, [navigate, dashPath]);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
@@ -1124,7 +1133,7 @@ function WebsiteEditorShellInner() {
   );
 
   return (
-    <div className="-mx-1 h-[calc(100vh-9rem)] flex flex-col gap-3">
+    <div className="-mx-1 h-full min-h-[calc(100vh-2rem)] flex flex-col gap-3 p-3">
       {/* Inline-edit bridge: listens for INLINE_EDIT_COMMIT messages from the
           preview iframe and persists via the existing useSectionConfig hooks.
           Renders nothing — pure listener. */}
@@ -1132,6 +1141,24 @@ function WebsiteEditorShellInner() {
       {/* ── Top toolbar — Square-style: exit pill | (spacer) | upgrade · preview · publish ── */}
       <div className="flex items-center justify-between gap-3 shrink-0 px-1">
         <div className="flex items-center gap-2 min-w-0">
+          {/* Exit Editor — returns to Website Hub overview. Guards unsaved/unpublished changes. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 rounded-full px-3 gap-1.5 shrink-0 font-display tracking-wide uppercase text-xs"
+            onClick={() => {
+              if (isDirty || hasChanges) {
+                setExitConfirmOpen(true);
+              } else {
+                performExit();
+              }
+            }}
+            title="Exit editor and return to Website Hub"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Exit Editor</span>
+          </Button>
+          <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
           {isMobile && (
             <Button
               variant="outline"
@@ -1359,6 +1386,31 @@ function WebsiteEditorShellInner() {
               ) : (
                 'Discard & Restore'
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Exit Editor confirm — guards unsaved/unpublished changes */}
+      <AlertDialog open={exitConfirmOpen} onOpenChange={setExitConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit editor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDirty
+                ? 'You have unsaved changes in the current section. Exiting now will discard them.'
+                : `You have ${totalChanges} unpublished change${totalChanges === 1 ? '' : 's'}. They will remain saved as a draft and can be published later from Website Hub.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setExitConfirmOpen(false);
+                performExit();
+              }}
+            >
+              Exit Editor
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
