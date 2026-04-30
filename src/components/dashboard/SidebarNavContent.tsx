@@ -776,7 +776,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                               )}
                             >
                               <Icon className="w-4 h-4 shrink-0" />
-                              <span>{label}</span>
+                              <span className="flex-1">{label}</span>
+                              {item.href === WEBSITE_HUB_HREF && websiteHasUnpublished && (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-primary animate-pulse"
+                                  aria-label="Unpublished changes"
+                                />
+                              )}
                             </a>
                           );
                         })}
