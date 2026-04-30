@@ -1638,6 +1638,7 @@ export type Database = {
           payment_status: string
           phorest_client_id: string | null
           phorest_staff_id: string | null
+          promo_offer_code: string | null
           rebook_declined_reason: string | null
           rebooked_at_checkout: boolean | null
           rebooked_at_weeks: number | null
@@ -1714,6 +1715,7 @@ export type Database = {
           payment_status?: string
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
+          promo_offer_code?: string | null
           rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
           rebooked_at_weeks?: number | null
@@ -1790,6 +1792,7 @@ export type Database = {
           payment_status?: string
           phorest_client_id?: string | null
           phorest_staff_id?: string | null
+          promo_offer_code?: string | null
           rebook_declined_reason?: string | null
           rebooked_at_checkout?: boolean | null
           rebooked_at_weeks?: number | null
@@ -20112,6 +20115,42 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_offer_responses: {
+        Row: {
+          created_at: string
+          id: string
+          offer_code: string
+          organization_id: string
+          referrer: string | null
+          response: string
+          session_id: string | null
+          surface: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offer_code?: string
+          organization_id: string
+          referrer?: string | null
+          response: string
+          session_id?: string | null
+          surface?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offer_code?: string
+          organization_id?: string
+          referrer?: string | null
+          response?: string
+          session_id?: string | null
+          surface?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       promotion_redemptions: {
         Row: {
           client_id: string | null
@@ -32529,6 +32568,18 @@ export type Database = {
           p_severity: string
           p_type: string
           p_user: string
+        }
+        Returns: string
+      }
+      record_promo_response: {
+        Args: {
+          p_offer_code: string
+          p_organization_id: string
+          p_referrer?: string
+          p_response: string
+          p_session_id?: string
+          p_surface: string
+          p_user_agent?: string
         }
         Returns: string
       }

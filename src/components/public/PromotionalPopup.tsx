@@ -9,6 +9,7 @@ import {
 } from '@/hooks/usePromotionalPopup';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPath } from '@/hooks/useOrgPath';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -76,6 +77,44 @@ function markSessionDismissed() {
     window.sessionStorage.setItem(`${STORAGE_PREFIX}.session`, 'dismissed');
   } catch {
     // ignore
+  }
+}
+
+function getOrCreateSessionId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const key = `${STORAGE_PREFIX}.sid`;
+    let sid = window.sessionStorage.getItem(key);
+    if (!sid) {
+      sid = (crypto as any)?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.sessionStorage.setItem(key, sid);
+    }
+    return sid;
+  } catch {
+    return '';
+  }
+}
+
+async function recordResponse(args: {
+  organizationId: string | undefined | null;
+  offerCode: string;
+  surface: PopupSurface;
+  response: 'accepted' | 'declined' | 'soft';
+}) {
+  if (!args.organizationId) return;
+  try {
+    await supabase.rpc('record_promo_response', {
+      p_organization_id: args.organizationId,
+      p_offer_code: args.offerCode || '',
+      p_surface: args.surface,
+      p_response: args.response,
+      p_session_id: getOrCreateSessionId(),
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+    });
+  } catch (err) {
+    // Non-fatal: localStorage already records the dismissal client-side.
+    console.warn('[promo] failed to record response', err);
   }
 }
 
@@ -164,6 +203,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleAccept() {
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
     setOpen(false);
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
@@ -176,6 +216,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleDecline() {
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     setOpen(false);
   }
 
@@ -183,6 +224,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // Soft dismiss respects the frequency cap but isn't a recorded decline.
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     setOpen(false);
   }
 
