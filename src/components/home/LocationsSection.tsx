@@ -35,7 +35,7 @@ const locationGalleries: Record<string, string[]> = {
   ],
 };
 
-function LocationCard({ location, index }: { location: Location; index: number }) {
+function LocationCard({ location, index, ctaPrimaryText, ctaSecondaryText }: { location: Location; index: number; ctaPrimaryText: string; ctaSecondaryText: string }) {
   const isPreview = useIsEditorPreview();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -170,7 +170,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
                 >
-                  <span>Book consult</span>
+                  <span>{ctaPrimaryText}</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
                 </Link>
                 <button
@@ -186,7 +186,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
                   }}
                   className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
                 >
-                  <span>Check out the stylists</span>
+                  <span>{ctaSecondaryText}</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
                 </button>
               </div>
