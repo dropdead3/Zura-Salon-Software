@@ -1101,3 +1101,53 @@ export function WebsiteEditorShell() {
     </div>
   );
 }
+
+// ─── Save status pill ───
+function formatRelative(ts: number): string {
+  const diff = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diff < 5) return 'just now';
+  if (diff < 60) return `${diff}s ago`;
+  const m = Math.floor(diff / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
+function SaveStatusPill({
+  isDirty,
+  isSaving,
+  lastSavedAt,
+}: {
+  isDirty: boolean;
+  isSaving: boolean;
+  lastSavedAt: number | null;
+}) {
+  let label: string;
+  let icon: React.ReactNode;
+  let tone: string;
+  if (isSaving) {
+    label = 'Saving…';
+    icon = <Loader2 className="h-3 w-3 animate-spin" />;
+    tone = 'text-muted-foreground bg-muted/60';
+  } else if (isDirty) {
+    label = 'Unsaved changes';
+    icon = <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />;
+    tone = 'text-amber-700 dark:text-amber-300 bg-amber-500/10';
+  } else if (lastSavedAt) {
+    label = `Saved ${formatRelative(lastSavedAt)}`;
+    icon = <Check className="h-3 w-3 text-emerald-500" />;
+    tone = 'text-muted-foreground bg-muted/60';
+  } else {
+    return null;
+  }
+  return (
+    <span
+      className={`hidden md:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${tone}`}
+      role="status"
+      aria-live="polite"
+    >
+      {icon}
+      {label}
+    </span>
+  );
+}
