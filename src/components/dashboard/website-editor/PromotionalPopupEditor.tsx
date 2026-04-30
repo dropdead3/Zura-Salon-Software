@@ -67,6 +67,43 @@ const BODY_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
 // matches what most legal teams ask for in compact promo surfaces.
 const DISCLAIMER_CEILING = 200;
 
+// Single source of truth for save-time overflow detection. Mirrors the
+// ceilings the live counters render so a field flagged as destructive in the
+// UI also blocks Save with a confirmation toast — and vice versa. Kept as a
+// pure function so it stays trivial to unit-test if we add coverage later.
+type OverflowFinding = { field: 'headline' | 'body' | 'disclaimer'; message: string };
+
+function collectOverflows(data: PromotionalPopupSettings): OverflowFinding[] {
+  const findings: OverflowFinding[] = [];
+  const layout = data.appearance === 'corner-card' ? 'corner card' : data.appearance;
+
+  const headlineCeiling = HEADLINE_CEILINGS[data.appearance];
+  if (data.headline.length > headlineCeiling) {
+    findings.push({
+      field: 'headline',
+      message: `Headline (${data.headline.length}/${headlineCeiling}) will truncate on ${layout}.`,
+    });
+  }
+
+  const bodyCeiling = BODY_CEILINGS[data.appearance];
+  if (data.body.length > bodyCeiling) {
+    findings.push({
+      field: 'body',
+      message: `Body (${data.body.length}/${bodyCeiling}) will truncate on ${layout}.`,
+    });
+  }
+
+  const disclaimerLen = (data.disclaimer ?? '').length;
+  if (disclaimerLen > DISCLAIMER_CEILING) {
+    findings.push({
+      field: 'disclaimer',
+      message: `Disclaimer (${disclaimerLen}/${DISCLAIMER_CEILING}) exceeds the legal-copy limit.`,
+    });
+  }
+
+  return findings;
+}
+
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
   const { publicPageUrl } = useOrgPublicUrl();
