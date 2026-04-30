@@ -18,6 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
+import { ExtensionReviewsChipsManager } from './ExtensionReviewsChipsManager';
 
 const ICON_OPTIONS = [
   { value: 'Star', icon: Star },
@@ -303,6 +304,8 @@ export function ExtensionsEditor() {
           </CollapsibleContent>
         </Collapsible>
       </EditorCard>
+
+      <ExtensionReviewsChipsManager />
 
       <ReviewsManager surface="extensions" title="Extension Page Reviews" />
     </div>
