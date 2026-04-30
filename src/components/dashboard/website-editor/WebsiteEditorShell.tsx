@@ -229,6 +229,14 @@ function writePersisted(orgId: string | undefined, state: PersistedState) {
 }
 
 export function WebsiteEditorShell() {
+  return (
+    <EditorHistoryProvider>
+      <WebsiteEditorShellInner />
+    </EditorHistoryProvider>
+  );
+}
+
+function WebsiteEditorShellInner() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { effectiveOrganization } = useOrganizationContext();
