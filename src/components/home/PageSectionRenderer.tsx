@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BrandStatement } from '@/components/home/BrandStatement';
 import { ExtensionsSection } from '@/components/home/ExtensionsSection';
@@ -75,6 +76,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   }, [pageId]);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
+  const queryClient = useQueryClient();
 
   const enabledSections = useMemo(() => {
     const base = isEditorPreview && !isViewMode
@@ -101,6 +103,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
         'PREVIEW_SET_ACTIVE_SECTION',
         'PREVIEW_PROVISIONAL_ORDER',
         'PREVIEW_REORDER_SECTIONS',
+        'PREVIEW_REFRESH_DRAFT',
       ].includes(msg.type)) return;
 
       if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
@@ -136,11 +139,17 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
         if (msg.pageId && currentPageIdRef.current && msg.pageId !== currentPageIdRef.current) return;
         setProvisionalOrder(msg.order as string[]);
       }
+
+      // Real-time draft refresh: editor saved a draft → invalidate the
+      // iframe's site-settings cache so it re-fetches the new draft_value.
+      if (msg.type === 'PREVIEW_REFRESH_DRAFT') {
+        queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      }
     };
 
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [queryClient]);
 
   // Notify parent iframe that sections have rendered and are ready for scroll commands
   useEffect(() => {

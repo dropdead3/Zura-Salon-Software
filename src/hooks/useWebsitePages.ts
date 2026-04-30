@@ -125,24 +125,30 @@ export function useWebsitePages(explicitOrgId?: string) {
         ? migrateFromSections(legacy)
         : { pages: createDefaultPages() };
 
-      // Seed both `value` and `draft_value` so first load is idempotent.
-      const { data: { user } } = await supabase.auth.getUser();
-      try {
-        await writeSiteSettingDraft(
-          orgId!,
-          'website_pages',
-          pagesConfig,
-          user?.id ?? null,
-        );
-        // Also promote to live so the public site has an initial config.
-        await supabase
-          .from('site_settings')
-          .update({ value: pagesConfig as never })
-          .eq('id', 'website_pages')
-          .eq('organization_id', orgId!);
-        queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });
-      } catch (err) {
-        console.error('Failed to seed website_pages:', err);
+      // Only SEED the row from the editor (authed) — never from a public
+      // visitor's read. RLS would reject anon inserts and surface as a
+      // homepage error; in StrictMode this can also race.
+      if (mode === 'draft') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          try {
+            await writeSiteSettingDraft(
+              orgId!,
+              'website_pages',
+              pagesConfig,
+              user.id,
+            );
+            // Also promote to live so the public site has an initial config.
+            await supabase
+              .from('site_settings')
+              .update({ value: pagesConfig as never })
+              .eq('id', 'website_pages')
+              .eq('organization_id', orgId!);
+            queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });
+          } catch (err) {
+            console.error('Failed to seed website_pages:', err);
+          }
+        }
       }
 
       return pagesConfig;

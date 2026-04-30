@@ -98,24 +98,47 @@ export async function writeSiteSettingDraft(
       .eq('id', key)
       .eq('organization_id', orgId);
     if (error) throw error;
+    broadcastDraftWrite(orgId, key);
     return;
   }
 
-  // No row exists yet — seed it with the same value in BOTH columns so the
-  // first save shows up in the editor immediately and the live site has
-  // sensible defaults to fall back to.
+  // No row exists yet — seed only the DRAFT side. Leaving `value = null`
+  // ensures the publish dialog correctly reports this as a pending change
+  // (draft_value !== value), and the public site will simply have no row
+  // until the operator clicks Publish.
   const { error } = await supabase
     .from('site_settings')
     .insert({
       id: key,
       organization_id: orgId,
-      value: value as never,
+      value: null as never,
       draft_value: value as never,
       draft_updated_at: new Date().toISOString(),
       draft_updated_by: userId ?? null,
       updated_by: userId ?? null,
     });
   if (error) throw error;
+  broadcastDraftWrite(orgId, key);
+}
+
+/**
+ * Broadcast a draft-write notification so the live preview iframe (and any
+ * other listener in the parent window) can refresh in real time without a
+ * full reload.
+ *
+ * - Parent window: dispatches a `site-settings-draft-write` CustomEvent
+ *   that LivePreviewPanel forwards into the iframe via postMessage.
+ * - Iframe context: posts up to parent (no-op if same window).
+ */
+function broadcastDraftWrite(orgId: string, key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
+    );
+  } catch {
+    /* SSR / non-DOM env */
+  }
 }
 
 /**
