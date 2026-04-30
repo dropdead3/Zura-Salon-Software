@@ -101,15 +101,16 @@ export async function writeSiteSettingDraft(
     return;
   }
 
-  // No row exists yet — seed it with the same value in BOTH columns so the
-  // first save shows up in the editor immediately and the live site has
-  // sensible defaults to fall back to.
+  // No row exists yet — seed only the DRAFT side. Leaving `value = null`
+  // ensures the publish dialog correctly reports this as a pending change
+  // (draft_value !== value), and the public site will simply have no row
+  // until the operator clicks Publish.
   const { error } = await supabase
     .from('site_settings')
     .insert({
       id: key,
       organization_id: orgId,
-      value: value as never,
+      value: null as never,
       draft_value: value as never,
       draft_updated_at: new Date().toISOString(),
       draft_updated_by: userId ?? null,
