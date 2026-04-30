@@ -712,12 +712,12 @@ export function WebsiteEditorShell() {
     <WebsiteEditorSidebar
       activeTab={editorTab}
       onTabChange={(t) => {
-        setEditorTab(t);
+        requestTabChange(t);
         if (isMobile) setMobileSidebarOpen(false);
       }}
       selectedPageId={selectedPageId}
       onPageChange={(p) => {
-        setSelectedPageId(p);
+        requestPageChange(p);
         if (isMobile) setMobileSidebarOpen(false);
       }}
       onToggleCollapse={() => setShowSidebar(false)}
