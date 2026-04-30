@@ -55,6 +55,7 @@ export interface PromotionalPopupSettings {
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   enabled: false,
   eyebrow: 'Limited time offer',
+  eyebrowIcon: 'zap',
   headline: 'Free Haircut with Any Color Service',
   body: 'Book a color appointment this month and your haircut is on us.',
   ctaAcceptLabel: 'Claim Offer',
