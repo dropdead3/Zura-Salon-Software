@@ -139,6 +139,18 @@ export function PromotionalPopupEditor() {
     }
   }, [orgId]);
 
+  // Opens the live public site in a new tab with `?preview=true`, the trusted
+  // editor-preview channel that bypasses frequency caps and forces an immediate
+  // trigger. Lets QA validate the real layout outside the editor iframe.
+  const fullPreviewUrl = publicPageUrl(null, { preview: true });
+  const handleOpenFullPreview = useCallback(() => {
+    if (!fullPreviewUrl) {
+      toast.error('Public site URL is not ready yet');
+      return;
+    }
+    window.open(fullPreviewUrl, '_blank', 'noopener,noreferrer');
+  }, [fullPreviewUrl]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
