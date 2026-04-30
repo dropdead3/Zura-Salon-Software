@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
+import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useOverflowGuard } from '@/hooks/useOverflowGuard';
@@ -475,10 +476,12 @@ export function PromotionalPopupEditor() {
             overflowVerb="Over limit"
           />
         </Field>
-        <Field label="Image URL (optional)">
-          <Input
+        <Field label="Image (optional)" hint="Shown above the headline. Recommended 1600×1200 or larger; auto-optimized to WebP.">
+          <ImageUploadInput
+            label=""
             value={formData.imageUrl ?? ''}
-            onChange={(e) => handleChange('imageUrl', e.target.value)}
+            onChange={(url) => handleChange('imageUrl', url)}
+            pathPrefix="promotional-popup"
             placeholder="https://..."
           />
         </Field>
