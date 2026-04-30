@@ -302,8 +302,9 @@ function WebsiteEditorShellInner() {
   }, [navigate, dashPath]);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
-  const { data: hasEverPublished } = useHasEverPublished();
-  const discardMutation = useDiscardToLastPublished();
+  // Discard now means "revert unpublished draft to live", not "restore last
+  // snapshot". Available whenever drafts have diverged from live.
+  const discardMutation = useDiscardDrafts();
 
   const { data: pagesConfig } = useWebsitePages();
   const updatePages = useUpdateWebsitePages();
