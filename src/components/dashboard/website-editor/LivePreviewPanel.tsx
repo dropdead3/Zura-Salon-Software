@@ -316,8 +316,12 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             <DeviceButton active={device === 'mobile'} onClick={() => setDevice('mobile')} title="Mobile (390px)">
               <Smartphone className="h-4 w-4" />
             </DeviceButton>
-            <DeviceButton active={device === 'fit'} onClick={() => setDevice('fit')} title="Fit to pane">
-              <Maximize2 className="h-4 w-4" />
+            <DeviceButton
+              active={device === 'fit'}
+              onClick={handleFitToggle}
+              title={device === 'fit' ? `Back to ${DEVICE_PRESETS[previousDeviceRef.current].label} view` : 'Fit to pane'}
+            >
+              {device === 'fit' ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </DeviceButton>
           </div>
 
