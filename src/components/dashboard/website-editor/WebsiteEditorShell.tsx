@@ -645,6 +645,8 @@ export function WebsiteEditorShell() {
     resolveSectionTab,
     requestTabChange,
     selectedPage,
+    selectedPageId,
+    pagesConfig,
     isHomePage,
     handlePageSectionToggle,
     handlePageSectionDuplicate,
