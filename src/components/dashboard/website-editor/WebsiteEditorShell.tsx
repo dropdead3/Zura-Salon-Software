@@ -68,6 +68,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useNavigate } from 'react-router-dom';
 import {
   useWebsitePages,
   useUpdateWebsitePages,
