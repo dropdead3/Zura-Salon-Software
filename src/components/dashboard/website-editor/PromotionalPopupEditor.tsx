@@ -55,6 +55,18 @@ const HEADLINE_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> 
   'corner-card': 22,
 };
 
+// Body is rendered as multi-line copy. The card/modal layouts truncate around
+// line 3 (~140 chars at default leading); banner is single-line and tighter.
+const BODY_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
+  modal: 160,
+  banner: 80,
+  'corner-card': 140,
+};
+
+// Legal/disclaimer ceiling — single global limit. Conservative default that
+// matches what most legal teams ask for in compact promo surfaces.
+const DISCLAIMER_CEILING = 200;
+
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
   const { publicPageUrl } = useOrgPublicUrl();
