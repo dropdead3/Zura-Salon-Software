@@ -472,22 +472,6 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50">
-      {/* Collapse toggle */}
-      <div className="px-3 py-2 border-b border-border/40 flex-shrink-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={onToggleCollapse}
-              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-muted/60 text-muted-foreground text-xs transition-colors"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-              <span>Collapse</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Collapse sidebar</TooltipContent>
-        </Tooltip>
-      </div>
-
       {/* Page actions — picker lives in the toolbar; this block surfaces page-scoped actions only */}
       {(!isHomePage || onAddPage) && (
         <div className="p-3 border-b border-border/40 space-y-2">
@@ -545,9 +529,23 @@ export function WebsiteEditorSidebar({
         </div>
       )}
 
-      {/* Search */}
-      <div className="p-3 border-b">
-        <WebsiteEditorSearch onSelectResult={onTabChange} />
+      {/* Search + collapse — single row reclaims ~44px of vertical real estate */}
+      <div className="p-3 border-b flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <WebsiteEditorSearch onSelectResult={onTabChange} />
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onToggleCollapse}
+              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
+              aria-label="Collapse sidebar"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Collapse sidebar (⌘\)</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Navigation */}

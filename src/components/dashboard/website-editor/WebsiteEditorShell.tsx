@@ -10,7 +10,7 @@ import {
   History,
   Loader2,
   MousePointer2,
-  PanelLeftClose,
+  
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
@@ -941,7 +941,7 @@ export function WebsiteEditorShell() {
             variant="default"
             size={tokens.button.card}
             onClick={() => setPublishOpen(true)}
-            className="relative"
+            className="relative rounded-full"
             title="Publish changes (⌘S)"
           >
             <Globe className="h-4 w-4 mr-1" />
@@ -961,6 +961,7 @@ export function WebsiteEditorShell() {
             variant={showPreview ? 'secondary' : 'outline'}
             size={tokens.button.card}
             onClick={() => setShowPreview(!showPreview)}
+            className="rounded-full"
             title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
           >
             {showPreview ? (
@@ -974,7 +975,7 @@ export function WebsiteEditorShell() {
           {/* Overflow */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9" title="More">
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" title="More">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -1224,26 +1225,22 @@ export function WebsiteEditorShell() {
             </>
           )}
 
-          <ResizablePanel defaultSize={showPreview ? 40 : 78} minSize={30}>
-            <div className="h-full flex flex-col overflow-hidden">
-              {!isMobile && (
-                <div className="flex-shrink-0 px-2 py-1.5 border-b bg-muted/30 flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSidebar(!showSidebar)}
-                    className="h-7 w-7"
-                    title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
-                  >
-                    {showSidebar ? (
-                      <PanelLeftClose className="h-3.5 w-3.5" />
-                    ) : (
-                      <PanelLeftOpen className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                </div>
+          <ResizablePanel defaultSize={showPreview ? 38 : 78} minSize={30}>
+            <div className="h-full flex flex-col overflow-hidden relative">
+              {/* Floating collapse affordance — only when sidebar hidden, so we
+                  don't waste a full row on a single icon button. */}
+              {!isMobile && !showSidebar && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowSidebar(true)}
+                  className="absolute top-3 left-3 z-20 h-8 w-8 rounded-full shadow-sm bg-card/90 backdrop-blur-md"
+                  title="Show sections (⌘\)"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </Button>
               )}
-              <div className="flex-1 overflow-auto p-6">
+              <div className="flex-1 overflow-auto p-4">
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center h-32">
@@ -1260,7 +1257,7 @@ export function WebsiteEditorShell() {
           {showPreview && !isMobile && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={38} minSize={20} maxSize={55}>
+              <ResizablePanel defaultSize={44} minSize={20} maxSize={55}>
                 <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
               </ResizablePanel>
             </>

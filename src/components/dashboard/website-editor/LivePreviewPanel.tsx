@@ -28,7 +28,9 @@ function readDevice(): DeviceMode {
     const v = localStorage.getItem(VIEWPORT_KEY);
     if (v === 'desktop' || v === 'tablet' || v === 'mobile' || v === 'fit') return v;
   } catch {}
-  return 'desktop';
+  // Default to 'fit' so the iframe uses the full pane and the site's real
+  // responsive breakpoints kick in. Persisted preferences override.
+  return 'fit';
 }
 
 function readOrientation(): Orientation {
@@ -158,9 +160,22 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         try {
           const url = new URL(previewUrl);
           const isCustomDomain = url.origin !== window.location.origin;
-          // Friendly: host + path (no query/UUIDs). Trim trailing slash.
-          const friendlyPath = url.pathname.replace(/\/$/, '') || '/';
-          const friendlyUrl = `${url.host}${friendlyPath === '/' ? '' : friendlyPath}`;
+          const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          // Strip /org/<uuid>/ → just the page slug. Keep /p/<slug>.
+          const cleanedPath = url.pathname
+            .split('/')
+            .filter(Boolean)
+            .filter((seg, i, arr) => !(arr[i - 1] === 'org' && UUID_RE.test(seg)))
+            .filter((seg) => seg !== 'org')
+            .join('/');
+          const friendlyPath = cleanedPath ? `/${cleanedPath}` : '/';
+          // Sandbox/preview hosts hide the UUID prefix; show a clean label instead.
+          const isSandboxHost = /lovable\.app$/.test(url.host) || /^id-preview/.test(url.host);
+          const friendlyHost = isSandboxHost ? 'Preview' : url.host;
+          const friendlyUrl =
+            friendlyPath === '/'
+              ? friendlyHost
+              : `${friendlyHost}${friendlyPath}`;
           return {
             status: isLoading ? 'Loading' : 'Ready',
             channel: isCustomDomain ? 'Custom domain' : null,

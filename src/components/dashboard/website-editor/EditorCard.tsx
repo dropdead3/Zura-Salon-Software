@@ -9,16 +9,28 @@ interface EditorCardProps {
   headerActions?: ReactNode;
   children: ReactNode;
   className?: string;
+  /**
+   * Compact header — drops the description (the toolbar breadcrumb already
+   * names this surface) and uses a tighter single-line band. Defaults true
+   * because the canonical label lives in the toolbar above.
+   */
+  compact?: boolean;
 }
 
-export function EditorCard({ title, icon: Icon, description, headerActions, children, className }: EditorCardProps) {
+export function EditorCard({ title, icon: Icon, description, headerActions, children, className, compact = true }: EditorCardProps) {
+  const showDescription = !!description && !compact;
   return (
     <div className={cn(
       "bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl shadow-sm overflow-hidden",
       className
     )}>
       {/* Sticky frosted-glass header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 px-4 py-3 bg-card/90 backdrop-blur-md border-b border-border/40">
+      <div
+        className={cn(
+          "sticky top-0 z-10 flex items-center justify-between gap-2 px-4 bg-card/90 backdrop-blur-md border-b border-border/40",
+          compact ? "py-2" : "py-3"
+        )}
+      >
         <div className="flex items-center gap-2.5 min-w-0 flex-1 overflow-hidden">
           {Icon && (
             <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
@@ -27,7 +39,7 @@ export function EditorCard({ title, icon: Icon, description, headerActions, chil
           )}
           <div className="min-w-0">
             <h3 className="font-display text-sm tracking-wide text-foreground truncate">{title}</h3>
-            {description && (
+            {showDescription && (
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{description}</p>
             )}
           </div>
