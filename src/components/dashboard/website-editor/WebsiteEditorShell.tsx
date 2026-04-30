@@ -139,6 +139,24 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   pages: PagesManager,
 };
 
+// Map home built-in section TYPES → editor tab keys (mirrors sidebar).
+// Used by canvas click-to-edit to resolve postMessage section IDs into tabs.
+const BUILTIN_TYPE_TO_TAB: Record<string, string> = {
+  hero: 'hero',
+  brand_statement: 'brand',
+  testimonials: 'testimonials-section',
+  services_preview: 'services-preview',
+  popular_services: 'popular-services',
+  gallery: 'gallery-section',
+  new_client: 'new-client',
+  stylists: 'stylists-section',
+  locations: 'locations-section',
+  faq: 'faq',
+  extensions: 'extensions',
+  brands: 'brands',
+  drink_menu: 'drinks',
+};
+
 const TAB_LABELS: Record<string, string> = {
   services: 'Services Manager',
   testimonials: 'Testimonials Manager',
