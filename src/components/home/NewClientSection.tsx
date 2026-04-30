@@ -6,6 +6,7 @@ import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useNewClientConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 export const NewClientSection = () => {
   const isPreview = useIsEditorPreview();
