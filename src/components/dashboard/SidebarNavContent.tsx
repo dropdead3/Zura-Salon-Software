@@ -820,6 +820,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       label={getNavLabel(item)}
                       icon={item.icon}
                       badgeCount={getBadgeCount(item.href)}
+                      showDot={item.href === WEBSITE_HUB_HREF && websiteHasUnpublished}
                     />
                   ))}
                   {/* Ops Hub favorites sub-links */}
