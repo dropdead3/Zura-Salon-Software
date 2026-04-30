@@ -9,6 +9,13 @@ export interface PromotionalPopupRedemptionStats {
   series: number[];
   /** Confirmed redemptions in the trailing 24h. Powers the momentum chip. */
   last24h: number;
+  /**
+   * Sum of `revenue_attributed` across all popup-surface redemptions for this
+   * code. Stamped at booking time — represents what the popup *drove*, not
+   * post-edit reality. Returns 0 when no redemptions or all rows pre-date the
+   * attribution column being populated (honest absence, not fabricated).
+   */
+  revenueAttributed: number;
 }
 
 const WINDOW_DAYS = 14;
