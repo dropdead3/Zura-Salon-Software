@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, memo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Monitor, Tablet, Smartphone, Maximize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Maximize2, Minimize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
