@@ -1032,7 +1032,7 @@ function WebsiteEditorShellInner() {
         <Button
           variant="secondary"
           size="sm"
-          className="h-8 rounded-full px-4 font-display text-xs tracking-wider uppercase"
+          className="rounded-full px-4"
           onClick={() => requestTabChange('pages')}
           title="Return to sections list"
         >
