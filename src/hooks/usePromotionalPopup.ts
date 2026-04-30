@@ -10,6 +10,8 @@ export type PopupFrequency = 'once' | 'once-per-session' | 'daily' | 'always';
 export type PopupAudience = 'all' | 'new-visitors-only';
 export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
 export type FabPosition = 'bottom-right' | 'bottom-left';
+/** Curated companion glyph for the eyebrow tag. `none` hides the icon. */
+export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles';
 
 export interface PromotionalPopupSettings {
   enabled: boolean;
@@ -17,6 +19,8 @@ export interface PromotionalPopupSettings {
   /** Small uppercase tag rendered above the headline. Optional — empty
    *  string hides the eyebrow row entirely. */
   eyebrow?: string;
+  /** Companion glyph rendered to the left of the eyebrow text. */
+  eyebrowIcon?: EyebrowIcon;
   headline: string;
   body: string;
   ctaAcceptLabel: string;
@@ -51,6 +55,7 @@ export interface PromotionalPopupSettings {
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   enabled: false,
   eyebrow: 'Limited time offer',
+  eyebrowIcon: 'zap',
   headline: 'Free Haircut with Any Color Service',
   body: 'Book a color appointment this month and your haircut is on us.',
   ctaAcceptLabel: 'Claim Offer',

@@ -12,6 +12,7 @@ import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { getEyebrowIcon } from '@/lib/eyebrow-icons';
 
 interface Props {
   /**
@@ -368,14 +369,18 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            {cfg.eyebrow && (
-              <p
-                className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-0.5 truncate"
-                style={{ color: accent }}
-              >
-                {cfg.eyebrow}
-              </p>
-            )}
+            {cfg.eyebrow && (() => {
+              const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+              return (
+                <p
+                  className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-0.5 truncate inline-flex items-center gap-1"
+                  style={{ color: accent }}
+                >
+                  {Icon && <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />}
+                  <span className="truncate">{cfg.eyebrow}</span>
+                </p>
+              );
+            })()}
             <p
               id="promo-popup-title"
               className="font-display uppercase tracking-wide text-sm sm:text-base text-foreground truncate"
@@ -468,17 +473,21 @@ function PromoBody({
           <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
-      {cfg.eyebrow && (
-        <p
-          className={cn(
-            'font-display uppercase tracking-[0.2em] mb-2',
-            compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
-          )}
-          style={{ color: accent }}
-        >
-          {cfg.eyebrow}
-        </p>
-      )}
+      {cfg.eyebrow && (() => {
+        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+        return (
+          <p
+            className={cn(
+              'font-display uppercase tracking-[0.2em] mb-2 inline-flex items-center gap-1.5',
+              compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
+            )}
+            style={{ color: accent }}
+          >
+            {Icon && <Icon className={cn('shrink-0', compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} aria-hidden="true" />}
+            <span>{cfg.eyebrow}</span>
+          </p>
+        );
+      })()}
       <h2
         id="promo-popup-title"
         className={cn(

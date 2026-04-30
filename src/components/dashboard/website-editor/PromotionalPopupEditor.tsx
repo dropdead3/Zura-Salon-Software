@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock } from 'lucide-react';
+import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ import {
   DEFAULT_PROMO_POPUP,
   type PromotionalPopupSettings,
   type PopupSurface,
+  type EyebrowIcon,
 } from '@/hooks/usePromotionalPopup';
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
@@ -330,11 +332,26 @@ export function PromotionalPopupEditor() {
       {/* Content */}
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
-          <Input
-            value={formData.eyebrow ?? ''}
-            onChange={(e) => handleChange('eyebrow', e.target.value)}
-            placeholder="Limited time offer"
-            maxLength={32}
+          <div className="grid grid-cols-[auto_1fr] gap-2">
+            <EyebrowIconPicker
+              value={formData.eyebrowIcon ?? 'none'}
+              onChange={(v) => handleChange('eyebrowIcon', v)}
+              accent={formData.accentColor}
+            />
+            <Input
+              value={formData.eyebrow ?? ''}
+              onChange={(e) => handleChange('eyebrow', e.target.value)}
+              placeholder="Limited time offer"
+              maxLength={32}
+            />
+          </div>
+          <EyebrowUrgencySuggestion
+            endsAt={formData.endsAt}
+            currentEyebrow={formData.eyebrow}
+            onApply={(text, icon) => {
+              handleChange('eyebrow', text);
+              handleChange('eyebrowIcon', icon);
+            }}
           />
         </Field>
         <Field label="Headline" hint="Keep it short — appears in display type.">
@@ -445,6 +462,8 @@ export function PromotionalPopupEditor() {
               appearance={formData.appearance}
               accent={formData.accentColor}
               headline={formData.headline}
+              eyebrow={formData.eyebrow}
+              eyebrowIcon={formData.eyebrowIcon}
             />
           </div>
         </Field>
@@ -821,14 +840,32 @@ function AppearancePreviewSwatch({
   appearance,
   accent,
   headline,
+  eyebrow,
+  eyebrowIcon,
 }: {
   appearance: PromotionalPopupSettings['appearance'];
   accent?: string;
   headline: string;
+  eyebrow?: string;
+  eyebrowIcon?: EyebrowIcon;
 }) {
   const accentColor = accent || 'hsl(var(--primary))';
   const trim = (max: number) =>
     headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
+  const Icon = getEyebrowIcon(eyebrowIcon);
+  const eyebrowText = eyebrow?.trim();
+  // Compact uppercase eyebrow strip — accent-colored, icon-aware. Reused by
+  // all three layout variants so the swatch stays a true WYSIWYG of what the
+  // public popup will paint.
+  const eyebrowStrip = eyebrowText ? (
+    <span
+      className="font-display uppercase tracking-[0.18em] text-[6px] inline-flex items-center gap-0.5 truncate"
+      style={{ color: accentColor }}
+    >
+      {Icon && <Icon className="h-1.5 w-1.5 shrink-0" aria-hidden="true" />}
+      <span className="truncate">{eyebrowText}</span>
+    </span>
+  ) : null;
 
   return (
     <div className="space-y-1.5">
@@ -846,6 +883,7 @@ function AppearancePreviewSwatch({
           <>
             <div className="absolute inset-0 top-3 bg-black/30 backdrop-blur-[1px]" />
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-14 rounded-md bg-card border border-border shadow-lg p-1.5 flex flex-col gap-0.5">
+              {eyebrowStrip}
               <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
                 {trim(28)}
               </span>
@@ -858,17 +896,23 @@ function AppearancePreviewSwatch({
         )}
         {appearance === 'banner' && (
           <div
-            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1 text-primary-foreground"
+            className="absolute top-3 inset-x-0 flex items-center px-1.5 gap-1 text-primary-foreground py-0.5"
             style={{ backgroundColor: accentColor }}
           >
-            <span className="font-display uppercase tracking-wider text-[7px] truncate flex-1">
-              {trim(26)}
-            </span>
+            <div className="flex flex-col flex-1 min-w-0">
+              {eyebrowStrip && (
+                <span className="text-white/80 [&>*]:text-white/80">{eyebrowStrip}</span>
+              )}
+              <span className="font-display uppercase tracking-wider text-[7px] truncate">
+                {trim(26)}
+              </span>
+            </div>
             <span className="h-1.5 w-5 rounded-full bg-white/30 shrink-0" />
           </div>
         )}
         {appearance === 'corner-card' && (
           <div className="absolute bottom-1.5 right-1.5 w-24 h-14 rounded-md bg-card border border-border shadow-md p-1.5 flex flex-col gap-0.5">
+            {eyebrowStrip}
             <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
               {trim(22)}
             </span>
@@ -918,4 +962,92 @@ function fromLocalInput(value: string): string | null {
   if (!value) return null;
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+// ── Eyebrow icon picker ──
+// Tiny pill-button row of curated lucide glyphs (+ "none" off-state). Active
+// option borrows the accent color so the picker doubles as a brand preview.
+function EyebrowIconPicker({
+  value,
+  onChange,
+  accent,
+}: {
+  value: EyebrowIcon;
+  onChange: (v: EyebrowIcon) => void;
+  accent?: string;
+}) {
+  const accentColor = accent || 'hsl(var(--primary))';
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Eyebrow icon"
+      className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9"
+    >
+      {EYEBROW_ICON_OPTIONS.map(({ value: optValue, label, icon: Icon }) => {
+        const active = value === optValue;
+        return (
+          <button
+            key={optValue}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(optValue)}
+            className={cn(
+              'h-7 w-7 rounded-full inline-flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground',
+              active && 'bg-muted text-foreground',
+            )}
+            style={active && Icon ? { color: accentColor } : undefined}
+          >
+            {Icon ? <Icon className="h-3.5 w-3.5" /> : <span className="text-[9px] font-display uppercase tracking-wider">Off</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Time-aware eyebrow suggestion ──
+// When `endsAt` falls within the next 72h, surface a one-tap chip that swaps
+// eyebrow copy to a urgency-tied phrase. Stays a *suggestion* — never
+// auto-edits — so the operator owns the final copy.
+function EyebrowUrgencySuggestion({
+  endsAt,
+  currentEyebrow,
+  onApply,
+}: {
+  endsAt: string | null | undefined;
+  currentEyebrow: string | undefined;
+  onApply: (text: string, icon: EyebrowIcon) => void;
+}) {
+  if (!endsAt) return null;
+  const end = new Date(endsAt);
+  if (Number.isNaN(end.getTime())) return null;
+
+  const msLeft = end.getTime() - Date.now();
+  if (msLeft <= 0 || msLeft > 72 * 60 * 60 * 1000) return null;
+
+  const hoursLeft = Math.round(msLeft / (60 * 60 * 1000));
+  const suggestion =
+    hoursLeft <= 12
+      ? 'Ends today'
+      : hoursLeft <= 36
+        ? 'Ends tomorrow'
+        : `Ends in ${Math.round(hoursLeft / 24)} days`;
+
+  if ((currentEyebrow ?? '').trim().toLowerCase() === suggestion.toLowerCase()) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onApply(suggestion, 'clock')}
+      className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/40 bg-primary/[0.04] px-2.5 py-1 text-[11px] font-sans text-primary hover:bg-primary/10 transition-colors"
+    >
+      <Clock className="h-3 w-3" />
+      <span>Switch to "{suggestion}"</span>
+    </button>
+  );
 }
