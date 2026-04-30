@@ -65,7 +65,11 @@ export function ExtensionsSection() {
                 transition={{ duration: 0.6, delay: 0.05 }}
                 className="text-sm font-display uppercase tracking-widest text-oat/70 mb-1"
               >
-                {config.eyebrow}
+                <InlineEditableText
+                  value={config.eyebrow}
+                  sectionKey="section_extensions"
+                  fieldPath="eyebrow"
+                />
               </motion.p>
             )}
 
@@ -76,11 +80,23 @@ export function ExtensionsSection() {
                 transition={{ duration: 0.8, delay: 0.1 }}
                 className="font-display text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.1]"
               >
-                <span className="whitespace-nowrap">{config.headline_line1}</span>
+                <span className="whitespace-nowrap">
+                  <InlineEditableText
+                    value={config.headline_line1}
+                    sectionKey="section_extensions"
+                    fieldPath="headline_line1"
+                  />
+                </span>
                 {config.headline_line2 && (
                   <>
                     <br />
-                    <span className="font-light text-oat">{config.headline_line2}</span>
+                    <span className="font-light text-oat">
+                      <InlineEditableText
+                        value={config.headline_line2}
+                        sectionKey="section_extensions"
+                        fieldPath="headline_line2"
+                      />
+                    </span>
                   </>
                 )}
               </motion.h2>
@@ -93,7 +109,13 @@ export function ExtensionsSection() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-lg md:text-xl font-sans font-light leading-relaxed text-background/80 max-w-xl"
               >
-                {config.description}
+                <InlineEditableText
+                  value={config.description}
+                  sectionKey="section_extensions"
+                  fieldPath="description"
+                  multiline
+                  as="span"
+                />
               </motion.p>
             )}
 
