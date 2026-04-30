@@ -34,16 +34,16 @@ import {
   PanelBottom,
   Plus,
   Trash2,
-  Copy,
   FileText,
-  Settings,
   LayoutTemplate,
   ChevronsRight,
   ChevronsLeft,
-  Search,
   Layers,
+  EyeOff,
+  Eye,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
@@ -57,6 +57,7 @@ import {
   type CustomSectionType,
 } from '@/hooks/useWebsiteSections';
 import { useWebsitePages } from '@/hooks/useWebsitePages';
+import { useEditorSidebarPrefs } from '@/hooks/useEditorSidebarPrefs';
 import { SectionNavItem } from './SectionNavItem';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { ContentNavItem } from './ContentNavItem';
