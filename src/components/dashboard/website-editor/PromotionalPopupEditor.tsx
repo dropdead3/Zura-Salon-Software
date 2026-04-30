@@ -736,6 +736,7 @@ export function PromotionalPopupEditor() {
               );
             })}
           </div>
+          <AccentContrastWarning accent={formData.accentColor} />
         </Field>
         <Field
           label="Reminder button position"
