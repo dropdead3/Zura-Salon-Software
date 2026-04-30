@@ -947,7 +947,7 @@ function FabPreviewSwatch({
             position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
             pulsing && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
           )}
-          style={{ backgroundColor: accentColor }}
+          style={{ backgroundColor: accentColor, color: accentFg }}
         >
           <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white/20">
             <Gift className="h-2 w-2" />
