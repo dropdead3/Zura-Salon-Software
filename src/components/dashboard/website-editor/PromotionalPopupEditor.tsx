@@ -31,12 +31,29 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
 ];
 
 // Curated accent presets so operators can match brand intent without hex
-// guessing. `undefined` resolves to the org's theme primary at render time.
-const ACCENT_PRESETS: { label: string; value: string | undefined; swatch: string; hint: string }[] = [
-  { label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
-  { label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
-  { label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
+// guessing. `value === undefined` resolves to the org's theme primary at render
+// time. `key` is persisted alongside `accentColor` so the active chip stays
+// highlighted even after a theme change shifts the underlying hex.
+const ACCENT_PRESETS: {
+  key: string;
+  label: string;
+  value: string | undefined;
+  swatch: string;
+  hint: string;
+}[] = [
+  { key: 'house', label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
+  { key: 'high-contrast', label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
+  { key: 'soft-neutral', label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
 ];
+
+// Per-appearance headline truncation ceilings — must match the `trim(...)` calls
+// inside `AppearancePreviewSwatch`. Surfaced in the headline field so operators
+// see the exact char ceiling for the layout they've selected.
+const HEADLINE_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
+  modal: 28,
+  banner: 26,
+  'corner-card': 22,
+};
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
