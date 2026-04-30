@@ -172,7 +172,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         fire();
         break;
       case 'delay': {
-        const t = window.setTimeout(fire, cfg.triggerValueMs ?? 4000);
+        const t = window.setTimeout(fire, cfg.triggerValueMs ?? 10000);
         cleanup = () => window.clearTimeout(t);
         break;
       }
