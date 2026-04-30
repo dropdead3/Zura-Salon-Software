@@ -695,10 +695,25 @@ export function PromotionalPopupEditor() {
           hint="Attached to the booking URL when a visitor accepts (e.g. FREECUT). Recorded for the team."
         >
           <Input
+            ref={offerCodeRef}
             value={formData.offerCode}
             onChange={(e) => handleChange('offerCode', e.target.value.toUpperCase())}
             placeholder="FREECUT"
           />
+          {/* Empty-code lint — passive editor warning that mirrors the publish
+              gate guard. Fires when destination is booking/consultation but
+              the code is empty: visitors would land on plain booking with
+              nothing applied. Warn-don't-block: the field still saves. */}
+          {!(formData.offerCode ?? '').trim() &&
+            ((formData.acceptDestination ?? 'booking') === 'booking' ||
+              (formData.acceptDestination ?? 'booking') === 'consultation') && (
+              <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl border border-amber-500/40 bg-amber-500/5">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="font-sans text-xs text-foreground leading-relaxed">
+                  No code attached — visitors who click Claim Offer will land on plain booking with nothing applied. Add a code or switch the destination to a Custom URL.
+                </p>
+              </div>
+            )}
         </Field>
 
         {/* Destination — where Claim Offer sends the visitor */}
