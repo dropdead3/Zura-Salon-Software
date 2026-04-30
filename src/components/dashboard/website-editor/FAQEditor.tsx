@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, HelpCircle } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useFAQConfig, type FAQConfig, DEFAULT_FAQ } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -23,6 +25,10 @@ export function FAQEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  // Live-edit bridge — stream in-memory edits into the preview iframe.
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_faq', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -33,11 +39,12 @@ export function FAQEditor() {
     try {
       await update(localConfig);
       toast.success('FAQ section saved');
+      clearPreviewOverride('section_faq', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 
