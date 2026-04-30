@@ -232,6 +232,7 @@ export function usePublishAll() {
       // both the public site AND the editor re-fetch fresh data.
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
       queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['website-menus-dirty'] });
       queryClient.invalidateQueries({ queryKey: ['website-menus'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
       queryClient.invalidateQueries({ queryKey: ['published-menu'] });
