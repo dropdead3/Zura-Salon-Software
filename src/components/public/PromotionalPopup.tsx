@@ -302,13 +302,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // headline so the visitor can re-open the offer at any time during the session.
   const fab = showFab && !open ? (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
+      className={cn(
+        'fixed bottom-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
+        fabPos === 'bottom-left' ? 'left-6 flex-row-reverse' : 'right-6',
+      )}
     >
       <button
         type="button"
         onClick={handleFabOpen}
         aria-label={`Reopen offer: ${cfg.headline}`}
-        className="group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform"
+        className={cn(
+          'group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform',
+          // Session-scoped one-time pulse hint (~3 cycles, then auto-stops).
+          pulseFab && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
+        )}
         style={{ backgroundColor: accent }}
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
@@ -323,7 +330,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         type="button"
         aria-label="Dismiss offer reminder"
         onClick={handleFabDismiss}
-        className="hidden sm:flex ml-2 h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+        className={cn(
+          'hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors',
+          fabPos === 'bottom-left' ? 'mr-2' : 'ml-2',
+        )}
       >
         <X className="h-3.5 w-3.5" />
       </button>
