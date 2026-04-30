@@ -1350,9 +1350,9 @@ function WebsiteEditorShellInner() {
           <AlertDialogHeader>
             <AlertDialogTitle>Discard unpublished changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will revert pages, theme, footer, and announcement bar to the last published
-              version. A backup of the current state is saved to History so you can recover it
-              later.
+              This reverts your editor drafts back to whatever is currently live on your public
+              site. Your live site is not affected. To restore an even older version, use Version
+              History instead.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1362,10 +1362,13 @@ function WebsiteEditorShellInner() {
               onClick={async (e) => {
                 e.preventDefault();
                 try {
-                  await discardMutation.mutateAsync();
+                  const reverted = await discardMutation.mutateAsync();
                   toast({
-                    title: 'Reverted to last published',
-                    description: 'A backup of your changes was saved to History.',
+                    title: 'Drafts discarded',
+                    description:
+                      reverted > 0
+                        ? `Reverted ${reverted} unpublished change${reverted === 1 ? '' : 's'} back to live.`
+                        : 'No unpublished changes to discard.',
                   });
                   setDiscardOpen(false);
                 } catch (err) {
@@ -1384,7 +1387,7 @@ function WebsiteEditorShellInner() {
                   Reverting…
                 </>
               ) : (
-                'Discard & Restore'
+                'Discard drafts'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
