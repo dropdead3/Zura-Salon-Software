@@ -77,7 +77,7 @@ export function GlyphPicker<V extends string = string>({
             {Icon ? (
               <Icon className="h-3.5 w-3.5" />
             ) : (
-              <span className="text-[9px] font-display uppercase tracking-wider">
+              <span className="text-[10px] font-sans font-medium tracking-tight">
                 {emptyLabel}
               </span>
             )}
