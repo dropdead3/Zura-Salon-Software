@@ -9,6 +9,11 @@ import { useWebsiteThemeSettings } from './useWebsiteSettings';
 import { useAnnouncementBarSettings } from './useAnnouncementBar';
 import { useSiteSettings } from './useSiteSettings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import {
+  publishSiteSettingsDrafts,
+  discardSiteSettingsDrafts,
+  listDirtyDrafts,
+} from '@/lib/siteSettingsDraft';
 
 export interface ChangeItem {
   id: string;
