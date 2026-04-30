@@ -237,6 +237,15 @@ export function WebsiteEditorShell() {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  // Wave 4: insert-at and style inspector
+  const [addSectionState, setAddSectionState] = useState<
+    | { open: false }
+    | { open: true; pageId: string; afterSectionId: string | null }
+  >({ open: false });
+  const [styleTarget, setStyleTarget] = useState<
+    | { pageId: string; sectionId: string }
+    | null
+  >(null);
   const pagePickerRef = useRef<HTMLButtonElement>(null);
 
   // Wave 3: dirty + saving + last-saved tracking from active editor surfaces.
