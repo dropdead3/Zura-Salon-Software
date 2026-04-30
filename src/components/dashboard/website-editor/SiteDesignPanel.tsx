@@ -266,6 +266,19 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     onClose();
   }, [onClose]);
 
+  // Shell → panel bridge: external close requests (backdrop / ESC / toolbar
+  // toggle) flow through here so the dirty-confirm dialog can intercept.
+  useEffect(() => {
+    const onExternalClose = () => handleCloseIntent();
+    const onExternalDiscard = () => handleDiscardConfirmed();
+    window.addEventListener('site-design-close-request', onExternalClose);
+    window.addEventListener('site-design-discard-request', onExternalDiscard);
+    return () => {
+      window.removeEventListener('site-design-close-request', onExternalClose);
+      window.removeEventListener('site-design-discard-request', onExternalDiscard);
+    };
+  }, [handleCloseIntent, handleDiscardConfirmed]);
+
   // Color helpers
   const colorRow = (
     label: string,
