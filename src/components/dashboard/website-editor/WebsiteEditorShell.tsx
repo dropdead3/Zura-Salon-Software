@@ -85,8 +85,7 @@ import {
 } from '@/hooks/useWebsiteSections';
 import {
   useChangelogSummary,
-  useDiscardToLastPublished,
-  useHasEverPublished,
+  useDiscardDrafts,
 } from '@/hooks/usePublishChangelog';
 import { WebsiteEditorSidebar } from './WebsiteEditorSidebar';
 import { LivePreviewPanel } from './LivePreviewPanel';
