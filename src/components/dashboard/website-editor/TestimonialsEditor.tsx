@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
+import { ReviewsManager } from './ReviewsManager';
 
 export function TestimonialsEditor() {
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
@@ -190,12 +191,9 @@ export function TestimonialsEditor() {
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="pt-4 border-t border-border/40">
-          <p className="text-sm text-muted-foreground">
-            <strong>Note:</strong> Individual testimonials are managed in the Testimonials Manager.
-          </p>
-        </div>
       </EditorCard>
+
+      <ReviewsManager surface="general" title="Homepage Reviews" />
     </div>
   );
 }
