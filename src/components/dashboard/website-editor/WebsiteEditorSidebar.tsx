@@ -615,7 +615,7 @@ export function WebsiteEditorSidebar({
 
           {/* Homepage Sections (with DND) - only show for home page */}
           {isHomePage && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
               <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="mb-1">
                   <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
