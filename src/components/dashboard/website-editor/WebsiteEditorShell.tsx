@@ -1293,7 +1293,7 @@ function WebsiteEditorShellInner() {
       <div className="flex-1 min-h-0 flex gap-3 overflow-hidden">
         {/* Fixed left rail — Square width is ~320–360px. Hidden on mobile (uses Sheet). */}
         {showSidebar && !isMobile && (
-          <aside className="w-[340px] shrink-0 rounded-xl border border-border overflow-hidden">
+          <aside className="w-[380px] shrink-0 rounded-xl border border-border overflow-hidden">
             {isEditorMode ? railEditorEl : railListEl}
           </aside>
         )}
