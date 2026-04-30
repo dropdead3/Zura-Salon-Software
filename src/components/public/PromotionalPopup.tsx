@@ -345,6 +345,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
+    // Corner-card is the densest surface — operators can hide the image here
+    // via `hidden-on-corner` so it doesn't crush headline + body. `side`
+    // collapses to `top` (no room for a left rail at 360px).
+    const cornerImageMode: 'top' | 'none' =
+      !cfg.imageUrl || cfg.imageTreatment === 'hidden-on-corner' ? 'none' : 'top';
     return (
       <div
         role="dialog"
@@ -353,7 +358,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 animate-in fade-in slide-in-from-bottom-4"
         style={{ borderTopColor: accent, borderTopWidth: 3 }}
       >
-        <PromoBody cfg={cfg} accent={accent} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
+        <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
       </div>
     );
   }
