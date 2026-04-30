@@ -132,7 +132,15 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   const [open, setOpen] = useState(false);
   const [showFab, setShowFab] = useState(false);
+  const [pulseFab, setPulseFab] = useState(false);
   const triggeredRef = useRef(false);
+
+  // Auto-suppress the entire offer prompt on the booking surface — if the
+  // visitor reached booking organically (or via the accept handler), don't
+  // double-ask. Detection is path-based so it survives slug variations.
+  const onBookingSurface = useMemo(() => {
+    return /\/booking(\/|$|\?)/i.test(location.pathname);
+  }, [location.pathname]);
 
   // Hide popup completely when accept lands on the booking surface with the
   // matching promo code already attached. Avoids re-prompting after acceptance.
@@ -148,6 +156,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (!active || !cfg) return;
     if (triggeredRef.current) return;
     if (promoQueryParam && promoQueryParam === code) return;
+    // Booking surface = visitor is already in the funnel; don't double-ask.
+    if (onBookingSurface && !isPreview) return;
 
     // In editor preview, bypass dismissal so reloads always re-show the popup.
     if (!isPreview) {
@@ -196,7 +206,29 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }
 
     return cleanup;
-  }, [active, cfg, code, orgId, promoQueryParam, isPreview]);
+  }, [active, cfg, code, orgId, promoQueryParam, isPreview, onBookingSurface]);
+
+  // One-time pulse hint: 30s after the FAB appears, gently pulse it once so
+  // the visitor remembers the offer is still available. Session-scoped — we
+  // never pulse twice in the same browsing session.
+  const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed`;
+  useEffect(() => {
+    if (!showFab || open || isPreview) return;
+    if (typeof window === 'undefined') return;
+    try {
+      if (window.sessionStorage.getItem(PULSE_SESSION_KEY) === '1') return;
+    } catch { /* ignore */ }
+
+    const t = window.setTimeout(() => {
+      setPulseFab(true);
+      try { window.sessionStorage.setItem(PULSE_SESSION_KEY, '1'); } catch { /* ignore */ }
+      // Pulse runs for ~2.4s (3 cycles of 800ms), then we stop the animation
+      // class so the FAB doesn't keep drawing attention indefinitely.
+      const stop = window.setTimeout(() => setPulseFab(false), 2400);
+      return () => window.clearTimeout(stop);
+    }, 30_000);
+    return () => window.clearTimeout(t);
+  }, [showFab, open, isPreview, PULSE_SESSION_KEY]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
@@ -211,8 +243,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   // If the popup is disabled or config missing, render nothing at all.
   if (!active || !cfg) return null;
+  // Auto-suppress on /booking — the visitor is in the funnel; the offer code
+  // is already being honored via the URL param when relevant.
+  if (onBookingSurface && !isPreview) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
+  const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
   function handleAccept() {
     if (!isPreview) {
@@ -266,13 +302,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // headline so the visitor can re-open the offer at any time during the session.
   const fab = showFab && !open ? (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
+      className={cn(
+        'fixed bottom-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
+        fabPos === 'bottom-left' ? 'left-6 flex-row-reverse' : 'right-6',
+      )}
     >
       <button
         type="button"
         onClick={handleFabOpen}
         aria-label={`Reopen offer: ${cfg.headline}`}
-        className="group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform"
+        className={cn(
+          'group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform',
+          // Session-scoped one-time pulse hint (~3 cycles, then auto-stops).
+          pulseFab && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
+        )}
         style={{ backgroundColor: accent }}
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
@@ -287,7 +330,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         type="button"
         aria-label="Dismiss offer reminder"
         onClick={handleFabDismiss}
-        className="hidden sm:flex ml-2 h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+        className={cn(
+          'hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors',
+          fabPos === 'bottom-left' ? 'mr-2' : 'ml-2',
+        )}
       >
         <X className="h-3.5 w-3.5" />
       </button>

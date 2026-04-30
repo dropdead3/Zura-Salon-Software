@@ -332,6 +332,21 @@ export function PromotionalPopupEditor() {
             </SelectContent>
           </Select>
         </Field>
+        <Field
+          label="Reminder button position"
+          hint="Where the floating reminder appears after a visitor closes the popup. Flip to bottom-left if a chat widget already lives in the right corner."
+        >
+          <Select
+            value={formData.fabPosition ?? 'bottom-right'}
+            onValueChange={(v) => handleChange('fabPosition', v as PromotionalPopupSettings['fabPosition'])}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bottom-right">Bottom right</SelectItem>
+              <SelectItem value="bottom-left">Bottom left</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
       </Section>
 
       {/* Targeting */}

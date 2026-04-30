@@ -9,6 +9,7 @@ export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
 export type PopupFrequency = 'once' | 'once-per-session' | 'daily' | 'always';
 export type PopupAudience = 'all' | 'new-visitors-only';
 export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
+export type FabPosition = 'bottom-right' | 'bottom-left';
 
 export interface PromotionalPopupSettings {
   enabled: boolean;
@@ -35,6 +36,8 @@ export interface PromotionalPopupSettings {
   frequency: PopupFrequency;
   // Style
   accentColor?: string;
+  // Re-entry FAB after dismissal
+  fabPosition?: FabPosition;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
@@ -53,6 +56,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   startsAt: null,
   endsAt: null,
   frequency: 'once-per-session',
+  fabPosition: 'bottom-right',
 };
 
 const SETTING_KEY = 'promotional_popup';
