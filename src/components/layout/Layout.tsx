@@ -79,6 +79,8 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
+  const location = useLocation();
+  const popupSurface = resolvePopupSurface(location.pathname);
   const [footerHeight, setFooterHeight] = useState(0);
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
