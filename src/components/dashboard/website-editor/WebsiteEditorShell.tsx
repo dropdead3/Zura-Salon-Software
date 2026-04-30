@@ -3,6 +3,8 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
+  Check,
+  Circle,
   ExternalLink,
   Globe,
   History,
