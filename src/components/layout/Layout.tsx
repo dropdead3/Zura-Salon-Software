@@ -155,6 +155,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
         <FooterCTA />
         <Footer />
+        <PromotionalPopup surface="all-public" />
       </div>
     );
   }
