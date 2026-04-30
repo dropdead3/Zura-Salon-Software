@@ -16,16 +16,10 @@ export interface Testimonial {
   title: string;
   author: string;
   body: string;
-  /** Legacy alias for `body` — kept so older editor screens compile. */
-  text: string;
   rating: number;
   source_url: string | null;
   enabled: boolean;
-  /** Legacy alias for `enabled`. */
-  is_visible: boolean;
   sort_order: number;
-  /** Legacy alias for `sort_order`. */
-  display_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -78,11 +72,8 @@ function useInvalidate() {
   const qc = useQueryClient();
   const orgId = useSettingsOrgId();
   return () => {
-    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'all'] });
-    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'general'] });
-    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'extensions'] });
-    qc.invalidateQueries({ queryKey: ['website_testimonials', 'visible', orgId, 'general'] });
-    qc.invalidateQueries({ queryKey: ['website_testimonials', 'visible', orgId, 'extensions'] });
+    qc.invalidateQueries({ queryKey: ['website_testimonials'] });
+    void orgId;
   };
 }
 
@@ -90,7 +81,10 @@ export function useCreateTestimonial() {
   const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (input: Pick<Testimonial, 'surface' | 'title' | 'author' | 'body'> & Partial<Pick<Testimonial, 'rating' | 'source_url' | 'sort_order' | 'enabled'>>) => {
+    mutationFn: async (
+      input: Pick<Testimonial, 'surface' | 'title' | 'author' | 'body'> &
+        Partial<Pick<Testimonial, 'rating' | 'source_url' | 'sort_order' | 'enabled'>>,
+    ) => {
       if (!orgId) throw new Error('No organization context');
       const { data, error } = await supabase
         .from('website_testimonials')
