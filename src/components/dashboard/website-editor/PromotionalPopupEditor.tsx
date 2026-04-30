@@ -225,7 +225,7 @@ export function PromotionalPopupEditor() {
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [autoSaving, setAutoSaving] = useState(false);
 
-  // Live count of confirmed redemptions for the *saved* offer code. We track
+  // Live count + 14-day velocity for the *saved* offer code. We track
   // savedSnapshot.offerCode (not formData) so the count reflects what's
   // actually in production, not in-flight edits — operators editing the code
   // shouldn't see the count flicker mid-keystroke.
@@ -233,6 +233,8 @@ export function PromotionalPopupEditor() {
     savedSnapshot.offerCode,
   );
   const redemptionCount = redemptionData?.count ?? 0;
+  const redemptionSeries = redemptionData?.series ?? [];
+  const redemptionLast24h = redemptionData?.last24h ?? 0;
 
   useEffect(() => {
     if (settings) {
