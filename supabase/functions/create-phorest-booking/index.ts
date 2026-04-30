@@ -381,6 +381,7 @@ serve(async (req) => {
         redo_reason: is_redo ? redo_reason || null : null,
         original_appointment_id: is_redo ? original_appointment_id || null : null,
         redo_pricing_override: is_redo ? (redoFinalPrice ?? redo_pricing_override ?? null) : null,
+        promo_offer_code: promoCode,
       };
 
       if (redoOriginalPrice != null) nativeRecord.original_price = redoOriginalPrice;
