@@ -144,10 +144,16 @@ export function PromotionalPopupEditor() {
     });
   };
 
-  // Detects every counter currently in destructive state. Drives the Save
-  // confirmation guard so operators never ship silent ellipses or
-  // legal-overflow disclaimers.
+  // Detects every counter currently in destructive state. Drives both the
+  // Save confirmation guard *and* the per-field destructive underline so
+  // operators see the same story passively (border) and actively (toast).
   const overflows = collectOverflows(formData);
+
+  // Refs to the offending inputs so the overflow guard can scroll-into-view
+  // the first offender when Save is blocked.
+  const headlineRef = useRef<HTMLInputElement | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+  const disclaimerRef = useRef<HTMLTextAreaElement | null>(null);
 
   const persist = useCallback(async () => {
     try {
@@ -160,28 +166,17 @@ export function PromotionalPopupEditor() {
     }
   }, [formData, updateSettings]);
 
-  const handleSave = useCallback(async () => {
-    if (overflows.length === 0) {
-      await persist();
-      return;
-    }
-    // Sonner's action button gives us a single-tap "Save anyway" without
-    // pulling in an AlertDialog just for one confirm. The description lists
-    // every overflowing field so operators see exactly what will truncate.
-    const summary = overflows.map((o) => `• ${o.message}`).join('\n');
-    toast.warning('Some copy will truncate', {
-      description: summary,
-      duration: 10000,
-      action: {
-        label: 'Save anyway',
-        onClick: () => {
-          void persist();
-        },
-      },
-    });
-  }, [overflows, persist]);
+  const { guardedSave, isFieldOverflowing } = useOverflowGuard<OverflowFinding>({
+    findings: overflows,
+    persist,
+    fieldRefs: {
+      headline: headlineRef.current,
+      body: bodyRef.current,
+      disclaimer: disclaimerRef.current,
+    },
+  });
 
-  useEditorSaveAction(handleSave);
+  useEditorSaveAction(guardedSave);
 
   // Auto-save for the binary Enable toggle — operators expect a switch to
   // "just work" without hunting for Save. We persist immediately, refresh
