@@ -16,6 +16,15 @@ export interface PromotionalPopupRedemptionStats {
    * attribution column being populated (honest absence, not fabricated).
    */
   revenueAttributed: number;
+  /**
+   * ISO timestamp of the *earliest* redemption that contributed to
+   * `revenueAttributed` (i.e., the first row with a non-null
+   * `revenue_attributed`). Powers the editor's "since DATE" hint so operators
+   * understand why count and attributed-revenue may diverge: rows redeemed
+   * before the attribution write went live are silently excluded.
+   * `null` when `revenueAttributed === 0`.
+   */
+  revenueAttributedSince: string | null;
 }
 
 const WINDOW_DAYS = 14;
