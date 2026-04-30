@@ -7,6 +7,7 @@ import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -93,7 +94,14 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 Hair • Color • Artistry
               </p>
               <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
-                <span className="whitespace-nowrap block">{headlineText}</span>
+                <InlineEditableText
+                  as="span"
+                  className="whitespace-nowrap block"
+                  value={headlineText}
+                  sectionKey="section_hero"
+                  fieldPath="headline_text"
+                  placeholder="Headline"
+                />
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
               <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">

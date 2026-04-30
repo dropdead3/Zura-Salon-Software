@@ -5,6 +5,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useBrandStatementConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 export function BrandStatement() {
   const isPreview = useIsEditorPreview();
@@ -100,7 +101,13 @@ export function BrandStatement() {
             )}
             {config.show_headline && (
               <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
-                {config.headline_prefix}
+                <InlineEditableText
+                  as="span"
+                  value={config.headline_prefix}
+                  sectionKey="section_brand_statement"
+                  fieldPath="headline_prefix"
+                  placeholder="Headline prefix"
+                />
                 <br />
                 <span className="font-light">
                   {displayText}
@@ -108,10 +115,17 @@ export function BrandStatement() {
                     <span className="inline-block w-[2px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
                   )}
                 </span>
-                {config.headline_suffix && (
+                {(config.headline_suffix || isPreview) && (
                   <>
                     <br />
-                    <span className="font-light">{config.headline_suffix}</span>
+                    <InlineEditableText
+                      as="span"
+                      className="font-light"
+                      value={config.headline_suffix ?? ''}
+                      sectionKey="section_brand_statement"
+                      fieldPath="headline_suffix"
+                      placeholder="Headline suffix (optional)"
+                    />
                   </>
                 )}
               </h2>
@@ -127,9 +141,16 @@ export function BrandStatement() {
               className="space-y-6"
             >
               {config.paragraphs.map((paragraph, i) => (
-                <p key={i} className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80">
-                  {paragraph}
-                </p>
+                <InlineEditableText
+                  key={i}
+                  as="p"
+                  multiline
+                  className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80"
+                  value={paragraph}
+                  sectionKey="section_brand_statement"
+                  fieldPath={`paragraphs.${i}`}
+                  placeholder="Paragraph text"
+                />
               ))}
             </motion.div>
           )}

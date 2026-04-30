@@ -114,6 +114,7 @@ import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
+import { InlineEditCommitHandler } from './InlineEditCommitHandler';
 import { Palette } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
@@ -1025,6 +1026,10 @@ export function WebsiteEditorShell() {
 
   return (
     <div className="-mx-1 h-[calc(100vh-9rem)] flex flex-col gap-3">
+      {/* Inline-edit bridge: listens for INLINE_EDIT_COMMIT messages from the
+          preview iframe and persists via the existing useSectionConfig hooks.
+          Renders nothing — pure listener. */}
+      <InlineEditCommitHandler />
       {/* ── Top toolbar — Square-style: exit pill | (spacer) | upgrade · preview · publish ── */}
       <div className="flex items-center justify-between gap-3 shrink-0 px-1">
         <div className="flex items-center gap-2 min-w-0">
