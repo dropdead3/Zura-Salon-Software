@@ -17,6 +17,7 @@ import {
   Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
   ArrowLeft, ArrowRight, PanelRightClose, PanelRightOpen, LayoutGrid,
   PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode, History,
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
