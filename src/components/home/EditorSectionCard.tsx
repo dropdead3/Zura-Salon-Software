@@ -31,6 +31,8 @@ import {
   Maximize2,
   ArrowUpDown,
   Paintbrush,
+  Type,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
