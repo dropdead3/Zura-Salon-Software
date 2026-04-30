@@ -161,7 +161,7 @@ export function ExtensionReviewsSection() {
     }, 4000);
 
     return () => clearInterval(intervalId);
-  }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
+  }, [isInView, isPaused, prefersReducedMotion, scrollToCard, extensionReviews.length]);
 
   const handleUserScroll = useCallback(() => {
     if (!isAutoScrolling.current) {
