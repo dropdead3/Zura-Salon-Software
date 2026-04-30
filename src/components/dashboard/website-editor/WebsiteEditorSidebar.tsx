@@ -397,6 +397,16 @@ export function WebsiteEditorSidebar({
     }
   }, [isHomePage, selectedPage]);
 
+  const handlePageDragOver = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localPageSections.findIndex(s => s.id === active.id);
+    const newIndex = localPageSections.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const provisional = arrayMove(localPageSections, oldIndex, newIndex);
+    emitProvisional(selectedPageId, provisional.map(s => s.id));
+  };
+
   const handlePageDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -405,6 +415,7 @@ export function WebsiteEditorSidebar({
     const newIndex = localPageSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localPageSections, oldIndex, newIndex).map((s, i) => ({ ...s, order: i + 1 }));
     setLocalPageSections(reordered);
+    emitCommit(selectedPageId, reordered.map(s => s.id));
     onPageSectionReorder?.(reordered);
     toast.success('Section order updated');
   };
