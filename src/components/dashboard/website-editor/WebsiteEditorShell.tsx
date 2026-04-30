@@ -1141,6 +1141,24 @@ function WebsiteEditorShellInner() {
       {/* ── Top toolbar — Square-style: exit pill | (spacer) | upgrade · preview · publish ── */}
       <div className="flex items-center justify-between gap-3 shrink-0 px-1">
         <div className="flex items-center gap-2 min-w-0">
+          {/* Exit Editor — returns to Website Hub overview. Guards unsaved/unpublished changes. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 rounded-full px-3 gap-1.5 shrink-0 font-display tracking-wide uppercase text-xs"
+            onClick={() => {
+              if (isDirty || hasChanges) {
+                setExitConfirmOpen(true);
+              } else {
+                performExit();
+              }
+            }}
+            title="Exit editor and return to Website Hub"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Exit Editor</span>
+          </Button>
+          <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
           {isMobile && (
             <Button
               variant="outline"
