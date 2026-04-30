@@ -82,6 +82,8 @@ export function InlineEditCommitHandler() {
   const faq = useFAQConfig();
   const footerCta = useFooterCTAConfig();
   const newClient = useNewClientConfig();
+  const testimonials = useTestimonialsConfig();
+  const extensions = useExtensionsConfig();
 
   // Registry: sectionKey → { current config, update fn, allowed paths }.
   // Adding a new editable field is a one-line addition to `allowedPaths`.
