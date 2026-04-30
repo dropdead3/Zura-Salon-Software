@@ -111,7 +111,8 @@ export function PromotionalPopupEditor() {
             <span className="font-display uppercase tracking-wider text-[10px] text-primary mr-2">
               Unsaved
             </span>
-            Press <strong>Done</strong> to publish your changes — visitors won't see them yet.
+            Press <strong>Save</strong> to keep this draft. Visitors won't see it until you{' '}
+            <strong>Publish</strong> from Website Hub.
           </p>
         </div>
       )}
