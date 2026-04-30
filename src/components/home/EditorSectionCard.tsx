@@ -212,6 +212,24 @@ export function EditorSectionCard({
     });
   }, [sendMessage, overrides.max_width]);
 
+  const handleCycleHeadingScale = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = nextHeadingScale(overrides.heading_scale ?? 'md');
+    sendMessage('EDITOR_APPLY_STYLE_PRESET', {
+      patch: { heading_scale: next.value },
+      label: `Heading: ${next.label}`,
+    });
+  }, [sendMessage, overrides.heading_scale]);
+
+  const handleToggleEyebrow = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextVisible = !(overrides.eyebrow_visible !== false); // default true → false
+    sendMessage('EDITOR_APPLY_STYLE_PRESET', {
+      patch: { eyebrow_visible: nextVisible },
+      label: `Eyebrow: ${nextVisible ? 'On' : 'Off'}`,
+    });
+  }, [sendMessage, overrides.eyebrow_visible]);
+
   // Tooltips show the NEXT value so operators know what a tap will do.
   const bgTooltip = useMemo(() => {
     const cur = BG_STOPS.find(
