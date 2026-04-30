@@ -146,7 +146,15 @@ export function FAQSection() {
             {config.show_intro_paragraphs && config.intro_paragraphs.length > 0 && (
               <div className="space-y-4 text-foreground/80 mb-8">
                 {config.intro_paragraphs.map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
+                  <p key={i}>
+                    <InlineEditableText
+                      value={paragraph}
+                      sectionKey="section_faq"
+                      fieldPath={`intro_paragraphs.${i}`}
+                      placeholder="Paragraph text"
+                      multiline
+                    />
+                  </p>
                 ))}
               </div>
             )}
