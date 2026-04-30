@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -51,14 +53,19 @@ export function AnnouncementBarContent() {
     }
   }, [settings]);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  // Live-edit bridge: stream in-memory edits into the preview iframe.
+  usePreviewBridge('announcement_bar', formData);
+
   const handleSave = useCallback(async () => {
     try {
       await updateSettings.mutateAsync(formData);
       toast.success('Announcement bar settings saved');
+      clearPreviewOverride('announcement_bar', effectiveOrganization?.id ?? null);
     } catch (error) {
       toast.error('Failed to save settings');
     }
-  }, [formData, updateSettings]);
+  }, [formData, updateSettings, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 
