@@ -239,6 +239,31 @@ export function WebsiteEditorSidebar({
     }
   };
 
+  // ── Live reflow during drag ──
+  // Posts the in-flight order to the preview iframe via a parent CustomEvent
+  // bridge, so the canvas reflows the moment the operator drags — not on drop.
+  // Commit is debounced server-side via saveSections() on drop.
+  const emitProvisional = (pageId: string, order: string[]) => {
+    window.dispatchEvent(
+      new CustomEvent('editor-provisional-order', { detail: { pageId, order } }),
+    );
+  };
+  const emitCommit = (pageId: string, order: string[]) => {
+    window.dispatchEvent(
+      new CustomEvent('editor-commit-order', { detail: { pageId, order } }),
+    );
+  };
+
+  const handleDragOver = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localSections.findIndex(s => s.id === active.id);
+    const newIndex = localSections.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const provisional = arrayMove(localSections, oldIndex, newIndex);
+    emitProvisional('home', provisional.map(s => s.id));
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -246,6 +271,7 @@ export function WebsiteEditorSidebar({
     const oldIndex = localSections.findIndex(s => s.id === active.id);
     const newIndex = localSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localSections, oldIndex, newIndex);
+    emitCommit('home', reordered.map(s => s.id));
     await saveSections(reordered);
     toast.success('Section order updated');
   };
