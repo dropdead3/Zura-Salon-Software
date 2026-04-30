@@ -473,17 +473,21 @@ function PromoBody({
           <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
-      {cfg.eyebrow && (
-        <p
-          className={cn(
-            'font-display uppercase tracking-[0.2em] mb-2',
-            compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
-          )}
-          style={{ color: accent }}
-        >
-          {cfg.eyebrow}
-        </p>
-      )}
+      {cfg.eyebrow && (() => {
+        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+        return (
+          <p
+            className={cn(
+              'font-display uppercase tracking-[0.2em] mb-2 inline-flex items-center gap-1.5',
+              compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
+            )}
+            style={{ color: accent }}
+          >
+            {Icon && <Icon className={cn('shrink-0', compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} aria-hidden="true" />}
+            <span>{cfg.eyebrow}</span>
+          </p>
+        );
+      })()}
       <h2
         id="promo-popup-title"
         className={cn(
