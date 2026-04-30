@@ -172,10 +172,21 @@ interface SiteDesignPanelProps {
 
 export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: persisted, isLoading } = useSiteSettings<DesignOverrides>(
     'website_design_overrides',
   );
   const updateSetting = useUpdateSiteSetting<DesignOverrides>();
+
+  // Cross-link to the Theme tab in the Website Hub. Site Design overrides
+  // sit on top of the active theme — this lets operators jump to the theme
+  // gallery without losing their place.
+  const goToThemeTab = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'theme');
+    setSearchParams(next, { replace: false });
+    onClose?.();
+  }, [searchParams, setSearchParams, onClose]);
 
   const [draft, setDraft] = useState<DesignOverrides>(DEFAULTS);
   const [dirty, setDirty] = useState(false);
