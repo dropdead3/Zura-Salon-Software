@@ -267,7 +267,6 @@ export function WebsiteEditorShell() {
   const { data: pagesConfig } = useWebsitePages();
   const updatePages = useUpdateWebsitePages();
   const selectedPage = pagesConfig?.pages?.find((p) => p.id === selectedPageId);
-  const selectedPageTitle = selectedPage?.title ?? 'Home';
   const isHomePage = selectedPageId === 'home';
 
   const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
@@ -875,7 +874,7 @@ export function WebsiteEditorShell() {
     <div className="space-y-0 -mx-1">
       {/* Editor toolbar */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isMobile && (
             <Button
               variant="outline"
@@ -892,7 +891,7 @@ export function WebsiteEditorShell() {
           <Select value={selectedPageId} onValueChange={requestPageChange}>
             <SelectTrigger
               ref={pagePickerRef}
-              className="h-9 text-xs min-w-[160px] max-w-[260px] rounded-full"
+              className="h-9 text-xs min-w-[140px] max-w-[220px] shrink-0 rounded-full"
               title="Switch page (⌘K)"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -922,22 +921,21 @@ export function WebsiteEditorShell() {
             </SelectContent>
           </Select>
 
-          {/* Breadcrumb */}
+          {/* Breadcrumb — section only (page already shown in picker). Hidden < lg. */}
           <nav
             aria-label="Editor breadcrumb"
-            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+            className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1"
           >
             <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            <span className="truncate text-foreground font-medium">{selectedPageTitle}</span>
-            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            <span className="truncate text-foreground font-medium">{sectionLabel}</span>
+            <span className="truncate text-foreground font-medium min-w-0">
+              {sectionLabel}
+            </span>
           </nav>
-
-          {/* Save status pill */}
-          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+          {/* Save status pill — adjacent to Publish, the action it qualifies */}
+          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
           {/* Primary action: Publish */}
           <Button
             variant="default"
@@ -1226,28 +1224,25 @@ export function WebsiteEditorShell() {
             </>
           )}
 
-          <ResizablePanel defaultSize={showPreview ? 48 : 78} minSize={30}>
+          <ResizablePanel defaultSize={showPreview ? 40 : 78} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
-              <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {!isMobile && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowSidebar(!showSidebar)}
-                      className="h-7 w-7"
-                      title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
-                    >
-                      {showSidebar ? (
-                        <PanelLeftClose className="h-3.5 w-3.5" />
-                      ) : (
-                        <PanelLeftOpen className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground truncate">{sectionLabel}</span>
+              {!isMobile && (
+                <div className="flex-shrink-0 px-2 py-1.5 border-b bg-muted/30 flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSidebar(!showSidebar)}
+                    className="h-7 w-7"
+                    title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
+                  >
+                    {showSidebar ? (
+                      <PanelLeftClose className="h-3.5 w-3.5" />
+                    ) : (
+                      <PanelLeftOpen className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
                 </div>
-              </div>
+              )}
               <div className="flex-1 overflow-auto p-6">
                 <Suspense
                   fallback={
@@ -1265,7 +1260,7 @@ export function WebsiteEditorShell() {
           {showPreview && !isMobile && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+              <ResizablePanel defaultSize={38} minSize={20} maxSize={55}>
                 <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
               </ResizablePanel>
             </>
@@ -1305,11 +1300,11 @@ function SaveStatusPill({
     tone = 'text-muted-foreground bg-muted/60';
   } else if (isDirty) {
     label = 'Unsaved changes';
-    icon = <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />;
-    tone = 'text-amber-700 dark:text-amber-300 bg-amber-500/10';
+    icon = <Circle className="h-2 w-2 fill-warning text-warning" />;
+    tone = 'text-warning-foreground bg-warning/15';
   } else if (lastSavedAt) {
     label = `Saved ${formatRelative(lastSavedAt)}`;
-    icon = <Check className="h-3 w-3 text-emerald-500" />;
+    icon = <Check className="h-3 w-3 text-success-foreground" />;
     tone = 'text-muted-foreground bg-muted/60';
   } else {
     return null;

@@ -158,16 +158,20 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         try {
           const url = new URL(previewUrl);
           const isCustomDomain = url.origin !== window.location.origin;
+          // Friendly: host + path (no query/UUIDs). Trim trailing slash.
+          const friendlyPath = url.pathname.replace(/\/$/, '') || '/';
+          const friendlyUrl = `${url.host}${friendlyPath === '/' ? '' : friendlyPath}`;
           return {
-            status: isLoading ? 'Loading preview' : 'Preview ready',
-            channel: isCustomDomain ? 'Custom domain' : 'Org route',
+            status: isLoading ? 'Loading' : 'Ready',
+            channel: isCustomDomain ? 'Custom domain' : null,
             displayUrl: previewUrl,
+            friendlyUrl,
           };
         } catch {
-          return { status: isLoading ? 'Loading preview' : 'Preview ready', channel: 'Org route', displayUrl: previewUrl };
+          return { status: isLoading ? 'Loading' : 'Ready', channel: null, displayUrl: previewUrl, friendlyUrl: previewUrl };
         }
       })()
-    : { status: 'Resolving preview URL', channel: 'Waiting for org context', displayUrl: null };
+    : { status: 'Resolving', channel: null, displayUrl: null, friendlyUrl: null };
 
   const handleCopyUrl = async () => {
     if (!previewMeta.displayUrl) return;
@@ -229,24 +233,37 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         </div>
       </div>
 
-      {/* Status + URL strip */}
-      <div className="border-b border-border bg-card/60 px-3 py-2">
+      {/* Status + URL strip — single condensed line */}
+      <div className="border-b border-border bg-card/60 px-3 py-1.5">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[11px] font-display uppercase tracking-wide text-muted-foreground">
-              <span>{previewMeta.status}</span>
-              <span className="opacity-40">•</span>
-              <span>{previewMeta.channel}</span>
-              {device !== 'fit' && (
-                <>
-                  <span className="opacity-40">•</span>
-                  <span>{iframeW} × {iframeH} · {scalePct}%</span>
-                </>
-              )}
-            </div>
-            <p className="truncate text-xs text-foreground/80" title={previewMeta.displayUrl ?? previewMeta.status}>
-              {previewMeta.displayUrl ?? 'Waiting for organization public URL...'}
-            </p>
+          <div className="flex items-center gap-2 min-w-0 text-[11px]">
+            <span className="font-display uppercase tracking-wide text-muted-foreground shrink-0">
+              {previewMeta.status}
+            </span>
+            {previewMeta.channel && (
+              <>
+                <span className="opacity-40 shrink-0">•</span>
+                <span className="font-display uppercase tracking-wide text-muted-foreground shrink-0">
+                  {previewMeta.channel}
+                </span>
+              </>
+            )}
+            {previewMeta.friendlyUrl && (
+              <>
+                <span className="opacity-40 shrink-0">•</span>
+                <span className="truncate text-foreground/80" title={previewMeta.displayUrl ?? ''}>
+                  {previewMeta.friendlyUrl}
+                </span>
+              </>
+            )}
+            {device !== 'fit' && (
+              <>
+                <span className="opacity-40 shrink-0">•</span>
+                <span className="font-display uppercase tracking-wide text-muted-foreground shrink-0">
+                  {iframeW}×{iframeH} · {scalePct}%
+                </span>
+              </>
+            )}
           </div>
 
           {previewMeta.displayUrl && (
