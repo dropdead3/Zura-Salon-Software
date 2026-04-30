@@ -1261,7 +1261,7 @@ export function WebsiteEditorShell() {
           {showPreview && !isMobile && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+              <ResizablePanel defaultSize={38} minSize={20} maxSize={55}>
                 <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
               </ResizablePanel>
             </>
