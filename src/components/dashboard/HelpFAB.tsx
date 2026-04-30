@@ -43,6 +43,11 @@ export function HelpFAB() {
     return null;
   }
 
+  // Hide inside the Website Editor — it owns the right-edge canvas + needs the corner real estate
+  if (location.pathname.includes('/website-hub') || location.pathname.includes('/website-editor')) {
+    return null;
+  }
+
   // Hide when booking popover is open on schedule page
   if (isSchedulePage && bookingOpen) {
     return null;
