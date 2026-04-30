@@ -56,9 +56,11 @@ function getIsViewMode() {
 
 interface PageSectionRendererProps {
   sections: SectionConfig[];
+  /** Page id (e.g. 'home' or page slug) — used to scope live-preview reorder messages. */
+  pageId?: string;
 }
 
-export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
+export function PageSectionRenderer({ sections, pageId }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   // While the operator is dragging in the editor rail, the parent posts the
   // in-flight order so the canvas can reflow live (premium feel). On drop or
