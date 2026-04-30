@@ -21,6 +21,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // In editor preview mode, merge unsaved edits broadcast from the editor.
   const heroConfig = useLiveOverride('section_hero', dbHeroConfig);
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
+  const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
+  const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -90,9 +92,17 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <div className="flex-1 flex items-start justify-center relative z-0 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
-              <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6">
-                Hair • Color • Artistry
-              </p>
+              {showEyebrow && (
+                <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6 section-eyebrow">
+                  <InlineEditableText
+                    as="span"
+                    value={eyebrowText}
+                    sectionKey="section_hero"
+                    fieldPath="eyebrow"
+                    placeholder="Eyebrow"
+                  />
+                </p>
+              )}
               <h1
                 className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
@@ -209,16 +219,18 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
             {/* Tagline */}
-            <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 2.0 }}
-              style={{ y: taglineY }}
-            >
-              <Eyebrow className="text-muted-foreground mb-6">
-                Hair • Color • Artistry
-              </Eyebrow>
-            </motion.div>
+            {showEyebrow && (
+              <motion.div
+                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ ...springTransition, delay: 2.0 }}
+                style={{ y: taglineY }}
+              >
+                <Eyebrow className="text-muted-foreground mb-6 section-eyebrow">
+                  {eyebrowText}
+                </Eyebrow>
+              </motion.div>
+            )}
 
             {/* Main headline */}
             <motion.h1
