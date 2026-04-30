@@ -359,7 +359,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // ── Variant: modal (default) ──
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
       }}
