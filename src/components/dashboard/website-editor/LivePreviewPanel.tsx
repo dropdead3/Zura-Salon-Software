@@ -158,16 +158,20 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         try {
           const url = new URL(previewUrl);
           const isCustomDomain = url.origin !== window.location.origin;
+          // Friendly: host + path (no query/UUIDs). Trim trailing slash.
+          const friendlyPath = url.pathname.replace(/\/$/, '') || '/';
+          const friendlyUrl = `${url.host}${friendlyPath === '/' ? '' : friendlyPath}`;
           return {
-            status: isLoading ? 'Loading preview' : 'Preview ready',
-            channel: isCustomDomain ? 'Custom domain' : 'Org route',
+            status: isLoading ? 'Loading' : 'Ready',
+            channel: isCustomDomain ? 'Custom domain' : null,
             displayUrl: previewUrl,
+            friendlyUrl,
           };
         } catch {
-          return { status: isLoading ? 'Loading preview' : 'Preview ready', channel: 'Org route', displayUrl: previewUrl };
+          return { status: isLoading ? 'Loading' : 'Ready', channel: null, displayUrl: previewUrl, friendlyUrl: previewUrl };
         }
       })()
-    : { status: 'Resolving preview URL', channel: 'Waiting for org context', displayUrl: null };
+    : { status: 'Resolving', channel: null, displayUrl: null, friendlyUrl: null };
 
   const handleCopyUrl = async () => {
     if (!previewMeta.displayUrl) return;
