@@ -569,6 +569,23 @@ export function PromotionalPopupEditor() {
               </div>
             </div>
           )}
+          {/* Lifetime attributed revenue — silence is valid: rows pre-dating
+              the attribution column write resolve to 0 (honest absence). We
+              only render when there's signal, keeping the card calm for new
+              codes and historic redemptions. */}
+          {revenueAttributed > 0 && (
+            <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
+              <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                Revenue attributed
+              </span>
+              <BlurredAmount
+                amount={revenueAttributed}
+                className="font-sans text-sm font-medium tabular-nums text-foreground"
+              >
+                {formatCurrency(revenueAttributed)}
+              </BlurredAmount>
+            </div>
+          )}
         </div>
       )}
 
