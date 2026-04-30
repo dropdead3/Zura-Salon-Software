@@ -131,6 +131,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const isPreview = useIsEditorPreview();
 
   const [open, setOpen] = useState(false);
+  const [showFab, setShowFab] = useState(false);
   const triggeredRef = useRef(false);
 
   // Hide popup completely when accept lands on the booking surface with the
