@@ -136,7 +136,13 @@ export function TestimonialSection() {
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.6 }}
               >
-                <Eyebrow>{config.eyebrow}</Eyebrow>
+                <Eyebrow>
+                  <InlineEditableText
+                    value={config.eyebrow}
+                    sectionKey="section_testimonials"
+                    fieldPath="eyebrow"
+                  />
+                </Eyebrow>
               </motion.div>
             )}
             {config?.show_headline && config.headline && (
@@ -146,7 +152,11 @@ export function TestimonialSection() {
                 transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
                 className="text-3xl md:text-4xl lg:text-5xl font-display"
               >
-                {config.headline}
+                <InlineEditableText
+                  value={config.headline}
+                  sectionKey="section_testimonials"
+                  fieldPath="headline"
+                />
               </motion.h2>
             )}
           </div>
