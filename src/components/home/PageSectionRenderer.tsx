@@ -144,8 +144,14 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
 
       // Real-time draft refresh: editor saved a draft → invalidate the
       // iframe's site-settings cache so it re-fetches the new draft_value.
+      // Scope to the specific key so we don't refetch every section on
+      // every keystroke when many sections exist.
       if (msg.type === 'PREVIEW_REFRESH_DRAFT') {
-        queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+        if (msg.orgId && msg.key) {
+          queryClient.invalidateQueries({ queryKey: ['site-settings', msg.orgId, msg.key] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+        }
       }
     };
 
