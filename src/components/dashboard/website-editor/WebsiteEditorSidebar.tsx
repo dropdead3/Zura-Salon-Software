@@ -680,7 +680,7 @@ export function WebsiteEditorSidebar({
 
           {/* Non-home page sections with DnD */}
           {!isHomePage && selectedPage && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePageDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handlePageDragOver} onDragEnd={handlePageDragEnd}>
               <SortableContext items={localPageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <SectionGroupHeader title={`${selectedPage.title} Sections`} />
                 {localPageSections.map(section => (
