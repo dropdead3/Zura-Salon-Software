@@ -1007,6 +1007,39 @@ export function WebsiteEditorShell() {
         onSelect={handleApplyPageTemplate}
       />
 
+      {/* Unsaved-changes guard */}
+      <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved edits in this section. Switching now will discard them. Save first
+              to keep your work.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay on this section</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (!pendingNav) return;
+                // Tell the active editor to drop its dirty state.
+                window.dispatchEvent(
+                  new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
+                );
+                setIsDirty(false);
+                if (pendingNav.type === 'tab') setEditorTab(pendingNav.tab);
+                else setSelectedPageId(pendingNav.pageId);
+                setPendingNav(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard & continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Editor canvas */}
       <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 18rem)' }}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
