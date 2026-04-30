@@ -120,7 +120,13 @@ export const NewClientSection = () => {
                   transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.1 }}
                   className="text-foreground/80 text-base md:text-lg leading-relaxed mb-8"
                 >
-                  {config.description}
+                  <InlineEditableText
+                    value={config.description}
+                    sectionKey="section_new_client"
+                    fieldPath="description"
+                    placeholder="Description"
+                    multiline
+                  />
                 </motion.p>
               )}
 
