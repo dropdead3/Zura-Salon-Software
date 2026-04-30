@@ -167,6 +167,7 @@ export function WebsiteEditorShell() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const pagePickerRef = useRef<HTMLButtonElement>(null);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
@@ -184,6 +185,38 @@ export function WebsiteEditorShell() {
   useEffect(() => {
     writePersisted(orgId, { editorTab, selectedPageId, showPreview });
   }, [orgId, editorTab, selectedPageId, showPreview]);
+
+  // Keyboard shortcuts: ⌘S publish, ⌘P toggle canvas, ⌘K focus page picker, ⌘\ toggle sidebar.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      // Don't intercept when typing in inputs/textareas/contenteditable
+      const target = e.target as HTMLElement | null;
+      const isEditable =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+
+      if (key === 's' && !isEditable) {
+        e.preventDefault();
+        setPublishOpen(true);
+      } else if (key === 'p' && !isEditable) {
+        e.preventDefault();
+        setShowPreview((v) => !v);
+      } else if (key === 'k' && !isEditable) {
+        e.preventDefault();
+        pagePickerRef.current?.click();
+      } else if (key === '\\' && !isEditable) {
+        e.preventDefault();
+        setShowSidebar((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const EditorComponent = EDITOR_COMPONENTS[editorTab];
   const sectionLabel = TAB_LABELS[editorTab] ?? 'Editor';
