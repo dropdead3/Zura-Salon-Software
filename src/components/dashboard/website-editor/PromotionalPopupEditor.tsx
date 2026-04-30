@@ -480,6 +480,35 @@ export function PromotionalPopupEditor() {
         </div>
       </div>
 
+      {/* Redemption stat — closes the marketing loop. Shows the operator that
+          the popup → booking flow is actually producing redemptions. Silent
+          when no code is configured (silence is valid output) and shows "0"
+          honestly when the code exists but hasn't been redeemed yet. */}
+      {savedSnapshot.offerCode?.trim() && (
+        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border/60 bg-muted/30">
+          <div className="flex items-center gap-2 min-w-0">
+            <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                Redemptions
+              </p>
+              <p className="font-sans text-sm text-foreground">
+                <span className="font-medium tabular-nums">{redemptionCount}</span>
+                <span className="text-muted-foreground">
+                  {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
+                  <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
+                </span>
+              </p>
+            </div>
+          </div>
+          {redemptionCount === 0 && (
+            <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
+              No redemptions yet
+            </p>
+          )}
+        </div>
+      )}
+
       {isDirty && (
         <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
           <p className="font-sans text-xs text-foreground">
