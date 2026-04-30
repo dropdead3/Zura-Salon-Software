@@ -74,6 +74,8 @@ export default function PublicBooking() {
   const [booking, setBooking] = useState<BookingState>(INITIAL_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [searchParams] = useSearchParams();
+  const promoCode = searchParams.get('promo')?.trim() || null;
 
   const { data: locations = [] } = useActiveLocations();
   
