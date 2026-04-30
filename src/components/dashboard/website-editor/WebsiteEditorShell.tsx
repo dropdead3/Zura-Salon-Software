@@ -1255,7 +1255,7 @@ function WebsiteEditorShellInner() {
           {/* Overflow */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" title="More">
+              <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" title="More">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
