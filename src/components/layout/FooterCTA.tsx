@@ -7,6 +7,7 @@ import { useOrgPath } from "@/hooks/useOrgPath";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useFooterCTAConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 export function FooterCTA() {
   const isPreview = useIsEditorPreview();
@@ -67,7 +68,12 @@ export function FooterCTA() {
               filter: eyebrowFilter,
             }}
           >
-            {config.eyebrow}
+            <InlineEditableText
+              value={config.eyebrow}
+              sectionKey="section_footer_cta"
+              fieldPath="eyebrow"
+              placeholder="Eyebrow text"
+            />
           </motion.p>
         )}
 
@@ -84,7 +90,12 @@ export function FooterCTA() {
                   filter: topLineFilter,
                 }}
               >
-                {config.headline_line1}
+                <InlineEditableText
+                  value={config.headline_line1}
+                  sectionKey="section_footer_cta"
+                  fieldPath="headline_line1"
+                  placeholder="First line"
+                />
               </motion.span>
             )}
             {config.headline_line2 && (
@@ -97,7 +108,12 @@ export function FooterCTA() {
                   filter: bottomLineFilter,
                 }}
               >
-                {config.headline_line2}
+                <InlineEditableText
+                  value={config.headline_line2}
+                  sectionKey="section_footer_cta"
+                  fieldPath="headline_line2"
+                  placeholder="Second line"
+                />
               </motion.span>
             )}
           </h2>
@@ -113,7 +129,13 @@ export function FooterCTA() {
               filter: descFilter,
             }}
           >
-            {config.description}
+            <InlineEditableText
+              value={config.description}
+              sectionKey="section_footer_cta"
+              fieldPath="description"
+              placeholder="Description"
+              multiline
+            />
           </motion.p>
         )}
 
@@ -131,7 +153,14 @@ export function FooterCTA() {
               to={config.cta_url ? orgPath(config.cta_url) : orgPath("/booking")}
               className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
             >
-              <span>{config.cta_text}</span>
+              <span>
+                <InlineEditableText
+                  value={config.cta_text}
+                  sectionKey="section_footer_cta"
+                  fieldPath="cta_text"
+                  placeholder="Button text"
+                />
+              </span>
               <ArrowUpRight size={18} className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           )}

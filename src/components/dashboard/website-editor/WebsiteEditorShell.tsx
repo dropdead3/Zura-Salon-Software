@@ -15,12 +15,14 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Plus,
+  Redo2,
   RotateCcw,
   Save,
   Settings,
   FileText,
   Menu,
   MoreHorizontal,
+  Undo2,
 } from 'lucide-react';
 import {
   Select,
@@ -115,6 +117,11 @@ import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
 import { InlineEditCommitHandler } from './InlineEditCommitHandler';
+import {
+  EditorHistoryProvider,
+  pushEditorHistoryEntry,
+  useEditorHistory,
+} from './EditorHistoryProvider';
 import { Palette } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
@@ -222,6 +229,14 @@ function writePersisted(orgId: string | undefined, state: PersistedState) {
 }
 
 export function WebsiteEditorShell() {
+  return (
+    <EditorHistoryProvider>
+      <WebsiteEditorShellInner />
+    </EditorHistoryProvider>
+  );
+}
+
+function WebsiteEditorShellInner() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { effectiveOrganization } = useOrganizationContext();
@@ -507,9 +522,18 @@ export function WebsiteEditorShell() {
 
   const handlePageSectionReorder = useCallback(
     (sections: SectionConfig[]) => {
-      void updateSelectedPage((p) => ({ ...p, sections }));
+      // Snapshot the previous order BEFORE the mutation so undo can restore it.
+      const prevSections = selectedPage?.sections;
+      void updateSelectedPage((p) => ({ ...p, sections })).then(() => {
+        if (!prevSections) return;
+        pushEditorHistoryEntry({
+          label: 'Reorder sections',
+          undo: () => updateSelectedPage((p) => ({ ...p, sections: prevSections })),
+          redo: () => updateSelectedPage((p) => ({ ...p, sections })),
+        });
+      });
     },
-    [updateSelectedPage],
+    [updateSelectedPage, selectedPage],
   );
 
   const handlePageSectionDelete = useCallback(
@@ -1075,6 +1099,10 @@ export function WebsiteEditorShell() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Undo/Redo — operates on the editor history ledger (reorder, design,
+              inline edits). Keyboard: ⌘Z / ⌘⇧Z. */}
+          <UndoRedoControls />
+
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
 
           {/* Site Design — global theme/typography/density panel */}
@@ -1458,5 +1486,34 @@ function SaveStatusPill({
       {icon}
       {label}
     </span>
+  );
+}
+
+// ─── Undo / Redo toolbar controls ───
+function UndoRedoControls() {
+  const { canUndo, canRedo, undo, redo, lastLabel, nextLabel } = useEditorHistory();
+  return (
+    <div className="flex items-center gap-1">
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 rounded-full"
+        onClick={undo}
+        disabled={!canUndo}
+        title={canUndo ? `Undo ${lastLabel ?? 'change'} (⌘Z)` : 'Nothing to undo'}
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 rounded-full"
+        onClick={redo}
+        disabled={!canRedo}
+        title={canRedo ? `Redo ${nextLabel ?? 'change'} (⌘⇧Z)` : 'Nothing to redo'}
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }

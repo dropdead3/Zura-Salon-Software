@@ -38,6 +38,7 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
+import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 // ─── Schema ───
 export type ButtonShape = 'square' | 'rounded' | 'pill';
@@ -239,11 +240,30 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
 
   const handleSave = useCallback(async () => {
     try {
-      await updateSetting.mutateAsync({ key: 'website_design_overrides', value: draft });
+      const before = persistedSnapshotRef.current;
+      const after = draft;
+      await updateSetting.mutateAsync({ key: 'website_design_overrides', value: after });
       setDirty(false);
       // Refresh snapshot so a subsequent discard reverts to the just-saved state.
-      persistedSnapshotRef.current = draft;
+      persistedSnapshotRef.current = after;
       toast({ title: 'Site Design saved', description: 'Changes are now live in your site.' });
+      // History: undo restores the prior overrides snapshot and re-broadcasts
+      // it to the preview iframe so the canvas rolls back instantly.
+      pushEditorHistoryEntry({
+        label: 'Site design',
+        undo: async () => {
+          await updateSetting.mutateAsync({ key: 'website_design_overrides', value: before });
+          persistedSnapshotRef.current = before;
+          setDraft(before);
+          broadcastToPreview(before);
+        },
+        redo: async () => {
+          await updateSetting.mutateAsync({ key: 'website_design_overrides', value: after });
+          persistedSnapshotRef.current = after;
+          setDraft(after);
+          broadcastToPreview(after);
+        },
+      });
     } catch (err) {
       toast({
         variant: 'destructive',

@@ -11,6 +11,7 @@ import {
 import { useFAQConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useVisibleFAQItems } from "@/hooks/useFAQItems";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 type FAQRow = { id: string; question: string; answer: string; category?: string | null; sort_order?: number };
 
@@ -145,7 +146,15 @@ export function FAQSection() {
             {config.show_intro_paragraphs && config.intro_paragraphs.length > 0 && (
               <div className="space-y-4 text-foreground/80 mb-8">
                 {config.intro_paragraphs.map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
+                  <p key={i}>
+                    <InlineEditableText
+                      value={paragraph}
+                      sectionKey="section_faq"
+                      fieldPath={`intro_paragraphs.${i}`}
+                      placeholder="Paragraph text"
+                      multiline
+                    />
+                  </p>
                 ))}
               </div>
             )}
@@ -157,7 +166,14 @@ export function FAQSection() {
                     to={config.cta_primary_url || "/faq"}
                     className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-all duration-300 overflow-hidden"
                   >
-                    <span>{config.cta_primary_text}</span>
+                    <span>
+                      <InlineEditableText
+                        value={config.cta_primary_text}
+                        sectionKey="section_faq"
+                        fieldPath="cta_primary_text"
+                        placeholder="Button text"
+                      />
+                    </span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover/faq:w-4 group-hover/faq:ml-2 group-hover/faq:opacity-100 transition-all duration-300" />
                   </Link>
                 )}
@@ -166,7 +182,14 @@ export function FAQSection() {
                     to={config.cta_secondary_url || "/policies"}
                     className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium rounded-full hover:border-foreground transition-all duration-300 overflow-hidden"
                   >
-                    <span>{config.cta_secondary_text}</span>
+                    <span>
+                      <InlineEditableText
+                        value={config.cta_secondary_text}
+                        sectionKey="section_faq"
+                        fieldPath="cta_secondary_text"
+                        placeholder="Button text"
+                      />
+                    </span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
                   </Link>
                 )}

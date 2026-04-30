@@ -24,6 +24,7 @@ import {
   useNewClientConfig,
 } from '@/hooks/useSectionConfig';
 import { useToast } from '@/hooks/use-toast';
+import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 type CommitMessage = {
   type: 'INLINE_EDIT_COMMIT';
@@ -59,6 +60,17 @@ function applyPatch<T extends Record<string, any>>(obj: T, path: string, value: 
   }
   cursor[segments[segments.length - 1]] = value;
   return next;
+}
+
+/** Read a dot-path value from a config object (returns '' if missing). */
+function readPath(obj: any, path: string): string {
+  const segments = path.split('.');
+  let cursor: any = obj;
+  for (const key of segments) {
+    if (cursor == null) return '';
+    cursor = cursor[key];
+  }
+  return typeof cursor === 'string' ? cursor : cursor == null ? '' : String(cursor);
 }
 
 export function InlineEditCommitHandler() {
@@ -101,17 +113,35 @@ export function InlineEditCommitHandler() {
         section_faq: {
           data: faq.data,
           update: faq.update,
-          allowedPaths: ['eyebrow', 'headline'],
+          allowedPaths: [
+            'cta_primary_text',
+            'cta_secondary_text',
+            'search_placeholder',
+            'intro_paragraphs.*',
+            'rotating_words.*',
+          ],
         },
         section_footer_cta: {
           data: footerCta.data,
           update: footerCta.update,
-          allowedPaths: ['eyebrow', 'headline', 'subheadline'],
+          allowedPaths: [
+            'eyebrow',
+            'headline_line1',
+            'headline_line2',
+            'description',
+            'cta_text',
+          ],
         },
         section_new_client: {
           data: newClient.data,
           update: newClient.update,
-          allowedPaths: ['eyebrow', 'headline', 'subheadline'],
+          allowedPaths: [
+            'headline_prefix',
+            'description',
+            'cta_text',
+            'benefits.*',
+            'rotating_words.*',
+          ],
         },
       };
 
@@ -132,10 +162,29 @@ export function InlineEditCommitHandler() {
       if (!pathAllowed) return; // unknown field — silently drop
 
       try {
-        const patched = applyPatch(entry.data ?? {}, msg.fieldPath, msg.value);
+        const before = readPath(entry.data ?? {}, msg.fieldPath);
+        const after = msg.value;
+        const patched = applyPatch(entry.data ?? {}, msg.fieldPath, after);
         await entry.update(patched);
         // Mark draft as freshly saved; mirrors the editor-side dirty pulse.
         window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
+        // Register undo entry — re-applies the previous text via the same
+        // update fn. We capture `entry.data` & `entry.update` in the closure;
+        // the registry is rebuilt on every commit so these stay current.
+        if (before !== after) {
+          const inverseEntry = entry;
+          pushEditorHistoryEntry({
+            label: 'Edit text',
+            undo: async () => {
+              const reverted = applyPatch(inverseEntry.data ?? {}, msg.fieldPath, before);
+              await inverseEntry.update(reverted);
+            },
+            redo: async () => {
+              const reapplied = applyPatch(inverseEntry.data ?? {}, msg.fieldPath, after);
+              await inverseEntry.update(reapplied);
+            },
+          });
+        }
       } catch (err) {
         toast({
           variant: 'destructive',

@@ -6,6 +6,7 @@ import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useNewClientConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 export const NewClientSection = () => {
   const isPreview = useIsEditorPreview();
@@ -100,7 +101,14 @@ export const NewClientSection = () => {
                   transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
                   className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
                 >
-                  <span className="whitespace-nowrap">{config.headline_prefix}</span>{" "}
+                  <span className="whitespace-nowrap">
+                    <InlineEditableText
+                      value={config.headline_prefix}
+                      sectionKey="section_new_client"
+                      fieldPath="headline_prefix"
+                      placeholder="Headline prefix"
+                    />
+                  </span>{" "}
                   <span className="inline-block min-w-[180px] md:min-w-[220px]">{displayText}</span>
                 </motion.h2>
               )}
@@ -112,7 +120,13 @@ export const NewClientSection = () => {
                   transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1], delay: 0.1 }}
                   className="text-foreground/80 text-base md:text-lg leading-relaxed mb-8"
                 >
-                  {config.description}
+                  <InlineEditableText
+                    value={config.description}
+                    sectionKey="section_new_client"
+                    fieldPath="description"
+                    placeholder="Description"
+                    multiline
+                  />
                 </motion.p>
               )}
 
@@ -151,7 +165,14 @@ export const NewClientSection = () => {
                   to={config.cta_url || "/booking"}
                   className="inline-flex items-center gap-3 bg-primary text-primary-foreground rounded-full px-8 py-4 text-base font-medium hover:bg-primary/90 transition-colors duration-300 group"
                 >
-                  <span>{config.cta_text}</span>
+                  <span>
+                    <InlineEditableText
+                      value={config.cta_text}
+                      sectionKey="section_new_client"
+                      fieldPath="cta_text"
+                      placeholder="Button text"
+                    />
+                  </span>
                   <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </motion.div>
