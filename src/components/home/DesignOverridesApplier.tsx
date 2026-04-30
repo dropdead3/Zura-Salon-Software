@@ -26,62 +26,73 @@ const BUTTON_RADIUS: Record<string, string> = {
   pill: '9999px',
 };
 
+// Module-scoped set of CSS vars THIS applier has set on the document. We only
+// ever clear vars we set ourselves — never vars baked in by the active theme.
+// Without this guard the first paint nukes the theme's --primary, --font-display, etc.
+const ownedVars = new Set<string>();
+
+function setVar(root: HTMLElement, name: string, value: string | null) {
+  if (value === null) {
+    if (ownedVars.has(name)) {
+      root.style.removeProperty(name);
+      ownedVars.delete(name);
+    }
+    return;
+  }
+  root.style.setProperty(name, value);
+  ownedVars.add(name);
+}
+
 function apply(overrides: DesignOverrides | null) {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
 
   // Colors → shadcn HSL var triplets. Only set when provided so theme defaults survive.
-  if (overrides?.primary_hsl) root.style.setProperty('--primary', overrides.primary_hsl);
-  else root.style.removeProperty('--primary');
+  setVar(root, '--primary', overrides?.primary_hsl ?? null);
+  setVar(root, '--secondary', overrides?.secondary_hsl ?? null);
+  setVar(root, '--accent', overrides?.accent_hsl ?? null);
+  setVar(root, '--background', overrides?.background_hsl ?? null);
 
-  if (overrides?.secondary_hsl) root.style.setProperty('--secondary', overrides.secondary_hsl);
-  else root.style.removeProperty('--secondary');
-
-  if (overrides?.accent_hsl) root.style.setProperty('--accent', overrides.accent_hsl);
-  else root.style.removeProperty('--accent');
-
-  if (overrides?.background_hsl) root.style.setProperty('--background', overrides.background_hsl);
-  else root.style.removeProperty('--background');
-
-  // Fonts → CSS vars. Components that use --font-display / --font-body via
-  // tailwind theme will inherit; otherwise set on body.
+  // Fonts → CSS vars.
   if (overrides?.heading_font && FONT_STACKS[overrides.heading_font]) {
-    root.style.setProperty('--font-display', FONT_STACKS[overrides.heading_font]);
+    setVar(root, '--font-display', FONT_STACKS[overrides.heading_font]);
   } else {
-    root.style.removeProperty('--font-display');
+    setVar(root, '--font-display', null);
   }
   if (overrides?.body_font && FONT_STACKS[overrides.body_font]) {
-    root.style.setProperty('--font-sans', FONT_STACKS[overrides.body_font]);
+    setVar(root, '--font-sans', FONT_STACKS[overrides.body_font]);
     document.body.style.fontFamily = FONT_STACKS[overrides.body_font];
   } else {
-    root.style.removeProperty('--font-sans');
+    setVar(root, '--font-sans', null);
     document.body.style.removeProperty('font-family');
   }
 
-  // Density: scales the global radius & spacing var consumers can reference.
+  // Density / button shape / hero overlay / section tint always have a sensible
+  // default — these are safe to set unconditionally because the public site
+  // doesn't pre-define them.
   const density = overrides?.density ?? 'comfy';
-  root.style.setProperty('--zura-density-scale', DENSITY_SCALE[density] ?? '1');
+  setVar(root, '--zura-density-scale', DENSITY_SCALE[density] ?? '1');
 
-  // Button shape via shared --radius (shadcn already uses this).
   const shape = overrides?.button_shape ?? 'rounded';
-  root.style.setProperty('--zura-button-radius', BUTTON_RADIUS[shape] ?? '0.5rem');
+  setVar(root, '--zura-button-radius', BUTTON_RADIUS[shape] ?? '0.5rem');
 
-  // Hero overlay (consumed by HeroSection via var(--zura-hero-overlay)).
   const heroOverlay = (overrides?.hero_overlay_opacity ?? 40) / 100;
-  root.style.setProperty('--zura-hero-overlay', heroOverlay.toString());
+  setVar(root, '--zura-hero-overlay', heroOverlay.toString());
 
-  // Subtle section tint (consumed by even-indexed section wrappers if they opt in).
   const sectionTint = (overrides?.section_tint_opacity ?? 0) / 100;
-  root.style.setProperty('--zura-section-tint', sectionTint.toString());
+  setVar(root, '--zura-section-tint', sectionTint.toString());
 }
 
 export function DesignOverridesApplier() {
-  const { data: persisted } = useSiteSettings<DesignOverrides>('website_design_overrides');
+  const { data: persisted, isLoading } = useSiteSettings<DesignOverrides>('website_design_overrides');
 
-  // Apply persisted overrides on hydrate/change.
+  // Apply persisted overrides on hydrate/change. Skip while loading so we don't
+  // momentarily strip the active theme's --primary/--font-display before the
+  // server-stored overrides arrive.
   useEffect(() => {
+    if (isLoading) return;
     apply(persisted ?? null);
-  }, [persisted]);
+  }, [persisted, isLoading]);
 
   // Live preview channel — only fires inside the editor iframe.
   useEffect(() => {
