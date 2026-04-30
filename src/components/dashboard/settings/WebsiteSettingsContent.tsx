@@ -607,6 +607,23 @@ function ThemeTab({
               History
             </Button>
             <Button
+              variant="ghost"
+              size={tokens.button.card}
+              onClick={() => setDiscardOpen(true)}
+              disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
+              title={
+                !hasEverPublished
+                  ? 'No published version yet — publish first to enable discard.'
+                  : !hasChanges
+                    ? 'No unpublished changes to discard.'
+                    : 'Revert all unpublished changes to last published version'
+              }
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Discard Changes
+            </Button>
+            <Button
               variant="default"
               size={tokens.button.card}
               onClick={() => setPublishOpen(true)}
