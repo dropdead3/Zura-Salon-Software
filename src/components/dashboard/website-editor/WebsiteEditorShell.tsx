@@ -522,9 +522,18 @@ function WebsiteEditorShellInner() {
 
   const handlePageSectionReorder = useCallback(
     (sections: SectionConfig[]) => {
-      void updateSelectedPage((p) => ({ ...p, sections }));
+      // Snapshot the previous order BEFORE the mutation so undo can restore it.
+      const prevSections = selectedPage?.sections;
+      void updateSelectedPage((p) => ({ ...p, sections })).then(() => {
+        if (!prevSections) return;
+        pushEditorHistoryEntry({
+          label: 'Reorder sections',
+          undo: () => updateSelectedPage((p) => ({ ...p, sections: prevSections })),
+          redo: () => updateSelectedPage((p) => ({ ...p, sections })),
+        });
+      });
     },
-    [updateSelectedPage],
+    [updateSelectedPage, selectedPage],
   );
 
   const handlePageSectionDelete = useCallback(
