@@ -81,6 +81,19 @@ const BG_STOPS: BgStop[] = [
   { label: 'Contrast', type: 'color', value: 'hsl(var(--foreground))' },
 ];
 
+type HeadingScaleStop = { label: string; value: NonNullable<StyleOverrides['heading_scale']> };
+const HEADING_SCALE_STOPS: HeadingScaleStop[] = [
+  { label: 'Sm', value: 'sm' },
+  { label: 'Md', value: 'md' },
+  { label: 'Lg', value: 'lg' },
+  { label: 'XL', value: 'xl' },
+];
+
+function nextHeadingScale(current: NonNullable<StyleOverrides['heading_scale']>): HeadingScaleStop {
+  const idx = HEADING_SCALE_STOPS.findIndex((s) => s.value === current);
+  return HEADING_SCALE_STOPS[(idx + 1 + HEADING_SCALE_STOPS.length) % HEADING_SCALE_STOPS.length] ?? HEADING_SCALE_STOPS[1];
+}
+
 function nextSpacing(current: { top: number; bottom: number }): SpacingStop {
   const idx = SPACING_STOPS.findIndex(
     (s) => s.top === current.top && s.bottom === current.bottom,
