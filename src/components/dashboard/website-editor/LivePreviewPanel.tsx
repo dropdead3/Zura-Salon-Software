@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useLayoutEffect, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect, useMemo, memo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Monitor, Tablet, Smartphone, Maximize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Maximize2, RefreshCw, Copy, ExternalLink, RotateCcw, MousePointerClick, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +22,9 @@ const DEVICE_PRESETS: Record<Exclude<DeviceMode, 'fit'>, { w: number; h: number;
 
 const VIEWPORT_KEY = 'website-editor:device';
 const ORIENTATION_KEY = 'website-editor:orientation';
+const CANVAS_MODE_KEY = 'website-editor:canvas-mode';
+
+type CanvasMode = 'edit' | 'view';
 
 function readDevice(): DeviceMode {
   try {
@@ -41,9 +44,20 @@ function readOrientation(): Orientation {
   return 'portrait';
 }
 
+function readCanvasMode(): CanvasMode {
+  try {
+    const v = localStorage.getItem(CANVAS_MODE_KEY);
+    if (v === 'edit' || v === 'view') return v;
+  } catch {}
+  // Default to edit so click-to-select sections + click-to-edit text are active
+  // out of the box. Operators can flip to clean Preview from the toolbar.
+  return 'edit';
+}
+
 export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
   const [device, setDeviceState] = useState<DeviceMode>(readDevice);
   const [orientation, setOrientationState] = useState<Orientation>(readOrientation);
+  const [canvasMode, setCanvasModeState] = useState<CanvasMode>(readCanvasMode);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [paneSize, setPaneSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -67,6 +81,21 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const pendingSectionRef = useRef<string | undefined>(undefined);
   const previewOrigin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
 
+  // Append the operator-chosen canvas mode to the iframe URL. Edit mode (default)
+  // activates click-to-select section chrome and click-to-edit text in the canvas;
+  // View mode renders a clean, visitor-style preview with no edit affordances.
+  const iframeSrc = useMemo(() => {
+    if (!previewUrl) return undefined;
+    try {
+      const u = new URL(previewUrl);
+      u.searchParams.set('mode', canvasMode);
+      return u.toString();
+    } catch {
+      const sep = previewUrl.includes('?') ? '&' : '?';
+      return `${previewUrl}${sep}mode=${canvasMode}`;
+    }
+  }, [previewUrl, canvasMode]);
+
   const setDevice = useCallback((d: DeviceMode) => {
     setDeviceState(d);
     try { localStorage.setItem(VIEWPORT_KEY, d); } catch {}
@@ -74,6 +103,13 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const setOrientation = useCallback((o: Orientation) => {
     setOrientationState(o);
     try { localStorage.setItem(ORIENTATION_KEY, o); } catch {}
+  }, []);
+  const setCanvasMode = useCallback((m: CanvasMode) => {
+    setCanvasModeState(m);
+    try { localStorage.setItem(CANVAS_MODE_KEY, m); } catch {}
+    // Iframe needs a reload to swap renderer paths (EditorSectionCard vs raw layout).
+    setIsLoading(true);
+    iframeReadyRef.current = false;
   }, []);
 
   // Observe pane size — recompute scale on splitter drag / window resize
@@ -293,6 +329,26 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Edit / Preview segmented control — Edit is the default and unlocks
+              click-to-select sections + click-to-edit text in the canvas.
+              Preview shows a clean visitor-style render with no chrome. */}
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
+            <DeviceButton
+              active={canvasMode === 'edit'}
+              onClick={() => setCanvasMode('edit')}
+              title="Edit — click sections and text to modify"
+            >
+              <MousePointerClick className="h-4 w-4" />
+            </DeviceButton>
+            <DeviceButton
+              active={canvasMode === 'view'}
+              onClick={() => setCanvasMode('view')}
+              title="Preview — clean visitor view (no edit chrome)"
+            >
+              <Eye className="h-4 w-4" />
+            </DeviceButton>
+          </div>
+
           {/* Device segmented control */}
           <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
             <DeviceButton active={device === 'desktop'} onClick={() => setDevice('desktop')} title="Desktop (1440px)">
@@ -415,7 +471,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
                 <iframe
                   ref={iframeRef}
                   key={refreshKey}
-                  src={previewUrl}
+                  src={iframeSrc}
                   className="w-full h-full border-0 block bg-background"
                   title="Website Preview"
                   onLoad={handleIframeLoad}
