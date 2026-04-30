@@ -12,7 +12,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Palette, Save, Sparkles, Type } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { ExternalLink, Loader2, Palette, Save, Sparkles, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -171,10 +172,21 @@ interface SiteDesignPanelProps {
 
 export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: persisted, isLoading } = useSiteSettings<DesignOverrides>(
     'website_design_overrides',
   );
   const updateSetting = useUpdateSiteSetting<DesignOverrides>();
+
+  // Cross-link to the Theme tab in the Website Hub. Site Design overrides
+  // sit on top of the active theme — this lets operators jump to the theme
+  // gallery without losing their place.
+  const goToThemeTab = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', 'theme');
+    setSearchParams(next, { replace: false });
+    onClose?.();
+  }, [searchParams, setSearchParams, onClose]);
 
   const [draft, setDraft] = useState<DesignOverrides>(DEFAULTS);
   const [dirty, setDirty] = useState(false);
@@ -321,7 +333,15 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
               Site Design
             </h3>
             <p className="text-[11px] text-muted-foreground truncate">
-              Global theme overrides — applies to every page
+              Overrides on top of your{' '}
+              <button
+                type="button"
+                onClick={goToThemeTab}
+                className="underline-offset-2 hover:underline text-primary inline-flex items-center gap-0.5"
+              >
+                active theme
+                <ExternalLink className="h-2.5 w-2.5" />
+              </button>
             </p>
           </div>
         </div>
@@ -347,7 +367,14 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
             {colorRow('Background', 'background_hsl')}
           </div>
           <p className="text-[11px] text-muted-foreground/80">
-            Leave blank to inherit from the active theme.
+            Leave blank to inherit from the active theme.{' '}
+            <button
+              type="button"
+              onClick={goToThemeTab}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Browse themes →
+            </button>
           </p>
         </section>
 
