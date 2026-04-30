@@ -33,7 +33,9 @@ import {
   type PromotionalPopupSettings,
   type PopupSurface,
   type EyebrowIcon,
+  type PopupAcceptDestination,
 } from '@/hooks/usePromotionalPopup';
+import { useBookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
   { value: 'home', label: 'Home page', description: 'Show on the homepage only' },
