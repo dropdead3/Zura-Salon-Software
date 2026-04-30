@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
+  ChevronRight,
+  Command,
   ExternalLink,
   Globe,
   History,
   Loader2,
+  MousePointer2,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
@@ -164,6 +167,7 @@ export function WebsiteEditorShell() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const pagePickerRef = useRef<HTMLButtonElement>(null);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
@@ -182,6 +186,38 @@ export function WebsiteEditorShell() {
     writePersisted(orgId, { editorTab, selectedPageId, showPreview });
   }, [orgId, editorTab, selectedPageId, showPreview]);
 
+  // Keyboard shortcuts: ⌘S publish, ⌘P toggle canvas, ⌘K focus page picker, ⌘\ toggle sidebar.
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      // Don't intercept when typing in inputs/textareas/contenteditable
+      const target = e.target as HTMLElement | null;
+      const isEditable =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable);
+
+      if (key === 's' && !isEditable) {
+        e.preventDefault();
+        setPublishOpen(true);
+      } else if (key === 'p' && !isEditable) {
+        e.preventDefault();
+        setShowPreview((v) => !v);
+      } else if (key === 'k' && !isEditable) {
+        e.preventDefault();
+        pagePickerRef.current?.click();
+      } else if (key === '\\' && !isEditable) {
+        e.preventDefault();
+        setShowSidebar((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const EditorComponent = EDITOR_COMPONENTS[editorTab];
   const sectionLabel = TAB_LABELS[editorTab] ?? 'Editor';
 
@@ -192,7 +228,11 @@ export function WebsiteEditorShell() {
         <div className="flex items-center gap-3 min-w-0">
           {/* Page picker — always visible */}
           <Select value={selectedPageId} onValueChange={setSelectedPageId}>
-            <SelectTrigger className="h-9 text-xs min-w-[180px] max-w-[260px] rounded-full">
+            <SelectTrigger
+              ref={pagePickerRef}
+              className="h-9 text-xs min-w-[180px] max-w-[260px] rounded-full"
+              title="Switch page (⌘K)"
+            >
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <SelectValue placeholder="Select page" />
@@ -220,10 +260,16 @@ export function WebsiteEditorShell() {
             </SelectContent>
           </Select>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-            <span className="opacity-50">·</span>
+          {/* Unified breadcrumb */}
+          <nav
+            aria-label="Editor breadcrumb"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+          >
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
+            <span className="truncate text-foreground font-medium">{selectedPageTitle}</span>
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
             <span className="truncate text-foreground font-medium">{sectionLabel}</span>
-          </div>
+          </nav>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -231,7 +277,7 @@ export function WebsiteEditorShell() {
             variant={showPreview ? 'default' : 'outline'}
             size={tokens.button.card}
             onClick={() => setShowPreview(!showPreview)}
-            title={showPreview ? 'Hide live canvas' : 'Show live canvas'}
+            title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
           >
             {showPreview ? (
               <>
@@ -276,6 +322,7 @@ export function WebsiteEditorShell() {
             size={tokens.button.card}
             onClick={() => setPublishOpen(true)}
             className="relative"
+            title="Publish changes (⌘S)"
           >
             <Globe className="h-4 w-4 mr-1" />
             Publish Changes
@@ -370,33 +417,66 @@ export function WebsiteEditorShell() {
 
           <ResizablePanel defaultSize={showPreview ? 48 : 78} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
-              <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
-                {!isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSidebar(!showSidebar)}
-                    className="h-7 w-7"
-                  >
-                    {showSidebar ? (
-                      <PanelLeftClose className="h-3.5 w-3.5" />
-                    ) : (
-                      <PanelLeftOpen className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
-                )}
-                <span className="text-xs text-muted-foreground">
-                  Editing: <span className="text-foreground font-medium">{selectedPageTitle}</span>
-                  <span className="mx-1.5 opacity-50">•</span>
-                  {sectionLabel}
-                </span>
+              <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {!isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowSidebar(!showSidebar)}
+                      className="h-7 w-7"
+                      title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
+                    >
+                      {showSidebar ? (
+                        <PanelLeftClose className="h-3.5 w-3.5" />
+                      ) : (
+                        <PanelLeftOpen className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground truncate">
+                    Editing <span className="text-foreground font-medium">{sectionLabel}</span>
+                  </span>
+                </div>
+                <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+                  <Command className="h-3 w-3" />
+                  <span>S publish</span>
+                  <span className="opacity-40">·</span>
+                  <Command className="h-3 w-3" />
+                  <span>P canvas</span>
+                  <span className="opacity-40">·</span>
+                  <Command className="h-3 w-3" />
+                  <span>K page</span>
+                </div>
               </div>
               <div className="flex-1 overflow-auto p-6">
                 {EditorComponent ? (
                   <EditorComponent />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                    Select a section from the sidebar
+                  <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-4">
+                    <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                      <MousePointer2 className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-1.5 max-w-sm">
+                      <h3 className="font-display text-base tracking-wide uppercase text-foreground">
+                        Pick a section to edit
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Choose a section from the sidebar — Hero, Services, Testimonials, Footer —
+                        and your changes appear in the live canvas on the right.
+                      </p>
+                    </div>
+                    {!showSidebar && !isMobile && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSidebar(true)}
+                        className="mt-2"
+                      >
+                        <PanelLeftOpen className="h-4 w-4 mr-1.5" />
+                        Show sections
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
