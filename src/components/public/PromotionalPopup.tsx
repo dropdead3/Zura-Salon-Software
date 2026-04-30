@@ -125,6 +125,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: cfg } = usePromotionalPopup();
+  // Editor-preview QA mode: bypass frequency caps + force immediate trigger
+  // so operators can faithfully QA enable/disable + content. Real visitor
+  // suppression rules (sessionStorage caps, analytics writes) are skipped.
+  const isPreview = useIsEditorPreview();
 
   const [open, setOpen] = useState(false);
   const triggeredRef = useRef(false);
