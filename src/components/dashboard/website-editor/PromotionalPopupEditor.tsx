@@ -442,6 +442,59 @@ function Field({
   );
 }
 
+// ── Live FAB preview swatch ──
+// Mirrors the shape of the real FAB rendered by `PromotionalPopup` so operators
+// can see corner placement, accent color, and headline truncation without
+// reloading the iframe. Faux "viewport" frame uses a 16:9 mock so the corner
+// anchoring reads correctly at a glance.
+function FabPreviewSwatch({
+  position,
+  headline,
+  accent,
+}: {
+  position: 'bottom-right' | 'bottom-left';
+  headline: string;
+  accent?: string;
+}) {
+  const accentColor = accent || 'hsl(var(--primary))';
+  const truncated = headline.length > 22 ? `${headline.slice(0, 22)}…` : headline;
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        aria-hidden="true"
+        className="relative w-44 h-24 rounded-md border border-border bg-gradient-to-br from-muted/60 to-muted/30 overflow-hidden shadow-inner"
+      >
+        {/* Faux browser chrome */}
+        <div className="absolute top-0 inset-x-0 h-3 bg-foreground/5 border-b border-border/60 flex items-center gap-1 px-1.5">
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+        </div>
+        {/* Mini FAB */}
+        <div
+          className={cn(
+            'absolute bottom-1.5 flex items-center gap-1 rounded-full pl-1 pr-1.5 h-5 shadow-md text-primary-foreground',
+            position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
+          )}
+          style={{ backgroundColor: accentColor }}
+        >
+          <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white/20">
+            <Gift className="h-2 w-2" />
+          </span>
+          <span className="font-display uppercase tracking-wider text-[7px] max-w-[70px] truncate">
+            {truncated || 'Offer'}
+          </span>
+          <ChevronRight className="h-2 w-2 opacity-80" />
+        </div>
+      </div>
+      <p className="font-sans text-[10px] text-muted-foreground text-center">
+        Live preview
+      </p>
+    </div>
+  );
+}
+
 // ── datetime-local <-> ISO helpers ──
 
 function toLocalInput(iso: string | null | undefined): string {
