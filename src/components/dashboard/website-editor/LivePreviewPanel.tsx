@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect, memo } from 'react';
 import { tokens } from '@/lib/design-tokens';
-import { Monitor, Tablet, Smartphone, Maximize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Maximize2, Minimize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +75,18 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     setOrientationState(o);
     try { localStorage.setItem(ORIENTATION_KEY, o); } catch {}
   }, []);
+
+  // Remember the last non-fit device so the Fit button can act as a toggle
+  // back to the user's previous viewport.
+  const previousDeviceRef = useRef<Exclude<DeviceMode, 'fit'>>(
+    device !== 'fit' ? device : 'desktop'
+  );
+  useEffect(() => {
+    if (device !== 'fit') previousDeviceRef.current = device;
+  }, [device]);
+  const handleFitToggle = useCallback(() => {
+    setDevice(device === 'fit' ? previousDeviceRef.current : 'fit');
+  }, [device, setDevice]);
 
   // Observe pane size — recompute scale on splitter drag / window resize
   useLayoutEffect(() => {
@@ -304,8 +316,12 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             <DeviceButton active={device === 'mobile'} onClick={() => setDevice('mobile')} title="Mobile (390px)">
               <Smartphone className="h-4 w-4" />
             </DeviceButton>
-            <DeviceButton active={device === 'fit'} onClick={() => setDevice('fit')} title="Fit to pane">
-              <Maximize2 className="h-4 w-4" />
+            <DeviceButton
+              active={device === 'fit'}
+              onClick={handleFitToggle}
+              title={device === 'fit' ? `Back to ${DEVICE_PRESETS[previousDeviceRef.current].label} view` : 'Fit to pane'}
+            >
+              {device === 'fit' ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </DeviceButton>
           </div>
 
