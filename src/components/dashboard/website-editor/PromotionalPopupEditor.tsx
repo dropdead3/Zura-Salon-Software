@@ -578,10 +578,7 @@ export function PromotionalPopupEditor() {
               <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
                 Revenue attributed
               </span>
-              <BlurredAmount
-                amount={revenueAttributed}
-                className="font-sans text-sm font-medium tabular-nums text-foreground"
-              >
+              <BlurredAmount className="font-sans text-sm font-medium tabular-nums text-foreground">
                 {formatCurrency(revenueAttributed)}
               </BlurredAmount>
             </div>
