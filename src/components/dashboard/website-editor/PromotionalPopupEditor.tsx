@@ -100,6 +100,17 @@ export function PromotionalPopupEditor() {
         />
       </div>
 
+      {isDirty && (
+        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
+          <p className="font-sans text-xs text-foreground">
+            <span className="font-display uppercase tracking-wider text-[10px] text-primary mr-2">
+              Unsaved
+            </span>
+            Press <strong>Done</strong> to publish your changes — visitors won't see them yet.
+          </p>
+        </div>
+      )}
+
       {/* Content */}
       <Section title="Content">
         <Field label="Headline" hint="Keep it short — appears in display type.">
