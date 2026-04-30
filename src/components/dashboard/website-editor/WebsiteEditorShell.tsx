@@ -243,6 +243,17 @@ export function WebsiteEditorShell() {
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [siteDesignOpen, setSiteDesignOpen] = useState(false);
+  // Track Site Design panel dirty state so backdrop/ESC closes can route
+  // through the panel's discard-draft confirm dialog instead of silently
+  // dropping unsaved color/typography edits.
+  const [siteDesignDirty, setSiteDesignDirty] = useState(false);
+  useEffect(() => {
+    const onDirty = (e: Event) => {
+      setSiteDesignDirty(!!(e as CustomEvent).detail?.dirty);
+    };
+    window.addEventListener('site-design-dirty-state', onDirty);
+    return () => window.removeEventListener('site-design-dirty-state', onDirty);
+  }, []);
   // Wave 4: insert-at and style inspector
   const [addSectionState, setAddSectionState] = useState<
     | { open: false }
