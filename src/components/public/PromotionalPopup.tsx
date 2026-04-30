@@ -80,6 +80,44 @@ function markSessionDismissed() {
   }
 }
 
+function getOrCreateSessionId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    const key = `${STORAGE_PREFIX}.sid`;
+    let sid = window.sessionStorage.getItem(key);
+    if (!sid) {
+      sid = (crypto as any)?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.sessionStorage.setItem(key, sid);
+    }
+    return sid;
+  } catch {
+    return '';
+  }
+}
+
+async function recordResponse(args: {
+  organizationId: string | undefined | null;
+  offerCode: string;
+  surface: PopupSurface;
+  response: 'accepted' | 'declined' | 'soft';
+}) {
+  if (!args.organizationId) return;
+  try {
+    await supabase.rpc('record_promo_response', {
+      p_organization_id: args.organizationId,
+      p_offer_code: args.offerCode || '',
+      p_surface: args.surface,
+      p_response: args.response,
+      p_session_id: getOrCreateSessionId(),
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+    });
+  } catch (err) {
+    // Non-fatal: localStorage already records the dismissal client-side.
+    console.warn('[promo] failed to record response', err);
+  }
+}
+
 export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const orgId = useSettingsOrgId();
   const orgPath = useOrgPath();
