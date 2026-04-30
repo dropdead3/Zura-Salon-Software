@@ -442,21 +442,36 @@ export function PromotionalPopupEditor() {
       {/* Content */}
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
-          <div className="space-y-2">
-            <GlyphPicker
-              ariaLabel="Eyebrow icon"
-              options={EYEBROW_ICON_OPTIONS}
-              value={formData.eyebrowIcon ?? 'none'}
-              onChange={(v) => handleChange('eyebrowIcon', v as EyebrowIcon)}
-              accent={formData.accentColor}
-            />
-            <Input
-              value={formData.eyebrow ?? ''}
-              onChange={(e) => handleChange('eyebrow', e.target.value)}
-              placeholder="Limited time offer"
-              maxLength={32}
-            />
-          </div>
+          {(() => {
+            const SelectedEyebrowIcon = getEyebrowIcon(formData.eyebrowIcon);
+            return (
+              <div className="space-y-2">
+                <GlyphPicker
+                  ariaLabel="Eyebrow icon"
+                  options={EYEBROW_ICON_OPTIONS}
+                  value={formData.eyebrowIcon ?? 'none'}
+                  onChange={(v) => handleChange('eyebrowIcon', v as EyebrowIcon)}
+                  accent={formData.accentColor}
+                  emptyCaption="No icon"
+                />
+                <div className="relative">
+                  {SelectedEyebrowIcon ? (
+                    <SelectedEyebrowIcon
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5"
+                      style={{ color: formData.accentColor || 'hsl(var(--primary))' }}
+                    />
+                  ) : null}
+                  <Input
+                    value={formData.eyebrow ?? ''}
+                    onChange={(e) => handleChange('eyebrow', e.target.value)}
+                    placeholder="Limited time offer"
+                    maxLength={32}
+                    className={cn(SelectedEyebrowIcon && 'pl-9')}
+                  />
+                </div>
+              </div>
+            );
+          })()}
           <EyebrowUrgencySuggestion
             endsAt={formData.endsAt}
             currentEyebrow={formData.eyebrow}
