@@ -422,6 +422,8 @@ export function WebsiteEditorSidebar({
     setLocalPageSections(reordered);
     emitCommit(selectedPageId, reordered.map(s => s.id));
     onPageSectionReorder?.(reordered);
+    // Soft-reload iframe so it rehydrates with the canonical order.
+    window.dispatchEvent(new CustomEvent('website-preview-refresh'));
     toast.success('Section order updated');
   };
 
