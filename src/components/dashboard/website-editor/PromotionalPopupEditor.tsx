@@ -779,8 +779,84 @@ export function PromotionalPopupEditor() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Accept button label">
+        {/* Live destination preview chip — resolves the same URL the live
+            popup will navigate to. Catches typos in customUrl + drift between
+            destination radio and offer code before publish. Renders a hint
+            row when destination cannot be resolved (custom URL empty/invalid). */}
+        {(() => {
+          const resolved = resolvePopupDestination(
+            {
+              acceptDestination: formData.acceptDestination ?? 'booking',
+              customUrl: formData.customUrl,
+              offerCode: formData.offerCode,
+            },
+            publicBookingUrl,
+          );
+          if (!resolved) {
+            return (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border/60 bg-muted/20">
+                <Link2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+                <p className="font-sans text-[11px] text-muted-foreground">
+                  {formData.acceptDestination === 'custom-url'
+                    ? 'Add a valid URL above to see where visitors will land.'
+                    : 'Public site URL not ready yet — destination preview will appear once available.'}
+                </p>
+              </div>
+            );
+          }
+          return (
+            <TooltipProvider delayDuration={120}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border/60 bg-muted/30 cursor-help">
+                    <Link2 className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />
+                    <p className="font-sans text-[11px] text-muted-foreground shrink-0">
+                      Visitors land on:
+                    </p>
+                    <p className="font-mono text-[11px] text-foreground truncate min-w-0" title={resolved.fullUrl}>
+                      {resolved.shortLabel}
+                    </p>
+                    {resolved.isExternal && (
+                      <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden="true" />
+                    )}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-md">
+                  <p className="font-sans text-xs break-all">{resolved.fullUrl}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        })()}
+
+        {/* Audience ↔ destination consistency lint. Warn (don't block) when a
+            new-visitors-only popup routes to direct booking while the org's
+            booking config requires a consultation first — the popup creative
+            promises one flow but the booking surface enforces another. */}
+        {formData.audience === 'new-visitors-only' &&
+          (formData.acceptDestination ?? 'booking') === 'booking' &&
+          consultationPolicyEnabled && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-xl border border-amber-500/40 bg-amber-500/5">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="font-display uppercase tracking-wider text-[10px] text-amber-700 dark:text-amber-300">
+                  Flow inconsistency
+                </p>
+                <p className="font-sans text-xs text-foreground mt-0.5 leading-relaxed">
+                  Your booking policy requires new clients to schedule a consultation, but this offer routes new visitors to direct booking. Switch the destination to{' '}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2 hover:text-amber-700 dark:hover:text-amber-300"
+                    onClick={() => handleDestinationChange('consultation')}
+                  >
+                    Schedule a consultation
+                  </button>{' '}
+                  to keep the flow consistent.
+                </p>
+              </div>
+            </div>
+          )}
+
             <Input
               value={formData.ctaAcceptLabel}
               onChange={(e) => handleChange('ctaAcceptLabel', e.target.value)}
