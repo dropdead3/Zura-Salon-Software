@@ -405,11 +405,19 @@ const JoinTeamCard = memo(JoinTeamCardComponent);
 export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const isPreview = useIsEditorPreview();
   const [selectedLocation, setSelectedLocation] = useState<Location | "all">("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
+
+  const { data: dbDisplayConfig } = useStylistsDisplayConfig();
+  const displayConfig = useLiveOverride('section_stylists_display', dbDisplayConfig) ?? dbDisplayConfig ?? DEFAULT_STYLISTS_DISPLAY;
+  const stylistsTitle = displayConfig?.section_title ?? DEFAULT_STYLISTS_DISPLAY.section_title;
+  const stylistsDescription = displayConfig?.section_description ?? DEFAULT_STYLISTS_DISPLAY.section_description;
+  const showStylistsTitle = displayConfig?.show_title ?? true;
+  const showStylistsDescription = displayConfig?.show_description ?? true;
 
   // Fetch stylists from database
   const { data: dbStylists, isLoading: stylistsLoading } = useHomepageStylists();
