@@ -1030,6 +1030,7 @@ export function WebsiteEditorShell() {
           preview iframe and persists via the existing useSectionConfig hooks.
           Renders nothing — pure listener. */}
       <InlineEditCommitHandler />
+      {/* ── Top toolbar — Square-style: exit pill | (spacer) | upgrade · preview · publish ── */}
       <div className="flex items-center justify-between gap-3 shrink-0 px-1">
         <div className="flex items-center gap-2 min-w-0">
           {isMobile && (
