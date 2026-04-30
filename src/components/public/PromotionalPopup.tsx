@@ -607,6 +607,14 @@ function PromoBody({
           {cfg.ctaAcceptLabel}
         </button>
       </div>
+      {cfg.acceptDestination === 'custom-url' && cfg.customUrlInstructions && (
+        <p
+          className="font-sans text-xs text-foreground/80 leading-relaxed mb-2 px-3 py-2 rounded-lg border border-border/60 bg-muted/40"
+          style={{ borderLeft: `3px solid ${accent}` }}
+        >
+          {cfg.customUrlInstructions}
+        </p>
+      )}
       {cfg.disclaimer && (
         <p className="font-sans text-[11px] text-muted-foreground/80 leading-relaxed">{cfg.disclaimer}</p>
       )}
