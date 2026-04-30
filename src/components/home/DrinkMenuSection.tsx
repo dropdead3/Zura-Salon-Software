@@ -2,24 +2,8 @@ import { motion, useInView, useScroll, useVelocity, useSpring, useAnimationFrame
 import { useRef, useState } from "react";
 import { useDrinkMenuConfig, type Drink } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
-
-// Import fallback drink images
-import dirtyPeachImg from "@/assets/drinks/dirty-peach.jpg";
-import blowOutImg from "@/assets/drinks/blow-out.jpg";
-import scaryStoriesImg from "@/assets/drinks/scary-stories.jpg";
-import grampsImg from "@/assets/drinks/gramps.jpg";
-import zombieImg from "@/assets/drinks/zombie.jpg";
-import afterlifeImg from "@/assets/drinks/afterlife.jpg";
-
-// Default drinks for fallback when no config is set
-const defaultDrinks: Drink[] = [
-  { id: "1", name: "Dirty Peach", image_url: dirtyPeachImg, ingredients: "Coke, peach, vanilla cream" },
-  { id: "2", name: "Blow Out", image_url: blowOutImg, ingredients: "Sparkling water, peach, strawberry" },
-  { id: "3", name: "Scary Stories", image_url: scaryStoriesImg, ingredients: "Espresso, white chocolate, toasted marshmallow, oat milk, whipped cream, cinnamon powder" },
-  { id: "4", name: "Gramps", image_url: grampsImg, ingredients: "Espresso, caramel drizzle, butterscotch, hazelnut, oat milk" },
-  { id: "5", name: "Zombie", image_url: zombieImg, ingredients: "Espresso, brown sugar cinnamon, vanilla, oat milk, cinnamon powder" },
-  { id: "6", name: "Afterlife", image_url: afterlifeImg, ingredients: "Red Bull, coconut, strawberry, vanilla cream" },
-];
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
+import { InlineEditableText } from "./InlineEditableText";
 
 interface DrinkCardProps {
   drink: Drink;
