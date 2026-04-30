@@ -209,7 +209,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (!active || !cfg || !open) return null;
+  // If the popup is disabled or config missing, render nothing at all.
+  if (!active || !cfg) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
 
@@ -220,6 +221,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
     }
     setOpen(false);
+    setShowFab(false); // Offer claimed — no need for the re-entry FAB.
     if (isPreview) return; // Don't navigate the editor iframe — operator is QA'ing.
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
@@ -236,6 +238,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
     setOpen(false);
+    if (!isPreview) setShowFab(true);
   }
 
   function handleSoftClose() {
@@ -246,7 +249,48 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
     setOpen(false);
+    if (!isPreview) setShowFab(true);
   }
+
+  function handleFabOpen() {
+    setShowFab(false);
+    setOpen(true);
+  }
+
+  function handleFabDismiss(e: React.MouseEvent) {
+    e.stopPropagation();
+    setShowFab(false);
+  }
+
+  // FAB element rendered after dismissal. Reuses the offer's accent color and
+  // headline so the visitor can re-open the offer at any time during the session.
+  const fab = showFab && !open ? (
+    <button
+      type="button"
+      onClick={handleFabOpen}
+      aria-label={`Reopen offer: ${cfg.headline}`}
+      className="group fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 hover:scale-[1.03] transition-transform"
+      style={{ backgroundColor: accent }}
+    >
+      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+        <Gift className="h-4 w-4" />
+      </span>
+      <span className="hidden sm:inline font-display uppercase tracking-wider text-xs max-w-[180px] truncate">
+        {cfg.headline}
+      </span>
+      <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+      <span
+        role="button"
+        aria-label="Dismiss offer reminder"
+        onClick={handleFabDismiss}
+        className="ml-1 hidden sm:flex h-5 w-5 items-center justify-center rounded-full bg-black/20 hover:bg-black/40 transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </span>
+    </button>
+  ) : null;
+
+  if (!open) return fab;
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
