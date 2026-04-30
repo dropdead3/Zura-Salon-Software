@@ -1187,7 +1187,15 @@ export function WebsiteEditorShell() {
           per Drawer Canon (no raw Sheet on dashboard surfaces). */}
       <PremiumFloatingPanel
         open={siteDesignOpen}
-        onOpenChange={setSiteDesignOpen}
+        onOpenChange={(next) => {
+          // Closing while dirty? Hand off to the panel's discard-draft dialog
+          // instead of dropping unsaved overrides on backdrop click / ESC.
+          if (!next && siteDesignDirty) {
+            window.dispatchEvent(new CustomEvent('site-design-close-request'));
+            return;
+          }
+          setSiteDesignOpen(next);
+        }}
         maxWidth="440px"
         showCloseButton={false}
       >
