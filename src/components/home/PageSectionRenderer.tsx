@@ -113,12 +113,19 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
       // Live drag-reorder reflow.
       if (msg.type === 'PREVIEW_PROVISIONAL_ORDER' && Array.isArray(msg.order)) {
+        // Page-scope guard: ignore messages targeting a different page than the
+        // one currently rendered (operator may have switched pages mid-drag).
+        if (msg.pageId && currentPageIdRef.current && msg.pageId !== currentPageIdRef.current) return;
         setProvisionalOrder(msg.order as string[]);
       }
-      // Commit on drop — clear the provisional layer; the next sections fetch
-      // (triggered by the editor's save) becomes the source of truth.
-      if (msg.type === 'PREVIEW_REORDER_SECTIONS') {
-        setProvisionalOrder(null);
+      // Commit on drop. We KEEP the provisional layer applied — clearing it now
+      // would snap the canvas back to stale cached sections (no realtime hook
+      // on useWebsiteSections). The provisional order persists visually until
+      // the iframe receives fresh server data via the refetch invalidation
+      // fired by the editor's saveSections() through React Query.
+      if (msg.type === 'PREVIEW_REORDER_SECTIONS' && Array.isArray(msg.order)) {
+        if (msg.pageId && currentPageIdRef.current && msg.pageId !== currentPageIdRef.current) return;
+        setProvisionalOrder(msg.order as string[]);
       }
     };
 
