@@ -36,6 +36,11 @@ export interface PromotionalPopupSettings {
   frequency: PopupFrequency;
   // Style
   accentColor?: string;
+  // Identifies which curated preset (e.g. 'house' / 'high-contrast' / 'soft-neutral')
+  // produced `accentColor`. Stored separately so the editor can re-highlight the
+  // correct chip even after a theme change shifts the underlying hex value.
+  // `null` / undefined = custom or untracked color.
+  accentPresetKey?: string | null;
   // Re-entry FAB after dismissal
   fabPosition?: FabPosition;
 }
