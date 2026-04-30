@@ -114,7 +114,6 @@ import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
-import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Palette } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
