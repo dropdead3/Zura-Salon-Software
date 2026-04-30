@@ -93,42 +93,25 @@ const SOCIAL_FIELDS = [
   { key: 'linkedin' as const, icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yoursalon' },
 ];
 
-// ─── General Tab ───
-function GeneralTab() {
+// ─── Editor Tab (immersive editor) ───
+function EditorTab() {
+  return <WebsiteEditorShell />;
+}
+
+// ─── Domain Tab (extracted from old General) ───
+function DomainTab() {
   const { effectiveOrganization } = useOrganizationContext();
+  return (
+    <div className="space-y-6">
+      <DomainConfigCard organizationId={effectiveOrganization?.id} />
+    </div>
+  );
+}
+
+// ─── Integrations Tab (Social Links + future pixels surface) ───
+function IntegrationsTab() {
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { dashPath } = useOrgDashboardPath();
-
-  // Announcement bar
-  const { data: announcementSettings, isLoading: annLoading } = useAnnouncementBarSettings();
-  const updateAnnouncement = useUpdateAnnouncementBarSettings();
-  const [annLocal, setAnnLocal] = useState<AnnouncementBarSettings>({
-    enabled: true,
-    message_prefix: '',
-    message_highlight: '',
-    message_suffix: '',
-    cta_text: '',
-    cta_url: '',
-    open_in_new_tab: true,
-    bg_color: '',
-  });
-
-  useEffect(() => {
-    if (announcementSettings) setAnnLocal(announcementSettings);
-  }, [announcementSettings]);
-
-  const annHasChanges = announcementSettings && JSON.stringify(annLocal) !== JSON.stringify(announcementSettings);
-
-  const handleSaveAnnouncement = () => {
-    updateAnnouncement.mutate(annLocal, {
-      onSuccess: () => toast({ title: 'Saved', description: 'Announcement banner updated.' }),
-      onError: () => toast({ variant: 'destructive', title: 'Error', description: 'Failed to save announcement.' }),
-    });
-  };
-
-  // Social links
-  const { data: socialSettings, isLoading: socialLoading } = useWebsiteSocialLinksSettings();
+  const { data: socialSettings, isLoading } = useWebsiteSocialLinksSettings();
   const updateSocial = useUpdateWebsiteSocialLinksSettings();
   const [socialLocal, setSocialLocal] = useState<WebsiteSocialLinksSettings>(DEFAULT_SOCIAL_LINKS);
 
@@ -148,176 +131,12 @@ function GeneralTab() {
     );
   };
 
-  const isLoading = annLoading || socialLoading;
-
   if (isLoading) {
     return <DashboardLoader size="md" className="py-12" />;
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="lg:col-span-2">
-        <DomainConfigCard organizationId={effectiveOrganization?.id} />
-      </div>
-
-      {/* Announcement Banner */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
-          <CardDescription>Control the banner displayed at the top of your public website.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-sm">Show announcement banner</p>
-              <p className="text-xs text-muted-foreground">Displays a dismissable banner at the top of every page</p>
-            </div>
-            <Switch
-              checked={annLocal.enabled}
-              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, enabled: v }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Message prefix</Label>
-            <Input
-              placeholder="Are you a salon"
-              value={annLocal.message_prefix}
-              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_prefix: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Highlighted text</Label>
-            <Input
-              placeholder="professional"
-              value={annLocal.message_highlight}
-              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_highlight: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Message suffix</Label>
-            <Input
-              placeholder="looking for our extensions?"
-              value={annLocal.message_suffix}
-              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_suffix: e.target.value }))}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label>CTA button text</Label>
-              <Input
-                placeholder="Shop Now"
-                value={annLocal.cta_text}
-                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_text: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>CTA link URL</Label>
-              <Input
-                placeholder="https://..."
-                value={annLocal.cta_url}
-                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_url: e.target.value }))}
-                autoCapitalize="off"
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm">Open link in new tab</p>
-            <Switch
-              checked={annLocal.open_in_new_tab}
-              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, open_in_new_tab: v }))}
-            />
-          </div>
-
-          {/* Banner Background Color */}
-          <div className="space-y-3 pt-1">
-            <Label className="text-sm font-medium">Banner Background Color</Label>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: 'Default', value: '', color: 'hsl(40, 20%, 92%)' },
-                { label: 'Warm Sand', value: 'hsl(40, 25%, 90%)', color: 'hsl(40, 25%, 90%)' },
-                { label: 'Soft Cream', value: 'hsl(45, 30%, 94%)', color: 'hsl(45, 30%, 94%)' },
-                { label: 'Stone', value: 'hsl(30, 10%, 60%)', color: 'hsl(30, 10%, 60%)' },
-                { label: 'Charcoal', value: 'hsl(0, 0%, 25%)', color: 'hsl(0, 0%, 25%)' },
-                { label: 'Midnight', value: 'hsl(220, 20%, 18%)', color: 'hsl(220, 20%, 18%)' },
-                { label: 'Blush', value: 'hsl(350, 30%, 88%)', color: 'hsl(350, 30%, 88%)' },
-                { label: 'Sage', value: 'hsl(140, 15%, 75%)', color: 'hsl(140, 15%, 75%)' },
-                { label: 'Slate Blue', value: 'hsl(210, 15%, 70%)', color: 'hsl(210, 15%, 70%)' },
-              ].map((preset) => {
-                const isSelected = (annLocal.bg_color || '') === preset.value;
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    title={preset.label}
-                    onClick={() => setAnnLocal(prev => ({ ...prev, bg_color: preset.value }))}
-                    className={cn(
-                      "w-8 h-8 rounded-full border border-border flex items-center justify-center transition-transform hover:scale-110",
-                      isSelected && "ring-2 ring-primary ring-offset-2"
-                    )}
-                    style={{ backgroundColor: preset.color }}
-                  >
-                    {isSelected && <Check className="w-3.5 h-3.5" style={{ color: preset.value && parseInt(preset.value.match(/(\d+)%\)$/)?.[1] || '100') < 40 ? '#fff' : '#000' }} />}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={annLocal.bg_color || '#e8e3da'}
-                onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
-                className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden"
-                style={{ WebkitAppearance: 'none' }}
-              />
-              <Input
-                placeholder="#hexcolor"
-                autoCapitalize="off"
-                className="flex-1 font-mono text-xs"
-                value={annLocal.bg_color || ''}
-                onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          {annHasChanges && (
-            <Button onClick={handleSaveAnnouncement} disabled={updateAnnouncement.isPending} className="w-full">
-              {updateAnnouncement.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Announcement
-            </Button>
-          )}
-
-          {/* Live Preview */}
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-3 mt-2">
-            <p className="text-xs font-display text-muted-foreground uppercase tracking-wide">Live Preview</p>
-            <div className={cn(
-              "rounded-md overflow-hidden transition-opacity",
-              !annLocal.enabled && "opacity-40"
-            )}>
-              <div 
-                className={cn("py-2.5 px-4 flex items-center justify-between text-sm", !annLocal.bg_color && "bg-secondary")}
-                style={annLocal.bg_color ? { backgroundColor: annLocal.bg_color } : undefined}
-              >
-                <div className={cn("font-sans", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white/80" : "text-foreground/80")}>
-                  <span>{annLocal.message_prefix || 'Are you a salon'}</span>{' '}
-                  <span className="font-medium">{annLocal.message_highlight || 'professional'}</span>{' '}
-                  <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
-                </div>
-                {annLocal.cta_text && (
-                  <div className={cn("flex items-center gap-1 uppercase tracking-wide text-xs font-display shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
-                    {annLocal.cta_text}
-                    <ArrowRight className="w-3 h-3" />
-                  </div>
-                )}
-              </div>
-            </div>
-            {!annLocal.enabled && (
-              <p className="text-xs text-muted-foreground text-center mt-2">Banner is currently disabled</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Social Links */}
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">SOCIAL LINKS</CardTitle>
@@ -371,86 +190,12 @@ function GeneralTab() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Footer Settings */}
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="font-display text-lg">FOOTER</CardTitle>
-          <CardDescription>Manage footer content, links, social profiles, and copyright text.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => navigate(dashPath('/admin/website-hub'))}
-          >
-            <ExternalLink className="w-4 h-4" />
-            Open Footer Editor
-          </Button>
-        </CardContent>
-      </Card>
-
     </div>
   );
 }
 
-// Editor component map (same as WebsiteSectionsHub)
-const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
-  'services': ServicesContent,
-  'testimonials': TestimonialsContent,
-  'gallery': GalleryContent,
-  'stylists': StylistsContent,
-  'locations': LocationsContent,
-  'banner': AnnouncementBarContent,
-  'hero': HeroEditor,
-  'brand': BrandStatementEditor,
-  'testimonials-section': TestimonialsEditor,
-  'services-preview': ServicesPreviewEditor,
-  'popular-services': PopularServicesEditor,
-  'gallery-section': GalleryDisplayEditor,
-  'new-client': NewClientEditor,
-  'stylists-section': StylistsDisplayEditor,
-  'locations-section': LocationsDisplayEditor,
-  'extensions': ExtensionsEditor,
-  'faq': FAQEditor,
-  'brands': BrandsManager,
-  'drinks': DrinksManager,
-  'footer-cta': FooterCTAEditor,
-  'footer': FooterEditor,
-};
-
-const TAB_LABELS: Record<string, string> = {
-  'services': 'Services Manager',
-  'testimonials': 'Testimonials Manager',
-  'gallery': 'Gallery Manager',
-  'stylists': 'Stylists Manager',
-  'locations': 'Locations Manager',
-  'banner': 'Announcement Banner',
-  'hero': 'Hero Section',
-  'brand': 'Brand Statement',
-  'testimonials-section': 'Testimonials Display',
-  'services-preview': 'Services Preview',
-  'popular-services': 'Popular Services',
-  'gallery-section': 'Gallery Display',
-  'new-client': 'New Client CTA',
-  'stylists-section': 'Stylists Display',
-  'locations-section': 'Locations Display',
-  'extensions': 'Extensions Spotlight',
-  'faq': 'FAQ',
-  'brands': 'Partner Brands',
-  'drinks': 'Drink Menu',
-  'footer-cta': 'Footer CTA',
-  'footer': 'Footer Settings',
-};
-
-// ─── Theme Tab (Full Theme Management System) ───
-function ThemeTab({
-  forceOpenEditor = false,
-  onForceOpenConsumed,
-}: {
-  forceOpenEditor?: boolean;
-  onForceOpenConsumed?: () => void;
-}) {
+// ─── Theme Tab (overview only; editor lives in the Editor tab now) ───
+function ThemeTab() {
   const { data: themes, isLoading: themesLoading } = useWebsiteThemes();
   const { data: activeThemeSetting, isLoading: activeLoading } = useActiveTheme();
   const activateTheme = useActivateTheme();
@@ -458,34 +203,10 @@ function ThemeTab({
   const { toast } = useToast();
   const { data: categoryThemes } = useServiceCategoryThemes();
   const applyCategoryTheme = useApplyCategoryTheme();
-  const isMobile = useIsMobile();
   const { data: business } = useBusinessSettings();
   const { effectiveOrganization } = useOrganizationContext();
   const { syncSplashToTheme } = useAutoSyncTerminalSplash(business?.logo_dark_url, business?.business_name || '', effectiveOrganization?.id);
-
-  // Editor state
-  const [mode, setMode] = useState<'overview' | 'editor'>(forceOpenEditor ? 'editor' : 'overview');
-  const [editorTab, setEditorTab] = useState('hero');
-  const [selectedPageId, setSelectedPageId] = useState('home');
-  const [showPreview, setShowPreview] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const [publishOpen, setPublishOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [discardOpen, setDiscardOpen] = useState(false);
-  const { hasChanges } = useChangelogSummary();
-  const { data: hasEverPublished } = useHasEverPublished();
-  const discardMutation = useDiscardToLastPublished();
-
-  useEffect(() => {
-    if (!forceOpenEditor) return;
-    setMode('editor');
-    onForceOpenConsumed?.();
-  }, [forceOpenEditor, onForceOpenConsumed]);
-
-  // Look up the selected page title for the status bar
-  const { data: pagesConfig } = useWebsitePages();
-  const selectedPage = pagesConfig?.pages?.find((p) => p.id === selectedPageId);
-  const selectedPageTitle = selectedPage?.title ?? 'Home';
+  const [, setSearchParams] = useSearchParams();
 
   const activeThemeId = activeThemeSetting?.theme_id || 'cream_classic';
   const activeTheme = themes?.find((t) => t.id === activeThemeId);
@@ -496,7 +217,6 @@ function ThemeTab({
 
     try {
       await activateTheme.mutateAsync(themeId);
-      // Apply color scheme
       const LEGACY_MAP: Record<string, ColorTheme> = { bone: 'cream-lux', cream: 'cream-lux', rose: 'rosewood', ocean: 'marine', ember: 'cognac' };
       const validSchemes = ['zura', 'cream-lux', 'rosewood', 'sage', 'jade', 'marine', 'cognac', 'noir', 'neon', 'matrix', 'peach', 'orchid', 'bone', 'cream', 'rose', 'ocean', 'ember'];
       if (validSchemes.includes(theme.color_scheme)) {
@@ -514,221 +234,35 @@ function ThemeTab({
     }
   };
 
-  const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
+  const { publicUrl: getPublicUrl } = useOrgPublicUrl();
   const orgPreviewUrl = getPublicUrl();
-  const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true, mode: 'view' });
   const handlePreview = (_themeId?: string) => {
     if (orgPreviewUrl) window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const isLoading = themesLoading || activeLoading;
+  // "Customize" jumps to the dedicated immersive Editor tab.
+  const handleCustomize = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tab', 'editor');
+      return next;
+    }, { replace: false });
+  };
 
-  if (isLoading) {
+  if (themesLoading || activeLoading) {
     return <DashboardLoader size="md" className="py-12" />;
   }
 
-  // ── Editor Mode ──
-  if (mode === 'editor') {
-    const EditorComponent = EDITOR_COMPONENTS[editorTab];
-
-    return (
-      <div className="space-y-0 -mx-1">
-        {/* Editor header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size={tokens.button.card} onClick={() => setMode('overview')} className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Themes
-            </Button>
-            <div className="h-5 w-px bg-border" />
-            <div className="flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">
-                {TAB_LABELS[editorTab] || 'Website Editor'}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant={showPreview ? 'default' : 'outline'}
-              size={tokens.button.card}
-              onClick={() => setShowPreview(!showPreview)}
-            >
-              {showPreview ? (
-                <><PanelRightClose className="h-4 w-4 mr-1" />Hide Preview</>
-              ) : (
-                <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size={tokens.button.card}
-              onClick={() => setHistoryOpen(true)}
-              title="View version history"
-            >
-              <History className="h-4 w-4 mr-1" />
-              History
-            </Button>
-            <Button
-              variant="ghost"
-              size={tokens.button.card}
-              onClick={() => setDiscardOpen(true)}
-              disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
-              title={
-                !hasEverPublished
-                  ? 'No published version yet — publish first to enable discard.'
-                  : !hasChanges
-                    ? 'No unpublished changes to discard.'
-                    : 'Revert all unpublished changes to last published version'
-              }
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <RotateCcw className="h-4 w-4 mr-1" />
-              Discard Changes
-            </Button>
-            <Button
-              variant="default"
-              size={tokens.button.card}
-              onClick={() => setPublishOpen(true)}
-              className="relative"
-            >
-              <Globe className="h-4 w-4 mr-1" />
-              Publish Changes
-              {hasChanges && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-background" />
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size={tokens.button.card}
-              onClick={() => orgPreviewUrl && window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer')}
-              disabled={!orgPreviewUrl}
-              title={orgPreviewUrl ?? 'No organization slug available'}
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Open Site
-            </Button>
-          </div>
-        </div>
-
-        <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
-        <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
-
-        <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Discard unpublished changes?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will revert pages, theme, footer, and announcement bar to the
-                last published version. A backup of the current state is saved to
-                History so you can recover it later.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={discardMutation.isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={discardMutation.isPending}
-                onClick={async (e) => {
-                  e.preventDefault();
-                  try {
-                    await discardMutation.mutateAsync();
-                    toast({
-                      title: 'Reverted to last published',
-                      description: 'A backup of your changes was saved to History.',
-                    });
-                    setDiscardOpen(false);
-                  } catch (err) {
-                    toast({
-                      variant: 'destructive',
-                      title: 'Discard failed',
-                      description: err instanceof Error ? err.message : 'Unknown error',
-                    });
-                  }
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {discardMutation.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reverting…</>
-                ) : (
-                  'Discard & Restore'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Editor content with sidebar + preview */}
-        <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 20rem)' }}>
-          <ResizablePanelGroup direction="horizontal" className="h-full">
-            {/* Sidebar */}
-            {showSidebar && !isMobile && (
-              <>
-                <ResizablePanel defaultSize={22} minSize={15} maxSize={30}>
-                  <WebsiteEditorSidebar
-                    activeTab={editorTab}
-                    onTabChange={setEditorTab}
-                    selectedPageId={selectedPageId}
-                    onPageChange={setSelectedPageId}
-                    onToggleCollapse={() => setShowSidebar(false)}
-                  />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-              </>
-            )}
-
-            {/* Main editor */}
-            <ResizablePanel defaultSize={showPreview ? 48 : 78} minSize={30}>
-              <div className="h-full flex flex-col overflow-hidden">
-                <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
-                  {!isMobile && (
-                    <Button variant="ghost" size="icon" onClick={() => setShowSidebar(!showSidebar)} className="h-7 w-7">
-                      {showSidebar ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    Editing: <span className="text-foreground font-medium">{selectedPageTitle}</span>
-                    <span className="mx-1.5 opacity-50">•</span>
-                    {TAB_LABELS[editorTab] ?? activeTheme?.name ?? 'Theme'}
-                  </span>
-                </div>
-                <div className="flex-1 overflow-auto p-6">
-                  {EditorComponent ? <EditorComponent /> : (
-                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                      Select a section from the sidebar
-                    </div>
-                  )}
-                </div>
-              </div>
-            </ResizablePanel>
-
-            {/* Preview panel */}
-            {showPreview && (
-              <>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                  <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
-                </ResizablePanel>
-              </>
-            )}
-          </ResizablePanelGroup>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Overview Mode ──
   return (
     <div className="space-y-6">
-      {/* Active Theme */}
       {activeTheme && (
         <ActiveThemeCard
           theme={activeTheme}
-          onCustomize={() => setMode('editor')}
+          onCustomize={handleCustomize}
           onPreview={() => handlePreview()}
         />
       )}
 
-      {/* Theme Library */}
       {themes && themes.length > 0 && (
         <ThemeLibraryGrid
           themes={themes}
@@ -741,6 +275,7 @@ function ThemeTab({
     </div>
   );
 }
+
 
 // ─── Booking Tab ───
 function BookingTab() {
