@@ -3,6 +3,8 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, Plus, Trash2, RotateCcw, GripVertical, Type } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -102,6 +104,9 @@ export function BrandStatementEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_brand_statement', localConfig);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -117,11 +122,12 @@ export function BrandStatementEditor() {
     try {
       await update(localConfig);
       toast.success('Brand Statement saved');
+      clearPreviewOverride('section_brand_statement', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 

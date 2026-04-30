@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, UserPlus } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -21,6 +23,9 @@ export function NewClientEditor() {
   const [localConfig, setLocalConfig] = useState<NewClientConfig>(DEFAULT_NEW_CLIENT);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_new_client', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -31,11 +36,12 @@ export function NewClientEditor() {
     try {
       await update(localConfig);
       toast.success('New Client section saved');
+      clearPreviewOverride('section_new_client', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 

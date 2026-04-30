@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, MousePointerClick } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useFooterCTAConfig, type FooterCTAConfig, DEFAULT_FOOTER_CTA } from '@/hooks/useSectionConfig';
 import { UrlInput } from './inputs/UrlInput';
@@ -19,6 +21,9 @@ export function FooterCTAEditor() {
   const [localConfig, setLocalConfig] = useState<FooterCTAConfig>(DEFAULT_FOOTER_CTA);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_footer_cta', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -29,11 +34,12 @@ export function FooterCTAEditor() {
     try {
       await update(localConfig);
       toast.success('Footer CTA section saved');
+      clearPreviewOverride('section_footer_cta', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 

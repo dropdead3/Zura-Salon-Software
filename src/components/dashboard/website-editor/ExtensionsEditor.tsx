@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Star, Award, MapPin, Settings2, RotateCcw, Puzzle } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -28,6 +30,9 @@ export function ExtensionsEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_extensions', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -38,11 +43,12 @@ export function ExtensionsEditor() {
     try {
       await update(localConfig);
       toast.success('Extensions section saved');
+      clearPreviewOverride('section_extensions', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 
