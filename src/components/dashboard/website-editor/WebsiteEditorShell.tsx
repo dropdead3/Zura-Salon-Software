@@ -840,6 +840,7 @@ function WebsiteEditorShellInner() {
     handlePageSectionToggle,
     handlePageSectionDuplicate,
     handlePageSectionDelete,
+    updatePages,
   ]);
 
   // Sidebar → canvas: highlight the active section in the iframe whenever the tab changes.
