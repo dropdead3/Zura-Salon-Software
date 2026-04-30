@@ -154,6 +154,11 @@ export function DrinkMenuSection() {
     setXPos(baseX.current);
   });
 
+  // Empty state: render nothing publicly; show editor stub when in preview.
+  if (drinks.length === 0 && !isPreview) {
+    return null;
+  }
+
   return (
     <section 
       ref={sectionRef} 
@@ -171,42 +176,82 @@ export function DrinkMenuSection() {
         className="container mx-auto px-6 text-center mb-12"
       >
         <p className="text-sm md:text-base uppercase tracking-[0.2em] text-muted-foreground font-display">
-          {config.eyebrow}{" "}
-          <span className="underline underline-offset-4">{config.eyebrow_highlight}</span>{" "}
-          {config.eyebrow_suffix}
+          {isPreview ? (
+            <InlineEditableText
+              value={config?.eyebrow ?? ''}
+              sectionKey="section_drink_menu"
+              fieldPath="eyebrow"
+              placeholder="Drinks on us. We have an exclusive menu of"
+            />
+          ) : config?.eyebrow}
+          {" "}
+          <span className="underline underline-offset-4">
+            {isPreview ? (
+              <InlineEditableText
+                value={config?.eyebrow_highlight ?? ''}
+                sectionKey="section_drink_menu"
+                fieldPath="eyebrow_highlight"
+                placeholder="complimentary"
+              />
+            ) : config?.eyebrow_highlight}
+          </span>
+          {" "}
+          {isPreview ? (
+            <InlineEditableText
+              value={config?.eyebrow_suffix ?? ''}
+              sectionKey="section_drink_menu"
+              fieldPath="eyebrow_suffix"
+              placeholder="options for your appointment."
+            />
+          ) : config?.eyebrow_suffix}
         </p>
       </motion.div>
 
+      {/* Empty-state stub (preview-only) */}
+      {drinks.length === 0 && isPreview && (
+        <div className="container mx-auto px-6">
+          <div className="max-w-md mx-auto text-center py-12 px-6 border-2 border-dashed border-border rounded-2xl bg-card/40">
+            <p className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground mb-2">No drinks yet</p>
+            <p className="text-sm text-muted-foreground font-sans">
+              Open the Drink Menu editor and click "Add Drink" to populate this section.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Infinite scroll drinks with velocity-based speed */}
-      <motion.div 
-        className="flex"
-        style={{ 
-          x: xPos,
-          width: 'fit-content'
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* First set */}
-        {drinks.map((drink, index) => (
-          <DrinkCard 
-            key={drink.id} 
-            drink={drink} 
-            index={index} 
-            isInView={isInView} 
-            animated={true}
-          />
-        ))}
-        
-        {/* Duplicate set for seamless loop */}
-        {drinks.map((drink) => (
-          <DrinkCard 
-            key={`dup-${drink.id}`} 
-            drink={drink} 
-            animated={false}
-          />
-        ))}
-      </motion.div>
+      {drinks.length > 0 && (
+        <motion.div 
+          className="flex"
+          style={{ 
+            x: xPos,
+            width: 'fit-content'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* First set — inline-editable in preview */}
+          {drinks.map((drink, index) => (
+            <DrinkCard 
+              key={drink.id} 
+              drink={drink} 
+              index={index} 
+              isInView={isInView} 
+              animated={true}
+              inlineEditIndex={isPreview ? index : undefined}
+            />
+          ))}
+          
+          {/* Duplicate set for seamless loop — never editable (would create dup commit handlers) */}
+          {drinks.map((drink) => (
+            <DrinkCard 
+              key={`dup-${drink.id}`} 
+              drink={drink} 
+              animated={false}
+            />
+          ))}
+        </motion.div>
+      )}
 
       {/* Bottom fade overlay for seamless exit */}
       <div 
