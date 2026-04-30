@@ -32,7 +32,7 @@
  * doctrine is preserved end-to-end.
  */
 import { useEffect, useRef, useState } from 'react';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOrganizationContext, useOptionalOrganizationContext } from '@/contexts/OrganizationContext';
 
 type LiveUpdate<T = unknown> = {
   type: 'EDITOR_LIVE_UPDATE';
