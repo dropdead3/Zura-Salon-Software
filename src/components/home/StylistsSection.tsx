@@ -27,6 +27,10 @@ import { useHomepageStylists } from "@/hooks/useHomepageStylists";
 import { useHomepageStylistsSettings } from "@/hooks/useSiteSettings";
 import { useSpecialtyOptions } from "@/hooks/useSpecialtyOptions";
 import { sampleStylists } from "@/data/sampleStylists";
+import { useStylistsDisplayConfig, DEFAULT_STYLISTS_DISPLAY } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "./InlineEditableText";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 import { locations as staticLocations, stylistLevels, type Stylist, type Location } from "@/data/stylists";
 import { useLocationName } from "@/hooks/useLocationName";
