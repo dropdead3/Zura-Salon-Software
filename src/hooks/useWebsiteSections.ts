@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useWebsitePages, useUpdateWebsitePages, type WebsitePagesConfig } from './useWebsitePages';
 
 // Built-in section types (have dedicated editor components)
