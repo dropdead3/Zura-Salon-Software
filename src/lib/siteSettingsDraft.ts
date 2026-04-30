@@ -98,6 +98,7 @@ export async function writeSiteSettingDraft(
       .eq('id', key)
       .eq('organization_id', orgId);
     if (error) throw error;
+    broadcastDraftWrite(orgId, key);
     return;
   }
 
@@ -117,6 +118,27 @@ export async function writeSiteSettingDraft(
       updated_by: userId ?? null,
     });
   if (error) throw error;
+  broadcastDraftWrite(orgId, key);
+}
+
+/**
+ * Broadcast a draft-write notification so the live preview iframe (and any
+ * other listener in the parent window) can refresh in real time without a
+ * full reload.
+ *
+ * - Parent window: dispatches a `site-settings-draft-write` CustomEvent
+ *   that LivePreviewPanel forwards into the iframe via postMessage.
+ * - Iframe context: posts up to parent (no-op if same window).
+ */
+function broadcastDraftWrite(orgId: string, key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
+    );
+  } catch {
+    /* SSR / non-DOM env */
+  }
 }
 
 /**
