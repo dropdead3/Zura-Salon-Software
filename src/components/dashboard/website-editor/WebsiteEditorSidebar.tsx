@@ -393,7 +393,13 @@ export function WebsiteEditorSidebar({
   const selectedPage = pagesConfig?.pages.find(p => p.id === selectedPageId);
 
   // --- Non-home page sections with DnD ---
+  // NOTE: This state + effect MUST live above the `if (collapsed) return` early
+  // exit below. Hooks declared after a conditional return violate the Rules of
+  // Hooks ("Rendered fewer hooks than expected") whenever the rail toggles
+  // between collapsed and expanded states.
   const [localPageSections, setLocalPageSections] = useState<SectionConfig[]>([]);
+  // Non-home page delete target — also hoisted above the early return.
+  const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
 
   useEffect(() => {
     if (!isHomePage && selectedPage) {
@@ -426,8 +432,7 @@ export function WebsiteEditorSidebar({
     toast.success('Section order updated');
   };
 
-  // Non-home page delete target
-  const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
+  // (pageDeleteTarget state hoisted above the early-return — see top of fn.)
 
 
   if (collapsed) {
