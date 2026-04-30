@@ -322,6 +322,7 @@ export function WebsiteEditorShell() {
             size={tokens.button.card}
             onClick={() => setPublishOpen(true)}
             className="relative"
+            title="Publish changes (⌘S)"
           >
             <Globe className="h-4 w-4 mr-1" />
             Publish Changes
