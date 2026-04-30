@@ -1143,6 +1143,44 @@ export function WebsiteEditorShell() {
         onSelect={handleApplyPageTemplate}
       />
 
+      {/* Wave 4: Add section at insertion index (canvas-driven) */}
+      <AddSectionDialog
+        open={addSectionState.open}
+        onOpenChange={(open) => !open && setAddSectionState({ open: false })}
+        onAdd={handleAddSectionAt}
+        onAddFromTemplate={handleAddSectionFromTemplate}
+      />
+
+      {/* Wave 4: Section style inspector */}
+      <PremiumFloatingPanel
+        open={!!styleTarget}
+        onOpenChange={(open) => !open && setStyleTarget(null)}
+        side="right"
+        maxWidth="380px"
+      >
+        <div className="flex flex-col h-full">
+          <div className="px-5 py-4 border-b border-border/60">
+            <p className="text-[11px] font-display tracking-wider uppercase text-muted-foreground">
+              Section Style
+            </p>
+            <h3 className="text-base font-display tracking-wide uppercase text-foreground truncate">
+              {styleTargetSection?.label ?? 'Section'}
+            </h3>
+          </div>
+          <div className="flex-1 overflow-auto px-5 py-4">
+            {styleTargetSection ? (
+              <SectionStyleEditor
+                value={styleTargetSection.style_overrides ?? {}}
+                onChange={handleStyleChange}
+                sectionId={styleTargetSection.id}
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">Select a section to style.</p>
+            )}
+          </div>
+        </div>
+      </PremiumFloatingPanel>
+
       {/* Unsaved-changes guard */}
       <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
         <AlertDialogContent>
