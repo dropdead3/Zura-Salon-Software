@@ -464,7 +464,7 @@ function DeviceButton({
     <Button
       variant="ghost"
       size={tokens.button.inline}
-      className={cn('h-7 w-8 p-0', active && 'bg-background shadow-sm text-foreground')}
+      className={cn('h-7 w-8 p-0 rounded-full', active && 'bg-background shadow-sm text-foreground')}
       onClick={onClick}
       title={title}
     >
