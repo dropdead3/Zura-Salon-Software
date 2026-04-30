@@ -188,6 +188,11 @@ export function HostedBookingPage() {
     setIsSubmitting(true);
 
     try {
+      // Forward the promotional popup code (if any) to the booking edge
+      // function so it can persist it on the appointment + write a row to
+      // promotion_redemptions when the code matches the org's active popup.
+      const promoCode = (searchParams.get('promo') ?? '').trim() || null;
+
       const { data, error } = await supabase.functions.invoke('create-public-booking', {
         body: {
           organization_id: org.id,
@@ -205,6 +210,7 @@ export function HostedBookingPage() {
           },
           // Wave 9: Inline-signed forms — empty array means deferred to check-in
           signed_form_template_ids: signedFormTemplateIds,
+          promo_code: promoCode,
         },
       });
 
