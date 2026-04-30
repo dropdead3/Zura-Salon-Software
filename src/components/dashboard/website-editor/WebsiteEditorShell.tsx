@@ -890,26 +890,21 @@ function WebsiteEditorShellInner() {
     updatePages,
   ]);
 
-  // Sidebar → canvas: highlight the active section in the iframe whenever the tab changes.
-  useEffect(() => {
-    // Find a sectionId that maps back to this tab so we can post it.
+  // Sidebar → canvas: resolve the active section id from the current editor tab.
+  // LivePreviewPanel consumes this prop and posts PREVIEW_SCROLL_TO_SECTION into
+  // the iframe so the draft preview auto-scrolls to whatever the operator clicked.
+  const activePreviewSectionId = useMemo<string | undefined>(() => {
     const allSections: SectionConfig[] = [
       ...(selectedPage?.sections ?? []),
       ...(pagesConfig?.pages.find((p) => p.id === 'home')?.sections ?? []),
     ];
-    let activeSectionId: string | undefined;
     if (editorTab.startsWith('custom-')) {
-      activeSectionId = editorTab.replace('custom-', '');
-    } else {
-      const match = allSections.find(
-        (s) => isBuiltinSection(s.type) && BUILTIN_TYPE_TO_TAB[s.type] === editorTab,
-      );
-      activeSectionId = match?.id;
+      return editorTab.replace('custom-', '');
     }
-    if (!activeSectionId) return;
-    // Broadcast — LivePreviewPanel posts to its iframe; we also fire a window event
-    // for any embedded preview that listens directly.
-    window.postMessage({ type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId: activeSectionId }, '*');
+    const match = allSections.find(
+      (s) => isBuiltinSection(s.type) && BUILTIN_TYPE_TO_TAB[s.type] === editorTab,
+    );
+    return match?.id;
   }, [editorTab, pagesConfig, selectedPage]);
 
   // ─── Resolve current editor component ───
@@ -1311,7 +1306,7 @@ function WebsiteEditorShellInner() {
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           )}
-          <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
+          <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} activeSectionId={activePreviewSectionId} />
         </div>
       </div>
 
