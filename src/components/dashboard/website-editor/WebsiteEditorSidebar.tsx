@@ -323,15 +323,14 @@ export function WebsiteEditorSidebar({
     const newSections = [...localSections, newSection];
     await saveSections(newSections);
 
-    // Also save the template's default config as the section content
+    // Also save the template's default config as the section content.
+    // Draft-only — Publish promotes to live so visitors don't see new
+    // template content before the operator finishes editing.
     const settingsKey = `section_custom_${newSection.id}`;
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('site_settings').upsert({
-      id: settingsKey,
-      organization_id: orgId,
-      value: template.default_config as never,
-      updated_by: user?.id,
-    });
+    if (orgId) {
+      await writeSiteSettingDraft(orgId, settingsKey, template.default_config, user?.id ?? null);
+    }
 
     toast.success(`"${template.name}" added from template`);
     onTabChange(`custom-${newSection.id}`);
