@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { colorThemes, type ColorTheme } from "@/hooks/useColorTheme";
 import type { StepProps } from "./types";
 
 interface Step1Data {
@@ -33,6 +35,18 @@ const TIMEZONES = [
   "America/Anchorage",
   "Pacific/Honolulu",
 ];
+
+// Curated 4-tile preview set — the rest of the gallery lives in the Site
+// Design panel post-onboarding. Ordering matches the dashboard's canonical
+// display order so wizard ↔ dashboard recognition holds.
+const WIZARD_THEME_TILES: ColorTheme[] = ["zura", "cream-lux", "neon", "rosewood"];
+
+// Same legacy localStorage key useColorTheme reads at module load and that
+// useCommitOrgSetup.seedWebsiteThemeFromDashboard reads at commit time. By
+// writing here we make the commit-time seed deterministic instead of
+// implicit (was: "whatever the operator clicked in the dashboard chrome").
+const WIZARD_THEME_STORAGE_KEY = "dd-color-theme";
+
 
 /**
  * Step 1 — Business identity. Soft-required. All fields validate or skip flow.
