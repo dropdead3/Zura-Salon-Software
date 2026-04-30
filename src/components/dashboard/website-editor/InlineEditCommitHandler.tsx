@@ -218,7 +218,7 @@ export function InlineEditCommitHandler() {
         });
       }
     },
-    [hero, brand, faq, footerCta, newClient, toast],
+    [hero, brand, faq, footerCta, newClient, testimonials, extensions, toast],
   );
 
   useEffect(() => {
