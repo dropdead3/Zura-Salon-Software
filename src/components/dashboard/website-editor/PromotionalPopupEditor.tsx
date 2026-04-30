@@ -4,6 +4,8 @@ import { Sparkline } from '@/components/ui/Sparkline';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatCurrency } from '@/lib/formatCurrency';
 import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -236,6 +238,7 @@ export function PromotionalPopupEditor() {
   const redemptionCount = redemptionData?.count ?? 0;
   const redemptionSeries = redemptionData?.series ?? [];
   const redemptionLast24h = redemptionData?.last24h ?? 0;
+  const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
 
   useEffect(() => {
     if (settings) {
@@ -564,6 +567,20 @@ export function PromotionalPopupEditor() {
                   ariaLabel="14-day redemption velocity"
                 />
               </div>
+            </div>
+          )}
+          {/* Lifetime attributed revenue — silence is valid: rows pre-dating
+              the attribution column write resolve to 0 (honest absence). We
+              only render when there's signal, keeping the card calm for new
+              codes and historic redemptions. */}
+          {revenueAttributed > 0 && (
+            <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
+              <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                Revenue attributed
+              </span>
+              <BlurredAmount className="font-sans text-sm font-medium tabular-nums text-foreground">
+                {formatCurrency(revenueAttributed)}
+              </BlurredAmount>
             </div>
           )}
         </div>

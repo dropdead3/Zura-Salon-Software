@@ -358,6 +358,12 @@ Deno.serve(async (req) => {
                 ? +(basePrice - finalPrice).toFixed(2)
                 : null,
               final_amount: finalPrice,
+              // Stamp at booking time — represents the operator's marketing
+              // intent, not post-edit reality. Voids/refunds are tracked
+              // separately and intentionally do not retro-mutate this value
+              // (we want to know what the popup *drove*, not what survived).
+              // Falls back to basePrice if discount logic produced no final.
+              revenue_attributed: finalPrice ?? basePrice ?? null,
               location_id: location_id || null,
               staff_user_id: staffUserId,
               // Surface attribution: identifies which marketing channel drove this
