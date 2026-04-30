@@ -7,7 +7,7 @@
  */
 
 import { useState, useCallback, type ReactNode } from 'react';
-import { GripVertical, Copy, Eye, EyeOff, MoreHorizontal, Trash2 } from 'lucide-react';
+import { GripVertical, Copy, Eye, EyeOff, MoreHorizontal, Trash2, Palette } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EditorSectionCardProps {
