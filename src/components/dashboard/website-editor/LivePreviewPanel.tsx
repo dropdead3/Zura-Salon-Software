@@ -306,7 +306,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
 
         <div className="flex items-center gap-2">
           {/* Device segmented control */}
-          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-1">
+          <div className="flex items-center gap-0.5 bg-muted rounded-full p-1">
             <DeviceButton active={device === 'desktop'} onClick={() => setDevice('desktop')} title="Desktop (1440px)">
               <Monitor className="h-4 w-4" />
             </DeviceButton>
@@ -464,7 +464,7 @@ function DeviceButton({
     <Button
       variant="ghost"
       size={tokens.button.inline}
-      className={cn('h-7 w-8 p-0', active && 'bg-background shadow-sm text-foreground')}
+      className={cn('h-7 w-8 p-0 rounded-full', active && 'bg-background shadow-sm text-foreground')}
       onClick={onClick}
       title={title}
     >
