@@ -141,6 +141,7 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   stylists: StylistsContent,
   locations: LocationsContent,
   banner: AnnouncementBarContent,
+  promotions: PromotionalPopupEditor,
   hero: HeroEditor,
   brand: BrandStatementEditor,
   'testimonials-section': TestimonialsEditor,
