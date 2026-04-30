@@ -305,8 +305,8 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={onClose}>
-          Done
+        <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={handleCloseIntent}>
+          {dirty ? 'Close' : 'Done'}
         </Button>
       </div>
 
@@ -486,6 +486,25 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
           Save Design
         </Button>
       </div>
+
+      {/* Discard-draft confirmation */}
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard design changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved Site Design edits. Closing now will revert the preview
+              to your last saved design.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardConfirmed}>
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
