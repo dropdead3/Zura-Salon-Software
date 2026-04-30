@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
       time,
       client,
       signed_form_template_ids, // Wave 7: optional list of form templates the client signed inline at confirm
+      promo_code, // Promotional popup code attached via ?promo= deep-link. Persisted on the appointment + recorded as a redemption when it matches the org's active popup code.
     } = body;
 
     if (!organization_id || typeof organization_id !== "string") {
