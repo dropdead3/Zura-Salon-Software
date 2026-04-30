@@ -11,6 +11,7 @@ import {
 import { useFAQConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useVisibleFAQItems } from "@/hooks/useFAQItems";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 type FAQRow = { id: string; question: string; answer: string; category?: string | null; sort_order?: number };
 
