@@ -1,95 +1,133 @@
-## Goal
+# Claim Offer — Full Loop Closure (Preview + Live + Consultation Policy)
 
-Make the promotional popup feel intentional: a smooth, slightly delayed entrance ~10s after the visitor lands, and after they close it, keep the offer accessible via a small floating action button (FAB) in the bottom corner so they can re-open it anytime during the visit.
+## What you confirmed
 
-## Behavior
+1. **Schedule a consultation** = a real popup destination, but **only** surfaces in the editor when the org has set "new clients must consult first" as a policy.
+2. **Custom URL destination** = yes, with operator-authored "how to claim" instructions on the booking page.
+3. **CTA label auto-fills** based on destination (operator can override).
 
-1. **Entrance**
-   - Default trigger delay becomes **10,000 ms** (today it's 4,000 ms).
-   - Existing operator config still wins — if the operator picked a different delay/trigger in the editor, we honor it.
-   - Animation softened: gentle fade + scale + 8px upward drift over ~500ms with `ease-out` (replaces the snappier `zoom-in-95`). Respects `prefers-reduced-motion` (reduced motion = fade only).
-   - Editor-preview path (QA inside the website editor iframe) keeps its current "fire immediately" override so operators don't wait 10s every reload.
+## What I confirmed in the codebase
 
-2. **Soft close → FAB**
-   - When the visitor closes the popup via the X, Esc, backdrop click, **or** the "No thanks" decline button, the popup hides and a small **FAB** appears anchored to the bottom-right of the viewport.
-   - The FAB shows the offer's accent color, a tag/gift icon, and a short label derived from the offer (e.g. headline, truncated). On mobile it collapses to icon-only.
-   - Clicking the FAB re-opens the same popup with the same animation.
-   - **Accept** still navigates to `/booking?promo=…` and does NOT show the FAB (the offer has been claimed).
-   - The FAB is **session-scoped**: once present, it stays for the rest of the browsing session, and it disappears on accept or if the operator disables the popup.
-   - The FAB is suppressed inside the editor preview iframe (operators are QA'ing the popup itself, not the FAB persistence flow).
+- **No org-wide consultation policy exists yet** — only per-service `requiresConsultation` flags. We need to add it.
+- **`?consultation=true` is dead wire today** — it's read into booking session state but nothing downstream uses it. We'll wire it up.
+- `BookingSurfaceConfig` is the right home for the new policy (already has `allowConsultationMode` on the embed side, so the concept is structurally present).
+- Booking page never reads `?promo=` today, so the popup's promise is currently unkept on the live site.
 
-3. **Frequency caps unchanged**
-   - The existing `frequency` rules (`once`, `once-per-session`, `daily`, `always`) continue to control whether the popup auto-opens on future page loads. The FAB is an in-session re-entry point only — it does not bypass `once` on the next visit.
+## Build plan — three concurrent layers
 
-## Visual spec (FAB)
+### Layer A — Org-wide "New Client Booking Policy" (Booking Surface Config)
 
-```text
-┌──────────────────────────────┐
-│  🎁  Free Haircut Offer  ›   │   ← rounded-full, bg = accent, text = primary-foreground
-└──────────────────────────────┘
-                         bottom-6 right-6
+Add a new field to `BookingSurfaceConfig`:
+
+```ts
+newClientPolicy: 'open' | 'consultation-required';
 ```
 
-- Desktop: pill with icon + truncated headline (max ~28 chars) + chevron
-- Mobile (<640px): circular icon-only button (`h-12 w-12 rounded-full`)
-- Subtle entrance: fade + slide-in-from-bottom-2 over 250ms after popup closes
-- Small dismiss "×" on hover (top-right of pill) lets the visitor remove the FAB for the session if they really don't want it; this writes the same `soft` dismissal record
+- Default: `'open'` (current behavior preserved)
+- New editor row in the Booking Surface settings (under Flow): **"New Client Policy"** with two options:
+  - *Open booking* — anyone can book any service directly
+  - *Consultation required* — new visitors must schedule a consultation before booking services
+- When `consultation-required` is set:
+  - Booking page checks for an existing-client cookie/session marker
+  - If new visitor + arrived without `?consultation=true` → show inline gate explaining policy + offer "Schedule Consultation" CTA that re-routes with the param
+  - If `?consultation=true` is set → filter service browser to services where `requiresConsultation === true` (or show all but pre-flag them as "consultation step")
+
+### Layer B — Promotional Popup Destination Toggle
+
+Add to `PromotionalPopupSettings`:
+
+```ts
+acceptDestination: 'booking' | 'consultation' | 'custom-url';
+customUrl?: string;
+customUrlInstructions?: string;  // shown on the booking page banner when destination='custom-url' is impossible — actually used only for in-popup tooltip; see Layer C
+```
+
+Editor UI (new section under "Call-to-action" in `PromotionalPopupEditor`):
+
+- **Radio group: "Where does Claim Offer send the visitor?"**
+  - *Direct booking* — `/booking?promo=CODE`
+  - *Schedule a consultation* — `/booking?promo=CODE&consultation=true` (only enabled when org's `newClientPolicy === 'consultation-required'`; otherwise grayed with helper text *"Enable 'Consultation required' in Booking Surface settings to use this destination."*)
+  - *Custom URL* — operator pastes a URL (validated as `https://`, `tel:`, or `mailto:`) + a short instructions field
+- **CTA label auto-fills** when destination changes:
+  - `booking` → "Claim Offer" (current default)
+  - `consultation` → "Book Consultation"
+  - `custom-url` → "Learn More"
+  - Operator can always override; we just rewrite the label at the moment they switch destinations and the field still matches the previous default
+
+### Layer C — Booking-page promo banner + custom-URL flow
+
+When `?promo=CODE` arrives on `/booking`:
+
+1. Resolve `CODE` against the org's promotional popup config (only if `enabled`)
+2. Render a slim accent-colored banner above the booking form:
+   - **Standard:** *"Offer applied — {headline}. Code {CODE} will be honored at checkout."*
+   - **Consultation variant** (if `?consultation=true` also set): *"Offer applied — schedule a consultation and we'll honor {CODE} at your next visit."*
+3. Banner uses the popup's `accentColor` so the visual handoff feels continuous
+
+For custom-URL destination: the operator-authored `customUrlInstructions` are surfaced **inside the popup itself** (small text below the CTA, e.g. *"Call (555) 123-4567 to claim — mention code {CODE}"*), since the visitor never lands on `/booking` for that path. Removes the need for a separate landing copy.
+
+### Layer D — Editor preview fix (the original bug)
+
+In `PromotionalPopup.handleAccept()`, when `isPreview === true`:
+- Show a sonner toast describing the simulated downstream action:
+  - `booking` → *"Visitor would be sent to /booking with code {CODE}"*
+  - `consultation` → *"Visitor would be sent to consultation booking with code {CODE}"*
+  - `custom-url` → *"Visitor would be sent to {customUrl}"* (or *"Visitor sees instructions: {customUrlInstructions}"* if no URL)
+- Popup still closes — no actual navigation. Operator now has clear feedback.
 
 ## Files to change
 
-- `src/components/public/PromotionalPopup.tsx` — bump default delay to 10000ms, soften entrance animation, add FAB state machine + render, wire close handlers to show FAB instead of fully unmounting
-- `src/hooks/usePromotionalPopup.ts` — update `DEFAULT_PROMO_POPUP.triggerValueMs` from 4000 → 10000 so new operators inherit the 10s default; existing saved configs are untouched
+```
+src/hooks/usePromotionalPopup.ts
+  + acceptDestination, customUrl, customUrlInstructions on PromotionalPopupSettings + DEFAULT_PROMO_POPUP
 
-(No DB / RLS / hook-architecture changes. Single component + one default constant.)
+src/hooks/useBookingSurfaceConfig.ts
+  + newClientPolicy on BookingSurfaceConfig + DEFAULT (= 'open')
 
-## Technical details
+src/components/dashboard/website-editor/PromotionalPopupEditor.tsx
+  + destination radio group + custom-URL fields + CTA auto-fill logic
+  + reads newClientPolicy from booking config to enable/disable consultation option
 
-State additions inside `PromotionalPopup`:
+src/components/dashboard/booking-editor/<existing flow settings>
+  + new client policy radio (locate exact file during implementation)
 
-```text
-open:    boolean   // popup visible
-showFab: boolean   // FAB visible (set true on any soft/decline close, false on accept)
+src/components/public/PromotionalPopup.tsx
+  + handleAccept switches on acceptDestination
+  + preview-mode toast feedback
+  + custom-URL instructions rendered in popup body when applicable
+
+src/components/booking-surface/HostedBookingPage.tsx
+  + read ?promo= param, resolve via popup config, render banner
+  + enforce newClientPolicy: gate new visitors who arrived without ?consultation=true
+
+src/components/booking-surface/BookingPromoBanner.tsx (new)
+  + small accent-colored banner component, standard + consultation variants
+
+src/components/booking-surface/NewClientGate.tsx (new)
+  + inline gate shown when policy=consultation-required + new visitor + no ?consultation=true
 ```
 
-Transitions:
-- `handleAccept`  → `open=false`, `showFab=false`, navigate to booking
-- `handleDecline` → `open=false`, `showFab=true`
-- `handleSoftClose` (X / Esc / backdrop) → `open=false`, `showFab=true`
-- FAB click → `open=true`, `showFab=false`
-- FAB dismiss "×" → `showFab=false` (stays gone for the session)
+No DB migration needed — both new fields live inside existing `site_settings` JSON payloads (`promotional_popup` and `booking_surface_config`). Site-settings persistence canon (read-then-update/insert) already handled by the existing hooks.
 
-Animation tokens (Tailwind `animate-in` utilities, already in the project):
-- Modal entrance: `animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-500 ease-out`
-- FAB entrance: `animate-in fade-in-0 slide-in-from-bottom-2 duration-300`
-- Reduced motion: rely on `motion-safe:` prefixes so `prefers-reduced-motion: reduce` falls back to opacity-only.
+## What this does NOT do (deferred, with revisit triggers)
 
-The 10s default applies only when:
-- The operator's saved config has `trigger === 'delay'` AND `triggerValueMs` is null/undefined
-- New configs created from `DEFAULT_PROMO_POPUP`
+- **Per-service offer linking** (Layer 2 from prior chat): operator can't yet say "this offer is *for* the Gloss Treatment service." Defer until at least one operator asks. Revisit trigger: an operator requests service-specific promo targeting in-product.
+- **Promo redemption analytics**: writing `promo_redemptions` rows on booking confirmation. Defer until Marketing OS Phase 2 — the data is currently captured client-side via `record_promo_response('accepted')` clicks, which is enough for operator confidence today. Revisit trigger: first operator asks "did anyone actually book using my offer?"
+- **Existing-client recognition** for the new-client gate: Layer A relies on a cookie/session marker. We'll set the marker on first booking confirmation. Revisit trigger: returning clients report being incorrectly gated.
 
-Existing configs with an explicit `triggerValueMs` keep their value.
+## Verification path before shipping
 
-## Verification
+1. Open promotional popup editor with org policy `open` → consultation destination is disabled with helper text
+2. Switch booking config to `consultation-required` → consultation destination unlocks; switching to it auto-renames CTA to "Book Consultation"
+3. In editor preview, click each CTA variant → toast describes the correct downstream action
+4. On real public site, click Claim Offer (booking destination) → land on `/booking?promo=CODE` with banner
+5. Same with consultation destination → land on `/booking?promo=CODE&consultation=true` with consultation-variant banner + service browser filtered/flagged
+6. Custom URL destination → instructions render inside popup; CTA opens URL in new tab
 
-- Land on a public surface with popup enabled → popup appears at ~10s with smooth entrance
-- Close via X → popup disappears, FAB appears bottom-right
-- Click FAB → popup re-opens with the same animation
-- Click "Claim Offer" → navigates to `/booking?promo=…`, no FAB on that page
-- Reload page within same session → frequency cap respected (no auto-open under `once-per-session`), FAB does not auto-restore
-- `prefers-reduced-motion: reduce` → no scale/slide, fade only
-- Editor preview iframe → still fires immediately, FAB suppressed
+## Doctrine alignment
 
-## Suggested next enhancements (after this ships)
-
-1. **Pulse hint on FAB after 30s of inactivity** — a subtle one-time pulse to remind the visitor the offer is still there, without being noisy.
-2. **Per-surface FAB position override** — let the operator choose bottom-right vs bottom-left, useful when a chat widget already occupies one corner.
-3. **Auto-hide FAB on `/booking` page** — if the visitor reaches the booking surface on their own (without clicking the offer), hide the FAB to avoid double-prompting.
-
-## Prompt feedback
-
-Strong prompt — you specified the trigger (10s), the surface (landing page), the animation feel (smooth), and the post-close behavior (FAB in corner). That's nearly a complete spec. Two small additions would have made it airtight:
-
-- **What should the FAB do on click?** (Re-open the popup vs. jump straight to booking — I assumed re-open, which is the safer default.)
-- **Should the FAB persist across page navigations or only on the landing page?** (I assumed session-scoped across all public pages, matching how the popup itself is mounted.)
-
-A reusable framing for behavior-change prompts: *trigger → entrance → primary action → dismissal path → persistence scope*. Hitting those five beats gets you a single-shot implementation almost every time.
+- **Structural Enforcement Gates**: `consultation-required` becomes a real gate on the booking surface, not a popup-only contract
+- **Visibility Contracts**: consultation destination on the popup editor returns a configuration stub (helper text + disabled state) when policy isn't set, never silent
+- **Routing**: all internal navigation uses React Router (no `window.location.href`), even custom URLs use `<a target="_blank" rel="noopener noreferrer">` for external escape
+- **Site Settings Persistence**: both schemas use the existing read-then-update hooks
+- **Stylist Privacy / RLS**: nothing tenant-sensitive added; both fields scope to existing `site_settings.organization_id`
