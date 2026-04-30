@@ -788,6 +788,42 @@ function WebsiteEditorShellInner() {
           }
           break;
         }
+        case 'EDITOR_APPLY_STYLE_PRESET': {
+          // One-tap chip → patch a subset of style_overrides without opening
+          // the full panel. Routes through updatePages so it shares dirty
+          // state, undo, and audit logging with every other section write.
+          if (!sectionId || !pagesConfig) return;
+          const patch = (msg as { patch?: Partial<StyleOverrides> }).patch;
+          const label = (msg as { label?: string }).label ?? 'Section style';
+          if (!patch || typeof patch !== 'object') return;
+          const ownerPage = pagesConfig.pages.find((p) =>
+            p.sections.some((s) => s.id === sectionId),
+          );
+          if (!ownerPage) return;
+          const targetSection = ownerPage.sections.find((s) => s.id === sectionId);
+          const before = targetSection?.style_overrides ?? {};
+          const after = { ...before, ...patch };
+          const apply = (next: Partial<StyleOverrides>) => {
+            const updated = pagesConfig.pages.map((p) => {
+              if (p.id !== ownerPage.id) return p;
+              return {
+                ...p,
+                sections: p.sections.map((s) =>
+                  s.id === sectionId ? { ...s, style_overrides: next } : s,
+                ),
+              };
+            });
+            return updatePages.mutateAsync({ pages: updated });
+          };
+          void apply(after).then(() => {
+            pushEditorHistoryEntry({
+              label,
+              undo: () => apply(before).then(() => undefined),
+              redo: () => apply(after).then(() => undefined),
+            });
+          });
+          break;
+        }
         default:
           break;
       }
