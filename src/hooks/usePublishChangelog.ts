@@ -69,24 +69,43 @@ export function useChangelogSummary() {
     queryFn: async () => listDirtyDrafts(orgId!),
   });
 
+  // Per-menu pending-change detector: a menu is dirty when it has at least
+  // one item where is_published=false. Avoids "1 navigation change" false
+  // positives on clean orgs.
+  const dirtyMenusQuery = useQuery({
+    queryKey: ['website-menus-dirty', orgId],
+    enabled: !!orgId,
+    staleTime: 5_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('website_menu_items')
+        .select('menu_id')
+        .eq('organization_id', orgId!)
+        .eq('is_published', false);
+      if (error) throw error;
+      return new Set<string>((data ?? []).map(r => r.menu_id as string));
+    },
+  });
+
   const summary = useMemo(() => {
     const navChanges: ChangeItem[] = [];
     const pageChanges: ChangeItem[] = [];
     const siteChanges: ChangeItem[] = [];
 
-    // Menus: surface those with unpublished items.
-    // (useWebsiteMenus already exposes published_at / has_pending_changes
-    // semantics — for now we mirror previous behavior and list all menus.)
-    if (menus && menus.length > 0) {
-      menus.forEach(menu => {
-        navChanges.push({
-          id: menu.id,
-          category: 'navigation',
-          type: 'modified',
-          label: menu.name,
-          detail: `Publish latest ${menu.slug} menu items`,
+    // Menus: only those with at least one unpublished item.
+    const dirtyMenus = dirtyMenusQuery.data;
+    if (menus && dirtyMenus) {
+      menus
+        .filter(menu => dirtyMenus.has(menu.id))
+        .forEach(menu => {
+          navChanges.push({
+            id: menu.id,
+            category: 'navigation',
+            type: 'modified',
+            label: menu.name,
+            detail: `Publish latest ${menu.slug} menu items`,
+          });
         });
-      });
     }
 
     // site_settings: only rows whose draft_value differs from live value.
@@ -111,9 +130,9 @@ export function useChangelogSummary() {
       siteChanges,
       hasChanges: totalChanges > 0,
       totalChanges,
-      isLoading: dirtyDraftsQuery.isLoading,
+      isLoading: dirtyDraftsQuery.isLoading || dirtyMenusQuery.isLoading,
     };
-  }, [menus, dirtyDraftsQuery.data, dirtyDraftsQuery.isLoading]);
+  }, [menus, dirtyDraftsQuery.data, dirtyDraftsQuery.isLoading, dirtyMenusQuery.data, dirtyMenusQuery.isLoading]);
 
   return summary;
 }
