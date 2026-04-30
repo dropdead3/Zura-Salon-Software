@@ -21,7 +21,7 @@ import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
-import { readableForegroundFor } from '@/lib/color-contrast';
+import { readableForegroundFor, bestTextContrast } from '@/lib/color-contrast';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
