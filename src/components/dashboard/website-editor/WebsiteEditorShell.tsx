@@ -753,7 +753,7 @@ export function WebsiteEditorShell() {
           )}
 
           {/* Page picker — always visible */}
-          <Select value={selectedPageId} onValueChange={setSelectedPageId}>
+          <Select value={selectedPageId} onValueChange={requestPageChange}>
             <SelectTrigger
               ref={pagePickerRef}
               className="h-9 text-xs min-w-[160px] max-w-[260px] rounded-full"
