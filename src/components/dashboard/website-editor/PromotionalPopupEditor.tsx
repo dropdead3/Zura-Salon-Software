@@ -272,8 +272,11 @@ export function PromotionalPopupEditor() {
 
       {/* Behavior */}
       <Section title="Behavior">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Appearance">
+        <Field
+          label="Appearance"
+          hint="How the offer enters the page. Pick the layout that matches your brand's tone."
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start">
             <Select
               value={formData.appearance}
               onValueChange={(v) => handleChange('appearance', v as PromotionalPopupSettings['appearance'])}
@@ -285,22 +288,26 @@ export function PromotionalPopupEditor() {
                 <SelectItem value="corner-card">Bottom-right card</SelectItem>
               </SelectContent>
             </Select>
-          </Field>
-          <Field label="Trigger">
-            <Select
-              value={formData.trigger}
-              onValueChange={(v) => handleChange('trigger', v as PromotionalPopupSettings['trigger'])}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="immediate">Immediately on load</SelectItem>
-                <SelectItem value="delay">After a delay</SelectItem>
-                <SelectItem value="scroll">After scrolling</SelectItem>
-                <SelectItem value="exit-intent">On exit intent (desktop)</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
+            <AppearancePreviewSwatch
+              appearance={formData.appearance}
+              accent={formData.accentColor}
+            />
+          </div>
+        </Field>
+        <Field label="Trigger">
+          <Select
+            value={formData.trigger}
+            onValueChange={(v) => handleChange('trigger', v as PromotionalPopupSettings['trigger'])}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="immediate">Immediately on load</SelectItem>
+              <SelectItem value="delay">After a delay</SelectItem>
+              <SelectItem value="scroll">After scrolling</SelectItem>
+              <SelectItem value="exit-intent">On exit intent (desktop)</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
         {(formData.trigger === 'delay' || formData.trigger === 'scroll') && (
           <Field
             label={formData.trigger === 'delay' ? 'Delay (milliseconds)' : 'Scroll distance (pixels)'}
@@ -332,6 +339,36 @@ export function PromotionalPopupEditor() {
               <SelectItem value="always">Every page load (testing only)</SelectItem>
             </SelectContent>
           </Select>
+        </Field>
+        <Field
+          label="Accent color"
+          hint="Drives the FAB and CTA accents. Match this to your brand's primary color."
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              aria-label="Accent color"
+              value={normalizeHex(formData.accentColor)}
+              onChange={(e) => handleChange('accentColor', e.target.value)}
+              className="h-9 w-12 rounded-md border border-border bg-transparent cursor-pointer p-0.5"
+            />
+            <Input
+              value={formData.accentColor ?? ''}
+              onChange={(e) => handleChange('accentColor', e.target.value || undefined)}
+              placeholder="#7C3AED or hsl(...) — leave blank for theme primary"
+              className="flex-1"
+            />
+            {formData.accentColor && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleChange('accentColor', undefined)}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
         </Field>
         <Field
           label="Reminder button position"
