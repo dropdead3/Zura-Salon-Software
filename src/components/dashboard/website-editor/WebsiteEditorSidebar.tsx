@@ -432,8 +432,7 @@ export function WebsiteEditorSidebar({
     toast.success('Section order updated');
   };
 
-  // Non-home page delete target
-  const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
+  // (pageDeleteTarget state hoisted above the early-return — see top of fn.)
 
 
   if (collapsed) {
