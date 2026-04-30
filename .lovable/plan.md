@@ -1,54 +1,111 @@
-## Goal
+## Group 2 — Repeater Content Editability
 
-When the user enters the **Edit Website** surface (Website Hub → Edit Website card), the editor should take the full browser viewport. The dashboard sidebar, dashboard top bar, and the "Website Hub" page header must be hidden. A clear **Exit Editor** affordance (back arrow + label) returns the user to the Website Hub overview.
+Three sections currently have hardcoded repeater content. Each needs an item manager UI inside the website editor, plus inline-edit wiring on the public canvas where appropriate.
 
-All other Website Hub tabs (Theme, Booking, Store, Domain, SEO, Integrations) keep the current chrome — they are configuration surfaces, not immersive canvases.
+### Storage strategy (per section)
 
-## Where it lives today
+| Section | Items live in | Why |
+|---|---|---|
+| Drink Menu | `site_settings.section_drink_menu.drinks[]` (already there) | Small set, image URLs, no per-item RLS need. Keep as config array. |
+| Brands | `site_settings.section_brands.brands[]` (already there) | Same — short marquee list. |
+| Extension Reviews | `website_testimonials` table (already there, scoped by `surface='extensions'`) | Already wired through `useVisibleTestimonials` and `ReviewsManager`. Just need to remove fallback dependency + extract chip list to config. |
 
-- `src/pages/dashboard/admin/WebsiteHub.tsx` renders `<DashboardLayout>` + `<DashboardPageHeader>` + `<WebsiteSettingsContent>` whenever a `?tab=` deep link is present.
-- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` mounts `<WebsiteEditorShell />` inside the `editor` tab, wrapped in the standard `Tabs` rail.
-- `DashboardLayout` already supports `hideTopBar` and `hideSidebar` props — no new infrastructure needed.
+No new tables needed. All three already have DB-backed storage; the gaps are (a) editor UI for drinks + brands + extension type chips, (b) inline-edit wiring for visible text, (c) ensuring fallback constants don't shadow empty DB state.
 
-## Plan
+---
 
-### 1. Detect editor mode in `WebsiteHub.tsx`
+### 1. Drink Menu — full item manager
 
-- When `searchParams.get('tab') === 'editor'`, branch to an **immersive render path** that:
-  - Wraps in `<DashboardLayout hideTopBar hideSidebar>` (footer already optional).
-  - Skips `<DashboardPageHeader>` and `<PageExplainer>`.
-  - Renders `<WebsiteEditorShell />` directly (no `Tabs` rail, no other tabs).
-- All other `?tab=` values keep the current `<DashboardPageHeader>` + `<WebsiteSettingsContent>` path.
+**Editor side (new):** `DrinkMenuItemsManager.tsx` inside the website editor, opens from the existing Drink Menu section editor card.
 
-### 2. Add an Exit Editor control inside the shell
+- Lists drinks from `useDrinkMenuConfig().data.drinks`
+- Per-row inline edit: name, ingredients (comma-sep), image URL (with file picker → Supabase storage upload via existing `useImageUpload`)
+- Add / delete / reorder (drag handle)
+- Saves whole `drinks[]` back via `useDrinkMenuConfig().update({ ...config, drinks: next })`
+- Uses `usePreviewBridge('section_drink_menu', nextConfig)` to broadcast live override while dragging/typing
 
-- In `WebsiteEditorShell.tsx`, the existing top toolbar already hosts page selector / undo / redo / publish. Add an **Exit Editor** button at the far left:
-  - `ArrowLeft` icon + label "Exit Editor" (font-display, uppercase, tracking-wide per UI canon).
-  - Uses `useNavigate()` + `useOrgDashboardPath()` to navigate to `dashPath('/admin/website-hub')` (no query — returns to card overview per Hub-landings canon).
-  - If there are unsaved/unpublished changes (the shell already tracks this for the publish button), show a confirm dialog before exit.
+**Canvas side:** `DrinkMenuSection.tsx`
+- Remove `defaultDrinks` fallback (silence/empty state instead — operator sees "No drinks yet" hint in preview only)
+- Wire `eyebrow`, `eyebrow_highlight`, `eyebrow_suffix` to `InlineEditableText` (already in config)
+- Per-card name + ingredients become `InlineEditableText` with `fieldPath="drinks.{idx}.name"` etc.
+- Register `section_drink_menu` in `InlineEditCommitHandler` with allowed paths: `eyebrow`, `eyebrow_highlight`, `eyebrow_suffix`, `drinks.*.name`, `drinks.*.ingredients`
 
-### 3. Reclaim vertical space inside the shell
+**Commit handler change:** extend dot-path patcher to support `drinks.<n>.<key>` (currently supports `paragraphs.0`-style single-level array index; needs nested object-in-array). The `applyPatch` function already does this correctly — only need to extend the wildcard regex in the allowlist check to match `drinks.\d+.(name|ingredients)`.
 
-- Because `DashboardLayout` no longer renders the top bar/sidebar, the editor's own toolbar becomes the sole top chrome. Confirm `WebsiteEditorShell` already sizes to `100vh` minus its toolbar; no layout changes expected beyond removing any `pt-*` that previously assumed a dashboard top bar.
+### 2. Brands — list manager
 
-### 4. Tab persistence still works
+**Editor side (new):** `BrandsListManager.tsx` inside the Brands section editor.
 
-- Internal links inside the editor that need to switch to other config tabs (e.g., "View in Themes") already use `setSearchParams({ tab: 'theme' })`. When the URL flips off `tab=editor`, the page re-renders into the standard chrome path automatically — no extra wiring needed.
+- List of brand display strings (`brands[].display_text`)
+- Add / delete / reorder rows
+- Edit `intro_text` (multiline), `marquee_speed` (number), `show_intro_text` (toggle)
+- Saves via `useBrandsConfig().update`
+- Live preview via `usePreviewBridge('section_brands', next)`
 
-## Out of scope
+**Canvas side:** `BrandsSection.tsx`
+- Wire `intro_text` to `InlineEditableText` (multiline)
+- Brand display strings stay manager-edited only (they're small uppercase chips — inline editing is awkward in a marquee)
+- Register `section_brands` in commit handler with `intro_text` allowed
 
-- No changes to other tabs' chrome.
-- No changes to publish flow, history ledger, or section editing behavior.
-- Mobile: the editor is desktop-first today; immersive mode applies on all sizes but no new mobile-specific UI is added in this pass.
+### 3. Extension Reviews — chips + fallback removal
 
-## Files to edit
+The reviews themselves are already DB-backed and editable through the existing `ReviewsManager` (surface=`extensions`). Two remaining hardcoded items:
 
-- `src/pages/dashboard/admin/WebsiteHub.tsx` — branch on `tab=editor` to immersive render.
-- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — add Exit Editor button + unsaved-changes guard.
+**a) Category chips (`extensionTypes` array)**
+- Add `extension_categories: string[]` to a new `section_extension_reviews` config
+- Default to current 5 values
+- Wire as a small chips manager inside the Extension Reviews editor card
+- Render via `useLiveOverride('section_extension_reviews', dbConfig)`
+- Optionally inline-editable on canvas (each chip)
 
-## Acceptance
+**b) `FALLBACK_REVIEWS` constant**
+- Remove the constant entirely
+- Empty state: render nothing in production; render a "Add your first extension review" stub in preview (`isPreview && items.length === 0`)
+- Doctrine alignment: per Visibility Contracts memory, operator-toggled sections with missing config render `<ConfigurationStubCard />` in preview rather than null
 
-- Clicking **Edit Website** card → viewport shows only the editor (no left sidebar, no top dashboard bar, no "Website Hub" header).
-- An **Exit Editor** button (ArrowLeft + label) sits in the editor toolbar's top-left.
-- Clicking Exit returns to Website Hub card overview; if unsaved changes exist, a confirm dialog gates the navigation.
-- Visiting any other `?tab=` value (theme/booking/etc.) still renders the standard hub chrome.
+### 4. Commit handler registry additions
+
+Add to `InlineEditCommitHandler.tsx`:
+```
+section_drink_menu: ['eyebrow', 'eyebrow_highlight', 'eyebrow_suffix', 'drinks.*.name', 'drinks.*.ingredients']
+section_brands: ['intro_text']
+section_extension_reviews: ['eyebrow', 'headline', 'extension_categories.*']  // new config
+```
+
+The wildcard matcher in commit handler needs a small extension to support `prefix.\d+.suffix` (currently only `prefix.\d+`). One-line regex change.
+
+### Files to add
+
+- `src/components/dashboard/website-editor/DrinkMenuItemsManager.tsx`
+- `src/components/dashboard/website-editor/BrandsListManager.tsx`
+- `src/components/dashboard/website-editor/ExtensionReviewsChipsManager.tsx`
+- (new config) `ExtensionReviewsConfig` interface + `DEFAULT_EXTENSION_REVIEWS` + `useExtensionReviewsConfig()` in `useSectionConfig.ts`
+
+### Files to modify
+
+- `src/components/home/DrinkMenuSection.tsx` — remove fallback, add InlineEditableText
+- `src/components/home/BrandsSection.tsx` — wire intro_text to InlineEditableText
+- `src/components/home/ExtensionReviewsSection.tsx` — remove FALLBACK_REVIEWS, wire chips to config, add empty-state stub for preview
+- `src/components/dashboard/website-editor/InlineEditCommitHandler.tsx` — register 3 new sections, extend wildcard regex
+- `src/hooks/useSectionConfig.ts` — add ExtensionReviewsConfig
+- The 3 section-editor card screens — slot in the new manager components
+
+### Open questions
+
+1. **Drink images** — should the manager support image upload to Supabase storage, or URL-only for now? (Upload is more polished but adds storage bucket setup.)
+2. **Empty state in production** — when an operator deletes all drinks, should the section disappear from the public site, or render an editor-only empty stub? (Per Visibility Contracts: silence is valid; render `null` publicly, stub in preview.)
+3. **Extension type chips** — keep as 5-chip list, or let operators add unlimited categories? (Affects layout — chips currently fit on one row at desktop.)
+
+### Suggested execution order
+
+Drinks first (most complex, highest visual impact), then Brands (simplest), then Extension Reviews (mostly cleanup since manager already exists). Ship Drinks as its own commit so the commit-handler regex change can be reviewed in isolation.
+
+---
+
+### Prompting feedback (positive + lift)
+
+**What worked well in your prompt:** "continue with Group 2 (repeater content...)" referenced the framing I established and named the exact group — zero ambiguity, zero re-explaining. That's textbook follow-on prompting.
+
+**Lift for next time:** I assumed three open questions (image upload, empty-state behavior, chip count). You could front-load those as part of the request: *"continue with Group 2 — drinks should support image upload, deleted-empty sections hide publicly, chip list stays fixed at 5."* That would let me skip the plan step and go straight to implementation.
+
+**Doctrinal lens:** Per the Visibility Contracts core rule, repeater sections with zero items should render `null` publicly but a `ConfigurationStubCard` in preview — operators need to see the toggle is on but unconfigured. I've baked that into the plan. Good to confirm or override.

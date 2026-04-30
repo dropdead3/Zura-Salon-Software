@@ -328,7 +328,14 @@ export interface LocationsDisplayConfig {
   show_description: boolean;
 }
 
-// WebsiteServicesData removed — services are now managed via useNativeServicesForWebsite hook
+export interface ExtensionReviewsConfig {
+  eyebrow: string;
+  headline: string;
+  extension_categories: string[];
+  show_eyebrow: boolean;
+  show_headline: boolean;
+  show_categories: boolean;
+}
 
 // ============================================
 // Default Values
@@ -619,6 +626,25 @@ export function useStylistsDisplayConfig() {
 
 export function useLocationsDisplayConfig() {
   return useSectionConfig<LocationsDisplayConfig>('section_locations_display', DEFAULT_LOCATIONS_DISPLAY);
+}
+
+export const DEFAULT_EXTENSION_REVIEWS: ExtensionReviewsConfig = {
+  eyebrow: "Real Reviews",
+  headline: "What our extension clients say",
+  extension_categories: [
+    "Blondes",
+    "Dimensional Brunettes",
+    "Vivid & Fashion Colors",
+    "Warm Tones",
+    "High Contrast",
+  ],
+  show_eyebrow: true,
+  show_headline: true,
+  show_categories: true,
+};
+
+export function useExtensionReviewsConfig() {
+  return useSectionConfig<ExtensionReviewsConfig>('section_extension_reviews', DEFAULT_EXTENSION_REVIEWS);
 }
 
 // useWebsiteServicesData removed — services are now managed via useNativeServicesForWebsite hook

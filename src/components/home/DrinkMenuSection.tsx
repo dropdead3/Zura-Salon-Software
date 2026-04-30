@@ -2,33 +2,19 @@ import { motion, useInView, useScroll, useVelocity, useSpring, useAnimationFrame
 import { useRef, useState } from "react";
 import { useDrinkMenuConfig, type Drink } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
-
-// Import fallback drink images
-import dirtyPeachImg from "@/assets/drinks/dirty-peach.jpg";
-import blowOutImg from "@/assets/drinks/blow-out.jpg";
-import scaryStoriesImg from "@/assets/drinks/scary-stories.jpg";
-import grampsImg from "@/assets/drinks/gramps.jpg";
-import zombieImg from "@/assets/drinks/zombie.jpg";
-import afterlifeImg from "@/assets/drinks/afterlife.jpg";
-
-// Default drinks for fallback when no config is set
-const defaultDrinks: Drink[] = [
-  { id: "1", name: "Dirty Peach", image_url: dirtyPeachImg, ingredients: "Coke, peach, vanilla cream" },
-  { id: "2", name: "Blow Out", image_url: blowOutImg, ingredients: "Sparkling water, peach, strawberry" },
-  { id: "3", name: "Scary Stories", image_url: scaryStoriesImg, ingredients: "Espresso, white chocolate, toasted marshmallow, oat milk, whipped cream, cinnamon powder" },
-  { id: "4", name: "Gramps", image_url: grampsImg, ingredients: "Espresso, caramel drizzle, butterscotch, hazelnut, oat milk" },
-  { id: "5", name: "Zombie", image_url: zombieImg, ingredients: "Espresso, brown sugar cinnamon, vanilla, oat milk, cinnamon powder" },
-  { id: "6", name: "Afterlife", image_url: afterlifeImg, ingredients: "Red Bull, coconut, strawberry, vanilla cream" },
-];
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
+import { InlineEditableText } from "./InlineEditableText";
 
 interface DrinkCardProps {
   drink: Drink;
   index?: number;
   isInView?: boolean;
   animated?: boolean;
+  /** When set, renders the name+ingredients as inline-editable using `drinks.<inlineEditIndex>.<field>`. Pass on the first set only (avoids duplicate edit handlers in the marquee loop). */
+  inlineEditIndex?: number;
 }
 
-const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: DrinkCardProps) => {
+const DrinkCard = ({ drink, index = 0, isInView = true, animated = true, inlineEditIndex }: DrinkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
   const ingredientsList = drink.ingredients.split(", ");
@@ -104,7 +90,13 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
       </div>
       
       <h3 className="font-display text-xl md:text-2xl lg:text-3xl text-foreground whitespace-nowrap">
-        {drink.name}
+        {inlineEditIndex !== undefined ? (
+          <InlineEditableText
+            value={drink.name}
+            sectionKey="section_drink_menu"
+            fieldPath={`drinks.${inlineEditIndex}.name`}
+          />
+        ) : drink.name}
       </h3>
     </Wrapper>
   );
@@ -113,11 +105,14 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const isPreview = useIsEditorPreview();
   const { data: dbConfig } = useDrinkMenuConfig();
   const config = useLiveOverride('section_drink_menu', dbConfig) ?? dbConfig;
-  
-  // Use configured drinks or fallback to defaults
-  const drinks = config.drinks.length > 0 ? config.drinks : defaultDrinks;
+
+  // Doctrine: silence is valid output. When operator hasn't configured drinks,
+  // render nothing publicly. In editor preview, show a "no drinks yet" stub so
+  // the operator sees that the toggle is on but the section is empty.
+  const drinks = config?.drinks ?? [];
   
   // Track scroll velocity
   const { scrollY } = useScroll();
@@ -159,6 +154,11 @@ export function DrinkMenuSection() {
     setXPos(baseX.current);
   });
 
+  // Empty state: render nothing publicly; show editor stub when in preview.
+  if (drinks.length === 0 && !isPreview) {
+    return null;
+  }
+
   return (
     <section 
       ref={sectionRef} 
@@ -176,42 +176,82 @@ export function DrinkMenuSection() {
         className="container mx-auto px-6 text-center mb-12"
       >
         <p className="text-sm md:text-base uppercase tracking-[0.2em] text-muted-foreground font-display">
-          {config.eyebrow}{" "}
-          <span className="underline underline-offset-4">{config.eyebrow_highlight}</span>{" "}
-          {config.eyebrow_suffix}
+          {isPreview ? (
+            <InlineEditableText
+              value={config?.eyebrow ?? ''}
+              sectionKey="section_drink_menu"
+              fieldPath="eyebrow"
+              placeholder="Drinks on us. We have an exclusive menu of"
+            />
+          ) : config?.eyebrow}
+          {" "}
+          <span className="underline underline-offset-4">
+            {isPreview ? (
+              <InlineEditableText
+                value={config?.eyebrow_highlight ?? ''}
+                sectionKey="section_drink_menu"
+                fieldPath="eyebrow_highlight"
+                placeholder="complimentary"
+              />
+            ) : config?.eyebrow_highlight}
+          </span>
+          {" "}
+          {isPreview ? (
+            <InlineEditableText
+              value={config?.eyebrow_suffix ?? ''}
+              sectionKey="section_drink_menu"
+              fieldPath="eyebrow_suffix"
+              placeholder="options for your appointment."
+            />
+          ) : config?.eyebrow_suffix}
         </p>
       </motion.div>
 
+      {/* Empty-state stub (preview-only) */}
+      {drinks.length === 0 && isPreview && (
+        <div className="container mx-auto px-6">
+          <div className="max-w-md mx-auto text-center py-12 px-6 border-2 border-dashed border-border rounded-2xl bg-card/40">
+            <p className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground mb-2">No drinks yet</p>
+            <p className="text-sm text-muted-foreground font-sans">
+              Open the Drink Menu editor and click "Add Drink" to populate this section.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Infinite scroll drinks with velocity-based speed */}
-      <motion.div 
-        className="flex"
-        style={{ 
-          x: xPos,
-          width: 'fit-content'
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {/* First set */}
-        {drinks.map((drink, index) => (
-          <DrinkCard 
-            key={drink.id} 
-            drink={drink} 
-            index={index} 
-            isInView={isInView} 
-            animated={true}
-          />
-        ))}
-        
-        {/* Duplicate set for seamless loop */}
-        {drinks.map((drink) => (
-          <DrinkCard 
-            key={`dup-${drink.id}`} 
-            drink={drink} 
-            animated={false}
-          />
-        ))}
-      </motion.div>
+      {drinks.length > 0 && (
+        <motion.div 
+          className="flex"
+          style={{ 
+            x: xPos,
+            width: 'fit-content'
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* First set — inline-editable in preview */}
+          {drinks.map((drink, index) => (
+            <DrinkCard 
+              key={drink.id} 
+              drink={drink} 
+              index={index} 
+              isInView={isInView} 
+              animated={true}
+              inlineEditIndex={isPreview ? index : undefined}
+            />
+          ))}
+          
+          {/* Duplicate set for seamless loop — never editable (would create dup commit handlers) */}
+          {drinks.map((drink) => (
+            <DrinkCard 
+              key={`dup-${drink.id}`} 
+              drink={drink} 
+              animated={false}
+            />
+          ))}
+        </motion.div>
+      )}
 
       {/* Bottom fade overlay for seamless exit */}
       <div 
