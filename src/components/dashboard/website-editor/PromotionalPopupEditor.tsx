@@ -331,9 +331,11 @@ export function PromotionalPopupEditor() {
       <Section title="Content">
         <Field label="Headline" hint="Keep it short — appears in display type.">
           <Input
+            ref={headlineRef}
             value={formData.headline}
             onChange={(e) => handleChange('headline', e.target.value)}
             placeholder="Free Haircut with Any Color Service"
+            className={cn(isFieldOverflowing('headline') && 'border-destructive/60 focus-visible:ring-destructive/40')}
           />
           <CharCounter
             length={formData.headline.length}
@@ -344,10 +346,12 @@ export function PromotionalPopupEditor() {
         </Field>
         <Field label="Body">
           <Textarea
+            ref={bodyRef}
             value={formData.body}
             onChange={(e) => handleChange('body', e.target.value)}
             rows={3}
             placeholder="Book a color appointment this month and your haircut is on us."
+            className={cn(isFieldOverflowing('body') && 'border-destructive/60 focus-visible:ring-destructive/40')}
           />
           <CharCounter
             length={formData.body.length}
@@ -358,10 +362,12 @@ export function PromotionalPopupEditor() {
         </Field>
         <Field label="Disclaimer (optional)" hint="Legal fine print — shown below the buttons.">
           <Textarea
+            ref={disclaimerRef}
             value={formData.disclaimer ?? ''}
             onChange={(e) => handleChange('disclaimer', e.target.value)}
             rows={2}
             placeholder="New clients only. Cannot be combined with other offers."
+            className={cn(isFieldOverflowing('disclaimer') && 'border-destructive/60 focus-visible:ring-destructive/40')}
           />
           <CharCounter
             length={(formData.disclaimer ?? '').length}
