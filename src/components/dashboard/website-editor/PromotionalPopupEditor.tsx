@@ -989,7 +989,9 @@ function AppearancePreviewSwatch({
   eyebrow?: string;
   eyebrowIcon?: EyebrowIcon;
 }) {
-  const accentColor = accent || 'hsl(var(--primary))';
+  const sitePrimary = useWebsitePrimaryColor();
+  const accentColor = accent || sitePrimary;
+  const accentFg = readableForegroundFor(accent);
   const trim = (max: number) =>
     headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
   const Icon = getEyebrowIcon(eyebrowIcon);
