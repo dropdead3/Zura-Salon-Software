@@ -570,7 +570,7 @@ function PromoBody({
         <button
           onClick={onAccept}
           className="flex-1 font-display uppercase tracking-wider text-xs sm:text-sm px-5 py-2.5 rounded-full text-primary-foreground transition hover:opacity-90"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: accent, color: accentFg }}
         >
           {cfg.ctaAcceptLabel}
         </button>
