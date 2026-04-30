@@ -13,6 +13,8 @@ import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useOverflowGuard } from '@/hooks/useOverflowGuard';
+import { useDismissedSuggestion } from '@/hooks/useDismissedSuggestion';
+import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
@@ -76,50 +78,14 @@ const DISCLAIMER_CEILING = 200;
 // pure function so it stays trivial to unit-test if we add coverage later.
 type OverflowFinding = { field: 'headline' | 'body' | 'disclaimer'; message: string };
 
-// ── Eyebrow icon picker ──
-// Tiny pill-button row of curated lucide glyphs (+ "none" off-state). Active
-// option borrows the accent color so the picker doubles as a brand preview.
-function EyebrowIconPicker({
-  value,
-  onChange,
-  accent,
-}: {
-  value: EyebrowIcon;
-  onChange: (v: EyebrowIcon) => void;
-  accent?: string;
-}) {
-  const accentColor = accent || 'hsl(var(--primary))';
-  return (
-    <div
-      role="radiogroup"
-      aria-label="Eyebrow icon"
-      className="inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9"
-    >
-      {EYEBROW_ICON_OPTIONS.map(({ value: optValue, label, icon: Icon }) => {
-        const active = value === optValue;
-        return (
-          <button
-            key={optValue}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={label}
-            title={label}
-            onClick={() => onChange(optValue)}
-            className={cn(
-              'h-7 w-7 rounded-full inline-flex items-center justify-center transition-colors text-muted-foreground hover:text-foreground',
-              active && 'bg-muted text-foreground',
-            )}
-            style={active && Icon ? { color: accentColor } : undefined}
-          >
-            {Icon ? <Icon className="h-3.5 w-3.5" /> : <span className="text-[9px] font-display uppercase tracking-wider">Off</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
+// ── Time-aware eyebrow suggestion ──
+// When `endsAt` falls within the next 72h, surface a one-tap chip that swaps
+// eyebrow copy to a urgency-tied phrase. Stays a *suggestion* — never
+// auto-edits — so the operator owns the final copy.
+//
+// Live countdown: re-evaluates every 60s so a lingering operator sees
+// "Ends in 3 days" tick down to "Ends tomorrow" without a refresh.
+// Dismissal: persisted per-`endsAt` so deliberate ignore doesn't nag.
 function EyebrowUrgencySuggestion({
   endsAt,
   currentEyebrow,
@@ -129,7 +95,18 @@ function EyebrowUrgencySuggestion({
   currentEyebrow: string | undefined;
   onApply: (text: string, icon: EyebrowIcon) => void;
 }) {
-  if (!endsAt) return null;
+  const { dismissed, dismiss } = useDismissedSuggestion(endsAt ?? null);
+
+  // Tick a counter every 60s so the suggestion text re-derives without a
+  // page refresh. Cheap: one setInterval, scoped to the editor lifetime.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!endsAt) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, [endsAt]);
+
+  if (!endsAt || dismissed) return null;
   const end = new Date(endsAt);
   if (Number.isNaN(end.getTime())) return null;
 
@@ -149,14 +126,25 @@ function EyebrowUrgencySuggestion({
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => onApply(suggestion, 'clock')}
-      className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/40 bg-primary/[0.04] px-2.5 py-1 text-[11px] font-sans text-primary hover:bg-primary/10 transition-colors"
-    >
-      <Clock className="h-3 w-3" />
-      <span>Switch to "{suggestion}"</span>
-    </button>
+    <div className="mt-1.5 inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onApply(suggestion, 'clock')}
+        className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-primary/40 bg-primary/[0.04] px-2.5 py-1 text-[11px] font-sans text-primary hover:bg-primary/10 transition-colors"
+      >
+        <Clock className="h-3 w-3" />
+        <span>Switch to "{suggestion}"</span>
+      </button>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Dismiss suggestion"
+        title="Dismiss"
+        className="h-6 w-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
   );
 }
 
@@ -417,9 +405,11 @@ export function PromotionalPopupEditor() {
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
           <div className="grid grid-cols-[auto_1fr] gap-2">
-            <EyebrowIconPicker
+            <GlyphPicker
+              ariaLabel="Eyebrow icon"
+              options={EYEBROW_ICON_OPTIONS}
               value={formData.eyebrowIcon ?? 'none'}
-              onChange={(v) => handleChange('eyebrowIcon', v)}
+              onChange={(v) => handleChange('eyebrowIcon', v as EyebrowIcon)}
               accent={formData.accentColor}
             />
             <Input
