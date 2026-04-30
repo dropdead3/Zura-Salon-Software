@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { useFAQConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { useVisibleFAQItems } from "@/hooks/useFAQItems";
 
 // FAQ question/answer items are not yet schema-backed — these defaults are
 // rendered until a dedicated FAQ Manager (table or JSONB column) is shipped.
