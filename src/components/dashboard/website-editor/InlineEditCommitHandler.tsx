@@ -24,6 +24,9 @@ import {
   useNewClientConfig,
   useTestimonialsConfig,
   useExtensionsConfig,
+  useGalleryDisplayConfig,
+  useLocationsSectionConfig,
+  useStylistsDisplayConfig,
 } from '@/hooks/useSectionConfig';
 import { useToast } from '@/hooks/use-toast';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
@@ -84,6 +87,9 @@ export function InlineEditCommitHandler() {
   const newClient = useNewClientConfig();
   const testimonials = useTestimonialsConfig();
   const extensions = useExtensionsConfig();
+  const gallery = useGalleryDisplayConfig();
+  const locations = useLocationsSectionConfig();
+  const stylists = useStylistsDisplayConfig();
 
   // Registry: sectionKey → { current config, update fn, allowed paths }.
   // Adding a new editable field is a one-line addition to `allowedPaths`.
@@ -166,6 +172,36 @@ export function InlineEditCommitHandler() {
             'cta_primary',
             'cta_secondary',
             'education_link_text',
+          ],
+        },
+        section_gallery_display: {
+          data: gallery.data,
+          update: gallery.update,
+          allowedPaths: [
+            'section_eyebrow',
+            'section_title',
+            'section_title_highlight',
+            'section_description',
+            'cta_text',
+          ],
+        },
+        section_locations: {
+          data: locations.data,
+          update: locations.update,
+          allowedPaths: [
+            'section_eyebrow',
+            'section_title',
+            'card_cta_primary_text',
+            'card_cta_secondary_text',
+          ],
+        },
+        section_stylists_display: {
+          data: stylists.data,
+          update: stylists.update,
+          allowedPaths: [
+            'section_eyebrow',
+            'section_title',
+            'section_description',
           ],
         },
       };
