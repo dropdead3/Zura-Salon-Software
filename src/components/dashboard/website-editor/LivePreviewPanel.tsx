@@ -471,7 +471,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
                 <iframe
                   ref={iframeRef}
                   key={refreshKey}
-                  src={previewUrl}
+                  src={iframeSrc}
                   className="w-full h-full border-0 block bg-background"
                   title="Website Preview"
                   onLoad={handleIframeLoad}
