@@ -118,6 +118,44 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
     ? '/org/your-salon'
     : `/org/your-salon/${local.slug || 'untitled'}`;
 
+  // ─── Page-level chip rail handlers ─────────────────────────────────────
+  // Each chip cycles to the next preset and writes into PageConfig.style_overrides.
+  // Page-level overrides wrap all sections via <SectionStyleWrapper> in
+  // Index.tsx / DynamicPage.tsx — section-level chips still layer on top.
+  const overrides: Partial<StyleOverrides> = local.style_overrides ?? {};
+  const updateOverrides = (patch: Partial<StyleOverrides>) => {
+    update('style_overrides', { ...overrides, ...patch });
+  };
+  const cycleBg = () => {
+    const idx = PAGE_BG_STOPS.findIndex(
+      (s) => s.type === (overrides.background_type ?? 'none') && s.value === (overrides.background_value ?? ''),
+    );
+    const next = nextIn(PAGE_BG_STOPS, idx);
+    updateOverrides({ background_type: next.type, background_value: next.value });
+  };
+  const cycleSpacing = () => {
+    const idx = PAGE_SPACING_STOPS.findIndex(
+      (s) => s.top === (overrides.padding_top ?? 0) && s.bottom === (overrides.padding_bottom ?? 0),
+    );
+    const next = nextIn(PAGE_SPACING_STOPS, idx);
+    updateOverrides({ padding_top: next.top, padding_bottom: next.bottom });
+  };
+  const cycleWidth = () => {
+    const idx = PAGE_WIDTH_STOPS.findIndex((s) => s.value === (overrides.max_width ?? 'full'));
+    const next = nextIn(PAGE_WIDTH_STOPS, idx);
+    updateOverrides({ max_width: next.value });
+  };
+  const bgActive = !!overrides.background_type && overrides.background_type !== 'none' && !!overrides.background_value;
+  const spacingActive = (overrides.padding_top ?? 0) > 0 || (overrides.padding_bottom ?? 0) > 0;
+  const widthActive = !!overrides.max_width && overrides.max_width !== 'full';
+  const currentBgLabel = PAGE_BG_STOPS.find(
+    (s) => s.type === (overrides.background_type ?? 'none') && s.value === (overrides.background_value ?? ''),
+  )?.label ?? 'Custom';
+  const currentSpacingLabel = PAGE_SPACING_STOPS.find(
+    (s) => s.top === (overrides.padding_top ?? 0) && s.bottom === (overrides.padding_bottom ?? 0),
+  )?.label ?? 'Custom';
+  const currentWidthLabel = PAGE_WIDTH_STOPS.find((s) => s.value === (overrides.max_width ?? 'full'))?.label ?? 'Custom';
+
   return (
     <div className="max-w-2xl">
       <Card>
@@ -131,6 +169,37 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
           <p className="text-xs text-muted-foreground mt-1 font-mono">{previewUrl}</p>
         </CardHeader>
         <CardContent className="space-y-5">
+          {/* ── Page-level style chips — same vocabulary as section chips ── */}
+          <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[11px] font-display tracking-wider uppercase text-muted-foreground">
+                Page Style
+              </Label>
+              <span className="text-[10px] text-muted-foreground/70">
+                Wraps all sections · section overrides win
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <PageStyleChip
+                icon={<Paintbrush className="h-3 w-3" />}
+                label={`BG · ${currentBgLabel}`}
+                active={bgActive}
+                onClick={cycleBg}
+              />
+              <PageStyleChip
+                icon={<ArrowUpDown className="h-3 w-3" />}
+                label={`Pad · ${currentSpacingLabel}`}
+                active={spacingActive}
+                onClick={cycleSpacing}
+              />
+              <PageStyleChip
+                icon={<Maximize2 className="h-3 w-3" />}
+                label={`Width · ${currentWidthLabel}`}
+                active={widthActive}
+                onClick={cycleWidth}
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label>Page Title</Label>
             <Input value={local.title} onChange={e => update('title', e.target.value)} />
