@@ -469,7 +469,7 @@ export function PromotionalPopupEditor() {
             length={formData.body.length}
             ceiling={BODY_CEILINGS[formData.appearance]}
             scopeLabel={`body in ${appearanceLabel(formData.appearance)}`}
-            overflowVerb="Truncating"
+            overflowVerb={formData.appearance === 'banner' ? 'Truncating' : 'Wrapping'}
           />
         </Field>
         <Field label="Disclaimer (optional)" hint="Legal fine print — shown below the buttons.">
