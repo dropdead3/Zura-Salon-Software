@@ -552,6 +552,110 @@ export function WebsiteEditorShell() {
     [updateSelectedPage, toast],
   );
 
+  // ─── Wave 4: insert section at index, on any page (incl. home) ───
+  const insertSectionInPage = useCallback(
+    (
+      pageId: string,
+      afterSectionId: string | null,
+      build: () => SectionConfig,
+    ) => {
+      if (!pagesConfig) return null;
+      const newSection = build();
+      const updated = pagesConfig.pages.map((p) => {
+        if (p.id !== pageId) return p;
+        const list = [...p.sections];
+        const idx = afterSectionId
+          ? list.findIndex((s) => s.id === afterSectionId)
+          : -1;
+        const insertAt = idx >= 0 ? idx + 1 : list.length;
+        list.splice(insertAt, 0, newSection);
+        // Re-stamp order to keep things sane.
+        const reordered = list.map((s, i) => ({ ...s, order: i + 1 }));
+        return { ...p, sections: reordered };
+      });
+      void updatePages
+        .mutateAsync({ pages: updated })
+        .catch((err) =>
+          toast({
+            variant: 'destructive',
+            title: 'Failed to add section',
+            description: err instanceof Error ? err.message : 'Unknown error',
+          }),
+        );
+      return newSection;
+    },
+    [pagesConfig, updatePages, toast],
+  );
+
+  const handleAddSectionAt = useCallback(
+    (type: CustomSectionType, label: string) => {
+      if (!addSectionState.open) return;
+      const created = insertSectionInPage(
+        addSectionState.pageId,
+        addSectionState.afterSectionId,
+        () => ({
+          id: generateSectionId(),
+          type,
+          label,
+          description: CUSTOM_TYPE_INFO[type].description,
+          enabled: true,
+          order: 0,
+          deletable: true,
+        }),
+      );
+      if (created) setEditorTab(`custom-${created.id}`);
+      setAddSectionState({ open: false });
+    },
+    [addSectionState, insertSectionInPage],
+  );
+
+  const handleAddSectionFromTemplate = useCallback(
+    (template: SectionTemplate) => {
+      if (!addSectionState.open) return;
+      const created = insertSectionInPage(
+        addSectionState.pageId,
+        addSectionState.afterSectionId,
+        () => ({
+          id: generateSectionId(),
+          type: template.section_type,
+          label: template.name,
+          description: template.description,
+          enabled: true,
+          order: 0,
+          deletable: true,
+          style_overrides: template.style_overrides,
+        }),
+      );
+      if (created) setEditorTab(`custom-${created.id}`);
+      setAddSectionState({ open: false });
+    },
+    [addSectionState, insertSectionInPage],
+  );
+
+  // Apply style overrides to any section on any page.
+  const handleStyleChange = useCallback(
+    (next: Partial<StyleOverrides>) => {
+      if (!styleTarget || !pagesConfig) return;
+      const updated = pagesConfig.pages.map((p) => {
+        if (p.id !== styleTarget.pageId) return p;
+        return {
+          ...p,
+          sections: p.sections.map((s) =>
+            s.id === styleTarget.sectionId ? { ...s, style_overrides: next } : s,
+          ),
+        };
+      });
+      void updatePages.mutateAsync({ pages: updated });
+    },
+    [styleTarget, pagesConfig, updatePages],
+  );
+
+  const styleTargetSection = useMemo(() => {
+    if (!styleTarget) return null;
+    const page = pagesConfig?.pages.find((p) => p.id === styleTarget.pageId);
+    return page?.sections.find((s) => s.id === styleTarget.sectionId) ?? null;
+  }, [styleTarget, pagesConfig]);
+
   // ─── Wave 2: canvas → editor bridge (click-to-edit, hover toggle, duplicate, delete, add) ───
   // Resolves a SectionConfig.id arriving from the iframe into an editor tab key.
   const resolveSectionTab = useCallback(
