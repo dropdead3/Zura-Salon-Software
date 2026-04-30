@@ -182,7 +182,14 @@ export function FAQSection() {
                     to={config.cta_secondary_url || "/policies"}
                     className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium rounded-full hover:border-foreground transition-all duration-300 overflow-hidden"
                   >
-                    <span>{config.cta_secondary_text}</span>
+                    <span>
+                      <InlineEditableText
+                        value={config.cta_secondary_text}
+                        sectionKey="section_faq"
+                        fieldPath="cta_secondary_text"
+                        placeholder="Button text"
+                      />
+                    </span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
                   </Link>
                 )}
