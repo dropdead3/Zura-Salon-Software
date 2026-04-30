@@ -68,7 +68,12 @@ export function FooterCTA() {
               filter: eyebrowFilter,
             }}
           >
-            {config.eyebrow}
+            <InlineEditableText
+              value={config.eyebrow}
+              sectionKey="section_footer_cta"
+              fieldPath="eyebrow"
+              placeholder="Eyebrow text"
+            />
           </motion.p>
         )}
 
