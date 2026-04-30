@@ -311,6 +311,65 @@ export function WebsiteEditorShell() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // ─── Wave 3: dirty + saving listeners (from CustomSectionEditor / PageSettingsEditor) ───
+  useEffect(() => {
+    const onDirty = (e: Event) => {
+      const dirty = !!(e as CustomEvent).detail?.dirty;
+      setIsDirty(dirty);
+      if (!dirty) setLastSavedAt(Date.now());
+    };
+    const onSaving = (e: Event) => setIsSaving(!!(e as CustomEvent).detail?.saving);
+    window.addEventListener('editor-dirty-state', onDirty);
+    window.addEventListener('editor-saving-state', onSaving);
+    return () => {
+      window.removeEventListener('editor-dirty-state', onDirty);
+      window.removeEventListener('editor-saving-state', onSaving);
+    };
+  }, []);
+
+  // Tick the "Saved 2s ago" label every 30s so it stays current without spamming renders.
+  useEffect(() => {
+    if (!lastSavedAt) return;
+    const t = setInterval(() => setSavedTick((x) => x + 1), 30_000);
+    return () => clearInterval(t);
+  }, [lastSavedAt]);
+
+  // Browser-level guard: warn before unloading the page with unsaved changes.
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
+
+  // Guarded navigation — used by sidebar tab change, page picker, and click-to-edit.
+  const requestTabChange = useCallback(
+    (tab: string) => {
+      if (tab === editorTab) return;
+      if (isDirty) {
+        setPendingNav({ type: 'tab', tab });
+        return;
+      }
+      setEditorTab(tab);
+    },
+    [editorTab, isDirty],
+  );
+
+  const requestPageChange = useCallback(
+    (pageId: string) => {
+      if (pageId === selectedPageId) return;
+      if (isDirty) {
+        setPendingNav({ type: 'page', pageId });
+        return;
+      }
+      setSelectedPageId(pageId);
+    },
+    [selectedPageId, isDirty],
+  );
+
   // ─── Page CRUD ───
   const handleCreatePage = useCallback(async () => {
     const title = newPageTitle.trim();
