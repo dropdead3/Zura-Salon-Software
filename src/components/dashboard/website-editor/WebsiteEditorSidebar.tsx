@@ -511,67 +511,32 @@ export function WebsiteEditorSidebar({
     );
   }
 
+  // ── Computed view-model for the rail body ──
+  // The "this page" sections we'll render. For non-home pages, also expose
+  // page-scoped actions (settings/templates/delete) inline at the top of the
+  // sections list so they read as "tools for this page".
+  const thisPageSections = isHomePage ? localSections : localPageSections;
+  const thisPageEnabled = thisPageSections.filter((s) => s.enabled).length;
+  const thisPageHidden = thisPageSections.filter((s) => !s.enabled);
+  const thisPageHeading = isHomePage ? 'This Page' : `${selectedPage?.title ?? 'Page'}`;
+  const thisPageCaption = isHomePage
+    ? 'Sections on the homepage — drag to reorder'
+    : 'Sections on this page — drag to reorder';
+
+  // Helper: render the disabled-sections popover trigger in the footer.
+  const onReenable = async (section: SectionConfig) => {
+    if (isHomePage) {
+      await handleToggleSection(section.id, true);
+    } else {
+      onPageSectionToggle?.(section.id, true);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50">
-      {/* Page actions — picker lives in the toolbar; this block surfaces page-scoped actions only */}
-      {(!isHomePage || onAddPage) && (
-        <div className="p-3 border-b border-border/40 space-y-2">
-          {!isHomePage && selectedPage ? (
-            <>
-              <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider px-1 truncate">
-                {selectedPage.title}
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size={tokens.button.inline}
-                  className="h-7 text-xs flex-1"
-                  onClick={() => onTabChange('page-settings')}
-                >
-                  <Settings className="h-3 w-3 mr-1" />
-                  Settings
-                </Button>
-                {onApplyPageTemplate && (
-                  <Button
-                    variant="ghost"
-                    size={tokens.button.inline}
-                    className="h-7 text-xs flex-1"
-                    onClick={onApplyPageTemplate}
-                  >
-                    <LayoutTemplate className="h-3 w-3 mr-1" />
-                    Templates
-                  </Button>
-                )}
-                {selectedPage.deletable && (
-                  <Button
-                    variant="ghost"
-                    size={tokens.button.inline}
-                    className="h-7 text-xs text-destructive hover:text-destructive"
-                    onClick={() => onDeletePage?.(selectedPageId)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            </>
-          ) : (
-            onAddPage && (
-              <Button
-                variant="ghost"
-                size={tokens.button.inline}
-                className="h-8 w-full justify-start text-xs"
-                onClick={onAddPage}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Add Page
-              </Button>
-            )
-          )}
-        </div>
-      )}
-
-      {/* Search + collapse — single row reclaims ~44px of vertical real estate */}
-      <div className="p-3 border-b flex items-center gap-2">
+      {/* Search + collapse — single row, no orphan "Add Page" above it. The
+          page picker (and its + / settings buttons) lives in the toolbar. */}
+      <div className="p-3 border-b border-border/40 flex items-center gap-2">
         <div className="flex-1 min-w-0">
           <WebsiteEditorSearch onSelectResult={onTabChange} />
         </div>
@@ -589,100 +554,118 @@ export function WebsiteEditorSidebar({
         </Tooltip>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — Zone 1 (this page) → Zone 2 (chrome) → Zone 3 (library) */}
       <ScrollArea className="flex-1">
         <div className="py-2">
-          {isHomePage && (
-            <>
-              {SITE_CONTENT_GROUPS.map((group, groupIndex) => (
-                <div key={group.title}>
-                  {groupIndex > 0 && <Separator className="my-2 mx-3" />}
-                  <SectionGroupHeader title={group.title} />
-                  <div className="space-y-0.5 mb-2">
-                    {group.items.map((item) => (
-                      <ContentNavItem
-                        key={item.tab}
-                        label={item.label}
-                        description={item.description}
-                        icon={item.icon}
-                        isActive={activeTab === item.tab}
-                        onSelect={() => onTabChange(item.tab)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+          {/* ─────────────────────────────────────────────────────────
+              ZONE 1: THIS PAGE — promoted to the top.
+              The most-edited surface should be the easiest to reach.
+             ───────────────────────────────────────────────────────── */}
+          <SectionGroupHeader title={thisPageHeading} caption={thisPageCaption} />
 
-              <Separator className="my-3 mx-3" />
-            </>
+          {/* Page-scoped actions for non-home pages, surfaced inline so
+              the operator doesn't hunt for them. */}
+          {!isHomePage && selectedPage && (
+            <div className="flex items-center gap-1 px-3 mb-2">
+              {onApplyPageTemplate && (
+                <Button
+                  variant="ghost"
+                  size={tokens.button.inline}
+                  className="h-7 text-xs flex-1"
+                  onClick={onApplyPageTemplate}
+                >
+                  <LayoutTemplate className="h-3 w-3 mr-1" />
+                  Templates
+                </Button>
+              )}
+              {selectedPage.deletable && (
+                <Button
+                  variant="ghost"
+                  size={tokens.button.inline}
+                  className="h-7 text-xs text-destructive hover:text-destructive"
+                  onClick={() => onDeletePage?.(selectedPageId)}
+                  title="Delete this page"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
           )}
 
-          {/* Homepage Sections (with DND) - only show for home page */}
+          {/* Homepage sections — collapsible logical groups */}
           {isHomePage && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
-              <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <div className="mb-1">
-                  <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
-                    Homepage Layout
-                  </p>
-                </div>
-
-                {/* Built-in section groups */}
-                {SECTION_GROUPS.map((group, groupIndex) => {
+              <SortableContext items={localSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                {SECTION_GROUPS.map((group) => {
                   const groupSections = group.sectionTypes
-                    .map(type => getBuiltinSection(type))
+                    .map((type) => getBuiltinSection(type))
                     .filter(Boolean) as SectionConfig[];
                   if (groupSections.length === 0) return null;
+                  const open = !isGroupCollapsed(group.title);
                   return (
                     <div key={group.title}>
-                      {groupIndex > 0 && <Separator className="my-2 mx-3" />}
-                      <SectionGroupHeader title={group.title} />
-                      {groupSections.map(section => (
-                        <SectionNavItem
-                          key={section.id}
-                          id={section.id}
-                          label={section.label}
-                          description={section.description}
-                          order={section.order}
-                          enabled={section.enabled}
-                          isActive={activeTab === getSectionTab(section)}
-                          onSelect={() => onTabChange(getSectionTab(section))}
-                          onToggle={(enabled) => handleToggleSection(section.id, enabled)}
-                          onDuplicate={() => handleDuplicateSection(section)}
-                        />
-                      ))}
+                      <SectionGroupHeader
+                        title={group.title}
+                        collapsible
+                        isOpen={open}
+                        onToggle={() => toggleGroup(group.title)}
+                        count={groupSections.length}
+                      />
+                      {open &&
+                        groupSections.map((section) => (
+                          <SectionNavItem
+                            key={section.id}
+                            id={section.id}
+                            label={section.label}
+                            description={section.description}
+                            order={section.order}
+                            enabled={section.enabled}
+                            isActive={activeTab === getSectionTab(section)}
+                            onSelect={() => onTabChange(getSectionTab(section))}
+                            onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                            onDuplicate={() => handleDuplicateSection(section)}
+                          />
+                        ))}
                     </div>
                   );
                 })}
 
-                {/* Custom sections */}
-                {customSections.length > 0 && (
-                  <>
-                    <Separator className="my-2 mx-3" />
-                    <SectionGroupHeader title="Custom Sections" />
-                    {customSections.map(section => (
-                      <SectionNavItem
-                        key={section.id}
-                        id={section.id}
-                        label={section.label}
-                        description={section.description}
-                        order={section.order}
-                        enabled={section.enabled}
-                        isActive={activeTab === `custom-${section.id}`}
-                        onSelect={() => onTabChange(`custom-${section.id}`)}
-                        onToggle={(enabled) => handleToggleSection(section.id, enabled)}
-                        deletable
-                        onDelete={() => setDeleteTarget(section)}
-                        onDuplicate={() => handleDuplicateSection(section)}
+                {customSections.length > 0 && (() => {
+                  const open = !isGroupCollapsed('Custom Sections');
+                  return (
+                    <div>
+                      <SectionGroupHeader
+                        title="Custom Sections"
+                        collapsible
+                        isOpen={open}
+                        onToggle={() => toggleGroup('Custom Sections')}
+                        count={customSections.length}
                       />
-                    ))}
-                  </>
-                )}
+                      {open &&
+                        customSections.map((section) => (
+                          <SectionNavItem
+                            key={section.id}
+                            id={section.id}
+                            label={section.label}
+                            description={section.description}
+                            order={section.order}
+                            enabled={section.enabled}
+                            isActive={activeTab === `custom-${section.id}`}
+                            onSelect={() => onTabChange(`custom-${section.id}`)}
+                            onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                            deletable
+                            onDelete={() => setDeleteTarget(section)}
+                            onDuplicate={() => handleDuplicateSection(section)}
+                          />
+                        ))}
+                    </div>
+                  );
+                })()}
               </SortableContext>
             </DndContext>
           )}
 
-          {/* Non-home page sections with DnD */}
+          {/* Non-home page sections (or empty state) */}
           {!isHomePage && selectedPage && localPageSections.length === 0 && (
             <div className="mx-3 mt-2 mb-3 rounded-xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-center">
               <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-background flex items-center justify-center border border-border/60">
@@ -719,9 +702,8 @@ export function WebsiteEditorSidebar({
           )}
           {!isHomePage && selectedPage && localPageSections.length > 0 && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handlePageDragOver} onDragEnd={handlePageDragEnd}>
-              <SortableContext items={localPageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                <SectionGroupHeader title={`${selectedPage.title} Sections`} />
-                {localPageSections.map(section => (
+              <SortableContext items={localPageSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                {localPageSections.map((section) => (
                   <SectionNavItem
                     key={section.id}
                     id={section.id}
@@ -741,29 +723,89 @@ export function WebsiteEditorSidebar({
             </DndContext>
           )}
 
-          {/* Add Section Button — shown for ALL pages */}
-          <div className="px-3 mt-3">
-            <Button
-              variant="outline"
-              size={tokens.button.card}
-              className="w-full text-xs"
-              onClick={() => setShowAddDialog(true)}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Section
-            </Button>
-          </div>
+          {/* Add Section button — only when there ARE sections (the empty-state
+              card already provides this affordance, so don't double up). */}
+          {thisPageSections.length > 0 && (
+            <div className="px-3 mt-3">
+              <Button
+                variant="outline"
+                size={tokens.button.card}
+                className="w-full text-xs rounded-full"
+                onClick={() => setShowAddDialog(true)}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add section to this page
+              </Button>
+            </div>
+          )}
+
+          {/* ─────────────────────────────────────────────────────────
+              ZONE 2: SITE CHROME — only relevant when editing the home
+              context. (Chrome applies everywhere; surfacing it on every
+              page would dilute "this page" focus.)
+             ───────────────────────────────────────────────────────── */}
+          {isHomePage && (
+            <>
+              <Separator className="my-3 mx-3" />
+              {SITE_CONTENT_GROUPS.map((group) => (
+                <div key={group.title}>
+                  <SectionGroupHeader title={group.title} caption={group.caption} />
+                  <div className="space-y-0.5 mb-2">
+                    {group.items.map((item) => (
+                      <ContentNavItem
+                        key={item.tab}
+                        label={item.label}
+                        description={item.description}
+                        icon={item.icon}
+                        isActive={activeTab === item.tab}
+                        onSelect={() => onTabChange(item.tab)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       </ScrollArea>
 
-      {/* Stats Footer */}
+      {/* Stats Footer — actionable: tap the count to manage hidden sections */}
       <div className="p-3 border-t bg-muted/30">
-        <div className="text-[10px] text-muted-foreground text-center">
-          {isHomePage
-            ? `${localSections.filter(s => s.enabled).length}/${localSections.length} sections visible`
-            : `${selectedPage?.title ?? 'Page'} • ${localPageSections.filter(s => s.enabled).length}/${localPageSections.length} sections visible`
-          }
-        </div>
+        {thisPageHidden.length > 0 ? (
+          <Popover open={hiddenSectionsOpen} onOpenChange={setHiddenSectionsOpen}>
+            <PopoverTrigger asChild>
+              <button className="w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5">
+                <EyeOff className="h-3 w-3" />
+                <span>
+                  {thisPageEnabled}/{thisPageSections.length} sections visible · {thisPageHidden.length} hidden
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="center" className="w-64 p-2">
+              <p className="text-[10px] font-display uppercase tracking-wider text-muted-foreground px-2 py-1.5">
+                Hidden sections
+              </p>
+              <div className="space-y-0.5">
+                {thisPageHidden.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => onReenable(section)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/60 text-left"
+                  >
+                    <Eye className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs flex-1 truncate">{section.label}</span>
+                    <span className="text-[9px] text-muted-foreground">Show</span>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <div className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1.5">
+            <Eye className="h-3 w-3" />
+            <span>All {thisPageSections.length} sections visible</span>
+          </div>
+        )}
       </div>
 
       {/* Add Section Dialog */}
