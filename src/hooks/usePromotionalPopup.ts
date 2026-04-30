@@ -14,6 +14,9 @@ export type FabPosition = 'bottom-right' | 'bottom-left';
 export interface PromotionalPopupSettings {
   enabled: boolean;
   // Content
+  /** Small uppercase tag rendered above the headline. Optional — empty
+   *  string hides the eyebrow row entirely. */
+  eyebrow?: string;
   headline: string;
   body: string;
   ctaAcceptLabel: string;
