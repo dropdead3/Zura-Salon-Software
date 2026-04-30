@@ -476,7 +476,7 @@ export function PromotionalPopupEditor() {
             overflowVerb="Over limit"
           />
         </Field>
-        <Field label="Image (optional)" hint="Shown above the headline. Recommended 1600×1200 or larger; auto-optimized to WebP.">
+        <Field label="Image (optional)" hint="Auto-optimized to WebP. Treatment + alt text below.">
           <ImageUploadInput
             label=""
             value={formData.imageUrl ?? ''}
@@ -484,6 +484,51 @@ export function PromotionalPopupEditor() {
             pathPrefix="promotional-popup"
             placeholder="https://..."
           />
+          {formData.imageUrl && (
+            <div className="mt-3 space-y-3">
+              <div>
+                <Label className="text-xs">Treatment</Label>
+                <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
+                  {([
+                    { value: 'cover', label: 'Cover', hint: 'Full-width strip above headline' },
+                    { value: 'side', label: 'Side', hint: 'Left rail on modal (collapses to top on corner)' },
+                    { value: 'hidden-on-corner', label: 'Hide on corner', hint: 'Show on modal/banner; hide on corner-card' },
+                  ] as const).map(({ value, label, hint }) => {
+                    const active = (formData.imageTreatment ?? 'cover') === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        title={hint}
+                        onClick={() => handleChange('imageTreatment', value)}
+                        className={cn(
+                          'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
+                          active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Alt text</Label>
+                <Input
+                  className="mt-1.5"
+                  value={formData.imageAlt ?? ''}
+                  onChange={(e) => handleChange('imageAlt', e.target.value)}
+                  placeholder="Describe the image (leave blank if decorative)"
+                  maxLength={140}
+                />
+                <p className="mt-1 font-sans text-[11px] text-muted-foreground">
+                  Used by screen readers and indexed for SEO. Empty = decorative.
+                </p>
+              </div>
+            </div>
+          )}
         </Field>
       </Section>
 
