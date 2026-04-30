@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'react';
 import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   ArrowLeft,
