@@ -76,6 +76,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   }, [pageId]);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
+  const queryClient = useQueryClient();
 
   const enabledSections = useMemo(() => {
     const base = isEditorPreview && !isViewMode
