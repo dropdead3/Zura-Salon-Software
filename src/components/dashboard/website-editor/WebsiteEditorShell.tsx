@@ -15,12 +15,14 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Plus,
+  Redo2,
   RotateCcw,
   Save,
   Settings,
   FileText,
   Menu,
   MoreHorizontal,
+  Undo2,
 } from 'lucide-react';
 import {
   Select,
