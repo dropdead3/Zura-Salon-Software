@@ -126,6 +126,13 @@ function isWidthActive(o: Partial<StyleOverrides>): boolean {
 function isBgActive(o: Partial<StyleOverrides>): boolean {
   return !!o.background_type && o.background_type !== 'none' && !!o.background_value;
 }
+function isHeadingScaleActive(o: Partial<StyleOverrides>): boolean {
+  return !!o.heading_scale && o.heading_scale !== 'md';
+}
+function isEyebrowActive(o: Partial<StyleOverrides>): boolean {
+  // "Active" means the operator has hidden eyebrows (deviation from default).
+  return o.eyebrow_visible === false;
+}
 
 export function EditorSectionCard({
   sectionId,
