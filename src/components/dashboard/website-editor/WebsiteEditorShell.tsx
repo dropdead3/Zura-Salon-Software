@@ -228,7 +228,11 @@ export function WebsiteEditorShell() {
         <div className="flex items-center gap-3 min-w-0">
           {/* Page picker — always visible */}
           <Select value={selectedPageId} onValueChange={setSelectedPageId}>
-            <SelectTrigger className="h-9 text-xs min-w-[180px] max-w-[260px] rounded-full">
+            <SelectTrigger
+              ref={pagePickerRef}
+              className="h-9 text-xs min-w-[180px] max-w-[260px] rounded-full"
+              title="Switch page (⌘K)"
+            >
               <div className="flex items-center gap-2 min-w-0">
                 <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <SelectValue placeholder="Select page" />
@@ -256,10 +260,16 @@ export function WebsiteEditorShell() {
             </SelectContent>
           </Select>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-            <span className="opacity-50">·</span>
+          {/* Unified breadcrumb */}
+          <nav
+            aria-label="Editor breadcrumb"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+          >
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
+            <span className="truncate text-foreground font-medium">{selectedPageTitle}</span>
+            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
             <span className="truncate text-foreground font-medium">{sectionLabel}</span>
-          </div>
+          </nav>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
@@ -267,7 +277,7 @@ export function WebsiteEditorShell() {
             variant={showPreview ? 'default' : 'outline'}
             size={tokens.button.card}
             onClick={() => setShowPreview(!showPreview)}
-            title={showPreview ? 'Hide live canvas' : 'Show live canvas'}
+            title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
           >
             {showPreview ? (
               <>
