@@ -250,6 +250,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   if (onBookingSurface && !isPreview) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
+  // Pick a readable text color for content sitting *on* the accent (FAB,
+  // CTA buttons, banner). When the accent is a CSS-var ref like
+  // `hsl(var(--primary))` we can't parse it client-side, so we fall back
+  // to the theme's `--primary-foreground` which is paired in CSS.
+  const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
   function handleAccept() {
