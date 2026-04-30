@@ -176,7 +176,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
         <FooterCTA />
         <Footer />
-        <PromotionalPopup surface="all-public" />
+        <PromotionalPopup surface={popupSurface} />
       </div>
     );
   }
@@ -210,7 +210,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       <StickyFooterBar />
-      <PromotionalPopup surface="all-public" />
+      <PromotionalPopup surface={popupSurface} />
     </div>
   );
 }
