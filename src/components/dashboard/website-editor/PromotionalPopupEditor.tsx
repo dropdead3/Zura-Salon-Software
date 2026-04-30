@@ -619,18 +619,25 @@ function Field({
   );
 }
 
-// ── Headline character counter ──
-// Surfaces the truncation ceiling for the *currently selected* appearance so
-// operators see the exact char limit before the live mock starts ellipsizing.
-// State map: under (muted) → near (warning at 80%) → over (destructive).
-function HeadlineCharCounter({
+// ── Generic character counter ──
+// Surfaces a truncation/limit ceiling next to free-text fields so operators
+// know the exact char ledge before the live mock ellipsizes (or before legal
+// flags an overflow). State map: under (muted) → near (warning at 80%) → over
+// (destructive). `scopeLabel` describes *what* is being measured (e.g.
+// "headline in corner card", "disclaimer"). `overflowVerb` lets callers swap
+// the badge copy — "Truncating" for layout-driven cuts, "Over limit" for
+// policy-driven caps like disclaimers.
+function CharCounter({
   length,
-  appearance,
+  ceiling,
+  scopeLabel,
+  overflowVerb = 'Over limit',
 }: {
   length: number;
-  appearance: PromotionalPopupSettings['appearance'];
+  ceiling: number;
+  scopeLabel: string;
+  overflowVerb?: string;
 }) {
-  const ceiling = HEADLINE_CEILINGS[appearance];
   const ratio = ceiling > 0 ? length / ceiling : 0;
   const tone =
     length > ceiling
@@ -638,23 +645,25 @@ function HeadlineCharCounter({
       : ratio >= 0.8
         ? 'text-amber-600 dark:text-amber-400'
         : 'text-muted-foreground';
-  const layoutLabel =
-    appearance === 'corner-card' ? 'corner card' : appearance;
   return (
     <p className={cn('font-sans text-xs flex items-center gap-1', tone)}>
       <span className="tabular-nums">
         {length} / {ceiling}
       </span>
-      <span className="text-muted-foreground">
-        chars before truncation in {layoutLabel}
-      </span>
+      <span className="text-muted-foreground">chars · {scopeLabel}</span>
       {length > ceiling && (
         <span className="font-display uppercase tracking-wider text-[10px] ml-1">
-          Truncating
+          {overflowVerb}
         </span>
       )}
     </p>
   );
+}
+
+// Human-readable layout label for `CharCounter` scope strings. Centralized so
+// "corner card" stays consistent across counters and prose.
+function appearanceLabel(appearance: PromotionalPopupSettings['appearance']): string {
+  return appearance === 'corner-card' ? 'corner card' : appearance;
 }
 
 // ── Live FAB preview swatch ──
