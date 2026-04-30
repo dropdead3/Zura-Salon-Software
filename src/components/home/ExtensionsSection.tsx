@@ -8,6 +8,7 @@ import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useExtensionsConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Star,
