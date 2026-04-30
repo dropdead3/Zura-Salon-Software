@@ -59,6 +59,7 @@ export function PromotionalPopupEditor() {
   const handleSave = useCallback(async () => {
     try {
       await updateSettings.mutateAsync(formData);
+      setSavedSnapshot(formData);
       toast.success('Promotional popup saved');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
