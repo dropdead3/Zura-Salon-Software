@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'rea
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
+  ArrowLeft,
   ChevronRight,
   Check,
   Circle,
@@ -10,12 +11,13 @@ import {
   History,
   Loader2,
   MousePointer2,
-  
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Plus,
   RotateCcw,
   Save,
+  Settings,
   FileText,
   Menu,
   MoreHorizontal,
@@ -851,7 +853,12 @@ export function WebsiteEditorShell() {
 
   const sectionLabel = TAB_LABELS[editorTab] ?? (editorTab.startsWith('custom-') ? 'Custom Section' : 'Editor');
 
-  // Sidebar element (reused for desktop pane and mobile sheet).
+  // Square-style: rail is in EDITOR mode whenever a section/page-settings tab is active.
+  // It returns to LIST mode when the user taps "Done" or the back arrow.
+  // We treat 'pages' as a list-mode tab (it IS a list of pages, not a section editor).
+  const isEditorMode = editorTab !== 'pages';
+
+  // Sidebar element (reused for desktop pane and mobile sheet) — list mode only.
   const sidebarEl = (
     <WebsiteEditorSidebar
       activeTab={editorTab}
@@ -879,11 +886,134 @@ export function WebsiteEditorShell() {
     />
   );
 
+  // Rail editor-mode body — replaces the sidebar in place when a section is active.
+  const railEditorEl = (
+    <div className="flex flex-col h-full bg-card/80 backdrop-blur-xl">
+      {/* Header: [<- back] [TITLE] [Done]  — mirrors Square's section editor */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/60 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full shrink-0"
+            onClick={() => requestTabChange('pages')}
+            title="Back to sections"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="font-display text-sm tracking-wide uppercase text-foreground truncate">
+            {sectionLabel}
+          </h2>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-8 rounded-full px-4 font-display text-xs tracking-wider uppercase"
+          onClick={() => requestTabChange('pages')}
+          title="Return to sections list"
+        >
+          Done
+        </Button>
+      </div>
+
+      {/* Save status pill — slim row under header so the user always sees draft state */}
+      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
+        <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 rounded-full px-3 text-xs"
+          onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
+          disabled={!isDirty || isSaving}
+          title="Save draft (⌘S)"
+        >
+          {isSaving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+          Save
+        </Button>
+      </div>
+
+      {/* Editor body */}
+      <div className="flex-1 overflow-auto px-4 py-4">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          }
+        >
+          {renderActiveEditor()}
+        </Suspense>
+      </div>
+    </div>
+  );
+
+  // Rail list-mode body — page picker header + sections list (existing sidebar component).
+  const railListEl = (
+    <div className="flex flex-col h-full bg-card/80 backdrop-blur-xl">
+      {/* Page picker row — matches Square's "Home ▾  ⚙  +" */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/60 shrink-0">
+        <Select value={selectedPageId} onValueChange={requestPageChange}>
+          <SelectTrigger
+            ref={pagePickerRef}
+            className="h-9 text-xs flex-1 rounded-full"
+            title="Switch page (⌘K)"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Select page" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {pagesConfig?.pages?.length ? (
+              pagesConfig.pages.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3 w-3" />
+                    <span>{p.title}</span>
+                    {!p.enabled && <span className="text-muted-foreground">(draft)</span>}
+                  </div>
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="home">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-3 w-3" />
+                  <span>Home</span>
+                </div>
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-full shrink-0"
+          onClick={() => requestTabChange('page-settings')}
+          title="Page settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-full shrink-0"
+          onClick={() => setAddPageOpen(true)}
+          title="Add page"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Sections list */}
+      <div className="flex-1 overflow-hidden">{sidebarEl}</div>
+    </div>
+  );
+
   return (
-    <div className="space-y-0 -mx-1">
-      {/* Editor toolbar */}
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+    <div className="-mx-1 h-[calc(100vh-9rem)] flex flex-col gap-3">
+      {/* ── Top toolbar — Square-style: exit pill | (spacer) | upgrade · preview · publish ── */}
+      <div className="flex items-center justify-between gap-3 shrink-0 px-1">
+        <div className="flex items-center gap-2 min-w-0">
           {isMobile && (
             <Button
               variant="outline"
@@ -895,77 +1025,55 @@ export function WebsiteEditorShell() {
               <Menu className="h-4 w-4" />
             </Button>
           )}
-
-          {/* Page picker — always visible */}
-          <Select value={selectedPageId} onValueChange={requestPageChange}>
-            <SelectTrigger
-              ref={pagePickerRef}
-              className="h-9 text-xs min-w-[140px] max-w-[220px] shrink-0 rounded-full"
-              title="Switch page (⌘K)"
+          {!isMobile && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-full shrink-0"
+              onClick={() => setShowSidebar((v) => !v)}
+              title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <SelectValue placeholder="Select page" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              {pagesConfig?.pages?.length ? (
-                pagesConfig.pages.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-3 w-3" />
-                      <span>{p.title}</span>
-                      {!p.enabled && <span className="text-muted-foreground">(draft)</span>}
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="home">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-3 w-3" />
-                    <span>Home</span>
-                  </div>
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-
-          {/* Breadcrumb — section only (page already shown in picker). Hidden < lg. */}
+              {showSidebar ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            </Button>
+          )}
+          {/* Breadcrumb: page › section. Hidden on small screens. */}
           <nav
             aria-label="Editor breadcrumb"
-            className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1"
+            className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
           >
-            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            <span className="truncate text-foreground font-medium min-w-0">
-              {sectionLabel}
+            <span className="truncate text-foreground/70 min-w-0">
+              {selectedPage?.title ?? 'Home'}
             </span>
+            {isEditorMode && (
+              <>
+                <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                <span className="truncate text-foreground font-medium min-w-0">
+                  {sectionLabel}
+                </span>
+              </>
+            )}
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-          {/* Save status pill — adjacent to Save/Publish, the actions it qualifies */}
+        <div className="flex items-center gap-2 shrink-0">
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
 
-          {/* Save Draft — persists privately. Does NOT push live. */}
+          {/* Preview (open public preview in new tab) */}
           <Button
             variant="outline"
             size={tokens.button.card}
             onClick={() =>
-              window.dispatchEvent(new CustomEvent('editor-save-request'))
+              livePreviewUrl && window.open(livePreviewUrl, '_blank', 'noopener,noreferrer')
             }
-            disabled={!isDirty || isSaving}
+            disabled={!livePreviewUrl}
             className="rounded-full"
-            title="Save draft (⌘S) — only published changes go live"
+            title="Open preview in new tab"
           >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-1" />
-            )}
-            Save Draft
+            <ExternalLink className="h-4 w-4 mr-1.5" />
+            Preview
           </Button>
 
-          {/* Primary action: Publish (promote draft → live) */}
+          {/* Publish — primary action, square-shaped pill */}
           <Button
             variant="default"
             size={tokens.button.card}
@@ -973,7 +1081,7 @@ export function WebsiteEditorShell() {
             className="relative rounded-full"
             title="Publish draft to live site (⌘⇧S)"
           >
-            <Globe className="h-4 w-4 mr-1" />
+            <Globe className="h-4 w-4 mr-1.5" />
             Publish
             {hasChanges && (
               <Badge
@@ -983,22 +1091,6 @@ export function WebsiteEditorShell() {
                 {totalChanges}
               </Badge>
             )}
-          </Button>
-
-          {/* Live Canvas inline toggle */}
-          <Button
-            variant={showPreview ? 'secondary' : 'outline'}
-            size={tokens.button.card}
-            onClick={() => setShowPreview(!showPreview)}
-            className="rounded-full"
-            title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
-          >
-            {showPreview ? (
-              <PanelRightClose className="h-4 w-4 mr-1" />
-            ) : (
-              <PanelRightOpen className="h-4 w-4 mr-1" />
-            )}
-            Canvas
           </Button>
 
           {/* Overflow */}
@@ -1036,14 +1128,40 @@ export function WebsiteEditorShell() {
         </div>
       </div>
 
+      {/* ── Editor canvas: fixed left rail (list ↔ editor swap) + full-bleed preview ── */}
+      <div className="flex-1 min-h-0 flex gap-3 overflow-hidden">
+        {/* Fixed left rail — Square width is ~320–360px. Hidden on mobile (uses Sheet). */}
+        {showSidebar && !isMobile && (
+          <aside className="w-[340px] shrink-0 rounded-xl border border-border overflow-hidden">
+            {isEditorMode ? railEditorEl : railListEl}
+          </aside>
+        )}
+
+        {/* Full-bleed preview canvas */}
+        <div className="flex-1 min-w-0 rounded-xl border border-border overflow-hidden relative">
+          {!isMobile && !showSidebar && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowSidebar(true)}
+              className="absolute top-3 left-3 z-20 h-8 w-8 rounded-full shadow-sm bg-card/90 backdrop-blur-md"
+              title="Show sections (⌘\\)"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          )}
+          <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
+        </div>
+      </div>
+
       <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
       <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
-      {/* Mobile sidebar Sheet */}
+      {/* Mobile sidebar Sheet — hosts list OR editor depending on mode */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="p-0 w-[320px] max-w-[85vw]">
-          <SheetTitle className="sr-only">Website Editor Sections</SheetTitle>
-          <div className="h-full overflow-hidden">{sidebarEl}</div>
+        <SheetContent side="left" className="p-0 w-[340px] max-w-[90vw]">
+          <SheetTitle className="sr-only">Website Editor</SheetTitle>
+          <div className="h-full overflow-hidden">{isEditorMode ? railEditorEl : railListEl}</div>
         </SheetContent>
       </Sheet>
 
@@ -1225,7 +1343,6 @@ export function WebsiteEditorShell() {
               onClick={(e) => {
                 e.preventDefault();
                 if (!pendingNav) return;
-                // Tell the active editor to drop its dirty state.
                 window.dispatchEvent(
                   new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
                 );
@@ -1241,58 +1358,6 @@ export function WebsiteEditorShell() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Editor canvas */}
-      <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 18rem)' }}>
-        <ResizablePanelGroup direction="horizontal" className="h-full">
-          {showSidebar && !isMobile && (
-            <>
-              <ResizablePanel defaultSize={22} minSize={15} maxSize={30}>
-                {sidebarEl}
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-
-          <ResizablePanel defaultSize={showPreview ? 38 : 78} minSize={30}>
-            <div className="h-full flex flex-col overflow-hidden relative">
-              {/* Floating collapse affordance — only when sidebar hidden, so we
-                  don't waste a full row on a single icon button. */}
-              {!isMobile && !showSidebar && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowSidebar(true)}
-                  className="absolute top-3 left-3 z-20 h-8 w-8 rounded-full shadow-sm bg-card/90 backdrop-blur-md"
-                  title="Show sections (⌘\)"
-                >
-                  <PanelLeftOpen className="h-4 w-4" />
-                </Button>
-              )}
-              <div className="flex-1 overflow-auto p-4">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center h-32">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  }
-                >
-                  {renderActiveEditor()}
-                </Suspense>
-              </div>
-            </div>
-          </ResizablePanel>
-
-          {showPreview && !isMobile && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={44} minSize={20} maxSize={55}>
-                <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
-              </ResizablePanel>
-            </>
-          )}
-        </ResizablePanelGroup>
-      </div>
     </div>
   );
 }
