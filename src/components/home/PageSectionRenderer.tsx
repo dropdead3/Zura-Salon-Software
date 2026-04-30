@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BrandStatement } from '@/components/home/BrandStatement';
