@@ -294,7 +294,7 @@ export function InlineEditCommitHandler() {
         });
       }
     },
-    [hero, brand, faq, footerCta, newClient, testimonials, extensions, gallery, locations, stylists, toast],
+    [hero, brand, faq, footerCta, newClient, testimonials, extensions, gallery, locations, stylists, drinks, brands, extensionReviews, toast],
   );
 
   useEffect(() => {
