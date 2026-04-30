@@ -363,23 +363,17 @@ export function WebsiteEditorSidebar({
     const newSections = [...localSections, newSection];
     await saveSections(newSections);
 
-    // Copy the custom section config if it exists
+    // Copy the custom section config if it exists. Read draft so the
+    // operator's in-progress edits are duplicated, not the last-published
+    // version. Write to draft so the duplicate isn't live until publish.
     const sourceKey = `section_custom_${section.id}`;
     const destKey = `section_custom_${newId}`;
-    const { data: sourceConfig } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('id', sourceKey)
-      .eq('organization_id', orgId)
-      .maybeSingle();
-    if (sourceConfig?.value) {
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('site_settings').upsert({
-        id: destKey,
-        organization_id: orgId,
-        value: sourceConfig.value as never,
-        updated_by: user?.id,
-      });
+    if (orgId) {
+      const sourceValue = await fetchSiteSetting<Record<string, unknown>>(orgId, sourceKey, 'draft');
+      if (sourceValue) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await writeSiteSettingDraft(orgId, destKey, sourceValue, user?.id ?? null);
+      }
     }
 
     toast.success(`"${section.label}" duplicated`);
