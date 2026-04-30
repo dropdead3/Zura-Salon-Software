@@ -637,7 +637,8 @@ function WebsiteEditorShellInner() {
     ) => {
       if (!pagesConfig) return null;
       const newSection = build();
-      const updated = pagesConfig.pages.map((p) => {
+      const prevPages = pagesConfig.pages;
+      const updated = prevPages.map((p) => {
         if (p.id !== pageId) return p;
         const list = [...p.sections];
         const idx = afterSectionId
@@ -651,6 +652,16 @@ function WebsiteEditorShellInner() {
       });
       void updatePages
         .mutateAsync({ pages: updated })
+        .then(() => {
+          // History: undo restores the prior pages snapshot; redo re-applies
+          // the insert. Page-scoped operation so we snapshot the full pages
+          // array (insert can target any page incl. home).
+          pushEditorHistoryEntry({
+            label: `Add ${newSection.label}`,
+            undo: () => updatePages.mutateAsync({ pages: prevPages }).then(() => undefined),
+            redo: () => updatePages.mutateAsync({ pages: updated }).then(() => undefined),
+          });
+        })
         .catch((err) =>
           toast({
             variant: 'destructive',
