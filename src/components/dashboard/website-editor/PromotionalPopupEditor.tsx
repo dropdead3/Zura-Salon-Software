@@ -21,7 +21,7 @@ import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
-import { readableForegroundFor } from '@/lib/color-contrast';
+import { readableForegroundFor, bestTextContrast } from '@/lib/color-contrast';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
@@ -736,6 +736,7 @@ export function PromotionalPopupEditor() {
               );
             })}
           </div>
+          <AccentContrastWarning accent={formData.accentColor} />
         </Field>
         <Field
           label="Reminder button position"
@@ -1104,4 +1105,32 @@ function fromLocalInput(value: string): string | null {
   if (!value) return null;
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+// ── Accent contrast warning ──
+// WCAG 2.x floor for non-text large UI is 3:1. When the operator picks an
+// accent like #FFF080 (pale yellow) where neither white nor black text
+// clears 3:1 against it, surface a non-blocking hint so they know CTA copy
+// will be hard to read on the live popup. Returns null when:
+//   - no custom accent (theme primary is presumed-good by the theme author)
+//   - accent unparseable (e.g. `hsl(var(--primary))` ref)
+//   - best contrast clears 3:1
+function AccentContrastWarning({ accent }: { accent: string | undefined | null }) {
+  if (!accent || !accent.trim()) return null;
+  const ratio = bestTextContrast(accent);
+  if (ratio === null || ratio >= 3) return null;
+  return (
+    <p
+      role="status"
+      className="mt-2 inline-flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400"
+    >
+      <span aria-hidden="true">⚠</span>
+      <span>
+        Low contrast — even the best text color clears only{' '}
+        <strong className="font-display tracking-wider">{ratio.toFixed(2)}:1</strong>.
+        WCAG asks for at least 3:1 on UI surfaces. Visitors may struggle to
+        read the CTA on this accent.
+      </span>
+    </p>
+  );
 }

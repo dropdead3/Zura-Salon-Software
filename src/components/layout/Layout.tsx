@@ -8,6 +8,7 @@ import { PageTransition } from "./PageTransition";
 import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
 import { PromotionalPopup } from "@/components/public/PromotionalPopup";
 import type { PopupSurface } from "@/hooks/usePromotionalPopup";
+import { useWebsiteColorTheme } from "@/hooks/useWebsiteColorTheme";
 
 /**
  * Map the current public route to a promotional-popup surface key.
@@ -85,30 +86,38 @@ export function Layout({ children }: LayoutProps) {
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
 
-  // Immediately force light mode during render (before useEffect) to prevent flash
+  // Operator-selected public-site color theme. Defaults to cream-lux to
+  // preserve historical look until an operator explicitly picks otherwise.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const themeClass = `theme-${websiteTheme}`;
+
+  // Immediately force light mode + the operator's chosen theme during render
+  // (before useEffect) to prevent flash. We use the resolved theme from the
+  // hook — on first paint this is the default, then re-renders pick up the
+  // persisted setting once site_settings resolves.
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.classList.remove('dark');
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-cream-lux');
+    root.classList.add(themeClass);
   }
 
   // Force light mode and reset any dashboard theme overrides for public website
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Remove dark mode class
     root.classList.remove('dark');
-    
-    // Ensure bone theme is applied
+
+    // Apply the operator's chosen public-site theme.
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-cream-lux');
+    root.classList.add(themeClass);
 
     // Add editor-preview class for scrollbar hiding
     if (isEditorPreview) {
       root.classList.add('editor-preview');
     }
-    
+
     // Clear any custom CSS variable overrides from dashboard theme
     const style = root.style;
     const propsToRemove: string[] = [];
@@ -126,7 +135,7 @@ export function Layout({ children }: LayoutProps) {
         root.classList.remove('editor-preview');
       }
     };
-  }, [isEditorPreview]);
+  }, [isEditorPreview, themeClass]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -168,7 +177,7 @@ export function Layout({ children }: LayoutProps) {
   // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-cream-lux bg-background" style={{ colorScheme: 'light' }}>
+      <div className={`min-h-screen flex flex-col relative ${themeClass} bg-background`} style={{ colorScheme: 'light' }}>
         <DesignOverridesApplier />
         <Header />
         <main className="flex-1 bg-background">
@@ -184,7 +193,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className="min-h-screen flex flex-col relative theme-cream-lux bg-secondary" style={{ colorScheme: 'light' }}>
+    <div className={`min-h-screen flex flex-col relative ${themeClass} bg-secondary`} style={{ colorScheme: 'light' }}>
       <DesignOverridesApplier />
       {/* Fixed footer that reveals as content scrolls */}
       <div 
