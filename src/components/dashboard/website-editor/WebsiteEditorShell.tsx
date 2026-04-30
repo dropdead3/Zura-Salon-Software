@@ -234,6 +234,18 @@ export function WebsiteEditorShell() {
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const pagePickerRef = useRef<HTMLButtonElement>(null);
 
+  // Wave 3: dirty + saving + last-saved tracking from active editor surfaces.
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [, setSavedTick] = useState(0); // forces re-render of relative timestamp
+  // Pending navigation when an unsaved-changes guard intercepts a tab/page switch.
+  const [pendingNav, setPendingNav] = useState<
+    | { type: 'tab'; tab: string }
+    | { type: 'page'; pageId: string }
+    | null
+  >(null);
+
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
   const discardMutation = useDiscardToLastPublished();
