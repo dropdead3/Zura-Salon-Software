@@ -137,10 +137,6 @@ export function usePublishAll() {
   const savePageVersion = useSavePageVersion();
   const saveSiteVersion = useSaveSiteVersion();
   const { data: menus } = useWebsiteMenus();
-  const { data: pagesConfig } = useWebsitePages();
-  const { data: theme } = useWebsiteThemeSettings();
-  const { data: announcement } = useAnnouncementBarSettings();
-  const { data: footer } = useSiteSettings('website_footer');
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -160,34 +156,52 @@ export function usePublishAll() {
         }
       }
 
-      // 3. Snapshot newly-promoted live state for rollback / history.
-      if (pagesConfig?.pages) {
-        for (const page of pagesConfig.pages) {
+      // 3. Snapshot the FRESHLY-PROMOTED live state (read straight from DB,
+      //    not from React Query cache — the cache may still hold pre-publish
+      //    live values because the editor itself reads draft mode and the
+      //    public hooks here weren't subscribed to invalidations yet).
+      const surfaceKeys = ['website_pages', 'website_theme', 'website_footer', 'announcement_bar'] as const;
+      const { data: liveRows } = await supabase
+        .from('site_settings')
+        .select('id, value')
+        .eq('organization_id', orgId)
+        .in('id', surfaceKeys as unknown as string[]);
+
+      const byKey = new Map<string, unknown>(
+        (liveRows ?? []).map(r => [r.id as string, (r as { value: unknown }).value]),
+      );
+
+      const livePages = byKey.get('website_pages') as { pages?: Array<{ id: string }> } | undefined;
+      if (livePages?.pages) {
+        for (const page of livePages.pages) {
           await savePageVersion.mutateAsync({
-            page,
+            page: page as never,
             organizationId: orgId,
             changeSummary: 'Bulk publish via changelog',
           });
         }
       }
-      if (theme) {
+      const liveTheme = byKey.get('website_theme');
+      if (liveTheme) {
         await saveSiteVersion.mutateAsync({
           surface: 'theme',
-          snapshot: theme,
+          snapshot: liveTheme as never,
           changeSummary: 'Bulk publish via changelog',
         });
       }
-      if (footer) {
+      const liveFooter = byKey.get('website_footer');
+      if (liveFooter) {
         await saveSiteVersion.mutateAsync({
           surface: 'footer',
-          snapshot: footer,
+          snapshot: liveFooter as never,
           changeSummary: 'Bulk publish via changelog',
         });
       }
-      if (announcement) {
+      const liveAnnouncement = byKey.get('announcement_bar');
+      if (liveAnnouncement) {
         await saveSiteVersion.mutateAsync({
           surface: 'announcement_bar',
-          snapshot: announcement,
+          snapshot: liveAnnouncement as never,
           changeSummary: 'Bulk publish via changelog',
         });
       }
