@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, Layout } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -28,6 +30,11 @@ export function HeroEditor() {
   const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
   useEditorDirtyState(isDirty);
 
+  // Live-edit bridge: stream in-memory edits into the preview iframe so the
+  // canvas reflects what's being typed RIGHT NOW, not just the last save.
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_hero', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -38,11 +45,14 @@ export function HeroEditor() {
     try {
       await update(localConfig);
       toast.success('Hero section saved');
+      // Drop the iframe's live override so it re-renders from the freshly
+      // invalidated DB read instead of holding our stale postMessage value.
+      clearPreviewOverride('section_hero', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 

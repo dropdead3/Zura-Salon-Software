@@ -6,6 +6,7 @@ import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { OrganizationLogo } from "@/components/brand/OrganizationLogo";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } from "@/hooks/useWebsiteMenus";
 import { emitNavEvent } from "@/lib/nav-tracking";
@@ -102,7 +103,9 @@ export function Header() {
   const navContainerRef = useRef<HTMLDivElement>(null);
   const lastScrollY = useRef(0);
   const location = useLocation();
-  const { data: announcementSettings } = useAnnouncementBarSettings();
+  const { data: dbAnnouncementSettings } = useAnnouncementBarSettings();
+  // In editor preview mode, merge unsaved announcement-bar edits.
+  const announcementSettings = useLiveOverride('announcement_bar', dbAnnouncementSettings);
   const orgPath = useOrgPath();
 
   // Fetch published primary menu
