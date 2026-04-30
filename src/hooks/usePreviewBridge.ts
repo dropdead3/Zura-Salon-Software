@@ -144,8 +144,10 @@ export function clearPreviewOverride(sectionKey: string, orgId: string | null) {
  * On the live public site this hook is effectively a pass-through.
  */
 export function useLiveOverride<T>(sectionKey: string, dbValue: T | undefined): T | undefined {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+  // Use the optional accessor — this hook also runs on the public site, which
+  // has no OrganizationProvider. Throwing there crashes the whole page.
+  const ctx = useOptionalOrganizationContext();
+  const orgId = ctx?.effectiveOrganization?.id ?? null;
   const [override, setOverride] = useState<T | null>(null);
 
   // Detect preview mode at mount. Stable for the lifetime of this iframe.
