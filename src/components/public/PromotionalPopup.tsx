@@ -488,6 +488,7 @@ function PromoBody({
   onAccept,
   onDecline,
   compact = false,
+  imageMode = 'top',
 }: {
   cfg: PromotionalPopupSettings;
   accent: string;
@@ -495,17 +496,25 @@ function PromoBody({
   onDecline: () => void;
   onClose: () => void;
   compact?: boolean;
+  /** How (or whether) to render the image inline. `side` is handled by the
+   *  parent layout (modal grid) and renders nothing here. */
+  imageMode?: 'top' | 'side' | 'none';
 }) {
+  const renderTopImage = imageMode === 'top' && cfg.imageUrl;
   return (
     <>
-      {cfg.imageUrl && (
+      {renderTopImage && (
         <div
           className={cn(
             'mb-4 overflow-hidden rounded-xl bg-muted',
             compact ? 'h-24' : 'h-32 sm:h-40',
           )}
         >
-          <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
+          <img
+            src={cfg.imageUrl}
+            alt={cfg.imageAlt ?? ''}
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
       {cfg.eyebrow && (() => {
