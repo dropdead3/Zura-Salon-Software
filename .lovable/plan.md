@@ -1,85 +1,128 @@
-# Website Publish UX — Sidebar Dot + Discard Changes
 
-Three improvements to the publishing/versioning system shipped previously. Per-section restore is scoped but deferred per your instruction.
+# Website Hub UX Redesign — Wave 1
 
----
+## What's wrong today
 
-## 1. Sidebar unpublished-changes dot
+1. **"Edit" lands on a configurator, not an editor.** Section/page editor only opens when `&openEditor=1` is also present. "Sections & Content" hub card and sidebar entry route to the **Theme** picker instead of an immersive editor.
+2. **The "General" tab is a dumping ground.** Mixes Custom Domain, Announcement Banner, and Social Links — three unrelated concerns.
+3. **Hub overview duplicates the editor sidebar.** Pages, Sections, Footer, Announcement, Theme already exist as nav items inside `WebsiteEditorSidebar`, then re-appear as standalone cards.
+4. **Editor sidebar "Site Content" is a flat 10-item list.** No grouping, no hierarchy.
+5. **Live preview defaults OFF.** An "immersive editor" without a canvas is a form.
+6. **Hub cards are dumb.** No status, no signal of what's enabled or pending.
 
-Surface the same "you have unpublished work" signal on the **Website Hub** sidebar entry, so operators see pending work without entering the editor.
+## Target IA
 
-**Behavior**
-- Small accent dot appears on the right side of the "Website Hub" nav row when `useChangelogSummary().hasChanges === true`.
-- In collapsed sidebar mode, dot positions on the upper-right corner of the icon.
-- Dot uses `bg-primary` with a soft pulse (re-uses existing pulse keyframes).
-- Tooltip on hover (collapsed mode): "Unpublished website changes".
-- Hides automatically once the operator publishes (the existing `usePublishAll` invalidates `page-versions` + `site-versions`, which feeds the summary).
+```text
+Website Hub (overview cards — status-aware)
+├── Editor              ← immersive: pages + sections + live preview ON by default
+│     sidebar groups: Site Chrome · Pages · Content Library · Homepage Layout
+├── Theme & Branding    ← active theme, library, color, fonts
+├── Online Booking      ← (unchanged)
+├── Online Store        ← (renamed from Retail)
+├── Domain              ← custom domain (moved out of General)
+├── SEO & Legal         ← (unchanged)
+└── Integrations        ← Social Links + future pixels surface
+```
 
-**Implementation**
-- Extend `NavItem` in `src/components/dashboard/CollapsibleNavGroup.tsx` with an optional `badgeIndicator?: ReactNode` slot (or `showDot?: boolean`) so this stays generic and doesn't hardcode "website" knowledge into the nav primitive.
-- In `SidebarNavContent.tsx`, wrap the Website Hub nav item construction with a small subscriber component (or call `useChangelogSummary()` once at the top) and inject `showDot` onto the matching item before passing to `CollapsibleNavGroup`.
-- Render the dot inside `NavLink` (both expanded + collapsed variants) and inside the popover row for grouped/collapsed mode.
+## Changes
 
-**Why a generic prop, not a Website-specific hack:** other surfaces (Connect chat, Capital opportunities) already have or will want the same treatment — a generic `showDot` slot keeps the Canon Pattern intact.
+### 1. Tabs: rename, re-order, default to Editor
 
----
+In `WebsiteSettingsContent.tsx`:
+- New tab order: **Editor • Theme • Booking • Store • Domain • SEO • Integrations**
+- Remove `General` tab; split its three pieces:
+  - Domain card → new **Domain** tab (uses existing `DomainConfigCard`)
+  - Announcement Banner → moves into the **Editor** under Site Chrome (already wired via `AnnouncementBarContent`)
+  - Social Links → new **Integrations** tab
+- `editor` becomes the default tab.
 
-## 2. "Discard changes" — revert to last published
+### 2. Make "Editor" the default, immersive entry
 
-Pair with the existing Restore flow. One click snapshots-then-restores the most recent **published** version of every page + site surface.
+- Extract the editor shell (sidebar + canvas + live preview) currently nested inside `ThemeTab`'s "editor mode" into a new standalone component:
+  - `src/components/dashboard/website-editor/WebsiteEditorShell.tsx`
+- The toolbar (Publish, History, Discard, Open Site, Preview) moves with it.
+- `ThemeTab` returns to its proper job: pick a theme, manage library, tweak global tokens. Its "Customize" button switches the URL `?tab=editor` instead of swapping into editor mode in place.
+- **Live preview defaults ON for desktop ≥1280px** (`showPreview = true`); mobile stays off.
 
-**Placement**
-- In `WebsiteSettingsContent.tsx` editor toolbar, beside the existing **Publish Changes** + **History** buttons.
-- Label: **Discard Changes**, ghost variant, destructive accent on hover.
-- Disabled when `hasChanges === false`.
+### 3. Editor sidebar: group "Site Content"
 
-**Confirmation dialog**
-- Title: *"Discard unpublished changes?"*
-- Body: *"This will revert pages, theme, footer, and announcement bar to the last published version. A backup of the current state will be saved to History so you can recover it later."*
-- Confirm CTA: **Discard & Restore**.
+Today: 10 items in a flat list. Group using existing `SectionGroupHeader`:
+- **Site Chrome** — Announcement Bar, Navigation, Footer CTA, Footer
+- **Pages** — Pages manager
+- **Content Library** — Services, Testimonials, Gallery, Stylists, Locations
 
-**Behavior (non-destructive — matches Restore doctrine)**
-For every page and every site-wide surface (theme / footer / announcement_bar):
-1. Save the **current live state** as a new version with `change_summary: "Pre-discard backup"` (so nothing is ever lost).
-2. Look up the most recent version where `is_published === true` (or fallback: most recent version if no explicit published flag exists).
-3. Write that snapshot back to live (`website_pages` / `site_settings`).
-4. Append a new version entry with `change_summary: "Reverted to last published"` and `restored_from_version_id` pointing at the source.
+`SITE_CONTENT_ITEMS` constant in `WebsiteEditorSidebar.tsx` becomes a grouped structure; render loop walks groups.
 
-**Hook**
-- New `useDiscardToLastPublished()` in `src/hooks/usePublishChangelog.ts` (co-located with `usePublishAll` since it's the inverse operation).
-- Reuses `useSavePageVersion`, `useRestorePageVersion`, `useSaveSiteVersion`, and a new `useRestoreSiteVersion` (mirroring page restore logic) inside `useSiteVersions.ts`.
-- On success: toast `"Reverted to last published version. Backup saved to History."`, invalidate `page-versions`, `site-versions`, `site-settings`, `website-pages`.
+### 4. Promote the page picker into the editor toolbar
 
-**Edge case — nothing has ever been published**
-- Disable the Discard button entirely, with tooltip: *"No published version yet — publish first to enable discard."*
-- Detected via a new `useHasEverPublished()` selector that checks if any `website_page_versions` or `website_site_versions` row exists with a published marker.
+Today the "Editing Page" Select sits inside the sidebar header — invisible when collapsed. Move it to the editor toolbar (left side, next to the breadcrumb), keep a read-only label echo in the collapsed sidebar. Always visible, always operable.
 
----
+### 5. Toolbar copy disambiguation
 
-## 3. Per-section restore — deferred (scoped only)
+- `Preview` → **Live Canvas** (toggles inline panel, panel icon)
+- `Open Site` → **Open Public Site** (`ExternalLink` icon)
 
-Per your instruction, **not building this now**. Captured here so it lands in the Deferral Register.
+### 6. Hub overview redesign with live status
 
-**What it would do:** in `VersionHistoryPanel`, allow restoring a single section (e.g. just "Hero") from a page version without touching other sections (testimonials, services, etc.) on that same page.
+In `WebsiteHub.tsx`, replace the four-category grid with a flat status-aware grid:
 
-**Why deferred:**
-- Requires a section-level diff engine — currently versions snapshot whole-page JSON.
-- Requires UI to expand a version into its constituent sections with per-section "Restore this section" actions.
-- Adds a new failure mode (section restored against an incompatible newer page schema) that needs a compatibility check.
+| Card | Status line (from existing hooks) |
+|---|---|
+| **Edit Website** → `?tab=editor` | "N unpublished changes" badge + inline **Publish** action when `useChangelogSummary().hasChanges` |
+| **Theme & Branding** → `?tab=theme` | "Active: {activeTheme.name}" |
+| **Online Booking** → `?tab=booking` | "Enabled · 15 min buffer" or "Disabled" |
+| **Online Store** → `?tab=store` | "Enabled · N products visible" or "Disabled" |
+| **Domain** → `?tab=domain` | "yourdomain.com" or "Using default" |
+| **SEO & Legal** → `?tab=seo` | "GA4 connected · Cookie consent on" or "Not configured" |
+| **Integrations** → `?tab=integrations` | "N social links connected" |
+| **Preview Site** (external) | host shown as badge |
 
-**Revisit trigger:** first operator request OR when section-level versioning is needed by the theme system. Tracked in `mem://architecture/visibility-contracts.md` Deferral Register with trigger condition: *"Operator restores a full page version solely to recover one section, ≥2 occurrences."*
+Drops the misleading "Sections & Content" and "Pages" cards (their job is the Editor).
 
----
+### 7. Persist last-used editor state
 
-## Files touched
+Save `selectedPageId` + `editorTab` + `showPreview` to `localStorage` keyed by org id (`zura.websiteEditor.${orgId}`). Returning operators land back where they left off.
 
-- `src/components/dashboard/CollapsibleNavGroup.tsx` — add optional `showDot` to `NavItem`, render in expanded + collapsed + popover variants.
-- `src/components/dashboard/SidebarNavContent.tsx` — call `useChangelogSummary()`, inject `showDot` onto the Website Hub item.
-- `src/hooks/usePublishChangelog.ts` — add `useDiscardToLastPublished` and `useHasEverPublished`.
-- `src/hooks/useSiteVersions.ts` — add `useRestoreSiteVersion` (mirror of page restore).
-- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` — add "Discard Changes" button + confirmation dialog beside Publish/History.
-- (No DB migration — existing `website_page_versions` + `website_site_versions` schema covers it.)
+### 8. Back-compat redirects
 
-## Memory updates after build
+Single normalization pass at the top of `WebsiteSettingsContent`:
+- `?tab=general` → `?tab=domain`
+- `?tab=retail` → `?tab=store`
+- `?openEditor=1` (with or without `&tab=theme`) → `?tab=editor`
 
-- Append to Deferral Register: per-section restore + revisit trigger.
+Per Hub-landings canon: redirects always re-enter through the hub overview, never auto-open the editor unless the user clicked an editor-bound CTA.
+
+### 9. Sidebar entry behavior
+
+Existing sidebar "Website Hub" link continues to land on the hub overview. The unpublished-changes dot on the sidebar nav stays as built.
+
+## Technical notes
+
+**Files to edit:**
+- `src/pages/dashboard/admin/WebsiteHub.tsx` — new status-aware card grid; drop deep-link short-circuit.
+- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` — tab restructure; new `EditorTab`, `DomainTab`, `IntegrationsTab`; remove `GeneralTab`; `ThemeTab` simplified; back-compat normalization.
+- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — **new**, extracted from current `ThemeTab` editor-mode JSX (~lines 568–753), now also owns the page picker in its toolbar and the localStorage persistence.
+- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` — group `SITE_CONTENT_ITEMS`; remove the in-sidebar page picker (or render read-only when collapsed).
+
+**State that moves into the shell:**
+`editorTab`, `selectedPageId`, `showPreview`, `showSidebar`, `publishOpen`, `historyOpen`, `discardOpen`, `EDITOR_COMPONENTS`, `TAB_LABELS`, plus localStorage hydrate/persist.
+
+**Hooks reused for hub status (no new hooks):**
+`useActiveTheme`, `useWebsiteBookingSettings`, `useWebsiteRetailSettings`, `useWebsiteSeoLegalSettings`, `useWebsiteSocialLinksSettings`, `useOrgPublicUrl`, `useChangelogSummary`.
+
+**No DB changes. No changes to versioning, publish, or discard logic.**
+
+## Out of scope (deferred)
+
+- Per-section restore (already deferred).
+- Empty editor canvas redesign (token-based empty state) — polish wave.
+- Breadcrumb unification between `DashboardPageHeader` and editor toolbar — polish wave.
+- Keyboard shortcuts (Cmd+S/Z/P, [/]) — power-user wave.
+- Editor canvas inline editing — separate initiative.
+
+## Prompting feedback
+
+"Yes" is efficient when context is fresh — and here it was, because the prior turn had a ranked recommendation. That's the move: rank options first, then a single-word approval lands cleanly. To get even more out of follow-ups like this:
+
+- *"Yes — and tighten X"* in one breath lets me adjust scope while approving, instead of waiting for the next round.
+- Naming a budget ("ship in one wave", "no DB migrations", "≤6 files touched") gives me a hard guardrail when I'm sequencing.
