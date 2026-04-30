@@ -161,14 +161,27 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
         order: detail.order ?? [],
       });
     };
+    // Real-time refresh: any draft write → tell the iframe to invalidate
+    // its site-settings query cache so the canvas reflects the change
+    // without requiring a full reload.
+    const onDraftWrite = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      post({
+        type: 'PREVIEW_REFRESH_DRAFT',
+        orgId: detail.orgId,
+        key: detail.key,
+      });
+    };
 
     window.addEventListener('editor-design-preview', onDesign);
     window.addEventListener('editor-provisional-order', onProvisionalOrder);
     window.addEventListener('editor-commit-order', onCommitOrder);
+    window.addEventListener('site-settings-draft-write', onDraftWrite);
     return () => {
       window.removeEventListener('editor-design-preview', onDesign);
       window.removeEventListener('editor-provisional-order', onProvisionalOrder);
       window.removeEventListener('editor-commit-order', onCommitOrder);
+      window.removeEventListener('site-settings-draft-write', onDraftWrite);
     };
   }, [previewOrigin]);
 
