@@ -12,6 +12,7 @@ import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { getEyebrowIcon } from '@/lib/eyebrow-icons';
 
 interface Props {
   /**
