@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useOverflowGuard } from '@/hooks/useOverflowGuard';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
