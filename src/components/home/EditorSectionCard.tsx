@@ -55,6 +55,12 @@ export function EditorSectionCard({
     sendMessage('EDITOR_DELETE_SECTION');
   }, [sendMessage]);
 
+  const handleOpenStyle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowOverflow(false);
+    sendMessage('EDITOR_OPEN_STYLE');
+  }, [sendMessage]);
+
   return (
     <div
       onClick={handleClick}
