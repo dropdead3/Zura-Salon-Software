@@ -27,6 +27,9 @@ import {
   useGalleryDisplayConfig,
   useLocationsSectionConfig,
   useStylistsDisplayConfig,
+  useDrinkMenuConfig,
+  useBrandsConfig,
+  useExtensionReviewsConfig,
 } from '@/hooks/useSectionConfig';
 import { useToast } from '@/hooks/use-toast';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
