@@ -16,10 +16,16 @@ export interface Testimonial {
   title: string;
   author: string;
   body: string;
+  /** Legacy alias for `body` — kept so older editor screens compile. */
+  text: string;
   rating: number;
   source_url: string | null;
   enabled: boolean;
+  /** Legacy alias for `enabled`. */
+  is_visible: boolean;
   sort_order: number;
+  /** Legacy alias for `sort_order`. */
+  display_order: number;
   created_at: string;
   updated_at: string;
 }
