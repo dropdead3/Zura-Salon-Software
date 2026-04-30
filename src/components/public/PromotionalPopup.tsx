@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Gift, X, ChevronRight } from 'lucide-react';
 import {
   isPopupActive,
   usePromotionalPopup,
