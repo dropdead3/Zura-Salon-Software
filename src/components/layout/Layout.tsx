@@ -89,7 +89,11 @@ export function Layout({ children }: LayoutProps) {
   // Operator-selected public-site color theme. Defaults to cream-lux to
   // preserve historical look until an operator explicitly picks otherwise.
   const { theme: websiteTheme } = useWebsiteColorTheme();
-  const themeClass = `theme-${websiteTheme}`;
+  // `previewThemeOverride` lets the editor instantly swap the theme class via
+  // PREVIEW_THEME_CLASS postMessage without waiting for the site_settings
+  // refetch — mirrors the PREVIEW_DESIGN_OVERRIDES live-preview channel.
+  const [previewThemeOverride, setPreviewThemeOverride] = useState<string | null>(null);
+  const themeClass = previewThemeOverride ?? `theme-${websiteTheme}`;
 
   // Immediately force light mode + the operator's chosen theme during render
   // (before useEffect) to prevent flash. We use the resolved theme from the
