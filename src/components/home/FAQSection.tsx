@@ -8,8 +8,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useFAQConfig } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
-const faqs = [
+// FAQ question/answer items are not yet schema-backed — these defaults are
+// rendered until a dedicated FAQ Manager (table or JSONB column) is shipped.
+// All chrome (headline, intro, CTAs, search, rotating words) IS config-driven.
+const DEFAULT_FAQ_ITEMS = [
   {
     question: "Do the salons accept walk-ins?",
     answer: "At this time, we do not accept walk-ins. All appointments must be scheduled in advance, and an initial consultation is required or must be waived by the stylist matched to you. This ensures you're paired with the right artist and receive the personalized service you deserve."
@@ -24,7 +29,7 @@ const faqs = [
   },
   {
     question: "What's the vibe like at each salon?",
-    answer: "Both locations share the same commitment to quality and creativity, but each has its own unique atmosphere. Val Vista Lakes has a more intimate, boutique feel, while North Mesa offers a larger, energetic space. We recommend visiting both to see which vibe resonates with you!"
+    answer: "Both locations share the same commitment to quality and creativity, but each has its own unique atmosphere. We recommend visiting both to see which vibe resonates with you!"
   },
   {
     question: "What is your cancellation policy?",
@@ -40,8 +45,6 @@ const faqs = [
   }
 ];
 
-const rotatingWords = ["Asked", "Answered"];
-
 export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
@@ -51,14 +54,31 @@ export function FAQSection() {
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Config-driven chrome with live-edit bridge override
+  const { data: dbConfig } = useFAQConfig();
+  const config = useLiveOverride('section_faq', dbConfig) ?? dbConfig;
+
+  const rotatingWords = config.show_rotating_words && config.rotating_words.length > 0
+    ? config.rotating_words
+    : [""];
+  const faqs = DEFAULT_FAQ_ITEMS;
+
+  // Reset typewriter index if rotating-words list shrinks while editing
+  useEffect(() => {
+    if (currentWordIndex >= rotatingWords.length) {
+      setCurrentWordIndex(0);
+      setDisplayText("");
+      setIsDeleting(false);
+    }
+  }, [rotatingWords.length, currentWordIndex]);
+
   // Typewriter effect with natural variation
   useEffect(() => {
-    const currentWord = rotatingWords[currentWordIndex];
+    const currentWord = rotatingWords[currentWordIndex] ?? "";
     const baseTypingSpeed = 100;
     const baseDeletingSpeed = 60;
     const pauseDuration = 2500;
 
-    // Add random variation for natural feel
     const getTypingSpeed = () => baseTypingSpeed + Math.random() * 80 - 40;
     const getDeletingSpeed = () => baseDeletingSpeed + Math.random() * 30 - 15;
 
@@ -86,27 +106,27 @@ export function FAQSection() {
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentWordIndex]);
+  }, [displayText, isDeleting, currentWordIndex, rotatingWords]);
 
   const filteredFaqs = useMemo(() => {
     if (!searchQuery.trim()) return faqs;
-    
+
     const query = searchQuery.toLowerCase();
     return faqs.filter(
-      faq => 
+      faq =>
         faq.question.toLowerCase().includes(query) ||
         faq.answer.toLowerCase().includes(query)
     );
-  }, [searchQuery]);
+  }, [searchQuery, faqs]);
 
   // Highlight matching text
   const highlightText = (text: string, query: string) => {
     if (!query.trim()) return text;
-    
+
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
+
+    return parts.map((part, index) =>
       regex.test(part) ? (
         <mark key={index} className="bg-oat/50 text-foreground px-0.5 rounded-sm">
           {part}
@@ -118,7 +138,7 @@ export function FAQSection() {
   };
 
   return (
-    <section 
+    <section
       ref={sectionRef}
       data-theme="light"
       className="py-20 lg:py-32"
@@ -134,36 +154,45 @@ export function FAQSection() {
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display mb-6">
               Frequently<br />
-              <span className="font-light">{displayText}</span>
-              <br />
+              {config.show_rotating_words && (
+                <>
+                  <span className="font-light">{displayText}</span>
+                  <br />
+                </>
+              )}
               Questions
             </h2>
-            
-            <div className="space-y-4 text-foreground/80 mb-8">
-              <p>
-                At our studio, it's simple—Death to Bad Hair is more than a motto; it's our mission.
-              </p>
-              <p>
-                We're here to deliver bold transformations and flawless results with every visit. Our policies help keep things smooth, respectful of everyone's time, and ensure you always leave loving your hair. Take a moment to review our FAQs and policies—because great hair days shouldn't come with surprises, just killer confidence.
-              </p>
-            </div>
 
-            <div className="flex flex-wrap gap-4">
-              <Link
-                to="/faq"
-                className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-all duration-300 overflow-hidden"
-              >
-                <span>See All FAQ's</span>
-                <ArrowRight className="w-0 h-4 opacity-0 group-hover/faq:w-4 group-hover/faq:ml-2 group-hover/faq:opacity-100 transition-all duration-300" />
-              </Link>
-              <Link
-                to="/policies"
-                className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium rounded-full hover:border-foreground transition-all duration-300 overflow-hidden"
-              >
-                <span>Salon Policies</span>
-                <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
-              </Link>
-            </div>
+            {config.show_intro_paragraphs && config.intro_paragraphs.length > 0 && (
+              <div className="space-y-4 text-foreground/80 mb-8">
+                {config.intro_paragraphs.map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
+            )}
+
+            {(config.show_primary_cta || config.show_secondary_cta) && (
+              <div className="flex flex-wrap gap-4">
+                {config.show_primary_cta && config.cta_primary_text && (
+                  <Link
+                    to={config.cta_primary_url || "/faq"}
+                    className="group/faq inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground text-sm font-medium rounded-full hover:bg-primary/90 transition-all duration-300 overflow-hidden"
+                  >
+                    <span>{config.cta_primary_text}</span>
+                    <ArrowRight className="w-0 h-4 opacity-0 group-hover/faq:w-4 group-hover/faq:ml-2 group-hover/faq:opacity-100 transition-all duration-300" />
+                  </Link>
+                )}
+                {config.show_secondary_cta && config.cta_secondary_text && (
+                  <Link
+                    to={config.cta_secondary_url || "/policies"}
+                    className="group/policies inline-flex items-center justify-center px-6 py-3 border border-border bg-background text-foreground text-sm font-medium rounded-full hover:border-foreground transition-all duration-300 overflow-hidden"
+                  >
+                    <span>{config.cta_secondary_text}</span>
+                    <ArrowRight className="w-0 h-4 opacity-0 group-hover/policies:w-4 group-hover/policies:ml-2 group-hover/policies:opacity-100 transition-all duration-300" />
+                  </Link>
+                )}
+              </div>
+            )}
           </motion.div>
 
           {/* Right Column - Search & Accordion */}
@@ -174,25 +203,27 @@ export function FAQSection() {
             className="overflow-hidden"
           >
             {/* Search Input */}
-            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            {config.show_search_bar && (
+              <div className="relative mb-6">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={config.search_placeholder || "Search questions..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-12 py-4 bg-background border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground/30 transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Results count */}
             {searchQuery && (
@@ -215,8 +246,8 @@ export function FAQSection() {
                       initial={{ opacity: 0, x: 100 }}
                       animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 100 }}
                       exit={{ opacity: 0, x: -50 }}
-                      transition={{ 
-                        duration: 0.9, 
+                      transition={{
+                        duration: 0.9,
                         delay: 0.4 + index * 0.18,
                         ease: [0.25, 0.1, 0.25, 1]
                       }}
@@ -231,7 +262,7 @@ export function FAQSection() {
                           {highlightText(faq.question, searchQuery)}
                         </AccordionTrigger>
                         <AccordionContent className="text-base text-foreground/80 font-sans font-normal pb-5 leading-relaxed">
-                          <div 
+                          <div
                             className="cursor-pointer group/content"
                             onClick={(e) => {
                               e.preventDefault();
