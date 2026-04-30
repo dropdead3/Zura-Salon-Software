@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Paintbrush, ArrowUpDown, Maximize2 } from 'lucide-react';
 import type { PageConfig, WebsitePagesConfig } from '@/hooks/useWebsitePages';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 // Page-level chip preset cycles. Mirrors the section-level chip rail so the
 // vocabulary is identical: one tap = next stop, "active" = deviation from
