@@ -73,9 +73,6 @@ const DEFAULTS: Record<CustomSectionType, SectionData> = {
 export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange, onLabelChange }: CustomSectionEditorProps) {
   const settingsKey = `section_custom_${sectionId}`;
   const [editingLabel, setEditingLabel] = useState(sectionLabel);
-export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange, onLabelChange }: CustomSectionEditorProps) {
-  const settingsKey = `section_custom_${sectionId}`;
-  const [editingLabel, setEditingLabel] = useState(sectionLabel);
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
   // Editor surfaces always read the draft layer so the operator sees their
