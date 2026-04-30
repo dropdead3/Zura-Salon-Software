@@ -614,9 +614,25 @@ export function WebsiteEditorShell() {
           break;
         }
         case 'EDITOR_ADD_SECTION_AT': {
-          // Open the page-settings/sections manager for now; granular insertion
-          // would require lifting the AddSectionDialog into the shell.
-          if (!isHomePage) requestTabChange('page-settings');
+          // Open AddSectionDialog targeting current page, inserting after the given section.
+          const afterId =
+            typeof msg.afterSectionId === 'string' ? msg.afterSectionId : null;
+          setAddSectionState({
+            open: true,
+            pageId: selectedPageId,
+            afterSectionId: afterId,
+          });
+          break;
+        }
+        case 'EDITOR_OPEN_STYLE': {
+          if (!sectionId) return;
+          // Find which page owns it.
+          const ownerPage = pagesConfig?.pages.find((p) =>
+            p.sections.some((s) => s.id === sectionId),
+          );
+          if (ownerPage) {
+            setStyleTarget({ pageId: ownerPage.id, sectionId });
+          }
           break;
         }
         default:
