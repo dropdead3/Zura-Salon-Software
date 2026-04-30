@@ -89,7 +89,11 @@ export function Layout({ children }: LayoutProps) {
   // Operator-selected public-site color theme. Defaults to cream-lux to
   // preserve historical look until an operator explicitly picks otherwise.
   const { theme: websiteTheme } = useWebsiteColorTheme();
-  const themeClass = `theme-${websiteTheme}`;
+  // `previewThemeOverride` lets the editor instantly swap the theme class via
+  // PREVIEW_THEME_CLASS postMessage without waiting for the site_settings
+  // refetch — mirrors the PREVIEW_DESIGN_OVERRIDES live-preview channel.
+  const [previewThemeOverride, setPreviewThemeOverride] = useState<string | null>(null);
+  const themeClass = previewThemeOverride ?? `theme-${websiteTheme}`;
 
   // Immediately force light mode + the operator's chosen theme during render
   // (before useEffect) to prevent flash. We use the resolved theme from the
@@ -136,6 +140,31 @@ export function Layout({ children }: LayoutProps) {
       }
     };
   }, [isEditorPreview, themeClass]);
+
+  // Editor → iframe instant theme swap. Operator clicks a Site Theme tile;
+  // SiteDesignPanel posts PREVIEW_THEME_CLASS via the LivePreviewPanel bridge;
+  // we apply the class immediately and clear once the site_settings refetch
+  // catches up (so we don't permanently shadow the persisted value).
+  useEffect(() => {
+    if (!isEditorPreview) return;
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object' || msg.type !== 'PREVIEW_THEME_CLASS') return;
+      const next = typeof msg.themeClass === 'string' ? msg.themeClass : null;
+      if (!next) return;
+      setPreviewThemeOverride(next);
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isEditorPreview]);
+
+  // Once the persisted theme catches up to the optimistic override, drop the
+  // override so future setting changes flow through the normal hook path.
+  useEffect(() => {
+    if (previewThemeOverride && previewThemeOverride === `theme-${websiteTheme}`) {
+      setPreviewThemeOverride(null);
+    }
+  }, [previewThemeOverride, websiteTheme]);
 
   useEffect(() => {
     const handleScroll = () => {

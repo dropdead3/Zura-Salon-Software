@@ -599,6 +599,13 @@ function WebsiteThemePicker() {
 
   const handlePick = async (id: ColorTheme, name: string) => {
     if (id === theme) return;
+    // Optimistic broadcast: paint the iframe with the new theme class the
+    // instant the operator clicks, instead of waiting for the site_settings
+    // round-trip + react-query invalidation. Mirrors the PREVIEW_DESIGN_OVERRIDES
+    // pattern used by sliders/colors above.
+    window.dispatchEvent(
+      new CustomEvent('editor-theme-preview', { detail: { themeClass: `theme-${id}` } }),
+    );
     try {
       await update.mutateAsync(id);
       toast({
