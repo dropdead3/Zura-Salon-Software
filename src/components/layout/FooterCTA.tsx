@@ -7,6 +7,7 @@ import { useOrgPath } from "@/hooks/useOrgPath";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useFooterCTAConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "@/components/home/InlineEditableText";
 
 export function FooterCTA() {
   const isPreview = useIsEditorPreview();
