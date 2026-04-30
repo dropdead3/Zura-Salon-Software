@@ -60,17 +60,26 @@ interface PageSectionRendererProps {
 
 export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  // While the operator is dragging in the editor rail, the parent posts the
+  // in-flight order so the canvas can reflow live (premium feel). On drop or
+  // when sections re-fetch, this clears.
+  const [provisionalOrder, setProvisionalOrder] = useState<string[] | null>(null);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
 
   const enabledSections = useMemo(() => {
-    if (isEditorPreview && !isViewMode) {
-      return [...sections].sort((a, b) => a.order - b.order);
-    }
-    return [...sections]
-      .filter(s => s.enabled)
-      .sort((a, b) => a.order - b.order);
-  }, [sections, isEditorPreview, isViewMode]);
+    const base = isEditorPreview && !isViewMode
+      ? [...sections].sort((a, b) => a.order - b.order)
+      : [...sections].filter(s => s.enabled).sort((a, b) => a.order - b.order);
+    if (!provisionalOrder?.length) return base;
+    const byId = new Map(base.map(s => [s.id, s]));
+    const ordered = provisionalOrder
+      .map(id => byId.get(id))
+      .filter((s): s is SectionConfig => !!s);
+    // Append any sections the editor didn't include (defensive — keeps content visible).
+    base.forEach(s => { if (!provisionalOrder.includes(s.id)) ordered.push(s); });
+    return ordered;
+  }, [sections, isEditorPreview, isViewMode, provisionalOrder]);
 
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
