@@ -38,6 +38,7 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
+import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 // ─── Schema ───
 export type ButtonShape = 'square' | 'rounded' | 'pill';
