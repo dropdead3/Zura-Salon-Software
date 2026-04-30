@@ -18,6 +18,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
+import { FAQItemsManager } from './FAQItemsManager';
 
 export function FAQEditor() {
   const { data, isLoading, isSaving, update } = useFAQConfig();
