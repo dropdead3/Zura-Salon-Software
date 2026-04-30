@@ -9,6 +9,14 @@ export interface StyleOverrides {
   max_width: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   text_color_override: string;
   border_radius: number;
+  /** Heading scale for the section. Multiplies the rendered heading size via
+   *  the `--section-heading-scale` CSS variable. Components can opt in with
+   *  `text-[calc(theme(fontSize.4xl)*var(--section-heading-scale,1))]`-style
+   *  rules; default is 1 (Md). */
+  heading_scale?: 'sm' | 'md' | 'lg' | 'xl';
+  /** When false, sections render `data-eyebrow="off"` so any eyebrow / kicker
+   *  text inside can hide itself via `[data-eyebrow="off"]_.section-eyebrow`. */
+  eyebrow_visible?: boolean;
 }
 
 export const DEFAULT_STYLE_OVERRIDES: StyleOverrides = {
@@ -19,6 +27,15 @@ export const DEFAULT_STYLE_OVERRIDES: StyleOverrides = {
   max_width: 'full',
   text_color_override: '',
   border_radius: 0,
+  heading_scale: 'md',
+  eyebrow_visible: true,
+};
+
+const HEADING_SCALE_VALUES: Record<NonNullable<StyleOverrides['heading_scale']>, number> = {
+  sm: 0.85,
+  md: 1,
+  lg: 1.18,
+  xl: 1.4,
 };
 
 const MAX_WIDTH_CLASSES: Record<string, string> = {
