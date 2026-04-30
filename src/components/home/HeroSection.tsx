@@ -8,6 +8,8 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { HeroBackground } from "@/components/home/HeroBackground";
+import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -19,10 +21,23 @@ interface HeroSectionProps {
 export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const { data: dbHeroConfig } = useHeroConfig();
   // In editor preview mode, merge unsaved edits broadcast from the editor.
-  const heroConfig = useLiveOverride('section_hero', dbHeroConfig);
+  const heroConfig = useLiveOverride('section_hero', dbHeroConfig) ?? dbHeroConfig ?? DEFAULT_HERO;
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
   const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
+  const slides = heroConfig?.slides ?? [];
+
+  // Multi-slide rotator takes over when operators have configured slides.
+  if (slides.length > 0) {
+    return <HeroSlideRotator config={heroConfig} isPreview={isPreview} />;
+  }
+
+  const bgType = heroConfig?.background_type ?? 'none';
+  const bgUrl = heroConfig?.background_url ?? '';
+  const bgPoster = heroConfig?.background_poster_url ?? '';
+  const bgFit = heroConfig?.background_fit ?? 'cover';
+  const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
+  const hasMediaBackground = bgType !== 'none' && !!bgUrl;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
