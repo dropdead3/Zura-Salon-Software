@@ -141,6 +141,31 @@ export function Layout({ children }: LayoutProps) {
     };
   }, [isEditorPreview, themeClass]);
 
+  // Editor → iframe instant theme swap. Operator clicks a Site Theme tile;
+  // SiteDesignPanel posts PREVIEW_THEME_CLASS via the LivePreviewPanel bridge;
+  // we apply the class immediately and clear once the site_settings refetch
+  // catches up (so we don't permanently shadow the persisted value).
+  useEffect(() => {
+    if (!isEditorPreview) return;
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object' || msg.type !== 'PREVIEW_THEME_CLASS') return;
+      const next = typeof msg.themeClass === 'string' ? msg.themeClass : null;
+      if (!next) return;
+      setPreviewThemeOverride(next);
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [isEditorPreview]);
+
+  // Once the persisted theme catches up to the optimistic override, drop the
+  // override so future setting changes flow through the normal hook path.
+  useEffect(() => {
+    if (previewThemeOverride && previewThemeOverride === `theme-${websiteTheme}`) {
+      setPreviewThemeOverride(null);
+    }
+  }, [previewThemeOverride, websiteTheme]);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
