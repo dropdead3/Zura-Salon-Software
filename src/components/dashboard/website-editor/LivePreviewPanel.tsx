@@ -267,7 +267,13 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             </>
           ) : (
             <>
-              <span className="text-sm font-medium shrink-0">Live Preview</span>
+              <span className="text-sm font-medium shrink-0">Draft Preview</span>
+              <span
+                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-warning/15 text-warning-foreground border border-warning/30"
+                title="This preview shows your unpublished draft. Visitors still see the last published version until you Publish."
+              >
+                Not live
+              </span>
               {isLoading && <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />}
             </>
           )}

@@ -4,6 +4,8 @@ import type { SectionConfig, WebsiteSectionsConfig } from './useWebsiteSections'
 import { BUILTIN_SECTION_TYPES, SECTION_LABELS, SECTION_DESCRIPTIONS } from './useWebsiteSections';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useIsEditorPreview } from './useIsEditorPreview';
+import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 export interface PageConfig {
   id: string;
@@ -99,49 +101,48 @@ function migrateFromSections(sectionsConfig: WebsiteSectionsConfig): WebsitePage
 export function useWebsitePages(explicitOrgId?: string) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId(explicitOrgId);
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
 
   return useQuery({
-    queryKey: ['site-settings', orgId, 'website_pages'],
+    queryKey: ['site-settings', orgId, 'website_pages', mode],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'website_pages')
-        .eq('organization_id', orgId!)
-        .maybeSingle();
+      const existing = await fetchSiteSetting<WebsitePagesConfig>(
+        orgId!,
+        'website_pages',
+        mode,
+      );
+      if (existing) return existing;
 
-      if (error) throw error;
+      // No website_pages row yet. Try migrating from legacy website_sections.
+      const legacy = await fetchSiteSetting<WebsiteSectionsConfig>(
+        orgId!,
+        'website_sections',
+        mode,
+      );
 
-      if (data?.value) {
-        return data.value as unknown as WebsitePagesConfig;
-      }
+      const pagesConfig: WebsitePagesConfig = legacy
+        ? migrateFromSections(legacy)
+        : { pages: createDefaultPages() };
 
-      // Check if website_sections exists and migrate
-      const { data: sectionsData } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'website_sections')
-        .eq('organization_id', orgId!)
-        .maybeSingle();
-
-      let pagesConfig: WebsitePagesConfig;
-      if (sectionsData?.value) {
-        const sectionsValue = sectionsData.value as unknown as WebsiteSectionsConfig;
-        pagesConfig = migrateFromSections(sectionsValue);
-      } else {
-        pagesConfig = { pages: createDefaultPages() };
-      }
-
-      // Save the new pages config
+      // Seed both `value` and `draft_value` so first load is idempotent.
       const { data: { user } } = await supabase.auth.getUser();
-      const { error: upsertError } = await supabase
-        .from('site_settings')
-        .upsert({ id: 'website_pages', organization_id: orgId, value: pagesConfig as never, updated_by: user?.id });
-
-      if (upsertError) {
-        console.error('Failed to seed website_pages:', upsertError);
-      } else {
+      try {
+        await writeSiteSettingDraft(
+          orgId!,
+          'website_pages',
+          pagesConfig,
+          user?.id ?? null,
+        );
+        // Also promote to live so the public site has an initial config.
+        await supabase
+          .from('site_settings')
+          .update({ value: pagesConfig as never })
+          .eq('id', 'website_pages')
+          .eq('organization_id', orgId!);
         queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });
+      } catch (err) {
+        console.error('Failed to seed website_pages:', err);
       }
 
       return pagesConfig;
@@ -158,11 +159,8 @@ export function useUpdateWebsitePages(explicitOrgId?: string) {
     mutationFn: async (value: WebsitePagesConfig) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-
-      const { error } = await supabase
-        .from('site_settings')
-        .upsert({ id: 'website_pages', organization_id: orgId, value: value as never, updated_by: user?.id });
-      if (error) throw error;
+      // Editor mutations only touch the draft. Publish promotes to live.
+      await writeSiteSettingDraft(orgId, 'website_pages', value, user?.id ?? null);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_pages'] });

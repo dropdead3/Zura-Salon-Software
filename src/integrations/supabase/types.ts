@@ -26356,6 +26356,9 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          draft_updated_at: string | null
+          draft_updated_by: string | null
+          draft_value: Json | null
           id: string
           organization_id: string | null
           updated_at: string
@@ -26363,6 +26366,9 @@ export type Database = {
           value: Json
         }
         Insert: {
+          draft_updated_at?: string | null
+          draft_updated_by?: string | null
+          draft_value?: Json | null
           id: string
           organization_id?: string | null
           updated_at?: string
@@ -26370,6 +26376,9 @@ export type Database = {
           value?: Json
         }
         Update: {
+          draft_updated_at?: string | null
+          draft_updated_by?: string | null
+          draft_value?: Json | null
           id?: string
           organization_id?: string | null
           updated_at?: string

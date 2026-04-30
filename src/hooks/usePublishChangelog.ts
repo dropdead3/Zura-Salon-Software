@@ -9,6 +9,11 @@ import { useWebsiteThemeSettings } from './useWebsiteSettings';
 import { useAnnouncementBarSettings } from './useAnnouncementBar';
 import { useSiteSettings } from './useSiteSettings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import {
+  publishSiteSettingsDrafts,
+  discardSiteSettingsDrafts,
+  listDirtyDrafts,
+} from '@/lib/siteSettingsDraft';
 
 export interface ChangeItem {
   id: string;
@@ -18,20 +23,60 @@ export interface ChangeItem {
   detail?: string;
 }
 
-export function useChangelogSummary() {
-  const { data: menus } = useWebsiteMenus();
-  const { data: pagesConfig } = useWebsitePages();
-  const { data: theme } = useWebsiteThemeSettings();
-  const { data: announcement } = useAnnouncementBarSettings();
-  const { data: footer } = useSiteSettings('website_footer');
+// Friendly labels for site_settings row IDs surfaced in the changelog.
+// Anything not listed falls back to a humanized version of the key.
+const SITE_SETTING_LABELS: Record<string, { label: string; category: 'navigation' | 'page' | 'site' }> = {
+  website_pages: { label: 'Pages & Sections', category: 'page' },
+  website_sections: { label: 'Homepage Sections', category: 'page' },
+  website_theme: { label: 'Theme', category: 'site' },
+  website_retail_theme: { label: 'Retail Theme', category: 'site' },
+  website_booking: { label: 'Booking Settings', category: 'site' },
+  website_retail: { label: 'Retail Settings', category: 'site' },
+  website_seo_legal: { label: 'SEO & Legal', category: 'site' },
+  website_social_links: { label: 'Social Links', category: 'site' },
+  website_footer: { label: 'Footer', category: 'site' },
+  announcement_bar: { label: 'Announcement Bar', category: 'site' },
+  homepage_stylists: { label: 'Homepage Stylists', category: 'site' },
+};
 
-  // Real diff requires version snapshots — we surface a simple
-  // "what will be published" summary based on what currently exists.
+const SECTION_KEY_PREFIX = 'section_';
+
+function labelForSettingKey(key: string): { label: string; category: 'navigation' | 'page' | 'site' } {
+  if (SITE_SETTING_LABELS[key]) return SITE_SETTING_LABELS[key];
+  if (key.startsWith(SECTION_KEY_PREFIX)) {
+    const rest = key.slice(SECTION_KEY_PREFIX.length).replace(/_/g, ' ');
+    return {
+      label: rest.replace(/\b\w/g, c => c.toUpperCase()),
+      category: 'page',
+    };
+  }
+  return { label: key.replace(/_/g, ' '), category: 'site' };
+}
+
+/**
+ * Real diff between draft_value and live value for the org's site_settings,
+ * plus menu publish status. Drives the publish dialog summary.
+ */
+export function useChangelogSummary() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const { data: menus } = useWebsiteMenus();
+
+  const dirtyDraftsQuery = useQuery({
+    queryKey: ['site-settings-dirty-drafts', orgId],
+    enabled: !!orgId,
+    staleTime: 5_000,
+    queryFn: async () => listDirtyDrafts(orgId!),
+  });
+
   const summary = useMemo(() => {
     const navChanges: ChangeItem[] = [];
     const pageChanges: ChangeItem[] = [];
     const siteChanges: ChangeItem[] = [];
 
+    // Menus: surface those with unpublished items.
+    // (useWebsiteMenus already exposes published_at / has_pending_changes
+    // semantics — for now we mirror previous behavior and list all menus.)
     if (menus && menus.length > 0) {
       menus.forEach(menu => {
         navChanges.push({
@@ -44,27 +89,20 @@ export function useChangelogSummary() {
       });
     }
 
-    if (pagesConfig?.pages) {
-      pagesConfig.pages.forEach(page => {
-        pageChanges.push({
-          id: page.id,
-          category: 'page',
-          type: page.enabled ? 'modified' : 'status_change',
-          label: page.title,
-          detail: page.enabled ? 'Save version snapshot' : 'Draft — not live',
-        });
-      });
-    }
-
-    if (theme) {
-      siteChanges.push({ id: 'theme', category: 'site', type: 'modified', label: 'Theme', detail: 'Snapshot colors & typography' });
-    }
-    if (footer) {
-      siteChanges.push({ id: 'footer', category: 'site', type: 'modified', label: 'Footer', detail: 'Snapshot footer config' });
-    }
-    if (announcement) {
-      siteChanges.push({ id: 'announcement_bar', category: 'site', type: 'modified', label: 'Announcement Bar', detail: 'Snapshot announcement message' });
-    }
+    // site_settings: only rows whose draft_value differs from live value.
+    const dirtyKeys = dirtyDraftsQuery.data ?? [];
+    dirtyKeys.forEach(key => {
+      const { label, category } = labelForSettingKey(key);
+      const item: ChangeItem = {
+        id: key,
+        category,
+        type: 'modified',
+        label,
+        detail: 'Unpublished draft changes',
+      };
+      if (category === 'page') pageChanges.push(item);
+      else siteChanges.push(item);
+    });
 
     const totalChanges = navChanges.length + pageChanges.length + siteChanges.length;
     return {
@@ -73,12 +111,25 @@ export function useChangelogSummary() {
       siteChanges,
       hasChanges: totalChanges > 0,
       totalChanges,
+      isLoading: dirtyDraftsQuery.isLoading,
     };
-  }, [menus, pagesConfig, theme, footer, announcement]);
+  }, [menus, dirtyDraftsQuery.data, dirtyDraftsQuery.isLoading]);
 
   return summary;
 }
 
+/**
+ * Publish flow:
+ *   1. Promote every divergent draft_value → live `value` for the org's
+ *      site_settings rows. THIS is what makes editor changes visible to
+ *      public visitors.
+ *   2. Publish menus.
+ *   3. Snapshot the now-live state into website_page_versions /
+ *      website_site_versions for rollback / history.
+ *
+ * Until step 1 runs, the editor is a sandbox — visitors see the old live
+ * value. Calling Save in the editor only updates draft_value.
+ */
 export function usePublishAll() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -96,7 +147,10 @@ export function usePublishAll() {
     mutationFn: async () => {
       if (!orgId) throw new Error('No organization');
 
-      // 1. Publish all menus
+      // 1. Promote drafts → live for every site_settings row in this org.
+      const promoted = await publishSiteSettingsDrafts(orgId);
+
+      // 2. Publish all menus.
       if (menus) {
         for (const menu of menus) {
           await publishMenu.mutateAsync({
@@ -106,7 +160,7 @@ export function usePublishAll() {
         }
       }
 
-      // 2. Save page version snapshots
+      // 3. Snapshot newly-promoted live state for rollback / history.
       if (pagesConfig?.pages) {
         for (const page of pagesConfig.pages) {
           await savePageVersion.mutateAsync({
@@ -116,8 +170,6 @@ export function usePublishAll() {
           });
         }
       }
-
-      // 3. Save site-wide surface snapshots
       if (theme) {
         await saveSiteVersion.mutateAsync({
           surface: 'theme',
@@ -139,13 +191,45 @@ export function usePublishAll() {
           changeSummary: 'Bulk publish via changelog',
         });
       }
+
+      return { promoted };
     },
     onSuccess: () => {
+      // Invalidate every site_settings cache key (live + draft modes) so
+      // both the public site AND the editor re-fetch fresh data.
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts'] });
       queryClient.invalidateQueries({ queryKey: ['website-menus'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
       queryClient.invalidateQueries({ queryKey: ['published-menu'] });
       queryClient.invalidateQueries({ queryKey: ['page-versions'] });
       queryClient.invalidateQueries({ queryKey: ['site-versions'] });
+    },
+  });
+}
+
+/**
+ * Discard all unpublished editor changes by copying live `value` back
+ * into `draft_value` for every site_settings row in the org. The live
+ * site is untouched; the editor reverts to showing what visitors see.
+ *
+ * This is the new, lightweight "Discard" action. The legacy
+ * `useDiscardToLastPublished` (snapshot-based) below remains available
+ * for restoring from version history.
+ */
+export function useDiscardDrafts() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!orgId) throw new Error('No organization');
+      return await discardSiteSettingsDrafts(orgId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts'] });
     },
   });
 }

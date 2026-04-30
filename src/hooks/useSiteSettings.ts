@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useIsEditorPreview } from './useIsEditorPreview';
+import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 interface HomepageStylistsSettings {
   show_sample_cards: boolean;
@@ -8,26 +10,25 @@ interface HomepageStylistsSettings {
 
 type SiteSettingValue = HomepageStylistsSettings | Record<string, unknown>;
 
+// Reads route through the draft layer:
+//   - Editor / preview iframe → coalesce(draft_value, value)
+//   - Public visitor          → value
 export function useSiteSettings<T extends SiteSettingValue = SiteSettingValue>(key: string, explicitOrgId?: string) {
   const orgId = useSettingsOrgId(explicitOrgId);
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
 
   return useQuery({
-    queryKey: ['site-settings', orgId, key],
+    queryKey: ['site-settings', orgId, key, mode],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', key)
-        .eq('organization_id', orgId!)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data?.value as T | null;
+      return await fetchSiteSetting<T>(orgId!, key, mode);
     },
     enabled: !!orgId,
   });
 }
 
+// All editor mutations write to draft_value only. The live site is not
+// affected until publishSiteSettingsDrafts() runs.
 export function useUpdateSiteSetting<T extends SiteSettingValue = SiteSettingValue>(explicitOrgId?: string) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId(explicitOrgId);
@@ -36,56 +37,23 @@ export function useUpdateSiteSetting<T extends SiteSettingValue = SiteSettingVal
     mutationFn: async ({ key, value }: { key: string; value: T }) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-
-      // Check if a row already exists
-      const { data: existing } = await supabase
-        .from('site_settings')
-        .select('id')
-        .eq('id', key)
-        .eq('organization_id', orgId)
-        .maybeSingle();
-
-      if (existing) {
-        // Update existing row
-        const { error } = await supabase
-          .from('site_settings')
-          .update({
-            value: value as never,
-            updated_by: user?.id,
-          })
-          .eq('id', key)
-          .eq('organization_id', orgId);
-
-        if (error) throw error;
-      } else {
-        // Insert new row
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({
-            id: key,
-            organization_id: orgId,
-            value: value as never,
-            updated_by: user?.id,
-          });
-
-        if (error) throw error;
-      }
+      await writeSiteSettingDraft(orgId, key, value, user?.id ?? null);
     },
     onMutate: async ({ key, value }) => {
-      // Optimistic update
-      const queryKey = ['site-settings', orgId, key];
+      // Optimistic update against the DRAFT cache key (editor view).
+      const queryKey = ['site-settings', orgId, key, 'draft'];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(queryKey, value);
       return { previous, queryKey };
     },
     onError: (_err, _vars, context) => {
-      // Rollback on error
       if (context?.queryKey && context?.previous !== undefined) {
         queryClient.setQueryData(context.queryKey, context.previous);
       }
     },
     onSettled: (_, __, { key }) => {
+      // Invalidate every mode (draft + live) so any consumer re-fetches.
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, key] });
     },
   });
@@ -104,17 +72,7 @@ export function useUpdateHomepageStylistsSettings(explicitOrgId?: string) {
     mutationFn: async (value: HomepageStylistsSettings) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from('site_settings')
-        .update({ 
-          value: value as never,
-          updated_by: user?.id 
-        })
-        .eq('id', 'homepage_stylists')
-        .eq('organization_id', orgId);
-
-      if (error) throw error;
+      await writeSiteSettingDraft(orgId, 'homepage_stylists', value, user?.id ?? null);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'homepage_stylists'] });

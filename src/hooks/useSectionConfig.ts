@@ -1,27 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useIsEditorPreview } from './useIsEditorPreview';
+import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
-// Generic hook for section configurations
+// Generic hook for section configurations.
+// Editor + preview iframe read drafts; the public site reads live `value`.
+// All writes go to `draft_value` only — call publishSiteSettingsDrafts() to
+// promote drafts to live.
 function useSectionConfig<T>(sectionId: string, defaultValue: T) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
 
   const query = useQuery({
-    queryKey: ['site-settings', orgId, sectionId],
+    // Cache key includes mode so the editor iframe and public visitor never
+    // share cached data.
+    queryKey: ['site-settings', orgId, sectionId, mode],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', sectionId)
-        .eq('organization_id', orgId!)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data?.value) return defaultValue;
-      
+      const value = await fetchSiteSetting<object>(orgId!, sectionId, mode);
+      if (!value) return defaultValue;
       // Merge with defaults to handle new fields
-      return { ...defaultValue, ...(data.value as object) } as T;
+      return { ...defaultValue, ...value } as T;
     },
     enabled: !!orgId,
   });
@@ -30,40 +31,11 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
     mutationFn: async (value: T) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Try to update first
-      const { data: existingData } = await supabase
-        .from('site_settings')
-        .select('id')
-        .eq('id', sectionId)
-        .eq('organization_id', orgId)
-        .maybeSingle();
-
-      if (existingData) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({ 
-            value: value as never,
-            updated_by: user?.id 
-          })
-          .eq('id', sectionId)
-          .eq('organization_id', orgId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({ 
-            id: sectionId,
-            organization_id: orgId,
-            value: value as never,
-            updated_by: user?.id 
-          });
-
-        if (error) throw error;
-      }
+      await writeSiteSettingDraft(orgId, sectionId, value, user?.id ?? null);
     },
     onSuccess: () => {
+      // Invalidate every cached mode for this key so the editor sees the
+      // fresh draft AND any open preview iframe re-fetches on next focus.
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, sectionId] });
     },
   });
