@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
   ChevronRight,
-  Command,
   ExternalLink,
   Globe,
   History,
@@ -15,6 +14,8 @@ import {
   PanelRightOpen,
   RotateCcw,
   FileText,
+  Menu,
+  MoreHorizontal,
 } from 'lucide-react';
 import {
   Select,
@@ -38,11 +39,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
-import { useWebsitePages } from '@/hooks/useWebsitePages';
+import {
+  useWebsitePages,
+  useUpdateWebsitePages,
+  generatePageId,
+  type PageConfig,
+} from '@/hooks/useWebsitePages';
+import {
+  CUSTOM_TYPE_INFO,
+  generateSectionId,
+  isBuiltinSection,
+  type CustomSectionType,
+  type SectionConfig,
+} from '@/hooks/useWebsiteSections';
 import {
   useChangelogSummary,
   useDiscardToLastPublished,
@@ -73,9 +104,15 @@ import { StylistsContent } from './StylistsContent';
 import { LocationsContent } from './LocationsContent';
 import { ServicesContent } from './ServicesContent';
 import { AnnouncementBarContent } from './AnnouncementBarContent';
+import { PagesManager } from './PagesManager';
+import { PageSettingsEditor } from './PageSettingsEditor';
+import { CustomSectionEditor } from './CustomSectionEditor';
+import { PageTemplatePicker } from './PageTemplatePicker';
 import { Badge } from '@/components/ui/badge';
+import type { PageTemplate } from '@/data/page-templates';
 
-const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
+// ─── Builtin tab → component map ───
+const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   services: ServicesContent,
   testimonials: TestimonialsContent,
   gallery: GalleryContent,
@@ -97,6 +134,7 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   drinks: DrinksManager,
   'footer-cta': FooterCTAEditor,
   footer: FooterEditor,
+  pages: PagesManager,
 };
 
 const TAB_LABELS: Record<string, string> = {
@@ -121,6 +159,9 @@ const TAB_LABELS: Record<string, string> = {
   drinks: 'Drink Menu',
   'footer-cta': 'Footer CTA',
   footer: 'Footer Settings',
+  pages: 'All Pages',
+  'page-settings': 'Page Settings',
+  navigation: 'Navigation Menus',
 };
 
 type PersistedState = {
@@ -159,14 +200,18 @@ export function WebsiteEditorShell() {
 
   const [editorTab, setEditorTab] = useState<string>(persisted.editorTab ?? 'hero');
   const [selectedPageId, setSelectedPageId] = useState<string>(persisted.selectedPageId ?? 'home');
-  // Default Live Canvas ON for desktop, OFF for mobile.
   const [showPreview, setShowPreview] = useState<boolean>(
     persisted.showPreview ?? (typeof window !== 'undefined' ? window.innerWidth >= 1280 : true),
   );
   const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [addPageOpen, setAddPageOpen] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState('');
+  const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const pagePickerRef = useRef<HTMLButtonElement>(null);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
@@ -174,8 +219,10 @@ export function WebsiteEditorShell() {
   const discardMutation = useDiscardToLastPublished();
 
   const { data: pagesConfig } = useWebsitePages();
+  const updatePages = useUpdateWebsitePages();
   const selectedPage = pagesConfig?.pages?.find((p) => p.id === selectedPageId);
   const selectedPageTitle = selectedPage?.title ?? 'Home';
+  const isHomePage = selectedPageId === 'home';
 
   const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
   const orgPreviewUrl = getPublicUrl();
@@ -186,20 +233,34 @@ export function WebsiteEditorShell() {
     writePersisted(orgId, { editorTab, selectedPageId, showPreview });
   }, [orgId, editorTab, selectedPageId, showPreview]);
 
-  // Keyboard shortcuts: ⌘S publish, ⌘P toggle canvas, ⌘K focus page picker, ⌘\ toggle sidebar.
+  // When switching to a non-home page, default to its first section so the
+  // canvas isn't stranded on an irrelevant home-page editor.
+  useEffect(() => {
+    if (isHomePage) return;
+    if (!selectedPage) return;
+    const tabIsForThisPage =
+      editorTab === 'page-settings' ||
+      editorTab === 'pages' ||
+      selectedPage.sections.some((s) => `custom-${s.id}` === editorTab);
+    if (!tabIsForThisPage) {
+      const first = selectedPage.sections[0];
+      if (first) setEditorTab(`custom-${first.id}`);
+      else setEditorTab('page-settings');
+    }
+  }, [selectedPageId, selectedPage, isHomePage, editorTab]);
+
+  // Keyboard shortcuts.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
       const key = e.key.toLowerCase();
-      // Don't intercept when typing in inputs/textareas/contenteditable
       const target = e.target as HTMLElement | null;
       const isEditable =
         target &&
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable);
-
       if (key === 's' && !isEditable) {
         e.preventDefault();
         setPublishOpen(true);
@@ -218,19 +279,288 @@ export function WebsiteEditorShell() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const EditorComponent = EDITOR_COMPONENTS[editorTab];
-  const sectionLabel = TAB_LABELS[editorTab] ?? 'Editor';
+  // ─── Page CRUD ───
+  const handleCreatePage = useCallback(async () => {
+    const title = newPageTitle.trim();
+    if (!title || !pagesConfig) return;
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .slice(0, 60);
+    if (!slug) {
+      toast({ variant: 'destructive', title: 'Invalid title', description: 'Page needs a URL-safe name.' });
+      return;
+    }
+    if (pagesConfig.pages.some((p) => p.slug === slug)) {
+      toast({ variant: 'destructive', title: 'Slug taken', description: `"${slug}" is already used.` });
+      return;
+    }
+    const newPage: PageConfig = {
+      id: generatePageId(),
+      slug,
+      title,
+      seo_title: title,
+      seo_description: '',
+      enabled: false,
+      show_in_nav: true,
+      nav_order: pagesConfig.pages.length,
+      sections: [],
+      page_type: 'custom',
+      deletable: true,
+    };
+    try {
+      await updatePages.mutateAsync({ pages: [...pagesConfig.pages, newPage] });
+      toast({ title: 'Page created', description: `"${title}" is in draft mode.` });
+      setAddPageOpen(false);
+      setNewPageTitle('');
+      setSelectedPageId(newPage.id);
+      setEditorTab('page-settings');
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create page',
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  }, [newPageTitle, pagesConfig, updatePages, toast]);
+
+  const handleDeletePage = useCallback(async () => {
+    if (!deletePageTarget || !pagesConfig) return;
+    try {
+      await updatePages.mutateAsync({
+        pages: pagesConfig.pages.filter((p) => p.id !== deletePageTarget.id),
+      });
+      toast({ title: 'Page deleted', description: `"${deletePageTarget.title}" removed.` });
+      if (selectedPageId === deletePageTarget.id) {
+        setSelectedPageId('home');
+        setEditorTab('hero');
+      }
+      setDeletePageTarget(null);
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to delete',
+        description: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
+  }, [deletePageTarget, pagesConfig, updatePages, selectedPageId, toast]);
+
+  const updateSelectedPage = useCallback(
+    async (mutator: (p: PageConfig) => PageConfig) => {
+      if (!pagesConfig || !selectedPage) return;
+      const updated = pagesConfig.pages.map((p) => (p.id === selectedPage.id ? mutator(p) : p));
+      try {
+        await updatePages.mutateAsync({ pages: updated });
+      } catch (err) {
+        toast({
+          variant: 'destructive',
+          title: 'Save failed',
+          description: err instanceof Error ? err.message : 'Unknown error',
+        });
+      }
+    },
+    [pagesConfig, selectedPage, updatePages, toast],
+  );
+
+  // Per-page section operations (non-home pages).
+  const handlePageSectionToggle = useCallback(
+    (sectionId: string, enabled: boolean) => {
+      void updateSelectedPage((p) => ({
+        ...p,
+        sections: p.sections.map((s) => (s.id === sectionId ? { ...s, enabled } : s)),
+      }));
+    },
+    [updateSelectedPage],
+  );
+
+  const handlePageSectionReorder = useCallback(
+    (sections: SectionConfig[]) => {
+      void updateSelectedPage((p) => ({ ...p, sections }));
+    },
+    [updateSelectedPage],
+  );
+
+  const handlePageSectionDelete = useCallback(
+    (sectionId: string) => {
+      void updateSelectedPage((p) => ({
+        ...p,
+        sections: p.sections.filter((s) => s.id !== sectionId),
+      }));
+      if (editorTab === `custom-${sectionId}`) setEditorTab('page-settings');
+    },
+    [updateSelectedPage, editorTab],
+  );
+
+  const handlePageSectionDuplicate = useCallback(
+    (section: SectionConfig) => {
+      const newId = generateSectionId();
+      void updateSelectedPage((p) => ({
+        ...p,
+        sections: [
+          ...p.sections,
+          { ...section, id: newId, label: `${section.label} (Copy)`, order: p.sections.length + 1 },
+        ],
+      }));
+      toast({ title: 'Section duplicated', description: section.label });
+    },
+    [updateSelectedPage, toast],
+  );
+
+  const handlePageSectionAdd = useCallback(
+    (type: CustomSectionType, label: string) => {
+      const newSection: SectionConfig = {
+        id: generateSectionId(),
+        type,
+        label,
+        description: CUSTOM_TYPE_INFO[type].description,
+        enabled: true,
+        order: 0,
+        deletable: true,
+      };
+      void updateSelectedPage((p) => ({
+        ...p,
+        sections: [...p.sections, { ...newSection, order: p.sections.length + 1 }],
+      }));
+      setEditorTab(`custom-${newSection.id}`);
+    },
+    [updateSelectedPage],
+  );
+
+  const handleApplyPageTemplate = useCallback(
+    (template: PageTemplate) => {
+      const newSections: SectionConfig[] = template.sections.map((s, i) => ({
+        id: generateSectionId(),
+        type: s.type as CustomSectionType,
+        label: s.label,
+        description: CUSTOM_TYPE_INFO[s.type as CustomSectionType]?.description ?? '',
+        enabled: true,
+        order: i + 1,
+        deletable: true,
+      }));
+      void updateSelectedPage((p) => ({ ...p, sections: newSections }));
+      toast({ title: 'Template applied', description: template.name });
+      const first = newSections[0];
+      if (first) setEditorTab(`custom-${first.id}`);
+    },
+    [updateSelectedPage, toast],
+  );
+
+  // ─── Resolve current editor component ───
+  const renderActiveEditor = () => {
+    // Custom section editor (matches both home custom_* and per-page sections)
+    if (editorTab.startsWith('custom-')) {
+      const sectionId = editorTab.replace('custom-', '');
+      // Look for it on the selected page first, then home.
+      const allSections: SectionConfig[] = [
+        ...(selectedPage?.sections ?? []),
+        ...(pagesConfig?.pages.find((p) => p.id === 'home')?.sections ?? []),
+      ];
+      const section = allSections.find((s) => s.id === sectionId);
+      if (section && !isBuiltinSection(section.type)) {
+        return (
+          <CustomSectionEditor
+            sectionId={section.id}
+            sectionType={section.type as CustomSectionType}
+            sectionLabel={section.label}
+          />
+        );
+      }
+    }
+
+    // Page settings editor
+    if (editorTab === 'page-settings' && selectedPage) {
+      return (
+        <PageSettingsEditor
+          page={selectedPage}
+          allPages={pagesConfig}
+          onUpdate={async (updated) => {
+            await updateSelectedPage(() => updated);
+          }}
+        />
+      );
+    }
+
+    const Component = BUILTIN_EDITORS[editorTab];
+    if (Component) return <Component />;
+
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-4">
+        <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+          <MousePointer2 className="h-6 w-6 text-muted-foreground" />
+        </div>
+        <div className="space-y-1.5 max-w-sm">
+          <h3 className="font-display text-base tracking-wide uppercase text-foreground">
+            Pick a section to edit
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Choose a section from the sidebar — Hero, Services, Testimonials, Footer — and your
+            changes appear in the live canvas on the right.
+          </p>
+        </div>
+        {!showSidebar && !isMobile && (
+          <Button variant="outline" size="sm" onClick={() => setShowSidebar(true)} className="mt-2">
+            <PanelLeftOpen className="h-4 w-4 mr-1.5" />
+            Show sections
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  const sectionLabel = TAB_LABELS[editorTab] ?? (editorTab.startsWith('custom-') ? 'Custom Section' : 'Editor');
+
+  // Sidebar element (reused for desktop pane and mobile sheet).
+  const sidebarEl = (
+    <WebsiteEditorSidebar
+      activeTab={editorTab}
+      onTabChange={(t) => {
+        setEditorTab(t);
+        if (isMobile) setMobileSidebarOpen(false);
+      }}
+      selectedPageId={selectedPageId}
+      onPageChange={(p) => {
+        setSelectedPageId(p);
+        if (isMobile) setMobileSidebarOpen(false);
+      }}
+      onToggleCollapse={() => setShowSidebar(false)}
+      onAddPage={() => setAddPageOpen(true)}
+      onDeletePage={(pageId) => {
+        const page = pagesConfig?.pages.find((p) => p.id === pageId);
+        if (page) setDeletePageTarget(page);
+      }}
+      onApplyPageTemplate={() => setTemplatePickerOpen(true)}
+      onPageSectionToggle={handlePageSectionToggle}
+      onPageSectionReorder={handlePageSectionReorder}
+      onPageSectionDelete={handlePageSectionDelete}
+      onPageSectionDuplicate={handlePageSectionDuplicate}
+      onPageSectionAdd={handlePageSectionAdd}
+    />
+  );
 
   return (
     <div className="space-y-0 -mx-1">
       {/* Editor toolbar */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          {isMobile && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-full shrink-0"
+              onClick={() => setMobileSidebarOpen(true)}
+              title="Open sections"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          )}
+
           {/* Page picker — always visible */}
           <Select value={selectedPageId} onValueChange={setSelectedPageId}>
             <SelectTrigger
               ref={pagePickerRef}
-              className="h-9 text-xs min-w-[180px] max-w-[260px] rounded-full"
+              className="h-9 text-xs min-w-[160px] max-w-[260px] rounded-full"
               title="Switch page (⌘K)"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -245,7 +575,7 @@ export function WebsiteEditorShell() {
                     <div className="flex items-center gap-2">
                       <FileText className="h-3 w-3" />
                       <span>{p.title}</span>
-                      {!p.enabled && <span className="text-muted-foreground">(disabled)</span>}
+                      {!p.enabled && <span className="text-muted-foreground">(draft)</span>}
                     </div>
                   </SelectItem>
                 ))
@@ -260,7 +590,7 @@ export function WebsiteEditorShell() {
             </SelectContent>
           </Select>
 
-          {/* Unified breadcrumb */}
+          {/* Breadcrumb */}
           <nav
             aria-label="Editor breadcrumb"
             className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
@@ -273,50 +603,7 @@ export function WebsiteEditorShell() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button
-            variant={showPreview ? 'default' : 'outline'}
-            size={tokens.button.card}
-            onClick={() => setShowPreview(!showPreview)}
-            title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
-          >
-            {showPreview ? (
-              <>
-                <PanelRightClose className="h-4 w-4 mr-1" />
-                Hide Canvas
-              </>
-            ) : (
-              <>
-                <PanelRightOpen className="h-4 w-4 mr-1" />
-                Live Canvas
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size={tokens.button.card}
-            onClick={() => setHistoryOpen(true)}
-            title="View version history"
-          >
-            <History className="h-4 w-4 mr-1" />
-            History
-          </Button>
-          <Button
-            variant="ghost"
-            size={tokens.button.card}
-            onClick={() => setDiscardOpen(true)}
-            disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
-            title={
-              !hasEverPublished
-                ? 'No published version yet — publish first to enable discard.'
-                : !hasChanges
-                  ? 'No unpublished changes to discard.'
-                  : 'Revert all unpublished changes to last published version'
-            }
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <RotateCcw className="h-4 w-4 mr-1" />
-            Discard Changes
-          </Button>
+          {/* Primary action: Publish */}
           <Button
             variant="default"
             size={tokens.button.card}
@@ -325,7 +612,7 @@ export function WebsiteEditorShell() {
             title="Publish changes (⌘S)"
           >
             <Globe className="h-4 w-4 mr-1" />
-            Publish Changes
+            Publish
             {hasChanges && (
               <Badge
                 variant="secondary"
@@ -335,22 +622,69 @@ export function WebsiteEditorShell() {
               </Badge>
             )}
           </Button>
+
+          {/* Live Canvas inline toggle */}
           <Button
-            variant="outline"
+            variant={showPreview ? 'secondary' : 'outline'}
             size={tokens.button.card}
-            onClick={() => orgPreviewUrl && window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer')}
-            disabled={!orgPreviewUrl}
-            title={orgPreviewUrl ?? 'No organization slug available'}
+            onClick={() => setShowPreview(!showPreview)}
+            title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
           >
-            <ExternalLink className="h-4 w-4 mr-1" />
-            Open Public Site
+            {showPreview ? (
+              <PanelRightClose className="h-4 w-4 mr-1" />
+            ) : (
+              <PanelRightOpen className="h-4 w-4 mr-1" />
+            )}
+            Canvas
           </Button>
+
+          {/* Overflow */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9" title="More">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setHistoryOpen(true)}>
+                <History className="h-4 w-4 mr-2" />
+                Version History
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setDiscardOpen(true)}
+                disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
+                className="text-destructive focus:text-destructive"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Discard Unpublished
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  orgPreviewUrl && window.open(orgPreviewUrl, '_blank', 'noopener,noreferrer')
+                }
+                disabled={!orgPreviewUrl}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Public Site
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
       <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
+      {/* Mobile sidebar Sheet */}
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-[320px] max-w-[85vw]">
+          <SheetTitle className="sr-only">Website Editor Sections</SheetTitle>
+          <div className="h-full overflow-hidden">{sidebarEl}</div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Discard confirmation */}
       <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -397,19 +731,90 @@ export function WebsiteEditorShell() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Editor canvas: sidebar + main + live preview */}
+      {/* Add page dialog */}
+      <Dialog open={addPageOpen} onOpenChange={setAddPageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create new page</DialogTitle>
+            <DialogDescription>
+              Pages start in draft mode. Add sections, then enable in Page Settings to publish.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-page-title">Page title</Label>
+              <Input
+                id="new-page-title"
+                value={newPageTitle}
+                onChange={(e) => setNewPageTitle(e.target.value)}
+                placeholder="e.g. Services Menu"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleCreatePage();
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddPageOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreatePage} disabled={!newPageTitle.trim() || updatePages.isPending}>
+              {updatePages.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating…
+                </>
+              ) : (
+                'Create page'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete page confirmation */}
+      <AlertDialog
+        open={!!deletePageTarget}
+        onOpenChange={(open) => !open && setDeletePageTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deletePageTarget?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the page and its sections. Public links to this page will
+              return 404. This cannot be undone (but a snapshot is preserved in Version History).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeletePage();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete page
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Page template picker */}
+      <PageTemplatePicker
+        open={templatePickerOpen}
+        onOpenChange={setTemplatePickerOpen}
+        onSelect={handleApplyPageTemplate}
+      />
+
+      {/* Editor canvas */}
       <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 18rem)' }}>
         <ResizablePanelGroup direction="horizontal" className="h-full">
           {showSidebar && !isMobile && (
             <>
               <ResizablePanel defaultSize={22} minSize={15} maxSize={30}>
-                <WebsiteEditorSidebar
-                  activeTab={editorTab}
-                  onTabChange={setEditorTab}
-                  selectedPageId={selectedPageId}
-                  onPageChange={setSelectedPageId}
-                  onToggleCollapse={() => setShowSidebar(false)}
-                />
+                {sidebarEl}
               </ResizablePanel>
               <ResizableHandle withHandle />
             </>
@@ -434,56 +839,24 @@ export function WebsiteEditorShell() {
                       )}
                     </Button>
                   )}
-                  <span className="text-xs text-muted-foreground truncate">
-                    Editing <span className="text-foreground font-medium">{sectionLabel}</span>
-                  </span>
-                </div>
-                <div className="hidden md:flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
-                  <Command className="h-3 w-3" />
-                  <span>S publish</span>
-                  <span className="opacity-40">·</span>
-                  <Command className="h-3 w-3" />
-                  <span>P canvas</span>
-                  <span className="opacity-40">·</span>
-                  <Command className="h-3 w-3" />
-                  <span>K page</span>
+                  <span className="text-xs text-muted-foreground truncate">{sectionLabel}</span>
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-6">
-                {EditorComponent ? (
-                  <EditorComponent />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-4">
-                    <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                      <MousePointer2 className="h-6 w-6 text-muted-foreground" />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center h-32">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
-                    <div className="space-y-1.5 max-w-sm">
-                      <h3 className="font-display text-base tracking-wide uppercase text-foreground">
-                        Pick a section to edit
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Choose a section from the sidebar — Hero, Services, Testimonials, Footer —
-                        and your changes appear in the live canvas on the right.
-                      </p>
-                    </div>
-                    {!showSidebar && !isMobile && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSidebar(true)}
-                        className="mt-2"
-                      >
-                        <PanelLeftOpen className="h-4 w-4 mr-1.5" />
-                        Show sections
-                      </Button>
-                    )}
-                  </div>
-                )}
+                  }
+                >
+                  {renderActiveEditor()}
+                </Suspense>
               </div>
             </div>
           </ResizablePanel>
 
-          {showPreview && (
+          {showPreview && !isMobile && (
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
