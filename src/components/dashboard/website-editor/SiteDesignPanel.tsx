@@ -586,6 +586,87 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
   );
 }
 
+// ─── Public-site color theme picker ───
+// Drives the `theme-*` class applied to <html> on the public site (via
+// Layout.tsx → useWebsiteColorTheme). Distinct from the dashboard theme so
+// operators can ship a public look that differs from their internal one.
+// Persists immediately (no Save button) — this is a top-level brand decision
+// and the chosen theme should re-paint the live preview iframe right away.
+function WebsiteThemePicker() {
+  const { theme, isLoading } = useWebsiteColorTheme();
+  const update = useUpdateWebsiteColorTheme();
+  const { toast } = useToast();
+
+  const handlePick = async (id: ColorTheme, name: string) => {
+    if (id === theme) return;
+    try {
+      await update.mutateAsync(id);
+      toast({
+        title: 'Site theme updated',
+        description: `Visitors now see the ${name} theme.`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Could not update site theme',
+        description: err instanceof Error ? err.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+        <h4 className="font-display text-[11px] tracking-wider uppercase text-muted-foreground">
+          Site Theme
+        </h4>
+        {update.isPending && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {colorThemes.map((t) => {
+          const isActive = !isLoading && t.id === theme;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => handlePick(t.id, t.name)}
+              disabled={update.isPending}
+              aria-pressed={isActive}
+              aria-label={`Apply ${t.name} theme to public site`}
+              title={`${t.name} — ${t.description}`}
+              className={cn(
+                'group relative rounded-lg border overflow-hidden transition-all text-left',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                isActive
+                  ? 'border-primary ring-2 ring-primary/30'
+                  : 'border-border hover:border-foreground/30',
+                update.isPending && 'opacity-60 cursor-wait',
+              )}
+            >
+              {/* Color swatch — three-band preview using the theme's own tokens. */}
+              <div className="h-10 flex" style={{ backgroundColor: t.lightPreview.bg }}>
+                <div className="flex-1" style={{ backgroundColor: t.lightPreview.bg }} />
+                <div className="flex-1" style={{ backgroundColor: t.lightPreview.accent }} />
+                <div className="flex-1" style={{ backgroundColor: t.lightPreview.primary }} />
+              </div>
+              <div className="px-1.5 py-1 bg-card">
+                <p className="font-display uppercase tracking-wider text-[9px] text-foreground truncate">
+                  {t.name}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-muted-foreground/80">
+        Sets the look visitors see on your public site. Color &amp; typography
+        overrides below still apply on top.
+      </p>
+    </section>
+  );
+}
+
 // ─── Brand looks gallery ───
 // Surfaces the first ~4 available themes as 1-tap presets right inside the
 // Site Design panel, so operators don't have to leave for the Theme tab to
