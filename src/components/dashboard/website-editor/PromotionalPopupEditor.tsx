@@ -20,6 +20,8 @@ import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { cn } from '@/lib/utils';
+import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
+import { readableForegroundFor } from '@/lib/color-contrast';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
@@ -906,7 +908,11 @@ function FabPreviewSwatch({
   headline: string;
   accent?: string;
 }) {
-  const accentColor = accent || 'hsl(var(--primary))';
+  // Fall back to the *public site*'s primary, not the dashboard's primary —
+  // operators QA against the theme visitors will actually see.
+  const sitePrimary = useWebsitePrimaryColor();
+  const accentColor = accent || sitePrimary;
+  const accentFg = readableForegroundFor(accent);
   const truncated = headline.length > 22 ? `${headline.slice(0, 22)}…` : headline;
   const [pulsing, setPulsing] = useState(false);
   const stopRef = useRef<number | null>(null);
@@ -941,7 +947,7 @@ function FabPreviewSwatch({
             position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
             pulsing && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
           )}
-          style={{ backgroundColor: accentColor }}
+          style={{ backgroundColor: accentColor, color: accentFg }}
         >
           <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white/20">
             <Gift className="h-2 w-2" />
@@ -983,7 +989,9 @@ function AppearancePreviewSwatch({
   eyebrow?: string;
   eyebrowIcon?: EyebrowIcon;
 }) {
-  const accentColor = accent || 'hsl(var(--primary))';
+  const sitePrimary = useWebsitePrimaryColor();
+  const accentColor = accent || sitePrimary;
+  const accentFg = readableForegroundFor(accent);
   const trim = (max: number) =>
     headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
   const Icon = getEyebrowIcon(eyebrowIcon);
@@ -1031,7 +1039,7 @@ function AppearancePreviewSwatch({
         {appearance === 'banner' && (
           <div
             className="absolute top-3 inset-x-0 flex items-center px-1.5 gap-1 text-primary-foreground py-0.5"
-            style={{ backgroundColor: accentColor }}
+            style={{ backgroundColor: accentColor, color: accentFg }}
           >
             <div className="flex flex-col flex-1 min-w-0">
               {eyebrowStrip && (

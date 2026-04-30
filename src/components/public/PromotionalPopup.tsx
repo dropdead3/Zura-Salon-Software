@@ -13,6 +13,7 @@ import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
+import { readableForegroundFor } from '@/lib/color-contrast';
 
 interface Props {
   /**
@@ -249,6 +250,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   if (onBookingSurface && !isPreview) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
+  // Pick a readable text color for content sitting *on* the accent (FAB,
+  // CTA buttons, banner). When the accent is a CSS-var ref like
+  // `hsl(var(--primary))` we can't parse it client-side, so we fall back
+  // to the theme's `--primary-foreground` which is paired in CSS.
+  const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
   function handleAccept() {
@@ -317,7 +323,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           // Session-scoped one-time pulse hint (~3 cycles, then auto-stops).
           pulseFab && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
         )}
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: accent, color: accentFg }}
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
           <Gift className="h-4 w-4" />
@@ -400,7 +406,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             <button
               onClick={handleAccept}
               className="font-display uppercase tracking-wider text-xs px-4 py-2 rounded-full text-primary-foreground"
-              style={{ backgroundColor: accent }}
+              style={{ backgroundColor: accent, color: accentFg }}
             >
               {cfg.ctaAcceptLabel}
             </button>
@@ -501,6 +507,9 @@ function PromoBody({
   imageMode?: 'top' | 'side' | 'none';
 }) {
   const renderTopImage = imageMode === 'top' && cfg.imageUrl;
+  // Mirror the parent's contrast pick so the CTA stays legible regardless
+  // of the operator's accent. Re-derive (cheap) instead of threading a prop.
+  const accentFg = readableForegroundFor(cfg.accentColor);
   return (
     <>
       {renderTopImage && (
@@ -561,7 +570,7 @@ function PromoBody({
         <button
           onClick={onAccept}
           className="flex-1 font-display uppercase tracking-wider text-xs sm:text-sm px-5 py-2.5 rounded-full text-primary-foreground transition hover:opacity-90"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: accent, color: accentFg }}
         >
           {cfg.ctaAcceptLabel}
         </button>
