@@ -112,6 +112,7 @@ import { StylistsContent } from './StylistsContent';
 import { LocationsContent } from './LocationsContent';
 import { ServicesContent } from './ServicesContent';
 import { AnnouncementBarContent } from './AnnouncementBarContent';
+import { PromotionalPopupEditor } from './PromotionalPopupEditor';
 import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
@@ -140,6 +141,7 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   stylists: StylistsContent,
   locations: LocationsContent,
   banner: AnnouncementBarContent,
+  promotions: PromotionalPopupEditor,
   hero: HeroEditor,
   brand: BrandStatementEditor,
   'testimonials-section': TestimonialsEditor,
@@ -183,6 +185,7 @@ const TAB_LABELS: Record<string, string> = {
   stylists: 'Stylists Manager',
   locations: 'Locations Manager',
   banner: 'Announcement Banner',
+  promotions: 'Promotional Popup',
   hero: 'Hero Section',
   brand: 'Brand Statement',
   'testimonials-section': 'Testimonials Display',

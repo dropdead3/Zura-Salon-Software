@@ -95,6 +95,7 @@ const SITE_CONTENT_GROUPS: { title: string; caption: string; items: SiteContentI
     caption: 'Applies to every page',
     items: [
       { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
+      { tab: 'promotions', label: 'Promotional Popup', description: 'One-time offer popup with accept/decline', icon: Megaphone },
       { tab: 'navigation', label: 'Navigation', description: 'Header & footer menus', icon: Layers },
       { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
       { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
