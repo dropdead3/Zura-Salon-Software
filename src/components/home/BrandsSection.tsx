@@ -1,10 +1,12 @@
 import { useBrandsConfig } from '@/hooks/useSectionConfig';
+import { useLiveOverride } from '@/hooks/usePreviewBridge';
 
 export function BrandsSection() {
-  const { data: config, isLoading } = useBrandsConfig();
+  const { data: dbConfig, isLoading } = useBrandsConfig();
+  const config = useLiveOverride('section_brands', dbConfig);
 
   // Don't render while loading to prevent flash
-  if (isLoading) return null;
+  if (isLoading || !config) return null;
 
   const brands = config.brands;
 
