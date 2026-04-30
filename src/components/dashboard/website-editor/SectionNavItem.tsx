@@ -52,7 +52,10 @@ export function SectionNavItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group flex items-center gap-2 pl-2 pr-3 py-2 mx-3 rounded-lg cursor-pointer transition-all',
+        // mx-3 keeps the row inset; pr-2 + extra right gap below give the
+        // scaled-down Switch (scale-75 keeps layout box at 44px but the
+        // visible thumb sits centered) breathing room from the rail edge.
+        'group flex items-center gap-2 pl-2 pr-2 py-2 mx-3 rounded-lg cursor-pointer transition-all',
         isActive
           ? 'bg-primary/10 border border-primary/20'
           : 'hover:bg-muted/60 border border-transparent',
@@ -65,7 +68,7 @@ export function SectionNavItem({
       <button
         {...attributes}
         {...listeners}
-        className="touch-none text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
+        className="shrink-0 touch-none text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical className="h-4 w-4" />
@@ -80,14 +83,14 @@ export function SectionNavItem({
           )}>
             {label}
           </span>
-          <Badge 
-            variant="outline" 
-            className="text-[9px] px-1 py-0 h-4 opacity-60"
+          <Badge
+            variant="outline"
+            className="shrink-0 text-[9px] px-1 py-0 h-4 opacity-60"
           >
             {order}
           </Badge>
           {deletable && (
-            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">Custom</Badge>
+            <Badge variant="secondary" className="shrink-0 text-[9px] px-1 py-0 h-4">Custom</Badge>
           )}
         </div>
         <p className="text-[10px] text-muted-foreground truncate hidden xl:block">
@@ -95,8 +98,13 @@ export function SectionNavItem({
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      {/* Actions — shrink-0 so they never get squeezed; -mr-1 pulls the
+          Switch's transparent layout box back so the visible thumb aligns
+          with the row's inner padding instead of poking past it. */}
+      <div
+        className="flex items-center gap-0.5 shrink-0 -mr-1"
+        onClick={(e) => e.stopPropagation()}
+      >
         {onDuplicate && (
           <Button
             variant="ghost"
