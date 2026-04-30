@@ -210,12 +210,19 @@ export function InlineEditCommitHandler() {
       if (!entry) return; // unknown section — silently drop
 
       // Allowlist check (with wildcard support for array indices).
+      // Supports two wildcard forms:
+      //   `items.*`              → matches `items.0`, `items.1`, …
+      //   `items.*.name`         → matches `items.0.name`, `items.1.name`, …
       const pathAllowed = entry.allowedPaths.some((p) => {
         if (p === msg.fieldPath) return true;
-        if (p.endsWith('.*')) {
-          const prefix = p.slice(0, -2);
-          // matches `prefix.<number>` only (no nested traversal allowed)
-          const re = new RegExp(`^${prefix.replace(/\./g, '\\.')}\\.\\d+$`);
+        if (p.includes('.*')) {
+          // Convert dot-path with `.*` placeholders into a regex that allows
+          // a single numeric segment in place of each `.*`.
+          const escaped = p
+            .split('.*')
+            .map((seg) => seg.replace(/\./g, '\\.'))
+            .join('\\.\\d+');
+          const re = new RegExp(`^${escaped}$`);
           return re.test(msg.fieldPath);
         }
         return false;
