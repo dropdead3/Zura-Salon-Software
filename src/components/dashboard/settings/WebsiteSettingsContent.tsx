@@ -17,6 +17,7 @@ import {
   Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
   ArrowLeft, ArrowRight, PanelRightClose, PanelRightOpen, LayoutGrid,
   PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode, History,
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -100,7 +101,17 @@ import { BookingVisibilityCard } from './BookingVisibilityCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PublishChangelog } from '@/components/dashboard/website-editor/PublishChangelog';
 import { VersionHistoryPanel } from '@/components/dashboard/website-editor/VersionHistoryPanel';
-import { useChangelogSummary } from '@/hooks/usePublishChangelog';
+import { useChangelogSummary, useDiscardToLastPublished, useHasEverPublished } from '@/hooks/usePublishChangelog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
@@ -497,7 +508,10 @@ function ThemeTab({
   const [showSidebar, setShowSidebar] = useState(true);
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const { hasChanges } = useChangelogSummary();
+  const { data: hasEverPublished } = useHasEverPublished();
+  const discardMutation = useDiscardToLastPublished();
 
   useEffect(() => {
     if (!forceOpenEditor) return;
@@ -593,6 +607,23 @@ function ThemeTab({
               History
             </Button>
             <Button
+              variant="ghost"
+              size={tokens.button.card}
+              onClick={() => setDiscardOpen(true)}
+              disabled={!hasChanges || !hasEverPublished || discardMutation.isPending}
+              title={
+                !hasEverPublished
+                  ? 'No published version yet — publish first to enable discard.'
+                  : !hasChanges
+                    ? 'No unpublished changes to discard.'
+                    : 'Revert all unpublished changes to last published version'
+              }
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Discard Changes
+            </Button>
+            <Button
               variant="default"
               size={tokens.button.card}
               onClick={() => setPublishOpen(true)}
@@ -619,6 +650,49 @@ function ThemeTab({
 
         <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
         <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
+
+        <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Discard unpublished changes?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will revert pages, theme, footer, and announcement bar to the
+                last published version. A backup of the current state is saved to
+                History so you can recover it later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={discardMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={discardMutation.isPending}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                    await discardMutation.mutateAsync();
+                    toast({
+                      title: 'Reverted to last published',
+                      description: 'A backup of your changes was saved to History.',
+                    });
+                    setDiscardOpen(false);
+                  } catch (err) {
+                    toast({
+                      variant: 'destructive',
+                      title: 'Discard failed',
+                      description: err instanceof Error ? err.message : 'Unknown error',
+                    });
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {discardMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reverting…</>
+                ) : (
+                  'Discard & Restore'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Editor content with sidebar + preview */}
         <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 20rem)' }}>
