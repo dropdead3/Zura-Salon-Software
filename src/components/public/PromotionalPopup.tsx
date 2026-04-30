@@ -148,8 +148,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (triggeredRef.current) return;
     if (promoQueryParam && promoQueryParam === code) return;
 
-    const dismissal = readDismissal(orgId, code);
-    if (shouldRespectDismissal(cfg, dismissal)) return;
+    // In editor preview, bypass dismissal so reloads always re-show the popup.
+    if (!isPreview) {
+      const dismissal = readDismissal(orgId, code);
+      if (shouldRespectDismissal(cfg, dismissal)) return;
+    }
 
     let cleanup: (() => void) | undefined;
 
@@ -159,7 +162,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       setOpen(true);
     };
 
-    switch (cfg.trigger) {
+    // In editor preview, force immediate trigger — delay/scroll/exit-intent
+    // are unreliable inside a scaled iframe and would make QA feel broken.
+    const effectiveTrigger = isPreview ? 'immediate' : cfg.trigger;
+
+    switch (effectiveTrigger) {
       case 'immediate':
         fire();
         break;
@@ -188,7 +195,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }
 
     return cleanup;
-  }, [active, cfg, code, orgId, promoQueryParam]);
+  }, [active, cfg, code, orgId, promoQueryParam, isPreview]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
