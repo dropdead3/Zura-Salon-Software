@@ -1039,7 +1039,7 @@ function AppearancePreviewSwatch({
         {appearance === 'banner' && (
           <div
             className="absolute top-3 inset-x-0 flex items-center px-1.5 gap-1 text-primary-foreground py-0.5"
-            style={{ backgroundColor: accentColor }}
+            style={{ backgroundColor: accentColor, color: accentFg }}
           >
             <div className="flex flex-col flex-1 min-w-0">
               {eyebrowStrip && (
