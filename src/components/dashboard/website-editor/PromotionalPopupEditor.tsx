@@ -31,12 +31,29 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
 ];
 
 // Curated accent presets so operators can match brand intent without hex
-// guessing. `undefined` resolves to the org's theme primary at render time.
-const ACCENT_PRESETS: { label: string; value: string | undefined; swatch: string; hint: string }[] = [
-  { label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
-  { label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
-  { label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
+// guessing. `value === undefined` resolves to the org's theme primary at render
+// time. `key` is persisted alongside `accentColor` so the active chip stays
+// highlighted even after a theme change shifts the underlying hex.
+const ACCENT_PRESETS: {
+  key: string;
+  label: string;
+  value: string | undefined;
+  swatch: string;
+  hint: string;
+}[] = [
+  { key: 'house', label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
+  { key: 'high-contrast', label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
+  { key: 'soft-neutral', label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
 ];
+
+// Per-appearance headline truncation ceilings — must match the `trim(...)` calls
+// inside `AppearancePreviewSwatch`. Surfaced in the headline field so operators
+// see the exact char ceiling for the layout they've selected.
+const HEADLINE_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
+  modal: 28,
+  banner: 26,
+  'corner-card': 22,
+};
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -247,6 +264,10 @@ export function PromotionalPopupEditor() {
             onChange={(e) => handleChange('headline', e.target.value)}
             placeholder="Free Haircut with Any Color Service"
           />
+          <HeadlineCharCounter
+            length={formData.headline.length}
+            appearance={formData.appearance}
+          />
         </Field>
         <Field label="Body">
           <Textarea
@@ -383,12 +404,24 @@ export function PromotionalPopupEditor() {
               type="color"
               aria-label="Accent color"
               value={normalizeHex(formData.accentColor)}
-              onChange={(e) => handleChange('accentColor', e.target.value)}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  accentColor: e.target.value,
+                  accentPresetKey: null, // custom color picked
+                }))
+              }
               className="h-9 w-12 rounded-md border border-border bg-transparent cursor-pointer p-0.5"
             />
             <Input
               value={formData.accentColor ?? ''}
-              onChange={(e) => handleChange('accentColor', e.target.value || undefined)}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  accentColor: e.target.value || undefined,
+                  accentPresetKey: null, // custom color typed
+                }))
+              }
               placeholder="#7C3AED or hsl(...) — leave blank for theme primary"
               className="flex-1"
             />
@@ -397,7 +430,13 @@ export function PromotionalPopupEditor() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => handleChange('accentColor', undefined)}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    accentColor: undefined,
+                    accentPresetKey: null,
+                  }))
+                }
               >
                 Reset
               </Button>
@@ -408,13 +447,24 @@ export function PromotionalPopupEditor() {
               Presets
             </span>
             {ACCENT_PRESETS.map((preset) => {
-              const active =
-                (preset.value ?? null) === (formData.accentColor ?? null);
+              // Prefer key match (survives theme/hex changes); fall back to
+              // color match so legacy rows saved before this field existed
+              // still highlight correctly.
+              const active = formData.accentPresetKey
+                ? formData.accentPresetKey === preset.key
+                : !formData.accentPresetKey &&
+                  (preset.value ?? null) === (formData.accentColor ?? null);
               return (
                 <button
-                  key={preset.label}
+                  key={preset.key}
                   type="button"
-                  onClick={() => handleChange('accentColor', preset.value)}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      accentColor: preset.value,
+                      accentPresetKey: preset.key,
+                    }))
+                  }
                   title={preset.hint}
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full border px-2 h-7 transition-colors',
@@ -540,6 +590,44 @@ function Field({
       {children}
       {hint && <p className="font-sans text-xs text-muted-foreground">{hint}</p>}
     </div>
+  );
+}
+
+// ── Headline character counter ──
+// Surfaces the truncation ceiling for the *currently selected* appearance so
+// operators see the exact char limit before the live mock starts ellipsizing.
+// State map: under (muted) → near (warning at 80%) → over (destructive).
+function HeadlineCharCounter({
+  length,
+  appearance,
+}: {
+  length: number;
+  appearance: PromotionalPopupSettings['appearance'];
+}) {
+  const ceiling = HEADLINE_CEILINGS[appearance];
+  const ratio = ceiling > 0 ? length / ceiling : 0;
+  const tone =
+    length > ceiling
+      ? 'text-destructive'
+      : ratio >= 0.8
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-muted-foreground';
+  const layoutLabel =
+    appearance === 'corner-card' ? 'corner card' : appearance;
+  return (
+    <p className={cn('font-sans text-xs flex items-center gap-1', tone)}>
+      <span className="tabular-nums">
+        {length} / {ceiling}
+      </span>
+      <span className="text-muted-foreground">
+        chars before truncation in {layoutLabel}
+      </span>
+      {length > ceiling && (
+        <span className="font-display uppercase tracking-wider text-[10px] ml-1">
+          Truncating
+        </span>
+      )}
+    </p>
   );
 }
 
