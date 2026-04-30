@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { useWebsitePages } from "@/hooks/useWebsitePages";
 import { PageSectionRenderer } from "@/components/home/PageSectionRenderer";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 
 const Index = () => {
   const { data: pagesConfig } = useWebsitePages();
@@ -14,7 +15,10 @@ const Index = () => {
         description="Premier destination for expert hair color, extensions, cutting & styling. Book your transformation today."
         type="local_business"
       />
-      <PageSectionRenderer sections={homePage?.sections ?? []} pageId="home" />
+      {/* Page-level style overrides — driven by chip rail in Page Settings. */}
+      <SectionStyleWrapper styleOverrides={homePage?.style_overrides}>
+        <PageSectionRenderer sections={homePage?.sections ?? []} pageId="home" />
+      </SectionStyleWrapper>
     </Layout>
   );
 };
