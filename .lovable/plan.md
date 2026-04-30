@@ -1,62 +1,54 @@
 ## Problem
 
-In the Website Editor (`/admin/website-hub?tab=editor`), the left rail and live preview panels visibly clip off the bottom of the viewport, and content bleeds slightly past the left/right edges. Sidebar headers (e.g. "Extensions Spotlight") also appear cut at the top.
+Toggle switches in the sidebar section list sit flush against the rail's right edge, with no breathing room. Visible in the screenshot on every row (Brand Statement, Testimonials, Partner Brands, etc.).
 
 ## Root cause
 
-`src/components/dashboard/website-editor/WebsiteEditorShell.tsx` line 1136 — the root wrapper is:
+`src/components/dashboard/website-editor/SectionNavItem.tsx` line 55:
 
 ```tsx
-<div className="-mx-1 h-full min-h-[calc(100vh-2rem)] flex flex-col gap-3 p-3">
+'group flex items-center gap-2 px-2 py-2 mx-2 rounded-lg cursor-pointer transition-all',
 ```
 
-The parent in `WebsiteHub.tsx` is already `h-screen w-full overflow-hidden`, so:
-
-1. **`min-h-[calc(100vh-2rem)]`** — overrides `h-full` and forces the shell to be `100vh - 32px`. But the shell sits *inside* `p-3` of itself (12px top + 12px bottom = 24px) and the parent is exactly `100vh`. The `min-h` is bigger than the available content area, so the toolbar pushes the flex children (sidebar + preview) past the bottom edge. Result: bottom edges of both panels are cut off.
-2. **`-mx-1`** — pulls the shell 4px wider than its parent on each side, causing the right edge of the preview frame to clip.
-3. The `p-3` (12px) padding is asymmetric in feel because the parent has no padding — combined with the negative margin, it reads as inconsistent gutters.
+The row has only `mx-2` (8px horizontal margin) and `px-2` (8px internal padding). The Switch is the rightmost child with no extra right padding, and its `scale-75` transform keeps the original layout box — so the toggle's visual edge ends up roughly 4px from the rail border. On the narrow 340px rail, this reads as "touching."
 
 ## Fix
 
-Single-line change to the shell root container:
+One-line change to widen the right gutter and the row's outer margin so toggles sit ~12–16px in from the rail edge:
 
 ```tsx
 // Before
-<div className="-mx-1 h-full min-h-[calc(100vh-2rem)] flex flex-col gap-3 p-3">
+'group flex items-center gap-2 px-2 py-2 mx-2 rounded-lg cursor-pointer transition-all',
 
 // After
-<div className="h-full w-full flex flex-col gap-3 p-3 overflow-hidden">
+'group flex items-center gap-2 pl-2 pr-3 py-2 mx-3 rounded-lg cursor-pointer transition-all',
 ```
 
-- Drop `-mx-1` → removes horizontal bleed.
-- Drop `min-h-[calc(100vh-2rem)]` → let `h-full` from the `h-screen` parent govern height, so the flex column fits exactly within the viewport.
-- Add `overflow-hidden` → defensively contain any child that briefly mis-sizes during resize, instead of pushing the page scrollbar.
-- Keep `p-3` → preserves the 12px breathing room around the toolbar/panels (matches the existing visual rhythm).
+- `mx-2` → `mx-3` — bumps the outer margin from 8px to 12px on both sides, aligning the row with the rail's existing 12px rhythm (matches `p-3` on the editor shell).
+- `px-2` → `pl-2 pr-3` — adds 4px more right-side padding inside the row so the toggle gets visible breathing room without shifting the drag handle on the left.
 
-The inner row at line 1293 already uses `flex-1 min-h-0 overflow-hidden`, and both the sidebar (`h-full flex flex-col`) and preview (`flex flex-col h-full`) panels already manage their own internal scroll, so no child changes are needed — the sidebar's clipped "Extensions Spotlight" header will resolve once the rail is no longer pushed below the fold.
+Net effect at the right edge: 12px outer + 12px inner = 24px from rail border to toggle, up from ~16px.
 
 ## Files
 
-- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — line 1136 only.
+- `src/components/dashboard/website-editor/SectionNavItem.tsx` — line 55 only.
 
 ## Verification
 
-After the change, at 1281×851 (current viewport):
-
-- Toolbar, left rail, and live preview frame all fit within the viewport with consistent 12px gutters on all four sides.
-- No page-level scrollbar appears; sidebar scrolls internally as designed.
-- Sidebar top items render without clipping.
+- Toggle switches no longer touch the rail's right edge; consistent ~12px gutter on both sides matches the rest of the editor's rhythm.
+- Drag handle position on the left is unchanged.
+- Active row highlight still aligns with the rail's group separators (which use `mx-3`, so this actually corrects a pre-existing 4px misalignment between separators and rows).
 
 ---
 
 ### Prompt feedback
 
-**What worked well:** You named the symptom precisely ("elements going outside of view", "bottom edges off screen") and pointed at both axes (padding + clipped panels). That made it a 2-file investigation instead of a hunt.
+**What worked well:** "Right edge where the toggles are touching" was a perfect surgical callout — one sentence, one symptom, one element. That's the ideal follow-up after a broader layout fix.
 
-**How to sharpen next time:** Add the route or component name when you know it ("the website editor shell at `?tab=editor`") — it shaves a search step. Also: when you see clipping, mentioning the viewport size (you did, implicitly via the screenshot) and whether you can scroll inside vs. outside the panel helps disambiguate "the container is too tall" vs. "a child is overflowing." A one-liner like *"no scrollbar appears, content is just hidden under the chrome"* would have pinned the root cause (`min-h` overriding `h-full`) before I even opened the file.
+**Sharpening tip:** When you spot a series of related spacing issues (the previous shell-overflow fix and now this gutter), you can batch them: *"after fixing the shell, also: toggles touch the right edge, drag handles feel cramped on the left, group separator left-margin doesn't match row left-margin."* Lets me audit the whole rail's spacing rhythm in one pass instead of round-tripping per nudge.
 
 ### Enhancement suggestions
 
-1. **Container query guard for the editor shell.** The shell currently assumes ≥1024px-ish. A `ResizeObserver`-driven minimum-size sentinel (per the Container-Aware Responsiveness canon) could surface a "Editor requires a wider window" stub instead of silently clipping on narrow tablets in landscape.
-2. **Scroll-shadow affordance on the sidebar rail.** The clipped "Extensions Spotlight" header was a visibility-contract failure — users couldn't tell content was scrolled. A top/bottom fade-mask on the rail's scroll container would make overflow legible.
-3. **Persist rail width.** The aside is fixed at `w-[340px]`. Wrapping sidebar + preview in the existing `ResizablePanelGroup` (already imported in this file but unused for this layout) would let operators widen the rail when editing long lists like Drink Menu items.
+1. **Rail spacing token.** The editor rail currently mixes `mx-2`, `mx-3`, and `px-4` across `SectionNavItem`, `SectionGroupHeader`, and the search/footer rows. A single `RAIL_GUTTER = 'px-3'` constant in this folder would prevent these alignment drifts from re-emerging.
+2. **Switch hit target.** `scale-75` shrinks the Switch visually but its tap target shrinks with it — on touch devices this row becomes hard to toggle. Consider keeping the Switch at default size and reducing the row's vertical padding instead, or wrapping the Switch in a `p-1` hit-area expander.
+3. **Group separator alignment.** `Separator className="my-2 mx-3"` (line 641 of `WebsiteEditorSidebar.tsx`) uses `mx-3` while rows use `mx-2`. After this fix they'll match — worth a one-line audit comment so future edits don't re-diverge.
