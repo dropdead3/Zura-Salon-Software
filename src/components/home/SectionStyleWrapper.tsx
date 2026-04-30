@@ -84,10 +84,23 @@ export function SectionStyleWrapper({ styleOverrides, children, className }: Sec
     outerStyle.overflow = 'clip';
   }
 
+  // Heading scale → exposed as CSS variable so opted-in components can
+  // multiply their heading sizes. Default of 1 means no visible change for
+  // sections that haven't adopted the variable yet.
+  const scale = HEADING_SCALE_VALUES[merged.heading_scale ?? 'md'] ?? 1;
+  (outerStyle as CSSProperties & { ['--section-heading-scale']?: string })[
+    '--section-heading-scale'
+  ] = String(scale);
+
   const maxWidthClass = merged.max_width !== 'full' ? MAX_WIDTH_CLASSES[merged.max_width] : '';
+  const eyebrowAttr = merged.eyebrow_visible === false ? 'off' : 'on';
 
   return (
-    <div style={outerStyle} className={cn('relative', className)}>
+    <div
+      style={outerStyle}
+      data-eyebrow={eyebrowAttr}
+      className={cn('relative', className)}
+    >
       <div className={cn(maxWidthClass, maxWidthClass && 'mx-auto')}>
         {children}
       </div>
