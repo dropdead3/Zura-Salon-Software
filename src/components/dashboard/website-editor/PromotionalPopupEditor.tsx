@@ -210,6 +210,17 @@ export function PromotionalPopupEditor() {
             <RotateCcw className="h-3.5 w-3.5" />
             Reset popup session
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenFullPreview}
+            disabled={!fullPreviewUrl}
+            className="gap-2"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open full preview
+          </Button>
           <p className="font-sans text-[11px] text-muted-foreground ml-auto">
             QA only — preview ignores frequency caps
           </p>
