@@ -21,6 +21,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // In editor preview mode, merge unsaved edits broadcast from the editor.
   const heroConfig = useLiveOverride('section_hero', dbHeroConfig);
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
+  const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
+  const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
