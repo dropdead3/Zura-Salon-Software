@@ -40,6 +40,9 @@ import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
+import { useWebsiteColorTheme, useUpdateWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
+import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
+import { cn } from '@/lib/utils';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
 
 // ─── Schema ───
