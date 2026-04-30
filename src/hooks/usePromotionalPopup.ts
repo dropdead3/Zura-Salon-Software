@@ -36,6 +36,8 @@ export interface PromotionalPopupSettings {
   frequency: PopupFrequency;
   // Style
   accentColor?: string;
+  // Re-entry FAB after dismissal
+  fabPosition?: FabPosition;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
@@ -54,6 +56,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   startsAt: null,
   endsAt: null,
   frequency: 'once-per-session',
+  fabPosition: 'bottom-right',
 };
 
 const SETTING_KEY = 'promotional_popup';
