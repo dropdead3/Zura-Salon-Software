@@ -373,6 +373,8 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
 
       {/* Body */}
       <div className="flex-1 overflow-auto px-5 py-5 space-y-7">
+        {/* 1-tap brand looks — promotes the Theme tab into Site Design adjacency. */}
+        <BrandLooksRow goToThemeTab={goToThemeTab} />
         {/* Colors */}
         <section className="space-y-3">
           <div className="flex items-center gap-2">
