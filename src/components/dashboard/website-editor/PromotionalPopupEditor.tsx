@@ -106,7 +106,12 @@ export function PromotionalPopupEditor() {
     });
   };
 
-  const handleSave = useCallback(async () => {
+  // Detects every counter currently in destructive state. Drives the Save
+  // confirmation guard so operators never ship silent ellipses or
+  // legal-overflow disclaimers.
+  const overflows = collectOverflows(formData);
+
+  const persist = useCallback(async () => {
     try {
       await updateSettings.mutateAsync(formData);
       setSavedSnapshot(formData);
@@ -116,6 +121,27 @@ export function PromotionalPopupEditor() {
       toast.error(`Failed to save: ${msg}`);
     }
   }, [formData, updateSettings]);
+
+  const handleSave = useCallback(async () => {
+    if (overflows.length === 0) {
+      await persist();
+      return;
+    }
+    // Sonner's action button gives us a single-tap "Save anyway" without
+    // pulling in an AlertDialog just for one confirm. The description lists
+    // every overflowing field so operators see exactly what will truncate.
+    const summary = overflows.map((o) => `• ${o.message}`).join('\n');
+    toast.warning('Some copy will truncate', {
+      description: summary,
+      duration: 10000,
+      action: {
+        label: 'Save anyway',
+        onClick: () => {
+          void persist();
+        },
+      },
+    });
+  }, [overflows, persist]);
 
   useEditorSaveAction(handleSave);
 
