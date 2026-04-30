@@ -24,6 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
@@ -168,13 +178,19 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
 
   const [draft, setDraft] = useState<DesignOverrides>(DEFAULTS);
   const [dirty, setDirty] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const initRef = useRef(false);
+  // Snapshot of last-persisted state — used to revert the iframe when the
+  // operator discards in-flight edits without saving.
+  const persistedSnapshotRef = useRef<DesignOverrides>(DEFAULTS);
 
   // Hydrate once from server state.
   useEffect(() => {
     if (initRef.current) return;
     if (isLoading) return;
-    setDraft({ ...DEFAULTS, ...(persisted ?? {}) });
+    const hydrated = { ...DEFAULTS, ...(persisted ?? {}) };
+    setDraft(hydrated);
+    persistedSnapshotRef.current = hydrated;
     initRef.current = true;
   }, [isLoading, persisted]);
 
@@ -206,6 +222,8 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     try {
       await updateSetting.mutateAsync({ key: 'website_design_overrides', value: draft });
       setDirty(false);
+      // Refresh snapshot so a subsequent discard reverts to the just-saved state.
+      persistedSnapshotRef.current = draft;
       toast({ title: 'Site Design saved', description: 'Changes are now live in your site.' });
     } catch (err) {
       toast({
@@ -221,6 +239,25 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     setDirty(true);
     broadcastToPreview(DEFAULTS);
   }, []);
+
+  // Close-intent: if dirty, surface confirm dialog. Otherwise close immediately.
+  const handleCloseIntent = useCallback(() => {
+    if (dirty) {
+      setDiscardOpen(true);
+      return;
+    }
+    onClose();
+  }, [dirty, onClose]);
+
+  // Confirmed discard: revert iframe + local draft to last-persisted snapshot, then close.
+  const handleDiscardConfirmed = useCallback(() => {
+    const snapshot = persistedSnapshotRef.current;
+    setDraft(snapshot);
+    setDirty(false);
+    broadcastToPreview(snapshot);
+    setDiscardOpen(false);
+    onClose();
+  }, [onClose]);
 
   // Color helpers
   const colorRow = (
