@@ -132,7 +132,15 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   const [open, setOpen] = useState(false);
   const [showFab, setShowFab] = useState(false);
+  const [pulseFab, setPulseFab] = useState(false);
   const triggeredRef = useRef(false);
+
+  // Auto-suppress the entire offer prompt on the booking surface — if the
+  // visitor reached booking organically (or via the accept handler), don't
+  // double-ask. Detection is path-based so it survives slug variations.
+  const onBookingSurface = useMemo(() => {
+    return /\/booking(\/|$|\?)/i.test(location.pathname);
+  }, [location.pathname]);
 
   // Hide popup completely when accept lands on the booking surface with the
   // matching promo code already attached. Avoids re-prompting after acceptance.
