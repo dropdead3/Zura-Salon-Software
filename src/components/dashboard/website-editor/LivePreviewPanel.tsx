@@ -57,6 +57,7 @@ function readCanvasMode(): CanvasMode {
 export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
   const [device, setDeviceState] = useState<DeviceMode>(readDevice);
   const [orientation, setOrientationState] = useState<Orientation>(readOrientation);
+  const [canvasMode, setCanvasModeState] = useState<CanvasMode>(readCanvasMode);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [paneSize, setPaneSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -80,6 +81,21 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const pendingSectionRef = useRef<string | undefined>(undefined);
   const previewOrigin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
 
+  // Append the operator-chosen canvas mode to the iframe URL. Edit mode (default)
+  // activates click-to-select section chrome and click-to-edit text in the canvas;
+  // View mode renders a clean, visitor-style preview with no edit affordances.
+  const iframeSrc = useMemo(() => {
+    if (!previewUrl) return undefined;
+    try {
+      const u = new URL(previewUrl);
+      u.searchParams.set('mode', canvasMode);
+      return u.toString();
+    } catch {
+      const sep = previewUrl.includes('?') ? '&' : '?';
+      return `${previewUrl}${sep}mode=${canvasMode}`;
+    }
+  }, [previewUrl, canvasMode]);
+
   const setDevice = useCallback((d: DeviceMode) => {
     setDeviceState(d);
     try { localStorage.setItem(VIEWPORT_KEY, d); } catch {}
@@ -87,6 +103,13 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const setOrientation = useCallback((o: Orientation) => {
     setOrientationState(o);
     try { localStorage.setItem(ORIENTATION_KEY, o); } catch {}
+  }, []);
+  const setCanvasMode = useCallback((m: CanvasMode) => {
+    setCanvasModeState(m);
+    try { localStorage.setItem(CANVAS_MODE_KEY, m); } catch {}
+    // Iframe needs a reload to swap renderer paths (EditorSectionCard vs raw layout).
+    setIsLoading(true);
+    iframeReadyRef.current = false;
   }, []);
 
   // Observe pane size — recompute scale on splitter drag / window resize
