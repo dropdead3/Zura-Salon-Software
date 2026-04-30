@@ -292,13 +292,16 @@ export interface PopularServicesConfig {
 export interface GalleryDisplayConfig {
   section_eyebrow: string;
   section_title: string;
+  section_title_highlight: string;
   section_description: string;
+  cta_text: string;
   grid_columns: number;
   max_images: number;
   // Visibility toggles
   show_eyebrow: boolean;
   show_title: boolean;
   show_description: boolean;
+  show_cta: boolean;
 }
 
 export interface StylistsDisplayConfig {
@@ -518,13 +521,16 @@ export const DEFAULT_POPULAR_SERVICES: PopularServicesConfig = {
 
 export const DEFAULT_GALLERY_DISPLAY: GalleryDisplayConfig = {
   section_eyebrow: "Our Work",
-  section_title: "Gallery",
-  section_description: "See the artistry behind every transformation.",
+  section_title: "Get the Look",
+  section_title_highlight: "You've Always Wanted",
+  section_description: "Real clients. Real transformations. See our artistry in action.",
+  cta_text: "View gallery",
   grid_columns: 3,
   max_images: 12,
   show_eyebrow: true,
   show_title: true,
   show_description: true,
+  show_cta: true,
 };
 
 export const DEFAULT_STYLISTS_DISPLAY: StylistsDisplayConfig = {
