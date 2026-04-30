@@ -453,7 +453,7 @@ export function PromotionalPopupEditor() {
             length={formData.headline.length}
             ceiling={HEADLINE_CEILINGS[formData.appearance]}
             scopeLabel={`headline in ${appearanceLabel(formData.appearance)}`}
-            overflowVerb="Truncating"
+            overflowVerb={formData.appearance === 'banner' ? 'Truncating' : 'Wrapping'}
           />
         </Field>
         <Field label="Body">
