@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, MessageSquareQuote } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useTestimonialsConfig, type TestimonialsConfig, DEFAULT_TESTIMONIALS } from '@/hooks/useSectionConfig';
 import { UrlInput } from './inputs/UrlInput';
@@ -22,6 +24,9 @@ export function TestimonialsEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
+  const { effectiveOrganization } = useOrganizationContext();
+  usePreviewBridge('section_testimonials', localConfig);
+
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -32,11 +37,12 @@ export function TestimonialsEditor() {
     try {
       await update(localConfig);
       toast.success('Testimonials section saved');
+      clearPreviewOverride('section_testimonials', effectiveOrganization?.id ?? null);
       triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update]);
+  }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
 
