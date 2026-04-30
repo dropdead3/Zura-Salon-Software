@@ -796,6 +796,9 @@ export function WebsiteEditorShell() {
             <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
             <span className="truncate text-foreground font-medium">{sectionLabel}</span>
           </nav>
+
+          {/* Save status pill */}
+          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
