@@ -276,9 +276,11 @@ export function PromotionalPopupEditor() {
             onChange={(e) => handleChange('headline', e.target.value)}
             placeholder="Free Haircut with Any Color Service"
           />
-          <HeadlineCharCounter
+          <CharCounter
             length={formData.headline.length}
-            appearance={formData.appearance}
+            ceiling={HEADLINE_CEILINGS[formData.appearance]}
+            scopeLabel={`headline in ${appearanceLabel(formData.appearance)}`}
+            overflowVerb="Truncating"
           />
         </Field>
         <Field label="Body">
@@ -288,6 +290,12 @@ export function PromotionalPopupEditor() {
             rows={3}
             placeholder="Book a color appointment this month and your haircut is on us."
           />
+          <CharCounter
+            length={formData.body.length}
+            ceiling={BODY_CEILINGS[formData.appearance]}
+            scopeLabel={`body in ${appearanceLabel(formData.appearance)}`}
+            overflowVerb="Truncating"
+          />
         </Field>
         <Field label="Disclaimer (optional)" hint="Legal fine print — shown below the buttons.">
           <Textarea
@@ -295,6 +303,12 @@ export function PromotionalPopupEditor() {
             onChange={(e) => handleChange('disclaimer', e.target.value)}
             rows={2}
             placeholder="New clients only. Cannot be combined with other offers."
+          />
+          <CharCounter
+            length={(formData.disclaimer ?? '').length}
+            ceiling={DISCLAIMER_CEILING}
+            scopeLabel="disclaimer"
+            overflowVerb="Over limit"
           />
         </Field>
         <Field label="Image URL (optional)">
