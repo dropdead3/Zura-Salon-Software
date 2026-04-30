@@ -48,6 +48,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
+import { DirtyActionButton } from '@/components/ui/dirty-action-button';
 import {
   Dialog,
   DialogContent,
@@ -1042,32 +1043,14 @@ function WebsiteEditorShellInner() {
       {/* Save status pill — slim row under header so the user always sees draft state */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
         <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
-        {/* Save button.
-            • Default (clean): ghost, low-emphasis — nothing to do.
-            • Dirty: amber fill + ring pulse so the operator's eye is pulled to it.
-              Mirrors the warning tone used by SaveStatusPill so dirty-state cues
-              are visually consistent across the strip.
-            • Title hint: explicit "Preview updates after Save" so users stop
-              expecting the iframe to live-reflect typed edits. */}
-        <Button
-          variant={isDirty && !isSaving ? 'default' : 'ghost'}
-          size="sm"
-          className={cn(
-            'h-7 rounded-full px-3 text-xs transition-colors',
-            isDirty && !isSaving &&
-              'bg-warning text-warning-foreground hover:bg-warning/90 shadow-[0_0_0_3px_hsl(var(--warning)/0.18)]',
-          )}
+        {/* Save button — uses canonical DirtyActionButton primitive so the
+            amber-when-dirty + breathing-ring cue stays identical across every
+            inline editor (Site Design, Themes, future surfaces). */}
+        <DirtyActionButton
+          isDirty={isDirty}
+          isSaving={isSaving}
           onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
-          disabled={!isDirty || isSaving}
-          title={
-            isDirty
-              ? 'Click Save to update the preview (⌘S)'
-              : 'Preview updates after each Save'
-          }
-        >
-          {isSaving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-          {isDirty && !isSaving ? 'Save to preview' : 'Save'}
-        </Button>
+        />
       </div>
 
       {/* Editor body */}

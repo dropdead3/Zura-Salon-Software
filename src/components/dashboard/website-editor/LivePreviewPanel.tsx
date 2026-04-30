@@ -413,6 +413,20 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
 
       {/* Stage — observed for size, hosts the scaled iframe */}
       <div ref={stageRef} className="flex-1 overflow-hidden bg-[hsl(var(--muted)/0.4)] relative">
+        {/* Preview-stale banner — overlays the iframe whenever the editor is
+            dirty so the operator understands at the surface where the
+            confusion actually happens (the canvas), not via an editor-strip
+            label they may have missed. Pointer-events-none so it never
+            blocks click-to-edit on sections beneath it. */}
+        {isEditingLive && previewUrl && paneSize.w > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3">
+            <div className="flex items-center gap-2 rounded-full bg-warning/95 text-warning-foreground px-3 py-1.5 text-xs shadow-lg backdrop-blur-sm border border-warning/40">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning-foreground/80 animate-pulse" />
+              <span className="font-medium">Showing last saved version</span>
+              <span className="opacity-80">— click Save to refresh</span>
+            </div>
+          </div>
+        )}
         {previewUrl ? (
           paneSize.w > 0 && (
             <div
