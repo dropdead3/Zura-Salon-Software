@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useWebsiteMenus, usePublishMenu } from './useWebsiteMenus';
 import { useWebsitePages } from './useWebsitePages';
-import { useSavePageVersion } from './usePageVersions';
-import { useSaveSiteVersion } from './useSiteVersions';
+import { useSavePageVersion, useRestorePageVersion } from './usePageVersions';
+import { useSaveSiteVersion, useRestoreSiteVersion, type SiteVersionSurface } from './useSiteVersions';
 import { useWebsiteThemeSettings } from './useWebsiteSettings';
 import { useAnnouncementBarSettings } from './useAnnouncementBar';
 import { useSiteSettings } from './useSiteSettings';
