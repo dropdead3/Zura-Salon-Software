@@ -188,6 +188,10 @@ export default {
           "0%, 100%": { transform: "translateX(0)" },
           "50%": { transform: "translateX(3px)" },
         },
+        promoFabPulse: {
+          "0%, 100%": { transform: "scale(1)", boxShadow: "0 10px 30px -10px hsl(0 0% 0% / 0.35)" },
+          "50%": { transform: "scale(1.08)", boxShadow: "0 18px 40px -8px hsl(0 0% 0% / 0.45)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
