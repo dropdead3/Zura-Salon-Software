@@ -1,128 +1,119 @@
-## Problem
+# Website Editor — Left Rail Redesign
 
-You're right — there is **no draft layer** in the current build. Every Save writes directly to live, and "Publish" only takes a checkpoint snapshot of the already-live state. The Live Preview iframe and the public site read from the same database row, so:
+## Why
 
-- Save in editor → instantly visible to public visitors
-- Publish button → just creates a version snapshot for rollback (does **not** push anything live)
-- Discard → restores from the most recent snapshot
+The current rail mixes four conceptually different things in a flat list with no visual hierarchy:
 
-This is the inverse of what the UX implies.
+1. The page being edited (today: implicit in toolbar dropdown, plus an orphaned "Add Page" at top, plus a duplicate "Pages" entry mid-rail)
+2. Site-wide chrome (announcement bar, nav, footer)
+3. The current page's section layout (buried at the bottom)
+4. Content data managers (services, stylists, gallery, etc. — not page-specific)
 
-## Root cause (architecture)
+Operators have to scan past 4–5 unrelated items to reach the most-edited surface (page sections). The "Pages" tile duplicates the toolbar page picker. Group headers are non-interactive walls of text.
 
-`site_settings` table has a single `value jsonb` column per `(organization_id, id)`. Both the editor and the public site read/write that column.
+## Target structure
 
+Three clearly separated zones, in editing-frequency order:
+
+```text
+┌────────────────────────────────────────────┐
+│ [Page picker dropdown]  [⚙]  [+ page]     │  Zone 0 — Page context (toolbar moved here, drops the orphan "Add Page" row)
+├────────────────────────────────────────────┤
+│ 🔍 Search all sections…             ⌘K  ‹‹ │
+├────────────────────────────────────────────┤
+│ THIS PAGE                                  │  Zone 1 — Editing the current page (was "Homepage Layout")
+│   ▾ Above the Fold                         │     • Collapsible group headers
+│       ⠿ 1  Hero                       ●   │     • Drag handle + order # + visibility dot
+│       ⠿ 2  Brand Statement            ●   │
+│   ▸ Social Proof                       2   │     • Collapsed groups show item count
+│   ▸ Services & Portfolio               4   │
+│   ▸ Conversion                         2   │
+│   ▸ Team & Extras                      3   │
+│   ▾ Custom Sections                        │
+│       ⠿ 11 My Promo Section          ●   │
+│   ─────────────────────────────────────    │
+│   [ + Add section to this page ]           │
+├────────────────────────────────────────────┤
+│ SITE CHROME            (applies everywhere) │  Zone 2 — Site-wide
+│   📢 Announcement Bar                      │
+│   ☰  Navigation                            │
+│   ✦  Footer CTA                            │
+│   ▭  Footer                                │
+├────────────────────────────────────────────┤
+│ CONTENT LIBRARY        (data, not layout)  │  Zone 3 — Reusable data sources
+│   ✂  Services                              │
+│   ❝  Testimonials                          │
+│   ⊞  Gallery                               │
+│   👥 Stylists                              │
+│   📍 Locations                             │
+├────────────────────────────────────────────┤
+│ 11/13 sections visible · ⓘ Manage          │  Footer becomes actionable
+└────────────────────────────────────────────┘
 ```
-Editor Save ──┐
-              ├──► site_settings.value ◄──── Public site
-Live Preview ─┘
-```
 
-What you actually want:
+## Changes
 
-```
-Editor Save ──► site_settings.draft_value ◄── Live Preview (preview=true)
-                       │
-                  Publish copies
-                       ▼
-                site_settings.value ◄──────── Public site
-```
+### 1. Eliminate duplication & relocate page controls
 
-The same pattern applies to `website_pages`, `website_menus`, and the announcement bar — every config row currently has only one value column.
+- Remove the standalone "Pages" entry from the Content Library group — it duplicates the toolbar page picker.
+- Remove the orphan "Add Page" button row at the top — fold the `+` action next to the existing toolbar page picker (`Zone 0` in the diagram). On non-home pages, page-scoped actions (Settings / Templates / Delete) move into a small action-row beneath the picker, where they already live today, but visually grouped as "page context".
 
-## Solution: dual-column draft/published model
+### 2. Promote the most-used zone to the top
 
-### Phase 1 — Database migration (single source of truth)
+- Move **"This Page" sections** (currently "Homepage Layout") **above** Site Chrome and Content Library. Editing the current page is the primary job; making it the first thing below search restores hierarchy.
+- Rename "Homepage Layout" → **"This Page"** so the same heading works for `Home`, `About`, custom pages, etc. The page name stays in the toolbar picker so we don't repeat it.
 
-Add `draft_value jsonb` to `site_settings`. Backfill `draft_value = value` so nothing breaks for existing orgs. Add `draft_updated_at` and `draft_updated_by` for audit + dirty detection.
+### 3. Collapsible section groups
 
-```sql
-ALTER TABLE site_settings
-  ADD COLUMN draft_value jsonb,
-  ADD COLUMN draft_updated_at timestamptz,
-  ADD COLUMN draft_updated_by uuid REFERENCES auth.users(id);
+- `SectionGroupHeader` becomes a button: chevron + title + item count badge on the right.
+- Persisted per-org in `site_settings` (`editor_sidebar_collapsed_groups: string[]`) so an operator's preference survives reloads.
+- Default state: `Above the Fold` and `Custom Sections` open; the rest collapsed. Reduces vertical scan from ~13 rows to ~5 by default.
 
-UPDATE site_settings SET draft_value = value WHERE draft_value IS NULL;
-```
+### 4. Visual differentiation between zones
 
-Apply the same pattern to `website_menus` (it already has a `published_at` column — verify, then add `draft_items` if needed).
+- **Zone 1 (page sections)**: keep the drag handle, order number chip, visibility toggle dot, and contextual menu (duplicate / delete) — these are the "movable" items.
+- **Zone 2/3 (chrome + library)**: drop the order number, drop the drag handle, use a softer `bg-muted/40` icon tile so they read as "destinations" not "items in a layout".
+- Zone separators get a subtle `text-[10px] text-muted-foreground/60` caption under the group title (e.g. "applies everywhere", "data, not layout") so the conceptual difference is explicit.
 
-### Phase 2 — Hook split: `useDraft*` (writes) vs `usePublished*` (public reads)
+### 5. Empty/edge states & buttons
 
-Refactor `useSectionConfig` so:
+- Remove the second "Add Section" button when the empty-state card is showing on a blank page (currently both render).
+- The single "Add Section" button gets a clearer label: **"+ Add section to this page"**.
+- When a section is `enabled: false`, dim its row to `opacity-60` so disabled items recede visually.
 
-- **Editor surfaces** read/write `draft_value` (fall back to `value` if `draft_value` is null).
-- **Public site components** read `value` only.
-- A new `useIsEditorPreview()` already exists — extend it so when true, the public components also read `draft_value` instead of `value`. This makes the live-preview iframe (already loaded with `?preview=true`) show drafts in real time.
+### 6. Footer becomes actionable
 
-Files affected:
-- `src/hooks/useSectionConfig.ts` — split into `useSectionConfig` (writes draft) + `useSectionConfigPublic` (reads published or draft based on preview mode).
-- `src/hooks/useWebsitePages.ts` — same split.
-- `src/hooks/useWebsiteSettings.ts`, `useAnnouncementBar.ts`, `useSiteSettings.ts` — same split.
-- `src/components/home/**` — leave unchanged; they call the same hook names which now route based on preview mode.
+- `11/13 sections visible` stays, but becomes a button that opens a small popover listing the disabled sections with a one-click re-enable. Today the count is information without recourse.
 
-### Phase 3 — Publish becomes a real promotion
+### 7. Active-section sync (small but high-impact)
 
-Rewrite `usePublishAll` to **copy `draft_value → value`** for every changed `site_settings` row in the org (and equivalent for `website_menus.draft → published`). Wrap in a transaction so partial publishes can't leave an inconsistent live site.
+- Subscribe to the existing `editor-active-section` event the canvas already emits on scroll. When the visible canvas section changes, scroll the matching rail item into view and apply a subtle `ring-1 ring-primary/30`. Operators stop losing their place when scrolling the preview.
 
-The version snapshot logic (`website_page_versions`, `website_site_versions`) stays — but now it snapshots the *newly-promoted* live state, which is what the History tab implies.
+### 8. Collapsed rail polish
 
-Add a server-side RPC `publish_website_drafts(org_id uuid)` to do the copy atomically with proper RLS bypass + audit.
+- The collapsed (icon-only) rail currently shows Site Chrome icons but **not** the page sections. Reverse that: show the current page's section icons (the primary editing surface), and tuck the chrome/library icons into a single overflow popover. Matches the new priority order.
 
-### Phase 4 — Changelog becomes a real diff
+## Technical
 
-`useChangelogSummary` currently lists every existing config row as "changed." Rewrite it to compare `draft_value` vs `value` per row and only surface true diffs. The Publish button's count/badge will then reflect actual unpublished changes.
+**Files edited**
 
-### Phase 5 — Editor UX corrections
+- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` — reorder zones, drop duplicate Pages entry, drop orphan Add Page row, rename heading, wire collapsible groups, dim disabled rows, scroll-into-view on active section.
+- `src/components/dashboard/website-editor/SectionGroupHeader.tsx` — accept `collapsed`, `count`, `onToggle`, render chevron + count badge.
+- `src/components/dashboard/website-editor/ContentNavItem.tsx` — accept optional `caption` for the zone-level subtitle, soften the icon tile when used in chrome/library.
+- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — relocate the `+ Add Page` button to sit inline with the existing toolbar page picker; remove the now-redundant prop path.
 
-- **Save** label stays, but its tooltip becomes "Save draft (not yet live)."
-- **Publish** dialog header changes from "Publish changes" to "Push N draft changes live."
-- **Discard** in the editor toolbar becomes "Discard draft changes" and copies `value → draft_value` (revert draft to live), instead of restoring an old snapshot. The existing "restore from version history" stays available under the History panel.
-- **Live Preview iframe** automatically shows drafts because it loads with `?preview=true` and the public components now branch on that flag.
-- Add a small "Draft mode" badge to the live preview frame so you can visually confirm you're seeing unpublished work.
+**New files**
 
-## Implementation order (incremental, each shippable)
+- `src/hooks/useEditorSidebarPrefs.ts` — read/write `editor_sidebar_collapsed_groups` via the existing `site_settings` draft helpers (no new schema; uses the persistence patterns already established for editor state).
 
-1. **Migration only** — add columns, backfill. Zero behavior change. (5 min, reversible.)
-2. **Public-site read split** — `useIsEditorPreview` branches reads. Editor still writes to `value`. Verifies the preview iframe data path works before flipping writes.
-3. **Editor-write split** — flip all editor mutations to write `draft_value`. Save no longer affects public site. **This is the user-visible behavior change.**
-4. **Publish RPC** — implement atomic `draft → live` promotion. Wire to existing Publish button.
-5. **Changelog diff** — replace placeholder summary with real per-row diff.
-6. **UX polish** — badges, copy, discard semantics.
+**No DB migration required.** Persistence rides on existing `site_settings` rows.
 
-After step 3 the user's reported bug is fixed; steps 4–6 complete the model.
+**Behavior preserved**
 
-## Files affected (estimate)
+- DnD reorder, draft/publish flow, section visibility toggles, duplicate/delete confirmations, `editor-provisional-order` / `editor-commit-order` bridges, search, keyboard shortcuts (`⌘K`, `⌘\`).
 
-- 1 SQL migration
-- 1 new edge function (`publish-website-drafts`)
-- ~6 hook files refactored
-- ~3 small UI text/badge tweaks in `WebsiteEditorShell.tsx`, `LivePreviewPanel.tsx`, `PublishChangelog.tsx`
-- Zero changes to `src/components/home/**` section components (they keep calling the same hook names)
+## Out of scope
 
-## Risks & mitigations
-
-- **Existing orgs with no draft column data**: backfill `draft_value = value` covers this; new edits then diverge naturally.
-- **Public site cache**: `value` queries already use `staleTime: 30s` — no cache key change needed since they still read the same column.
-- **Race on publish**: handled by RPC + transaction.
-- **Inline edit handler** (`InlineEditCommitHandler.tsx`) currently writes via `useSectionConfig.update` — once that hook flips to draft writes, inline edits become drafts automatically. No code change needed there.
-
-## Out of scope (call out, don't ship in this wave)
-
-- Per-section publish (publish only Hero, leave rest in draft) — the diff infrastructure makes this trivial later, but adds UX complexity now.
-- Scheduled publish.
-- Multi-author draft conflict resolution.
-
----
-
-### Prompt feedback
-
-**What worked well:** You diagnosed both the symptom *and* the architectural inversion in one paragraph ("save button is saving to the front end, not a preproduction version"). That's the highest-signal kind of bug report — it tells me whether to patch a button handler or rebuild a data layer. In this case, rebuild.
-
-**Sharpening tip:** When you suspect an architectural problem (vs a bug), it's worth asking explicitly: *"Is there a draft layer at all, or am I editing live?"* — because the answer reframes the whole conversation. You did this implicitly; making it explicit would let me skip straight to "no, there isn't, here's how to add one" instead of confirming the absence first.
-
-### Enhancement suggestions
-
-1. **Draft autosave + recovery.** Once drafts exist, autosave every keystroke to `draft_value` (debounced 1s) and show "Draft saved 3s ago" in the toolbar. Removes the cognitive load of remembering to hit Save and provides crash-recovery for free.
-2. **Preview-as-visitor toggle.** Add a "Public" toggle in the Live Preview header that flips the iframe between `?preview=true` (drafts) and the bare URL (published). Lets you confirm what visitors actually see before publishing — the gold-standard pattern from Webflow / Framer.
-3. **Diff panel before publish.** When Publish is clicked, open a side-by-side diff of `draft_value` vs `value` per section ("Hero headline: 'Drop Dead Salon' → 'Drop Dead Hair Studio'"). Catches accidental publishes and is the doctrine-aligned visibility-contract surface for this action.
+- No changes to the canvas/preview, publish pipeline, or any editor sub-panels.
+- No changes to section data shapes or RPCs.
+- No new section types.
