@@ -112,6 +112,58 @@ export function BookingFlowConfigurator({ flow, onChange }: BookingFlowConfigura
           </div>
         </div>
 
+        {/* New client policy — gates first-time visitors through a consultation
+            step when set. Drives the booking surface AND unlocks the
+            "Schedule a consultation" destination on the promotional popup editor. */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">New Client Policy</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose how first-time visitors enter your booking flow.
+          </p>
+          <div className="space-y-2" role="radiogroup" aria-label="New client policy">
+            {[
+              {
+                value: 'open' as const,
+                label: 'Open booking',
+                description: 'Anyone can book any service directly without a consultation step.',
+              },
+              {
+                value: 'consultation-required' as const,
+                label: 'Consultation required',
+                description: 'New visitors must schedule a consultation before booking services. Promotional offers can route into this flow automatically.',
+              },
+            ].map((opt) => {
+              const active = (draft.newClientPolicy ?? 'open') === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setDraft((prev) => ({ ...prev, newClientPolicy: opt.value }))}
+                  className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                    active
+                      ? 'border-foreground bg-muted/50'
+                      : 'border-border hover:border-foreground/40'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <div
+                      className={`mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 transition-colors ${
+                        active ? 'border-foreground bg-foreground' : 'border-muted-foreground/40'
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{opt.description}</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Button onClick={handleSave} className="w-full sm:w-auto">
           Save Flow Settings
         </Button>
