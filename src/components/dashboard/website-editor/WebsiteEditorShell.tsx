@@ -110,8 +110,13 @@ import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
+import { AddSectionDialog } from './AddSectionDialog';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Badge } from '@/components/ui/badge';
 import type { PageTemplate } from '@/data/page-templates';
+import type { SectionTemplate } from '@/data/section-templates';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 // ─── Builtin tab → component map ───
 const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
@@ -232,6 +237,15 @@ export function WebsiteEditorShell() {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  // Wave 4: insert-at and style inspector
+  const [addSectionState, setAddSectionState] = useState<
+    | { open: false }
+    | { open: true; pageId: string; afterSectionId: string | null }
+  >({ open: false });
+  const [styleTarget, setStyleTarget] = useState<
+    | { pageId: string; sectionId: string }
+    | null
+  >(null);
   const pagePickerRef = useRef<HTMLButtonElement>(null);
 
   // Wave 3: dirty + saving + last-saved tracking from active editor surfaces.
@@ -538,6 +552,110 @@ export function WebsiteEditorShell() {
     [updateSelectedPage, toast],
   );
 
+  // ─── Wave 4: insert section at index, on any page (incl. home) ───
+  const insertSectionInPage = useCallback(
+    (
+      pageId: string,
+      afterSectionId: string | null,
+      build: () => SectionConfig,
+    ) => {
+      if (!pagesConfig) return null;
+      const newSection = build();
+      const updated = pagesConfig.pages.map((p) => {
+        if (p.id !== pageId) return p;
+        const list = [...p.sections];
+        const idx = afterSectionId
+          ? list.findIndex((s) => s.id === afterSectionId)
+          : -1;
+        const insertAt = idx >= 0 ? idx + 1 : list.length;
+        list.splice(insertAt, 0, newSection);
+        // Re-stamp order to keep things sane.
+        const reordered = list.map((s, i) => ({ ...s, order: i + 1 }));
+        return { ...p, sections: reordered };
+      });
+      void updatePages
+        .mutateAsync({ pages: updated })
+        .catch((err) =>
+          toast({
+            variant: 'destructive',
+            title: 'Failed to add section',
+            description: err instanceof Error ? err.message : 'Unknown error',
+          }),
+        );
+      return newSection;
+    },
+    [pagesConfig, updatePages, toast],
+  );
+
+  const handleAddSectionAt = useCallback(
+    (type: CustomSectionType, label: string) => {
+      if (!addSectionState.open) return;
+      const created = insertSectionInPage(
+        addSectionState.pageId,
+        addSectionState.afterSectionId,
+        () => ({
+          id: generateSectionId(),
+          type,
+          label,
+          description: CUSTOM_TYPE_INFO[type].description,
+          enabled: true,
+          order: 0,
+          deletable: true,
+        }),
+      );
+      if (created) setEditorTab(`custom-${created.id}`);
+      setAddSectionState({ open: false });
+    },
+    [addSectionState, insertSectionInPage],
+  );
+
+  const handleAddSectionFromTemplate = useCallback(
+    (template: SectionTemplate) => {
+      if (!addSectionState.open) return;
+      const created = insertSectionInPage(
+        addSectionState.pageId,
+        addSectionState.afterSectionId,
+        () => ({
+          id: generateSectionId(),
+          type: template.section_type,
+          label: template.name,
+          description: template.description,
+          enabled: true,
+          order: 0,
+          deletable: true,
+          style_overrides: template.style_overrides,
+        }),
+      );
+      if (created) setEditorTab(`custom-${created.id}`);
+      setAddSectionState({ open: false });
+    },
+    [addSectionState, insertSectionInPage],
+  );
+
+  // Apply style overrides to any section on any page.
+  const handleStyleChange = useCallback(
+    (next: Partial<StyleOverrides>) => {
+      if (!styleTarget || !pagesConfig) return;
+      const updated = pagesConfig.pages.map((p) => {
+        if (p.id !== styleTarget.pageId) return p;
+        return {
+          ...p,
+          sections: p.sections.map((s) =>
+            s.id === styleTarget.sectionId ? { ...s, style_overrides: next } : s,
+          ),
+        };
+      });
+      void updatePages.mutateAsync({ pages: updated });
+    },
+    [styleTarget, pagesConfig, updatePages],
+  );
+
+  const styleTargetSection = useMemo(() => {
+    if (!styleTarget) return null;
+    const page = pagesConfig?.pages.find((p) => p.id === styleTarget.pageId);
+    return page?.sections.find((s) => s.id === styleTarget.sectionId) ?? null;
+  }, [styleTarget, pagesConfig]);
+
   // ─── Wave 2: canvas → editor bridge (click-to-edit, hover toggle, duplicate, delete, add) ───
   // Resolves a SectionConfig.id arriving from the iframe into an editor tab key.
   const resolveSectionTab = useCallback(
@@ -600,9 +718,25 @@ export function WebsiteEditorShell() {
           break;
         }
         case 'EDITOR_ADD_SECTION_AT': {
-          // Open the page-settings/sections manager for now; granular insertion
-          // would require lifting the AddSectionDialog into the shell.
-          if (!isHomePage) requestTabChange('page-settings');
+          // Open AddSectionDialog targeting current page, inserting after the given section.
+          const afterId =
+            typeof msg.afterSectionId === 'string' ? msg.afterSectionId : null;
+          setAddSectionState({
+            open: true,
+            pageId: selectedPageId,
+            afterSectionId: afterId,
+          });
+          break;
+        }
+        case 'EDITOR_OPEN_STYLE': {
+          if (!sectionId) return;
+          // Find which page owns it.
+          const ownerPage = pagesConfig?.pages.find((p) =>
+            p.sections.some((s) => s.id === sectionId),
+          );
+          if (ownerPage) {
+            setStyleTarget({ pageId: ownerPage.id, sectionId });
+          }
           break;
         }
         default:
@@ -615,6 +749,8 @@ export function WebsiteEditorShell() {
     resolveSectionTab,
     requestTabChange,
     selectedPage,
+    selectedPageId,
+    pagesConfig,
     isHomePage,
     handlePageSectionToggle,
     handlePageSectionDuplicate,
@@ -1006,6 +1142,44 @@ export function WebsiteEditorShell() {
         onOpenChange={setTemplatePickerOpen}
         onSelect={handleApplyPageTemplate}
       />
+
+      {/* Wave 4: Add section at insertion index (canvas-driven) */}
+      <AddSectionDialog
+        open={addSectionState.open}
+        onOpenChange={(open) => !open && setAddSectionState({ open: false })}
+        onAdd={handleAddSectionAt}
+        onAddFromTemplate={handleAddSectionFromTemplate}
+      />
+
+      {/* Wave 4: Section style inspector */}
+      <PremiumFloatingPanel
+        open={!!styleTarget}
+        onOpenChange={(open) => !open && setStyleTarget(null)}
+        side="right"
+        maxWidth="380px"
+      >
+        <div className="flex flex-col h-full">
+          <div className="px-5 py-4 border-b border-border/60">
+            <p className="text-[11px] font-display tracking-wider uppercase text-muted-foreground">
+              Section Style
+            </p>
+            <h3 className="text-base font-display tracking-wide uppercase text-foreground truncate">
+              {styleTargetSection?.label ?? 'Section'}
+            </h3>
+          </div>
+          <div className="flex-1 overflow-auto px-5 py-4">
+            {styleTargetSection ? (
+              <SectionStyleEditor
+                value={styleTargetSection.style_overrides ?? {}}
+                onChange={handleStyleChange}
+                sectionId={styleTargetSection.id}
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">Select a section to style.</p>
+            )}
+          </div>
+        </div>
+      </PremiumFloatingPanel>
 
       {/* Unsaved-changes guard */}
       <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
