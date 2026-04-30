@@ -8,7 +8,7 @@ import { PageTransition } from "./PageTransition";
 import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
 import { PromotionalPopup } from "@/components/public/PromotionalPopup";
 import type { PopupSurface } from "@/hooks/usePromotionalPopup";
-import { useWebsiteColorTheme, WEBSITE_THEME_DEFAULT } from "@/hooks/useWebsiteColorTheme";
+import { useWebsiteColorTheme } from "@/hooks/useWebsiteColorTheme";
 
 /**
  * Map the current public route to a promotional-popup surface key.
