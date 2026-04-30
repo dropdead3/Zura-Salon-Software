@@ -246,6 +246,33 @@ export function PromotionalPopupEditor() {
     });
   };
 
+  // Default CTA labels per destination — used to auto-rename the Accept
+  // button when the operator switches destinations *and* the current label
+  // still matches a previous default. Manual overrides are preserved.
+  const DEFAULT_CTA_FOR_DESTINATION: Record<PopupAcceptDestination, string> = {
+    booking: 'Claim Offer',
+    consultation: 'Book Consultation',
+    'custom-url': 'Learn More',
+  };
+  const KNOWN_DEFAULT_LABELS = new Set(Object.values(DEFAULT_CTA_FOR_DESTINATION));
+
+  const handleDestinationChange = (next: PopupAcceptDestination) => {
+    setFormData((prev) => {
+      const currentLabel = prev.ctaAcceptLabel?.trim() ?? '';
+      // Only auto-rewrite when the field still holds a known default — never
+      // overwrite operator-authored copy.
+      const shouldRewriteLabel =
+        !currentLabel || KNOWN_DEFAULT_LABELS.has(currentLabel);
+      return {
+        ...prev,
+        acceptDestination: next,
+        ctaAcceptLabel: shouldRewriteLabel
+          ? DEFAULT_CTA_FOR_DESTINATION[next]
+          : prev.ctaAcceptLabel,
+      };
+    });
+  };
+
   // Detects every counter currently in destructive state. Drives both the
   // Save confirmation guard *and* the per-field destructive underline so
   // operators see the same story passively (border) and actively (toast).
