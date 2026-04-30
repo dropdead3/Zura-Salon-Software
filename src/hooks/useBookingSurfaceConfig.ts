@@ -104,6 +104,7 @@ export const DEFAULT_BOOKING_FLOW: BookingSurfaceFlow = {
   showStylistBios: false,
   showAddOns: false,
   featuredCategoryIds: [],
+  newClientPolicy: 'open',
 };
 
 export const DEFAULT_BOOKING_HOSTED: BookingSurfaceHosted = {
