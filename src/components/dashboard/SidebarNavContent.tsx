@@ -715,6 +715,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                               )}
                             >
                               <Icon className="w-4 h-4" />
+                              {singleItem.href === WEBSITE_HUB_HREF && websiteHasUnpublished && (
+                                <span
+                                  className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-background animate-pulse"
+                                  aria-label="Unpublished changes"
+                                />
+                              )}
                             </a>
                           </div>
                         </TooltipTrigger>
