@@ -81,18 +81,11 @@ const SOCIAL_PLATFORMS = [
 export function FooterEditor() {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
+  // Editor reads draft layer; public site reads live value.
   const { data: savedConfig, isLoading } = useQuery({
-    queryKey: ['site-settings', orgId, 'website_footer'],
+    queryKey: ['site-settings', orgId, 'website_footer', 'draft'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'website_footer')
-        .eq('organization_id', orgId!)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data?.value) return null;
-      return data.value as unknown as FooterConfig;
+      return await fetchSiteSetting<FooterConfig>(orgId!, 'website_footer', 'draft');
     },
     enabled: !!orgId,
   });
@@ -101,31 +94,14 @@ export function FooterEditor() {
     mutationFn: async (value: FooterConfig) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: existing } = await supabase
-        .from('site_settings')
-        .select('id')
-        .eq('id', 'website_footer')
-        .eq('organization_id', orgId)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({ value: value as never, updated_by: user?.id })
-          .eq('id', 'website_footer')
-          .eq('organization_id', orgId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({ id: 'website_footer', organization_id: orgId, value: value as never, updated_by: user?.id });
-        if (error) throw error;
-      }
+      // Draft-only write — Publish promotes to live.
+      await writeSiteSettingDraft(orgId, 'website_footer', value, user?.id ?? null);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'website_footer'] });
     },
   });
+
 
   const [config, setConfig] = useState<FooterConfig>(DEFAULT_FOOTER);
   const [isDirty, setIsDirty] = useState(false);
