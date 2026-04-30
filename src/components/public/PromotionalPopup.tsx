@@ -206,7 +206,29 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }
 
     return cleanup;
-  }, [active, cfg, code, orgId, promoQueryParam, isPreview]);
+  }, [active, cfg, code, orgId, promoQueryParam, isPreview, onBookingSurface]);
+
+  // One-time pulse hint: 30s after the FAB appears, gently pulse it once so
+  // the visitor remembers the offer is still available. Session-scoped — we
+  // never pulse twice in the same browsing session.
+  const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed`;
+  useEffect(() => {
+    if (!showFab || open || isPreview) return;
+    if (typeof window === 'undefined') return;
+    try {
+      if (window.sessionStorage.getItem(PULSE_SESSION_KEY) === '1') return;
+    } catch { /* ignore */ }
+
+    const t = window.setTimeout(() => {
+      setPulseFab(true);
+      try { window.sessionStorage.setItem(PULSE_SESSION_KEY, '1'); } catch { /* ignore */ }
+      // Pulse runs for ~2.4s (3 cycles of 800ms), then we stop the animation
+      // class so the FAB doesn't keep drawing attention indefinitely.
+      const stop = window.setTimeout(() => setPulseFab(false), 2400);
+      return () => window.clearTimeout(stop);
+    }, 30_000);
+    return () => window.clearTimeout(t);
+  }, [showFab, open, isPreview, PULSE_SESSION_KEY]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
