@@ -468,6 +468,17 @@ function PromoBody({
           <img src={cfg.imageUrl} alt="" className="w-full h-full object-cover" />
         </div>
       )}
+      {cfg.eyebrow && (
+        <p
+          className={cn(
+            'font-display uppercase tracking-[0.2em] mb-2',
+            compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
+          )}
+          style={{ color: accent }}
+        >
+          {cfg.eyebrow}
+        </p>
+      )}
       <h2
         id="promo-popup-title"
         className={cn(
