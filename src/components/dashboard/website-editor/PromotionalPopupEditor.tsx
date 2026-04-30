@@ -624,11 +624,16 @@ function FabPreviewSwatch({
 function AppearancePreviewSwatch({
   appearance,
   accent,
+  headline,
 }: {
   appearance: PromotionalPopupSettings['appearance'];
   accent?: string;
+  headline: string;
 }) {
   const accentColor = accent || 'hsl(var(--primary))';
+  const trim = (max: number) =>
+    headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
+
   return (
     <div className="space-y-1.5">
       <div
@@ -644,12 +649,12 @@ function AppearancePreviewSwatch({
         {appearance === 'modal' && (
           <>
             <div className="absolute inset-0 top-3 bg-black/30 backdrop-blur-[1px]" />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-12 rounded-md bg-card border border-border shadow-lg p-1 flex flex-col gap-0.5">
-              <span className="h-1 w-12 rounded-full bg-foreground/40" />
-              <span className="h-0.5 w-16 rounded-full bg-foreground/20" />
-              <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-14 rounded-md bg-card border border-border shadow-lg p-1.5 flex flex-col gap-0.5">
+              <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
+                {trim(28)}
+              </span>
               <span
-                className="mt-auto h-1.5 w-10 rounded-full"
+                className="mt-auto h-1.5 w-12 rounded-full"
                 style={{ backgroundColor: accentColor }}
               />
             </div>
@@ -657,19 +662,22 @@ function AppearancePreviewSwatch({
         )}
         {appearance === 'banner' && (
           <div
-            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1"
+            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1 text-primary-foreground"
             style={{ backgroundColor: accentColor }}
           >
-            <span className="h-1 w-12 rounded-full bg-white/70" />
-            <span className="ml-auto h-1.5 w-6 rounded-full bg-white/30" />
+            <span className="font-display uppercase tracking-wider text-[7px] truncate flex-1">
+              {trim(26)}
+            </span>
+            <span className="h-1.5 w-5 rounded-full bg-white/30 shrink-0" />
           </div>
         )}
         {appearance === 'corner-card' && (
-          <div className="absolute bottom-1.5 right-1.5 w-20 h-12 rounded-md bg-card border border-border shadow-md p-1 flex flex-col gap-0.5">
-            <span className="h-1 w-10 rounded-full bg-foreground/40" />
-            <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+          <div className="absolute bottom-1.5 right-1.5 w-24 h-14 rounded-md bg-card border border-border shadow-md p-1.5 flex flex-col gap-0.5">
+            <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
+              {trim(22)}
+            </span>
             <span
-              className="mt-auto h-1.5 w-8 rounded-full"
+              className="mt-auto h-1.5 w-10 rounded-full"
               style={{ backgroundColor: accentColor }}
             />
           </div>
