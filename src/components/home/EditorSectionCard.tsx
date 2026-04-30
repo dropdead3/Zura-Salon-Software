@@ -33,8 +33,11 @@ import {
   Paintbrush,
   Type,
   Tag,
+  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 interface EditorSectionCardProps {
@@ -271,6 +274,20 @@ export function EditorSectionCard({
     return `Eyebrow: ${visible ? 'On → Off' : 'Off → On'}`;
   }, [overrides.eyebrow_visible]);
 
+  // Roll-up of which style dimensions deviate from defaults — drives the
+  // pill's active highlight + numeric badge so operators can see at a glance
+  // whether this section is customized without expanding the popover.
+  const activeStyleCount = useMemo(() => {
+    let n = 0;
+    if (isBgActive(overrides)) n++;
+    if (isSpacingActive(overrides)) n++;
+    if (isWidthActive(overrides)) n++;
+    if (isHeadingScaleActive(overrides)) n++;
+    if (isEyebrowActive(overrides)) n++;
+    return n;
+  }, [overrides]);
+  const hasAnyStyle = activeStyleCount > 0;
+
   return (
     <div
       onClick={handleClick}
@@ -291,49 +308,90 @@ export function EditorSectionCard({
           'z-10'
         )}
       >
-        {/* Section name + style chips */}
+        {/* Section name + Style pill (popover) */}
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[11px] font-sans text-muted-foreground/70 truncate max-w-[140px]">
             {sectionLabel}
           </span>
-          {/* ── Style chips ── */}
-          <div className="flex items-center gap-1">
-            <StyleChip
-              icon={<Paintbrush className="h-3 w-3" />}
-              label="BG"
-              active={isBgActive(overrides)}
-              tooltip={bgTooltip}
-              onClick={handleCycleBg}
-            />
-            <StyleChip
-              icon={<ArrowUpDown className="h-3 w-3" />}
-              label="Pad"
-              active={isSpacingActive(overrides)}
-              tooltip={spacingTooltip}
-              onClick={handleCycleSpacing}
-            />
-            <StyleChip
-              icon={<Maximize2 className="h-3 w-3" />}
-              label="Width"
-              active={isWidthActive(overrides)}
-              tooltip={widthTooltip}
-              onClick={handleCycleWidth}
-            />
-            <StyleChip
-              icon={<Type className="h-3 w-3" />}
-              label="H"
-              active={isHeadingScaleActive(overrides)}
-              tooltip={headingScaleTooltip}
-              onClick={handleCycleHeadingScale}
-            />
-            <StyleChip
-              icon={<Tag className="h-3 w-3" />}
-              label={overrides.eyebrow_visible === false ? 'Eb·Off' : 'Eb'}
-              active={isEyebrowActive(overrides)}
-              tooltip={eyebrowTooltip}
-              onClick={handleToggleEyebrow}
-            />
-          </div>
+          {/* Single Style pill — expands to chip palette. Frees horizontal
+              space on narrower sections and keeps the hover header calm. */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                data-editor-control
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  'h-6 inline-flex items-center gap-1 px-2 rounded-full text-[10px] font-sans border transition-colors',
+                  hasAnyStyle
+                    ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/15'
+                    : 'bg-background/80 backdrop-blur-sm border-border/60 text-muted-foreground/80 hover:text-foreground hover:bg-muted/60',
+                )}
+                title="Section style"
+              >
+                <Sparkles className="h-3 w-3" />
+                <span>Style</span>
+                {hasAnyStyle && (
+                  <span className="ml-0.5 inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary/20 px-1 text-[9px] leading-none">
+                    {activeStyleCount}
+                  </span>
+                )}
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              data-editor-control
+              align="start"
+              sideOffset={6}
+              onClick={(e) => e.stopPropagation()}
+              className="w-auto p-2 rounded-xl"
+            >
+              <div className="flex items-center gap-1">
+                <StyleChip
+                  icon={<Paintbrush className="h-3 w-3" />}
+                  label="BG"
+                  active={isBgActive(overrides)}
+                  tooltip={bgTooltip}
+                  onClick={handleCycleBg}
+                />
+                <StyleChip
+                  icon={<ArrowUpDown className="h-3 w-3" />}
+                  label="Pad"
+                  active={isSpacingActive(overrides)}
+                  tooltip={spacingTooltip}
+                  onClick={handleCycleSpacing}
+                />
+                <StyleChip
+                  icon={<Maximize2 className="h-3 w-3" />}
+                  label="Width"
+                  active={isWidthActive(overrides)}
+                  tooltip={widthTooltip}
+                  onClick={handleCycleWidth}
+                />
+                <StyleChip
+                  icon={<Type className="h-3 w-3" />}
+                  label="H"
+                  active={isHeadingScaleActive(overrides)}
+                  tooltip={headingScaleTooltip}
+                  onClick={handleCycleHeadingScale}
+                />
+                <StyleChip
+                  icon={<Tag className="h-3 w-3" />}
+                  label={overrides.eyebrow_visible === false ? 'Eb·Off' : 'Eb'}
+                  active={isEyebrowActive(overrides)}
+                  tooltip={eyebrowTooltip}
+                  onClick={handleToggleEyebrow}
+                />
+              </div>
+              <button
+                data-editor-control
+                onClick={handleOpenStyle}
+                className="mt-2 w-full px-2 py-1.5 text-[10px] font-sans text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-md text-left flex items-center gap-1.5 transition-colors"
+              >
+                <Palette className="h-3 w-3" />
+                Advanced style…
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Structural controls */}

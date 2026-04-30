@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ExternalLink, Loader2, Palette, Save, Sparkles, Type } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ToastAction } from '@/components/ui/toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -611,7 +612,19 @@ function BrandLooksRow({ goToThemeTab }: { goToThemeTab: () => void }) {
   const handleActivate = async (themeId: string, name: string) => {
     try {
       await activate.mutateAsync(themeId);
-      toast({ title: 'Brand look applied', description: name });
+      // Surface a non-modal cross-link to the Theme tab so operators who
+      // want to fine-tune the activated look (variants, detail, browse more)
+      // can jump there in one tap. The toast auto-dismisses; staying in
+      // Site Design is the default path so quick activations stay frictionless.
+      toast({
+        title: 'Brand look applied',
+        description: name,
+        action: (
+          <ToastAction altText="Open Theme tab" onClick={goToThemeTab}>
+            View in Themes →
+          </ToastAction>
+        ),
+      });
     } catch (err) {
       toast({
         variant: 'destructive',
