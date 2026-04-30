@@ -1025,7 +1025,7 @@ function WebsiteEditorShellInner() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h2 className="font-display text-sm tracking-wide uppercase text-foreground truncate">
+          <h2 className="font-sans text-sm font-medium tracking-tight text-foreground truncate">
             {sectionLabel}
           </h2>
         </div>
