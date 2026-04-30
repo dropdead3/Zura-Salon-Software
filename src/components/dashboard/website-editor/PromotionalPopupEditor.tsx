@@ -128,6 +128,83 @@ export function PromotionalPopupEditor() {
     }
   }, [orgId]);
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <EditorCard
+      title="Promotional Popup"
+      icon={Megaphone}
+      description="Show a one-time offer to website visitors. Accept routes them to booking with the offer code attached; decline dismisses based on your frequency cap."
+    >
+      {/* Enable + QA actions */}
+      <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Label htmlFor="promo-enabled" className="text-base font-medium">
+              Show Promotional Popup
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Toggle the popup on or off across the public site. Saves automatically.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {autoSaving && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Saving" />
+            )}
+            <Switch
+              id="promo-enabled"
+              checked={formData.enabled}
+              disabled={autoSaving}
+              onCheckedChange={handleEnableToggle}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePreviewNow}
+            className="gap-2"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview popup now
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleResetSession}
+            className="gap-2"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset popup session
+          </Button>
+          <p className="font-sans text-[11px] text-muted-foreground ml-auto">
+            QA only — preview ignores frequency caps
+          </p>
+        </div>
+      </div>
+
+      {isDirty && (
+        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
+          <p className="font-sans text-xs text-foreground">
+            <span className="font-display uppercase tracking-wider text-[10px] text-primary mr-2">
+              Unsaved
+            </span>
+            Press <strong>Save</strong> to keep this draft. Visitors won't see it until you{' '}
+            <strong>Publish</strong> from Website Hub.
+          </p>
+        </div>
+      )}
+
       {/* Content */}
       <Section title="Content">
         <Field label="Headline" hint="Keep it short — appears in display type.">
