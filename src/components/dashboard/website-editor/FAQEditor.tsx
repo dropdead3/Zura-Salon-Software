@@ -18,6 +18,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
+import { FAQItemsManager } from './FAQItemsManager';
 
 export function FAQEditor() {
   const { data, isLoading, isSaving, update } = useFAQConfig();
@@ -211,12 +212,9 @@ export function FAQEditor() {
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="pt-4 border-t border-border/40">
-          <p className="text-sm text-muted-foreground">
-            <strong>Note:</strong> FAQ questions and answers are managed separately in the FAQ Manager.
-          </p>
-        </div>
       </EditorCard>
+
+      <FAQItemsManager />
     </div>
   );
 }

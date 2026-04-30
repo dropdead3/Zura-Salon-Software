@@ -10,40 +10,14 @@ import {
 } from "@/components/ui/accordion";
 import { useFAQConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { useVisibleFAQItems } from "@/hooks/useFAQItems";
 
-// FAQ question/answer items are not yet schema-backed — these defaults are
-// rendered until a dedicated FAQ Manager (table or JSONB column) is shipped.
-// All chrome (headline, intro, CTAs, search, rotating words) IS config-driven.
-const DEFAULT_FAQ_ITEMS = [
-  {
-    question: "Do the salons accept walk-ins?",
-    answer: "At this time, we do not accept walk-ins. All appointments must be scheduled in advance, and an initial consultation is required or must be waived by the stylist matched to you. This ensures you're paired with the right artist and receive the personalized service you deserve."
-  },
-  {
-    question: "Will I need a consultation?",
-    answer: "For most color services, extensions, and major transformations, yes. Consultations help us understand your hair history, assess its current condition, and create a personalized plan. Some services like trims or blowouts may not require one—your stylist will let you know."
-  },
-  {
-    question: "Does it matter which location I arrive at for my appointment?",
-    answer: "Yes! Please arrive at the specific location where your appointment is booked. Our stylists work at designated locations, so showing up at the correct salon ensures you're seen on time by your scheduled artist."
-  },
-  {
-    question: "What's the vibe like at each salon?",
-    answer: "Both locations share the same commitment to quality and creativity, but each has its own unique atmosphere. We recommend visiting both to see which vibe resonates with you!"
-  },
-  {
-    question: "What is your cancellation policy?",
-    answer: "We require 48 hours notice for cancellations or rescheduling. Late cancellations or no-shows may result in a fee equal to 50% of the scheduled service. We understand life happens—just communicate with us as early as possible."
-  },
-  {
-    question: "How do I book an appointment?",
-    answer: "You can book directly through our website by visiting the booking page, or reach out to us via email or phone. New clients should fill out our consultation form first so we can match you with the perfect stylist."
-  },
-  {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards, debit cards, Apple Pay, Google Pay, and cash. A deposit may be required for certain services at the time of booking."
-  }
-];
+type FAQRow = { id: string; question: string; answer: string; category?: string | null; sort_order?: number };
+
+// Empty fallback — when an org has no FAQ items configured, the section
+// silently hides the accordion (chrome remains so editors can still see it
+// in the live preview while drafting their first questions).
+const EMPTY_FAQS: FAQRow[] = [];
 
 export function FAQSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -58,10 +32,15 @@ export function FAQSection() {
   const { data: dbConfig } = useFAQConfig();
   const config = useLiveOverride('section_faq', dbConfig) ?? dbConfig;
 
+  // Items come from website_faq_items, with a live-edit override so the
+  // FAQItemsManager can stream unsaved drafts into the preview iframe.
+  const { data: dbItems } = useVisibleFAQItems();
+  const items = useLiveOverride<FAQRow[]>('faq_items', dbItems ?? EMPTY_FAQS) ?? dbItems ?? EMPTY_FAQS;
+
   const rotatingWords = config.show_rotating_words && config.rotating_words.length > 0
     ? config.rotating_words
     : [""];
-  const faqs = DEFAULT_FAQ_ITEMS;
+  const faqs = items;
 
   // Reset typewriter index if rotating-words list shrinks while editing
   useEffect(() => {
