@@ -555,14 +555,38 @@ export function StylistsSection() {
       />
       <div className="container mx-auto px-6">
         {/* Header */}
-        <SectionHeader
-          title="Meet our stylists"
-          description="Our talented team of artists are ready to help you achieve your hair goals. Each stylist brings their own unique expertise and creative vision."
-          align="center"
-          className="mb-8"
-          animate
-          isInView={isInView}
-        />
+        {isPreview ? (
+          <div className="text-center mb-8">
+            {showStylistsTitle && (
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+                <InlineEditableText
+                  value={stylistsTitle}
+                  sectionKey="section_stylists_display"
+                  fieldPath="section_title"
+                />
+              </h2>
+            )}
+            {showStylistsDescription && (
+              <p className="font-sans text-base md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
+                <InlineEditableText
+                  value={stylistsDescription}
+                  sectionKey="section_stylists_display"
+                  fieldPath="section_description"
+                  multiline
+                />
+              </p>
+            )}
+          </div>
+        ) : (
+          <SectionHeader
+            title={showStylistsTitle ? stylistsTitle : ""}
+            description={showStylistsDescription ? stylistsDescription : undefined}
+            align="center"
+            className="mb-8"
+            animate
+            isInView={isInView}
+          />
+        )}
 
         <div className="text-center">
           <Eyebrow className="text-muted-foreground mb-4">
