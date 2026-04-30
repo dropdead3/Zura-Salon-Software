@@ -165,7 +165,14 @@ export const NewClientSection = () => {
                   to={config.cta_url || "/booking"}
                   className="inline-flex items-center gap-3 bg-primary text-primary-foreground rounded-full px-8 py-4 text-base font-medium hover:bg-primary/90 transition-colors duration-300 group"
                 >
-                  <span>{config.cta_text}</span>
+                  <span>
+                    <InlineEditableText
+                      value={config.cta_text}
+                      sectionKey="section_new_client"
+                      fieldPath="cta_text"
+                      placeholder="Button text"
+                    />
+                  </span>
                   <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </motion.div>
