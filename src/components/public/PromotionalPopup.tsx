@@ -203,6 +203,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleAccept() {
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
     setOpen(false);
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
@@ -215,6 +216,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleDecline() {
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     setOpen(false);
   }
 
@@ -222,6 +224,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // Soft dismiss respects the frequency cap but isn't a recorded decline.
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
     markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     setOpen(false);
   }
 
