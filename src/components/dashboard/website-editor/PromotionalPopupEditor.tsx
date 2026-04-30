@@ -52,13 +52,21 @@ const ACCENT_PRESETS: {
   { key: 'soft-neutral', label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
 ];
 
-// Per-appearance headline truncation ceilings — must match the `trim(...)` calls
-// inside `AppearancePreviewSwatch`. Surfaced in the headline field so operators
-// see the exact char ceiling for the layout they've selected.
+// Per-appearance headline ceilings.
+//
+// Modal + corner-card render the headline as multi-line display copy (no
+// `truncate` / no `line-clamp` in PromoBody) — it wraps freely up to ~2 lines
+// before it starts visually crowding the CTA row. We size these ceilings for
+// "comfortable two-line max" rather than "fits on one line", so a natural
+// 35-char headline like "Free Haircut with Any Color Service" doesn't trip a
+// scary destructive counter when in fact it lays out fine.
+//
+// Banner is the only layout that hard-truncates (single-line `truncate`),
+// so its ceiling stays tight.
 const HEADLINE_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
-  modal: 28,
-  banner: 26,
-  'corner-card': 22,
+  modal: 60,
+  banner: 32,
+  'corner-card': 50,
 };
 
 // Body is rendered as multi-line copy. The card/modal layouts truncate around
