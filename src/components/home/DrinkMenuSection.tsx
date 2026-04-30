@@ -105,11 +105,14 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true, inlineE
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const isPreview = useIsEditorPreview();
   const { data: dbConfig } = useDrinkMenuConfig();
   const config = useLiveOverride('section_drink_menu', dbConfig) ?? dbConfig;
-  
-  // Use configured drinks or fallback to defaults
-  const drinks = config.drinks.length > 0 ? config.drinks : defaultDrinks;
+
+  // Doctrine: silence is valid output. When operator hasn't configured drinks,
+  // render nothing publicly. In editor preview, show a "no drinks yet" stub so
+  // the operator sees that the toggle is on but the section is empty.
+  const drinks = config?.drinks ?? [];
   
   // Track scroll velocity
   const { scrollY } = useScroll();
