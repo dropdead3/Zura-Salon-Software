@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
