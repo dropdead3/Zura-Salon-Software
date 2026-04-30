@@ -113,17 +113,35 @@ export function InlineEditCommitHandler() {
         section_faq: {
           data: faq.data,
           update: faq.update,
-          allowedPaths: ['eyebrow', 'headline'],
+          allowedPaths: [
+            'cta_primary_text',
+            'cta_secondary_text',
+            'search_placeholder',
+            'intro_paragraphs.*',
+            'rotating_words.*',
+          ],
         },
         section_footer_cta: {
           data: footerCta.data,
           update: footerCta.update,
-          allowedPaths: ['eyebrow', 'headline', 'subheadline'],
+          allowedPaths: [
+            'eyebrow',
+            'headline_line1',
+            'headline_line2',
+            'description',
+            'cta_text',
+          ],
         },
         section_new_client: {
           data: newClient.data,
           update: newClient.update,
-          allowedPaths: ['eyebrow', 'headline', 'subheadline'],
+          allowedPaths: [
+            'headline_prefix',
+            'description',
+            'cta_text',
+            'benefits.*',
+            'rotating_words.*',
+          ],
         },
       };
 
