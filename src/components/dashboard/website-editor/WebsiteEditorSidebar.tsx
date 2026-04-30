@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { writeSiteSettingDraft, fetchSiteSetting } from '@/lib/siteSettingsDraft';
 import {
   arrayMove,
   SortableContext,
@@ -322,15 +323,14 @@ export function WebsiteEditorSidebar({
     const newSections = [...localSections, newSection];
     await saveSections(newSections);
 
-    // Also save the template's default config as the section content
+    // Also save the template's default config as the section content.
+    // Draft-only — Publish promotes to live so visitors don't see new
+    // template content before the operator finishes editing.
     const settingsKey = `section_custom_${newSection.id}`;
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from('site_settings').upsert({
-      id: settingsKey,
-      organization_id: orgId,
-      value: template.default_config as never,
-      updated_by: user?.id,
-    });
+    if (orgId) {
+      await writeSiteSettingDraft(orgId, settingsKey, template.default_config, user?.id ?? null);
+    }
 
     toast.success(`"${template.name}" added from template`);
     onTabChange(`custom-${newSection.id}`);
@@ -363,23 +363,17 @@ export function WebsiteEditorSidebar({
     const newSections = [...localSections, newSection];
     await saveSections(newSections);
 
-    // Copy the custom section config if it exists
+    // Copy the custom section config if it exists. Read draft so the
+    // operator's in-progress edits are duplicated, not the last-published
+    // version. Write to draft so the duplicate isn't live until publish.
     const sourceKey = `section_custom_${section.id}`;
     const destKey = `section_custom_${newId}`;
-    const { data: sourceConfig } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('id', sourceKey)
-      .eq('organization_id', orgId)
-      .maybeSingle();
-    if (sourceConfig?.value) {
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('site_settings').upsert({
-        id: destKey,
-        organization_id: orgId,
-        value: sourceConfig.value as never,
-        updated_by: user?.id,
-      });
+    if (orgId) {
+      const sourceValue = await fetchSiteSetting<Record<string, unknown>>(orgId, sourceKey, 'draft');
+      if (sourceValue) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await writeSiteSettingDraft(orgId, destKey, sourceValue, user?.id ?? null);
+      }
     }
 
     toast.success(`"${section.label}" duplicated`);

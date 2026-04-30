@@ -26363,7 +26363,7 @@ export type Database = {
           organization_id: string | null
           updated_at: string
           updated_by: string | null
-          value: Json
+          value: Json | null
         }
         Insert: {
           draft_updated_at?: string | null
@@ -26373,7 +26373,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           updated_by?: string | null
-          value?: Json
+          value?: Json | null
         }
         Update: {
           draft_updated_at?: string | null
@@ -26383,7 +26383,7 @@ export type Database = {
           organization_id?: string | null
           updated_at?: string
           updated_by?: string | null
-          value?: Json
+          value?: Json | null
         }
         Relationships: [
           {
@@ -32481,6 +32481,7 @@ export type Database = {
         }
         Returns: string
       }
+      publish_all_menus: { Args: { _org_id: string }; Returns: number }
       publish_policy_externally: {
         Args: { p_policy_id: string; p_publish: boolean }
         Returns: Json

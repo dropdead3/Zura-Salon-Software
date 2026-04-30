@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useWebsiteMenus, usePublishMenu } from './useWebsiteMenus';
+import { useWebsiteMenus } from './useWebsiteMenus';
 import { useWebsitePages } from './useWebsitePages';
 import { useSavePageVersion, useRestorePageVersion } from './usePageVersions';
 import { useSaveSiteVersion, useRestoreSiteVersion, type SiteVersionSurface } from './useSiteVersions';
@@ -152,7 +152,6 @@ export function useChangelogSummary() {
 export function usePublishAll() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
-  const publishMenu = usePublishMenu();
   const savePageVersion = useSavePageVersion();
   const saveSiteVersion = useSaveSiteVersion();
   const { data: menus } = useWebsiteMenus();
@@ -165,15 +164,15 @@ export function usePublishAll() {
       // 1. Promote drafts → live for every site_settings row in this org.
       const promoted = await publishSiteSettingsDrafts(orgId);
 
-      // 2. Publish all menus.
-      if (menus) {
-        for (const menu of menus) {
-          await publishMenu.mutateAsync({
-            menuId: menu.id,
-            changeSummary: 'Bulk publish via changelog',
-          });
-        }
-      }
+      // 2. Publish all menus atomically via single RPC. Replaces the
+      //    sequential per-menu loop that could leave menus partially
+      //    published if the network failed mid-loop.
+      const { error: menuErr } = await supabase.rpc('publish_all_menus', {
+        _org_id: orgId,
+      });
+      if (menuErr) throw menuErr;
+      // `menus` reference retained so the hook re-runs on menu changes.
+      void menus;
 
       // 3. Snapshot the FRESHLY-PROMOTED live state (read straight from DB,
       //    not from React Query cache — the cache may still hold pre-publish
