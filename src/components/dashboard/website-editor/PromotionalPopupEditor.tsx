@@ -505,28 +505,66 @@ export function PromotionalPopupEditor() {
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
           when no code is configured (silence is valid output) and shows "0"
-          honestly when the code exists but hasn't been redeemed yet. */}
+          honestly when the code exists but hasn't been redeemed yet.
+
+          14-day sparkline answers "is it still working?" — flat-zero for new
+          codes (silence is valid), then traces velocity as redemptions land.
+          Last-24h chip surfaces momentum at a glance. */}
       {savedSnapshot.offerCode?.trim() && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border/60 bg-muted/30">
-          <div className="flex items-center gap-2 min-w-0">
-            <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
-                Redemptions
-              </p>
-              <p className="font-sans text-sm text-foreground">
-                <span className="font-medium tabular-nums">{redemptionCount}</span>
-                <span className="text-muted-foreground">
-                  {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
-                  <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
-                </span>
-              </p>
+        <div className="px-3 py-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                  Redemptions
+                </p>
+                <p className="font-sans text-sm text-foreground">
+                  <span className="font-medium tabular-nums">{redemptionCount}</span>
+                  <span className="text-muted-foreground">
+                    {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
+                    <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
+                  </span>
+                </p>
+              </div>
             </div>
+            {redemptionCount === 0 ? (
+              <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
+                No redemptions yet
+              </p>
+            ) : (
+              <div
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-sans shrink-0',
+                  redemptionLast24h > 0
+                    ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
+                    : 'border-border/60 bg-background text-muted-foreground',
+                )}
+                title="Confirmed redemptions in the last 24 hours"
+              >
+                {redemptionLast24h > 0 ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
+                <span className="tabular-nums">{redemptionLast24h}</span>
+                <span>last 24h</span>
+              </div>
+            )}
           </div>
-          {redemptionCount === 0 && (
-            <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
-              No redemptions yet
-            </p>
+          {redemptionCount > 0 && redemptionSeries.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground shrink-0">
+                14d
+              </span>
+              <div className="flex-1 text-primary">
+                <Sparkline
+                  data={redemptionSeries}
+                  height={24}
+                  ariaLabel="14-day redemption velocity"
+                />
+              </div>
+            </div>
           )}
         </div>
       )}
