@@ -507,6 +507,9 @@ function PromoBody({
   imageMode?: 'top' | 'side' | 'none';
 }) {
   const renderTopImage = imageMode === 'top' && cfg.imageUrl;
+  // Mirror the parent's contrast pick so the CTA stays legible regardless
+  // of the operator's accent. Re-derive (cheap) instead of threading a prop.
+  const accentFg = readableForegroundFor(cfg.accentColor);
   return (
     <>
       {renderTopImage && (
