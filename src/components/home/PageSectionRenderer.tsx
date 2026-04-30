@@ -86,7 +86,13 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
     const handler = (event: MessageEvent) => {
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;
-      if (!['PREVIEW_SCROLL_TO_SECTION', 'PREVIEW_HIGHLIGHT_SECTION', 'PREVIEW_SET_ACTIVE_SECTION'].includes(msg.type)) return;
+      if (![
+        'PREVIEW_SCROLL_TO_SECTION',
+        'PREVIEW_HIGHLIGHT_SECTION',
+        'PREVIEW_SET_ACTIVE_SECTION',
+        'PREVIEW_PROVISIONAL_ORDER',
+        'PREVIEW_REORDER_SECTIONS',
+      ].includes(msg.type)) return;
 
       if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
         const el = document.getElementById(`section-${msg.sectionId}`);
@@ -103,6 +109,16 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
       if (msg.type === 'PREVIEW_SET_ACTIVE_SECTION') {
         setSelectedSectionId(msg.sectionId || null);
+      }
+
+      // Live drag-reorder reflow.
+      if (msg.type === 'PREVIEW_PROVISIONAL_ORDER' && Array.isArray(msg.order)) {
+        setProvisionalOrder(msg.order as string[]);
+      }
+      // Commit on drop — clear the provisional layer; the next sections fetch
+      // (triggered by the editor's save) becomes the source of truth.
+      if (msg.type === 'PREVIEW_REORDER_SECTIONS') {
+        setProvisionalOrder(null);
       }
     };
 
