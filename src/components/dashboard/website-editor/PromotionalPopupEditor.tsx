@@ -462,6 +462,8 @@ export function PromotionalPopupEditor() {
               appearance={formData.appearance}
               accent={formData.accentColor}
               headline={formData.headline}
+              eyebrow={formData.eyebrow}
+              eyebrowIcon={formData.eyebrowIcon}
             />
           </div>
         </Field>
