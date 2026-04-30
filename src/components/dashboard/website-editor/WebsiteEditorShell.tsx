@@ -1133,7 +1133,7 @@ function WebsiteEditorShellInner() {
   );
 
   return (
-    <div className="-mx-1 h-full min-h-[calc(100vh-2rem)] flex flex-col gap-3 p-3">
+    <div className="h-full w-full flex flex-col gap-3 p-3 overflow-hidden">
       {/* Inline-edit bridge: listens for INLINE_EDIT_COMMIT messages from the
           preview iframe and persists via the existing useSectionConfig hooks.
           Renders nothing — pure listener. */}
