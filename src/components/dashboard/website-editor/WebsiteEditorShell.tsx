@@ -313,7 +313,11 @@ function WebsiteEditorShellInner() {
 
   const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
   const orgPreviewUrl = getPublicUrl();
-  const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true, mode: 'view' });
+  // Base preview URL — `LivePreviewPanel` appends `mode=edit|view` from the
+  // operator's segmented toggle. Default (no `mode`) is treated as edit by the
+  // canvas, which activates `EditorSectionCard` chrome and `InlineEditableText`
+  // surfaces so clicks select sections and text is click-to-edit.
+  const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true });
 
   // Persist last-used editor state per org.
   useEffect(() => {
