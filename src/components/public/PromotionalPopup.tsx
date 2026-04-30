@@ -323,7 +323,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           // Session-scoped one-time pulse hint (~3 cycles, then auto-stops).
           pulseFab && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
         )}
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: accent, color: accentFg }}
       >
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
           <Gift className="h-4 w-4" />
