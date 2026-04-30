@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
+import { useIsEditorPreview } from './useIsEditorPreview';
+import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 export interface AnnouncementBarSettings {
   enabled: boolean;
@@ -25,21 +27,18 @@ const DEFAULT_SETTINGS: AnnouncementBarSettings = {
 
 export function useAnnouncementBarSettings(explicitOrgId?: string) {
   const orgId = useSettingsOrgId(explicitOrgId);
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
 
   return useQuery({
-    queryKey: ['site-settings', orgId, 'announcement_bar'],
+    queryKey: ['site-settings', orgId, 'announcement_bar', mode],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'announcement_bar')
-        .eq('organization_id', orgId!)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data?.value) return DEFAULT_SETTINGS;
-      
-      return data.value as unknown as AnnouncementBarSettings;
+      const value = await fetchSiteSetting<AnnouncementBarSettings>(
+        orgId!,
+        'announcement_bar',
+        mode,
+      );
+      return value ?? DEFAULT_SETTINGS;
     },
     enabled: !!orgId,
   });
@@ -53,38 +52,7 @@ export function useUpdateAnnouncementBarSettings(explicitOrgId?: string) {
     mutationFn: async (value: AnnouncementBarSettings) => {
       if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      
-      // Try to update first
-      const { data: existingData } = await supabase
-        .from('site_settings')
-        .select('id')
-        .eq('id', 'announcement_bar')
-        .eq('organization_id', orgId)
-        .maybeSingle();
-
-      if (existingData) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({ 
-            value: value as never,
-            updated_by: user?.id 
-          })
-          .eq('id', 'announcement_bar')
-          .eq('organization_id', orgId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({ 
-            id: 'announcement_bar',
-            organization_id: orgId,
-            value: value as never,
-            updated_by: user?.id 
-          });
-
-        if (error) throw error;
-      }
+      await writeSiteSettingDraft(orgId, 'announcement_bar', value, user?.id ?? null);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, 'announcement_bar'] });
