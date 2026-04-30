@@ -433,7 +433,6 @@ export function ExtensionReviewsSection() {
                       sectionKey="section_extension_reviews"
                       fieldPath={`extension_categories.${index}`}
                       as="span"
-                      maxLength={40}
                     />
                   ) : (
                     <span>{type}</span>
