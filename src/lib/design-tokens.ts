@@ -111,9 +111,9 @@ export const tokens = {
     /** Hero sections, onboarding, empty-state CTAs */
     hero: 'lg' as const,
     /** Card footer "View All" link style */
-    cardFooter: 'w-full text-muted-foreground hover:text-foreground text-sm h-9',
+    cardFooter: 'w-full text-muted-foreground hover:text-foreground text-sm h-8',
     /** Card header action pill (outline variant) */
-    cardAction: 'h-9 px-4 rounded-full text-sm font-sans font-medium',
+    cardAction: 'h-8 px-3.5 rounded-full text-xs font-sans font-medium',
     /** Inline ghost action — muted text, high-contrast on hover */
     inlineGhost: 'h-6 px-2 text-[10px] font-sans text-muted-foreground hover:text-primary-foreground hover:bg-primary/90 rounded-md transition-colors',
     /** Selected ghost state — purple ghost fill + thick primary stroke.
