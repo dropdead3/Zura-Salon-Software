@@ -23,6 +23,7 @@ import {
   DEFAULT_PROMO_POPUP,
   type PromotionalPopupSettings,
   type PopupSurface,
+  type EyebrowIcon,
 } from '@/hooks/usePromotionalPopup';
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
