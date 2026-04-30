@@ -679,7 +679,41 @@ export function WebsiteEditorSidebar({
           )}
 
           {/* Non-home page sections with DnD */}
-          {!isHomePage && selectedPage && (
+          {!isHomePage && selectedPage && localPageSections.length === 0 && (
+            <div className="mx-3 mt-2 mb-3 rounded-xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-center">
+              <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-background flex items-center justify-center border border-border/60">
+                <Plus className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="font-display text-xs uppercase tracking-wider text-foreground mb-1">
+                No sections yet
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Start from a template or add a section manually.
+              </p>
+              <div className="flex flex-col gap-2">
+                {onApplyPageTemplate && (
+                  <Button
+                    variant="default"
+                    size={tokens.button.card}
+                    className="w-full text-xs rounded-full"
+                    onClick={onApplyPageTemplate}
+                  >
+                    Choose a template
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size={tokens.button.card}
+                  className="w-full text-xs rounded-full"
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Add a blank section
+                </Button>
+              </div>
+            </div>
+          )}
+          {!isHomePage && selectedPage && localPageSections.length > 0 && (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handlePageDragOver} onDragEnd={handlePageDragEnd}>
               <SortableContext items={localPageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <SectionGroupHeader title={`${selectedPage.title} Sections`} />
