@@ -71,43 +71,67 @@ export function usePromotionalPopupRedemptions(
   return useQuery<PromotionalPopupRedemptionStats>({
     queryKey: ['promotional-popup-redemptions', orgId, code],
     queryFn: async () => {
-      if (!orgId || !code) return { count: 0, series: [], last24h: 0 };
+      if (!orgId || !code) return { count: 0, series: [], last24h: 0, revenueAttributed: 0 };
 
-      // Fetch only the timestamps needed for both the total count and the
-      // 14-day bucket build. Limited to a generous ceiling so a hugely-popular
-      // promo never blows the response budget.
+      // Fetch only the timestamps + attributed revenue needed for the count,
+      // 14-day bucket build, and lifetime revenue total. Limited to a generous
+      // ceiling so a hugely-popular promo never blows the response budget.
       const windowStart = new Date(
         Date.now() - WINDOW_DAYS * 86400_000,
       ).toISOString();
 
-      const [{ count: totalCount, error: countErr }, { data: recentRows, error: rowsErr }] =
-        await Promise.all([
-          supabase
-            .from('promotion_redemptions')
-            .select('id', { count: 'exact', head: true })
-            .eq('organization_id', orgId)
-            .eq('promo_code_used', code)
-            .eq('surface', POPUP_SURFACE),
-          supabase
-            .from('promotion_redemptions')
-            .select('transaction_date')
-            .eq('organization_id', orgId)
-            .eq('promo_code_used', code)
-            .eq('surface', POPUP_SURFACE)
-            .gte('transaction_date', windowStart)
-            .limit(1000),
-        ]);
+      const [
+        { count: totalCount, error: countErr },
+        { data: recentRows, error: rowsErr },
+        { data: revenueRows, error: revenueErr },
+      ] = await Promise.all([
+        supabase
+          .from('promotion_redemptions')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('promo_code_used', code)
+          .eq('surface', POPUP_SURFACE),
+        supabase
+          .from('promotion_redemptions')
+          .select('transaction_date')
+          .eq('organization_id', orgId)
+          .eq('promo_code_used', code)
+          .eq('surface', POPUP_SURFACE)
+          .gte('transaction_date', windowStart)
+          .limit(1000),
+        // Lifetime attributed revenue — separate query so a failure here
+        // doesn't kill the count + sparkline. Pulls only the column we sum,
+        // limited to 5000 rows (an org popping that many redemptions on one
+        // code has earned its own dedicated dashboard surface).
+        supabase
+          .from('promotion_redemptions')
+          .select('revenue_attributed')
+          .eq('organization_id', orgId)
+          .eq('promo_code_used', code)
+          .eq('surface', POPUP_SURFACE)
+          .not('revenue_attributed', 'is', null)
+          .limit(5000),
+      ]);
 
       if (countErr || rowsErr) {
         // Swallow — the editor card should never crash because a count failed.
         // Returning zeros is honest: we genuinely don't know of any redemptions.
-        return { count: 0, series: [], last24h: 0 };
+        return { count: 0, series: [], last24h: 0, revenueAttributed: 0 };
       }
 
       const { series, last24h } = buildDailySeries(
         (recentRows ?? []) as Array<{ transaction_date: string | null }>,
       );
-      return { count: totalCount ?? 0, series, last24h };
+      // Honest absence: revenue query failure → 0, not a fabricated estimate.
+      // Older rows pre-dating the attribution write also resolve to 0 (the
+      // `.not('revenue_attributed', 'is', null)` filter excludes them).
+      const revenueAttributed = revenueErr
+        ? 0
+        : (revenueRows ?? []).reduce(
+            (sum, r) => sum + (Number((r as { revenue_attributed: number | null }).revenue_attributed) || 0),
+            0,
+          );
+      return { count: totalCount ?? 0, series, last24h, revenueAttributed };
     },
     enabled: !!orgId && code.length > 0,
     staleTime: 30_000,
