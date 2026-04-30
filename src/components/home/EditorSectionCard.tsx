@@ -274,6 +274,20 @@ export function EditorSectionCard({
     return `Eyebrow: ${visible ? 'On → Off' : 'Off → On'}`;
   }, [overrides.eyebrow_visible]);
 
+  // Roll-up of which style dimensions deviate from defaults — drives the
+  // pill's active highlight + numeric badge so operators can see at a glance
+  // whether this section is customized without expanding the popover.
+  const activeStyleCount = useMemo(() => {
+    let n = 0;
+    if (isBgActive(overrides)) n++;
+    if (isSpacingActive(overrides)) n++;
+    if (isWidthActive(overrides)) n++;
+    if (isHeadingScaleActive(overrides)) n++;
+    if (isEyebrowActive(overrides)) n++;
+    return n;
+  }, [overrides]);
+  const hasAnyStyle = activeStyleCount > 0;
+
   return (
     <div
       onClick={handleClick}
