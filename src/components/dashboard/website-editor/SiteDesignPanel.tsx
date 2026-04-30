@@ -651,11 +651,35 @@ function WebsiteThemePicker() {
                 update.isPending && 'opacity-60 cursor-wait',
               )}
             >
-              {/* Color swatch — three-band preview using the theme's own tokens. */}
-              <div className="h-10 flex" style={{ backgroundColor: t.lightPreview.bg }}>
-                <div className="flex-1" style={{ backgroundColor: t.lightPreview.bg }} />
-                <div className="flex-1" style={{ backgroundColor: t.lightPreview.accent }} />
-                <div className="flex-1" style={{ backgroundColor: t.lightPreview.primary }} />
+              {/* Mini-hero mock — composes the theme's own tokens into the
+                  same shapes operators see on the live site (background,
+                  headline bar, body bar, CTA pill). Trades the abstract
+                  three-band swatch for a content-shaped preview, so picking
+                  Marine vs Neon reads as "what my hero will look like". */}
+              <div
+                className="h-12 relative overflow-hidden"
+                style={{ backgroundColor: t.lightPreview.bg }}
+                aria-hidden="true"
+              >
+                {/* Headline bar — uses primary at full opacity. */}
+                <div
+                  className="absolute left-1.5 top-1.5 h-1 w-7 rounded-sm"
+                  style={{ backgroundColor: t.lightPreview.primary }}
+                />
+                {/* Body bars — use accent at reduced opacity to mimic muted body copy. */}
+                <div
+                  className="absolute left-1.5 top-3.5 h-[3px] w-9 rounded-sm opacity-70"
+                  style={{ backgroundColor: t.lightPreview.accent }}
+                />
+                <div
+                  className="absolute left-1.5 top-5 h-[3px] w-6 rounded-sm opacity-50"
+                  style={{ backgroundColor: t.lightPreview.accent }}
+                />
+                {/* CTA pill — primary fill, lower-right. */}
+                <div
+                  className="absolute right-1.5 bottom-1.5 h-2 w-5 rounded-full"
+                  style={{ backgroundColor: t.lightPreview.primary }}
+                />
               </div>
               <div className="px-1.5 py-1 bg-card">
                 <p className="font-display uppercase tracking-wider text-[9px] text-foreground truncate">
