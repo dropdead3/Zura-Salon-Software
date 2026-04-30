@@ -223,8 +223,9 @@ export function WebsiteEditorSidebar({
     onSectionsChange?.(reordered);
     try {
       await updateSections.mutateAsync({ homepage: reordered });
-    } catch {
-      toast.error('Failed to save');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown error';
+      toast.error(`Failed to save: ${msg}`);
       setLocalSections(orderedSections);
     }
   };
@@ -239,8 +240,9 @@ export function WebsiteEditorSidebar({
       await updateSections.mutateAsync({ homepage: newSections });
       const label = newSections.find(s => s.id === sectionId)?.label ?? 'Section';
       toast.success(`${label} ${enabled ? 'enabled' : 'disabled'}`);
-    } catch {
-      toast.error('Failed to update section');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'unknown error';
+      toast.error(`Failed to update section: ${msg}`);
       setLocalSections(orderedSections);
     }
   };
