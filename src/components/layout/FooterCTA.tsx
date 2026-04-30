@@ -90,7 +90,12 @@ export function FooterCTA() {
                   filter: topLineFilter,
                 }}
               >
-                {config.headline_line1}
+                <InlineEditableText
+                  value={config.headline_line1}
+                  sectionKey="section_footer_cta"
+                  fieldPath="headline_line1"
+                  placeholder="First line"
+                />
               </motion.span>
             )}
             {config.headline_line2 && (
@@ -103,7 +108,12 @@ export function FooterCTA() {
                   filter: bottomLineFilter,
                 }}
               >
-                {config.headline_line2}
+                <InlineEditableText
+                  value={config.headline_line2}
+                  sectionKey="section_footer_cta"
+                  fieldPath="headline_line2"
+                  placeholder="Second line"
+                />
               </motion.span>
             )}
           </h2>
