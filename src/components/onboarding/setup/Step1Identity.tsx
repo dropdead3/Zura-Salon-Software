@@ -113,6 +113,73 @@ export function Step1Identity({ initialData, onChange, onValidityChange }: StepP
         </p>
       </div>
 
+      {/* Theme picker — sets the visitor-facing site theme. Stored to
+          localStorage; useCommitOrgSetup seeds it into site_settings on
+          successful commit so the new org's public site doesn't whiplash
+          to cream-lux on first preview. Operators can change it any time
+          from Site Design → Site Theme. */}
+      <div className="space-y-2">
+        <Label className="font-sans text-sm">Site theme</Label>
+        <div className="grid grid-cols-4 gap-2">
+          {WIZARD_THEME_TILES.map((id) => {
+            const t = colorThemes.find((c) => c.id === id);
+            if (!t) return null;
+            const isActive = selectedTheme === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => handleThemePick(id)}
+                aria-pressed={isActive}
+                aria-label={`Pick ${t.name} theme`}
+                title={`${t.name} — ${t.description}`}
+                className={cn(
+                  "group relative rounded-lg border overflow-hidden transition-all text-left",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  isActive
+                    ? "border-primary ring-2 ring-primary/30"
+                    : "border-border hover:border-foreground/30",
+                )}
+              >
+                {/* Mini-hero mock — same shapes as the dashboard's Site Theme
+                    tiles for cross-surface recognition. */}
+                <div
+                  className="h-12 relative overflow-hidden"
+                  style={{ backgroundColor: t.lightPreview.bg }}
+                  aria-hidden="true"
+                >
+                  <div
+                    className="absolute left-1.5 top-1.5 h-1 w-7 rounded-sm"
+                    style={{ backgroundColor: t.lightPreview.primary }}
+                  />
+                  <div
+                    className="absolute left-1.5 top-3.5 h-[3px] w-9 rounded-sm opacity-70"
+                    style={{ backgroundColor: t.lightPreview.accent }}
+                  />
+                  <div
+                    className="absolute left-1.5 top-5 h-[3px] w-6 rounded-sm opacity-50"
+                    style={{ backgroundColor: t.lightPreview.accent }}
+                  />
+                  <div
+                    className="absolute right-1.5 bottom-1.5 h-2 w-5 rounded-full"
+                    style={{ backgroundColor: t.lightPreview.primary }}
+                  />
+                </div>
+                <div className="px-1.5 py-1 bg-card">
+                  <p className="font-display uppercase tracking-wider text-[9px] text-foreground truncate">
+                    {t.name}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <p className="font-sans text-xs text-muted-foreground">
+          Sets the look visitors see on your public site. Browse all themes
+          from Site Design after setup.
+        </p>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="legal-name" className="font-sans text-sm">
           Legal entity name <span className="text-muted-foreground">(optional)</span>
