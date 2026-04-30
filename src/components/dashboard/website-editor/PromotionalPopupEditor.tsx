@@ -13,6 +13,7 @@ import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { cn } from '@/lib/utils';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
