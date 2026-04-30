@@ -12,6 +12,7 @@ import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { cn } from '@/lib/utils';
 import {
