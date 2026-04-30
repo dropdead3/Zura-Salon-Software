@@ -13,6 +13,8 @@ import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useOverflowGuard } from '@/hooks/useOverflowGuard';
+import { useDismissedSuggestion } from '@/hooks/useDismissedSuggestion';
+import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
@@ -403,9 +405,11 @@ export function PromotionalPopupEditor() {
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
           <div className="grid grid-cols-[auto_1fr] gap-2">
-            <EyebrowIconPicker
+            <GlyphPicker
+              ariaLabel="Eyebrow icon"
+              options={EYEBROW_ICON_OPTIONS}
               value={formData.eyebrowIcon ?? 'none'}
-              onChange={(v) => handleChange('eyebrowIcon', v)}
+              onChange={(v) => handleChange('eyebrowIcon', v as EyebrowIcon)}
               accent={formData.accentColor}
             />
             <Input
