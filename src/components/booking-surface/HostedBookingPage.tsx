@@ -15,6 +15,7 @@ import { BookingLocationPicker, type BookingLocation } from './BookingLocationPi
 import { BookingDateTimePicker } from './BookingDateTimePicker';
 import { BookingClientForm } from './BookingClientForm';
 import { BookingConfirmation } from './BookingConfirmation';
+import { BookingPromoBanner } from './BookingPromoBanner';
 import { useBookingSession, STEP_LABELS } from '@/hooks/useBookingSession';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -394,6 +395,15 @@ export function HostedBookingPage() {
         )}
 
         <div className={`max-w-4xl mx-auto pb-16 ${isEmbedMode ? 'px-3 pt-3' : 'px-4 sm:px-6'}`}>
+          {/* Promo banner — closes the loop opened by the promotional popup's
+              "Claim Offer" CTA. Renders nothing when no recognized ?promo= is
+              present (silence is valid output per Visibility Contract). */}
+          {!state.isConfirmed && (
+            <div className="mb-4">
+              <BookingPromoBanner organizationId={org.id} />
+            </div>
+          )}
+
           {!state.isConfirmed && (
             <BookingFlowProgress
               steps={steps.map((s) => STEP_LABELS[s])}
