@@ -22,6 +22,8 @@ import {
   useFAQConfig,
   useFooterCTAConfig,
   useNewClientConfig,
+  useTestimonialsConfig,
+  useExtensionsConfig,
 } from '@/hooks/useSectionConfig';
 import { useToast } from '@/hooks/use-toast';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
