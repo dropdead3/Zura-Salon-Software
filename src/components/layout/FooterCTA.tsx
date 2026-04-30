@@ -129,7 +129,13 @@ export function FooterCTA() {
               filter: descFilter,
             }}
           >
-            {config.description}
+            <InlineEditableText
+              value={config.description}
+              sectionKey="section_footer_cta"
+              fieldPath="description"
+              placeholder="Description"
+              multiline
+            />
           </motion.p>
         )}
 
