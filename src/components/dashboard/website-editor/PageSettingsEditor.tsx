@@ -291,3 +291,35 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
     </div>
   );
 }
+
+// Compact page-level chip — mirrors EditorSectionCard's StyleChip but lives
+// inline in the Page Settings card so the rail and the rest of the form share
+// the same visual rhythm.
+function PageStyleChip({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'h-7 inline-flex items-center gap-1.5 px-2.5 rounded-full text-[11px] font-sans',
+        'border transition-colors',
+        active
+          ? 'bg-primary/10 border-primary/30 text-primary hover:bg-primary/15'
+          : 'bg-background border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted/60',
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
