@@ -319,6 +319,20 @@ export function EditorSectionCard({
               tooltip={widthTooltip}
               onClick={handleCycleWidth}
             />
+            <StyleChip
+              icon={<Type className="h-3 w-3" />}
+              label="H"
+              active={isHeadingScaleActive(overrides)}
+              tooltip={headingScaleTooltip}
+              onClick={handleCycleHeadingScale}
+            />
+            <StyleChip
+              icon={<Tag className="h-3 w-3" />}
+              label={overrides.eyebrow_visible === false ? 'Eb·Off' : 'Eb'}
+              active={isEyebrowActive(overrides)}
+              tooltip={eyebrowTooltip}
+              onClick={handleToggleEyebrow}
+            />
           </div>
         </div>
 
