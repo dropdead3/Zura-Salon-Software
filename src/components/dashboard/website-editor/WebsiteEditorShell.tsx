@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from 'rea
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
+  ArrowLeft,
   ChevronRight,
   Check,
   Circle,
@@ -10,12 +11,13 @@ import {
   History,
   Loader2,
   MousePointer2,
-  
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
+  Plus,
   RotateCcw,
   Save,
+  Settings,
   FileText,
   Menu,
   MoreHorizontal,
