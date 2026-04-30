@@ -73,18 +73,23 @@ const DEFAULTS: Record<CustomSectionType, SectionData> = {
 export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange, onLabelChange }: CustomSectionEditorProps) {
   const settingsKey = `section_custom_${sectionId}`;
   const [editingLabel, setEditingLabel] = useState(sectionLabel);
+export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange, onLabelChange }: CustomSectionEditorProps) {
+  const settingsKey = `section_custom_${sectionId}`;
+  const [editingLabel, setEditingLabel] = useState(sectionLabel);
   const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId();
+  // Editor surfaces always read the draft layer so the operator sees their
+  // unsaved-but-saved-as-draft work, not the last published value.
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = 'draft'; // editor surface
+  void isPreview;
 
   const { data: savedConfig } = useQuery({
-    queryKey: ['site-settings', settingsKey],
+    queryKey: ['site-settings', orgId, settingsKey, mode],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', settingsKey)
-        .maybeSingle();
-      if (error) throw error;
-      return (data?.value as unknown as SectionData) ?? DEFAULTS[sectionType];
+      const value = await fetchSiteSetting<SectionData>(orgId!, settingsKey, mode);
+      return value ?? DEFAULTS[sectionType];
     },
   });
 
@@ -103,25 +108,20 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!orgId) throw new Error('No organization context');
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: existing } = await supabase.from('site_settings').select('id').eq('id', settingsKey).maybeSingle();
-      if (existing) {
-        const { error } = await supabase.from('site_settings').update({ value: config as never, updated_by: user?.id }).eq('id', settingsKey);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('site_settings').insert({ id: settingsKey, value: config as never, updated_by: user?.id });
-        if (error) throw error;
-      }
+      // Draft-only write. Live `value` is untouched until Publish.
+      await writeSiteSettingDraft(orgId, settingsKey, config, user?.id ?? null);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', settingsKey] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, settingsKey] });
       setIsDirty(false);
       window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
-      toast.success('Section saved');
-      window.dispatchEvent(new CustomEvent('website-preview-refresh'));
+      toast.success('Draft saved');
     },
     onError: () => toast.error('Failed to save'),
   });
+
 
   useEffect(() => {
     const handler = () => { if (isDirty) saveMutation.mutate(); };
