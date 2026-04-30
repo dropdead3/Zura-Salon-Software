@@ -46,6 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 import {
   Dialog,
   DialogContent,
@@ -1544,78 +1545,44 @@ function WebsiteEditorShellInner() {
               and making operators reflex-click destructive paths.
             • Buttons sized via the canonical `Button` size token (default
               h-9), not raw AlertDialogAction (which used hero-sized fills). */}
-      <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
-        <AlertDialogContent className="max-w-md gap-4">
-          <AlertDialogHeader className="space-y-2">
-            <AlertDialogTitle className="font-display text-base tracking-wide uppercase">
-              Unsaved changes
-            </AlertDialogTitle>
-            <AlertDialogDescription className="font-sans text-sm leading-relaxed">
-              You have unsaved edits in this section. Save them as a draft
-              first, or discard and continue.
-              <span className="block mt-1.5 text-xs text-muted-foreground/80">
-                Drafts stay private until you Publish from Website Hub.
-              </span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 sm:gap-0">
-            {/* Passive escape — ghost, no fill, sits leftmost. */}
-            <AlertDialogCancel asChild>
-              <Button variant="ghost" size="default" className="rounded-full">
-                Stay here
-              </Button>
-            </AlertDialogCancel>
-            {/* Cautious destructive — outline so it doesn't outshout primary. */}
-            <Button
-              variant="outline"
-              size="default"
-              className="rounded-full text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/60"
-              onClick={() => {
-                if (!pendingNav) return;
-                window.dispatchEvent(
-                  new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
-                );
-                setIsDirty(false);
-                if (pendingNav.type === 'tab') setEditorTab(pendingNav.tab);
-                else setSelectedPageId(pendingNav.pageId);
-                setPendingNav(null);
-              }}
-            >
-              Discard changes
-            </Button>
-            {/* Recommended path — filled primary, rightmost. */}
-            <Button
-              variant="default"
-              size="default"
-              className="rounded-full"
-              onClick={() => {
-                if (!pendingNav) return;
-                // Trigger the active editor's save handler. When it finishes
-                // (editor-saving-state flips back to false), run the deferred
-                // navigation. Generic across every panel using useEditorSaveAction.
-                const navTarget = pendingNav;
-                let armed = false;
-                const onSavingChange = (evt: Event) => {
-                  const saving = !!(evt as CustomEvent).detail?.saving;
-                  if (saving) {
-                    armed = true;
-                    return;
-                  }
-                  if (!armed) return;
-                  window.removeEventListener('editor-saving-state', onSavingChange);
-                  if (navTarget.type === 'tab') setEditorTab(navTarget.tab);
-                  else setSelectedPageId(navTarget.pageId);
-                  setPendingNav(null);
-                };
-                window.addEventListener('editor-saving-state', onSavingChange);
-                window.dispatchEvent(new CustomEvent('editor-save-request'));
-              }}
-            >
-              Save & continue
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <UnsavedChangesDialog
+        open={!!pendingNav}
+        isSaving={isSaving}
+        hint="Drafts stay private until you Publish from Website Hub."
+        onCancel={() => setPendingNav(null)}
+        onDiscard={() => {
+          if (!pendingNav) return;
+          window.dispatchEvent(
+            new CustomEvent('editor-dirty-state', { detail: { dirty: false } }),
+          );
+          setIsDirty(false);
+          if (pendingNav.type === 'tab') setEditorTab(pendingNav.tab);
+          else setSelectedPageId(pendingNav.pageId);
+          setPendingNav(null);
+        }}
+        onSave={() => {
+          if (!pendingNav) return;
+          // Trigger the active editor's save handler. When it finishes
+          // (editor-saving-state flips back to false), run the deferred
+          // navigation. Generic across every panel using useEditorSaveAction.
+          const navTarget = pendingNav;
+          let armed = false;
+          const onSavingChange = (evt: Event) => {
+            const saving = !!(evt as CustomEvent).detail?.saving;
+            if (saving) {
+              armed = true;
+              return;
+            }
+            if (!armed) return;
+            window.removeEventListener('editor-saving-state', onSavingChange);
+            if (navTarget.type === 'tab') setEditorTab(navTarget.tab);
+            else setSelectedPageId(navTarget.pageId);
+            setPendingNav(null);
+          };
+          window.addEventListener('editor-saving-state', onSavingChange);
+          window.dispatchEvent(new CustomEvent('editor-save-request'));
+        }}
+      />
     </div>
   );
 }
