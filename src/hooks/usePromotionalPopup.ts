@@ -9,6 +9,7 @@ export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
 export type PopupFrequency = 'once' | 'once-per-session' | 'daily' | 'always';
 export type PopupAudience = 'all' | 'new-visitors-only';
 export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
+export type FabPosition = 'bottom-right' | 'bottom-left';
 
 export interface PromotionalPopupSettings {
   enabled: boolean;
