@@ -28,7 +28,9 @@ function readDevice(): DeviceMode {
     const v = localStorage.getItem(VIEWPORT_KEY);
     if (v === 'desktop' || v === 'tablet' || v === 'mobile' || v === 'fit') return v;
   } catch {}
-  return 'desktop';
+  // Default to 'fit' so the iframe uses the full pane and the site's real
+  // responsive breakpoints kick in. Persisted preferences override.
+  return 'fit';
 }
 
 function readOrientation(): Orientation {
