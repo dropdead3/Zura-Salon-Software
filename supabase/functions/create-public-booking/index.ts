@@ -360,6 +360,12 @@ Deno.serve(async (req) => {
               final_amount: finalPrice,
               location_id: location_id || null,
               staff_user_id: staffUserId,
+              // Surface attribution: identifies which marketing channel drove this
+              // redemption. Lets the popup editor count strictly popup-driven
+              // bookings as future surfaces (campaigns, QR codes) write to the
+              // same table. See `mem://architecture/visibility-contracts.md` —
+              // attribution silence is honest; conflating channels is not.
+              surface: 'promotional_popup',
             });
           if (redempErr) {
             // Don't fail the booking — attribution is best-effort. Operators

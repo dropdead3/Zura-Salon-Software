@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock, Link2, AlertTriangle } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Sparkline } from '@/components/ui/Sparkline';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
@@ -225,7 +226,7 @@ export function PromotionalPopupEditor() {
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [autoSaving, setAutoSaving] = useState(false);
 
-  // Live count of confirmed redemptions for the *saved* offer code. We track
+  // Live count + 14-day velocity for the *saved* offer code. We track
   // savedSnapshot.offerCode (not formData) so the count reflects what's
   // actually in production, not in-flight edits — operators editing the code
   // shouldn't see the count flicker mid-keystroke.
@@ -233,6 +234,8 @@ export function PromotionalPopupEditor() {
     savedSnapshot.offerCode,
   );
   const redemptionCount = redemptionData?.count ?? 0;
+  const redemptionSeries = redemptionData?.series ?? [];
+  const redemptionLast24h = redemptionData?.last24h ?? 0;
 
   useEffect(() => {
     if (settings) {
@@ -327,6 +330,12 @@ export function PromotionalPopupEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [overflows],
   );
+  // Empty-code guard — warns (doesn't block) when the destination is a
+  // booking flow but no code is attached. Visitors would land on plain booking
+  // with nothing applied: a silent dead-end on a "Claim Offer" promise. Same
+  // warn-don't-block pattern as overflow/contrast — operator can ship via
+  // "Save anyway" if the offer truly has no code.
+  const offerCodeRef = useRef<HTMLInputElement | null>(null);
   const guards = useMemo(
     () => [
       makeOverflowGuard<OverflowFinding>(overflows, fieldRefs),
@@ -334,8 +343,21 @@ export function PromotionalPopupEditor() {
         accent: formData.accentColor,
         getRatio: bestTextContrast,
       }),
+      () => {
+        const dest = formData.acceptDestination ?? 'booking';
+        const codeMissing = !(formData.offerCode ?? '').trim();
+        if (!codeMissing) return null;
+        if (dest !== 'booking' && dest !== 'consultation') return null;
+        return {
+          field: 'offerCode',
+          title: 'No offer code attached',
+          description:
+            'Visitors who click Claim Offer will land on plain booking with nothing applied. Add a code or switch the destination to a custom URL.',
+          scrollTo: offerCodeRef.current,
+        };
+      },
     ],
-    [overflows, fieldRefs, formData.accentColor],
+    [overflows, fieldRefs, formData.accentColor, formData.acceptDestination, formData.offerCode],
   );
   const { guardedSave, isFieldGuarded } = usePersistGuards({ guards, persist });
   // Back-compat alias — existing destructive-state styling reads this name.
@@ -483,28 +505,66 @@ export function PromotionalPopupEditor() {
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
           when no code is configured (silence is valid output) and shows "0"
-          honestly when the code exists but hasn't been redeemed yet. */}
+          honestly when the code exists but hasn't been redeemed yet.
+
+          14-day sparkline answers "is it still working?" — flat-zero for new
+          codes (silence is valid), then traces velocity as redemptions land.
+          Last-24h chip surfaces momentum at a glance. */}
       {savedSnapshot.offerCode?.trim() && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border/60 bg-muted/30">
-          <div className="flex items-center gap-2 min-w-0">
-            <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
-                Redemptions
-              </p>
-              <p className="font-sans text-sm text-foreground">
-                <span className="font-medium tabular-nums">{redemptionCount}</span>
-                <span className="text-muted-foreground">
-                  {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
-                  <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
-                </span>
-              </p>
+        <div className="px-3 py-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                  Redemptions
+                </p>
+                <p className="font-sans text-sm text-foreground">
+                  <span className="font-medium tabular-nums">{redemptionCount}</span>
+                  <span className="text-muted-foreground">
+                    {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
+                    <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
+                  </span>
+                </p>
+              </div>
             </div>
+            {redemptionCount === 0 ? (
+              <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
+                No redemptions yet
+              </p>
+            ) : (
+              <div
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-sans shrink-0',
+                  redemptionLast24h > 0
+                    ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
+                    : 'border-border/60 bg-background text-muted-foreground',
+                )}
+                title="Confirmed redemptions in the last 24 hours"
+              >
+                {redemptionLast24h > 0 ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
+                <span className="tabular-nums">{redemptionLast24h}</span>
+                <span>last 24h</span>
+              </div>
+            )}
           </div>
-          {redemptionCount === 0 && (
-            <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
-              No redemptions yet
-            </p>
+          {redemptionCount > 0 && redemptionSeries.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground shrink-0">
+                14d
+              </span>
+              <div className="flex-1 text-primary">
+                <Sparkline
+                  data={redemptionSeries}
+                  height={24}
+                  ariaLabel="14-day redemption velocity"
+                />
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -673,10 +733,25 @@ export function PromotionalPopupEditor() {
           hint="Attached to the booking URL when a visitor accepts (e.g. FREECUT). Recorded for the team."
         >
           <Input
+            ref={offerCodeRef}
             value={formData.offerCode}
             onChange={(e) => handleChange('offerCode', e.target.value.toUpperCase())}
             placeholder="FREECUT"
           />
+          {/* Empty-code lint — passive editor warning that mirrors the publish
+              gate guard. Fires when destination is booking/consultation but
+              the code is empty: visitors would land on plain booking with
+              nothing applied. Warn-don't-block: the field still saves. */}
+          {!(formData.offerCode ?? '').trim() &&
+            ((formData.acceptDestination ?? 'booking') === 'booking' ||
+              (formData.acceptDestination ?? 'booking') === 'consultation') && (
+              <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl border border-amber-500/40 bg-amber-500/5">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="font-sans text-xs text-foreground leading-relaxed">
+                  No code attached — visitors who click Claim Offer will land on plain booking with nothing applied. Add a code or switch the destination to a Custom URL.
+                </p>
+              </div>
+            )}
         </Field>
 
         {/* Destination — where Claim Offer sends the visitor */}
