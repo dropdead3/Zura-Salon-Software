@@ -29,11 +29,13 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
 ];
 
 export function PromotionalPopupEditor() {
+  const orgId = useSettingsOrgId();
   const { data: settings, isLoading } = usePromotionalPopup();
   const updateSettings = useUpdatePromotionalPopup();
 
   const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
+  const [autoSaving, setAutoSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -77,48 +79,54 @@ export function PromotionalPopupEditor() {
 
   useEditorSaveAction(handleSave);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // Auto-save for the binary Enable toggle — operators expect a switch to
+  // "just work" without hunting for Save. We persist immediately, refresh
+  // the preview, and skip the dirty-state path for this single field.
+  const handleEnableToggle = useCallback(
+    async (checked: boolean) => {
+      const next = { ...formData, enabled: checked };
+      setFormData(next);
+      setAutoSaving(true);
+      try {
+        await updateSettings.mutateAsync(next);
+        setSavedSnapshot(next);
+        toast.success(checked ? 'Popup enabled' : 'Popup disabled');
+        triggerPreviewRefresh();
+      } catch (err) {
+        // Roll back optimistic state on failure
+        setFormData((prev) => ({ ...prev, enabled: !checked }));
+        const msg = err instanceof Error ? err.message : 'unknown error';
+        toast.error(`Failed to update: ${msg}`);
+      } finally {
+        setAutoSaving(false);
+      }
+    },
+    [formData, updateSettings],
+  );
 
-  return (
-    <EditorCard
-      title="Promotional Popup"
-      icon={Megaphone}
-      description="Show a one-time offer to website visitors. Accept routes them to booking with the offer code attached; decline dismisses based on your frequency cap."
-    >
-      {/* Enable */}
-      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-        <div>
-          <Label htmlFor="promo-enabled" className="text-base font-medium">
-            Show Promotional Popup
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            Toggle the popup on or off across the public site.
-          </p>
-        </div>
-        <Switch
-          id="promo-enabled"
-          checked={formData.enabled}
-          onCheckedChange={(c) => handleChange('enabled', c)}
-        />
-      </div>
+  const handlePreviewNow = useCallback(() => {
+    triggerPreviewRefresh();
+    toast.success('Preview reloaded — popup will trigger immediately');
+  }, []);
 
-      {isDirty && (
-        <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
-          <p className="font-sans text-xs text-foreground">
-            <span className="font-display uppercase tracking-wider text-[10px] text-primary mr-2">
-              Unsaved
-            </span>
-            Press <strong>Save</strong> to keep this draft. Visitors won't see it until you{' '}
-            <strong>Publish</strong> from Website Hub.
-          </p>
-        </div>
-      )}
+  const handleResetSession = useCallback(() => {
+    if (typeof window === 'undefined' || !orgId) return;
+    try {
+      // Clear all per-org promo dismissal records + session sentinel
+      const prefix = `zura.promo.${orgId}.`;
+      const toDelete: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k && k.startsWith(prefix)) toDelete.push(k);
+      }
+      toDelete.forEach((k) => window.localStorage.removeItem(k));
+      window.sessionStorage.removeItem('zura.promo.session');
+      triggerPreviewRefresh();
+      toast.success(`Cleared ${toDelete.length} dismissal record(s) — preview reloaded`);
+    } catch (err) {
+      toast.error('Could not reset session storage');
+    }
+  }, [orgId]);
 
       {/* Content */}
       <Section title="Content">
