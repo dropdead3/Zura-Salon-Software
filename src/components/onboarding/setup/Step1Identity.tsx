@@ -64,6 +64,25 @@ export function Step1Identity({ initialData, onChange, onValidityChange }: StepP
   // orchestrator doesn't overwrite a backfilled multi_location with the default.
   const [businessTypeTouched, setBusinessTypeTouched] = useState(false);
 
+  // Wizard theme picker — local UI state mirrors localStorage. The
+  // commit-time seed in useCommitOrgSetup.seedWebsiteThemeFromDashboard
+  // reads this same key, so picking a tile here makes the seed deterministic
+  // and intentional rather than implicit (was: "whatever the operator
+  // happened to click in dashboard chrome before commit"). Defaults to
+  // whatever's already stored so re-entering the wizard doesn't reset.
+  const [selectedTheme, setSelectedTheme] = useState<ColorTheme>(() => {
+    if (typeof window === "undefined") return "zura";
+    const stored = window.localStorage.getItem(WIZARD_THEME_STORAGE_KEY);
+    return (stored as ColorTheme) ?? "zura";
+  });
+
+  const handleThemePick = (id: ColorTheme) => {
+    setSelectedTheme(id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(WIZARD_THEME_STORAGE_KEY, id);
+    }
+  };
+
   useEffect(() => {
     onChange({
       business_name: businessName,
