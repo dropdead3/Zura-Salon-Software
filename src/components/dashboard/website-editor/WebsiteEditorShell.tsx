@@ -112,6 +112,7 @@ import { StylistsContent } from './StylistsContent';
 import { LocationsContent } from './LocationsContent';
 import { ServicesContent } from './ServicesContent';
 import { AnnouncementBarContent } from './AnnouncementBarContent';
+import { PromotionalPopupEditor } from './PromotionalPopupEditor';
 import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
