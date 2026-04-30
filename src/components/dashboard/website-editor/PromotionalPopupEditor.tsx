@@ -527,7 +527,7 @@ function FabPreviewSwatch({
           className={cn(
             'absolute bottom-1.5 flex items-center gap-1 rounded-full pl-1 pr-1.5 h-5 shadow-md text-primary-foreground',
             position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
-            pulsing && 'animate-promo-fab-pulse',
+            pulsing && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
           )}
           style={{ backgroundColor: accentColor }}
         >
