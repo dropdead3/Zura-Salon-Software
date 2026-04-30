@@ -219,16 +219,18 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
             {/* Tagline */}
-            <motion.div
-              initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 2.0 }}
-              style={{ y: taglineY }}
-            >
-              <Eyebrow className="text-muted-foreground mb-6">
-                Hair • Color • Artistry
-              </Eyebrow>
-            </motion.div>
+            {showEyebrow && (
+              <motion.div
+                initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ ...springTransition, delay: 2.0 }}
+                style={{ y: taglineY }}
+              >
+                <Eyebrow className="text-muted-foreground mb-6 section-eyebrow">
+                  {eyebrowText}
+                </Eyebrow>
+              </motion.div>
+            )}
 
             {/* Main headline */}
             <motion.h1
