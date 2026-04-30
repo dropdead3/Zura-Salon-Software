@@ -1,82 +1,47 @@
-## Website Editor Audit — Findings & Plan
+# Wave 5 — Website Editor Polish
 
-The editor shell is solid (persistence, shortcuts, breadcrumb, resizable panes), but five real problems remain. Below is what's wrong and exactly what to change.
+Address the seven priority issues from the audit. Scope is limited to the editor surface; no schema or routing changes.
 
----
+## Changes
 
-### Findings
+**1. Toolbar reflow** — `WebsiteEditorShell.tsx`
+- Page picker: shrink min-width 160→140, max 260→220, add `shrink-0`.
+- Breadcrumb: drop the redundant "Home" segment (page picker already shows it). Keep only the section name. Hide below `lg`. Add `min-w-0 flex-1` so it truncates instead of pushing siblings.
+- Move `<SaveStatusPill>` from the left cluster to the right cluster, immediately before the Publish button — it visually qualifies the action it describes.
 
-**1. Page management is silently broken from the editor entrypoint.**
-`WebsiteEditorShell` renders `<WebsiteEditorSidebar>` with only 5 props. The sidebar exposes `onAddPage`, `onDeletePage`, `onApplyPageTemplate`, `onPageSectionToggle/Reorder/Delete/Duplicate/Add` — all undefined. So:
-- "+ Add Page" button does nothing.
-- "Page Settings", "Templates", trash icons on non-home pages are no-ops.
-- Dragging/toggling/duplicating sections on any non-home page silently fails.
-- Selecting a non-home page leads to a dead "Pick a section to edit" state because `EDITOR_COMPONENTS` has no entry for `custom-*`, `pages`, `navigation`, or `page-settings` tabs.
+**2. De-duplicate canvas pane header** — `WebsiteEditorShell.tsx`
+- Remove the `{sectionLabel}` strip (the small "Hero Section" caption above the editor card). The toolbar breadcrumb now carries that, and the EditorCard has its own large title.
+- Keep only the sidebar collapse toggle in that strip; if showSidebar is true, render an empty 8px spacer instead of the full strip.
 
-**2. Toolbar is overweight and duplicates labels.**
-Top row has Page picker + breadcrumb + 5 buttons (Hide Canvas, History, Discard, Publish + count, Open Public Site). Then the canvas sub-header repeats "Editing X" plus a shortcut crib. The breadcrumb already says the same thing — three places, one signal.
+**3. Preview pane polish** — `WebsiteEditorShell.tsx` + `LivePreviewPanel.tsx`
+- Increase default canvas pane size 30 → 38 so click-to-edit and the embedded `EditorSectionCard` controls are usable at common viewports.
+- In the preview metadata strip, replace the raw URL line with the **path + host** only (e.g., `dropdeadsalons.com/` instead of the full UUID-bearing iframe URL). The full URL stays available via the existing copy/open buttons.
+- Collapse the metadata strip from two lines to one when the displayUrl already encodes the channel (drops `Org route` redundancy when the host matches `previewOrigin`).
 
-**3. No click-to-edit from the live canvas.**
-`EditorSectionCard` posts `EDITOR_SELECT_SECTION`, `EDITOR_TOGGLE_SECTION`, `EDITOR_DUPLICATE_SECTION`, `EDITOR_DELETE_SECTION` from inside the iframe — but `LivePreviewPanel` never listens. The canvas is read-only, so users still navigate via sidebar even though the visual affordances suggest otherwise. Conversely, picking a section in the sidebar scrolls the iframe (good) but never highlights a corresponding card (no two-way binding).
+**4. Remove redundant sidebar page picker** — `WebsiteEditorSidebar.tsx`
+- Remove the "EDITING PAGE" block (lines ~491–~530) including the Select, the `+` add-page button, and the template/delete chip row beneath. The toolbar picker is canonical (⌘K bound).
+- Keep the small page-context label in the sidebar's "Pages" section header (it's already there in the navigation hierarchy below).
+- The collapsed-rail variant of the sidebar already shows a page icon — leave that intact.
 
-**4. No unsaved-changes safety net.**
-`useEditorDirtyState` and `useEditorSaveAction` exist but aren't wired in `WebsiteEditorShell`. Switching pages, sections, or tabs while a per-section editor has unsaved input loses changes silently. There's also no autosave/last-saved indicator.
+**5. Token-ize SaveStatusPill colors** — `WebsiteEditorShell.tsx`
+- Replace raw `amber-*` and `emerald-*` Tailwind colors with semantic equivalents using existing CSS tokens: amber → `bg-warning/10 text-warning` (or `bg-accent/10` if `--warning` isn't defined; verify against `index.css` first); emerald → `bg-success/10 text-success` with same fallback. If tokens aren't defined, leave a TODO and use existing `text-muted-foreground`/`bg-muted` for the saved state and a single `text-primary`/`bg-primary/10` for dirty — keep within the design system.
 
-**5. Empty state hides the only path forward, and loading is jarring.**
-- The "Pick a section" empty state appears whenever a tab has no `EDITOR_COMPONENTS` mapping (e.g. `pages`, `navigation`, `page-settings`, `custom-*`). It looks like a bug.
-- Per-section editors mount without a skeleton; the canvas blanks then snaps in.
-- Mobile: Live Canvas is hidden, but the sidebar is also hidden (`!isMobile` guard) so the editor canvas is *just* the section editor — no way to open sections on a phone.
+**6. AI assistant (HelpFAB) bounds** — `HelpFAB.tsx`
+- Hide the floating Z when the user is inside the Website Editor route (mirrors the existing Team Chat suppression). Detection: `location.pathname.includes('/website-hub')` AND query `?tab=editor` OR pathname includes `/website-editor`. Simpler: just match the website-hub admin route.
 
----
+## What's NOT in this wave (deferred)
 
-### Plan
+- Moving each per-editor "Reset" button (HeroEditor, BrandStatementEditor, etc.) into an overflow menu — would touch ~15 editor files and risks regressions. Reset already uses `variant="ghost"` so visual weight is low; revisit if user reports accidental clicks.
+- Character counter inline placement (would require touching `CharCountInput`).
 
-**A. Wire page management + non-home sections (fixes Finding 1)**
-- Lift page CRUD + per-page section operations out of `WebsiteSettingsContent`'s old structure into `WebsiteEditorShell`. Add handlers backed by `useWebsitePages` mutations:
-  - `handleAddPage` → opens `PageTemplatePicker` modal, creates page, switches to it.
-  - `handleDeletePage` → confirm dialog, deletes, falls back to `home`.
-  - `handlePageSectionToggle/Reorder/Delete/Duplicate/Add` → `useUpdateWebsitePages` patches.
-- Extend `EDITOR_COMPONENTS` with:
-  - `pages` → `PagesManager`
-  - `page-settings` → `PageSettingsEditor`
-  - `custom-*` → resolves to `CustomSectionEditor` keyed by section id.
-- Add a `PageTemplatePicker` modal trigger inside the shell (`onApplyPageTemplate`).
+## Risk
 
-**B. Slim and reorganise the toolbar (fixes Finding 2)**
-- Top toolbar (left → right): Page picker · breadcrumb · spacer · status pill (`Saved 2s ago` / `N unpublished`) · primary `Publish` (with count badge) · overflow `⋯` menu containing History, Discard, Open Public Site, Live Canvas toggle, Sidebar toggle.
-- Remove the canvas sub-header's "Editing X" string and shortcut crib (breadcrumb already shows the section; expose shortcuts via a `?` keyboard-help dialog reused from `useKeyboardShortcuts`).
-- Demote `Live Canvas` and `Sidebar` toggles to icon-only buttons inside the canvas pane gutter (where they belong contextually).
+- Sidebar page picker removal: ensure no other component dispatches via that Select. Verified — `onPageChange` is a passed prop only used by this Select. Toolbar picker covers the same flow.
+- Default canvas pane 30→38 reduces editor pane width by ~8% — still above 30% min for editor pane (`minSize={30}`).
 
-**C. Click-to-edit + two-way selection (fixes Finding 3)**
-- In `LivePreviewPanel`, add a `window.addEventListener('message')` filtered by `previewOrigin` that handles:
-  - `EDITOR_SELECT_SECTION` → calls a new `onSelectSection` prop → `setEditorTab(tabFor(sectionId))`.
-  - `EDITOR_TOGGLE_SECTION` / `EDITOR_DUPLICATE_SECTION` / `EDITOR_DELETE_SECTION` → forwarded to shell handlers (already implemented in sidebar).
-- After `setEditorTab`, post a `PREVIEW_HIGHLIGHT_SECTION` message back to the iframe so the matching `EditorSectionCard` shows the selected ring — closes the loop.
+## Files touched
 
-**D. Unsaved-changes guard + save status (fixes Finding 4)**
-- In `WebsiteEditorShell`, listen for the existing `editor-dirty-state` and `editor-saving-state` events.
-- Track `dirty`, `saving`, `lastSavedAt` in shell state.
-- When `dirty && (changing tab || page || closing canvas)`: open an `AlertDialog` ("Save changes to X before leaving?") with Save / Discard / Cancel. Save dispatches `editor-save-request`.
-- Render a status pill in the toolbar: `Saving…` (spinner), `Saved · 12s ago` (relative timer), `Unsaved changes` (amber dot).
-
-**E. Empty/loading/mobile polish (fixes Finding 5)**
-- Replace the global "Pick a section" empty state with a per-tab fallback: when a tab maps to a manager (`pages`, `navigation`), render that manager directly; never show the "pick a section" copy unless `editorTab` truly has no resolution.
-- Add `<EditorSkeletons />` (already exists) inside a `Suspense` wrapper around `EditorComponent` so swaps don't flash.
-- Mobile: replace the hidden sidebar with a `Sheet` triggered by a "Sections" button in the toolbar; keep Live Canvas off by default but expose a "Preview" link that opens the iframe URL in a new tab.
-
----
-
-### Files Changed
-
-- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — page handlers, expanded `EDITOR_COMPONENTS`, dirty-state guard, save-status pill, slimmer toolbar with overflow menu, message bridge to canvas, mobile Sheet sidebar.
-- `src/components/dashboard/website-editor/LivePreviewPanel.tsx` — `postMessage` listener, `onSelectSection` prop, two-way highlight.
-- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` — minor: ensure `pages` / `navigation` / `page-settings` tabs are emitted consistently; no API changes.
-- `src/components/dashboard/website-editor/PagesManager.tsx` and `PageSettingsEditor.tsx` — confirm exported component shape; small adapter if props differ from the registry signature.
-- `src/components/home/EditorSectionCard.tsx` — accept inbound `PREVIEW_HIGHLIGHT_SECTION` to drive `isSelected`.
-
-### Out of Scope (next wave)
-- Undo/redo stack across sections.
-- Inline canvas editing (text-in-place).
-- Section-level versioning UI (diff view in History panel).
-
-Confirm and I'll implement A→E in that order.
+- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx`
+- `src/components/dashboard/website-editor/LivePreviewPanel.tsx`
+- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx`
+- `src/components/dashboard/HelpFAB.tsx`
