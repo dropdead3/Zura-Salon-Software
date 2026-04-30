@@ -11,13 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Globe, Palette, Calendar, ShoppingBag, Scale, 
-  ExternalLink, Check, Loader2, Save, Megaphone,
-  Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
-  ArrowLeft, ArrowRight, PanelRightClose, PanelRightOpen, LayoutGrid,
-  PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode, History,
-  RotateCcw,
+import {
+  Globe, Palette, Calendar, ShoppingBag, Scale,
+  ExternalLink, Check, Loader2, Save,
+  Instagram, Facebook, Twitter, Linkedin, Youtube,
+  ArrowRight, Copy, Link as LinkIcon, QrCode,
+  LayoutGrid, Share2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
@@ -57,31 +56,8 @@ import { ActiveThemeCard } from './ActiveThemeCard';
 import { ThemeLibraryGrid } from './ThemeLibraryGrid';
 import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
 // useColorTheme already imported above
-// Website Editor components for embedded editor
-import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
-import { useWebsitePages } from '@/hooks/useWebsitePages';
-import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
-import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
-import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
-import { NewClientEditor } from '@/components/dashboard/website-editor/NewClientEditor';
-import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
-import { ExtensionsEditor } from '@/components/dashboard/website-editor/ExtensionsEditor';
-import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
-import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
-import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
-import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
-import { FooterEditor } from '@/components/dashboard/website-editor/FooterEditor';
-import { ServicesPreviewEditor } from '@/components/dashboard/website-editor/ServicesPreviewEditor';
-import { PopularServicesEditor } from '@/components/dashboard/website-editor/PopularServicesEditor';
-import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
-import { StylistsDisplayEditor } from '@/components/dashboard/website-editor/StylistsDisplayEditor';
-import { LocationsDisplayEditor } from '@/components/dashboard/website-editor/LocationsDisplayEditor';
-import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
-import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
-import { StylistsContent } from '@/components/dashboard/website-editor/StylistsContent';
-import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
-import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
-import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
+// Website Editor shell (immersive editor) lives in its own component now.
+import { WebsiteEditorShell } from '@/components/dashboard/website-editor/WebsiteEditorShell';
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -99,19 +75,6 @@ import {
 } from '@/components/ui/select';
 import { BookingVisibilityCard } from './BookingVisibilityCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { PublishChangelog } from '@/components/dashboard/website-editor/PublishChangelog';
-import { VersionHistoryPanel } from '@/components/dashboard/website-editor/VersionHistoryPanel';
-import { useChangelogSummary, useDiscardToLastPublished, useHasEverPublished } from '@/hooks/usePublishChangelog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
