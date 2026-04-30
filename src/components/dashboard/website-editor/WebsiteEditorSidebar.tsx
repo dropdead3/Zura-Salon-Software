@@ -72,19 +72,45 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Site Content items (data managers - not part of homepage ordering)
-const SITE_CONTENT_ITEMS = [
-  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
-  { tab: 'pages', label: 'Pages', description: 'Manage all pages', icon: FileText },
-  { tab: 'navigation', label: 'Navigation', description: 'Header & footer menus', icon: Layers },
-  { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
-  { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
-  { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
-  { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
-  { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
-  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
-  { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
+// Site Content items (data managers - not part of homepage ordering),
+// grouped by intent so the editor sidebar reads as a hierarchy not a flat list.
+type SiteContentItem = {
+  tab: string;
+  label: string;
+  description: string;
+  icon: typeof Megaphone;
+};
+
+const SITE_CONTENT_GROUPS: { title: string; items: SiteContentItem[] }[] = [
+  {
+    title: 'Site Chrome',
+    items: [
+      { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
+      { tab: 'navigation', label: 'Navigation', description: 'Header & footer menus', icon: Layers },
+      { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
+      { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
+    ],
+  },
+  {
+    title: 'Pages',
+    items: [
+      { tab: 'pages', label: 'Pages', description: 'Manage all pages', icon: FileText },
+    ],
+  },
+  {
+    title: 'Content Library',
+    items: [
+      { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
+      { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
+      { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
+      { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
+      { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
+    ],
+  },
 ];
+
+// Flattened list — used for the collapsed icon rail and lookups.
+const SITE_CONTENT_ITEMS: SiteContentItem[] = SITE_CONTENT_GROUPS.flatMap((g) => g.items);
 
 // Map built-in section IDs to UNIQUE tab values
 const BUILTIN_SECTION_TO_TAB: Record<BuiltinSectionType, string> = {
@@ -541,20 +567,24 @@ export function WebsiteEditorSidebar({
         <div className="py-2">
           {isHomePage && (
             <>
-              {/* Site Content Section */}
-              <SectionGroupHeader title="Site Content" />
-              <div className="space-y-0.5 mb-2">
-                {SITE_CONTENT_ITEMS.map(item => (
-                  <ContentNavItem
-                    key={item.tab}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    isActive={activeTab === item.tab}
-                    onSelect={() => onTabChange(item.tab)}
-                  />
-                ))}
-              </div>
+              {SITE_CONTENT_GROUPS.map((group, groupIndex) => (
+                <div key={group.title}>
+                  {groupIndex > 0 && <Separator className="my-2 mx-3" />}
+                  <SectionGroupHeader title={group.title} />
+                  <div className="space-y-0.5 mb-2">
+                    {group.items.map((item) => (
+                      <ContentNavItem
+                        key={item.tab}
+                        label={item.label}
+                        description={item.description}
+                        icon={item.icon}
+                        isActive={activeTab === item.tab}
+                        onSelect={() => onTabChange(item.tab)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               <Separator className="my-3 mx-3" />
             </>
