@@ -120,31 +120,66 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
     : `/org/your-salon/${local.slug || 'untitled'}`;
 
   // ─── Page-level chip rail handlers ─────────────────────────────────────
-  // Each chip cycles to the next preset and writes into PageConfig.style_overrides.
-  // Page-level overrides wrap all sections via <SectionStyleWrapper> in
-  // Index.tsx / DynamicPage.tsx — section-level chips still layer on top.
+  // Each chip cycles to the next preset and IMMEDIATELY persists the patch
+  // (Square-style "one tap = visible change") instead of staging it behind
+  // the form's Save button. Persistence flows through onUpdate so it shares
+  // the editor's dirty/saving plumbing — and we register an undo entry so
+  // chip cycles join the same Cmd+Z stack as section chips, reorders, and
+  // inline edits.
   const overrides: Partial<StyleOverrides> = local.style_overrides ?? {};
-  const updateOverrides = (patch: Partial<StyleOverrides>) => {
-    update('style_overrides', { ...overrides, ...patch });
-  };
+  const applyOverrides = useCallback(
+    async (patch: Partial<StyleOverrides>, label: string) => {
+      const beforeOverrides = overrides;
+      const beforePage = local;
+      const afterOverrides = { ...beforeOverrides, ...patch };
+      const afterPage = { ...beforePage, style_overrides: afterOverrides };
+      // Optimistic local sync so the form shows the new chip state instantly.
+      setLocal(afterPage);
+      try {
+        await onUpdate(afterPage);
+        pushEditorHistoryEntry({
+          label,
+          undo: async () => {
+            setLocal(beforePage);
+            await onUpdate(beforePage);
+          },
+          redo: async () => {
+            setLocal(afterPage);
+            await onUpdate(afterPage);
+          },
+        });
+      } catch {
+        // Roll back optimistic UI on failure; toast already surfaced upstream.
+        setLocal(beforePage);
+        toast.error('Failed to update page style');
+      }
+    },
+    [local, overrides, onUpdate],
+  );
   const cycleBg = () => {
     const idx = PAGE_BG_STOPS.findIndex(
       (s) => s.type === (overrides.background_type ?? 'none') && s.value === (overrides.background_value ?? ''),
     );
     const next = nextIn(PAGE_BG_STOPS, idx);
-    updateOverrides({ background_type: next.type, background_value: next.value });
+    void applyOverrides(
+      { background_type: next.type, background_value: next.value },
+      `Page background: ${next.label}`,
+    );
   };
   const cycleSpacing = () => {
     const idx = PAGE_SPACING_STOPS.findIndex(
       (s) => s.top === (overrides.padding_top ?? 0) && s.bottom === (overrides.padding_bottom ?? 0),
     );
     const next = nextIn(PAGE_SPACING_STOPS, idx);
-    updateOverrides({ padding_top: next.top, padding_bottom: next.bottom });
+    void applyOverrides(
+      { padding_top: next.top, padding_bottom: next.bottom },
+      `Page spacing: ${next.label}`,
+    );
   };
   const cycleWidth = () => {
     const idx = PAGE_WIDTH_STOPS.findIndex((s) => s.value === (overrides.max_width ?? 'full'));
     const next = nextIn(PAGE_WIDTH_STOPS, idx);
-    updateOverrides({ max_width: next.value });
+    void applyOverrides({ max_width: next.value }, `Page width: ${next.label}`);
   };
   const bgActive = !!overrides.background_type && overrides.background_type !== 'none' && !!overrides.background_value;
   const spacingActive = (overrides.padding_top ?? 0) > 0 || (overrides.padding_bottom ?? 0) > 0;
