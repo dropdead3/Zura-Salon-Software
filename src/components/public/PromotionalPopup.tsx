@@ -406,7 +406,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             <button
               onClick={handleAccept}
               className="font-display uppercase tracking-wider text-xs px-4 py-2 rounded-full text-primary-foreground"
-              style={{ backgroundColor: accent }}
+              style={{ backgroundColor: accent, color: accentFg }}
             >
               {cfg.ctaAcceptLabel}
             </button>
