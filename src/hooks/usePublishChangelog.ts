@@ -118,6 +118,18 @@ export function useChangelogSummary() {
   return summary;
 }
 
+/**
+ * Publish flow:
+ *   1. Promote every divergent draft_value → live `value` for the org's
+ *      site_settings rows. THIS is what makes editor changes visible to
+ *      public visitors.
+ *   2. Publish menus.
+ *   3. Snapshot the now-live state into website_page_versions /
+ *      website_site_versions for rollback / history.
+ *
+ * Until step 1 runs, the editor is a sandbox — visitors see the old live
+ * value. Calling Save in the editor only updates draft_value.
+ */
 export function usePublishAll() {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
@@ -135,7 +147,10 @@ export function usePublishAll() {
     mutationFn: async () => {
       if (!orgId) throw new Error('No organization');
 
-      // 1. Publish all menus
+      // 1. Promote drafts → live for every site_settings row in this org.
+      const promoted = await publishSiteSettingsDrafts(orgId);
+
+      // 2. Publish all menus.
       if (menus) {
         for (const menu of menus) {
           await publishMenu.mutateAsync({
@@ -145,7 +160,7 @@ export function usePublishAll() {
         }
       }
 
-      // 2. Save page version snapshots
+      // 3. Snapshot newly-promoted live state for rollback / history.
       if (pagesConfig?.pages) {
         for (const page of pagesConfig.pages) {
           await savePageVersion.mutateAsync({
@@ -155,8 +170,6 @@ export function usePublishAll() {
           });
         }
       }
-
-      // 3. Save site-wide surface snapshots
       if (theme) {
         await saveSiteVersion.mutateAsync({
           surface: 'theme',
@@ -178,13 +191,45 @@ export function usePublishAll() {
           changeSummary: 'Bulk publish via changelog',
         });
       }
+
+      return { promoted };
     },
     onSuccess: () => {
+      // Invalidate every site_settings cache key (live + draft modes) so
+      // both the public site AND the editor re-fetch fresh data.
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts'] });
       queryClient.invalidateQueries({ queryKey: ['website-menus'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
       queryClient.invalidateQueries({ queryKey: ['published-menu'] });
       queryClient.invalidateQueries({ queryKey: ['page-versions'] });
       queryClient.invalidateQueries({ queryKey: ['site-versions'] });
+    },
+  });
+}
+
+/**
+ * Discard all unpublished editor changes by copying live `value` back
+ * into `draft_value` for every site_settings row in the org. The live
+ * site is untouched; the editor reverts to showing what visitors see.
+ *
+ * This is the new, lightweight "Discard" action. The legacy
+ * `useDiscardToLastPublished` (snapshot-based) below remains available
+ * for restoring from version history.
+ */
+export function useDiscardDrafts() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!orgId) throw new Error('No organization');
+      return await discardSiteSettingsDrafts(orgId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts'] });
     },
   });
 }
