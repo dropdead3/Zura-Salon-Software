@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -15,7 +16,9 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
-  const { data: heroConfig } = useHeroConfig();
+  const { data: dbHeroConfig } = useHeroConfig();
+  // In editor preview mode, merge unsaved edits broadcast from the editor.
+  const heroConfig = useLiveOverride('section_hero', dbHeroConfig);
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
