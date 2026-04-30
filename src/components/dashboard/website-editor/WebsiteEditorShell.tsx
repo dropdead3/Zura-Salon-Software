@@ -267,7 +267,6 @@ export function WebsiteEditorShell() {
   const { data: pagesConfig } = useWebsitePages();
   const updatePages = useUpdateWebsitePages();
   const selectedPage = pagesConfig?.pages?.find((p) => p.id === selectedPageId);
-  const selectedPageTitle = selectedPage?.title ?? 'Home';
   const isHomePage = selectedPageId === 'home';
 
   const { publicUrl: getPublicUrl, publicPageUrl } = useOrgPublicUrl();
