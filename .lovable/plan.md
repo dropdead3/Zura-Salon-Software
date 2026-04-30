@@ -1,104 +1,85 @@
-## Website Publish & Version History
+# Website Publish UX — Sidebar Dot + Discard Changes
 
-Add a clear "Publish Changes" action and full version history (with non-destructive restore) to the Website Hub editor, covering both pages and theme/site-level settings.
-
-### Why this matters
-
-Today the editor saves changes immediately to the live site with no separation between draft and published, and no way to undo a bad edit. Operators editing a public storefront need:
-- A clear moment to publish (with a summary of what's changing)
-- A safety net to roll back if something breaks
-- Confidence that no past version is ever lost
-
-### What you'll see in the UI
-
-**Editor toolbar** (top-right, next to "Open Site"):
-- `History` button — opens a slide-in panel listing the last 20 versions
-- `Publish Changes` button — primary CTA, shows a small dot when there are unpublished changes; opens the existing changelog dialog
-
-**Version History panel** (slide-in from right):
-- Grouped by surface: **Pages**, **Theme**, **Footer**, **Announcement Bar**
-- Each version row shows: version number, timestamp, who saved it, change summary
-- `Restore` button on each row → confirmation dialog → applies snapshot to the live site
-- Restoring v3 doesn't delete v4–v7. It creates a new v8 marked "Restored from v3" so the audit trail stays intact and you can undo the restore.
-
-```text
-┌─ Version History ──────────────────────┐
-│ Page: Home                             │
-│ ────────────────────────────────────── │
-│ v8 · just now · "Restored from v3"     │
-│ v7 · 2h ago  · Edited hero headline    │
-│ v6 · 1d ago  · Updated testimonials    │
-│ v3 · 3d ago  · Initial setup [Restore] │
-└────────────────────────────────────────┘
-```
-
-### Scope of versioning
-
-**Page-level** (already exists, just needs to be exposed):
-- Each page snapshot stored in `website_page_versions`
-
-**Site-level / Theme** (new in this wave):
-- Theme + colors + typography
-- Footer config
-- Announcement bar
-- Navigation menus (publish flow already exists)
-
-A new table `website_site_versions` mirrors the page versions pattern but stores org-scoped snapshots of these site-wide configs.
-
-### Restore behavior (non-destructive)
-
-```text
-Before restore:  v1 → v2 → v3 → v4 → v5 → v6 (live)
-User restores v3
-After restore:   v1 → v2 → v3 → v4 → v5 → v6 → v7 (live, snapshot of v3)
-```
-
-Nothing is deleted. Restore is itself a versioned action. You can restore the restore.
+Three improvements to the publishing/versioning system shipped previously. Per-section restore is scoped but deferred per your instruction.
 
 ---
 
-### Technical details
+## 1. Sidebar unpublished-changes dot
 
-**Backend (1 new table + 1 column):**
-- New table `website_site_versions` with columns: `id`, `organization_id`, `surface` (enum: `theme` | `footer` | `announcement_bar`), `version_number`, `snapshot` (jsonb), `status`, `saved_by`, `saved_at`, `change_summary`, `restored_from_version_id` (nullable). RLS scoped to `organization_id` via existing `is_org_member` / `is_org_admin` helpers.
-- Add `restored_from_version_id uuid` column to `website_page_versions` to track restore lineage.
+Surface the same "you have unpublished work" signal on the **Website Hub** sidebar entry, so operators see pending work without entering the editor.
 
-**Frontend hooks (extend existing + new):**
-- Extend `useRestorePageVersion` in `src/hooks/usePageVersions.ts` so it actually writes the snapshot back via the existing page mutation, then inserts a new version row marked with `restored_from_version_id`.
-- New `src/hooks/useSiteVersions.ts` with `useSiteVersions(surface)`, `useSaveSiteVersion`, `useRestoreSiteVersion`.
-- New `src/hooks/useUnpublishedChangesCount.ts` — derives a badge count by comparing latest saved version to current draft state for pages + site surfaces.
-- `usePublishAll` in `usePublishChangelog.ts` extended to also snapshot theme/footer/announcement bar surfaces.
+**Behavior**
+- Small accent dot appears on the right side of the "Website Hub" nav row when `useChangelogSummary().hasChanges === true`.
+- In collapsed sidebar mode, dot positions on the upper-right corner of the icon.
+- Dot uses `bg-primary` with a soft pulse (re-uses existing pulse keyframes).
+- Tooltip on hover (collapsed mode): "Unpublished website changes".
+- Hides automatically once the operator publishes (the existing `usePublishAll` invalidates `page-versions` + `site-versions`, which feeds the summary).
 
-**Frontend components (new):**
-- `src/components/dashboard/website-editor/VersionHistoryPanel.tsx` — slide-in using `PremiumFloatingPanel` (per Drawer Canon). Tabbed by surface (Pages / Theme / Footer / Announcement Bar). Page tab has a sub-selector for which page.
-- `src/components/dashboard/website-editor/RestoreConfirmDialog.tsx` — small confirm dialog showing "This will restore [surface] to v3 (saved 3 days ago by Jane). Your current version will be preserved as v8."
+**Implementation**
+- Extend `NavItem` in `src/components/dashboard/CollapsibleNavGroup.tsx` with an optional `badgeIndicator?: ReactNode` slot (or `showDot?: boolean`) so this stays generic and doesn't hardcode "website" knowledge into the nav primitive.
+- In `SidebarNavContent.tsx`, wrap the Website Hub nav item construction with a small subscriber component (or call `useChangelogSummary()` once at the top) and inject `showDot` onto the matching item before passing to `CollapsibleNavGroup`.
+- Render the dot inside `NavLink` (both expanded + collapsed variants) and inside the popover row for grouped/collapsed mode.
 
-**Files modified:**
-- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` — add `History` and `Publish Changes` buttons to toolbar (both editor mode and overview mode); render `VersionHistoryPanel` and `PublishChangelog`.
-- `src/hooks/usePublishChangelog.ts` — extend `useChangelogSummary` and `usePublishAll` to include theme/footer/announcement bar diffs.
-- `src/hooks/usePageVersions.ts` — complete `useRestorePageVersion` write-back.
+**Why a generic prop, not a Website-specific hack:** other surfaces (Connect chat, Capital opportunities) already have or will want the same treatment — a generic `showDot` slot keeps the Canon Pattern intact.
 
-### Doctrine alignment
+---
 
-- **Site Settings Persistence**: restore writes use the existing read-then-update pattern via the page/theme/footer mutations.
-- **Drawer Canon**: history panel uses `PremiumFloatingPanel` (no raw `Sheet`).
-- **Tenant isolation**: new `website_site_versions` table has RLS keyed to `organization_id` — no `USING (true)`.
-- **Signal preservation**: snapshots are full JSON copies; no defaults or fallbacks.
-- **Visibility contracts**: when there are zero unpublished changes, the dot badge is silent (not "0").
-- **Audit trail**: `restored_from_version_id` makes restores fully traceable.
+## 2. "Discard changes" — revert to last published
 
-### Out of scope (deferred)
+Pair with the existing Restore flow. One click snapshots-then-restores the most recent **published** version of every page + site surface.
 
-- **Scheduled publish** (publish at 9am tomorrow): future wave. Tracked in Deferral Register with revisit trigger "operator requests scheduled publishing."
-- **Per-section versioning** (restore just the hero, not the whole page): future wave.
-- **Branching / staging environments**: not in scope.
+**Placement**
+- In `WebsiteSettingsContent.tsx` editor toolbar, beside the existing **Publish Changes** + **History** buttons.
+- Label: **Discard Changes**, ghost variant, destructive accent on hover.
+- Disabled when `hasChanges === false`.
 
-### Acceptance criteria
+**Confirmation dialog**
+- Title: *"Discard unpublished changes?"*
+- Body: *"This will revert pages, theme, footer, and announcement bar to the last published version. A backup of the current state will be saved to History so you can recover it later."*
+- Confirm CTA: **Discard & Restore**.
 
-1. Editor toolbar shows `History` and `Publish Changes` buttons.
-2. Publish dialog lists pending page + theme + footer + announcement bar changes; clicking Publish snapshots all of them.
-3. History panel lists versions per surface, last 20 each, ordered newest first.
-4. Restore button writes the snapshot to the live config AND creates a new version row marked with `restored_from_version_id`.
-5. Restoring a version does not delete any newer versions.
-6. The dot badge on `Publish Changes` only appears when there is at least one unsaved diff.
-7. RLS prevents any cross-org access to `website_site_versions`.
+**Behavior (non-destructive — matches Restore doctrine)**
+For every page and every site-wide surface (theme / footer / announcement_bar):
+1. Save the **current live state** as a new version with `change_summary: "Pre-discard backup"` (so nothing is ever lost).
+2. Look up the most recent version where `is_published === true` (or fallback: most recent version if no explicit published flag exists).
+3. Write that snapshot back to live (`website_pages` / `site_settings`).
+4. Append a new version entry with `change_summary: "Reverted to last published"` and `restored_from_version_id` pointing at the source.
+
+**Hook**
+- New `useDiscardToLastPublished()` in `src/hooks/usePublishChangelog.ts` (co-located with `usePublishAll` since it's the inverse operation).
+- Reuses `useSavePageVersion`, `useRestorePageVersion`, `useSaveSiteVersion`, and a new `useRestoreSiteVersion` (mirroring page restore logic) inside `useSiteVersions.ts`.
+- On success: toast `"Reverted to last published version. Backup saved to History."`, invalidate `page-versions`, `site-versions`, `site-settings`, `website-pages`.
+
+**Edge case — nothing has ever been published**
+- Disable the Discard button entirely, with tooltip: *"No published version yet — publish first to enable discard."*
+- Detected via a new `useHasEverPublished()` selector that checks if any `website_page_versions` or `website_site_versions` row exists with a published marker.
+
+---
+
+## 3. Per-section restore — deferred (scoped only)
+
+Per your instruction, **not building this now**. Captured here so it lands in the Deferral Register.
+
+**What it would do:** in `VersionHistoryPanel`, allow restoring a single section (e.g. just "Hero") from a page version without touching other sections (testimonials, services, etc.) on that same page.
+
+**Why deferred:**
+- Requires a section-level diff engine — currently versions snapshot whole-page JSON.
+- Requires UI to expand a version into its constituent sections with per-section "Restore this section" actions.
+- Adds a new failure mode (section restored against an incompatible newer page schema) that needs a compatibility check.
+
+**Revisit trigger:** first operator request OR when section-level versioning is needed by the theme system. Tracked in `mem://architecture/visibility-contracts.md` Deferral Register with trigger condition: *"Operator restores a full page version solely to recover one section, ≥2 occurrences."*
+
+---
+
+## Files touched
+
+- `src/components/dashboard/CollapsibleNavGroup.tsx` — add optional `showDot` to `NavItem`, render in expanded + collapsed + popover variants.
+- `src/components/dashboard/SidebarNavContent.tsx` — call `useChangelogSummary()`, inject `showDot` onto the Website Hub item.
+- `src/hooks/usePublishChangelog.ts` — add `useDiscardToLastPublished` and `useHasEverPublished`.
+- `src/hooks/useSiteVersions.ts` — add `useRestoreSiteVersion` (mirror of page restore).
+- `src/components/dashboard/settings/WebsiteSettingsContent.tsx` — add "Discard Changes" button + confirmation dialog beside Publish/History.
+- (No DB migration — existing `website_page_versions` + `website_site_versions` schema covers it.)
+
+## Memory updates after build
+
+- Append to Deferral Register: per-section restore + revisit trigger.
