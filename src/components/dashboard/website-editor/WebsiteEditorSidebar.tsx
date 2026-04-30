@@ -567,20 +567,24 @@ export function WebsiteEditorSidebar({
         <div className="py-2">
           {isHomePage && (
             <>
-              {/* Site Content Section */}
-              <SectionGroupHeader title="Site Content" />
-              <div className="space-y-0.5 mb-2">
-                {SITE_CONTENT_ITEMS.map(item => (
-                  <ContentNavItem
-                    key={item.tab}
-                    label={item.label}
-                    description={item.description}
-                    icon={item.icon}
-                    isActive={activeTab === item.tab}
-                    onSelect={() => onTabChange(item.tab)}
-                  />
-                ))}
-              </div>
+              {SITE_CONTENT_GROUPS.map((group, groupIndex) => (
+                <div key={group.title}>
+                  {groupIndex > 0 && <Separator className="my-2 mx-3" />}
+                  <SectionGroupHeader title={group.title} />
+                  <div className="space-y-0.5 mb-2">
+                    {group.items.map((item) => (
+                      <ContentNavItem
+                        key={item.tab}
+                        label={item.label}
+                        description={item.description}
+                        icon={item.icon}
+                        isActive={activeTab === item.tab}
+                        onSelect={() => onTabChange(item.tab)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
 
               <Separator className="my-3 mx-3" />
             </>
