@@ -154,6 +154,15 @@ export async function publishSiteSettingsDrafts(orgId: string): Promise<number> 
     _org_id: orgId,
   });
   if (error) throw error;
+  // Tell the live preview iframe (and any other listener) to refresh
+  // every site-settings query for this org — values may have changed.
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
+      );
+    } catch { /* SSR */ }
+  }
   return (data as number | null) ?? 0;
 }
 
@@ -167,6 +176,15 @@ export async function discardSiteSettingsDrafts(orgId: string): Promise<number> 
     _org_id: orgId,
   });
   if (error) throw error;
+  // Broadcast a draft-wide refresh so the editor + preview re-read the
+  // reverted draft state without a full reload.
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
+      );
+    } catch { /* SSR */ }
+  }
   return (data as number | null) ?? 0;
 }
 
