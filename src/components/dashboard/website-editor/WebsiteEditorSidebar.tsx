@@ -21,6 +21,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import { toast } from 'sonner';
 import {
