@@ -142,89 +142,43 @@ function broadcastDraftWrite(orgId: string, key: string): void {
 }
 
 /**
- * Promote every divergent draft for the given org to live.
- *
- * Implemented client-side as a sequential loop because RLS already
- * restricts writes to org admins and the row count per org is small
- * (typically <30 settings rows). If we ever need atomicity across rows,
- * convert to a SECURITY DEFINER RPC.
+ * Promote every divergent draft for the given org to live in a SINGLE
+ * transaction via the `publish_site_settings_drafts` RPC (SECURITY
+ * DEFINER, jsonb-DISTINCT comparison — order-insensitive). Atomic: a
+ * mid-publish failure leaves the org untouched, never half-published.
  *
  * Returns the number of rows promoted.
  */
 export async function publishSiteSettingsDrafts(orgId: string): Promise<number> {
-  const { data: rows, error } = await supabase
-    .from('site_settings')
-    .select('id, value, draft_value')
-    .eq('organization_id', orgId);
-
+  const { data, error } = await supabase.rpc('publish_site_settings_drafts', {
+    _org_id: orgId,
+  });
   if (error) throw error;
-  if (!rows || rows.length === 0) return 0;
-
-  let promoted = 0;
-  for (const row of rows as Array<{ id: string; value: unknown; draft_value: unknown }>) {
-    if (row.draft_value === null || row.draft_value === undefined) continue;
-    if (JSON.stringify(row.draft_value) === JSON.stringify(row.value)) continue;
-
-    const { error: updateErr } = await supabase
-      .from('site_settings')
-      .update({ value: row.draft_value as never })
-      .eq('id', row.id)
-      .eq('organization_id', orgId);
-
-    if (updateErr) throw updateErr;
-    promoted += 1;
-  }
-  return promoted;
+  return (data as number | null) ?? 0;
 }
 
 /**
  * Discard all editor drafts for an org by copying live `value` back into
  * `draft_value`. Reverses unpublished changes without touching the live
- * site.
+ * site. Atomic via RPC.
  */
 export async function discardSiteSettingsDrafts(orgId: string): Promise<number> {
-  const { data: rows, error } = await supabase
-    .from('site_settings')
-    .select('id, value, draft_value')
-    .eq('organization_id', orgId);
-
+  const { data, error } = await supabase.rpc('discard_site_settings_drafts', {
+    _org_id: orgId,
+  });
   if (error) throw error;
-  if (!rows || rows.length === 0) return 0;
-
-  let reverted = 0;
-  for (const row of rows as Array<{ id: string; value: unknown; draft_value: unknown }>) {
-    if (JSON.stringify(row.draft_value) === JSON.stringify(row.value)) continue;
-
-    const { error: updateErr } = await supabase
-      .from('site_settings')
-      .update({
-        draft_value: row.value as never,
-        draft_updated_at: new Date().toISOString(),
-      })
-      .eq('id', row.id)
-      .eq('organization_id', orgId);
-
-    if (updateErr) throw updateErr;
-    reverted += 1;
-  }
-  return reverted;
+  return (data as number | null) ?? 0;
 }
 
 /**
  * Return the list of setting keys whose draft differs from live.
- * Used by the publish dialog's changelog summary.
+ * Uses `IS DISTINCT FROM` on jsonb server-side, which is order-insensitive
+ * (fixes the JSON.stringify ordering false-positive).
  */
 export async function listDirtyDrafts(orgId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('id, value, draft_value')
-    .eq('organization_id', orgId);
-
+  const { data, error } = await supabase.rpc('list_dirty_site_setting_drafts', {
+    _org_id: orgId,
+  });
   if (error) throw error;
-  if (!data) return [];
-
-  return (data as Array<{ id: string; value: unknown; draft_value: unknown }>)
-    .filter(r => r.draft_value !== null && r.draft_value !== undefined)
-    .filter(r => JSON.stringify(r.draft_value) !== JSON.stringify(r.value))
-    .map(r => r.id);
+  return ((data ?? []) as Array<{ setting_id: string }>).map(r => r.setting_id);
 }
