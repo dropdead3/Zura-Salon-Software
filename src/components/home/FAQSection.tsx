@@ -32,10 +32,15 @@ export function FAQSection() {
   const { data: dbConfig } = useFAQConfig();
   const config = useLiveOverride('section_faq', dbConfig) ?? dbConfig;
 
+  // Items come from website_faq_items, with a live-edit override so the
+  // FAQItemsManager can stream unsaved drafts into the preview iframe.
+  const { data: dbItems } = useVisibleFAQItems();
+  const items = useLiveOverride<FAQRow[]>('faq_items', dbItems ?? EMPTY_FAQS) ?? dbItems ?? EMPTY_FAQS;
+
   const rotatingWords = config.show_rotating_words && config.rotating_words.length > 0
     ? config.rotating_words
     : [""];
-  const faqs = DEFAULT_FAQ_ITEMS;
+  const faqs = items;
 
   // Reset typewriter index if rotating-words list shrinks while editing
   useEffect(() => {
