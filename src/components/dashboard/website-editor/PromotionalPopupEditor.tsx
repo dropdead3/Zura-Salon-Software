@@ -264,6 +264,10 @@ export function PromotionalPopupEditor() {
             onChange={(e) => handleChange('headline', e.target.value)}
             placeholder="Free Haircut with Any Color Service"
           />
+          <HeadlineCharCounter
+            length={formData.headline.length}
+            appearance={formData.appearance}
+          />
         </Field>
         <Field label="Body">
           <Textarea
