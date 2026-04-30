@@ -632,6 +632,107 @@ export function PromotionalPopupEditor() {
             placeholder="FREECUT"
           />
         </Field>
+
+        {/* Destination — where Claim Offer sends the visitor */}
+        <Field
+          label="Where does Claim Offer send the visitor?"
+          hint="Pick the destination that matches how a visitor actually claims this offer."
+        >
+          <div className="space-y-2" role="radiogroup" aria-label="Accept destination">
+            {([
+              {
+                value: 'booking' as const,
+                label: 'Direct booking',
+                description: 'Send visitors straight into the booking flow with the offer code attached.',
+                disabled: false,
+                disabledReason: null,
+              },
+              {
+                value: 'consultation' as const,
+                label: 'Schedule a consultation',
+                description: 'Route visitors to a consultation step before they book — recommended when new clients require a consult first.',
+                disabled: !consultationPolicyEnabled,
+                disabledReason: 'Enable "Consultation required" in Booking Surface settings to use this destination.',
+              },
+              {
+                value: 'custom-url' as const,
+                label: 'Custom URL',
+                description: 'Send visitors to an external page, phone number, or email. Add instructions so they know how to claim.',
+                disabled: false,
+                disabledReason: null,
+              },
+            ]).map((opt) => {
+              const active = (formData.acceptDestination ?? 'booking') === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={opt.disabled}
+                  onClick={() => !opt.disabled && handleDestinationChange(opt.value)}
+                  className={cn(
+                    'w-full text-left rounded-xl border p-3 transition-colors',
+                    active
+                      ? 'border-foreground bg-muted/50'
+                      : 'border-border hover:border-foreground/40',
+                    opt.disabled && 'opacity-50 cursor-not-allowed hover:border-border',
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    <div
+                      className={cn(
+                        'mt-0.5 h-4 w-4 rounded-full border-2 shrink-0 transition-colors',
+                        active ? 'border-foreground bg-foreground' : 'border-muted-foreground/40',
+                      )}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-sans text-sm font-medium text-foreground">{opt.label}</p>
+                      <p className="font-sans text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                        {opt.disabled && opt.disabledReason ? opt.disabledReason : opt.description}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+
+        {/* Custom URL fields — only when the destination needs them */}
+        {formData.acceptDestination === 'custom-url' && (
+          <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3">
+            <Field
+              label="Destination URL"
+              hint="Where the visitor goes when they click. Supports https://, tel:, and mailto: links."
+            >
+              <Input
+                value={formData.customUrl ?? ''}
+                onChange={(e) => handleChange('customUrl', e.target.value)}
+                placeholder="https://example.com/claim or tel:+15551234567"
+              />
+              {formData.customUrl &&
+                !/^(https?:|tel:|mailto:)/i.test(formData.customUrl.trim()) && (
+                  <p className="mt-1 font-sans text-[11px] text-destructive">
+                    Must start with https://, tel:, or mailto:
+                  </p>
+                )}
+            </Field>
+            <Field
+              label="Instructions for the visitor"
+              hint="Shown inside the popup beneath the CTA so visitors know what to do at the destination."
+            >
+              <Textarea
+                value={formData.customUrlInstructions ?? ''}
+                onChange={(e) => handleChange('customUrlInstructions', e.target.value)}
+                placeholder="Mention code FREEHAIR when you call. Available Mon–Sat, 9am–6pm."
+                rows={2}
+                maxLength={200}
+              />
+            </Field>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Accept button label">
             <Input
