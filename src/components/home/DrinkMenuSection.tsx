@@ -1,6 +1,7 @@
 import { motion, useInView, useScroll, useVelocity, useSpring, useAnimationFrame } from "framer-motion";
 import { useRef, useState } from "react";
 import { useDrinkMenuConfig, type Drink } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
 // Import fallback drink images
 import dirtyPeachImg from "@/assets/drinks/dirty-peach.jpg";
@@ -112,7 +113,8 @@ const DrinkCard = ({ drink, index = 0, isInView = true, animated = true }: Drink
 export function DrinkMenuSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
-  const { data: config } = useDrinkMenuConfig();
+  const { data: dbConfig } = useDrinkMenuConfig();
+  const config = useLiveOverride('section_drink_menu', dbConfig) ?? dbConfig;
   
   // Use configured drinks or fallback to defaults
   const drinks = config.drinks.length > 0 ? config.drinks : defaultDrinks;
