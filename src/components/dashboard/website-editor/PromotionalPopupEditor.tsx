@@ -40,6 +40,10 @@ export function PromotionalPopupEditor() {
   }, [settings]);
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
+  // Broadcast dirty state to the editor shell so it can:
+  // (1) light up the Save button, (2) intercept Done / tab switches with the
+  // unsaved-changes guard instead of silently dropping the operator's edits.
+  useEditorDirtyState(isDirty);
 
   const handleChange = <K extends keyof PromotionalPopupSettings>(
     field: K,
