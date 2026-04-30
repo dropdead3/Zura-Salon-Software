@@ -310,11 +310,67 @@ Deno.serve(async (req) => {
         forms_required: formsRequired,
         forms_completed: formsCompleted,
         forms_completed_at: formsCompleted && formsRequired ? new Date().toISOString() : null,
+        // Promotional popup attribution: stamps the offer code on the
+        // appointment so payroll/reporting can join redemptions later.
+        promo_offer_code: typeof promo_code === 'string' && promo_code.trim()
+          ? promo_code.trim().toUpperCase()
+          : null,
       })
       .select("id")
       .single();
 
     if (apptErr) throw apptErr;
+
+    // ── Promotional popup redemption tracking ───────────────────
+    // Closes the marketing loop opened by the popup's "Claim Offer" CTA. We
+    // only write a redemption row when (a) a promo code was attached, and
+    // (b) it matches the org's currently-published popup code. This prevents
+    // attribution to stale or unrelated codes someone might guess via URL.
+    const submittedCode = typeof promo_code === 'string'
+      ? promo_code.trim().toUpperCase()
+      : '';
+    if (submittedCode) {
+      try {
+        const { data: popupRow } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('organization_id', organization_id)
+          .eq('key', 'promotional_popup')
+          .maybeSingle();
+        const popupCfg = (popupRow?.value as any) ?? null;
+        const liveCode = popupCfg?.live?.offerCode
+          ?? popupCfg?.offerCode
+          ?? '';
+        const liveCodeUpper = String(liveCode).trim().toUpperCase();
+        const popupEnabled =
+          popupCfg?.live?.enabled ?? popupCfg?.enabled ?? false;
+        if (popupEnabled && liveCodeUpper && liveCodeUpper === submittedCode) {
+          const { error: redempErr } = await supabase
+            .from('promotion_redemptions')
+            .insert({
+              organization_id,
+              promo_code_used: submittedCode,
+              client_id: clientId,
+              transaction_id: appointment.id,
+              transaction_date: new Date().toISOString(),
+              original_amount: basePrice,
+              discount_applied: basePrice != null && finalPrice != null
+                ? +(basePrice - finalPrice).toFixed(2)
+                : null,
+              final_amount: finalPrice,
+              location_id: location_id || null,
+              staff_user_id: staffUserId,
+            });
+          if (redempErr) {
+            // Don't fail the booking — attribution is best-effort. Operators
+            // would rather lose a redemption count than lose a booking.
+            console.error('Failed to record promotion redemption:', redempErr);
+          }
+        }
+      } catch (err) {
+        console.error('Promotion redemption lookup failed:', err);
+      }
+    }
 
     // ── Wave 7: Record signatures server-side ───────────────────
     // We trust the form_template_id only after validating against required set above.
