@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Gift, X, ChevronRight } from 'lucide-react';
 import {
   isPopupActive,
   usePromotionalPopup,
@@ -131,6 +131,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const isPreview = useIsEditorPreview();
 
   const [open, setOpen] = useState(false);
+  const [showFab, setShowFab] = useState(false);
   const triggeredRef = useRef(false);
 
   // Hide popup completely when accept lands on the booking surface with the
@@ -171,7 +172,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         fire();
         break;
       case 'delay': {
-        const t = window.setTimeout(fire, cfg.triggerValueMs ?? 4000);
+        const t = window.setTimeout(fire, cfg.triggerValueMs ?? 10000);
         cleanup = () => window.clearTimeout(t);
         break;
       }
@@ -208,7 +209,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (!active || !cfg || !open) return null;
+  // If the popup is disabled or config missing, render nothing at all.
+  if (!active || !cfg) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
 
@@ -219,6 +221,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
     }
     setOpen(false);
+    setShowFab(false); // Offer claimed — no need for the re-entry FAB.
     if (isPreview) return; // Don't navigate the editor iframe — operator is QA'ing.
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
@@ -235,6 +238,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
     setOpen(false);
+    if (!isPreview) setShowFab(true);
   }
 
   function handleSoftClose() {
@@ -245,7 +249,52 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
     setOpen(false);
+    if (!isPreview) setShowFab(true);
   }
+
+  function handleFabOpen() {
+    setShowFab(false);
+    setOpen(true);
+  }
+
+  function handleFabDismiss(e: React.MouseEvent) {
+    e.stopPropagation();
+    setShowFab(false);
+  }
+
+  // FAB element rendered after dismissal. Reuses the offer's accent color and
+  // headline so the visitor can re-open the offer at any time during the session.
+  const fab = showFab && !open ? (
+    <div
+      className="fixed bottom-6 right-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
+    >
+      <button
+        type="button"
+        onClick={handleFabOpen}
+        aria-label={`Reopen offer: ${cfg.headline}`}
+        className="group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform"
+        style={{ backgroundColor: accent }}
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+          <Gift className="h-4 w-4" />
+        </span>
+        <span className="hidden sm:inline font-display uppercase tracking-wider text-xs max-w-[180px] truncate">
+          {cfg.headline}
+        </span>
+        <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+      <button
+        type="button"
+        aria-label="Dismiss offer reminder"
+        onClick={handleFabDismiss}
+        className="hidden sm:flex ml-2 h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  ) : null;
+
+  if (!open) return fab;
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
@@ -314,7 +363,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // ── Variant: modal (default) ──
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
       }}
@@ -323,7 +372,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="promo-popup-title"
-        className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 sm:p-8 animate-in zoom-in-95"
+        className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 sm:p-8 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out"
         style={{ borderTopColor: accent, borderTopWidth: 4 }}
       >
         <button

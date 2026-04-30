@@ -47,7 +47,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   offerCode: '',
   appearance: 'modal',
   trigger: 'delay',
-  triggerValueMs: 4000,
+  triggerValueMs: 10000,
   showOn: ['home'],
   audience: 'all',
   startsAt: null,

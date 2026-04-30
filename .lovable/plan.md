@@ -1,92 +1,95 @@
-Good catch — your report was specific and useful. You pointed to the exact failing interaction (“Show Promotional Popup” + Done), which made the root cause easy to isolate.
+## Goal
 
-## What I found
+Make the promotional popup feel intentional: a smooth, slightly delayed entrance ~10s after the visitor lands, and after they close it, keep the offer accessible via a small floating action button (FAB) in the bottom corner so they can re-open it anytime during the visit.
 
-The problem is not the database write itself — it’s the editor flow.
+## Behavior
 
-1. `PromotionalPopupEditor.tsx` tracks its own local `isDirty` state, but it never reports that dirty state back to the Website Editor shell.
-2. `WebsiteEditorShell.tsx` treats the top-right `Done` button as navigation only. It does not save by itself.
-3. Because the shell never learns that the promo editor is dirty, clicking `Done` exits immediately instead of warning or saving, so the toggle is lost.
-4. The UI copy is also misleading: the promo editor currently tells the operator to press `Done` to publish changes, but in reality only `Save` writes a draft, and publishing happens later from Website Hub.
-5. The network snapshot supports this: I can see the editor reading `promotional_popup`, but no write request was triggered during the failing interaction.
+1. **Entrance**
+   - Default trigger delay becomes **10,000 ms** (today it's 4,000 ms).
+   - Existing operator config still wins — if the operator picked a different delay/trigger in the editor, we honor it.
+   - Animation softened: gentle fade + scale + 8px upward drift over ~500ms with `ease-out` (replaces the snappier `zoom-in-95`). Respects `prefers-reduced-motion` (reduced motion = fade only).
+   - Editor-preview path (QA inside the website editor iframe) keeps its current "fire immediately" override so operators don't wait 10s every reload.
 
-## Implementation plan
+2. **Soft close → FAB**
+   - When the visitor closes the popup via the X, Esc, backdrop click, **or** the "No thanks" decline button, the popup hides and a small **FAB** appears anchored to the bottom-right of the viewport.
+   - The FAB shows the offer's accent color, a tag/gift icon, and a short label derived from the offer (e.g. headline, truncated). On mobile it collapses to icon-only.
+   - Clicking the FAB re-opens the same popup with the same animation.
+   - **Accept** still navigates to `/booking?promo=…` and does NOT show the FAB (the offer has been claimed).
+   - The FAB is **session-scoped**: once present, it stays for the rest of the browsing session, and it disappears on accept or if the operator disables the popup.
+   - The FAB is suppressed inside the editor preview iframe (operators are QA'ing the popup itself, not the FAB persistence flow).
 
-### 1. Wire the promo editor into the editor dirty-state system
-Update `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` to use the same dirty/saving contract as the other editor panels.
+3. **Frequency caps unchanged**
+   - The existing `frequency` rules (`once`, `once-per-session`, `daily`, `always`) continue to control whether the popup auto-opens on future page loads. The FAB is an in-session re-entry point only — it does not bypass `once` on the next visit.
 
-This will include:
-- broadcasting dirty state when the form changes
-- clearing dirty state after a successful save
-- making the shell’s Save button enable correctly for this panel
-- preventing silent loss of the toggle state
+## Visual spec (FAB)
 
-### 2. Make the Done path safe for this editor
-Update `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` so the promo editor no longer silently exits with unsaved changes.
+```text
+┌──────────────────────────────┐
+│  🎁  Free Haircut Offer  ›   │   ← rounded-full, bg = accent, text = primary-foreground
+└──────────────────────────────┘
+                         bottom-6 right-6
+```
 
-I’ll implement one of these safe behaviors:
-- preferred: when the active tab is Promotional Popup and there are unsaved edits, `Done` saves the draft first, then returns to the section list
-- fallback-safe behavior: `Done` triggers the existing unsaved-changes guard instead of discarding changes silently
+- Desktop: pill with icon + truncated headline (max ~28 chars) + chevron
+- Mobile (<640px): circular icon-only button (`h-12 w-12 rounded-full`)
+- Subtle entrance: fade + slide-in-from-bottom-2 over 250ms after popup closes
+- Small dismiss "×" on hover (top-right of pill) lets the visitor remove the FAB for the session if they really don't want it; this writes the same `soft` dismissal record
 
-Given your report, the first option is the better UX because it matches what you expected.
+## Files to change
 
-### 3. Fix the misleading instructional copy
-Update the promo editor messaging so it matches the real workflow.
+- `src/components/public/PromotionalPopup.tsx` — bump default delay to 10000ms, soften entrance animation, add FAB state machine + render, wire close handlers to show FAB instead of fully unmounting
+- `src/hooks/usePromotionalPopup.ts` — update `DEFAULT_PROMO_POPUP.triggerValueMs` from 4000 → 10000 so new operators inherit the 10s default; existing saved configs are untouched
 
-Specifically:
-- remove the “Press Done to publish” wording
-- replace it with copy that clearly distinguishes:
-  - `Save` = save draft
-  - `Publish` = make it live to visitors from Website Hub
-- keep the operator guidance concise so this doesn’t happen again
-
-### 4. Verify the promo settings row now persists correctly
-After the code fix, I’ll verify the full flow:
-- toggle on
-- click Done
-- confirm draft save occurs
-- confirm the preview can read the saved draft
-- confirm the popup row is created when one doesn’t already exist
-
-## Files to update
-
-- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`
-- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx`
-- possibly `src/hooks/useEditorDirtyState.ts` only if a tiny helper adjustment is needed
+(No DB / RLS / hook-architecture changes. Single component + one default constant.)
 
 ## Technical details
 
-Root cause in plain terms:
+State additions inside `PromotionalPopup`:
 
 ```text
-Promo editor local state changes
--> shell never receives editor-dirty-state
--> shell thinks nothing changed
--> Done = navigate away immediately
--> save callback never runs
--> no draft row written
+open:    boolean   // popup visible
+showFab: boolean   // FAB visible (set true on any soft/decline close, false on accept)
 ```
 
-The database/draft pipeline already looks correct:
-- `useUpdatePromotionalPopup()` writes through `writeSiteSettingDraft()`
-- that helper uses the required read-then-update/insert pattern
-- draft invalidation is already in place
+Transitions:
+- `handleAccept`  → `open=false`, `showFab=false`, navigate to booking
+- `handleDecline` → `open=false`, `showFab=true`
+- `handleSoftClose` (X / Esc / backdrop) → `open=false`, `showFab=true`
+- FAB click → `open=true`, `showFab=false`
+- FAB dismiss "×" → `showFab=false` (stays gone for the session)
 
-So this is primarily an editor state + navigation contract bug, not a backend persistence bug.
+Animation tokens (Tailwind `animate-in` utilities, already in the project):
+- Modal entrance: `animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-500 ease-out`
+- FAB entrance: `animate-in fade-in-0 slide-in-from-bottom-2 duration-300`
+- Reduced motion: rely on `motion-safe:` prefixes so `prefers-reduced-motion: reduce` falls back to opacity-only.
 
-## Better prompt framing for bugs like this
+The 10s default applies only when:
+- The operator's saved config has `trigger === 'delay'` AND `triggerValueMs` is null/undefined
+- New configs created from `DEFAULT_PROMO_POPUP`
 
-Your prompt was solid. An even stronger version for debugging would be:
+Existing configs with an explicit `triggerValueMs` keep their value.
 
-- exact action: “I toggle Show Promotional Popup on and click Done”
-- expected result: “the draft should save and the popup should appear in preview”
-- actual result: “nothing saves, and reopening shows the toggle off again”
+## Verification
 
-That structure helps separate save bugs from render bugs immediately.
+- Land on a public surface with popup enabled → popup appears at ~10s with smooth entrance
+- Close via X → popup disappears, FAB appears bottom-right
+- Click FAB → popup re-opens with the same animation
+- Click "Claim Offer" → navigates to `/booking?promo=…`, no FAB on that page
+- Reload page within same session → frequency cap respected (no auto-open under `once-per-session`), FAB does not auto-restore
+- `prefers-reduced-motion: reduce` → no scale/slide, fade only
+- Editor preview iframe → still fires immediately, FAB suppressed
 
-## Enhancement suggestions
+## Suggested next enhancements (after this ships)
 
-After this fix, the next useful upgrades would be:
-1. add a tiny “Saved as draft” status right inside the promo card
-2. add a “Preview popup now” button so operators can force-open it in the iframe
-3. add a “Reset popup session” test action so frequency caps never block QA
+1. **Pulse hint on FAB after 30s of inactivity** — a subtle one-time pulse to remind the visitor the offer is still there, without being noisy.
+2. **Per-surface FAB position override** — let the operator choose bottom-right vs bottom-left, useful when a chat widget already occupies one corner.
+3. **Auto-hide FAB on `/booking` page** — if the visitor reaches the booking surface on their own (without clicking the offer), hide the FAB to avoid double-prompting.
+
+## Prompt feedback
+
+Strong prompt — you specified the trigger (10s), the surface (landing page), the animation feel (smooth), and the post-close behavior (FAB in corner). That's nearly a complete spec. Two small additions would have made it airtight:
+
+- **What should the FAB do on click?** (Re-open the popup vs. jump straight to booking — I assumed re-open, which is the safer default.)
+- **Should the FAB persist across page navigations or only on the landing page?** (I assumed session-scoped across all public pages, matching how the popup itself is mounted.)
+
+A reusable framing for behavior-change prompts: *trigger → entrance → primary action → dismissal path → persistence scope*. Hitting those five beats gets you a single-shot implementation almost every time.
