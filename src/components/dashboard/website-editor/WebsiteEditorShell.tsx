@@ -1041,16 +1041,31 @@ function WebsiteEditorShellInner() {
       {/* Save status pill — slim row under header so the user always sees draft state */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
         <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
+        {/* Save button.
+            • Default (clean): ghost, low-emphasis — nothing to do.
+            • Dirty: amber fill + ring pulse so the operator's eye is pulled to it.
+              Mirrors the warning tone used by SaveStatusPill so dirty-state cues
+              are visually consistent across the strip.
+            • Title hint: explicit "Preview updates after Save" so users stop
+              expecting the iframe to live-reflect typed edits. */}
         <Button
-          variant="ghost"
+          variant={isDirty && !isSaving ? 'default' : 'ghost'}
           size="sm"
-          className="h-7 rounded-full px-3 text-xs"
+          className={cn(
+            'h-7 rounded-full px-3 text-xs transition-colors',
+            isDirty && !isSaving &&
+              'bg-warning text-warning-foreground hover:bg-warning/90 shadow-[0_0_0_3px_hsl(var(--warning)/0.18)]',
+          )}
           onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
           disabled={!isDirty || isSaving}
-          title="Save draft (⌘S)"
+          title={
+            isDirty
+              ? 'Click Save to update the preview (⌘S)'
+              : 'Preview updates after each Save'
+          }
         >
           {isSaving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-          Save
+          {isDirty && !isSaving ? 'Save to preview' : 'Save'}
         </Button>
       </div>
 
