@@ -113,6 +113,8 @@ import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
+import { SiteDesignPanel } from './SiteDesignPanel';
+import { Palette, Sparkles } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
