@@ -333,7 +333,15 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
               Site Design
             </h3>
             <p className="text-[11px] text-muted-foreground truncate">
-              Global theme overrides — applies to every page
+              Overrides on top of your{' '}
+              <button
+                type="button"
+                onClick={goToThemeTab}
+                className="underline-offset-2 hover:underline text-primary inline-flex items-center gap-0.5"
+              >
+                active theme
+                <ExternalLink className="h-2.5 w-2.5" />
+              </button>
             </p>
           </div>
         </div>
