@@ -261,7 +261,7 @@ export function HostedBookingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount, signedFormTemplateIds]);
+  }, [org?.id, state, isEmbedMode, update, needsPayment, stripeConfig, depositAmount, signedFormTemplateIds, searchParams]);
 
   // ─── Payment complete handler ─────────────────────────────────
   const handlePaymentComplete = useCallback((intentId: string) => {
