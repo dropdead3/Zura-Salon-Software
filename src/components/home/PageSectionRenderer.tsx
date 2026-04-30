@@ -191,6 +191,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
               enabled={section.enabled}
               isSelected={selectedSectionId === section.id}
               fullBleed={FULL_BLEED_SECTIONS.has(section.type)}
+              styleOverrides={section.style_overrides}
             >
               <div id={`section-${section.id}`}>
                 <SectionStyleWrapper styleOverrides={section.style_overrides}>
