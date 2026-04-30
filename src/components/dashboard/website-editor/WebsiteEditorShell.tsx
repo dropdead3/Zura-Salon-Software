@@ -1225,28 +1225,25 @@ export function WebsiteEditorShell() {
             </>
           )}
 
-          <ResizablePanel defaultSize={showPreview ? 48 : 78} minSize={30}>
+          <ResizablePanel defaultSize={showPreview ? 40 : 78} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
-              <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {!isMobile && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowSidebar(!showSidebar)}
-                      className="h-7 w-7"
-                      title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
-                    >
-                      {showSidebar ? (
-                        <PanelLeftClose className="h-3.5 w-3.5" />
-                      ) : (
-                        <PanelLeftOpen className="h-3.5 w-3.5" />
-                      )}
-                    </Button>
-                  )}
-                  <span className="text-xs text-muted-foreground truncate">{sectionLabel}</span>
+              {!isMobile && (
+                <div className="flex-shrink-0 px-2 py-1.5 border-b bg-muted/30 flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSidebar(!showSidebar)}
+                    className="h-7 w-7"
+                    title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
+                  >
+                    {showSidebar ? (
+                      <PanelLeftClose className="h-3.5 w-3.5" />
+                    ) : (
+                      <PanelLeftOpen className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
                 </div>
-              </div>
+              )}
               <div className="flex-1 overflow-auto p-6">
                 <Suspense
                   fallback={
