@@ -368,7 +368,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="promo-popup-title"
-        className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 sm:p-8 animate-in zoom-in-95"
+        className="relative w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 sm:p-8 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out"
         style={{ borderTopColor: accent, borderTopWidth: 4 }}
       >
         <button
