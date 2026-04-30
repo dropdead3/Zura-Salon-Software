@@ -20166,6 +20166,7 @@ export type Database = {
           promotion_id: string | null
           revenue_attributed: number | null
           staff_user_id: string | null
+          surface: string
           transaction_date: string | null
           transaction_id: string | null
           variant_id: string | null
@@ -20185,6 +20186,7 @@ export type Database = {
           promotion_id?: string | null
           revenue_attributed?: number | null
           staff_user_id?: string | null
+          surface?: string
           transaction_date?: string | null
           transaction_id?: string | null
           variant_id?: string | null
@@ -20204,6 +20206,7 @@ export type Database = {
           promotion_id?: string | null
           revenue_attributed?: number | null
           staff_user_id?: string | null
+          surface?: string
           transaction_date?: string | null
           transaction_id?: string | null
           variant_id?: string | null
