@@ -330,6 +330,12 @@ export function PromotionalPopupEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [overflows],
   );
+  // Empty-code guard — warns (doesn't block) when the destination is a
+  // booking flow but no code is attached. Visitors would land on plain booking
+  // with nothing applied: a silent dead-end on a "Claim Offer" promise. Same
+  // warn-don't-block pattern as overflow/contrast — operator can ship via
+  // "Save anyway" if the offer truly has no code.
+  const offerCodeRef = useRef<HTMLInputElement | null>(null);
   const guards = useMemo(
     () => [
       makeOverflowGuard<OverflowFinding>(overflows, fieldRefs),
@@ -337,8 +343,21 @@ export function PromotionalPopupEditor() {
         accent: formData.accentColor,
         getRatio: bestTextContrast,
       }),
+      () => {
+        const dest = formData.acceptDestination ?? 'booking';
+        const codeMissing = !(formData.offerCode ?? '').trim();
+        if (!codeMissing) return null;
+        if (dest !== 'booking' && dest !== 'consultation') return null;
+        return {
+          field: 'offerCode',
+          title: 'No offer code attached',
+          description:
+            'Visitors who click Claim Offer will land on plain booking with nothing applied. Add a code or switch the destination to a custom URL.',
+          scrollTo: offerCodeRef.current,
+        };
+      },
     ],
-    [overflows, fieldRefs, formData.accentColor],
+    [overflows, fieldRefs, formData.accentColor, formData.acceptDestination, formData.offerCode],
   );
   const { guardedSave, isFieldGuarded } = usePersistGuards({ guards, persist });
   // Back-compat alias — existing destructive-state styling reads this name.
