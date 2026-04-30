@@ -3,6 +3,44 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { dismissBackfillBanner } from "@/hooks/onboarding/useBackfillTrigger";
+import { writeSiteSettingDraft } from "@/lib/siteSettingsDraft";
+import type { ColorTheme } from "@/hooks/useColorTheme";
+
+// Same key + valid set as useWebsiteColorTheme. Inlined here to avoid pulling
+// the whole hook tree into the wizard commit path.
+const WEBSITE_THEME_SETTING_KEY = "website_active_color_theme";
+const VALID_THEMES: ReadonlySet<ColorTheme> = new Set([
+  "zura", "cream-lux", "neon", "rosewood", "orchid", "peach",
+  "cognac", "jade", "sage", "matrix", "noir", "marine",
+]);
+
+/**
+ * Seed the new org's public-site theme to match the dashboard theme the
+ * operator was using during onboarding. Without this, every new org lands
+ * on the cream-lux default — even when the operator clearly chose Neon /
+ * Marine / etc. for their dashboard, creating jarring visual whiplash on
+ * first preview of the public site.
+ *
+ * Best-effort: any failure is swallowed (the org is already created; this is
+ * cosmetic) and never blocks the commit success path.
+ */
+async function seedWebsiteThemeFromDashboard(orgId: string, userId: string | null) {
+  try {
+    if (typeof window === "undefined") return;
+    // Prefer the org-scoped key if the operator already touched the dashboard
+    // theme picker for this org during onboarding; fall back to the global
+    // legacy key (the early-paint hint used before orgId resolves).
+    const orgKey = `dd-color-theme:${orgId}`;
+    const raw =
+      window.localStorage.getItem(orgKey) ??
+      window.localStorage.getItem("dd-color-theme");
+    if (!raw || !VALID_THEMES.has(raw as ColorTheme)) return;
+    await writeSiteSettingDraft(orgId, WEBSITE_THEME_SETTING_KEY, { theme: raw }, userId);
+  } catch {
+    // Non-fatal — operator can re-pick from Site Design.
+  }
+}
+
 
 /**
  * useCommitOrgSetup — finalize the wizard.
