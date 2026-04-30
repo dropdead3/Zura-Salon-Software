@@ -55,7 +55,7 @@ export function SectionNavItem({
         // Keep a real inset on the right edge instead of relying on a scaled
         // switch plus negative margin hacks; this gives the action cluster a
         // stable gutter away from the rail and scrollbar.
-        'group flex items-center gap-2 pl-2 pr-4 py-2 mx-3 rounded-lg cursor-pointer transition-all',
+        'group flex items-center gap-2 pl-2 pr-5 py-2 mx-3 rounded-lg cursor-pointer transition-all',
         isActive
           ? 'bg-primary/10 border border-primary/20'
           : 'hover:bg-muted/60 border border-transparent',
@@ -100,30 +100,31 @@ export function SectionNavItem({
 
       {/* Actions — keep a real inner gutter on the right so the controls never
           read as touching the rail edge, even when the scrollbar is visible. */}
-      <div
-        className="flex items-center gap-1 shrink-0 pr-1"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="flex items-center gap-1 shrink-0 pr-1.5" onClick={(e) => e.stopPropagation()}>
         {onDuplicate && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={onDuplicate}
-            title="Duplicate section"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
+          <div className="w-0 overflow-hidden opacity-0 pointer-events-none transition-[width,opacity] duration-150 group-hover:w-6 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:w-6 group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onDuplicate}
+              title="Duplicate section"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+          </div>
         )}
         {deletable && onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-            onClick={onDelete}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
+          <div className="w-0 overflow-hidden opacity-0 pointer-events-none transition-[width,opacity] duration-150 group-hover:w-6 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:w-6 group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
         )}
         <Switch
           checked={enabled}
