@@ -1306,7 +1306,7 @@ function WebsiteEditorShellInner() {
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
           )}
-          <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} />
+          <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} activeSectionId={activePreviewSectionId} />
         </div>
       </div>
 
