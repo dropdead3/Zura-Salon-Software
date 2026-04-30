@@ -8,7 +8,38 @@ import { Badge } from '@/components/ui/badge';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Paintbrush, ArrowUpDown, Maximize2 } from 'lucide-react';
 import type { PageConfig, WebsitePagesConfig } from '@/hooks/useWebsitePages';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+
+// Page-level chip preset cycles. Mirrors the section-level chip rail so the
+// vocabulary is identical: one tap = next stop, "active" = deviation from
+// inherit/default. Persisted into PageConfig.style_overrides.
+type PageBgStop = { label: string; type: StyleOverrides['background_type']; value: string };
+const PAGE_BG_STOPS: PageBgStop[] = [
+  { label: 'Inherit', type: 'none', value: '' },
+  { label: 'Muted', type: 'color', value: 'hsl(var(--muted))' },
+  { label: 'Secondary', type: 'color', value: 'hsl(var(--secondary))' },
+  { label: 'Contrast', type: 'color', value: 'hsl(var(--foreground))' },
+];
+type PageSpacingStop = { label: string; top: number; bottom: number };
+const PAGE_SPACING_STOPS: PageSpacingStop[] = [
+  { label: 'Default', top: 0, bottom: 0 },
+  { label: 'Cozy', top: 32, bottom: 32 },
+  { label: 'Roomy', top: 64, bottom: 64 },
+  { label: 'Epic', top: 128, bottom: 128 },
+];
+type PageWidthStop = { label: string; value: StyleOverrides['max_width'] };
+const PAGE_WIDTH_STOPS: PageWidthStop[] = [
+  { label: 'Full', value: 'full' },
+  { label: 'XL', value: 'xl' },
+  { label: 'LG', value: 'lg' },
+  { label: 'MD', value: 'md' },
+];
+
+function nextIn<T>(arr: T[], idx: number): T {
+  return arr[(idx + 1 + arr.length) % arr.length] ?? arr[0];
+}
 
 const RESERVED_SLUGS = [
   'services', 'extensions', 'about', 'policies', 'booking',
