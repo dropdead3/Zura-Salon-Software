@@ -52,7 +52,7 @@ export function SectionNavItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group flex items-center gap-2 px-2 py-2 mx-2 rounded-lg cursor-pointer transition-all',
+        'group flex items-center gap-2 pl-2 pr-3 py-2 mx-3 rounded-lg cursor-pointer transition-all',
         isActive
           ? 'bg-primary/10 border border-primary/20'
           : 'hover:bg-muted/60 border border-transparent',
