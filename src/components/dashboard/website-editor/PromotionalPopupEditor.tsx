@@ -29,10 +29,16 @@ export function PromotionalPopupEditor() {
   const updateSettings = useUpdatePromotionalPopup();
 
   const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
+  const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
 
   useEffect(() => {
-    if (settings) setFormData(settings);
+    if (settings) {
+      setFormData(settings);
+      setSavedSnapshot(settings);
+    }
   }, [settings]);
+
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
 
   const handleChange = <K extends keyof PromotionalPopupSettings>(
     field: K,
