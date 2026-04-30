@@ -265,7 +265,33 @@ export function PromotionalPopupEditor() {
     },
   });
 
-  useEditorSaveAction(guardedSave);
+  // Contrast-guarded Save: when the chosen accent fails WCAG 3:1 against both
+  // black and white text, intercept Save with a Sonner confirm (mirrors the
+  // overflow-guard pattern). Operator can still ship by clicking "Save anyway".
+  // Layered AROUND guardedSave so overflow + low-contrast warnings stack
+  // correctly — overflow is asserted first (data loss > legibility risk).
+  const guardedSaveWithContrast = useCallback(async () => {
+    const accent = formData.accentColor;
+    if (accent && accent.trim()) {
+      const ratio = bestTextContrast(accent);
+      if (ratio !== null && ratio < 3) {
+        toast.warning('Low contrast accent', {
+          description: `Even the best text color clears only ${ratio.toFixed(2)}:1 against this accent. Visitors may struggle to read the CTA.`,
+          duration: 10000,
+          action: {
+            label: 'Save anyway',
+            onClick: () => {
+              void guardedSave();
+            },
+          },
+        });
+        return;
+      }
+    }
+    await guardedSave();
+  }, [formData.accentColor, guardedSave]);
+
+  useEditorSaveAction(guardedSaveWithContrast);
 
   // Auto-save for the binary Enable toggle — operators expect a switch to
   // "just work" without hunting for Save. We persist immediately, refresh
