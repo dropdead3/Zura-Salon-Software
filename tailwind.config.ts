@@ -192,6 +192,12 @@ export default {
           "0%, 100%": { transform: "scale(1)", boxShadow: "0 10px 30px -10px hsl(0 0% 0% / 0.35)" },
           "50%": { transform: "scale(1.08)", boxShadow: "0 18px 40px -8px hsl(0 0% 0% / 0.45)" },
         },
+        // Soft "breathing" ring for dirty action buttons (Save needs attention).
+        // Pre-attentive cue without motion noise — opacity-only on a fixed ring.
+        "dirty-pulse": {
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--warning) / 0.35)" },
+          "50%": { boxShadow: "0 0 0 6px hsl(var(--warning) / 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
