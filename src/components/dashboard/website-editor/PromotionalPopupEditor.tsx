@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { cn } from '@/lib/utils';
 import {
@@ -29,8 +30,17 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
   { value: 'all-public', label: 'Every public page', description: 'Show site-wide (overrides others)' },
 ];
 
+// Curated accent presets so operators can match brand intent without hex
+// guessing. `undefined` resolves to the org's theme primary at render time.
+const ACCENT_PRESETS: { label: string; value: string | undefined; swatch: string; hint: string }[] = [
+  { label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
+  { label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
+  { label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
+];
+
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
+  const { publicPageUrl } = useOrgPublicUrl();
   const { data: settings, isLoading } = usePromotionalPopup();
   const updateSettings = useUpdatePromotionalPopup();
 
@@ -129,6 +139,18 @@ export function PromotionalPopupEditor() {
     }
   }, [orgId]);
 
+  // Opens the live public site in a new tab with `?preview=true`, the trusted
+  // editor-preview channel that bypasses frequency caps and forces an immediate
+  // trigger. Lets QA validate the real layout outside the editor iframe.
+  const fullPreviewUrl = publicPageUrl(null, { preview: true });
+  const handleOpenFullPreview = useCallback(() => {
+    if (!fullPreviewUrl) {
+      toast.error('Public site URL is not ready yet');
+      return;
+    }
+    window.open(fullPreviewUrl, '_blank', 'noopener,noreferrer');
+  }, [fullPreviewUrl]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -187,6 +209,17 @@ export function PromotionalPopupEditor() {
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Reset popup session
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleOpenFullPreview}
+            disabled={!fullPreviewUrl}
+            className="gap-2"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open full preview
           </Button>
           <p className="font-sans text-[11px] text-muted-foreground ml-auto">
             QA only — preview ignores frequency caps
@@ -291,6 +324,7 @@ export function PromotionalPopupEditor() {
             <AppearancePreviewSwatch
               appearance={formData.appearance}
               accent={formData.accentColor}
+              headline={formData.headline}
             />
           </div>
         </Field>
@@ -368,6 +402,35 @@ export function PromotionalPopupEditor() {
                 Reset
               </Button>
             )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground mr-1">
+              Presets
+            </span>
+            {ACCENT_PRESETS.map((preset) => {
+              const active =
+                (preset.value ?? null) === (formData.accentColor ?? null);
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleChange('accentColor', preset.value)}
+                  title={preset.hint}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2 h-7 transition-colors',
+                    active
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-card hover:bg-muted/60 text-muted-foreground',
+                  )}
+                >
+                  <span
+                    className="h-3 w-3 rounded-full border border-border/60"
+                    style={{ backgroundColor: preset.swatch }}
+                  />
+                  <span className="font-sans text-[11px]">{preset.label}</span>
+                </button>
+              );
+            })}
           </div>
         </Field>
         <Field
@@ -561,11 +624,16 @@ function FabPreviewSwatch({
 function AppearancePreviewSwatch({
   appearance,
   accent,
+  headline,
 }: {
   appearance: PromotionalPopupSettings['appearance'];
   accent?: string;
+  headline: string;
 }) {
   const accentColor = accent || 'hsl(var(--primary))';
+  const trim = (max: number) =>
+    headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
+
   return (
     <div className="space-y-1.5">
       <div
@@ -581,12 +649,12 @@ function AppearancePreviewSwatch({
         {appearance === 'modal' && (
           <>
             <div className="absolute inset-0 top-3 bg-black/30 backdrop-blur-[1px]" />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-12 rounded-md bg-card border border-border shadow-lg p-1 flex flex-col gap-0.5">
-              <span className="h-1 w-12 rounded-full bg-foreground/40" />
-              <span className="h-0.5 w-16 rounded-full bg-foreground/20" />
-              <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-14 rounded-md bg-card border border-border shadow-lg p-1.5 flex flex-col gap-0.5">
+              <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
+                {trim(28)}
+              </span>
               <span
-                className="mt-auto h-1.5 w-10 rounded-full"
+                className="mt-auto h-1.5 w-12 rounded-full"
                 style={{ backgroundColor: accentColor }}
               />
             </div>
@@ -594,19 +662,22 @@ function AppearancePreviewSwatch({
         )}
         {appearance === 'banner' && (
           <div
-            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1"
+            className="absolute top-3 inset-x-0 h-4 flex items-center px-1.5 gap-1 text-primary-foreground"
             style={{ backgroundColor: accentColor }}
           >
-            <span className="h-1 w-12 rounded-full bg-white/70" />
-            <span className="ml-auto h-1.5 w-6 rounded-full bg-white/30" />
+            <span className="font-display uppercase tracking-wider text-[7px] truncate flex-1">
+              {trim(26)}
+            </span>
+            <span className="h-1.5 w-5 rounded-full bg-white/30 shrink-0" />
           </div>
         )}
         {appearance === 'corner-card' && (
-          <div className="absolute bottom-1.5 right-1.5 w-20 h-12 rounded-md bg-card border border-border shadow-md p-1 flex flex-col gap-0.5">
-            <span className="h-1 w-10 rounded-full bg-foreground/40" />
-            <span className="h-0.5 w-14 rounded-full bg-foreground/20" />
+          <div className="absolute bottom-1.5 right-1.5 w-24 h-14 rounded-md bg-card border border-border shadow-md p-1.5 flex flex-col gap-0.5">
+            <span className="font-display uppercase tracking-wider text-[7px] text-foreground leading-tight line-clamp-2">
+              {trim(22)}
+            </span>
             <span
-              className="mt-auto h-1.5 w-8 rounded-full"
+              className="mt-auto h-1.5 w-10 rounded-full"
               style={{ backgroundColor: accentColor }}
             />
           </div>
