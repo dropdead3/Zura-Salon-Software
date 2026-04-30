@@ -255,43 +255,36 @@ export function PromotionalPopupEditor() {
     }
   }, [formData, updateSettings]);
 
-  const { guardedSave, isFieldOverflowing } = useOverflowGuard<OverflowFinding>({
-    findings: overflows,
-    persist,
-    fieldRefs: {
+  // Composed Save guards — overflow first (data loss), contrast second
+  // (legibility). usePersistGuards picks the first blocking finding for the
+  // toast and scrolls/focuses the offending input. Adding a third guard later
+  // (link reachability, deposit amount, etc.) is a one-line append.
+  const fieldRefs = useMemo(
+    () => ({
       headline: headlineRef.current,
       body: bodyRef.current,
       disclaimer: disclaimerRef.current,
-    },
-  });
+    }),
+    // Refs are read at guard-evaluation time; we only need to recompute the
+    // memo when overflow findings change so the guard sees fresh nodes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [overflows],
+  );
+  const guards = useMemo(
+    () => [
+      makeOverflowGuard<OverflowFinding>(overflows, fieldRefs),
+      makeContrastGuard({
+        accent: formData.accentColor,
+        getRatio: bestTextContrast,
+      }),
+    ],
+    [overflows, fieldRefs, formData.accentColor],
+  );
+  const { guardedSave, isFieldGuarded } = usePersistGuards({ guards, persist });
+  // Back-compat alias — existing destructive-state styling reads this name.
+  const isFieldOverflowing = isFieldGuarded;
 
-  // Contrast-guarded Save: when the chosen accent fails WCAG 3:1 against both
-  // black and white text, intercept Save with a Sonner confirm (mirrors the
-  // overflow-guard pattern). Operator can still ship by clicking "Save anyway".
-  // Layered AROUND guardedSave so overflow + low-contrast warnings stack
-  // correctly — overflow is asserted first (data loss > legibility risk).
-  const guardedSaveWithContrast = useCallback(async () => {
-    const accent = formData.accentColor;
-    if (accent && accent.trim()) {
-      const ratio = bestTextContrast(accent);
-      if (ratio !== null && ratio < 3) {
-        toast.warning('Low contrast accent', {
-          description: `Even the best text color clears only ${ratio.toFixed(2)}:1 against this accent. Visitors may struggle to read the CTA.`,
-          duration: 10000,
-          action: {
-            label: 'Save anyway',
-            onClick: () => {
-              void guardedSave();
-            },
-          },
-        });
-        return;
-      }
-    }
-    await guardedSave();
-  }, [formData.accentColor, guardedSave]);
-
-  useEditorSaveAction(guardedSaveWithContrast);
+  useEditorSaveAction(guardedSave);
 
   // Auto-save for the binary Enable toggle — operators expect a switch to
   // "just work" without hunting for Save. We persist immediately, refresh
