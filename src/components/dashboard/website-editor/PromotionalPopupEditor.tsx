@@ -840,14 +840,32 @@ function AppearancePreviewSwatch({
   appearance,
   accent,
   headline,
+  eyebrow,
+  eyebrowIcon,
 }: {
   appearance: PromotionalPopupSettings['appearance'];
   accent?: string;
   headline: string;
+  eyebrow?: string;
+  eyebrowIcon?: EyebrowIcon;
 }) {
   const accentColor = accent || 'hsl(var(--primary))';
   const trim = (max: number) =>
     headline.length > max ? `${headline.slice(0, max)}…` : headline || 'Offer';
+  const Icon = getEyebrowIcon(eyebrowIcon);
+  const eyebrowText = eyebrow?.trim();
+  // Compact uppercase eyebrow strip — accent-colored, icon-aware. Reused by
+  // all three layout variants so the swatch stays a true WYSIWYG of what the
+  // public popup will paint.
+  const eyebrowStrip = eyebrowText ? (
+    <span
+      className="font-display uppercase tracking-[0.18em] text-[6px] inline-flex items-center gap-0.5 truncate"
+      style={{ color: accentColor }}
+    >
+      {Icon && <Icon className="h-1.5 w-1.5 shrink-0" aria-hidden="true" />}
+      <span className="truncate">{eyebrowText}</span>
+    </span>
+  ) : null;
 
   return (
     <div className="space-y-1.5">
