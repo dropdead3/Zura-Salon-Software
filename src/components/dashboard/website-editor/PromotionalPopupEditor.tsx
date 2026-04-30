@@ -857,6 +857,8 @@ export function PromotionalPopupEditor() {
             </div>
           )}
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Accept button label">
             <Input
               value={formData.ctaAcceptLabel}
               onChange={(e) => handleChange('ctaAcceptLabel', e.target.value)}
