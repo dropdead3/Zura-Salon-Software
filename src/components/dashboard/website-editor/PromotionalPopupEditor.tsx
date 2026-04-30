@@ -67,6 +67,43 @@ const BODY_CEILINGS: Record<PromotionalPopupSettings['appearance'], number> = {
 // matches what most legal teams ask for in compact promo surfaces.
 const DISCLAIMER_CEILING = 200;
 
+// Single source of truth for save-time overflow detection. Mirrors the
+// ceilings the live counters render so a field flagged as destructive in the
+// UI also blocks Save with a confirmation toast — and vice versa. Kept as a
+// pure function so it stays trivial to unit-test if we add coverage later.
+type OverflowFinding = { field: 'headline' | 'body' | 'disclaimer'; message: string };
+
+function collectOverflows(data: PromotionalPopupSettings): OverflowFinding[] {
+  const findings: OverflowFinding[] = [];
+  const layout = data.appearance === 'corner-card' ? 'corner card' : data.appearance;
+
+  const headlineCeiling = HEADLINE_CEILINGS[data.appearance];
+  if (data.headline.length > headlineCeiling) {
+    findings.push({
+      field: 'headline',
+      message: `Headline (${data.headline.length}/${headlineCeiling}) will truncate on ${layout}.`,
+    });
+  }
+
+  const bodyCeiling = BODY_CEILINGS[data.appearance];
+  if (data.body.length > bodyCeiling) {
+    findings.push({
+      field: 'body',
+      message: `Body (${data.body.length}/${bodyCeiling}) will truncate on ${layout}.`,
+    });
+  }
+
+  const disclaimerLen = (data.disclaimer ?? '').length;
+  if (disclaimerLen > DISCLAIMER_CEILING) {
+    findings.push({
+      field: 'disclaimer',
+      message: `Disclaimer (${disclaimerLen}/${DISCLAIMER_CEILING}) exceeds the legal-copy limit.`,
+    });
+  }
+
+  return findings;
+}
+
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
   const { publicPageUrl } = useOrgPublicUrl();
@@ -106,7 +143,12 @@ export function PromotionalPopupEditor() {
     });
   };
 
-  const handleSave = useCallback(async () => {
+  // Detects every counter currently in destructive state. Drives the Save
+  // confirmation guard so operators never ship silent ellipses or
+  // legal-overflow disclaimers.
+  const overflows = collectOverflows(formData);
+
+  const persist = useCallback(async () => {
     try {
       await updateSettings.mutateAsync(formData);
       setSavedSnapshot(formData);
@@ -116,6 +158,27 @@ export function PromotionalPopupEditor() {
       toast.error(`Failed to save: ${msg}`);
     }
   }, [formData, updateSettings]);
+
+  const handleSave = useCallback(async () => {
+    if (overflows.length === 0) {
+      await persist();
+      return;
+    }
+    // Sonner's action button gives us a single-tap "Save anyway" without
+    // pulling in an AlertDialog just for one confirm. The description lists
+    // every overflowing field so operators see exactly what will truncate.
+    const summary = overflows.map((o) => `• ${o.message}`).join('\n');
+    toast.warning('Some copy will truncate', {
+      description: summary,
+      duration: 10000,
+      action: {
+        label: 'Save anyway',
+        onClick: () => {
+          void persist();
+        },
+      },
+    });
+  }, [overflows, persist]);
 
   useEditorSaveAction(handleSave);
 
