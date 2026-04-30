@@ -121,12 +121,18 @@ export function useWebsiteSections() {
 }
 
 export function useUpdateWebsiteSections() {
-  const queryClient = useQueryClient();
+  const pagesQuery = useWebsitePages();
   const updatePages = useUpdateWebsitePages();
 
   return useMutation({
     mutationFn: async (value: WebsiteSectionsConfig) => {
-      const currentPages = queryClient.getQueryData<WebsitePagesConfig>(['site-settings', 'website_pages']);
+      // Source of truth = the live useWebsitePages query, not an arbitrary
+      // cache lookup. The previous implementation read
+      // ['site-settings', 'website_pages'] which never matches the actual key
+      // (`['site-settings', orgId, 'website_pages', mode]`) and always threw
+      // "Pages config not loaded" — surfacing as "Failed to update section"
+      // when toggling a homepage row.
+      const currentPages = pagesQuery.data;
       if (!currentPages) throw new Error('Pages config not loaded');
 
       const updated: WebsitePagesConfig = {

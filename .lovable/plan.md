@@ -1,68 +1,83 @@
-# Auto-scroll Live Preview to Active Section
+# Fix "Failed to update section" toggle error
 
 ## Positive feedback on your prompt
 
-This was a strong prompt: you described the trigger (clicking a rail item), the expected outcome (preview auto-scrolls to that section), and framed it as a problem to solve rather than dictating an implementation. That gives me room to find the real root cause instead of patching a symptom.
+Good prompt — you named the exact toast text ("failed to update section"), the trigger (toggling off), and what success looks like ("toggles work and act properly"). Naming the literal error text let me grep straight to the source instead of hunting.
 
-**Even better next time:** add the observed behavior alongside the expected one — e.g. "currently nothing happens" vs "it scrolls to the wrong section" vs "it works for built-ins but not custom sections". That narrows the diagnostic surface immediately and avoids me having to test every branch.
+**Even better next time:** open DevTools → Network and tell me whether the PATCH/RPC actually fired (and its status) vs. whether the toast fires before any network hit. That distinguishes "network rejected the write" (RLS, schema) from "client-side guard threw before calling the API" (this case). Two very different fixes.
 
 ## Root cause
 
-The scroll pipeline is fully built and only broken at one seam:
+The toggle handler calls `updateSections.mutateAsync(...)` which routes through `useUpdateWebsiteSections` in `src/hooks/useWebsiteSections.ts`:
 
-```text
-SectionNavItem click
-   -> onTabChange(tab)               [sidebar]
-   -> editorTab state changes        [shell]
-   -> effect resolves activeSectionId
-   -> window.postMessage(...)        <-- broadcasts to PARENT window
-                                         but LivePreviewPanel never listens
-   -> LivePreviewPanel.activeSectionId prop is NEVER PASSED
-   -> iframe.postMessage(PREVIEW_SCROLL_TO_SECTION) never fires
+```ts
+const currentPages = queryClient.getQueryData<WebsitePagesConfig>(
+  ['site-settings', 'website_pages']
+);
+if (!currentPages) throw new Error('Pages config not loaded');
 ```
 
-Specifically:
-- `WebsiteEditorShell.tsx:1314` renders `<LivePreviewPanel previewUrl={...} />` with **no `activeSectionId` prop**.
-- The shell's effect at line 894 broadcasts via `window.postMessage` to itself, but `LivePreviewPanel` only reacts to its prop, not to window messages.
-- The iframe-side listener in `src/components/home/PageSectionRenderer.tsx` is correct and tags DOM nodes with `id="section-${section.id}"`.
+But the actual query key used by `useWebsitePages` is:
 
-## Plan
+```ts
+['site-settings', orgId, 'website_pages', mode]   // mode = 'draft' | 'live'
+```
 
-**1. Lift `activeSectionId` resolution into shell render scope and pass it as a prop.**
+The lookup never matches, `currentPages` is always `undefined`, the mutation throws **before any network call**, and the sidebar's catch shows the generic `Failed to update section` toast. No DB write, no RLS issue — purely a client-side cache-key mismatch.
 
-In `WebsiteEditorShell.tsx`:
-- Replace the broadcast effect (lines 893–913) with a `useMemo` that returns the resolved `activeSectionId` from `editorTab` + `selectedPage` + `pagesConfig` using the existing logic.
-- Pass it: `<LivePreviewPanel previewUrl={...} activeSectionId={activeSectionId} />`.
-- Keep the `window.postMessage` broadcast as a secondary signal only if anything else listens (search confirms nothing does — safe to remove).
+This affects both code paths in `WebsiteEditorSidebar.tsx`:
+- `handleToggleSection` (line 232) — homepage section toggles
+- `saveSections` (line 217) — homepage drag-reorder commits
 
-**2. Confirm the iframe receives the message at the right origin.**
+Per-page section toggles route through `handlePageSectionToggle` in the shell, which uses a different (working) path — that's why only the homepage rail surfaces this.
 
-`LivePreviewPanel` already posts `PREVIEW_SCROLL_TO_SECTION` to `previewOrigin` once `iframeReadyRef` is true, and queues it via `pendingSectionRef` if the iframe is still loading. No change needed.
+## Fix
 
-**3. Handle initial load.**
+**Single file edit: `src/hooks/useWebsiteSections.ts`**
 
-When the editor first opens with a default tab (e.g. `hero`), the memo will resolve to that section's id, the prop will fire on first render, and the queued message will deliver after `onLoad`. This means the preview will land on the active section immediately, not just on subsequent clicks.
+Replace the broken `queryClient.getQueryData(...)` lookup with the live `useWebsitePages()` hook so the mutation reads from the correct, always-current source of truth:
 
-**4. Custom-section-on-non-home-page edge case.**
+```ts
+export function useUpdateWebsiteSections() {
+  const pagesQuery = useWebsitePages();
+  const updatePages = useUpdateWebsitePages();
 
-The current resolver searches `selectedPage.sections` then falls back to `home`. That's correct for custom sections — they live on the page that owns them. No change needed.
+  return useMutation({
+    mutationFn: async (value: WebsiteSectionsConfig) => {
+      const currentPages = pagesQuery.data;
+      if (!currentPages) throw new Error('Pages config not loaded');
+
+      const updated: WebsitePagesConfig = {
+        pages: currentPages.pages.map(p =>
+          p.id === 'home' ? { ...p, sections: value.homepage } : p
+        ),
+      };
+      await updatePages.mutateAsync(updated);
+    },
+  });
+}
+```
+
+Why this works: `useWebsitePages()` is already mounted by every consumer that calls `useUpdateWebsiteSections` (the sidebar reads sections), so its data is hot in the cache and reactively updated.
+
+**Bonus hardening (small, in same file):** improve the sidebar catch in `WebsiteEditorSidebar.tsx` lines 226–229 and 242–245 to surface the actual error message (`toast.error(`Failed to update section: ${err.message ?? 'unknown error'}`)`) so this class of silent guard-throw is visible next time instead of being masked by a friendly generic.
 
 ## Verification
 
-After implementation, in the browser:
-- Open the Website Editor, click "Brand Statement" in the rail → preview smoothly scrolls to that section and briefly highlights it.
-- Click "Testimonials", "Partner Brands", a custom section → same.
-- Switch to a non-home page, click a section there → preview navigates and scrolls.
-- Reload the editor → preview lands on the currently-active section without an extra click.
+After the fix, in the browser:
+1. Toggle "Hero Section" off → toast: "Hero Section disabled". Iframe re-renders without the hero. Refresh → still off.
+2. Toggle it back on → toast: "Hero Section enabled". Hero returns.
+3. Toggle "Brand Statement", "Testimonials", "Partner Brands" → each one persists.
+4. Drag-reorder a couple of homepage sections → no "Failed to save" toast; new order persists across reload.
+5. Per-page (non-home) toggles continue to work as before (separate code path, not affected).
 
 ## Files to edit
 
-- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — replace effect with memo, pass prop.
+- `src/hooks/useWebsiteSections.ts` — fix the cache lookup (~6 line delta).
+- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` — surface the underlying error message in the two catch blocks (~2 line delta, optional but recommended).
 
-That's the entire fix. One file, ~15 line delta.
+## Enhancement suggestions (after this lands)
 
-## Enhancement suggestions (optional, for after this lands)
-
-- **Visual confirmation in the rail.** When the iframe scrolls past a section, post a reverse `PREVIEW_VISIBLE_SECTION` message (IntersectionObserver in the renderer) so the rail can highlight whichever section the user has scrolled to inside the preview. Closes the loop both ways.
-- **Scroll offset for sticky headers.** If the published site has a sticky nav, `scrollIntoView` will hide the section's top under it. Add a `scroll-margin-top` to the section wrapper or compute an offset in the renderer's scroll handler.
-- **Reduced-motion respect.** Swap `behavior: 'smooth'` for `'auto'` when the iframe's `window.matchMedia('(prefers-reduced-motion: reduce)')` matches.
+- **Optimistic toggle without a network round-trip on each click.** Today every toggle writes the entire `website_pages` JSON. A debounced batch (e.g. 500ms after the last toggle) would feel snappier and reduce write amplification, with the same visual instant feedback you already have via `setLocalSections`.
+- **Standardize the error toast pattern.** A small helper like `errorToast(prefix, err)` that always appends `err.message` would have caught this silently-failed guard immediately. Worth adding to `src/lib/utils.ts` and using in every editor catch block.
+- **Add a Vitest covering the cache-key contract.** A 10-line test that mounts `useUpdateWebsiteSections` alongside `useWebsitePages` and asserts the toggle round-trips would have caught this drift the moment the key shape changed.
