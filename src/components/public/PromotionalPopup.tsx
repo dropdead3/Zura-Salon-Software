@@ -8,6 +8,7 @@ import {
   type PromotionalPopupSettings,
 } from '@/hooks/usePromotionalPopup';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
