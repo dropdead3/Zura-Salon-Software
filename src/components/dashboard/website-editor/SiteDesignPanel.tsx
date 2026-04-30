@@ -213,6 +213,13 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     };
   }, [draft]);
 
+  // Broadcast dirty state to the shell so it can guard backdrop/ESC closes.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('site-design-dirty-state', { detail: { dirty } }),
+    );
+  }, [dirty]);
+
   const setField = useCallback(<K extends keyof DesignOverrides>(key: K, value: DesignOverrides[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     setDirty(true);
