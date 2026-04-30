@@ -442,7 +442,7 @@ export function PromotionalPopupEditor() {
       {/* Content */}
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
-          <div className="grid grid-cols-[auto_1fr] gap-2">
+          <div className="space-y-2">
             <GlyphPicker
               ariaLabel="Eyebrow icon"
               options={EYEBROW_ICON_OPTIONS}
