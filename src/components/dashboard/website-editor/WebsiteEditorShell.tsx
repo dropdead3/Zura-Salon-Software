@@ -1061,6 +1061,18 @@ export function WebsiteEditorShell() {
         <div className="flex items-center gap-2 shrink-0">
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
 
+          {/* Site Design — global theme/typography/density panel */}
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            onClick={() => setSiteDesignOpen(true)}
+            className="rounded-full"
+            title="Site Design — global colors, type, density"
+          >
+            <Palette className="h-4 w-4 mr-1.5" />
+            Site Design
+          </Button>
+
           {/* Preview (open public preview in new tab) */}
           <Button
             variant="outline"
