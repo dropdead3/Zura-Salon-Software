@@ -404,12 +404,24 @@ export function PromotionalPopupEditor() {
               type="color"
               aria-label="Accent color"
               value={normalizeHex(formData.accentColor)}
-              onChange={(e) => handleChange('accentColor', e.target.value)}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  accentColor: e.target.value,
+                  accentPresetKey: null, // custom color picked
+                }))
+              }
               className="h-9 w-12 rounded-md border border-border bg-transparent cursor-pointer p-0.5"
             />
             <Input
               value={formData.accentColor ?? ''}
-              onChange={(e) => handleChange('accentColor', e.target.value || undefined)}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  accentColor: e.target.value || undefined,
+                  accentPresetKey: null, // custom color typed
+                }))
+              }
               placeholder="#7C3AED or hsl(...) — leave blank for theme primary"
               className="flex-1"
             />
@@ -418,7 +430,13 @@ export function PromotionalPopupEditor() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => handleChange('accentColor', undefined)}
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    accentColor: undefined,
+                    accentPresetKey: null,
+                  }))
+                }
               >
                 Reset
               </Button>
@@ -429,13 +447,24 @@ export function PromotionalPopupEditor() {
               Presets
             </span>
             {ACCENT_PRESETS.map((preset) => {
-              const active =
-                (preset.value ?? null) === (formData.accentColor ?? null);
+              // Prefer key match (survives theme/hex changes); fall back to
+              // color match so legacy rows saved before this field existed
+              // still highlight correctly.
+              const active = formData.accentPresetKey
+                ? formData.accentPresetKey === preset.key
+                : !formData.accentPresetKey &&
+                  (preset.value ?? null) === (formData.accentColor ?? null);
               return (
                 <button
-                  key={preset.label}
+                  key={preset.key}
                   type="button"
-                  onClick={() => handleChange('accentColor', preset.value)}
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      accentColor: preset.value,
+                      accentPresetKey: preset.key,
+                    }))
+                  }
                   title={preset.hint}
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-full border px-2 h-7 transition-colors',
