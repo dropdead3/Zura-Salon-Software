@@ -31,6 +31,8 @@ import {
   Maximize2,
   ArrowUpDown,
   Paintbrush,
+  Type,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
@@ -79,6 +81,19 @@ const BG_STOPS: BgStop[] = [
   { label: 'Contrast', type: 'color', value: 'hsl(var(--foreground))' },
 ];
 
+type HeadingScaleStop = { label: string; value: NonNullable<StyleOverrides['heading_scale']> };
+const HEADING_SCALE_STOPS: HeadingScaleStop[] = [
+  { label: 'Sm', value: 'sm' },
+  { label: 'Md', value: 'md' },
+  { label: 'Lg', value: 'lg' },
+  { label: 'XL', value: 'xl' },
+];
+
+function nextHeadingScale(current: NonNullable<StyleOverrides['heading_scale']>): HeadingScaleStop {
+  const idx = HEADING_SCALE_STOPS.findIndex((s) => s.value === current);
+  return HEADING_SCALE_STOPS[(idx + 1 + HEADING_SCALE_STOPS.length) % HEADING_SCALE_STOPS.length] ?? HEADING_SCALE_STOPS[1];
+}
+
 function nextSpacing(current: { top: number; bottom: number }): SpacingStop {
   const idx = SPACING_STOPS.findIndex(
     (s) => s.top === current.top && s.bottom === current.bottom,
@@ -110,6 +125,13 @@ function isWidthActive(o: Partial<StyleOverrides>): boolean {
 }
 function isBgActive(o: Partial<StyleOverrides>): boolean {
   return !!o.background_type && o.background_type !== 'none' && !!o.background_value;
+}
+function isHeadingScaleActive(o: Partial<StyleOverrides>): boolean {
+  return !!o.heading_scale && o.heading_scale !== 'md';
+}
+function isEyebrowActive(o: Partial<StyleOverrides>): boolean {
+  // "Active" means the operator has hidden eyebrows (deviation from default).
+  return o.eyebrow_visible === false;
 }
 
 export function EditorSectionCard({
@@ -190,6 +212,24 @@ export function EditorSectionCard({
     });
   }, [sendMessage, overrides.max_width]);
 
+  const handleCycleHeadingScale = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = nextHeadingScale(overrides.heading_scale ?? 'md');
+    sendMessage('EDITOR_APPLY_STYLE_PRESET', {
+      patch: { heading_scale: next.value },
+      label: `Heading: ${next.label}`,
+    });
+  }, [sendMessage, overrides.heading_scale]);
+
+  const handleToggleEyebrow = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextVisible = !(overrides.eyebrow_visible !== false); // default true → false
+    sendMessage('EDITOR_APPLY_STYLE_PRESET', {
+      patch: { eyebrow_visible: nextVisible },
+      label: `Eyebrow: ${nextVisible ? 'On' : 'Off'}`,
+    });
+  }, [sendMessage, overrides.eyebrow_visible]);
+
   // Tooltips show the NEXT value so operators know what a tap will do.
   const bgTooltip = useMemo(() => {
     const cur = BG_STOPS.find(
@@ -219,6 +259,17 @@ export function EditorSectionCard({
     const nxt = nextWidth(overrides.max_width ?? 'full');
     return `Width: ${cur?.label ?? 'Custom'} → ${nxt.label}`;
   }, [overrides.max_width]);
+
+  const headingScaleTooltip = useMemo(() => {
+    const cur = HEADING_SCALE_STOPS.find((s) => s.value === (overrides.heading_scale ?? 'md'));
+    const nxt = nextHeadingScale(overrides.heading_scale ?? 'md');
+    return `Heading: ${cur?.label ?? 'Md'} → ${nxt.label}`;
+  }, [overrides.heading_scale]);
+
+  const eyebrowTooltip = useMemo(() => {
+    const visible = overrides.eyebrow_visible !== false;
+    return `Eyebrow: ${visible ? 'On → Off' : 'Off → On'}`;
+  }, [overrides.eyebrow_visible]);
 
   return (
     <div
@@ -267,6 +318,20 @@ export function EditorSectionCard({
               active={isWidthActive(overrides)}
               tooltip={widthTooltip}
               onClick={handleCycleWidth}
+            />
+            <StyleChip
+              icon={<Type className="h-3 w-3" />}
+              label="H"
+              active={isHeadingScaleActive(overrides)}
+              tooltip={headingScaleTooltip}
+              onClick={handleCycleHeadingScale}
+            />
+            <StyleChip
+              icon={<Tag className="h-3 w-3" />}
+              label={overrides.eyebrow_visible === false ? 'Eb·Off' : 'Eb'}
+              active={isEyebrowActive(overrides)}
+              tooltip={eyebrowTooltip}
+              onClick={handleToggleEyebrow}
             />
           </div>
         </div>

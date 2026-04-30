@@ -17,6 +17,11 @@ export interface PageConfig {
   sections: SectionConfig[];
   page_type: 'home' | 'standard' | 'custom';
   deletable: boolean;
+  /** Page-level style overrides — applied as a wrapper around all sections.
+   *  Used for whole-page background/padding presets driven by the Page
+   *  Settings chip rail. Partial because every field has a sensible default
+   *  in `SectionStyleWrapper.DEFAULT_STYLE_OVERRIDES`. */
+  style_overrides?: Partial<StyleOverrides>;
 }
 
 export interface WebsitePagesConfig {

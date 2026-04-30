@@ -538,32 +538,50 @@ function WebsiteEditorShellInner() {
 
   const handlePageSectionDelete = useCallback(
     (sectionId: string) => {
+      const prevSections = selectedPage?.sections;
+      const removed = prevSections?.find((s) => s.id === sectionId);
       void updateSelectedPage((p) => ({
         ...p,
         sections: p.sections.filter((s) => s.id !== sectionId),
-      }));
+      })).then(() => {
+        if (!prevSections || !removed) return;
+        const nextSections = prevSections.filter((s) => s.id !== sectionId);
+        pushEditorHistoryEntry({
+          label: `Delete ${removed.label}`,
+          undo: () => updateSelectedPage((p) => ({ ...p, sections: prevSections })),
+          redo: () => updateSelectedPage((p) => ({ ...p, sections: nextSections })),
+        });
+      });
       if (editorTab === `custom-${sectionId}`) setEditorTab('page-settings');
     },
-    [updateSelectedPage, editorTab],
+    [updateSelectedPage, editorTab, selectedPage],
   );
 
   const handlePageSectionDuplicate = useCallback(
     (section: SectionConfig) => {
+      const prevSections = selectedPage?.sections;
       const newId = generateSectionId();
+      const dup = { ...section, id: newId, label: `${section.label} (Copy)`, order: (prevSections?.length ?? 0) + 1 };
       void updateSelectedPage((p) => ({
         ...p,
-        sections: [
-          ...p.sections,
-          { ...section, id: newId, label: `${section.label} (Copy)`, order: p.sections.length + 1 },
-        ],
-      }));
+        sections: [...p.sections, dup],
+      })).then(() => {
+        if (!prevSections) return;
+        const nextSections = [...prevSections, dup];
+        pushEditorHistoryEntry({
+          label: `Duplicate ${section.label}`,
+          undo: () => updateSelectedPage((p) => ({ ...p, sections: prevSections })),
+          redo: () => updateSelectedPage((p) => ({ ...p, sections: nextSections })),
+        });
+      });
       toast({ title: 'Section duplicated', description: section.label });
     },
-    [updateSelectedPage, toast],
+    [updateSelectedPage, toast, selectedPage],
   );
 
   const handlePageSectionAdd = useCallback(
     (type: CustomSectionType, label: string) => {
+      const prevSections = selectedPage?.sections;
       const newSection: SectionConfig = {
         id: generateSectionId(),
         type,
@@ -573,13 +591,22 @@ function WebsiteEditorShellInner() {
         order: 0,
         deletable: true,
       };
+      const stamped = { ...newSection, order: (prevSections?.length ?? 0) + 1 };
       void updateSelectedPage((p) => ({
         ...p,
-        sections: [...p.sections, { ...newSection, order: p.sections.length + 1 }],
-      }));
+        sections: [...p.sections, stamped],
+      })).then(() => {
+        if (!prevSections) return;
+        const nextSections = [...prevSections, stamped];
+        pushEditorHistoryEntry({
+          label: `Add ${label}`,
+          undo: () => updateSelectedPage((p) => ({ ...p, sections: prevSections })),
+          redo: () => updateSelectedPage((p) => ({ ...p, sections: nextSections })),
+        });
+      });
       setEditorTab(`custom-${newSection.id}`);
     },
-    [updateSelectedPage],
+    [updateSelectedPage, selectedPage],
   );
 
   const handleApplyPageTemplate = useCallback(
@@ -610,7 +637,8 @@ function WebsiteEditorShellInner() {
     ) => {
       if (!pagesConfig) return null;
       const newSection = build();
-      const updated = pagesConfig.pages.map((p) => {
+      const prevPages = pagesConfig.pages;
+      const updated = prevPages.map((p) => {
         if (p.id !== pageId) return p;
         const list = [...p.sections];
         const idx = afterSectionId
@@ -624,6 +652,16 @@ function WebsiteEditorShellInner() {
       });
       void updatePages
         .mutateAsync({ pages: updated })
+        .then(() => {
+          // History: undo restores the prior pages snapshot; redo re-applies
+          // the insert. Page-scoped operation so we snapshot the full pages
+          // array (insert can target any page incl. home).
+          pushEditorHistoryEntry({
+            label: `Add ${newSection.label}`,
+            undo: () => updatePages.mutateAsync({ pages: prevPages }).then(() => undefined),
+            redo: () => updatePages.mutateAsync({ pages: updated }).then(() => undefined),
+          });
+        })
         .catch((err) =>
           toast({
             variant: 'destructive',
