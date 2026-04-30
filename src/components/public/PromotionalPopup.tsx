@@ -213,10 +213,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accent = cfg.accentColor || 'hsl(var(--primary))';
 
   function handleAccept() {
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    if (!isPreview) {
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    }
     setOpen(false);
+    if (isPreview) return; // Don't navigate the editor iframe — operator is QA'ing.
     // Land on the booking surface with the offer code attached. Booking
     // page surfaces it as a banner; checkout/payroll can later honor it.
     const target = orgPath('/booking');
@@ -226,17 +229,21 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   }
 
   function handleDecline() {
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
+    if (!isPreview) {
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
+    }
     setOpen(false);
   }
 
   function handleSoftClose() {
-    // Soft dismiss respects the frequency cap but isn't a recorded decline.
-    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
-    markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
+    if (!isPreview) {
+      // Soft dismiss respects the frequency cap but isn't a recorded decline.
+      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
+      markSessionDismissed();
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
+    }
     setOpen(false);
   }
 
