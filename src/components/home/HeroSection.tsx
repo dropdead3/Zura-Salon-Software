@@ -222,8 +222,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* Main headline */}
             <motion.h1
-              className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center"
-              style={{ y: headlineY, filter: headingBlurFilter }}
+              className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+              style={{
+                y: headlineY,
+                filter: headingBlurFilter,
+                fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))',
+              }}
             >
               <motion.span 
                 className="whitespace-nowrap block"
