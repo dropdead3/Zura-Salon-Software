@@ -110,8 +110,13 @@ import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
+import { AddSectionDialog } from './AddSectionDialog';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Badge } from '@/components/ui/badge';
 import type { PageTemplate } from '@/data/page-templates';
+import type { SectionTemplate } from '@/data/section-templates';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 // ─── Builtin tab → component map ───
 const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
