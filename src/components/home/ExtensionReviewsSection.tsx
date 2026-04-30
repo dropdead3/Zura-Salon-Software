@@ -404,24 +404,45 @@ export function ExtensionReviewsSection() {
       </div>
 
       {/* Extension Types Pills */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={isInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6, delay: 0.4 }}
-        className="container mx-auto px-6 mt-16"
-      >
-        <div className="flex flex-wrap justify-center gap-3">
-          {extensionTypes.map((type, index) => (
-            <div
-              key={index}
-              className="inline-flex items-center gap-2 px-5 py-2.5 border border-border bg-background text-sm"
-            >
-              <Check className="w-4 h-4 text-foreground" strokeWidth={2} />
-              <span>{type}</span>
+      {showCategories && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="container mx-auto px-6 mt-16"
+        >
+          {extensionTypes.length === 0 ? (
+            isPreview ? (
+              <div className="max-w-xl mx-auto p-6 border border-dashed border-border rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">
+                  No extension types configured. Add categories from the Extensions editor in the sidebar.
+                </p>
+              </div>
+            ) : null
+          ) : (
+            <div className="flex flex-wrap justify-center gap-3">
+              {extensionTypes.map((type, index) => (
+                <div
+                  key={index}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 border border-border bg-background text-sm"
+                >
+                  <Check className="w-4 h-4 text-foreground" strokeWidth={2} />
+                  {isPreview ? (
+                    <InlineEditableText
+                      value={type}
+                      sectionKey="section_extension_reviews"
+                      fieldPath={`extension_categories.${index}`}
+                      as="span"
+                    />
+                  ) : (
+                    <span>{type}</span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </motion.div>
+          )}
+        </motion.div>
+      )}
     </section>
   );
 }
