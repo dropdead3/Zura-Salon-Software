@@ -212,12 +212,9 @@ export function FAQEditor() {
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="pt-4 border-t border-border/40">
-          <p className="text-sm text-muted-foreground">
-            <strong>Note:</strong> FAQ questions and answers are managed separately in the FAQ Manager.
-          </p>
-        </div>
       </EditorCard>
+
+      <FAQItemsManager />
     </div>
   );
 }
