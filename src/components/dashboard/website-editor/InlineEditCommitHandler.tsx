@@ -147,6 +147,27 @@ export function InlineEditCommitHandler() {
             'rotating_words.*',
           ],
         },
+        section_testimonials: {
+          data: testimonials.data,
+          update: testimonials.update,
+          allowedPaths: ['eyebrow', 'headline', 'link_text', 'verified_badge_text'],
+        },
+        section_extensions: {
+          data: extensions.data,
+          update: extensions.update,
+          allowedPaths: [
+            'eyebrow',
+            'badge_text',
+            'headline_line1',
+            'headline_line2',
+            'description',
+            'floating_badge_text',
+            'floating_badge_description',
+            'cta_primary',
+            'cta_secondary',
+            'education_link_text',
+          ],
+        },
       };
 
       const entry = registry[msg.sectionKey];
