@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useWebsiteMenus, usePublishMenu } from './useWebsiteMenus';
+import { useWebsiteMenus } from './useWebsiteMenus';
 import { useWebsitePages } from './useWebsitePages';
 import { useSavePageVersion, useRestorePageVersion } from './usePageVersions';
 import { useSaveSiteVersion, useRestoreSiteVersion, type SiteVersionSurface } from './useSiteVersions';
