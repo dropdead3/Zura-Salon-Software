@@ -1,172 +1,140 @@
+/**
+ * Tenant-scoped testimonials (website_testimonials).
+ * Surface discriminator: 'general' (TestimonialSection) | 'extensions' (ExtensionReviewsSection).
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from './useSettingsOrgId';
 import { toast } from 'sonner';
+
+export type TestimonialSurface = 'general' | 'extensions';
 
 export interface Testimonial {
   id: string;
+  organization_id: string;
+  surface: TestimonialSurface;
   title: string;
   author: string;
-  text: string;
+  body: string;
   rating: number;
-  is_visible: boolean;
-  display_order: number;
-  organization_id: string | null;
+  source_url: string | null;
+  enabled: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
-  created_by: string | null;
 }
 
-export function useTestimonials() {
-  return useQuery({
-    queryKey: ['testimonials'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .order('display_order', { ascending: true })
-        .order('created_at', { ascending: false });
+const STALE_TIME_MS = 30_000;
 
+export function useTestimonials(surface?: TestimonialSurface, explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+  return useQuery({
+    queryKey: ['website_testimonials', orgId, surface ?? 'all'],
+    enabled: !!orgId,
+    staleTime: STALE_TIME_MS,
+    queryFn: async () => {
+      let q = supabase
+        .from('website_testimonials')
+        .select('*')
+        .eq('organization_id', orgId!)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (surface) q = q.eq('surface', surface);
+      const { data, error } = await q;
       if (error) throw error;
-      return data as unknown as Testimonial[];
+      return (data ?? []) as Testimonial[];
     },
   });
 }
 
-export function useVisibleTestimonials() {
+export function useVisibleTestimonials(surface: TestimonialSurface, explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
   return useQuery({
-    queryKey: ['testimonials', 'visible'],
+    queryKey: ['website_testimonials', 'visible', orgId, surface],
+    enabled: !!orgId,
+    staleTime: STALE_TIME_MS,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .eq('is_visible', true)
-        .order('display_order', { ascending: true });
-
+        .from('website_testimonials')
+        .select('id, title, author, body, rating, source_url, sort_order')
+        .eq('organization_id', orgId!)
+        .eq('surface', surface)
+        .eq('enabled', true)
+        .order('sort_order', { ascending: true })
+        .order('created_at', { ascending: true });
       if (error) throw error;
-      return data as unknown as Testimonial[];
+      return (data ?? []) as Pick<Testimonial, 'id' | 'title' | 'author' | 'body' | 'rating' | 'source_url' | 'sort_order'>[];
     },
   });
+}
+
+function useInvalidate() {
+  const qc = useQueryClient();
+  const orgId = useSettingsOrgId();
+  return () => {
+    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'all'] });
+    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'general'] });
+    qc.invalidateQueries({ queryKey: ['website_testimonials', orgId, 'extensions'] });
+    qc.invalidateQueries({ queryKey: ['website_testimonials', 'visible', orgId, 'general'] });
+    qc.invalidateQueries({ queryKey: ['website_testimonials', 'visible', orgId, 'extensions'] });
+  };
 }
 
 export function useCreateTestimonial() {
-  const queryClient = useQueryClient();
-
+  const orgId = useSettingsOrgId();
+  const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async (testimonial: Omit<Testimonial, 'id' | 'created_at' | 'updated_at' | 'created_by'>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    mutationFn: async (input: Pick<Testimonial, 'surface' | 'title' | 'author' | 'body'> & Partial<Pick<Testimonial, 'rating' | 'source_url' | 'sort_order' | 'enabled'>>) => {
+      if (!orgId) throw new Error('No organization context');
       const { data, error } = await supabase
-        .from('testimonials')
+        .from('website_testimonials')
         .insert({
-          ...testimonial,
-          created_by: user?.id,
+          organization_id: orgId,
+          surface: input.surface,
+          title: input.title,
+          author: input.author,
+          body: input.body,
+          rating: input.rating ?? 5,
+          source_url: input.source_url ?? null,
+          sort_order: input.sort_order ?? 0,
+          enabled: input.enabled ?? true,
         })
         .select()
         .single();
-
       if (error) throw error;
-      return data;
+      return data as Testimonial;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['testimonials'] });
-      toast.success('Testimonial added');
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to add testimonial: ' + error.message);
-    },
+    onSuccess: invalidate,
+    onError: (e: Error) => toast.error('Failed to add testimonial: ' + e.message),
   });
 }
 
 export function useUpdateTestimonial() {
-  const queryClient = useQueryClient();
-
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Testimonial> & { id: string }) => {
       const { data, error } = await supabase
-        .from('testimonials')
+        .from('website_testimonials')
         .update(updates)
         .eq('id', id)
         .select()
         .single();
-
       if (error) throw error;
-      return data;
+      return data as Testimonial;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['testimonials'] });
-      toast.success('Testimonial updated');
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to update testimonial: ' + error.message);
-    },
-  });
-}
-
-export function useUpdateTestimonialOrder() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (orderedIds: string[]) => {
-      // Update each testimonial with its new display_order
-      const updates = orderedIds.map((id, index) => 
-        supabase
-          .from('testimonials')
-          .update({ display_order: index })
-          .eq('id', id)
-      );
-
-      const results = await Promise.all(updates);
-      const errors = results.filter(r => r.error);
-      if (errors.length > 0) {
-        throw new Error('Failed to update order');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['testimonials'] });
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to reorder: ' + error.message);
-    },
+    onSuccess: invalidate,
+    onError: (e: Error) => toast.error('Failed to update testimonial: ' + e.message),
   });
 }
 
 export function useDeleteTestimonial() {
-  const queryClient = useQueryClient();
-
+  const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('testimonials')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('website_testimonials').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['testimonials'] });
-      toast.success('Testimonial deleted');
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to delete testimonial: ' + error.message);
-    },
-  });
-}
-
-export function useToggleTestimonialVisibility() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, is_visible }: { id: string; is_visible: boolean }) => {
-      const { error } = await supabase
-        .from('testimonials')
-        .update({ is_visible })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['testimonials'] });
-    },
-    onError: (error: Error) => {
-      toast.error('Failed to toggle visibility: ' + error.message);
-    },
+    onSuccess: invalidate,
+    onError: (e: Error) => toast.error('Failed to delete testimonial: ' + e.message),
   });
 }
