@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import {
+  ChevronRight,
+  Command,
   ExternalLink,
   Globe,
   History,
   Loader2,
+  MousePointer2,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
