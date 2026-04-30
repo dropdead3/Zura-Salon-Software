@@ -147,6 +147,7 @@ export function Layout({ children }: LayoutProps) {
   if (isEditorPreview) {
     return (
       <div className="min-h-screen flex flex-col relative theme-cream-lux bg-background" style={{ colorScheme: 'light' }}>
+        <DesignOverridesApplier />
         <Header />
         <main className="flex-1 bg-background">
           {children}
@@ -161,6 +162,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col relative theme-cream-lux bg-secondary" style={{ colorScheme: 'light' }}>
+      <DesignOverridesApplier />
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
