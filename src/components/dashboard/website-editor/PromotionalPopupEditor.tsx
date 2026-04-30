@@ -216,6 +216,11 @@ export function PromotionalPopupEditor() {
   const consultationPolicyEnabled =
     bookingConfig?.flow?.newClientPolicy === 'consultation-required';
 
+  // Resolve the public booking URL once so the destination chip + lint can
+  // render the exact URL a visitor will land on. Falls back to relative path
+  // when the org doesn't have a public URL ready yet.
+  const publicBookingUrl = publicPageUrl('booking') ?? null;
+
   const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [autoSaving, setAutoSaving] = useState(false);
