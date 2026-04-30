@@ -196,7 +196,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
       )}
 
       {/* Subtle gradient orbs - only show when no video */}
-      {!videoSrc && (
+      {!videoSrc && !hasMediaBackground && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
             className="absolute w-[600px] h-[600px] -top-[200px] -right-[200px] rounded-full"
