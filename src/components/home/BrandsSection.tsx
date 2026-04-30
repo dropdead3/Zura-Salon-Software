@@ -1,9 +1,12 @@
 import { useBrandsConfig } from '@/hooks/useSectionConfig';
 import { useLiveOverride } from '@/hooks/usePreviewBridge';
+import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
+import { InlineEditableText } from './InlineEditableText';
 
 export function BrandsSection() {
   const { data: dbConfig, isLoading } = useBrandsConfig();
   const config = useLiveOverride('section_brands', dbConfig);
+  const isPreview = useIsEditorPreview();
 
   // Don't render while loading to prevent flash
   if (isLoading || !config) return null;
@@ -22,12 +25,22 @@ export function BrandsSection() {
                   className="text-xs md:text-sm tracking-[0.02em] text-foreground/80 leading-relaxed"
                   style={{ fontFamily: "'Aeonik Pro', sans-serif" }}
                 >
-                  {config.intro_text.split('\n').map((line, i) => (
-                    <span key={i}>
-                      {line}
-                      {i < config.intro_text.split('\n').length - 1 && <br />}
-                    </span>
-                  ))}
+                  {isPreview ? (
+                    <InlineEditableText
+                      value={config.intro_text}
+                      sectionKey="section_brands"
+                      fieldPath="intro_text"
+                      multiline
+                      placeholder="Our favorite brands..."
+                    />
+                  ) : (
+                    config.intro_text.split('\n').map((line, i) => (
+                      <span key={i}>
+                        {line}
+                        {i < config.intro_text.split('\n').length - 1 && <br />}
+                      </span>
+                    ))
+                  )}
                 </p>
               </div>
               {/* Vertical divider */}
