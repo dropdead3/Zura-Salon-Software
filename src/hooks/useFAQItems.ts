@@ -7,7 +7,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useSettingsOrgId } from './useSettingsOrgId';
 import { toast } from 'sonner';
 
 export interface FAQItem {
@@ -25,9 +25,8 @@ export interface FAQItem {
 const STALE_TIME_MS = 30_000;
 
 /** All FAQ items for the org (editor view — includes disabled rows). */
-export function useFAQItems() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+export function useFAQItems(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
 
   return useQuery({
     queryKey: ['website_faq_items', orgId],
@@ -47,7 +46,9 @@ export function useFAQItems() {
 }
 
 /** Public consumer — only enabled rows, scoped to the resolved org. */
-export function useVisibleFAQItems(orgId: string | null | undefined) {
+export function useVisibleFAQItems(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+
   return useQuery({
     queryKey: ['website_faq_items', 'visible', orgId],
     enabled: !!orgId,
@@ -66,10 +67,18 @@ export function useVisibleFAQItems(orgId: string | null | undefined) {
   });
 }
 
-export function useCreateFAQItem() {
+function useInvalidateFAQ() {
   const qc = useQueryClient();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+  const orgId = useSettingsOrgId();
+  return () => {
+    qc.invalidateQueries({ queryKey: ['website_faq_items', orgId] });
+    qc.invalidateQueries({ queryKey: ['website_faq_items', 'visible', orgId] });
+  };
+}
+
+export function useCreateFAQItem() {
+  const orgId = useSettingsOrgId();
+  const invalidate = useInvalidateFAQ();
 
   return useMutation({
     mutationFn: async (input: Pick<FAQItem, 'question' | 'answer'> & Partial<Pick<FAQItem, 'category' | 'sort_order' | 'enabled'>>) => {
@@ -89,18 +98,13 @@ export function useCreateFAQItem() {
       if (error) throw error;
       return data as FAQItem;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['website_faq_items', orgId] });
-      qc.invalidateQueries({ queryKey: ['website_faq_items', 'visible', orgId] });
-    },
+    onSuccess: invalidate,
     onError: (e: Error) => toast.error('Failed to add FAQ: ' + e.message),
   });
 }
 
 export function useUpdateFAQItem() {
-  const qc = useQueryClient();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+  const invalidate = useInvalidateFAQ();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<FAQItem> & { id: string }) => {
@@ -113,36 +117,26 @@ export function useUpdateFAQItem() {
       if (error) throw error;
       return data as FAQItem;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['website_faq_items', orgId] });
-      qc.invalidateQueries({ queryKey: ['website_faq_items', 'visible', orgId] });
-    },
+    onSuccess: invalidate,
     onError: (e: Error) => toast.error('Failed to update FAQ: ' + e.message),
   });
 }
 
 export function useDeleteFAQItem() {
-  const qc = useQueryClient();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+  const invalidate = useInvalidateFAQ();
 
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('website_faq_items').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['website_faq_items', orgId] });
-      qc.invalidateQueries({ queryKey: ['website_faq_items', 'visible', orgId] });
-    },
+    onSuccess: invalidate,
     onError: (e: Error) => toast.error('Failed to delete FAQ: ' + e.message),
   });
 }
 
 export function useReorderFAQItems() {
-  const qc = useQueryClient();
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id ?? null;
+  const invalidate = useInvalidateFAQ();
 
   return useMutation({
     mutationFn: async (orderedIds: string[]) => {
@@ -153,10 +147,7 @@ export function useReorderFAQItems() {
       const errors = results.filter((r) => r.error);
       if (errors.length > 0) throw new Error('Failed to reorder');
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['website_faq_items', orgId] });
-      qc.invalidateQueries({ queryKey: ['website_faq_items', 'visible', orgId] });
-    },
+    onSuccess: invalidate,
     onError: (e: Error) => toast.error('Failed to reorder: ' + e.message),
   });
 }
