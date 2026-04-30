@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { cn } from '@/lib/utils';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
@@ -336,16 +337,23 @@ export function PromotionalPopupEditor() {
           label="Reminder button position"
           hint="Where the floating reminder appears after a visitor closes the popup. Flip to bottom-left if a chat widget already lives in the right corner."
         >
-          <Select
-            value={formData.fabPosition ?? 'bottom-right'}
-            onValueChange={(v) => handleChange('fabPosition', v as PromotionalPopupSettings['fabPosition'])}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="bottom-right">Bottom right</SelectItem>
-              <SelectItem value="bottom-left">Bottom left</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start">
+            <Select
+              value={formData.fabPosition ?? 'bottom-right'}
+              onValueChange={(v) => handleChange('fabPosition', v as PromotionalPopupSettings['fabPosition'])}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bottom-right">Bottom right</SelectItem>
+                <SelectItem value="bottom-left">Bottom left</SelectItem>
+              </SelectContent>
+            </Select>
+            <FabPreviewSwatch
+              position={formData.fabPosition ?? 'bottom-right'}
+              headline={formData.headline}
+              accent={formData.accentColor}
+            />
+          </div>
         </Field>
       </Section>
 
@@ -431,6 +439,59 @@ function Field({
       <Label className="font-sans text-sm">{label}</Label>
       {children}
       {hint && <p className="font-sans text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+// ── Live FAB preview swatch ──
+// Mirrors the shape of the real FAB rendered by `PromotionalPopup` so operators
+// can see corner placement, accent color, and headline truncation without
+// reloading the iframe. Faux "viewport" frame uses a 16:9 mock so the corner
+// anchoring reads correctly at a glance.
+function FabPreviewSwatch({
+  position,
+  headline,
+  accent,
+}: {
+  position: 'bottom-right' | 'bottom-left';
+  headline: string;
+  accent?: string;
+}) {
+  const accentColor = accent || 'hsl(var(--primary))';
+  const truncated = headline.length > 22 ? `${headline.slice(0, 22)}…` : headline;
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        aria-hidden="true"
+        className="relative w-44 h-24 rounded-md border border-border bg-gradient-to-br from-muted/60 to-muted/30 overflow-hidden shadow-inner"
+      >
+        {/* Faux browser chrome */}
+        <div className="absolute top-0 inset-x-0 h-3 bg-foreground/5 border-b border-border/60 flex items-center gap-1 px-1.5">
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+          <span className="h-1 w-1 rounded-full bg-foreground/20" />
+        </div>
+        {/* Mini FAB */}
+        <div
+          className={cn(
+            'absolute bottom-1.5 flex items-center gap-1 rounded-full pl-1 pr-1.5 h-5 shadow-md text-primary-foreground',
+            position === 'bottom-left' ? 'left-1.5' : 'right-1.5',
+          )}
+          style={{ backgroundColor: accentColor }}
+        >
+          <span className="flex h-3 w-3 items-center justify-center rounded-full bg-white/20">
+            <Gift className="h-2 w-2" />
+          </span>
+          <span className="font-display uppercase tracking-wider text-[7px] max-w-[70px] truncate">
+            {truncated || 'Offer'}
+          </span>
+          <ChevronRight className="h-2 w-2 opacity-80" />
+        </div>
+      </div>
+      <p className="font-sans text-[10px] text-muted-foreground text-center">
+        Live preview
+      </p>
     </div>
   );
 }
