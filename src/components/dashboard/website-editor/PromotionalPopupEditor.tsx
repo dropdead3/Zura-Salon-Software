@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
@@ -39,6 +40,10 @@ export function PromotionalPopupEditor() {
   }, [settings]);
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
+  // Broadcast dirty state to the editor shell so it can:
+  // (1) light up the Save button, (2) intercept Done / tab switches with the
+  // unsaved-changes guard instead of silently dropping the operator's edits.
+  useEditorDirtyState(isDirty);
 
   const handleChange = <K extends keyof PromotionalPopupSettings>(
     field: K,
@@ -106,7 +111,8 @@ export function PromotionalPopupEditor() {
             <span className="font-display uppercase tracking-wider text-[10px] text-primary mr-2">
               Unsaved
             </span>
-            Press <strong>Done</strong> to publish your changes — visitors won't see them yet.
+            Press <strong>Save</strong> to keep this draft. Visitors won't see it until you{' '}
+            <strong>Publish</strong> from Website Hub.
           </p>
         </div>
       )}

@@ -1536,10 +1536,10 @@ function WebsiteEditorShellInner() {
       <AlertDialog open={!!pendingNav} onOpenChange={(open) => !open && setPendingNav(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved edits in this section. Switching now will discard them. Save first
-              to keep your work.
+              You have unsaved edits in this section. Save them as a draft first, or discard
+              and continue. (Drafts stay private until you Publish from Website Hub.)
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1559,6 +1559,33 @@ function WebsiteEditorShellInner() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Discard & continue
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (!pendingNav) return;
+                // Trigger the active editor's save handler. When it finishes
+                // (editor-saving-state flips back to false), run the deferred
+                // navigation. Generic across every panel using useEditorSaveAction.
+                const navTarget = pendingNav;
+                let armed = false;
+                const onSavingChange = (evt: Event) => {
+                  const saving = !!(evt as CustomEvent).detail?.saving;
+                  if (saving) {
+                    armed = true;
+                    return;
+                  }
+                  if (!armed) return;
+                  window.removeEventListener('editor-saving-state', onSavingChange);
+                  if (navTarget.type === 'tab') setEditorTab(navTarget.tab);
+                  else setSelectedPageId(navTarget.pageId);
+                  setPendingNav(null);
+                };
+                window.addEventListener('editor-saving-state', onSavingChange);
+                window.dispatchEvent(new CustomEvent('editor-save-request'));
+              }}
+            >
+              Save & continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
