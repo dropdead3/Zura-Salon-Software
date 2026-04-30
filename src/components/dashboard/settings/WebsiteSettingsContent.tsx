@@ -101,7 +101,17 @@ import { BookingVisibilityCard } from './BookingVisibilityCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PublishChangelog } from '@/components/dashboard/website-editor/PublishChangelog';
 import { VersionHistoryPanel } from '@/components/dashboard/website-editor/VersionHistoryPanel';
-import { useChangelogSummary } from '@/hooks/usePublishChangelog';
+import { useChangelogSummary, useDiscardToLastPublished, useHasEverPublished } from '@/hooks/usePublishChangelog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
