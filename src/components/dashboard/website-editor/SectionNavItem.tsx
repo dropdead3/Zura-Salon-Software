@@ -20,6 +20,12 @@ interface SectionNavItemProps {
   onDuplicate?: () => void;
 }
 
+// Fixed width reserved for the right-side action cluster, regardless of hover
+// state. Sized to fit: [duplicate 24px] [delete 24px] [gap 4px] [switch 36px]
+// + 12px right padding + small breathing room. Locking this width prevents the
+// hover reveal from re-flowing the title/subtitle column.
+const ACTION_ZONE_WIDTH = 92; // px
+
 export function SectionNavItem({
   id,
   label,
@@ -50,12 +56,12 @@ export function SectionNavItem({
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, paddingRight: ACTION_ZONE_WIDTH }}
       className={cn(
-        // Keep a real inset on the right edge instead of relying on a scaled
-        // switch plus negative margin hacks; this gives the action cluster a
-        // stable gutter away from the rail and scrollbar.
-        'group flex items-center gap-2 pl-2 pr-5 py-2 mx-3 rounded-lg cursor-pointer transition-all',
+        // `relative` so the action cluster can be absolutely positioned and
+        // therefore taken out of the row's flex flow — this is what stops the
+        // duplicate icon from pushing the subtitle on hover.
+        'group relative flex items-center gap-2 pl-2 py-2 mx-3 rounded-lg cursor-pointer transition-all',
         isActive
           ? 'bg-primary/10 border border-primary/20'
           : 'hover:bg-muted/60 border border-transparent',
@@ -98,33 +104,52 @@ export function SectionNavItem({
         </p>
       </div>
 
-      {/* Actions — keep a real inner gutter on the right so the controls never
-          read as touching the rail edge, even when the scrollbar is visible. */}
-      <div className="flex items-center gap-1 shrink-0 pr-1.5" onClick={(e) => e.stopPropagation()}>
+      {/*
+        Action zone — absolutely positioned so revealing the duplicate/delete
+        icons on hover never changes the row's flex layout. Width is reserved
+        via `paddingRight` on the row above, so the subtitle text cannot bleed
+        underneath these controls.
+      */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-end gap-1 pr-3"
+        style={{ width: ACTION_ZONE_WIDTH }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {onDuplicate && (
-          <div className="w-0 overflow-hidden opacity-0 pointer-events-none transition-[width,opacity] duration-150 group-hover:w-6 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:w-6 group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={onDuplicate}
-              title="Duplicate section"
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'h-6 w-6 shrink-0 transition-opacity duration-150',
+              // Visual-only reveal — does not affect layout. Always rendered,
+              // always occupies its slot, just invisible until row hover/focus.
+              'opacity-0 pointer-events-none',
+              'group-hover:opacity-100 group-hover:pointer-events-auto',
+              'group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
+            )}
+            onClick={onDuplicate}
+            title="Duplicate section"
+            tabIndex={-1}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
         )}
         {deletable && onDelete && (
-          <div className="w-0 overflow-hidden opacity-0 pointer-events-none transition-[width,opacity] duration-150 group-hover:w-6 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:w-6 group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-destructive hover:text-destructive"
-              onClick={onDelete}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'h-6 w-6 shrink-0 text-destructive hover:text-destructive transition-opacity duration-150',
+              'opacity-0 pointer-events-none',
+              'group-hover:opacity-100 group-hover:pointer-events-auto',
+              'group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
+            )}
+            onClick={onDelete}
+            title="Delete section"
+            tabIndex={-1}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
         )}
         <Switch
           checked={enabled}
