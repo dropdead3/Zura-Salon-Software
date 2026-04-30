@@ -205,6 +205,13 @@ export function PromotionalPopupEditor() {
   const { publicPageUrl } = useOrgPublicUrl();
   const { data: settings, isLoading } = usePromotionalPopup();
   const updateSettings = useUpdatePromotionalPopup();
+  // Read booking surface config to know whether the org enforces a
+  // consultation-required policy. The "Schedule a consultation" destination
+  // is only enabled when this is set — otherwise the popup would route
+  // visitors into a flow the booking surface doesn't actually gate.
+  const { data: bookingConfig } = useBookingSurfaceConfig();
+  const consultationPolicyEnabled =
+    bookingConfig?.flow?.newClientPolicy === 'consultation-required';
 
   const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
