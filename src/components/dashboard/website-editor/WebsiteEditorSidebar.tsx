@@ -239,6 +239,31 @@ export function WebsiteEditorSidebar({
     }
   };
 
+  // ── Live reflow during drag ──
+  // Posts the in-flight order to the preview iframe via a parent CustomEvent
+  // bridge, so the canvas reflows the moment the operator drags — not on drop.
+  // Commit is debounced server-side via saveSections() on drop.
+  const emitProvisional = (pageId: string, order: string[]) => {
+    window.dispatchEvent(
+      new CustomEvent('editor-provisional-order', { detail: { pageId, order } }),
+    );
+  };
+  const emitCommit = (pageId: string, order: string[]) => {
+    window.dispatchEvent(
+      new CustomEvent('editor-commit-order', { detail: { pageId, order } }),
+    );
+  };
+
+  const handleDragOver = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localSections.findIndex(s => s.id === active.id);
+    const newIndex = localSections.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const provisional = arrayMove(localSections, oldIndex, newIndex);
+    emitProvisional('home', provisional.map(s => s.id));
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -246,6 +271,7 @@ export function WebsiteEditorSidebar({
     const oldIndex = localSections.findIndex(s => s.id === active.id);
     const newIndex = localSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localSections, oldIndex, newIndex);
+    emitCommit('home', reordered.map(s => s.id));
     await saveSections(reordered);
     toast.success('Section order updated');
   };
@@ -371,6 +397,16 @@ export function WebsiteEditorSidebar({
     }
   }, [isHomePage, selectedPage]);
 
+  const handlePageDragOver = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = localPageSections.findIndex(s => s.id === active.id);
+    const newIndex = localPageSections.findIndex(s => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const provisional = arrayMove(localPageSections, oldIndex, newIndex);
+    emitProvisional(selectedPageId, provisional.map(s => s.id));
+  };
+
   const handlePageDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -379,6 +415,7 @@ export function WebsiteEditorSidebar({
     const newIndex = localPageSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localPageSections, oldIndex, newIndex).map((s, i) => ({ ...s, order: i + 1 }));
     setLocalPageSections(reordered);
+    emitCommit(selectedPageId, reordered.map(s => s.id));
     onPageSectionReorder?.(reordered);
     toast.success('Section order updated');
   };
@@ -578,7 +615,7 @@ export function WebsiteEditorSidebar({
 
           {/* Homepage Sections (with DND) - only show for home page */}
           {isHomePage && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
               <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <div className="mb-1">
                   <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider">
@@ -642,8 +679,42 @@ export function WebsiteEditorSidebar({
           )}
 
           {/* Non-home page sections with DnD */}
-          {!isHomePage && selectedPage && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePageDragEnd}>
+          {!isHomePage && selectedPage && localPageSections.length === 0 && (
+            <div className="mx-3 mt-2 mb-3 rounded-xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-center">
+              <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-background flex items-center justify-center border border-border/60">
+                <Plus className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="font-display text-xs uppercase tracking-wider text-foreground mb-1">
+                No sections yet
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Start from a template or add a section manually.
+              </p>
+              <div className="flex flex-col gap-2">
+                {onApplyPageTemplate && (
+                  <Button
+                    variant="default"
+                    size={tokens.button.card}
+                    className="w-full text-xs rounded-full"
+                    onClick={onApplyPageTemplate}
+                  >
+                    Choose a template
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size={tokens.button.card}
+                  className="w-full text-xs rounded-full"
+                  onClick={() => setShowAddDialog(true)}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Add a blank section
+                </Button>
+              </div>
+            </div>
+          )}
+          {!isHomePage && selectedPage && localPageSections.length > 0 && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragOver={handlePageDragOver} onDragEnd={handlePageDragEnd}>
               <SortableContext items={localPageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
                 <SectionGroupHeader title={`${selectedPage.title} Sections`} />
                 {localPageSections.map(section => (

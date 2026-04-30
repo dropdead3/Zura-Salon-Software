@@ -131,6 +131,47 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     return () => window.removeEventListener('website-preview-refresh', handleStorageChange);
   }, []);
 
+  // ── Editor → iframe bridge ──
+  // Forward parent CustomEvents (live design tweaks, provisional reorder during drag)
+  // straight into the iframe so the canvas reflows the moment the operator interacts.
+  useEffect(() => {
+    const post = (msg: any) => {
+      const iframe = iframeRef.current;
+      if (!iframe?.contentWindow) return;
+      iframe.contentWindow.postMessage(msg, previewOrigin);
+    };
+
+    const onDesign = (e: Event) => {
+      const overrides = (e as CustomEvent).detail?.overrides ?? null;
+      post({ type: 'PREVIEW_DESIGN_OVERRIDES', overrides });
+    };
+    const onProvisionalOrder = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      post({
+        type: 'PREVIEW_PROVISIONAL_ORDER',
+        pageId: detail.pageId,
+        order: detail.order ?? [],
+      });
+    };
+    const onCommitOrder = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      post({
+        type: 'PREVIEW_REORDER_SECTIONS',
+        pageId: detail.pageId,
+        order: detail.order ?? [],
+      });
+    };
+
+    window.addEventListener('editor-design-preview', onDesign);
+    window.addEventListener('editor-provisional-order', onProvisionalOrder);
+    window.addEventListener('editor-commit-order', onCommitOrder);
+    return () => {
+      window.removeEventListener('editor-design-preview', onDesign);
+      window.removeEventListener('editor-provisional-order', onProvisionalOrder);
+      window.removeEventListener('editor-commit-order', onCommitOrder);
+    };
+  }, [previewOrigin]);
+
   const handleRefresh = () => {
     if (!previewUrl) return;
     setRefreshKey(prev => prev + 1);

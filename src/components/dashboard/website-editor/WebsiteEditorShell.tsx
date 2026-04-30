@@ -113,6 +113,8 @@ import { PagesManager } from './PagesManager';
 import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
+import { SiteDesignPanel } from './SiteDesignPanel';
+import { Palette } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
@@ -240,6 +242,7 @@ export function WebsiteEditorShell() {
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [siteDesignOpen, setSiteDesignOpen] = useState(false);
   // Wave 4: insert-at and style inspector
   const [addSectionState, setAddSectionState] = useState<
     | { open: false }
@@ -1058,6 +1061,18 @@ export function WebsiteEditorShell() {
         <div className="flex items-center gap-2 shrink-0">
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
 
+          {/* Site Design — global theme/typography/density panel */}
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            onClick={() => setSiteDesignOpen(true)}
+            className="rounded-full"
+            title="Site Design — global colors, type, density"
+          >
+            <Palette className="h-4 w-4 mr-1.5" />
+            Site Design
+          </Button>
+
           {/* Preview (open public preview in new tab) */}
           <Button
             variant="outline"
@@ -1157,6 +1172,13 @@ export function WebsiteEditorShell() {
       <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
       <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
+      {/* Site Design — global look & feel overrides (lives in a right-side sheet) */}
+      <Sheet open={siteDesignOpen} onOpenChange={setSiteDesignOpen}>
+        <SheetContent side="right" className="p-0 w-full sm:w-[440px] sm:max-w-[440px] overflow-y-auto">
+          <SheetTitle className="sr-only">Site Design</SheetTitle>
+          <SiteDesignPanel onClose={() => setSiteDesignOpen(false)} />
+        </SheetContent>
+      </Sheet>
       {/* Mobile sidebar Sheet — hosts list OR editor depending on mode */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent side="left" className="p-0 w-[340px] max-w-[90vw]">

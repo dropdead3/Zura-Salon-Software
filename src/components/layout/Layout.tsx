@@ -4,6 +4,22 @@ import { Footer } from "./Footer";
 import { FooterCTA } from "./FooterCTA";
 import { StickyFooterBar } from "./StickyFooterBar";
 import { PageTransition } from "./PageTransition";
+import { DesignOverridesApplier } from "@/components/home/DesignOverridesApplier";
+
+// CSS variable prefixes owned by Site Design overrides — must survive the
+// per-mount theme wipe so live-preview + persisted overrides keep applying.
+const DESIGN_OVERRIDE_VARS = new Set([
+  '--primary',
+  '--secondary',
+  '--accent',
+  '--background',
+  '--font-display',
+  '--font-sans',
+  '--zura-density-scale',
+  '--zura-button-radius',
+  '--zura-hero-overlay',
+  '--zura-section-tint',
+]);
 
 const DASHBOARD_THEME_CLASSES = [
   'theme-zura',
@@ -77,7 +93,7 @@ export function Layout({ children }: LayoutProps) {
     for (let i = 0; i < style.length; i++) {
       const prop = style[i];
       // Only remove custom properties that could be from dashboard theme
-      if (prop.startsWith('--') && !prop.includes('radix')) {
+      if (prop.startsWith('--') && !prop.includes('radix') && !DESIGN_OVERRIDE_VARS.has(prop)) {
         propsToRemove.push(prop);
       }
     }
@@ -131,6 +147,7 @@ export function Layout({ children }: LayoutProps) {
   if (isEditorPreview) {
     return (
       <div className="min-h-screen flex flex-col relative theme-cream-lux bg-background" style={{ colorScheme: 'light' }}>
+        <DesignOverridesApplier />
         <Header />
         <main className="flex-1 bg-background">
           {children}
@@ -145,6 +162,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col relative theme-cream-lux bg-secondary" style={{ colorScheme: 'light' }}>
+      <DesignOverridesApplier />
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}

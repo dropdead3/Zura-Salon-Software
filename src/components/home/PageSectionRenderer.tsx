@@ -60,24 +60,39 @@ interface PageSectionRendererProps {
 
 export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  // While the operator is dragging in the editor rail, the parent posts the
+  // in-flight order so the canvas can reflow live (premium feel). On drop or
+  // when sections re-fetch, this clears.
+  const [provisionalOrder, setProvisionalOrder] = useState<string[] | null>(null);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
 
   const enabledSections = useMemo(() => {
-    if (isEditorPreview && !isViewMode) {
-      return [...sections].sort((a, b) => a.order - b.order);
-    }
-    return [...sections]
-      .filter(s => s.enabled)
-      .sort((a, b) => a.order - b.order);
-  }, [sections, isEditorPreview, isViewMode]);
+    const base = isEditorPreview && !isViewMode
+      ? [...sections].sort((a, b) => a.order - b.order)
+      : [...sections].filter(s => s.enabled).sort((a, b) => a.order - b.order);
+    if (!provisionalOrder?.length) return base;
+    const byId = new Map(base.map(s => [s.id, s]));
+    const ordered = provisionalOrder
+      .map(id => byId.get(id))
+      .filter((s): s is SectionConfig => !!s);
+    // Append any sections the editor didn't include (defensive — keeps content visible).
+    base.forEach(s => { if (!provisionalOrder.includes(s.id)) ordered.push(s); });
+    return ordered;
+  }, [sections, isEditorPreview, isViewMode, provisionalOrder]);
 
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;
-      if (!['PREVIEW_SCROLL_TO_SECTION', 'PREVIEW_HIGHLIGHT_SECTION', 'PREVIEW_SET_ACTIVE_SECTION'].includes(msg.type)) return;
+      if (![
+        'PREVIEW_SCROLL_TO_SECTION',
+        'PREVIEW_HIGHLIGHT_SECTION',
+        'PREVIEW_SET_ACTIVE_SECTION',
+        'PREVIEW_PROVISIONAL_ORDER',
+        'PREVIEW_REORDER_SECTIONS',
+      ].includes(msg.type)) return;
 
       if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
         const el = document.getElementById(`section-${msg.sectionId}`);
@@ -94,6 +109,16 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
       if (msg.type === 'PREVIEW_SET_ACTIVE_SECTION') {
         setSelectedSectionId(msg.sectionId || null);
+      }
+
+      // Live drag-reorder reflow.
+      if (msg.type === 'PREVIEW_PROVISIONAL_ORDER' && Array.isArray(msg.order)) {
+        setProvisionalOrder(msg.order as string[]);
+      }
+      // Commit on drop — clear the provisional layer; the next sections fetch
+      // (triggered by the editor's save) becomes the source of truth.
+      if (msg.type === 'PREVIEW_REORDER_SECTIONS') {
+        setProvisionalOrder(null);
       }
     };
 
