@@ -430,6 +430,9 @@ export function WebsiteEditorSidebar({
 
 
   if (collapsed) {
+    // Collapsed rail prioritises the *page section* icons (the primary
+    // editing surface) and tucks chrome/library into one expand affordance.
+    const collapsedSections = isHomePage ? localSections : localPageSections;
     return (
       <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50 py-2 w-full">
         {/* Expand toggle */}
@@ -439,6 +442,7 @@ export function WebsiteEditorSidebar({
               <button
                 onClick={onToggleCollapse}
                 className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
+                aria-label="Expand sidebar"
               >
                 <ChevronsRight className="h-4 w-4" />
               </button>
@@ -447,27 +451,42 @@ export function WebsiteEditorSidebar({
           </Tooltip>
         </div>
 
-        {/* Collapsed page icon */}
-        <div className="px-2 mb-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onToggleCollapse}
-                className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
-              >
-                <FileText className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{selectedPage?.title ?? 'Pages'}</TooltipContent>
-          </Tooltip>
-        </div>
+        {/* Page section icons — the primary editing surface */}
+        <ScrollArea className="flex-1">
+          <div className="px-2 space-y-0.5">
+            {collapsedSections.map((section) => {
+              const tab = isHomePage ? getSectionTab(section) : `custom-${section.id}`;
+              const isActive = activeTab === tab;
+              return (
+                <Tooltip key={section.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onTabChange(tab)}
+                      className={cn(
+                        'w-full flex items-center justify-center p-2 rounded-lg transition-colors text-[10px] font-medium tabular-nums',
+                        isActive
+                          ? 'bg-primary/10 text-primary'
+                          : 'hover:bg-muted/60 text-muted-foreground',
+                        !section.enabled && 'opacity-40',
+                      )}
+                    >
+                      {section.order}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    {section.label}
+                    {!section.enabled && ' (hidden)'}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
 
-        <Separator className="my-1 mx-2" />
+          <Separator className="my-2 mx-2" />
 
-        {/* Site Content icons */}
-        {isHomePage && (
-          <div className="px-2 space-y-0.5 mb-2">
-            {SITE_CONTENT_ITEMS.map(item => (
+          {/* Site chrome + library — secondary in collapsed mode */}
+          <div className="px-2 space-y-0.5">
+            {SITE_CONTENT_ITEMS.map((item) => (
               <ContentNavItem
                 key={item.tab}
                 label={item.label}
@@ -478,28 +497,7 @@ export function WebsiteEditorSidebar({
               />
             ))}
           </div>
-        )}
-
-        {isHomePage && <Separator className="my-1 mx-2" />}
-
-        {/* Homepage Layout icon */}
-        {isHomePage && (
-          <div className="px-2 mb-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onToggleCollapse}
-                  className="w-full flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
-                >
-                  <Layers className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Homepage Layout</TooltipContent>
-            </Tooltip>
-          </div>
-        )}
-
-        <div className="flex-1" />
+        </ScrollArea>
       </div>
     );
   }
