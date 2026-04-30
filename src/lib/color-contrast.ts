@@ -62,14 +62,56 @@ export function pickReadableForeground(color: string | undefined | null): 'light
   if (!color) return null;
   const rgb = color.startsWith('#') ? hexToRgb(color) : parseHsl(color);
   if (!rgb) return null;
+  const luminance = relativeLuminanceFromRgb(rgb);
+  return luminance > 0.5 ? 'dark' : 'light';
+}
 
-  // Relative luminance per WCAG 2.x (sRGB → linear → weighted sum).
-  const [r, g, b] = rgb.map((c) => {
+/** Compute relative luminance per WCAG 2.x given an sRGB triplet (0-255). */
+function relativeLuminanceFromRgb([r, g, b]: [number, number, number]): number {
+  const [rL, gL, bL] = [r, g, b].map((c) => {
     const s = c / 255;
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
   });
-  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance > 0.5 ? 'dark' : 'light';
+  return 0.2126 * rL + 0.7152 * gL + 0.0722 * bL;
+}
+
+/** Parse any supported color string to an sRGB triplet, or null if unparseable. */
+function parseColor(color: string | undefined | null): [number, number, number] | null {
+  if (!color) return null;
+  const trimmed = color.trim();
+  if (trimmed.startsWith('#')) return hexToRgb(trimmed);
+  return parseHsl(trimmed);
+}
+
+/**
+ * WCAG 2.x contrast ratio between two colors. Returns `null` when either
+ * color can't be parsed (e.g. CSS-var refs). Range: 1 (no contrast) → 21
+ * (black on white). 3:1 is the floor for "non-text large UI" per WCAG AA.
+ */
+export function contrastRatio(
+  a: string | undefined | null,
+  b: string | undefined | null,
+): number | null {
+  const aRgb = parseColor(a);
+  const bRgb = parseColor(b);
+  if (!aRgb || !bRgb) return null;
+  const aL = relativeLuminanceFromRgb(aRgb);
+  const bL = relativeLuminanceFromRgb(bRgb);
+  const lighter = Math.max(aL, bL);
+  const darker = Math.min(aL, bL);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Best contrast ratio achievable when placing white OR black text on the
+ * given background. Returns `null` when the color can't be parsed. Useful
+ * for "is this background usable for *any* legible text?" checks.
+ */
+export function bestTextContrast(background: string | undefined | null): number | null {
+  const white = contrastRatio(background, '#ffffff');
+  const black = contrastRatio(background, '#111111');
+  if (white === null || black === null) return null;
+  return Math.max(white, black);
 }
 
 /**
