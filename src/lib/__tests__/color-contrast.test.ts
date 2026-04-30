@@ -82,12 +82,24 @@ describe('contrastRatio + bestTextContrast — WCAG floors', () => {
     expect(contrastRatio('#000', undefined)).toBeNull();
   });
 
-  it('pale yellow (#FFF080) fails 3:1 against both black and white', () => {
-    // The user's example — high luminance against white, weak against black.
-    // Documents *why* the editor warning exists.
+  it('pale yellow (#FFF080) does NOT trip the warning — high contrast vs black', () => {
+    // Important behavioral note: a "weak" color like pale yellow looks
+    // washed out against white but has 16:1 against black. The warning
+    // fires only when *both* black AND white text fail 3:1 — which is
+    // a narrow band of mid-luminance, low-saturation colors. This test
+    // documents the reality so a future contributor doesn't widen the
+    // warning to fire on visually-pale-but-mathematically-fine accents.
     const r = bestTextContrast('#FFF080');
     expect(r).not.toBeNull();
-    expect(r!).toBeLessThan(3);
+    expect(r!).toBeGreaterThanOrEqual(3);
+  });
+
+  it('mid-gray (#888888) clears 3:1 with black text — warning stays silent', () => {
+    // Pure mid-grays look low-contrast intuitively, but black text on
+    // #888 still clears WCAG's 3:1 UI floor (~5.3:1). Warning silent.
+    const r = bestTextContrast('#888888');
+    expect(r).not.toBeNull();
+    expect(r!).toBeGreaterThanOrEqual(3);
   });
 
   it('curated taupe (#A1887F) clears 3:1 floor with white text', () => {
