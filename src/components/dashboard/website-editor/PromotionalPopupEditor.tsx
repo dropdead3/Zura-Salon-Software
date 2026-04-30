@@ -332,11 +332,26 @@ export function PromotionalPopupEditor() {
       {/* Content */}
       <Section title="Content">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
-          <Input
-            value={formData.eyebrow ?? ''}
-            onChange={(e) => handleChange('eyebrow', e.target.value)}
-            placeholder="Limited time offer"
-            maxLength={32}
+          <div className="grid grid-cols-[auto_1fr] gap-2">
+            <EyebrowIconPicker
+              value={formData.eyebrowIcon ?? 'none'}
+              onChange={(v) => handleChange('eyebrowIcon', v)}
+              accent={formData.accentColor}
+            />
+            <Input
+              value={formData.eyebrow ?? ''}
+              onChange={(e) => handleChange('eyebrow', e.target.value)}
+              placeholder="Limited time offer"
+              maxLength={32}
+            />
+          </div>
+          <EyebrowUrgencySuggestion
+            endsAt={formData.endsAt}
+            currentEyebrow={formData.eyebrow}
+            onApply={(text, icon) => {
+              handleChange('eyebrow', text);
+              handleChange('eyebrowIcon', icon);
+            }}
           />
         </Field>
         <Field label="Headline" hint="Keep it short — appears in display type.">
