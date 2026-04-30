@@ -1176,7 +1176,7 @@ export function WebsiteEditorShell() {
       <Sheet open={siteDesignOpen} onOpenChange={setSiteDesignOpen}>
         <SheetContent side="right" className="p-0 w-full sm:w-[440px] sm:max-w-[440px] overflow-y-auto">
           <SheetTitle className="sr-only">Site Design</SheetTitle>
-          <SiteDesignPanel />
+          <SiteDesignPanel onClose={() => setSiteDesignOpen(false)} />
         </SheetContent>
       </Sheet>
       {/* Mobile sidebar Sheet — hosts list OR editor depending on mode */}
