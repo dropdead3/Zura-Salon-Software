@@ -185,15 +185,23 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       });
     };
 
+    // Site theme picker → instant iframe class swap (mirrors PREVIEW_DESIGN_OVERRIDES).
+    const onThemePreview = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      post({ type: 'PREVIEW_THEME_CLASS', themeClass: detail.themeClass });
+    };
+
     window.addEventListener('editor-design-preview', onDesign);
     window.addEventListener('editor-provisional-order', onProvisionalOrder);
     window.addEventListener('editor-commit-order', onCommitOrder);
     window.addEventListener('site-settings-draft-write', onDraftWrite);
+    window.addEventListener('editor-theme-preview', onThemePreview);
     return () => {
       window.removeEventListener('editor-design-preview', onDesign);
       window.removeEventListener('editor-provisional-order', onProvisionalOrder);
       window.removeEventListener('editor-commit-order', onCommitOrder);
       window.removeEventListener('site-settings-draft-write', onDraftWrite);
+      window.removeEventListener('editor-theme-preview', onThemePreview);
     };
   }, [previewOrigin]);
 
