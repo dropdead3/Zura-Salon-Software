@@ -93,6 +93,9 @@ export function InlineEditCommitHandler() {
   const gallery = useGalleryDisplayConfig();
   const locations = useLocationsSectionConfig();
   const stylists = useStylistsDisplayConfig();
+  const drinks = useDrinkMenuConfig();
+  const brands = useBrandsConfig();
+  const extensionReviews = useExtensionReviewsConfig();
 
   // Registry: sectionKey → { current config, update fn, allowed paths }.
   // Adding a new editable field is a one-line addition to `allowedPaths`.
@@ -205,6 +208,33 @@ export function InlineEditCommitHandler() {
             'section_eyebrow',
             'section_title',
             'section_description',
+          ],
+        },
+        section_drink_menu: {
+          data: drinks.data,
+          update: drinks.update,
+          allowedPaths: [
+            'eyebrow',
+            'eyebrow_highlight',
+            'eyebrow_suffix',
+            'drinks.*.name',
+            'drinks.*.ingredients',
+          ],
+        },
+        section_brands: {
+          data: brands.data,
+          update: brands.update,
+          allowedPaths: [
+            'intro_text',
+          ],
+        },
+        section_extension_reviews: {
+          data: extensionReviews.data,
+          update: extensionReviews.update,
+          allowedPaths: [
+            'eyebrow',
+            'headline',
+            'extension_categories.*',
           ],
         },
       };
