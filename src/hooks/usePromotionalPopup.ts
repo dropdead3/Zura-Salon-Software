@@ -88,10 +88,29 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
 
 const SETTING_KEY = 'promotional_popup';
 
-export function usePromotionalPopup(explicitOrgId?: string) {
+/**
+ * Reads the promotional popup config.
+ *
+ * Mode resolution:
+ *   - Public visitor (no `?preview=true`): always reads `live` (published).
+ *   - Editor surfaces & live-preview iframe: reads `draft`. Editors must
+ *     read drafts so the toggle/form state matches what the preview is
+ *     rendering — otherwise the editor reflects the published state while
+ *     the iframe shows the draft, and the operator sees a desynced UI
+ *     (e.g. toggle OFF but popup still visible because draft was enabled
+ *     in a prior session and live has since been republished).
+ *   - Callers that explicitly need the live copy (e.g. publish-changelog
+ *     diffing) can pass `forceMode='live'`.
+ */
+export function usePromotionalPopup(
+  explicitOrgId?: string,
+  options?: { forceMode?: 'live' | 'draft' },
+) {
   const orgId = useSettingsOrgId(explicitOrgId);
   const isPreview = useIsEditorPreview();
-  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
+  const isEditorSurface = useIsEditorSurface();
+  const mode: 'live' | 'draft' =
+    options?.forceMode ?? (isPreview || isEditorSurface ? 'draft' : 'live');
 
   return useQuery({
     queryKey: ['site-settings', orgId, SETTING_KEY, mode],
