@@ -538,6 +538,111 @@ export function WebsiteEditorShell() {
     [updateSelectedPage, toast],
   );
 
+  // ─── Wave 2: canvas → editor bridge (click-to-edit, hover toggle, duplicate, delete, add) ───
+  // Resolves a SectionConfig.id arriving from the iframe into an editor tab key.
+  const resolveSectionTab = useCallback(
+    (sectionId: string): string | null => {
+      // Per-page sections (non-home) carry random IDs and use custom-<id>.
+      const pageSection = selectedPage?.sections.find((s) => s.id === sectionId);
+      if (pageSection) {
+        if (isBuiltinSection(pageSection.type)) {
+          return BUILTIN_TYPE_TO_TAB[pageSection.type] ?? null;
+        }
+        return `custom-${pageSection.id}`;
+      }
+      // Home page: built-in section IDs equal their type ('hero', 'gallery', …).
+      const homeSection = pagesConfig?.pages
+        .find((p) => p.id === 'home')
+        ?.sections.find((s) => s.id === sectionId);
+      if (homeSection) {
+        if (isBuiltinSection(homeSection.type)) {
+          return BUILTIN_TYPE_TO_TAB[homeSection.type] ?? null;
+        }
+        return `custom-${homeSection.id}`;
+      }
+      // Defensive fallback: maybe sectionId IS a built-in type.
+      return BUILTIN_TYPE_TO_TAB[sectionId] ?? null;
+    },
+    [pagesConfig, selectedPage],
+  );
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') return;
+      if (!msg.type.startsWith('EDITOR_')) return;
+      const sectionId: string | undefined = msg.sectionId;
+
+      switch (msg.type) {
+        case 'EDITOR_SELECT_SECTION': {
+          if (!sectionId) return;
+          const tab = resolveSectionTab(sectionId);
+          if (tab) requestTabChange(tab);
+          break;
+        }
+        case 'EDITOR_TOGGLE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          // Only meaningful on per-page sections; home built-ins are managed in sidebar.
+          const onPage = selectedPage.sections.some((s) => s.id === sectionId);
+          if (onPage) handlePageSectionToggle(sectionId, !!msg.enabled);
+          break;
+        }
+        case 'EDITOR_DUPLICATE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          const section = selectedPage.sections.find((s) => s.id === sectionId);
+          if (section) handlePageSectionDuplicate(section);
+          break;
+        }
+        case 'EDITOR_DELETE_SECTION': {
+          if (!sectionId || !selectedPage) return;
+          const onPage = selectedPage.sections.some((s) => s.id === sectionId);
+          if (onPage) handlePageSectionDelete(sectionId);
+          break;
+        }
+        case 'EDITOR_ADD_SECTION_AT': {
+          // Open the page-settings/sections manager for now; granular insertion
+          // would require lifting the AddSectionDialog into the shell.
+          if (!isHomePage) requestTabChange('page-settings');
+          break;
+        }
+        default:
+          break;
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [
+    resolveSectionTab,
+    requestTabChange,
+    selectedPage,
+    isHomePage,
+    handlePageSectionToggle,
+    handlePageSectionDuplicate,
+    handlePageSectionDelete,
+  ]);
+
+  // Sidebar → canvas: highlight the active section in the iframe whenever the tab changes.
+  useEffect(() => {
+    // Find a sectionId that maps back to this tab so we can post it.
+    const allSections: SectionConfig[] = [
+      ...(selectedPage?.sections ?? []),
+      ...(pagesConfig?.pages.find((p) => p.id === 'home')?.sections ?? []),
+    ];
+    let activeSectionId: string | undefined;
+    if (editorTab.startsWith('custom-')) {
+      activeSectionId = editorTab.replace('custom-', '');
+    } else {
+      const match = allSections.find(
+        (s) => isBuiltinSection(s.type) && BUILTIN_TYPE_TO_TAB[s.type] === editorTab,
+      );
+      activeSectionId = match?.id;
+    }
+    if (!activeSectionId) return;
+    // Broadcast — LivePreviewPanel posts to its iframe; we also fire a window event
+    // for any embedded preview that listens directly.
+    window.postMessage({ type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId: activeSectionId }, '*');
+  }, [editorTab, pagesConfig, selectedPage]);
+
   // ─── Resolve current editor component ───
   const renderActiveEditor = () => {
     // Custom section editor (matches both home custom_* and per-page sections)
