@@ -1,83 +1,120 @@
-# Fix "Failed to update section" toggle error
+# Wire draft preview to be clickable, editable, and rail-synced
 
 ## Positive feedback on your prompt
 
-Good prompt — you named the exact toast text ("failed to update section"), the trigger (toggling off), and what success looks like ("toggles work and act properly"). Naming the literal error text let me grep straight to the source instead of hunting.
+Strong product framing — you described the user-visible outcome ("elements are clickable and editable") AND the system behavior ("update the left rail in real time"), with a screenshot for context. That tells me both *what* and *why*, not just *how*.
 
-**Even better next time:** open DevTools → Network and tell me whether the PATCH/RPC actually fired (and its status) vs. whether the toast fires before any network hit. That distinguishes "network rejected the write" (RLS, schema) from "client-side guard threw before calling the API" (this case). Two very different fixes.
+**Even better next time:** name the granularity. "Clickable and editable" can mean three different things:
+1. Click any **section** → rail jumps to its editor (section-level select)
+2. Click any **text** → edit it in place, persists on blur (inline text edit)
+3. Click any **image/CTA** → opens a property panel (rich element editing)
 
-## Root cause
+I'm scoping all three below because they share infrastructure, but if you only meant #1 or only #2, the answer compresses by half. Telling me upfront ("just text edits for now" or "section selection only") avoids over-engineering.
 
-The toggle handler calls `updateSections.mutateAsync(...)` which routes through `useUpdateWebsiteSections` in `src/hooks/useWebsiteSections.ts`:
+## What's already built (and why nothing happens today)
 
-```ts
-const currentPages = queryClient.getQueryData<WebsitePagesConfig>(
-  ['site-settings', 'website_pages']
-);
-if (!currentPages) throw new Error('Pages config not loaded');
+The codebase already has a remarkably complete editor↔canvas bridge:
+
+```text
+CANVAS (iframe)                      SHELL (parent)
+─────────────────                    ───────────────
+EditorSectionCard                    WebsiteEditorShell
+ ├─ click → EDITOR_SELECT_SECTION ──→ resolves tab → opens in rail ✓
+ ├─ toggle → EDITOR_TOGGLE_SECTION ─→ handlePageSectionToggle      ✓
+ ├─ chips → EDITOR_APPLY_STYLE_PRESET → updatePages.mutate         ✓
+ └─ menu → EDITOR_OPEN_STYLE ───────→ opens style panel             ✓
+
+InlineEditableText
+ └─ blur → INLINE_EDIT_COMMIT ──────→ InlineEditCommitHandler
+                                       ├─ allowlist check          ✓
+                                       ├─ update mutation          ✓
+                                       └─ undo/redo entry          ✓
 ```
 
-But the actual query key used by `useWebsitePages` is:
+13 section types already have inline-editable text fields wired (Hero, Brand Statement, Testimonials, FAQ, Footer CTA, New Client, Extensions, Gallery, Locations, Stylists, Drink Menu, Brands, Extension Reviews).
+
+**The single line that breaks all of it:** `WebsiteEditorShell.tsx:316`
 
 ```ts
-['site-settings', orgId, 'website_pages', mode]   // mode = 'draft' | 'live'
+const livePreviewUrl = publicPageUrl(selectedPage?.slug, {
+  preview: true,
+  mode: 'view',          // ← this kills both flows
+});
 ```
 
-The lookup never matches, `currentPages` is always `undefined`, the mutation throws **before any network call**, and the sidebar's catch shows the generic `Failed to update section` toast. No DB write, no RLS issue — purely a client-side cache-key mismatch.
+`mode=view` does two things in the iframe:
+- `PageSectionRenderer` skips the `EditorSectionCard` wrapper and renders the raw public layout → no click target, no select chrome (line 181: `if (!isEditorPreview || isViewMode)`)
+- `InlineEditableText` renders inert plain text instead of a contentEditable surface (line 52: `if (params.get('mode') === 'view') return false`)
 
-This affects both code paths in `WebsiteEditorSidebar.tsx`:
-- `handleToggleSection` (line 232) — homepage section toggles
-- `saveSections` (line 217) — homepage drag-reorder commits
+So the current Draft Preview is a **read-only** rendering of the published layout. None of the existing edit infrastructure activates.
 
-Per-page section toggles route through `handlePageSectionToggle` in the shell, which uses a different (working) path — that's why only the homepage rail surfaces this.
+## Plan
 
-## Fix
+### 1. Switch the live preview from `view` to `edit` mode
 
-**Single file edit: `src/hooks/useWebsiteSections.ts`**
+Change the URL builder to `mode: 'edit'` (or drop `mode` entirely so `preview=true` alone activates editor chrome).
 
-Replace the broken `queryClient.getQueryData(...)` lookup with the live `useWebsitePages()` hook so the mutation reads from the correct, always-current source of truth:
-
+`src/components/dashboard/website-editor/WebsiteEditorShell.tsx:316`:
 ```ts
-export function useUpdateWebsiteSections() {
-  const pagesQuery = useWebsitePages();
-  const updatePages = useUpdateWebsitePages();
-
-  return useMutation({
-    mutationFn: async (value: WebsiteSectionsConfig) => {
-      const currentPages = pagesQuery.data;
-      if (!currentPages) throw new Error('Pages config not loaded');
-
-      const updated: WebsitePagesConfig = {
-        pages: currentPages.pages.map(p =>
-          p.id === 'home' ? { ...p, sections: value.homepage } : p
-        ),
-      };
-      await updatePages.mutateAsync(updated);
-    },
-  });
-}
+const livePreviewUrl = publicPageUrl(selectedPage?.slug, {
+  preview: true,
+  mode: 'edit',
+});
 ```
 
-Why this works: `useWebsitePages()` is already mounted by every consumer that calls `useUpdateWebsiteSections` (the sidebar reads sections), so its data is hot in the cache and reactively updated.
+This single change:
+- Activates `EditorSectionCard` wrapping → click any section → rail jumps to its editor (already wired via `EDITOR_SELECT_SECTION`).
+- Activates `InlineEditableText` → all 13 section types' text fields become click-to-edit, persisting via the existing commit handler.
+- Activates style chips, toggle, duplicate, delete buttons on each section card.
+- Hover/focus rings appear on every editable text node.
 
-**Bonus hardening (small, in same file):** improve the sidebar catch in `WebsiteEditorSidebar.tsx` lines 226–229 and 242–245 to surface the actual error message (`toast.error(`Failed to update section: ${err.message ?? 'unknown error'}`)`) so this class of silent guard-throw is visible next time instead of being masked by a friendly generic.
+### 2. Add a Preview/Edit mode toggle in the LivePreviewPanel toolbar
 
-## Verification
+`mode=view` is genuinely useful — it shows the operator what visitors see without edit chrome. We should keep it accessible, just not as the default.
 
-After the fix, in the browser:
-1. Toggle "Hero Section" off → toast: "Hero Section disabled". Iframe re-renders without the hero. Refresh → still off.
-2. Toggle it back on → toast: "Hero Section enabled". Hero returns.
-3. Toggle "Brand Statement", "Testimonials", "Partner Brands" → each one persists.
-4. Drag-reorder a couple of homepage sections → no "Failed to save" toast; new order persists across reload.
-5. Per-page (non-home) toggles continue to work as before (separate code path, not affected).
+`src/components/dashboard/website-editor/LivePreviewPanel.tsx`:
+- Add a two-state segmented control next to the device picker: **"Edit"** (default, current `mode=edit`) | **"Preview"** (clean `mode=view`).
+- Persist choice in `localStorage` under `website-editor:canvas-mode`.
+- Lift state up via a callback prop OR (simpler) read it inside the panel and append `&mode=…` to the iframe `src`. The shell just provides the base URL without `mode`; the panel decides which mode to load.
+
+This keeps the operator in control: click into Edit when they want to change something, switch to Preview to see the visitor view.
+
+### 3. Confirm rail-side selection state reflects the canvas click
+
+When the iframe posts `EDITOR_SELECT_SECTION`, the shell already calls `requestTabChange(tab)` which updates `editorTab`. The sidebar passes `activeTab` to each `SectionNavItem` and highlights the active row. That loop is closed — verify in the browser after enabling edit mode.
+
+We've also already wired the **reverse** direction this morning: clicking a rail item sets `activePreviewSectionId`, which the panel posts as `PREVIEW_SCROLL_TO_SECTION` and `PREVIEW_HIGHLIGHT_SECTION`. So both directions sync.
+
+### 4. Two small UX hardenings
+
+**a. Scroll-into-view when canvas selection comes from a click.**
+Today, clicking a section in the canvas opens its editor in the rail but doesn't scroll the rail. If the operator clicked a section that's below the fold of the rail's section list, they won't see the highlight. Add a `scrollIntoView({ block: 'nearest' })` call inside `SectionNavItem` when `isActive` flips on.
+
+**b. Suppress the section-card chrome on focused inline edits.**
+When the operator is mid-typing in an `InlineEditableText`, the surrounding `EditorSectionCard` chrome (chips, toggle) should fade so it doesn't compete visually. Add a `:focus-within` rule to `EditorSectionCard` that drops the chrome's opacity to ~0.3.
+
+## Verification (browser, after change)
+
+1. Open Website Editor → preview iframe loads with `mode=edit`.
+2. Hover any text in the canvas → faint primary-tinted ring appears. Click → contentEditable; type a new headline; Tab/Enter → text persists, "Saved" pulse fires, rail's section highlights.
+3. Click a section's blank area → rail jumps to that section's editor tab. The section that was clicked highlights in the rail with the active state.
+4. Click the section's eyeball/toggle in the canvas → it disables; rail toggle flips to off; iframe re-renders without it.
+5. Toggle the new "Edit / Preview" segmented control to **Preview** → all chrome disappears, text becomes inert, page reads like the live site. Toggle back to **Edit** → chrome returns.
+6. Refresh editor → choice persists.
+7. Undo (Cmd+Z) reverts the last text edit.
 
 ## Files to edit
 
-- `src/hooks/useWebsiteSections.ts` — fix the cache lookup (~6 line delta).
-- `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` — surface the underlying error message in the two catch blocks (~2 line delta, optional but recommended).
+- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — drop `mode: 'view'` from the URL builder; pass mode-less base URL to LivePreviewPanel.
+- `src/components/dashboard/website-editor/LivePreviewPanel.tsx` — add Edit/Preview segmented toggle, persist in localStorage, append `&mode=…` to iframe src.
+- `src/components/dashboard/website-editor/SectionNavItem.tsx` — `scrollIntoView` when `isActive` becomes true.
+- `src/components/home/EditorSectionCard.tsx` — `:focus-within` chrome dimming.
+
+Net delta: ~60 lines across 4 files. No new infrastructure, no new message types, no DB changes. We're flipping a switch on a fully-built system.
 
 ## Enhancement suggestions (after this lands)
 
-- **Optimistic toggle without a network round-trip on each click.** Today every toggle writes the entire `website_pages` JSON. A debounced batch (e.g. 500ms after the last toggle) would feel snappier and reduce write amplification, with the same visual instant feedback you already have via `setLocalSections`.
-- **Standardize the error toast pattern.** A small helper like `errorToast(prefix, err)` that always appends `err.message` would have caught this silently-failed guard immediately. Worth adding to `src/lib/utils.ts` and using in every editor catch block.
-- **Add a Vitest covering the cache-key contract.** A 10-line test that mounts `useUpdateWebsiteSections` alongside `useWebsitePages` and asserts the toggle round-trips would have caught this drift the moment the key shape changed.
+- **Click affordance on first hover.** Show a one-time tooltip/coachmark "Click any text to edit, click anywhere on a section to open it" the first time a user enters edit mode. Drives discoverability.
+- **Image click → opens upload/replace modal.** Today images are static in the canvas. Same pattern: wrap them in an `EditableImage` primitive that posts `EDITOR_REPLACE_IMAGE { sectionKey, fieldPath }` upward; shell opens the existing image picker. Adds the third granularity from your prompt.
+- **Multi-cursor dirty indicator.** When the iframe is mid-edit AND there are unsaved changes, the rail's matching section row could pulse a 1px primary-tinted left border. Visual confirmation that the canvas and rail are looking at the same record.
+- **Keyboard navigation.** `Cmd+E` to toggle Edit/Preview, `Cmd+Up/Down` to step through sections in the rail. Power-user multiplier with no design cost.
