@@ -66,7 +66,13 @@ export function ExtensionReviewsSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const prefersReducedMotion = useReducedMotion();
-  
+
+  // Items: DB-backed + bridge override for live edits.
+  const { data: dbItems } = useVisibleTestimonials('extensions');
+  const liveItems = useLiveOverride<ReviewItem[]>('testimonial_items:extensions', dbItems);
+  const items = (liveItems ?? dbItems ?? []) as ReviewItem[];
+  const extensionReviews = items.length > 0 ? items : FALLBACK_REVIEWS;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -393,7 +399,7 @@ export function ExtensionReviewsSection() {
             </div>
             
             <p className="text-sm text-foreground/80 leading-relaxed">
-              {review.text}
+              {review.body}
             </p>
           </motion.div>
         ))}
