@@ -243,8 +243,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   // If the popup is disabled or config missing, render nothing at all.
   if (!active || !cfg) return null;
+  // Auto-suppress on /booking — the visitor is in the funnel; the offer code
+  // is already being honored via the URL param when relevant.
+  if (onBookingSurface && !isPreview) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
+  const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
   function handleAccept() {
     if (!isPreview) {
