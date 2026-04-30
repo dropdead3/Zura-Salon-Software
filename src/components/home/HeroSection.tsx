@@ -8,6 +8,8 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { HeroBackground } from "@/components/home/HeroBackground";
+import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -19,10 +21,23 @@ interface HeroSectionProps {
 export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const { data: dbHeroConfig } = useHeroConfig();
   // In editor preview mode, merge unsaved edits broadcast from the editor.
-  const heroConfig = useLiveOverride('section_hero', dbHeroConfig);
+  const heroConfig = useLiveOverride('section_hero', dbHeroConfig) ?? dbHeroConfig ?? DEFAULT_HERO;
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
   const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
+  const slides = heroConfig?.slides ?? [];
+
+  // Multi-slide rotator takes over when operators have configured slides.
+  if (slides.length > 0) {
+    return <HeroSlideRotator config={heroConfig} isPreview={isPreview} />;
+  }
+
+  const bgType = heroConfig?.background_type ?? 'none';
+  const bgUrl = heroConfig?.background_url ?? '';
+  const bgPoster = heroConfig?.background_poster_url ?? '';
+  const bgFit = heroConfig?.background_fit ?? 'cover';
+  const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
+  const hasMediaBackground = bgType !== 'none' && !!bgUrl;
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -88,8 +103,9 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // In preview/editor mode, render static HTML — no Framer Motion at all
   if (isPreview) {
     return (
-      <section data-theme="light" className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
-        <div className="flex-1 flex items-start justify-center relative z-0 pt-16 pb-16">
+      <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
+        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+        <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
               {showEyebrow && (
@@ -154,9 +170,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   }
 
   return (
-    <section ref={sectionRef} data-theme="light" className="relative flex flex-col overflow-hidden min-h-screen">
-      {/* Video Background */}
-      {videoSrc && (
+    <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-screen">
+      {/* Operator-configured background (image or video) */}
+      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+
+      {/* Legacy explicit videoSrc prop (back-compat) */}
+      {!hasMediaBackground && videoSrc && (
         <motion.div 
           className="absolute inset-0 z-0"
           initial={{ opacity: 0, scale: 1.1 }}
@@ -177,7 +196,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
       )}
 
       {/* Subtle gradient orbs - only show when no video */}
-      {!videoSrc && (
+      {!videoSrc && !hasMediaBackground && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <motion.div
             className="absolute w-[600px] h-[600px] -top-[200px] -right-[200px] rounded-full"

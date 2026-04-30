@@ -81,6 +81,24 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
 // Section Types
 // ============================================
 
+export interface HeroSlide {
+  id: string;
+  background_type: 'image' | 'video' | 'inherit';
+  background_url: string;
+  background_poster_url: string;
+  overlay_opacity: number | null; // null = inherit from section
+  eyebrow: string;
+  show_eyebrow: boolean;
+  headline_text: string;
+  subheadline_line1: string;
+  subheadline_line2: string;
+  cta_new_client: string;
+  cta_new_client_url: string;
+  cta_returning_client: string;
+  cta_returning_client_url: string;
+  show_secondary_button: boolean;
+}
+
 export interface HeroConfig {
   headline_text: string;
   eyebrow: string;
@@ -104,6 +122,18 @@ export interface HeroConfig {
   show_eyebrow: boolean;
   show_rotating_words: boolean;
   show_subheadline: boolean;
+  // Background media (single-slide / fallback when slides[] is empty)
+  background_type: 'none' | 'image' | 'video';
+  background_url: string;
+  background_poster_url: string;
+  background_fit: 'cover' | 'contain';
+  overlay_opacity: number; // 0..0.8
+  // Multi-slide rotator (Revolution Slider–style)
+  slides: HeroSlide[];
+  auto_rotate: boolean;
+  slide_interval_ms: number;
+  transition_style: 'fade' | 'crossfade' | 'slide-up';
+  pause_on_hover: boolean;
 }
 
 export interface BrandStatementConfig {
@@ -362,6 +392,16 @@ export const DEFAULT_HERO: HeroConfig = {
   show_eyebrow: true,
   show_rotating_words: true,
   show_subheadline: true,
+  background_type: 'none',
+  background_url: '',
+  background_poster_url: '',
+  background_fit: 'cover',
+  overlay_opacity: 0.4,
+  slides: [],
+  auto_rotate: true,
+  slide_interval_ms: 6000,
+  transition_style: 'crossfade',
+  pause_on_hover: true,
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
