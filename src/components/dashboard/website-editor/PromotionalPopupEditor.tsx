@@ -593,6 +593,44 @@ function Field({
   );
 }
 
+// ── Headline character counter ──
+// Surfaces the truncation ceiling for the *currently selected* appearance so
+// operators see the exact char limit before the live mock starts ellipsizing.
+// State map: under (muted) → near (warning at 80%) → over (destructive).
+function HeadlineCharCounter({
+  length,
+  appearance,
+}: {
+  length: number;
+  appearance: PromotionalPopupSettings['appearance'];
+}) {
+  const ceiling = HEADLINE_CEILINGS[appearance];
+  const ratio = ceiling > 0 ? length / ceiling : 0;
+  const tone =
+    length > ceiling
+      ? 'text-destructive'
+      : ratio >= 0.8
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-muted-foreground';
+  const layoutLabel =
+    appearance === 'corner-card' ? 'corner card' : appearance;
+  return (
+    <p className={cn('font-sans text-xs flex items-center gap-1', tone)}>
+      <span className="tabular-nums">
+        {length} / {ceiling}
+      </span>
+      <span className="text-muted-foreground">
+        chars before truncation in {layoutLabel}
+      </span>
+      {length > ceiling && (
+        <span className="font-display uppercase tracking-wider text-[10px] ml-1">
+          Truncating
+        </span>
+      )}
+    </p>
+  );
+}
+
 // ── Live FAB preview swatch ──
 // Mirrors the shape of the real FAB rendered by `PromotionalPopup` so operators
 // can see corner placement, accent color, and headline truncation without
