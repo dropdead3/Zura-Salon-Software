@@ -73,8 +73,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Site Content items (data managers - not part of homepage ordering),
-// grouped by intent so the editor sidebar reads as a hierarchy not a flat list.
+// Site-wide & content-library items (data managers — not part of any page's
+// section ordering). Grouped by intent so the editor sidebar reads as a
+// hierarchy not a flat list. Each group carries an explanatory caption that
+// reinforces what makes it different from the page-section list above it.
+//
+// "Pages" is intentionally NOT in this list: page selection lives in the
+// toolbar picker at the top of the rail (avoid duplicating that affordance).
 type SiteContentItem = {
   tab: string;
   label: string;
@@ -82,9 +87,10 @@ type SiteContentItem = {
   icon: typeof Megaphone;
 };
 
-const SITE_CONTENT_GROUPS: { title: string; items: SiteContentItem[] }[] = [
+const SITE_CONTENT_GROUPS: { title: string; caption: string; items: SiteContentItem[] }[] = [
   {
     title: 'Site Chrome',
+    caption: 'Applies to every page',
     items: [
       { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
       { tab: 'navigation', label: 'Navigation', description: 'Header & footer menus', icon: Layers },
@@ -93,13 +99,8 @@ const SITE_CONTENT_GROUPS: { title: string; items: SiteContentItem[] }[] = [
     ],
   },
   {
-    title: 'Pages',
-    items: [
-      { tab: 'pages', label: 'Pages', description: 'Manage all pages', icon: FileText },
-    ],
-  },
-  {
     title: 'Content Library',
+    caption: 'Reusable data, not layout',
     items: [
       { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
       { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
