@@ -13,7 +13,6 @@ import { EditorCard } from './EditorCard';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
-import { useOverflowGuard } from '@/hooks/useOverflowGuard';
 import {
   usePersistGuards,
   makeOverflowGuard,
