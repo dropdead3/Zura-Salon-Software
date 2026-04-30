@@ -260,6 +260,17 @@ export function EditorSectionCard({
     return `Width: ${cur?.label ?? 'Custom'} → ${nxt.label}`;
   }, [overrides.max_width]);
 
+  const headingScaleTooltip = useMemo(() => {
+    const cur = HEADING_SCALE_STOPS.find((s) => s.value === (overrides.heading_scale ?? 'md'));
+    const nxt = nextHeadingScale(overrides.heading_scale ?? 'md');
+    return `Heading: ${cur?.label ?? 'Md'} → ${nxt.label}`;
+  }, [overrides.heading_scale]);
+
+  const eyebrowTooltip = useMemo(() => {
+    const visible = overrides.eyebrow_visible !== false;
+    return `Eyebrow: ${visible ? 'On → Off' : 'Off → On'}`;
+  }, [overrides.eyebrow_visible]);
+
   return (
     <div
       onClick={handleClick}
