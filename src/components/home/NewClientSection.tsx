@@ -101,7 +101,14 @@ export const NewClientSection = () => {
                   transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
                   className="text-3xl md:text-4xl lg:text-5xl font-display mb-6"
                 >
-                  <span className="whitespace-nowrap">{config.headline_prefix}</span>{" "}
+                  <span className="whitespace-nowrap">
+                    <InlineEditableText
+                      value={config.headline_prefix}
+                      sectionKey="section_new_client"
+                      fieldPath="headline_prefix"
+                      placeholder="Headline prefix"
+                    />
+                  </span>{" "}
                   <span className="inline-block min-w-[180px] md:min-w-[220px]">{displayText}</span>
                 </motion.h2>
               )}
