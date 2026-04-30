@@ -35,6 +35,8 @@ interface BookingRequest {
   redo_pricing_override?: number;
   redo_requires_approval?: boolean;
   redo_is_manager?: boolean;
+  // Promotional offer code claimed by visitor (public popup → booking flow)
+  promo_offer_code?: string;
 }
 
 async function phorestRequest(
