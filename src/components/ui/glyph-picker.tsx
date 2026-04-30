@@ -25,8 +25,13 @@ export interface GlyphPickerProps<V extends string = string> {
   ariaLabel: string;
   /** Optional brand accent applied to the active glyph color. */
   accent?: string;
-  /** Label rendered when an option's icon is null. Defaults to "Off". */
+  /** Label rendered inside the empty-state tile. Defaults to "Off". */
   emptyLabel?: string;
+  /**
+   * Caption rendered under the row when the empty option is selected.
+   * Provides a more legible active-state hint than the ring alone.
+   */
+  emptyCaption?: string;
   className?: string;
 }
 
@@ -37,16 +42,19 @@ export function GlyphPicker<V extends string = string>({
   ariaLabel,
   accent,
   emptyLabel = 'Off',
+  emptyCaption,
   className,
 }: GlyphPickerProps<V>) {
   const accentColor = accent || 'hsl(var(--primary))';
+  const activeOption = options.find((o) => o.value === value);
+  const showEmptyCaption = Boolean(emptyCaption) && activeOption?.icon === null;
   return (
+    <div className={cn('inline-flex flex-col items-start gap-1', className)}>
     <div
       role="radiogroup"
       aria-label={ariaLabel}
       className={cn(
         'inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9',
-        className,
       )}
     >
       {options.map(({ value: optValue, label, icon: Icon }) => {
@@ -76,6 +84,12 @@ export function GlyphPicker<V extends string = string>({
           </button>
         );
       })}
+    </div>
+      {showEmptyCaption ? (
+        <span className="pl-3 text-[10px] font-sans text-muted-foreground">
+          {emptyCaption}
+        </span>
+      ) : null}
     </div>
   );
 }
