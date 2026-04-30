@@ -32,6 +32,13 @@ export interface BookingSurfaceFlow {
   showStylistBios: boolean;
   showAddOns: boolean;
   featuredCategoryIds: string[];
+  /** Org-wide policy for first-time visitors.
+   *  - `open` (default): anyone can book any service directly.
+   *  - `consultation-required`: new visitors are gated through a consultation
+   *    step before they can book non-consult services. The booking surface
+   *    enforces this; the promotional popup editor unlocks the
+   *    "Schedule a consultation" destination only when this is set. */
+  newClientPolicy?: 'open' | 'consultation-required';
 }
 
 export interface BookingSurfaceHosted {
@@ -97,6 +104,7 @@ export const DEFAULT_BOOKING_FLOW: BookingSurfaceFlow = {
   showStylistBios: false,
   showAddOns: false,
   featuredCategoryIds: [],
+  newClientPolicy: 'open',
 };
 
 export const DEFAULT_BOOKING_HOSTED: BookingSurfaceHosted = {

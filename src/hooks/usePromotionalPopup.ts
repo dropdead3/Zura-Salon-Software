@@ -19,6 +19,15 @@ export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles';
  *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card,
  *    where vertical room is the tightest. */
 export type ImageTreatment = 'cover' | 'side' | 'hidden-on-corner';
+/** Where the Claim Offer CTA sends the visitor.
+ *  - `booking`: deep-links into the public booking surface with the promo code attached.
+ *  - `consultation`: same as booking but flips on `?consultation=true` so the booking
+ *    surface gates the visitor through a consultation step. Only valid when the org
+ *    has set `newClientPolicy === 'consultation-required'` on its Booking Surface config.
+ *  - `custom-url`: external destination (https/tel/mailto). Operator authors a short
+ *    instructions string that surfaces inline within the popup so the visitor knows
+ *    what to do once they arrive (e.g. "Mention code FREEHAIR on the call"). */
+export type PopupAcceptDestination = 'booking' | 'consultation' | 'custom-url';
 
 export interface PromotionalPopupSettings {
   enabled: boolean;
@@ -63,6 +72,16 @@ export interface PromotionalPopupSettings {
   accentPresetKey?: string | null;
   // Re-entry FAB after dismissal
   fabPosition?: FabPosition;
+  // Accept-CTA destination
+  /** Where Claim Offer sends the visitor. Defaults to `booking` (legacy behavior). */
+  acceptDestination?: PopupAcceptDestination;
+  /** External URL when `acceptDestination === 'custom-url'`. Must start with
+   *  `https://`, `tel:`, or `mailto:`. Validated at the editor + accept time. */
+  customUrl?: string;
+  /** Short operator-authored instructions surfaced beneath the CTA when the
+   *  destination is `custom-url`. Lets the visitor know what to do at the
+   *  destination (e.g. "Mention code FREEHAIR when you call"). */
+  customUrlInstructions?: string;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
@@ -85,6 +104,9 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   frequency: 'once-per-session',
   imageTreatment: 'cover',
   fabPosition: 'bottom-right',
+  acceptDestination: 'booking',
+  customUrl: '',
+  customUrlInstructions: '',
 };
 
 const SETTING_KEY = 'promotional_popup';

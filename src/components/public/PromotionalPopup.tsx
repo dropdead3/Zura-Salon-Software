@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Gift, X, ChevronRight } from 'lucide-react';
 import {
   isPopupActive,
@@ -258,19 +259,50 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
   function handleAccept() {
-    if (!isPreview) {
-      writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
-      markSessionDismissed();
-      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    const destination = cfg.acceptDestination ?? 'booking';
+
+    // Editor preview: never navigate the iframe — the operator is QA'ing.
+    // Surface a toast that describes the simulated downstream action so the
+    // popup doesn't read as broken (the original "click does nothing" bug).
+    if (isPreview) {
+      const codeLabel = code ? `code ${code}` : 'no offer code';
+      const simulated =
+        destination === 'consultation'
+          ? `Visitor would be sent to consultation booking with ${codeLabel}.`
+          : destination === 'custom-url'
+            ? cfg.customUrl
+              ? `Visitor would be sent to ${cfg.customUrl}.`
+              : `Visitor would see your custom instructions${cfg.customUrlInstructions ? `: "${cfg.customUrlInstructions}"` : '.'}`
+            : `Visitor would be sent to /booking with ${codeLabel}.`;
+      toast.success('Claim Offer (preview)', { description: simulated });
+      setOpen(false);
+      setShowFab(false);
+      return;
     }
+
+    writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
+    markSessionDismissed();
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
     setOpen(false);
     setShowFab(false); // Offer claimed — no need for the re-entry FAB.
-    if (isPreview) return; // Don't navigate the editor iframe — operator is QA'ing.
-    // Land on the booking surface with the offer code attached. Booking
-    // page surfaces it as a banner; checkout/payroll can later honor it.
+
+    // Custom URL: open externally in a new tab. tel:/mailto: URLs trigger
+    // the device handler. Operator-supplied — we only sanity-check the prefix.
+    if (destination === 'custom-url' && cfg.customUrl) {
+      const url = cfg.customUrl.trim();
+      const safe = /^(https?:|tel:|mailto:)/i.test(url);
+      if (safe) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      // Falls through to booking if URL is malformed — better than a dead click.
+    }
+
+    // Booking + consultation: deep link into the public booking surface.
     const target = orgPath('/booking');
     const params = new URLSearchParams();
     if (code) params.set('promo', code);
+    if (destination === 'consultation') params.set('consultation', 'true');
     navigate(params.toString() ? `${target}?${params.toString()}` : target);
   }
 
@@ -575,6 +607,14 @@ function PromoBody({
           {cfg.ctaAcceptLabel}
         </button>
       </div>
+      {cfg.acceptDestination === 'custom-url' && cfg.customUrlInstructions && (
+        <p
+          className="font-sans text-xs text-foreground/80 leading-relaxed mb-2 px-3 py-2 rounded-lg border border-border/60 bg-muted/40"
+          style={{ borderLeft: `3px solid ${accent}` }}
+        >
+          {cfg.customUrlInstructions}
+        </p>
+      )}
       {cfg.disclaimer && (
         <p className="font-sans text-[11px] text-muted-foreground/80 leading-relaxed">{cfg.disclaimer}</p>
       )}
