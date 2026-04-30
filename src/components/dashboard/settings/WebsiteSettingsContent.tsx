@@ -508,7 +508,10 @@ function ThemeTab({
   const [showSidebar, setShowSidebar] = useState(true);
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const { hasChanges } = useChangelogSummary();
+  const { data: hasEverPublished } = useHasEverPublished();
+  const discardMutation = useDiscardToLastPublished();
 
   useEffect(() => {
     if (!forceOpenEditor) return;
