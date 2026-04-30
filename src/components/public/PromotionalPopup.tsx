@@ -265,29 +265,33 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // FAB element rendered after dismissal. Reuses the offer's accent color and
   // headline so the visitor can re-open the offer at any time during the session.
   const fab = showFab && !open ? (
-    <button
-      type="button"
-      onClick={handleFabOpen}
-      aria-label={`Reopen offer: ${cfg.headline}`}
-      className="group fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 hover:scale-[1.03] transition-transform"
-      style={{ backgroundColor: accent }}
+    <div
+      className="fixed bottom-6 right-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
     >
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
-        <Gift className="h-4 w-4" />
-      </span>
-      <span className="hidden sm:inline font-display uppercase tracking-wider text-xs max-w-[180px] truncate">
-        {cfg.headline}
-      </span>
-      <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
-      <span
-        role="button"
+      <button
+        type="button"
+        onClick={handleFabOpen}
+        aria-label={`Reopen offer: ${cfg.headline}`}
+        className="group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform"
+        style={{ backgroundColor: accent }}
+      >
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
+          <Gift className="h-4 w-4" />
+        </span>
+        <span className="hidden sm:inline font-display uppercase tracking-wider text-xs max-w-[180px] truncate">
+          {cfg.headline}
+        </span>
+        <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+      </button>
+      <button
+        type="button"
         aria-label="Dismiss offer reminder"
         onClick={handleFabDismiss}
-        className="ml-1 hidden sm:flex h-5 w-5 items-center justify-center rounded-full bg-black/20 hover:bg-black/40 transition-colors"
+        className="hidden sm:flex ml-2 h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors"
       >
-        <X className="h-3 w-3" />
-      </span>
-    </button>
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
   ) : null;
 
   if (!open) return fab;
