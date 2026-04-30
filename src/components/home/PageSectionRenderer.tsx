@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BrandStatement } from '@/components/home/BrandStatement';
 import { ExtensionsSection } from '@/components/home/ExtensionsSection';
