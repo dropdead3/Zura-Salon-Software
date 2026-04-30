@@ -86,30 +86,38 @@ export function Layout({ children }: LayoutProps) {
   const [showFooter, setShowFooter] = useState(false);
   const footerRef = useRef<HTMLDivElement>(null);
 
-  // Immediately force light mode during render (before useEffect) to prevent flash
+  // Operator-selected public-site color theme. Defaults to cream-lux to
+  // preserve historical look until an operator explicitly picks otherwise.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const themeClass = `theme-${websiteTheme}`;
+
+  // Immediately force light mode + the operator's chosen theme during render
+  // (before useEffect) to prevent flash. We use the resolved theme from the
+  // hook — on first paint this is the default, then re-renders pick up the
+  // persisted setting once site_settings resolves.
   if (typeof document !== 'undefined') {
     const root = document.documentElement;
     root.classList.remove('dark');
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-cream-lux');
+    root.classList.add(themeClass);
   }
 
   // Force light mode and reset any dashboard theme overrides for public website
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Remove dark mode class
     root.classList.remove('dark');
-    
-    // Ensure bone theme is applied
+
+    // Apply the operator's chosen public-site theme.
     root.classList.remove(...DASHBOARD_THEME_CLASSES);
-    root.classList.add('theme-cream-lux');
+    root.classList.add(themeClass);
 
     // Add editor-preview class for scrollbar hiding
     if (isEditorPreview) {
       root.classList.add('editor-preview');
     }
-    
+
     // Clear any custom CSS variable overrides from dashboard theme
     const style = root.style;
     const propsToRemove: string[] = [];
@@ -127,7 +135,7 @@ export function Layout({ children }: LayoutProps) {
         root.classList.remove('editor-preview');
       }
     };
-  }, [isEditorPreview]);
+  }, [isEditorPreview, themeClass]);
 
   useEffect(() => {
     const handleScroll = () => {
