@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock } from 'lucide-react';
 import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,11 @@ import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { useOverflowGuard } from '@/hooks/useOverflowGuard';
+import {
+  usePersistGuards,
+  makeOverflowGuard,
+  makeContrastGuard,
+} from '@/hooks/usePersistGuards';
 import { useDismissedSuggestion } from '@/hooks/useDismissedSuggestion';
 import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
