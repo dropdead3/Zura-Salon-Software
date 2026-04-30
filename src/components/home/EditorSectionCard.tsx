@@ -123,8 +123,15 @@ export function EditorSectionCard({
             {showOverflow && (
               <div
                 data-editor-control
-                className="absolute right-0 top-7 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[120px] z-20"
+                className="absolute right-0 top-7 bg-popover border border-border rounded-lg shadow-lg py-1 min-w-[140px] z-20"
               >
+                <button
+                  onClick={handleOpenStyle}
+                  className="w-full px-3 py-1.5 text-xs font-sans text-foreground hover:bg-muted/60 text-left flex items-center gap-2 transition-colors"
+                >
+                  <Palette className="h-3 w-3" />
+                  Style
+                </button>
                 <button
                   onClick={handleDelete}
                   className="w-full px-3 py-1.5 text-xs font-sans text-destructive hover:bg-destructive/10 text-left flex items-center gap-2 transition-colors"
