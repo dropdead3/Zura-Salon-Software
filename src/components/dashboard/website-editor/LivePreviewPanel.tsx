@@ -47,6 +47,19 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [paneSize, setPaneSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  // Mirror the shell's editor-dirty-state so the toolbar can flip its label
+  // from "Live Preview" to "Editing — unsaved" while the user types. This
+  // makes the live-edit bridge legible: the canvas is showing your in-progress
+  // edits, not what's saved.
+  const [isEditingLive, setIsEditingLive] = useState(false);
+
+  useEffect(() => {
+    const onDirty = (e: Event) => {
+      setIsEditingLive(!!(e as CustomEvent).detail?.dirty);
+    };
+    window.addEventListener('editor-dirty-state', onDirty);
+    return () => window.removeEventListener('editor-dirty-state', onDirty);
+  }, []);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -201,8 +214,22 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2 p-3 border-b border-border bg-card">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-medium shrink-0">Live Preview</span>
-          {isLoading && <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />}
+          {isEditingLive ? (
+            <>
+              <span
+                className="text-sm font-medium shrink-0 text-warning-foreground"
+                title="Showing unsaved edits — Save Draft to persist"
+              >
+                Editing — unsaved
+              </span>
+              <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-medium shrink-0">Live Preview</span>
+              {isLoading && <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />}
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
