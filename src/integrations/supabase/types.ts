@@ -32230,6 +32230,10 @@ export type Database = {
             }[]
           }
       current_user_is_coach: { Args: never; Returns: boolean }
+      discard_site_settings_drafts: {
+        Args: { _org_id: string }
+        Returns: number
+      }
       find_duplicate_clients: {
         Args: {
           p_email?: string
@@ -32461,6 +32465,12 @@ export type Database = {
           tier3: number
         }[]
       }
+      list_dirty_site_setting_drafts: {
+        Args: { _org_id: string }
+        Returns: {
+          setting_id: string
+        }[]
+      }
       log_platform_action: {
         Args: {
           _action: string
@@ -32474,6 +32484,10 @@ export type Database = {
       publish_policy_externally: {
         Args: { p_policy_id: string; p_publish: boolean }
         Returns: Json
+      }
+      publish_site_settings_drafts: {
+        Args: { _org_id: string }
+        Returns: number
       }
       rebuild_inventory_projection: {
         Args: { p_location_id?: string; p_org_id: string; p_product_id: string }
