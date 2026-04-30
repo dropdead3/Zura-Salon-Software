@@ -10,7 +10,7 @@ import {
   History,
   Loader2,
   MousePointer2,
-  PanelLeftClose,
+  
   PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
