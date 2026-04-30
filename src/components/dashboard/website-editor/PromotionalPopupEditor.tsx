@@ -239,6 +239,7 @@ export function PromotionalPopupEditor() {
   const redemptionSeries = redemptionData?.series ?? [];
   const redemptionLast24h = redemptionData?.last24h ?? 0;
   const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
+  const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
   useEffect(() => {
     if (settings) {
@@ -572,12 +573,24 @@ export function PromotionalPopupEditor() {
           {/* Lifetime attributed revenue — silence is valid: rows pre-dating
               the attribution column write resolve to 0 (honest absence). We
               only render when there's signal, keeping the card calm for new
-              codes and historic redemptions. */}
+              codes and historic redemptions. The "since DATE" caption makes
+              that exclusion legible — without it, operators see count=12 but
+              revenue worth of 8 and reasonably ask "where are the other 4?". */}
           {revenueAttributed > 0 && (
             <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
-              <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
-                Revenue attributed
-              </span>
+              <div className="min-w-0">
+                <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground block">
+                  Revenue attributed
+                </span>
+                {revenueAttributedSince && (
+                  <span
+                    className="font-sans text-[10px] text-muted-foreground/80 block mt-0.5"
+                    title={`Earliest redemption with attributed revenue: ${new Date(revenueAttributedSince).toLocaleString()}. Earlier redemptions exist but pre-date attribution tracking.`}
+                  >
+                    since {new Date(revenueAttributedSince).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
               <BlurredAmount className="font-sans text-sm font-medium tabular-nums text-foreground">
                 {formatCurrency(revenueAttributed)}
               </BlurredAmount>
