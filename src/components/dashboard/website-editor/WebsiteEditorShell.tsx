@@ -875,7 +875,7 @@ export function WebsiteEditorShell() {
     <div className="space-y-0 -mx-1">
       {/* Editor toolbar */}
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isMobile && (
             <Button
               variant="outline"
@@ -892,7 +892,7 @@ export function WebsiteEditorShell() {
           <Select value={selectedPageId} onValueChange={requestPageChange}>
             <SelectTrigger
               ref={pagePickerRef}
-              className="h-9 text-xs min-w-[160px] max-w-[260px] rounded-full"
+              className="h-9 text-xs min-w-[140px] max-w-[220px] shrink-0 rounded-full"
               title="Switch page (⌘K)"
             >
               <div className="flex items-center gap-2 min-w-0">
@@ -922,22 +922,21 @@ export function WebsiteEditorShell() {
             </SelectContent>
           </Select>
 
-          {/* Breadcrumb */}
+          {/* Breadcrumb — section only (page already shown in picker). Hidden < lg. */}
           <nav
             aria-label="Editor breadcrumb"
-            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0"
+            className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0 flex-1"
           >
             <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            <span className="truncate text-foreground font-medium">{selectedPageTitle}</span>
-            <ChevronRight className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            <span className="truncate text-foreground font-medium">{sectionLabel}</span>
+            <span className="truncate text-foreground font-medium min-w-0">
+              {sectionLabel}
+            </span>
           </nav>
-
-          {/* Save status pill */}
-          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+          {/* Save status pill — adjacent to Publish, the action it qualifies */}
+          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
           {/* Primary action: Publish */}
           <Button
             variant="default"
