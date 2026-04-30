@@ -30,6 +30,14 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
   { value: 'all-public', label: 'Every public page', description: 'Show site-wide (overrides others)' },
 ];
 
+// Curated accent presets so operators can match brand intent without hex
+// guessing. `undefined` resolves to the org's theme primary at render time.
+const ACCENT_PRESETS: { label: string; value: string | undefined; swatch: string; hint: string }[] = [
+  { label: 'House Default', value: undefined, swatch: 'hsl(var(--primary))', hint: 'Inherit your site theme primary' },
+  { label: 'High Contrast', value: '#111111', swatch: '#111111', hint: 'Near-black — maximum attention' },
+  { label: 'Soft Neutral', value: '#A1887F', swatch: '#A1887F', hint: 'Warm taupe — editorial calm' },
+];
+
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
   const { data: settings, isLoading } = usePromotionalPopup();
