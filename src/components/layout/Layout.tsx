@@ -177,7 +177,7 @@ export function Layout({ children }: LayoutProps) {
   // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className="min-h-screen flex flex-col relative theme-cream-lux bg-background" style={{ colorScheme: 'light' }}>
+      <div className={`min-h-screen flex flex-col relative ${themeClass} bg-background`} style={{ colorScheme: 'light' }}>
         <DesignOverridesApplier />
         <Header />
         <main className="flex-1 bg-background">
@@ -193,7 +193,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className="min-h-screen flex flex-col relative theme-cream-lux bg-secondary" style={{ colorScheme: 'light' }}>
+    <div className={`min-h-screen flex flex-col relative ${themeClass} bg-secondary`} style={{ colorScheme: 'light' }}>
       <DesignOverridesApplier />
       {/* Fixed footer that reveals as content scrolls */}
       <div 
