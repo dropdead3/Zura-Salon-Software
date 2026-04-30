@@ -47,7 +47,9 @@ function getBuiltinComponent(type: BuiltinSectionType, isPreview: boolean): Reac
 function getIsEditorPreview() {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search);
-  return params.has('preview') || params.has('mode');
+  if (params.get('preview') === 'true') return true;
+  const mode = params.get('mode');
+  return mode === 'view' || mode === 'edit';
 }
 
 function getIsViewMode() {

@@ -50,7 +50,7 @@ function getIsEditorPreview() {
   // Inline editing is suppressed in `mode=view` so the public-style preview
   // doesn't show edit affordances.
   if (params.get('mode') === 'view') return false;
-  return params.has('preview');
+  return params.get('preview') === 'true';
 }
 
 export function InlineEditableText({

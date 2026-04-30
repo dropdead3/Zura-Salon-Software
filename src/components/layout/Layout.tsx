@@ -44,7 +44,7 @@ const DASHBOARD_THEME_CLASSES = [
 
 function getIsEditorPreview() {
   if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).has('preview');
+  return new URLSearchParams(window.location.search).get('preview') === 'true';
 }
 
 function getIsViewMode() {
