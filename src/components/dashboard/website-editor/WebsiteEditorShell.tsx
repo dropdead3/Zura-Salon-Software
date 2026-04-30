@@ -1099,6 +1099,10 @@ function WebsiteEditorShellInner() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Undo/Redo — operates on the editor history ledger (reorder, design,
+              inline edits). Keyboard: ⌘Z / ⌘⇧Z. */}
+          <UndoRedoControls />
+
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
 
           {/* Site Design — global theme/typography/density panel */}
