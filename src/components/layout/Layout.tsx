@@ -189,6 +189,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       <StickyFooterBar />
+      <PromotionalPopup surface="all-public" />
     </div>
   );
 }
