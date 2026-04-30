@@ -1,0 +1,270 @@
+/**
+ * HeroSlideRotator — Revolution-Slider-style multi-slide hero.
+ *
+ * Each slide carries its own background media + foreground text + CTAs.
+ * Slides cross-fade on a configurable interval; pagination dots and prev/next
+ * arrows expose manual control. In editor preview, auto-rotate is suppressed
+ * so operators can edit the active slide without it sliding away.
+ */
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
+import { Eyebrow } from '@/components/ui/Eyebrow';
+import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
+import { HeroBackground } from './HeroBackground';
+import { InlineEditableText } from './InlineEditableText';
+
+interface HeroSlideRotatorProps {
+  config: HeroConfig;
+  isPreview?: boolean;
+}
+
+export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotatorProps) {
+  const slides = config.slides ?? [];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [consultationOpen, setConsultationOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+
+  // Clamp the active index if slides shrink.
+  useEffect(() => {
+    if (activeIndex >= slides.length && slides.length > 0) {
+      setActiveIndex(0);
+    }
+  }, [slides.length, activeIndex]);
+
+  const interval = Math.max(2000, config.slide_interval_ms ?? 6000);
+  const autoRotate = !!config.auto_rotate && slides.length > 1 && !isPreview && !reduceMotion;
+
+  useEffect(() => {
+    if (!autoRotate || isPaused) return;
+    const id = window.setInterval(() => {
+      setActiveIndex((i) => (i + 1) % slides.length);
+    }, interval);
+    return () => window.clearInterval(id);
+  }, [autoRotate, isPaused, interval, slides.length]);
+
+  const goTo = useCallback((i: number) => {
+    if (slides.length === 0) return;
+    setActiveIndex(((i % slides.length) + slides.length) % slides.length);
+  }, [slides.length]);
+
+  const slide: HeroSlide | undefined = slides[activeIndex];
+
+  // Slide background overlay falls back to section default when null.
+  const overlay = useMemo(() => {
+    if (!slide) return config.overlay_opacity ?? 0.4;
+    return slide.overlay_opacity ?? config.overlay_opacity ?? 0.4;
+  }, [slide, config.overlay_opacity]);
+
+  const bgType = useMemo(() => {
+    if (!slide) return 'none' as const;
+    if (slide.background_type === 'inherit') return config.background_type;
+    return slide.background_type;
+  }, [slide, config.background_type]);
+
+  const bgUrl = useMemo(() => {
+    if (!slide) return '';
+    if (slide.background_type === 'inherit') return config.background_url;
+    return slide.background_url;
+  }, [slide, config.background_url]);
+
+  const bgPoster = useMemo(() => {
+    if (!slide) return '';
+    if (slide.background_type === 'inherit') return config.background_poster_url;
+    return slide.background_poster_url;
+  }, [slide, config.background_poster_url]);
+
+  if (!slide) return null;
+
+  const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
+  const handleHoverLeave = () => config.pause_on_hover && setIsPaused(false);
+
+  // Foreground text gets contrast against background media — when there's a
+  // background, text turns white; otherwise inherit theme foreground.
+  const hasBackground = bgType !== 'none' && !!bgUrl;
+  const textTone = hasBackground ? 'text-white' : 'text-foreground';
+  const mutedTone = hasBackground ? 'text-white/80' : 'text-muted-foreground';
+  const buttonPrimary = hasBackground
+    ? 'bg-white text-black hover:bg-white/90'
+    : 'bg-foreground text-background hover:bg-foreground/90';
+  const buttonSecondary = hasBackground
+    ? 'border-white text-white'
+    : 'border-foreground text-foreground';
+
+  return (
+    <section
+      data-theme={hasBackground ? 'dark' : 'light'}
+      className="relative flex flex-col overflow-hidden min-h-[600px] lg:min-h-screen"
+      onMouseEnter={handleHoverEnter}
+      onMouseLeave={handleHoverLeave}
+    >
+      {/* Background layer — cross-faded between slides */}
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={`bg-${activeIndex}`}
+          className="absolute inset-0 z-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <HeroBackground
+            type={bgType}
+            url={bgUrl}
+            posterUrl={bgPoster}
+            fit={config.background_fit}
+            overlayOpacity={overlay}
+          />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Foreground content */}
+      <div className="flex-1 flex items-center justify-center relative z-10 pt-28 pb-32 lg:pt-36 lg:pb-48">
+        <div className="container mx-auto px-6 lg:px-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`fg-${activeIndex}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+              >
+                {slide.show_eyebrow && slide.eyebrow && (
+                  <div className="mb-6">
+                    {isPreview ? (
+                      <p className={`text-xs uppercase tracking-[0.2em] font-display section-eyebrow ${mutedTone}`}>
+                        <InlineEditableText
+                          as="span"
+                          value={slide.eyebrow}
+                          sectionKey="section_hero"
+                          fieldPath={`slides.${activeIndex}.eyebrow`}
+                          placeholder="Eyebrow"
+                        />
+                      </p>
+                    ) : (
+                      <Eyebrow className={`section-eyebrow ${mutedTone}`}>{slide.eyebrow}</Eyebrow>
+                    )}
+                  </div>
+                )}
+
+                <h1
+                  className={`font-display font-normal leading-[0.95] ${textTone}`}
+                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+                >
+                  {isPreview ? (
+                    <InlineEditableText
+                      as="span"
+                      value={slide.headline_text}
+                      sectionKey="section_hero"
+                      fieldPath={`slides.${activeIndex}.headline_text`}
+                      placeholder="Headline"
+                    />
+                  ) : (
+                    slide.headline_text
+                  )}
+                </h1>
+
+                {(slide.subheadline_line1 || slide.subheadline_line2) && (
+                  <p className={`mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed ${mutedTone}`}>
+                    {isPreview ? (
+                      <InlineEditableText
+                        as="span"
+                        value={slide.subheadline_line1}
+                        sectionKey="section_hero"
+                        fieldPath={`slides.${activeIndex}.subheadline_line1`}
+                        placeholder="Subheadline line 1"
+                      />
+                    ) : (
+                      slide.subheadline_line1
+                    )}
+                    {slide.subheadline_line2 && (
+                      <>
+                        <br />
+                        {isPreview ? (
+                          <InlineEditableText
+                            as="span"
+                            value={slide.subheadline_line2}
+                            sectionKey="section_hero"
+                            fieldPath={`slides.${activeIndex}.subheadline_line2`}
+                            placeholder="Subheadline line 2"
+                          />
+                        ) : (
+                          slide.subheadline_line2
+                        )}
+                      </>
+                    )}
+                  </p>
+                )}
+
+                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      if (slide.cta_new_client_url) {
+                        window.location.href = slide.cta_new_client_url;
+                      } else {
+                        setConsultationOpen(true);
+                      }
+                    }}
+                    className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonPrimary}`}
+                  >
+                    <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
+                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                  </button>
+                  {slide.show_secondary_button && (
+                    <Link
+                      to={slide.cta_returning_client_url || '/booking'}
+                      className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonSecondary}`}
+                    >
+                      <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
+                      <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination + arrows */}
+      {slides.length > 1 && (
+        <div className="absolute bottom-8 inset-x-0 z-20 flex items-center justify-center gap-6">
+          <button
+            onClick={() => goTo(activeIndex - 1)}
+            aria-label="Previous slide"
+            className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-1 transition-all duration-500 ${
+                  i === activeIndex
+                    ? `w-8 ${hasBackground ? 'bg-white' : 'bg-foreground'}`
+                    : `w-2 ${hasBackground ? 'bg-white/40 hover:bg-white/60' : 'bg-foreground/30 hover:bg-foreground/50'}`
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => goTo(activeIndex + 1)}
+            aria-label="Next slide"
+            className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
+    </section>
+  );
+}
