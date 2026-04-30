@@ -87,6 +87,20 @@ export default function WebsiteHub() {
   const { dashPath } = useOrgDashboardPath();
   const { publicUrl, isUsingCustomDomain, customDomain } = useOrgPublicUrl();
   const [searchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab');
+
+  // Immersive editor mode: hide dashboard sidebar, top bar, and page header so
+  // the website editor canvas owns the full viewport. Exit affordance lives
+  // inside WebsiteEditorShell's toolbar.
+  if (activeTab === 'editor') {
+    return (
+      <DashboardLayout hideTopBar hideSidebar hideFooter>
+        <div className="h-screen w-full overflow-hidden">
+          <WebsiteEditorShell />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Per Hub-landings canon: only show the editor surface when the user explicitly
   // requested a tab via deep link. A bare hub URL always renders the card overview.
