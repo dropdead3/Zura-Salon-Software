@@ -294,6 +294,13 @@ function WebsiteEditorShellInner() {
     | { type: 'page'; pageId: string }
     | null
   >(null);
+  // Exit Editor confirm dialog (only opens when there are unsaved/unpublished changes).
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const navigate = useNavigate();
+  const { dashPath } = useOrgDashboardPath();
+  const performExit = useCallback(() => {
+    navigate(dashPath('/admin/website-hub'));
+  }, [navigate, dashPath]);
 
   const { hasChanges, totalChanges } = useChangelogSummary();
   const { data: hasEverPublished } = useHasEverPublished();
