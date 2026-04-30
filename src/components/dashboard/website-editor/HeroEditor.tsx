@@ -20,6 +20,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
+import { HeroBackgroundEditor } from './HeroBackgroundEditor';
+import { HeroSlidesManager } from './HeroSlidesManager';
 
 export function HeroEditor() {
   const { data, isLoading, isSaving, update } = useHeroConfig();
@@ -74,17 +76,30 @@ export function HeroEditor() {
   }
 
   return (
-    <EditorCard
-      title="Hero Section"
-      icon={Layout}
-      description="Configure the main hero banner on your homepage"
-      headerActions={
-        <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
-          <RotateCcw className="h-3.5 w-3.5" />
-          Reset
-        </Button>
-      }
-    >
+    <div className="space-y-6">
+      <HeroBackgroundEditor
+        config={localConfig}
+        onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
+      />
+
+      <HeroSlidesManager
+        config={localConfig}
+        onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
+      />
+
+      <EditorCard
+        title="Hero Section"
+        icon={Layout}
+        description={localConfig.slides.length > 0
+          ? "Default fallback content (used when slides above are empty)"
+          : "Configure the main hero banner on your homepage"}
+        headerActions={
+          <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
+        }
+      >
 
       {/* Eyebrow */}
       <ToggleInput
@@ -293,6 +308,7 @@ export function HeroEditor() {
           </div>
         </CollapsibleContent>
       </Collapsible>
-    </EditorCard>
+      </EditorCard>
+    </div>
   );
 }
