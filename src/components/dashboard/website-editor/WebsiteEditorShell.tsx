@@ -117,6 +117,11 @@ import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
 import { InlineEditCommitHandler } from './InlineEditCommitHandler';
+import {
+  EditorHistoryProvider,
+  pushEditorHistoryEntry,
+  useEditorHistory,
+} from './EditorHistoryProvider';
 import { Palette } from 'lucide-react';
 import { AddSectionDialog } from './AddSectionDialog';
 import { SectionStyleEditor } from './SectionStyleEditor';
