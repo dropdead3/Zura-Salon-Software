@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { EditorCard } from './EditorCard';
+import { ReviewsManager } from './ReviewsManager';
 
 const ICON_OPTIONS = [
   { value: 'Star', icon: Star },
@@ -302,6 +303,8 @@ export function ExtensionsEditor() {
           </CollapsibleContent>
         </Collapsible>
       </EditorCard>
+
+      <ReviewsManager surface="extensions" title="Extension Page Reviews" />
     </div>
   );
 }

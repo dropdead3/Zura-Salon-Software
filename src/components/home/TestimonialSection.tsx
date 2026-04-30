@@ -2,64 +2,94 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Star, ArrowRight } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { useVisibleTestimonials } from "@/hooks/useTestimonials";
+import { useTestimonialsConfig } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
-const reviews = [
+interface ReviewItem {
+  id: string;
+  title: string;
+  author: string;
+  body: string;
+  rating: number;
+  source_url: string | null;
+  sort_order: number;
+}
+
+const FALLBACK_REVIEWS: ReviewItem[] = [
   {
+    id: 'fallback-1',
     title: "Love this place!",
     author: "Lexi V.",
-    text: "I love this place! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+    body: "I love this place! The owner picks literally THE BEST hair stylist and lash and brow artists. You really can't go wrong with going to anyone inside the studio, everyone is so welcoming and friendly.",
+    rating: 5,
+    source_url: null,
+    sort_order: 0,
   },
   {
+    id: 'fallback-2',
     title: "You won't be disappointed",
     author: "Melissa C.",
-    text: "The salon itself is beautiful and so unique. The atmosphere is comforting and fun!! Never have I loved my hair this much!! Definitely recommend to anyone wanting to a new salon!! You won't be disappointed.",
+    body: "The salon itself is beautiful and so unique. The atmosphere is comforting and fun!! Never have I loved my hair this much!! Definitely recommend to anyone wanting to a new salon!! You won't be disappointed.",
+    rating: 5,
+    source_url: null,
+    sort_order: 1,
   },
   {
-    title: "Best wefts ever!!",
-    author: "Lexi K.",
-    text: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
-  },
-  {
-    title: "Best extensions",
-    author: "Darian F.",
-    text: "These extensions were so easily filled my clients hair long. It took very little cutting with the hair and I'm obsessed with the product.",
-  },
-  {
-    title: "Absolutely stunning results",
-    author: "Morgan S.",
-    text: "I've been going here for over a year now and every single visit has been incredible. The attention to detail and care they put into every service is unmatched.",
-  },
-  {
+    id: 'fallback-3',
     title: "Hair transformation goals",
     author: "Jamie L.",
-    text: "Went from damaged, over-processed hair to the healthiest it's ever been. The team really knows their stuff and takes the time to educate you on proper hair care.",
+    body: "Went from damaged, over-processed hair to the healthiest it's ever been. The team really knows their stuff and takes the time to educate you on proper hair care.",
+    rating: 5,
+    source_url: null,
+    sort_order: 2,
   },
 ];
 
-const StarRating = () => (
-  <div className="flex gap-0.5">
-    {[...Array(5)].map((_, i) => (
-      <Star key={i} className="w-4 h-4 fill-oat text-oat" />
-    ))}
-  </div>
-);
+const StarRating = ({ rating, show }: { rating: number; show: boolean }) => {
+  if (!show) return null;
+  return (
+    <div className="flex gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={
+            i < rating
+              ? "w-4 h-4 fill-oat text-oat"
+              : "w-4 h-4 text-foreground/20"
+          }
+        />
+      ))}
+    </div>
+  );
+};
 
-const ReviewCard = ({ review }: { review: typeof reviews[0] }) => (
+const ReviewCard = ({
+  review,
+  showStars,
+  verifiedText,
+}: {
+  review: ReviewItem;
+  showStars: boolean;
+  verifiedText: string;
+}) => (
   <div className="flex-shrink-0 w-[320px] md:w-[380px] bg-background border border-border rounded-2xl p-6 md:p-8">
     <h3 className="text-xl md:text-2xl font-display mb-4">{review.title}</h3>
-    
+
     <div className="flex items-center gap-3 mb-3">
       <span className="text-sm font-medium">{review.author}</span>
-      <span className="text-xs text-muted-foreground">Verified Customer</span>
+      {verifiedText && (
+        <span className="text-xs text-muted-foreground">{verifiedText}</span>
+      )}
     </div>
-    
-    <div className="mb-4">
-      <StarRating />
-    </div>
-    
-    <p className="text-sm text-foreground/80 leading-relaxed">
-      {review.text}
-    </p>
+
+    {showStars && (
+      <div className="mb-4">
+        <StarRating rating={review.rating} show={showStars} />
+      </div>
+    )}
+
+    <p className="text-sm text-foreground/80 leading-relaxed">{review.body}</p>
   </div>
 );
 
@@ -68,12 +98,30 @@ export function TestimonialSection() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [isPaused, setIsPaused] = useState(false);
 
-  // Duplicate reviews for seamless infinite scroll
-  const duplicatedReviews = [...reviews, ...reviews];
+  // Chrome config (eyebrow / headline / google review link / display options).
+  const { data: dbConfig } = useTestimonialsConfig();
+  const config = useLiveOverride('section_testimonials', dbConfig) ?? dbConfig;
+
+  // Items: DB-backed + bridge override for live edits.
+  const { data: dbItems } = useVisibleTestimonials('general');
+  const liveItems = useLiveOverride<ReviewItem[]>('testimonial_items:general', dbItems);
+  const items = (liveItems ?? dbItems ?? []) as ReviewItem[];
+  const reviews = items.length > 0 ? items : FALLBACK_REVIEWS;
+
+  // Cap visible items based on config.
+  const cap = config?.max_visible_testimonials ?? 20;
+  const cappedReviews = reviews.slice(0, cap);
+
+  // Duplicate reviews for seamless infinite scroll.
+  const duplicatedReviews = [...cappedReviews, ...cappedReviews];
+
+  const animationDuration = config?.scroll_animation_duration ?? 60;
+  const showStars = config?.show_star_ratings ?? true;
+  const verifiedText = config?.verified_badge_text ?? 'Verified Customer';
 
   return (
-    <section 
-      ref={sectionRef} 
+    <section
+      ref={sectionRef}
       data-theme="light"
       className="py-20 lg:py-32 overflow-hidden"
     >
@@ -81,35 +129,41 @@ export function TestimonialSection() {
       <div className="container mx-auto px-6 lg:px-12 mb-10">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div className="flex flex-col gap-3">
-            <motion.div
+            {config?.show_eyebrow && config.eyebrow && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6 }}
+              >
+                <Eyebrow>{config.eyebrow}</Eyebrow>
+              </motion.div>
+            )}
+            {config?.show_headline && config.headline && (
+              <motion.h2
+                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+                animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
+                transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+                className="text-3xl md:text-4xl lg:text-5xl font-display"
+              >
+                {config.headline}
+              </motion.h2>
+            )}
+          </div>
+
+          {config?.show_google_review_link && config.google_review_url && (
+            <motion.a
+              href={config.google_review_url}
+              target="_blank"
+              rel="noopener noreferrer"
               initial={{ opacity: 0, y: 10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
             >
-              <Eyebrow>Check out 100's of</Eyebrow>
-            </motion.div>
-            <motion.h2
-              initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-              animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-              transition={{ duration: 0.9, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
-              className="text-3xl md:text-4xl lg:text-5xl font-display"
-            >
-              Our happy 5-star reviews
-            </motion.h2>
-          </div>
-          
-          <motion.a
-            href="https://g.page/r/YOUR_GOOGLE_REVIEW_LINK"
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 10 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
-          >
-            Leave a review
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-          </motion.a>
+              {config.link_text || 'Leave a review'}
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </motion.a>
+          )}
         </div>
       </div>
 
@@ -122,34 +176,32 @@ export function TestimonialSection() {
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Left fade gradient - hidden on mobile */}
         <div className="hidden md:block absolute left-0 top-0 bottom-0 md:w-64 lg:w-80 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-        
-        {/* Right fade gradient - hidden on mobile */}
         <div className="hidden md:block absolute right-0 top-0 bottom-0 md:w-64 lg:w-80 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
-        
-        <div 
+
+        <div
           className="flex gap-4"
           style={{
-            animation: `scroll 60s linear infinite`,
+            animation: `scroll ${animationDuration}s linear infinite`,
             animationPlayState: isPaused ? 'paused' : 'running',
             width: 'max-content',
           }}
         >
           {duplicatedReviews.map((review, index) => (
-            <ReviewCard key={index} review={review} />
+            <ReviewCard
+              key={`${review.id}-${index}`}
+              review={review}
+              showStars={showStars}
+              verifiedText={verifiedText}
+            />
           ))}
         </div>
       </motion.div>
 
       <style>{`
         @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
     </section>

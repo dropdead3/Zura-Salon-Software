@@ -1,43 +1,52 @@
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Star, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { useVisibleTestimonials } from "@/hooks/useTestimonials";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
 
-const extensionReviews = [
+interface ReviewItem {
+  id: string;
+  title: string;
+  author: string;
+  body: string;
+  rating: number;
+  source_url: string | null;
+  sort_order: number;
+}
+
+const FALLBACK_REVIEWS: ReviewItem[] = [
   {
+    id: 'fallback-1',
     title: "Best wefts ever!!",
     author: "Lexi K.",
-    text: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
+    body: "I have loved every product so far. I wear them myself and I also use them on my clients. My clients love everything too!! These new SuperWefts are amazing. So comfortable, flat, customizable and easy to color!",
+    rating: 5,
+    source_url: null,
+    sort_order: 0,
   },
   {
+    id: 'fallback-2',
     title: "Best extensions I've used.",
     author: "Darian F.",
-    text: "These extensions were so easy to use. 2 packs easily filled my clients hair making it very thick and long. It took very little cutting to blend the extensions with the hair and I'm overall very pleased with the product.",
+    body: "These extensions were so easy to use. 2 packs easily filled my clients hair making it very thick and long. It took very little cutting to blend the extensions with the hair and I'm overall very pleased with the product.",
+    rating: 5,
+    source_url: null,
+    sort_order: 1,
   },
   {
-    title: "Badass extensions...",
-    author: "Shauna N.",
-    text: "I've been researching this company for a bit trying to decide if I wanted to make the switch.... I'M SO GLAD I DID!!! The products, the customer service, and the company ideals as a whole align with EVERYTHING I believe in.",
-  },
-  {
+    id: 'fallback-3',
     title: "Game changer for my salon",
     author: "Rachel M.",
-    text: "The signature method has completely transformed how I approach extensions. My clients are happier, appointments are faster, and the results speak for themselves. Truly the best investment I've made.",
-  },
-  {
-    title: "Finally found the one!",
-    author: "Amanda T.",
-    text: "After trying so many different extension brands, I finally found the holy grail. The quality is unmatched, the color matching is perfect, and they last so much longer than anything else I've used.",
-  },
-  {
-    title: "Worth every penny",
-    author: "Jessica H.",
-    text: "I was hesitant about the investment at first, but these extensions are absolutely worth it. The way they blend is seamless and I get compliments constantly. My hair has never looked better!",
+    body: "The signature method has completely transformed how I approach extensions. My clients are happier, appointments are faster, and the results speak for themselves. Truly the best investment I've made.",
+    rating: 5,
+    source_url: null,
+    sort_order: 2,
   },
 ];
 
 const extensionTypes = [
   "Blondes",
-  "Dimensional Brunettes", 
+  "Dimensional Brunettes",
   "Vivid & Fashion Colors",
   "Warm Tones",
   "High Contrast"
@@ -51,12 +60,19 @@ const StarRating = () => (
   </div>
 );
 
+
 export function ExtensionReviewsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const prefersReducedMotion = useReducedMotion();
-  
+
+  // Items: DB-backed + bridge override for live edits.
+  const { data: dbItems } = useVisibleTestimonials('extensions');
+  const liveItems = useLiveOverride<ReviewItem[]>('testimonial_items:extensions', dbItems);
+  const items = (liveItems ?? dbItems ?? []) as ReviewItem[];
+  const extensionReviews = items.length > 0 ? items : FALLBACK_REVIEWS;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -145,7 +161,7 @@ export function ExtensionReviewsSection() {
     }, 4000);
 
     return () => clearInterval(intervalId);
-  }, [isInView, isPaused, prefersReducedMotion, scrollToCard]);
+  }, [isInView, isPaused, prefersReducedMotion, scrollToCard, extensionReviews.length]);
 
   const handleUserScroll = useCallback(() => {
     if (!isAutoScrolling.current) {
@@ -383,7 +399,7 @@ export function ExtensionReviewsSection() {
             </div>
             
             <p className="text-sm text-foreground/80 leading-relaxed">
-              {review.text}
+              {review.body}
             </p>
           </motion.div>
         ))}
