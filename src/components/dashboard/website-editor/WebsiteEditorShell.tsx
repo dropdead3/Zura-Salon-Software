@@ -1301,11 +1301,11 @@ function SaveStatusPill({
     tone = 'text-muted-foreground bg-muted/60';
   } else if (isDirty) {
     label = 'Unsaved changes';
-    icon = <Circle className="h-2 w-2 fill-amber-500 text-amber-500" />;
-    tone = 'text-amber-700 dark:text-amber-300 bg-amber-500/10';
+    icon = <Circle className="h-2 w-2 fill-warning text-warning" />;
+    tone = 'text-warning-foreground bg-warning/15';
   } else if (lastSavedAt) {
     label = `Saved ${formatRelative(lastSavedAt)}`;
-    icon = <Check className="h-3 w-3 text-emerald-500" />;
+    icon = <Check className="h-3 w-3 text-success-foreground" />;
     tone = 'text-muted-foreground bg-muted/60';
   } else {
     return null;
