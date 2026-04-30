@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Megaphone, Loader2 } from 'lucide-react';
+import { Megaphone, Loader2, Eye, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
@@ -26,11 +29,13 @@ const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string
 ];
 
 export function PromotionalPopupEditor() {
+  const orgId = useSettingsOrgId();
   const { data: settings, isLoading } = usePromotionalPopup();
   const updateSettings = useUpdatePromotionalPopup();
 
   const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
+  const [autoSaving, setAutoSaving] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -74,6 +79,55 @@ export function PromotionalPopupEditor() {
 
   useEditorSaveAction(handleSave);
 
+  // Auto-save for the binary Enable toggle — operators expect a switch to
+  // "just work" without hunting for Save. We persist immediately, refresh
+  // the preview, and skip the dirty-state path for this single field.
+  const handleEnableToggle = useCallback(
+    async (checked: boolean) => {
+      const next = { ...formData, enabled: checked };
+      setFormData(next);
+      setAutoSaving(true);
+      try {
+        await updateSettings.mutateAsync(next);
+        setSavedSnapshot(next);
+        toast.success(checked ? 'Popup enabled' : 'Popup disabled');
+        triggerPreviewRefresh();
+      } catch (err) {
+        // Roll back optimistic state on failure
+        setFormData((prev) => ({ ...prev, enabled: !checked }));
+        const msg = err instanceof Error ? err.message : 'unknown error';
+        toast.error(`Failed to update: ${msg}`);
+      } finally {
+        setAutoSaving(false);
+      }
+    },
+    [formData, updateSettings],
+  );
+
+  const handlePreviewNow = useCallback(() => {
+    triggerPreviewRefresh();
+    toast.success('Preview reloaded — popup will trigger immediately');
+  }, []);
+
+  const handleResetSession = useCallback(() => {
+    if (typeof window === 'undefined' || !orgId) return;
+    try {
+      // Clear all per-org promo dismissal records + session sentinel
+      const prefix = `zura.promo.${orgId}.`;
+      const toDelete: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k && k.startsWith(prefix)) toDelete.push(k);
+      }
+      toDelete.forEach((k) => window.localStorage.removeItem(k));
+      window.sessionStorage.removeItem('zura.promo.session');
+      triggerPreviewRefresh();
+      toast.success(`Cleared ${toDelete.length} dismissal record(s) — preview reloaded`);
+    } catch (err) {
+      toast.error('Could not reset session storage');
+    }
+  }, [orgId]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -88,21 +142,55 @@ export function PromotionalPopupEditor() {
       icon={Megaphone}
       description="Show a one-time offer to website visitors. Accept routes them to booking with the offer code attached; decline dismisses based on your frequency cap."
     >
-      {/* Enable */}
-      <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-        <div>
-          <Label htmlFor="promo-enabled" className="text-base font-medium">
-            Show Promotional Popup
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            Toggle the popup on or off across the public site.
+      {/* Enable + QA actions */}
+      <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Label htmlFor="promo-enabled" className="text-base font-medium">
+              Show Promotional Popup
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Toggle the popup on or off across the public site. Saves automatically.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {autoSaving && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Saving" />
+            )}
+            <Switch
+              id="promo-enabled"
+              checked={formData.enabled}
+              disabled={autoSaving}
+              onCheckedChange={handleEnableToggle}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handlePreviewNow}
+            className="gap-2"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview popup now
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleResetSession}
+            className="gap-2"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset popup session
+          </Button>
+          <p className="font-sans text-[11px] text-muted-foreground ml-auto">
+            QA only — preview ignores frequency caps
           </p>
         </div>
-        <Switch
-          id="promo-enabled"
-          checked={formData.enabled}
-          onCheckedChange={(c) => handleChange('enabled', c)}
-        />
       </div>
 
       {isDirty && (
