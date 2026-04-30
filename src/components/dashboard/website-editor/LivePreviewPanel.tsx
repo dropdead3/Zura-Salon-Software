@@ -76,6 +76,18 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     try { localStorage.setItem(ORIENTATION_KEY, o); } catch {}
   }, []);
 
+  // Remember the last non-fit device so the Fit button can act as a toggle
+  // back to the user's previous viewport.
+  const previousDeviceRef = useRef<Exclude<DeviceMode, 'fit'>>(
+    device !== 'fit' ? device : 'desktop'
+  );
+  useEffect(() => {
+    if (device !== 'fit') previousDeviceRef.current = device;
+  }, [device]);
+  const handleFitToggle = useCallback(() => {
+    setDevice(device === 'fit' ? previousDeviceRef.current : 'fit');
+  }, [device, setDevice]);
+
   // Observe pane size — recompute scale on splitter drag / window resize
   useLayoutEffect(() => {
     const el = stageRef.current;
