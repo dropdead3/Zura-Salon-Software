@@ -402,6 +402,35 @@ export function PromotionalPopupEditor() {
               </Button>
             )}
           </div>
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground mr-1">
+              Presets
+            </span>
+            {ACCENT_PRESETS.map((preset) => {
+              const active =
+                (preset.value ?? null) === (formData.accentColor ?? null);
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleChange('accentColor', preset.value)}
+                  title={preset.hint}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2 h-7 transition-colors',
+                    active
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-card hover:bg-muted/60 text-muted-foreground',
+                  )}
+                >
+                  <span
+                    className="h-3 w-3 rounded-full border border-border/60"
+                    style={{ backgroundColor: preset.swatch }}
+                  />
+                  <span className="font-sans text-[11px]">{preset.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </Field>
         <Field
           label="Reminder button position"
