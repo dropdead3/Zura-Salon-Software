@@ -651,6 +651,49 @@ function ThemeTab({
         <PublishChangelog open={publishOpen} onOpenChange={setPublishOpen} />
         <VersionHistoryPanel open={historyOpen} onOpenChange={setHistoryOpen} />
 
+        <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Discard unpublished changes?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will revert pages, theme, footer, and announcement bar to the
+                last published version. A backup of the current state is saved to
+                History so you can recover it later.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={discardMutation.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={discardMutation.isPending}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  try {
+                    await discardMutation.mutateAsync();
+                    toast({
+                      title: 'Reverted to last published',
+                      description: 'A backup of your changes was saved to History.',
+                    });
+                    setDiscardOpen(false);
+                  } catch (err) {
+                    toast({
+                      variant: 'destructive',
+                      title: 'Discard failed',
+                      description: err instanceof Error ? err.message : 'Unknown error',
+                    });
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {discardMutation.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Reverting…</>
+                ) : (
+                  'Discard & Restore'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Editor content with sidebar + preview */}
         <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 20rem)' }}>
           <ResizablePanelGroup direction="horizontal" className="h-full">
