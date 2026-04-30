@@ -85,5 +85,11 @@ export function GlyphPicker<V extends string = string>({
         );
       })}
     </div>
+      {showEmptyCaption ? (
+        <span className="pl-3 text-[10px] font-sans text-muted-foreground">
+          {emptyCaption}
+        </span>
+      ) : null}
+    </div>
   );
 }
