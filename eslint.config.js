@@ -58,6 +58,20 @@ export default tseslint.config(
           selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
           message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
         },
+        {
+          // UnsavedChangesDialog canon — ban ad-hoc "Unsaved changes" titles
+          // inside AlertDialogTitle. Once the canonical <UnsavedChangesDialog />
+          // exists (src/components/ui/unsaved-changes-dialog.tsx), forking it
+          // ad-hoc means future copy/UX tweaks leave call sites diverged.
+          // Aligns with Canon Pattern (mem://architecture/canon-pattern).
+          //
+          // Override: if you genuinely need a custom navigate-away dialog
+          // (e.g. with extra fields), add `// eslint-disable-next-line
+          // no-restricted-syntax -- <reason>` and document why the canonical
+          // component doesn't fit.
+          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
+          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
+        },
       ],
     },
   },
