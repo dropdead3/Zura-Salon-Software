@@ -27,6 +27,10 @@ import { useHomepageStylists } from "@/hooks/useHomepageStylists";
 import { useHomepageStylistsSettings } from "@/hooks/useSiteSettings";
 import { useSpecialtyOptions } from "@/hooks/useSpecialtyOptions";
 import { sampleStylists } from "@/data/sampleStylists";
+import { useStylistsDisplayConfig, DEFAULT_STYLISTS_DISPLAY } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "./InlineEditableText";
+import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 
 import { locations as staticLocations, stylistLevels, type Stylist, type Location } from "@/data/stylists";
 import { useLocationName } from "@/hooks/useLocationName";
@@ -401,11 +405,19 @@ const JoinTeamCard = memo(JoinTeamCardComponent);
 export function StylistsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const isPreview = useIsEditorPreview();
   const [selectedLocation, setSelectedLocation] = useState<Location | "all">("all");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   
   const [isFormExpanded, setIsFormExpanded] = useState(false);
+
+  const { data: dbDisplayConfig } = useStylistsDisplayConfig();
+  const displayConfig = useLiveOverride('section_stylists_display', dbDisplayConfig) ?? dbDisplayConfig ?? DEFAULT_STYLISTS_DISPLAY;
+  const stylistsTitle = displayConfig?.section_title ?? DEFAULT_STYLISTS_DISPLAY.section_title;
+  const stylistsDescription = displayConfig?.section_description ?? DEFAULT_STYLISTS_DISPLAY.section_description;
+  const showStylistsTitle = displayConfig?.show_title ?? true;
+  const showStylistsDescription = displayConfig?.show_description ?? true;
 
   // Fetch stylists from database
   const { data: dbStylists, isLoading: stylistsLoading } = useHomepageStylists();
@@ -543,14 +555,38 @@ export function StylistsSection() {
       />
       <div className="container mx-auto px-6">
         {/* Header */}
-        <SectionHeader
-          title="Meet our stylists"
-          description="Our talented team of artists are ready to help you achieve your hair goals. Each stylist brings their own unique expertise and creative vision."
-          align="center"
-          className="mb-8"
-          animate
-          isInView={isInView}
-        />
+        {isPreview ? (
+          <div className="text-center mb-8">
+            {showStylistsTitle && (
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+                <InlineEditableText
+                  value={stylistsTitle}
+                  sectionKey="section_stylists_display"
+                  fieldPath="section_title"
+                />
+              </h2>
+            )}
+            {showStylistsDescription && (
+              <p className="font-sans text-base md:text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
+                <InlineEditableText
+                  value={stylistsDescription}
+                  sectionKey="section_stylists_display"
+                  fieldPath="section_description"
+                  multiline
+                />
+              </p>
+            )}
+          </div>
+        ) : (
+          <SectionHeader
+            title={showStylistsTitle ? stylistsTitle : ""}
+            description={showStylistsDescription ? stylistsDescription : undefined}
+            align="center"
+            className="mb-8"
+            animate
+            isInView={isInView}
+          />
+        )}
 
         <div className="text-center">
           <Eyebrow className="text-muted-foreground mb-4">

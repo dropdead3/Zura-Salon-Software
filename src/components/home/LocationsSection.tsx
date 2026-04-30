@@ -6,6 +6,10 @@ import { ArrowRight, Phone, MapPin, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { useLocationsSectionConfig, DEFAULT_LOCATIONS_SECTION } from "@/hooks/useSectionConfig";
+import { useLiveOverride } from "@/hooks/usePreviewBridge";
+import { InlineEditableText } from "./InlineEditableText";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { 
   useActiveLocations, 
   formatHoursForDisplay, 
@@ -31,7 +35,7 @@ const locationGalleries: Record<string, string[]> = {
   ],
 };
 
-function LocationCard({ location, index }: { location: Location; index: number }) {
+function LocationCard({ location, index, ctaPrimaryText, ctaSecondaryText }: { location: Location; index: number; ctaPrimaryText: string; ctaSecondaryText: string }) {
   const isPreview = useIsEditorPreview();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -166,7 +170,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
                   onClick={(e) => e.stopPropagation()}
                   className="inline-flex items-center justify-center bg-foreground text-background px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-foreground/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/link w-full overflow-hidden"
                 >
-                  <span>Book consult</span>
+                  <span>{ctaPrimaryText}</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover/link:w-4 group-hover/link:ml-2 group-hover/link:opacity-100 transition-all duration-300" />
                 </Link>
                 <button
@@ -182,7 +186,7 @@ function LocationCard({ location, index }: { location: Location; index: number }
                   }}
                   className="inline-flex items-center justify-center bg-background border border-border text-foreground px-6 py-3.5 text-sm font-sans font-medium rounded-full hover:bg-muted hover:border-foreground/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group/stylists w-full overflow-hidden"
                 >
-                  <span>Check out the stylists</span>
+                  <span>{ctaSecondaryText}</span>
                   <ArrowRight className="w-0 h-4 opacity-0 group-hover/stylists:w-4 group-hover/stylists:ml-2 group-hover/stylists:opacity-100 transition-all duration-300" />
                 </button>
               </div>
@@ -261,6 +265,13 @@ export function LocationsSection() {
   const isPreview = useIsEditorPreview();
   const sectionRef = useRef<HTMLElement>(null);
   const { data: locations = [] } = useActiveLocations();
+  const { data: dbConfig } = useLocationsSectionConfig();
+  const config = useLiveOverride('section_locations', dbConfig) ?? dbConfig ?? DEFAULT_LOCATIONS_SECTION;
+
+  const eyebrowText = config?.section_eyebrow ?? DEFAULT_LOCATIONS_SECTION.section_eyebrow;
+  const titleText = config?.section_title ?? DEFAULT_LOCATIONS_SECTION.section_title;
+  const ctaPrimaryText = config?.card_cta_primary_text ?? DEFAULT_LOCATIONS_SECTION.card_cta_primary_text;
+  const ctaSecondaryText = config?.card_cta_secondary_text ?? DEFAULT_LOCATIONS_SECTION.card_cta_secondary_text;
   
   // Filter to only show locations marked for website display
   const websiteLocations = locations.filter(loc => loc.show_on_website);
@@ -288,19 +299,44 @@ export function LocationsSection() {
       <div className="container mx-auto px-6">
         {/* Header */}
         <motion.div style={isPreview ? { opacity: 1, y: 0 } : { opacity: headerOpacity, y: headerY }}>
-          <SectionHeader
-            eyebrow="Find Us"
-            title="Our Locations"
-            align="center"
-            className="mb-12 md:mb-16"
-            eyebrowClassName="text-foreground/50"
-          />
+          {isPreview ? (
+            <div className="text-center mb-12 md:mb-16">
+              <Eyebrow className="text-foreground/50 mb-4 section-eyebrow">
+                <InlineEditableText
+                  value={eyebrowText}
+                  sectionKey="section_locations"
+                  fieldPath="section_eyebrow"
+                />
+              </Eyebrow>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1]">
+                <InlineEditableText
+                  value={titleText}
+                  sectionKey="section_locations"
+                  fieldPath="section_title"
+                />
+              </h2>
+            </div>
+          ) : (
+            <SectionHeader
+              eyebrow={eyebrowText}
+              title={titleText}
+              align="center"
+              className="mb-12 md:mb-16"
+              eyebrowClassName="text-foreground/50"
+            />
+          )}
         </motion.div>
 
         {/* Location Cards Grid */}
         <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
           {websiteLocations.map((location, index) => (
-            <LocationCard key={location.id} location={location} index={index} />
+            <LocationCard 
+              key={location.id} 
+              location={location} 
+              index={index} 
+              ctaPrimaryText={ctaPrimaryText}
+              ctaSecondaryText={ctaSecondaryText}
+            />
           ))}
         </div>
       </div>
