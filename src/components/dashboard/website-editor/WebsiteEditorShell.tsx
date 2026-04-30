@@ -15,6 +15,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   RotateCcw,
+  Save,
   FileText,
   Menu,
   MoreHorizontal,
@@ -306,9 +307,17 @@ export function WebsiteEditorShell() {
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable);
-      if (key === 's' && !isEditable) {
+      if (key === 's') {
+        // ⌘⇧S → open Publish dialog (promote draft to live).
+        // ⌘S    → save current editor's draft (private; not live).
+        // We intercept ⌘S even inside form fields so the browser's
+        // "Save Page" default never wins over the editor save.
         e.preventDefault();
-        setPublishOpen(true);
+        if (e.shiftKey) {
+          setPublishOpen(true);
+        } else {
+          window.dispatchEvent(new CustomEvent('editor-save-request'));
+        }
       } else if (key === 'p' && !isEditable) {
         e.preventDefault();
         setShowPreview((v) => !v);
@@ -934,15 +943,35 @@ export function WebsiteEditorShell() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-          {/* Save status pill — adjacent to Publish, the action it qualifies */}
+          {/* Save status pill — adjacent to Save/Publish, the actions it qualifies */}
           <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
-          {/* Primary action: Publish */}
+
+          {/* Save Draft — persists privately. Does NOT push live. */}
+          <Button
+            variant="outline"
+            size={tokens.button.card}
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent('editor-save-request'))
+            }
+            disabled={!isDirty || isSaving}
+            className="rounded-full"
+            title="Save draft (⌘S) — only published changes go live"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
+            Save Draft
+          </Button>
+
+          {/* Primary action: Publish (promote draft → live) */}
           <Button
             variant="default"
             size={tokens.button.card}
             onClick={() => setPublishOpen(true)}
             className="relative rounded-full"
-            title="Publish changes (⌘S)"
+            title="Publish draft to live site (⌘⇧S)"
           >
             <Globe className="h-4 w-4 mr-1" />
             Publish
@@ -1300,7 +1329,7 @@ function SaveStatusPill({
     icon = <Circle className="h-2 w-2 fill-warning text-warning" />;
     tone = 'text-warning-foreground bg-warning/15';
   } else if (lastSavedAt) {
-    label = `Saved ${formatRelative(lastSavedAt)}`;
+    label = `Draft saved ${formatRelative(lastSavedAt)}`;
     icon = <Check className="h-3 w-3 text-success-foreground" />;
     tone = 'text-muted-foreground bg-muted/60';
   } else {
