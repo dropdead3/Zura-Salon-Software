@@ -941,7 +941,7 @@ export function WebsiteEditorShell() {
             variant="default"
             size={tokens.button.card}
             onClick={() => setPublishOpen(true)}
-            className="relative"
+            className="relative rounded-full"
             title="Publish changes (⌘S)"
           >
             <Globe className="h-4 w-4 mr-1" />
@@ -961,6 +961,7 @@ export function WebsiteEditorShell() {
             variant={showPreview ? 'secondary' : 'outline'}
             size={tokens.button.card}
             onClick={() => setShowPreview(!showPreview)}
+            className="rounded-full"
             title={showPreview ? 'Hide live canvas (⌘P)' : 'Show live canvas (⌘P)'}
           >
             {showPreview ? (
@@ -974,7 +975,7 @@ export function WebsiteEditorShell() {
           {/* Overflow */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9" title="More">
+              <Button variant="outline" size="icon" className="h-9 w-9 rounded-full" title="More">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
