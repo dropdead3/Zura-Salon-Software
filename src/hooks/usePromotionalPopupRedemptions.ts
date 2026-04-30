@@ -80,7 +80,9 @@ export function usePromotionalPopupRedemptions(
   return useQuery<PromotionalPopupRedemptionStats>({
     queryKey: ['promotional-popup-redemptions', orgId, code],
     queryFn: async () => {
-      if (!orgId || !code) return { count: 0, series: [], last24h: 0, revenueAttributed: 0 };
+      if (!orgId || !code) {
+        return { count: 0, series: [], last24h: 0, revenueAttributed: 0, revenueAttributedSince: null };
+      }
 
       // Fetch only the timestamps + attributed revenue needed for the count,
       // 14-day bucket build, and lifetime revenue total. Limited to a generous
@@ -108,24 +110,26 @@ export function usePromotionalPopupRedemptions(
           .eq('surface', POPUP_SURFACE)
           .gte('transaction_date', windowStart)
           .limit(1000),
-        // Lifetime attributed revenue — separate query so a failure here
-        // doesn't kill the count + sparkline. Pulls only the column we sum,
-        // limited to 5000 rows (an org popping that many redemptions on one
-        // code has earned its own dedicated dashboard surface).
+        // Lifetime attributed revenue + earliest contributing date. Ordered
+        // ascending so the first row's `transaction_date` becomes the
+        // `revenueAttributedSince` hint shown in the editor — letting
+        // operators see why count and revenue may diverge (rows pre-dating the
+        // attribution write are intentionally excluded).
         supabase
           .from('promotion_redemptions')
-          .select('revenue_attributed')
+          .select('revenue_attributed, transaction_date')
           .eq('organization_id', orgId)
           .eq('promo_code_used', code)
           .eq('surface', POPUP_SURFACE)
           .not('revenue_attributed', 'is', null)
+          .order('transaction_date', { ascending: true })
           .limit(5000),
       ]);
 
       if (countErr || rowsErr) {
         // Swallow — the editor card should never crash because a count failed.
         // Returning zeros is honest: we genuinely don't know of any redemptions.
-        return { count: 0, series: [], last24h: 0, revenueAttributed: 0 };
+        return { count: 0, series: [], last24h: 0, revenueAttributed: 0, revenueAttributedSince: null };
       }
 
       const { series, last24h } = buildDailySeries(
@@ -134,13 +138,22 @@ export function usePromotionalPopupRedemptions(
       // Honest absence: revenue query failure → 0, not a fabricated estimate.
       // Older rows pre-dating the attribution write also resolve to 0 (the
       // `.not('revenue_attributed', 'is', null)` filter excludes them).
-      const revenueAttributed = revenueErr
-        ? 0
-        : (revenueRows ?? []).reduce(
-            (sum, r) => sum + (Number((r as { revenue_attributed: number | null }).revenue_attributed) || 0),
-            0,
-          );
-      return { count: totalCount ?? 0, series, last24h, revenueAttributed };
+      type RevenueRow = { revenue_attributed: number | null; transaction_date: string | null };
+      const safeRevenueRows: RevenueRow[] = revenueErr ? [] : ((revenueRows ?? []) as RevenueRow[]);
+      const revenueAttributed = safeRevenueRows.reduce(
+        (sum, r) => sum + (Number(r.revenue_attributed) || 0),
+        0,
+      );
+      // First row in ascending order = earliest contributing redemption.
+      // Null when no attributed rows exist (silence is valid).
+      const revenueAttributedSince = safeRevenueRows[0]?.transaction_date ?? null;
+      return {
+        count: totalCount ?? 0,
+        series,
+        last24h,
+        revenueAttributed,
+        revenueAttributedSince,
+      };
     },
     enabled: !!orgId && code.length > 0,
     staleTime: 30_000,
