@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsEditorPreview } from './useIsEditorPreview';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
+import { useIsEditorSurface } from './useIsEditorSurface';
 
 export type PopupAppearance = 'modal' | 'banner' | 'corner-card';
 export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
