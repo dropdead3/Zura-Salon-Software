@@ -156,6 +156,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (!active || !cfg) return;
     if (triggeredRef.current) return;
     if (promoQueryParam && promoQueryParam === code) return;
+    // Booking surface = visitor is already in the funnel; don't double-ask.
+    if (onBookingSurface && !isPreview) return;
 
     // In editor preview, bypass dismissal so reloads always re-show the popup.
     if (!isPreview) {
