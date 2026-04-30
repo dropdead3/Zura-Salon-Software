@@ -1066,38 +1066,19 @@ export function ServiceEditorDialog({
       </DialogContent>
     </Dialog>
 
-    <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
-      <AlertDialogContent className="max-w-md p-6 gap-4">
-        <AlertDialogHeader className="space-y-2">
-          <AlertDialogTitle className="font-display tracking-wide text-base">
-            Unsaved changes
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm leading-relaxed">
-            You have unsaved changes to this service. Are you sure you want to close without saving?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex flex-col gap-2 pt-2 sm:flex-col sm:space-x-0">
-          <Button
-            variant="outline"
-            onClick={handleDiscard}
-            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            Discard Changes
-          </Button>
-          <AlertDialogCancel className="w-full mt-0 sm:mt-0">
-            Keep Editing
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleSaveAndClose}
-            disabled={!name.trim() || isPending || hasErrors}
-            className="w-full mt-0"
-          >
-            {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Save &amp; Close
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <UnsavedChangesDialog
+      open={showDiscardConfirm}
+      isSaving={isPending}
+      saveDisabled={!name.trim() || hasErrors}
+      title="Unsaved changes"
+      description="You have unsaved changes to this service. Save them, discard them, or keep editing."
+      cancelLabel="Keep editing"
+      discardLabel="Discard changes"
+      saveLabel="Save & close"
+      onCancel={() => setShowDiscardConfirm(false)}
+      onDiscard={handleDiscard}
+      onSave={handleSaveAndClose}
+    />
     </>
   );
 }
