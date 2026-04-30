@@ -93,7 +93,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6">
                 Hair • Color • Artistry
               </p>
-              <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
+              <h1
+                className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+                // Heading scale opt-in — multiplied by `--section-heading-scale`
+                // (set on the SectionStyleWrapper); defaults to 1 so existing
+                // sections see no change. Section-level "H" chip cycles Sm→XL.
+                style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+              >
                 <InlineEditableText
                   as="span"
                   className="whitespace-nowrap block"
