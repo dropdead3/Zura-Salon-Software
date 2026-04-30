@@ -908,7 +908,11 @@ function FabPreviewSwatch({
   headline: string;
   accent?: string;
 }) {
-  const accentColor = accent || 'hsl(var(--primary))';
+  // Fall back to the *public site*'s primary, not the dashboard's primary —
+  // operators QA against the theme visitors will actually see.
+  const sitePrimary = useWebsitePrimaryColor();
+  const accentColor = accent || sitePrimary;
+  const accentFg = readableForegroundFor(accent);
   const truncated = headline.length > 22 ? `${headline.slice(0, 22)}…` : headline;
   const [pulsing, setPulsing] = useState(false);
   const stopRef = useRef<number | null>(null);
