@@ -488,74 +488,62 @@ export function WebsiteEditorSidebar({
         </Tooltip>
       </div>
 
-      <div className="p-3 border-b border-border/40 space-y-2">
-        <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider px-1">Editing Page</p>
-        <div className="flex items-center gap-2">
-          <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
-            <SelectTrigger className="h-9 text-xs flex-1 rounded-full">
-              <SelectValue placeholder="Select page" />
-            </SelectTrigger>
-            <SelectContent>
-              {pagesConfig?.pages?.length ? (
-                pagesConfig.pages.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-3 w-3" />
-                      <span>{p.title}</span>
-                      {!p.enabled && <span className="text-muted-foreground">(disabled)</span>}
-                    </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="home">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-3 w-3" />
-                    <span>Home</span>
-                  </div>
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-full" onClick={onAddPage} title="Add Page">
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+      {/* Page actions — picker lives in the toolbar; this block surfaces page-scoped actions only */}
+      {(!isHomePage || onAddPage) && (
+        <div className="p-3 border-b border-border/40 space-y-2">
+          {!isHomePage && selectedPage ? (
+            <>
+              <p className="text-[10px] font-medium text-muted-foreground font-display uppercase tracking-wider px-1 truncate">
+                {selectedPage.title}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size={tokens.button.inline}
+                  className="h-7 text-xs flex-1"
+                  onClick={() => onTabChange('page-settings')}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Settings
+                </Button>
+                {onApplyPageTemplate && (
+                  <Button
+                    variant="ghost"
+                    size={tokens.button.inline}
+                    className="h-7 text-xs flex-1"
+                    onClick={onApplyPageTemplate}
+                  >
+                    <LayoutTemplate className="h-3 w-3 mr-1" />
+                    Templates
+                  </Button>
+                )}
+                {selectedPage.deletable && (
+                  <Button
+                    variant="ghost"
+                    size={tokens.button.inline}
+                    className="h-7 text-xs text-destructive hover:text-destructive"
+                    onClick={() => onDeletePage?.(selectedPageId)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            onAddPage && (
+              <Button
+                variant="ghost"
+                size={tokens.button.inline}
+                className="h-8 w-full justify-start text-xs"
+                onClick={onAddPage}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add Page
+              </Button>
+            )
+          )}
         </div>
-        {/* Page actions for non-home pages */}
-        {!isHomePage && selectedPage && (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size={tokens.button.inline}
-              className="h-7 text-xs flex-1"
-              onClick={() => onTabChange('page-settings')}
-            >
-              <Settings className="h-3 w-3 mr-1" />
-              Page Settings
-            </Button>
-            {onApplyPageTemplate && (
-              <Button
-                variant="ghost"
-                size={tokens.button.inline}
-                className="h-7 text-xs flex-1"
-                onClick={onApplyPageTemplate}
-              >
-                <LayoutTemplate className="h-3 w-3 mr-1" />
-                Templates
-              </Button>
-            )}
-            {selectedPage.deletable && (
-              <Button
-                variant="ghost"
-                size={tokens.button.inline}
-                className="h-7 text-xs text-destructive hover:text-destructive"
-                onClick={() => onDeletePage?.(selectedPageId)}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Search */}
       <div className="p-3 border-b">
