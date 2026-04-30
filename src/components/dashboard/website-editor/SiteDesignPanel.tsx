@@ -367,7 +367,14 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
             {colorRow('Background', 'background_hsl')}
           </div>
           <p className="text-[11px] text-muted-foreground/80">
-            Leave blank to inherit from the active theme.
+            Leave blank to inherit from the active theme.{' '}
+            <button
+              type="button"
+              onClick={goToThemeTab}
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Browse themes →
+            </button>
           </p>
         </section>
 
