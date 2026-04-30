@@ -14,7 +14,7 @@ const Index = () => {
         description="Premier destination for expert hair color, extensions, cutting & styling. Book your transformation today."
         type="local_business"
       />
-      <PageSectionRenderer sections={homePage?.sections ?? []} />
+      <PageSectionRenderer sections={homePage?.sections ?? []} pageId="home" />
     </Layout>
   );
 };

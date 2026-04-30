@@ -44,7 +44,7 @@ export default function DynamicPage() {
         title={page.seo_title || page.title}
         description={page.seo_description}
       />
-      <PageSectionRenderer sections={page.sections} />
+      <PageSectionRenderer sections={page.sections} pageId={page.id} />
     </Layout>
   );
 }

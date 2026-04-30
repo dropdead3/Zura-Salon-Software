@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BrandStatement } from '@/components/home/BrandStatement';
@@ -56,14 +56,23 @@ function getIsViewMode() {
 
 interface PageSectionRendererProps {
   sections: SectionConfig[];
+  /** Page id (e.g. 'home' or page slug) — used to scope live-preview reorder messages. */
+  pageId?: string;
 }
 
-export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
+export function PageSectionRenderer({ sections, pageId }: PageSectionRendererProps) {
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   // While the operator is dragging in the editor rail, the parent posts the
   // in-flight order so the canvas can reflow live (premium feel). On drop or
   // when sections re-fetch, this clears.
   const [provisionalOrder, setProvisionalOrder] = useState<string[] | null>(null);
+  // Latest pageId in a ref so the message handler (registered once) sees fresh values.
+  const currentPageIdRef = useRef(pageId);
+  useEffect(() => {
+    currentPageIdRef.current = pageId;
+    // When the renderer switches pages, drop any provisional order from a prior page.
+    setProvisionalOrder(null);
+  }, [pageId]);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
 
@@ -113,12 +122,19 @@ export function PageSectionRenderer({ sections }: PageSectionRendererProps) {
 
       // Live drag-reorder reflow.
       if (msg.type === 'PREVIEW_PROVISIONAL_ORDER' && Array.isArray(msg.order)) {
+        // Page-scope guard: ignore messages targeting a different page than the
+        // one currently rendered (operator may have switched pages mid-drag).
+        if (msg.pageId && currentPageIdRef.current && msg.pageId !== currentPageIdRef.current) return;
         setProvisionalOrder(msg.order as string[]);
       }
-      // Commit on drop — clear the provisional layer; the next sections fetch
-      // (triggered by the editor's save) becomes the source of truth.
-      if (msg.type === 'PREVIEW_REORDER_SECTIONS') {
-        setProvisionalOrder(null);
+      // Commit on drop. We KEEP the provisional layer applied — clearing it now
+      // would snap the canvas back to stale cached sections (no realtime hook
+      // on useWebsiteSections). The provisional order persists visually until
+      // the iframe receives fresh server data via the refetch invalidation
+      // fired by the editor's saveSections() through React Query.
+      if (msg.type === 'PREVIEW_REORDER_SECTIONS' && Array.isArray(msg.order)) {
+        if (msg.pageId && currentPageIdRef.current && msg.pageId !== currentPageIdRef.current) return;
+        setProvisionalOrder(msg.order as string[]);
       }
     };
 

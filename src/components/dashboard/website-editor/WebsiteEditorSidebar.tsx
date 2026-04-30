@@ -271,8 +271,13 @@ export function WebsiteEditorSidebar({
     const oldIndex = localSections.findIndex(s => s.id === active.id);
     const newIndex = localSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localSections, oldIndex, newIndex);
+    // Send commit BEFORE save so the iframe locks in provisional layer
+    // (prevents a snap-back to stale cached order while the save round-trips).
     emitCommit('home', reordered.map(s => s.id));
     await saveSections(reordered);
+    // Soft-reload the iframe so it rehydrates from the new canonical order;
+    // this is what naturally clears the provisional layer.
+    window.dispatchEvent(new CustomEvent('website-preview-refresh'));
     toast.success('Section order updated');
   };
 
@@ -417,6 +422,8 @@ export function WebsiteEditorSidebar({
     setLocalPageSections(reordered);
     emitCommit(selectedPageId, reordered.map(s => s.id));
     onPageSectionReorder?.(reordered);
+    // Soft-reload iframe so it rehydrates with the canonical order.
+    window.dispatchEvent(new CustomEvent('website-preview-refresh'));
     toast.success('Section order updated');
   };
 
