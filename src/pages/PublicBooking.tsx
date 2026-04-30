@@ -263,6 +263,7 @@ export default function PublicBooking() {
             phone: booking.clientPhone,
           },
           notes: booking.notes,
+          promo_offer_code: promoCode || undefined,
         },
       });
 
