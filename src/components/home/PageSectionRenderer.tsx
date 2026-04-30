@@ -66,6 +66,13 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   // in-flight order so the canvas can reflow live (premium feel). On drop or
   // when sections re-fetch, this clears.
   const [provisionalOrder, setProvisionalOrder] = useState<string[] | null>(null);
+  // Latest pageId in a ref so the message handler (registered once) sees fresh values.
+  const currentPageIdRef = useRef(pageId);
+  useEffect(() => {
+    currentPageIdRef.current = pageId;
+    // When the renderer switches pages, drop any provisional order from a prior page.
+    setProvisionalOrder(null);
+  }, [pageId]);
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
 
