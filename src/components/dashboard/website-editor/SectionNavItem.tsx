@@ -52,10 +52,10 @@ export function SectionNavItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        // mx-3 keeps the row inset; pr-2 + extra right gap below give the
-        // scaled-down Switch (scale-75 keeps layout box at 44px but the
-        // visible thumb sits centered) breathing room from the rail edge.
-        'group flex items-center gap-2 pl-2 pr-2 py-2 mx-3 rounded-lg cursor-pointer transition-all',
+        // Keep a real inset on the right edge instead of relying on a scaled
+        // switch plus negative margin hacks; this gives the action cluster a
+        // stable gutter away from the rail and scrollbar.
+        'group flex items-center gap-2 pl-2 pr-4 py-2 mx-3 rounded-lg cursor-pointer transition-all',
         isActive
           ? 'bg-primary/10 border border-primary/20'
           : 'hover:bg-muted/60 border border-transparent',
@@ -98,11 +98,10 @@ export function SectionNavItem({
         </p>
       </div>
 
-      {/* Actions — shrink-0 so they never get squeezed; -mr-1 pulls the
-          Switch's transparent layout box back so the visible thumb aligns
-          with the row's inner padding instead of poking past it. */}
+      {/* Actions — keep a real inner gutter on the right so the controls never
+          read as touching the rail edge, even when the scrollbar is visible. */}
       <div
-        className="flex items-center gap-0.5 shrink-0 -mr-1"
+        className="flex items-center gap-1 shrink-0 pr-1"
         onClick={(e) => e.stopPropagation()}
       >
         {onDuplicate && (
@@ -129,7 +128,7 @@ export function SectionNavItem({
         <Switch
           checked={enabled}
           onCheckedChange={onToggle}
-          className="scale-75"
+          className="h-5 w-9 shrink-0 [&>span]:h-4 [&>span]:w-4 [&>span[data-state=checked]]:translate-x-4 [&>span[data-state=unchecked]]:translate-x-0"
         />
       </div>
     </div>
