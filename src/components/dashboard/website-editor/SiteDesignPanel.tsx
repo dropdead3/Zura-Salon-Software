@@ -24,6 +24,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { tokens } from '@/lib/design-tokens';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
 import { useToast } from '@/hooks/use-toast';
@@ -168,13 +178,19 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
 
   const [draft, setDraft] = useState<DesignOverrides>(DEFAULTS);
   const [dirty, setDirty] = useState(false);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const initRef = useRef(false);
+  // Snapshot of last-persisted state — used to revert the iframe when the
+  // operator discards in-flight edits without saving.
+  const persistedSnapshotRef = useRef<DesignOverrides>(DEFAULTS);
 
   // Hydrate once from server state.
   useEffect(() => {
     if (initRef.current) return;
     if (isLoading) return;
-    setDraft({ ...DEFAULTS, ...(persisted ?? {}) });
+    const hydrated = { ...DEFAULTS, ...(persisted ?? {}) };
+    setDraft(hydrated);
+    persistedSnapshotRef.current = hydrated;
     initRef.current = true;
   }, [isLoading, persisted]);
 
@@ -197,6 +213,13 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     };
   }, [draft]);
 
+  // Broadcast dirty state to the shell so it can guard backdrop/ESC closes.
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('site-design-dirty-state', { detail: { dirty } }),
+    );
+  }, [dirty]);
+
   const setField = useCallback(<K extends keyof DesignOverrides>(key: K, value: DesignOverrides[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     setDirty(true);
@@ -206,6 +229,8 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     try {
       await updateSetting.mutateAsync({ key: 'website_design_overrides', value: draft });
       setDirty(false);
+      // Refresh snapshot so a subsequent discard reverts to the just-saved state.
+      persistedSnapshotRef.current = draft;
       toast({ title: 'Site Design saved', description: 'Changes are now live in your site.' });
     } catch (err) {
       toast({
@@ -221,6 +246,38 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     setDirty(true);
     broadcastToPreview(DEFAULTS);
   }, []);
+
+  // Close-intent: if dirty, surface confirm dialog. Otherwise close immediately.
+  const handleCloseIntent = useCallback(() => {
+    if (dirty) {
+      setDiscardOpen(true);
+      return;
+    }
+    onClose();
+  }, [dirty, onClose]);
+
+  // Confirmed discard: revert iframe + local draft to last-persisted snapshot, then close.
+  const handleDiscardConfirmed = useCallback(() => {
+    const snapshot = persistedSnapshotRef.current;
+    setDraft(snapshot);
+    setDirty(false);
+    broadcastToPreview(snapshot);
+    setDiscardOpen(false);
+    onClose();
+  }, [onClose]);
+
+  // Shell → panel bridge: external close requests (backdrop / ESC / toolbar
+  // toggle) flow through here so the dirty-confirm dialog can intercept.
+  useEffect(() => {
+    const onExternalClose = () => handleCloseIntent();
+    const onExternalDiscard = () => handleDiscardConfirmed();
+    window.addEventListener('site-design-close-request', onExternalClose);
+    window.addEventListener('site-design-discard-request', onExternalDiscard);
+    return () => {
+      window.removeEventListener('site-design-close-request', onExternalClose);
+      window.removeEventListener('site-design-discard-request', onExternalDiscard);
+    };
+  }, [handleCloseIntent, handleDiscardConfirmed]);
 
   // Color helpers
   const colorRow = (
@@ -268,8 +325,8 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={onClose}>
-          Done
+        <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={handleCloseIntent}>
+          {dirty ? 'Close' : 'Done'}
         </Button>
       </div>
 
@@ -449,6 +506,25 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
           Save Design
         </Button>
       </div>
+
+      {/* Discard-draft confirmation */}
+      <AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard design changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved Site Design edits. Closing now will revert the preview
+              to your last saved design.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardConfirmed}>
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
