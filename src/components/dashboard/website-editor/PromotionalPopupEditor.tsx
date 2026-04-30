@@ -40,6 +40,7 @@ const ACCENT_PRESETS: { label: string; value: string | undefined; swatch: string
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
+  const { publicPageUrl } = useOrgPublicUrl();
   const { data: settings, isLoading } = usePromotionalPopup();
   const updateSettings = useUpdatePromotionalPopup();
 
