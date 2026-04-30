@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Trash2, Copy } from 'lucide-react';
@@ -54,24 +53,9 @@ export function SectionNavItem({
     transition,
   };
 
-  // When this row becomes active (e.g. operator clicked the matching section
-  // in the canvas), scroll it into view so the highlight is visible even when
-  // the section list extends below the rail's fold.
-  const rowRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!isActive) return;
-    rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [isActive]);
-
-  // Compose dnd-kit's setNodeRef with our local ref.
-  const composedRef = (node: HTMLDivElement | null) => {
-    rowRef.current = node;
-    setNodeRef(node);
-  };
-
   return (
     <div
-      ref={composedRef}
+      ref={setNodeRef}
       style={{ ...style, paddingRight: ACTION_ZONE_WIDTH }}
       className={cn(
         // `relative` so the action cluster can be absolutely positioned and

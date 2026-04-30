@@ -298,16 +298,12 @@ export function EditorSectionCard({
         !enabled && 'opacity-50'
       )}
     >
-      {/* Hover header row.
-          `focus-within:opacity-0` hides the chrome the moment the operator
-          clicks into an `InlineEditableText` so chips/toggle don't compete
-          visually with the cursor. Returns on blur. */}
+      {/* Hover header row */}
       <div
         data-editor-control
         className={cn(
           'absolute top-3 left-4 right-4 flex items-center justify-between gap-3',
           'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
-          'group-focus-within:opacity-0 group-focus-within:pointer-events-none',
           'pointer-events-none group-hover:pointer-events-auto',
           'z-10'
         )}
