@@ -105,6 +105,13 @@ export function useCommitOrgSetup() {
         if (user?.id) {
           dismissBackfillBanner(user.id, variables.organization_id);
         }
+        // Seed the public-site theme to match the dashboard theme so the
+        // operator's first preview of their public site doesn't whiplash
+        // back to cream-lux. Best-effort; non-blocking.
+        void seedWebsiteThemeFromDashboard(
+          variables.organization_id,
+          user?.id ?? null,
+        );
         toast.success("Setup complete");
       } else if (data.partial) {
         toast.warning(
