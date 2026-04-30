@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import type { CustomSectionType } from '@/hooks/useWebsiteSections';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
+import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
+import { fetchSiteSetting } from '@/lib/siteSettingsDraft';
 
 interface CustomSectionRendererProps {
   sectionId: string;
@@ -12,21 +14,22 @@ interface CustomSectionRendererProps {
 
 export function CustomSectionRenderer({ sectionId, sectionType }: CustomSectionRendererProps) {
   const settingsKey = `section_custom_${sectionId}`;
+  // Org-scope the read so multi-tenant pages don't bleed into each other.
+  // Editor/preview iframe sees draft_value; public visitors see live value.
+  const orgId = useSettingsOrgId();
+  const isPreview = useIsEditorPreview();
+  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
 
   const { data: config } = useQuery({
-    queryKey: ['site-settings', settingsKey],
+    queryKey: ['site-settings', orgId, settingsKey, mode],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', settingsKey)
-        .maybeSingle();
-      if (error) throw error;
-      return data?.value as Record<string, unknown> | null;
+      return await fetchSiteSetting<Record<string, unknown>>(orgId!, settingsKey, mode);
     },
   });
 
   if (!config) return null;
+
 
   switch (sectionType) {
     case 'rich_text': {
