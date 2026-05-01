@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsEditorPreview } from './useIsEditorPreview';
+import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
-import { useIsEditorSurface } from './useIsEditorSurface';
 
 export type PopupAppearance = 'modal' | 'banner' | 'corner-card';
 export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
@@ -140,10 +140,14 @@ export function usePromotionalPopup(
   options?: { forceMode?: 'live' | 'draft' },
 ) {
   const orgId = useSettingsOrgId(explicitOrgId);
+  // `isPreview` (iframe-only) is preserved for the popup-suppression flag
+  // returned below — we mute the auto-open inside the iframe so operators
+  // can edit copy without it cycling. The mode decision composes both
+  // signals via the centralized draft-reader hook.
   const isPreview = useIsEditorPreview();
-  const isEditorSurface = useIsEditorSurface();
+  const isDraftReader = useIsDraftReader();
   const mode: 'live' | 'draft' =
-    options?.forceMode ?? (isPreview || isEditorSurface ? 'draft' : 'live');
+    options?.forceMode ?? (isDraftReader ? 'draft' : 'live');
 
   return useQuery({
     queryKey: ['site-settings', orgId, SETTING_KEY, mode],
