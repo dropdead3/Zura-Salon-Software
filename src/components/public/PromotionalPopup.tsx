@@ -22,6 +22,7 @@ import {
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 import { useReplayableMount } from '@/hooks/useReplayableMount';
 import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
+import { subscribeHeroAlignment, type HeroAlignmentSignal } from '@/lib/heroAlignmentSignal';
 
 interface Props {
   /**
