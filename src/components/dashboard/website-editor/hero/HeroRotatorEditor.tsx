@@ -1,4 +1,4 @@
-import { Settings2 } from 'lucide-react';
+import { Settings2, Sparkles } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { ToggleInput } from '../inputs/ToggleInput';
 import { SliderInput } from '../inputs/SliderInput';
@@ -7,6 +7,55 @@ import type { HeroConfig } from '@/hooks/useSectionConfig';
 interface HeroRotatorEditorProps {
   config: HeroConfig;
   onChange: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
+}
+
+/**
+ * Mode-appropriate defaults. When an operator switches modes, we nudge
+ * transition_style + slide_interval_ms into a sensible starting point —
+ * but only if their current values still match the *other* mode's defaults
+ * (i.e. they haven't manually customized). This avoids stomping on intent.
+ */
+const MODE_DEFAULTS = {
+  multi_slide: { transition_style: 'slide-up' as const, slide_interval_ms: 6000 },
+  background_only: { transition_style: 'crossfade' as const, slide_interval_ms: 7000 },
+};
+
+/**
+ * Tiny inline illustration for the mode picker. Multi-slide shows a
+ * full-card swap; background-only shows a static foreground over a
+ * rotating background.
+ */
+function ModeIllustration({ mode, active }: { mode: 'multi_slide' | 'background_only'; active: boolean }) {
+  const stroke = active ? 'currentColor' : 'currentColor';
+  const opacity = active ? 1 : 0.55;
+  if (mode === 'multi_slide') {
+    return (
+      <svg viewBox="0 0 64 28" className="w-full h-7" fill="none" stroke={stroke} strokeWidth={1.2} style={{ opacity }}>
+        <rect x="1" y="3" width="28" height="22" rx="3" />
+        <rect x="6" y="9" width="14" height="2" rx="1" fill={stroke} />
+        <rect x="6" y="14" width="10" height="2" rx="1" fill={stroke} opacity={0.5} />
+        <rect x="6" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+        <path d="M33 14 L37 14 M35 12 L37 14 L35 16" />
+        <rect x="35" y="3" width="28" height="22" rx="3" />
+        <rect x="40" y="9" width="10" height="2" rx="1" fill={stroke} />
+        <rect x="40" y="14" width="14" height="2" rx="1" fill={stroke} opacity={0.5} />
+        <rect x="40" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 64 28" className="w-full h-7" fill="none" stroke={stroke} strokeWidth={1.2} style={{ opacity }}>
+      <rect x="1" y="3" width="28" height="22" rx="3" />
+      <path d="M4 8 L26 8 M4 12 L20 12" stroke={stroke} opacity={0.4} />
+      <rect x="6" y="14" width="14" height="2" rx="1" fill={stroke} />
+      <rect x="6" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+      <path d="M33 14 L37 14 M35 12 L37 14 L35 16" />
+      <rect x="35" y="3" width="28" height="22" rx="3" />
+      <path d="M38 8 L60 8 M38 12 L54 12" stroke={stroke} opacity={0.85} />
+      <rect x="40" y="14" width="14" height="2" rx="1" fill={stroke} />
+      <rect x="40" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+    </svg>
+  );
 }
 
 /**
