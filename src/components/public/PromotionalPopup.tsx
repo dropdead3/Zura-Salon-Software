@@ -584,7 +584,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className={cn(
           'fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
-          isClosing ? cornerExitClasses : 'animate-in fade-in slide-in-from-bottom-4',
+          isClosing ? cornerExitClasses : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-8 motion-safe:duration-500 motion-safe:ease-out',
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -624,7 +624,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className={cn(
           'fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden',
-          isClosing ? bannerExitClasses : 'animate-in slide-in-from-top-2',
+          isClosing ? bannerExitClasses : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-4 motion-safe:duration-500 motion-safe:ease-out',
         )}
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
         onMouseEnter={() => setIsHovered(true)}

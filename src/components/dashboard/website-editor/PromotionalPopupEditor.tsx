@@ -931,65 +931,95 @@ export function PromotionalPopupEditor() {
             pathPrefix="promotional-popup"
             placeholder="https://..."
           />
-          {formData.imageUrl && (
-            <div className="mt-3 space-y-3">
-              <div>
-                <Label className="text-xs">Treatment</Label>
-                <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
-                  {([
+          {formData.imageUrl && (() => {
+            // Treatment options vary per appearance: in `corner-card` the
+            // surface is a single ~360px tile, so "cover" and "side" both
+            // collapse to a top strip — exposing both would be a phantom
+            // choice. Banner doesn't render an image at all. The dynamic
+            // option set keeps every visible button structurally meaningful.
+            type TreatmentOption = {
+              value: 'cover' | 'side' | 'hidden-on-corner';
+              label: string;
+              hint: string;
+            };
+            const appearance = formData.appearance ?? 'modal';
+            const treatmentOptions: TreatmentOption[] = appearance === 'corner-card'
+              ? [
+                  { value: 'cover', label: 'Show', hint: 'Render the image as a strip above the headline' },
+                  { value: 'hidden-on-corner', label: 'Hide', hint: 'Hide the image on the corner card' },
+                ]
+              : appearance === 'banner'
+                ? []
+                : [
                     { value: 'cover', label: 'Cover', hint: 'Full-width strip above headline' },
-                    { value: 'side', label: 'Side', hint: 'Left rail on modal (collapses to top on corner)' },
-                    { value: 'hidden-on-corner', label: 'Hide on corner', hint: 'Show on modal/banner; hide on corner-card' },
-                  ] as const).map(({ value, label, hint }) => {
-                    const active = (formData.imageTreatment ?? 'cover') === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        title={hint}
-                        onClick={() => handleChange('imageTreatment', value)}
-                        className={cn(
-                          'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
-                          active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
-                        )}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+                    { value: 'side', label: 'Side', hint: 'Left rail on the modal' },
+                    { value: 'hidden-on-corner', label: 'Hide on corner', hint: 'Show on modal; hide on the corner card' },
+                  ];
+            const activeTreatment = formData.imageTreatment ?? 'cover';
+            return (
+              <div className="mt-3 space-y-3">
+                {treatmentOptions.length > 0 ? (
+                  <div>
+                    <Label className="text-xs">Treatment</Label>
+                    <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
+                      {treatmentOptions.map(({ value, label, hint }) => {
+                        const active = activeTreatment === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            title={hint}
+                            onClick={() => handleChange('imageTreatment', value)}
+                            className={cn(
+                              'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
+                              active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+                            )}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  // Banner appearance ignores the image entirely; tell the
+                  // operator instead of silently rendering nothing.
+                  <p className="font-sans text-[11px] text-muted-foreground">
+                    Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
+                  </p>
+                )}
+                <FocalPointPicker
+                  imageUrl={formData.imageUrl}
+                  x={formData.imageFocalX ?? 50}
+                  y={formData.imageFocalY ?? 50}
+                  onChange={(x, y) => {
+                    handleChange('imageFocalX', x);
+                    handleChange('imageFocalY', y);
+                  }}
+                  onReset={() => {
+                    handleChange('imageFocalX', 50);
+                    handleChange('imageFocalY', 50);
+                  }}
+                  helper="Click or drag to anchor the most important area — it stays in view across modal, side-rail, and corner-card layouts."
+                />
+                <div>
+                  <Label className="text-xs">Alt text</Label>
+                  <Input
+                    className="mt-1.5"
+                    value={formData.imageAlt ?? ''}
+                    onChange={(e) => handleChange('imageAlt', e.target.value)}
+                    placeholder="Describe the image (leave blank if decorative)"
+                    maxLength={140}
+                  />
+                  <p className="mt-1 font-sans text-[11px] text-muted-foreground">
+                    Used by screen readers and indexed for SEO. Empty = decorative.
+                  </p>
                 </div>
               </div>
-              <FocalPointPicker
-                imageUrl={formData.imageUrl}
-                x={formData.imageFocalX ?? 50}
-                y={formData.imageFocalY ?? 50}
-                onChange={(x, y) => {
-                  handleChange('imageFocalX', x);
-                  handleChange('imageFocalY', y);
-                }}
-                onReset={() => {
-                  handleChange('imageFocalX', 50);
-                  handleChange('imageFocalY', 50);
-                }}
-                helper="Click or drag to anchor the most important area — it stays in view across modal, side-rail, and corner-card layouts."
-              />
-              <div>
-                <Label className="text-xs">Alt text</Label>
-                <Input
-                  className="mt-1.5"
-                  value={formData.imageAlt ?? ''}
-                  onChange={(e) => handleChange('imageAlt', e.target.value)}
-                  placeholder="Describe the image (leave blank if decorative)"
-                  maxLength={140}
-                />
-                <p className="mt-1 font-sans text-[11px] text-muted-foreground">
-                  Used by screen readers and indexed for SEO. Empty = decorative.
-                </p>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </Field>
       </Section>
 
