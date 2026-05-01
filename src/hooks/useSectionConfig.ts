@@ -70,12 +70,33 @@ export interface HeroTextColors {
   secondary_button_hover_bg?: string;
 }
 
+/**
+ * Scrim styles applied over background media to keep text legible regardless
+ * of dark/light fluctuations in a video or image.
+ *
+ * - `flat`        — uniform dark wash (legacy `overlay_opacity` behavior).
+ * - `gradient-bottom` — darker at the text region (bottom 60%), transparent up top.
+ * - `gradient-radial` — darker at the center (where headlines sit), transparent at edges.
+ * - `vignette`    — darker at all four edges, lighter in the middle.
+ * - `none`        — no scrim. Text relies solely on its own color.
+ */
+export type HeroScrimStyle =
+  | 'flat'
+  | 'gradient-bottom'
+  | 'gradient-radial'
+  | 'vignette'
+  | 'none';
+
 export interface HeroSlide {
   id: string;
   background_type: 'image' | 'video' | 'inherit';
   background_url: string;
   background_poster_url: string;
-  overlay_opacity: number | null; // null = inherit from section
+  overlay_opacity: number | null; // null = inherit from section (legacy flat-scrim strength)
+  /** Per-slide scrim style override. null = inherit from section. */
+  scrim_style?: HeroScrimStyle | null;
+  /** Per-slide scrim strength override (0..1). null = inherit from section. */
+  scrim_strength?: number | null;
   eyebrow: string;
   show_eyebrow: boolean;
   headline_text: string;
@@ -118,7 +139,11 @@ export interface HeroConfig {
   background_url: string;
   background_poster_url: string;
   background_fit: 'cover' | 'contain';
-  overlay_opacity: number; // 0..0.8
+  overlay_opacity: number; // 0..0.8 — back-compat strength used when scrim_style === 'flat' or unset
+  /** Section-level scrim style. Defaults to `gradient-bottom` for media backgrounds. */
+  scrim_style?: HeroScrimStyle;
+  /** Section-level scrim strength (0..1). Defaults to 0.55 when set, else falls back to overlay_opacity. */
+  scrim_strength?: number;
   // Multi-slide rotator (Revolution Slider–style)
   slides: HeroSlide[];
   auto_rotate: boolean;
@@ -390,6 +415,8 @@ export const DEFAULT_HERO: HeroConfig = {
   background_poster_url: '',
   background_fit: 'cover',
   overlay_opacity: 0.4,
+  scrim_style: 'gradient-bottom',
+  scrim_strength: 0.55,
   slides: [],
   auto_rotate: true,
   slide_interval_ms: 6000,

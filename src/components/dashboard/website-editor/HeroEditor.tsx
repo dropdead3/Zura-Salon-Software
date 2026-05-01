@@ -25,7 +25,8 @@ import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
-import { Palette } from 'lucide-react';
+import { HeroScrimEditor } from './HeroScrimEditor';
+import { Palette, Layers } from 'lucide-react';
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
@@ -96,6 +97,21 @@ export function HeroEditor() {
         <HeroTextColorsEditor
           value={localConfig.text_colors}
           onChange={(next) => updateField('text_colors', next)}
+        />
+      </EditorCard>
+
+      <EditorCard
+        title="Background Scrim"
+        icon={Layers}
+        description="Choose how the dark overlay sits over your background media. Gradient is the editorial default — strongest where text lives, transparent everywhere else."
+      >
+        <HeroScrimEditor
+          scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
+          scrimStrength={localConfig.scrim_strength ?? 0.55}
+          onChange={(patch) => {
+            if (patch.scrim_style !== undefined) updateField('scrim_style', patch.scrim_style ?? undefined);
+            if (patch.scrim_strength !== undefined) updateField('scrim_strength', patch.scrim_strength ?? undefined);
+          }}
         />
       </EditorCard>
 

@@ -45,6 +45,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const bgPoster = heroConfig?.background_poster_url ?? '';
   const bgFit = heroConfig?.background_fit ?? 'cover';
   const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
+  const scrimStyle = heroConfig?.scrim_style ?? 'gradient-bottom';
+  const scrimStrength = heroConfig?.scrim_strength ?? 0.55;
   const hasMediaBackground = bgType !== 'none' && !!bgUrl;
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
@@ -115,7 +117,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   if (isPreview) {
     return (
       <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
-        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
         <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
@@ -190,7 +192,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   return (
     <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-screen">
       {/* Operator-configured background (image or video) */}
-      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
 
       {/* Legacy explicit videoSrc prop (back-compat) */}
       {!hasMediaBackground && videoSrc && (

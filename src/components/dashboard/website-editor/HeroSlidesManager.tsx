@@ -17,6 +17,7 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
 import { EditorCard } from './EditorCard';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
+import { HeroScrimEditor } from './HeroScrimEditor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
@@ -42,6 +43,8 @@ const newSlide = (): HeroSlide => ({
   background_url: '',
   background_poster_url: '',
   overlay_opacity: null,
+  scrim_style: null,
+  scrim_strength: null,
   eyebrow: '',
   show_eyebrow: false,
   headline_text: 'New Slide',
@@ -59,9 +62,12 @@ interface SlideRowProps {
   index: number;
   onUpdate: (id: string, patch: Partial<HeroSlide>) => void;
   onDelete: (id: string) => void;
+  /** Section-level scrim defaults; surfaced as the "inherit" preview values. */
+  sectionScrimStyle?: HeroConfig['scrim_style'];
+  sectionScrimStrength?: HeroConfig['scrim_strength'];
 }
 
-function SlideRow({ slide, index, onUpdate, onDelete }: SlideRowProps) {
+function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, sectionScrimStrength }: SlideRowProps) {
   const [open, setOpen] = useState(index === 0);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
@@ -228,6 +234,21 @@ function SlideRow({ slide, index, onUpdate, onDelete }: SlideRowProps) {
             )}
           </div>
 
+          {/* Per-slide scrim style override — falls back to section-level
+              when null. Critical for video slides whose luminance flickers. */}
+          <div className="space-y-2 pt-3 border-t border-border/30">
+            <HeroScrimEditor
+              scrimStyle={slide.scrim_style ?? null}
+              scrimStrength={slide.scrim_strength ?? null}
+              inheritedStyle={sectionScrimStyle ?? 'gradient-bottom'}
+              inheritedStrength={sectionScrimStrength ?? 0.55}
+              allowInherit
+              onChange={(patch) => onUpdate(slide.id, patch as Partial<HeroSlide>)}
+              title="Slide Scrim"
+              description="Override the section scrim for this slide. Useful when one video flashes brighter than others."
+            />
+          </div>
+
           {/* Per-slide text/button color overrides — empty fields inherit
               from the section-level Text & Buttons panel. */}
           <div className="space-y-2 pt-3 border-t border-border/30">
@@ -294,7 +315,15 @@ export function HeroSlidesManager({ config, onChange }: HeroSlidesManagerProps) 
             <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
                 {slides.map((s, i) => (
-                  <SlideRow key={s.id} slide={s} index={i} onUpdate={updateSlide} onDelete={deleteSlide} />
+                  <SlideRow
+                    key={s.id}
+                    slide={s}
+                    index={i}
+                    onUpdate={updateSlide}
+                    onDelete={deleteSlide}
+                    sectionScrimStyle={config.scrim_style}
+                    sectionScrimStrength={config.scrim_strength}
+                  />
                 ))}
               </div>
             </SortableContext>
