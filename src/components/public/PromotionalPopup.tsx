@@ -749,21 +749,31 @@ function PromoBody({
           {cfg.body}
         </p>
       )}
+      {/*
+        Compact (corner-card) stacks the CTAs vertically: full-width Claim
+        Offer on top, centered "No thanks" beneath. Cleaner read at 360px
+        wide than the side-by-side row, which crowded the decline link
+        against the accent button. Full-size modal keeps the inline row.
+      */}
       <div className={cn(
-        'flex items-center gap-4 mb-3',
-        compact ? 'flex-col-reverse sm:flex-row' : 'flex-row',
+        'mb-3',
+        compact
+          ? 'flex flex-col items-stretch gap-2'
+          : 'flex flex-row items-center gap-4',
       )}>
-        <button
-          onClick={onDecline}
-          className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0"
-        >
-          {cfg.ctaDeclineLabel}
-        </button>
+        {!compact && (
+          <button
+            onClick={onDecline}
+            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0"
+          >
+            {cfg.ctaDeclineLabel}
+          </button>
+        )}
         <button
           onClick={onAccept}
           className={cn(
-            'group flex-1 inline-flex items-center justify-center gap-2 font-display uppercase tracking-wider px-6 rounded-full transition-all hover:opacity-95 hover:-translate-y-px',
-            compact ? 'text-xs h-10' : 'text-xs sm:text-sm h-12',
+            'group inline-flex items-center justify-center gap-2 font-display uppercase tracking-wider px-6 rounded-full transition-all hover:opacity-95 hover:-translate-y-px',
+            compact ? 'w-full text-xs h-11' : 'flex-1 text-xs sm:text-sm h-12',
           )}
           style={{
             backgroundColor: accent,
@@ -774,6 +784,14 @@ function PromoBody({
           <span>{cfg.ctaAcceptLabel}</span>
           <ChevronRight className="h-4 w-4 opacity-90 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
+        {compact && (
+          <button
+            onClick={onDecline}
+            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors py-1.5 mx-auto underline-offset-4 hover:underline"
+          >
+            {cfg.ctaDeclineLabel}
+          </button>
+        )}
       </div>
       {cfg.acceptDestination === 'custom-url' && cfg.customUrlInstructions && (
         <p
