@@ -133,10 +133,3 @@ export function getVideoSizeWarning(file: File): string | null {
   return null;
 }
 
-export function getVideoSizeWarning(file: File): string | null {
-  const sizeMB = file.size / (1024 * 1024);
-  if (sizeMB > VIDEO_SIZE_WARN_MB && sizeMB <= VIDEO_SIZE_HARD_MB) {
-    return `Large video (${bytesToMb(file.size)}MB) — consider compressing for faster page loads`;
-  }
-  return null;
-}
