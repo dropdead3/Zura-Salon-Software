@@ -221,7 +221,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   toneClass={mutedTone}
                   editable={isPreview}
                   fieldPath={`slides.${activeIndex}.eyebrow`}
-                  className="mb-6"
+                  className="mb-8"
                 />
 
                 <h1
@@ -251,7 +251,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
                   <p
-                    className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                    className={cn("mt-10 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                     style={heroColors.subheadlineStyle}
                   >
                     {isPreview ? (
@@ -284,8 +284,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   </p>
                 )}
 
-                <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
-                  <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
+                <div className={cn("mt-10 flex flex-col gap-6", alignment.cta)}>
+                  <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                     <button
                       onClick={() => {
                         if (slide.cta_new_client_url) {

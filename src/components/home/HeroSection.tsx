@@ -144,7 +144,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 text={eyebrowText}
                 editable
                 fieldPath="eyebrow"
-                className="mb-6"
+                className="mb-8"
               />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
@@ -165,7 +165,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                  className={cn("mt-10 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
@@ -173,8 +173,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
-                <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
+              <div className={cn("mt-10 flex flex-col gap-6", alignment.cta)}>
+                <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
                     className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
@@ -280,7 +280,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <HeroEyebrow show={true} text={eyebrowText} className="mb-6" />
+                <HeroEyebrow show={true} text={eyebrowText} className="mb-8" />
               </motion.div>
             )}
 
@@ -322,7 +322,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                className={cn("mt-10 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                 style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
@@ -333,10 +333,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className={cn("mt-10 flex flex-col gap-3", alignment.cta)}
+              className={cn("mt-10 flex flex-col gap-6", alignment.cta)}
               style={{ y: ctaY }}
             >
-              <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
+              <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
