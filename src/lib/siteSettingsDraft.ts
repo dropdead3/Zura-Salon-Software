@@ -152,6 +152,7 @@ export async function writeSiteSettingDraft(
  */
 function broadcastDraftWrite(orgId: string, key: string): void {
   if (typeof window === 'undefined') return;
+  emitAmbientTelemetry('draft-write-broadcast', { orgId, key });
   try {
     window.dispatchEvent(
       new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
