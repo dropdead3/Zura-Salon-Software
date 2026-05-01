@@ -279,7 +279,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                       className="whitespace-nowrap block"
                       value={slide.headline_text}
                       sectionKey="section_hero"
-                      fieldPath={`slides.${activeIndex}.headline_text`}
+                      fieldPath={rotatorMode === 'background_only' ? 'headline_text' : `slides.${activeIndex}.headline_text`}
                       placeholder="Headline"
                     />
                   ) : (
@@ -304,7 +304,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         as="span"
                         value={slide.subheadline_line1}
                         sectionKey="section_hero"
-                        fieldPath={`slides.${activeIndex}.subheadline_line1`}
+                        fieldPath={rotatorMode === 'background_only' ? 'subheadline_line1' : `slides.${activeIndex}.subheadline_line1`}
                         placeholder="Subheadline line 1"
                       />
                     ) : (
@@ -318,7 +318,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                             as="span"
                             value={slide.subheadline_line2}
                             sectionKey="section_hero"
-                            fieldPath={`slides.${activeIndex}.subheadline_line2`}
+                            fieldPath={rotatorMode === 'background_only' ? 'subheadline_line2' : `slides.${activeIndex}.subheadline_line2`}
                             placeholder="Subheadline line 2"
                           />
                         ) : (
