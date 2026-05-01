@@ -35,11 +35,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const subheadlineLine2 = heroConfig?.subheadline_line2 ?? DEFAULT_HERO.subheadline_line2;
   const hasSubheadlineContent = showSubheadline && (subheadlineLine1.trim() !== '' || subheadlineLine2.trim() !== '');
   const slides = heroConfig?.slides ?? [];
+  const hasSlides = slides.length > 0;
 
-  // Multi-slide rotator takes over when operators have configured slides.
-  if (slides.length > 0) {
-    return <HeroSlideRotator config={heroConfig} isPreview={isPreview} />;
-  }
+  // HOOK ORDER CONTRACT — every hook below MUST run on every render. Earlier
+  // versions early-returned <HeroSlideRotator/> here when slides existed,
+  // which silently changed the hook count when an operator added/removed
+  // slides ("Rendered fewer hooks than expected" crash). Compute everything
+  // unconditionally; the rotator branch is taken at the JSX return below.
 
   const bgType = heroConfig?.background_type ?? 'none';
   const bgUrl = heroConfig?.background_url ?? '';
@@ -118,6 +120,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
+
+  // Multi-slide rotator takes over when operators have configured slides.
+  // Branch AFTER all hooks above to keep hook order stable across renders.
+  if (hasSlides) {
+    return <HeroSlideRotator config={heroConfig} isPreview={isPreview} />;
+  }
 
   // In preview/editor mode, render static HTML — no Framer Motion at all
   if (isPreview) {
