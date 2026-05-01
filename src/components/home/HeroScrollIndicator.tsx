@@ -25,6 +25,7 @@ export function HeroScrollIndicator({ show, text, onMedia, onClick }: HeroScroll
   const label = (text ?? 'Scroll').trim() || 'Scroll';
 
   return (
+    // eslint-disable-next-line no-restricted-syntax -- canonical owner of the hero scroll affordance; every other hero file imports this component instead of hand-rolling motion.button.
     <motion.button
       type="button"
       initial={{ opacity: 0, y: 15 }}
