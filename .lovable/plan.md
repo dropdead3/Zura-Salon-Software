@@ -1,37 +1,61 @@
 ## Goal
 
-Lock in the post-save edit-preservation fix with a Vitest regression test so the stale-ref race in `PromotionalPopupEditor` can't silently come back.
+Make the "Top banner" appearance variant fully responsive on mobile by reshaping it into a top drawer that stacks content vertically with comfortable spacing, while keeping the slim horizontal banner look on desktop.
 
-## Scope
+## The problem
 
-Add a single test file covering the exact scenario you reported:
-- Operator hydrates the editor from saved settings.
-- Operator edits a field, saves, then immediately changes Appearance.
-- A post-save query refetch lands with the just-saved payload.
-- Assertion: the Appearance change survives, and the dirty/save state is correctly recomputed against the new snapshot.
+Today the banner (`PromotionalPopup.tsx`, lines 458–522) is a single horizontal flex row with `truncate` on the eyebrow, headline, and body, plus an inline cluster of CTA + decline + close on the right. At mobile widths (≤390px in your screenshot):
+- Headline collapses to "FRE…" — unreadable.
+- Body collapses to "Book a c…" — unreadable.
+- Close button (X) sits visually on top of the CTA / decline group.
+- Countdown timer overlaps the content row.
 
-## Files to add
+## The fix
 
-- `src/components/dashboard/website-editor/__tests__/PromotionalPopupEditor.refetch-race.test.tsx`
+Restructure the banner branch so:
+- **Desktop (sm and up)**: unchanged single-row banner (eyebrow / headline / body on the left, CTA + decline + close on the right). Slim and horizontal.
+- **Mobile (below sm)**: the same surface becomes a "top drawer" — taller, content stacked vertically, no truncation:
+  - A dedicated close-row at the very top right (so X never competes with the headline).
+  - Eyebrow on its own line (wraps if long).
+  - Headline on its own line, normal wrapping.
+  - Body on its own line, normal wrapping (relaxed leading).
+  - CTA row at the bottom: Claim Offer button stretches full width, Decline sits beside it.
+- Vertical padding bumps from `py-3` to `py-4` on mobile so the drawer feels intentional.
+- Countdown bar stays anchored to the bottom edge of the drawer (already absolute-positioned) — its 5px height won't crash into stacked content because the drawer grows to fit.
 
-## Test outline
+## Technical changes
 
-1. Mock `usePromotionalPopup` and `useUpdatePromotionalPopup` so we can drive the `settings` reference manually.
-2. Render the editor with an initial saved payload (`appearance: 'modal'`, custom headline).
-3. Assert the form hydrated (headline + appearance match server).
-4. Simulate Save — flip the mocked `settings` reference to a new object with the same content (post-save refetch).
-5. Between the save and the refetch resolution, change Appearance to `corner-card` via the Select.
-6. Flush effects.
-7. Assert:
-   - The Appearance value in the form is still `corner-card` (not reverted to `modal`).
-   - The dirty pill / `useEditorDirtyState` is `true` (form diverges from snapshot).
-   - The custom headline is still intact.
+Edit only `src/components/public/PromotionalPopup.tsx`, the `if (cfg.appearance === 'banner')` block (currently lines 458–522). Replace the single-row layout with a responsive layout that uses `flex-col sm:flex-row` for the main content row and adds a mobile-only close affordance row above it. No changes to the editor, the data model, or the other appearance variants (modal / corner-card).
 
-## Why this is enough
+### Visual contract
 
-The fix swapped ref-based dirty detection for functional-setState comparison plus a `hasHydratedRef`. The race window is exactly: refetch arrives between an edit's `setState` and React's commit. The test reproduces that ordering by driving the mocked query result synchronously, which is the only way the bug manifests in practice.
+```text
+Desktop (≥640px):
+┌──────────────────────────────────────────────────────────────┐
+│ ⚡ LIMITED TIME OFFER                  [CLAIM OFFER] No thx X│
+│ FREE HAIRCUT WITH ANY COLOR SERVICE                          │
+│ Book a color appointment this month and your haircut is on us│
+├──────────────────────────────────────────────────────── 12s ─┤
+
+Mobile (<640px) — top drawer:
+┌─────────────────────────────────────────┐
+│                                       X │
+│ ⚡ LIMITED TIME OFFER                   │
+│ FREE HAIRCUT WITH ANY                   │
+│ COLOR SERVICE                           │
+│ Book a color appointment this month     │
+│ and your haircut is on us.              │
+│                                         │
+│ [    CLAIM OFFER    ]   No thanks       │
+├──────────────────────────────────── 12s ┤
+```
 
 ## Out of scope
 
-- No production code changes — the fix already shipped.
-- No changes to `usePromotionalPopup` or other editors. If you want the same regression coverage on Hero / Booking / etc. editors, that's a follow-up.
+- No changes to modal or corner-card variants.
+- No changes to the editor's Appearance preview swatch (it remains a tiny static thumbnail; the real responsive behavior shows in the live preview iframe).
+- No new copy or fields.
+
+## QA after implementation
+
+In the live preview, switch viewport to 390×844 and confirm: the headline wraps fully, the body wraps fully, the CTA stretches, the X has its own row, and the countdown bar sits cleanly at the bottom without overlapping any content.
