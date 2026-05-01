@@ -387,17 +387,16 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   </Link>
                 </motion.div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 5.1 }}
-                className={cn(
-                  "flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans",
-                  alignment.notes,
-                )}
               >
-                <p>New clients begin with a $15 consultation</p>
-                <p>Returning clients are free to book their known services</p>
+                <HeroNotes
+                  alignment={alignment}
+                  line1="New clients begin with a $15 consultation"
+                  line2="Returning clients are free to book their known services"
+                />
               </motion.div>
             </motion.div>
           </div>
