@@ -19,6 +19,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
