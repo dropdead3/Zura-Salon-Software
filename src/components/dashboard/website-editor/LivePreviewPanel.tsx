@@ -420,8 +420,8 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             blocks click-to-edit on sections beneath it. */}
         {isEditingLive && previewUrl && paneSize.w > 0 && (
           <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3">
-            <div className="flex items-center gap-2 rounded-full bg-warning/95 text-warning-foreground px-3 py-1.5 text-xs shadow-lg backdrop-blur-sm border border-warning/40">
-              <span className="h-1.5 w-1.5 rounded-full bg-warning-foreground/80 animate-pulse" />
+            <div className="flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1.5 text-xs shadow-lg backdrop-blur-sm border border-primary/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary/80 animate-pulse" />
               <span className="font-medium">Showing last saved version</span>
               <span className="opacity-80">— click Save to refresh</span>
             </div>
