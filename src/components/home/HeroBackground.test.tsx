@@ -41,12 +41,11 @@ describe('HeroBackground overlay layering', () => {
 
     expect(wash).not.toBeNull();
     expect(scrim).not.toBeNull();
-    // jsdom drops gradient values from CSSStyleDeclaration.background, so
-    // assert against the raw inline style attribute the React render emitted.
-    const washStyle = wash!.getAttribute('style') ?? '';
-    const scrimStyle = scrim!.getAttribute('style') ?? '';
-    expect(washStyle).toMatch(/rgba\(0,\s*0,\s*0,/);
-    expect(scrimStyle).toMatch(/linear-gradient/);
+    // jsdom's CSSOM rejects modern gradient syntax, leaving both
+    // `.style.background` and the `style` attribute empty. Assert against the
+    // outerHTML instead — that's the source-of-truth React emits.
+    expect(wash!.outerHTML).toMatch(/rgba\(0,\s*0,\s*0,/);
+    expect(scrim!.outerHTML).toMatch(/linear-gradient/);
   });
 
   it('omits the wash layer when overlayOpacity is 0', () => {
