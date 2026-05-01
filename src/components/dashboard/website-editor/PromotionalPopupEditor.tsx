@@ -255,21 +255,41 @@ export function PromotionalPopupEditor() {
   const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
   const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
+  // Tracks whether we've ever hydrated the form from the server. The first
+  // arrival of `settings` must fully populate the form (initial load). Every
+  // subsequent arrival is a refetch — those must preserve in-progress edits.
+  const hasHydratedRef = useRef(false);
   useEffect(() => {
     if (!settings) return;
-    // Always refresh the saved snapshot — it must mirror the server so dirty
-    // detection stays correct after refetches triggered by sibling auto-saves.
-    setSavedSnapshot(settings);
-    // Only mirror into the live form when the operator has no pending edits.
-    // If formData diverges from the prior snapshot, the operator is mid-edit
-    // and a refetch from a sibling auto-save must NOT yank the rug — their
-    // unsaved typing/toggling wins until they Save or Discard.
-    const isDirtyNow =
-      JSON.stringify(formDataRef.current) !==
-      JSON.stringify(savedSnapshotRef.current);
-    if (!isDirtyNow) {
+    const incomingSerialized = JSON.stringify(settings);
+    // First load — populate both saved snapshot AND live form so the operator
+    // sees their persisted config instead of the DEFAULT placeholder.
+    if (!hasHydratedRef.current) {
+      hasHydratedRef.current = true;
+      setSavedSnapshot(settings);
       setFormData(settings);
+      return;
     }
+    // Refetch (after a save, sibling auto-save, or window-focus revalidation).
+    // We compare *inside* the setState callbacks so we read the freshest
+    // values — reading from refs here lags by one render and can clobber
+    // a just-typed edit (the original bug: editing Appearance right after a
+    // Save would race the post-save refetch and revert the appearance).
+    setSavedSnapshot((prevSnapshot) => {
+      // Only update the snapshot if it actually changed — preserves identity
+      // and avoids spurious dirty-state recomputes.
+      return JSON.stringify(prevSnapshot) === incomingSerialized
+        ? prevSnapshot
+        : settings;
+    });
+    setFormData((current) => {
+      // If the form already mirrors the incoming payload, no-op.
+      if (JSON.stringify(current) === incomingSerialized) return current;
+      // Operator has unsaved edits — keep them. The dirty-state check below
+      // will compare against the freshly-updated snapshot and correctly
+      // light up the Save button.
+      return current;
+    });
   }, [settings]);
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
