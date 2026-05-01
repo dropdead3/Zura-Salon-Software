@@ -338,9 +338,14 @@ export function Header() {
         // section, which can resolve to "light" when there's no IntersectionObserver
         // signal yet, making the text render near-black over dark hero footage.
         const hasExplicitBg = !!announcementSettings.bg_color;
+        // Mirror the nav's contrast signal so the announcement bar text color
+        // ALWAYS matches the nav menu. The nav uses `isOverDark` (true →
+        // white text). When the operator sets an explicit `bg_color` we still
+        // honor that color's own luminance, since the bar is no longer
+        // see-through and the nav signal would be misleading.
         const effectiveDark = hasExplicitBg
           ? isColorDark(announcementSettings.bg_color!)
-          : true;
+          : isOverDark || true; // default-dark when detection hasn't resolved yet
         // Strengthen scrim over hero media so text stays legible on busy footage.
         const overMediaDark = !hasExplicitBg;
         // Hide announcement bar on scroll-down past hero, slide back in on scroll-up only.
