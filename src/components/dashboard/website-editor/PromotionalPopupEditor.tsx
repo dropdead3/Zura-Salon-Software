@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
-import { ImageWithFocalPointInput } from './inputs/ImageWithFocalPointInput';
+import { MediaWithFocalPoint } from '@/components/ui/media-with-focal-point';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import {
@@ -923,23 +923,7 @@ export function PromotionalPopupEditor() {
           />
         </Field>
         <Field label="Image (optional)" hint="Auto-optimized to WebP. Treatment + alt text below.">
-          <ImageWithFocalPointInput
-            value={formData.imageUrl ?? ''}
-            onChange={(url) => handleChange('imageUrl', url)}
-            focalX={formData.imageFocalX ?? 50}
-            focalY={formData.imageFocalY ?? 50}
-            onFocalChange={(x, y) => {
-              handleChange('imageFocalX', x);
-              handleChange('imageFocalY', y);
-            }}
-            onFocalReset={() => {
-              handleChange('imageFocalX', 50);
-              handleChange('imageFocalY', 50);
-            }}
-            pathPrefix="promotional-popup"
-            placeholder="https://..."
-          />
-          {formData.imageUrl && (() => {
+          {(() => {
             // Treatment options vary per appearance: in `corner-card` the
             // surface is a single ~360px tile, so "cover" and "side" both
             // collapse to a top strip — exposing both would be a phantom
@@ -950,6 +934,7 @@ export function PromotionalPopupEditor() {
               hint: string;
             };
             const appearance = formData.appearance ?? 'modal';
+            const activeTreatment = formData.imageTreatment ?? 'cover';
             const treatmentOptions: TreatmentOption[] = appearance === 'corner-card'
               ? [
                   { value: 'cover', label: 'Show', hint: 'Render the image as a strip above the headline' },
@@ -962,53 +947,87 @@ export function PromotionalPopupEditor() {
                     { value: 'side', label: 'Side', hint: 'Left rail on the modal' },
                     { value: 'hidden-on-corner', label: 'Hide on corner', hint: 'Show on modal; hide on the corner card' },
                   ];
-            const activeTreatment = formData.imageTreatment ?? 'cover';
+
+            // Focal point has no visible effect when the active surface
+            // doesn't render the image: corner-card+hidden-on-corner OR any
+            // banner appearance. Lock the picker to prevent operators from
+            // tuning a value the audience won't see.
+            const focalDisabled =
+              appearance === 'banner' ||
+              (appearance === 'corner-card' && activeTreatment === 'hidden-on-corner');
+            const focalDisabledReason =
+              appearance === 'banner'
+                ? "Banner appearance doesn't render the image. Switch to Modal or Corner Card to use the focal point."
+                : "The corner card is set to hide the image. Switch Treatment to Show to use the focal point.";
+
             return (
-              <div className="mt-3 space-y-3">
-                {treatmentOptions.length > 0 ? (
-                  <div>
-                    <Label size="xs">Treatment</Label>
-                    <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
-                      {treatmentOptions.map(({ value, label, hint }) => {
-                        const active = activeTreatment === value;
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            title={hint}
-                            onClick={() => handleChange('imageTreatment', value)}
-                            className={cn(
-                              'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
-                              active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
-                            )}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
+              <>
+                <MediaWithFocalPoint
+                  value={formData.imageUrl ?? ''}
+                  onChange={(url) => handleChange('imageUrl', url)}
+                  focalX={formData.imageFocalX ?? 50}
+                  focalY={formData.imageFocalY ?? 50}
+                  onFocalChange={(x, y) => {
+                    handleChange('imageFocalX', x);
+                    handleChange('imageFocalY', y);
+                  }}
+                  onFocalReset={() => {
+                    handleChange('imageFocalX', 50);
+                    handleChange('imageFocalY', 50);
+                  }}
+                  pathPrefix="promotional-popup"
+                  placeholder="https://..."
+                  focalDisabled={focalDisabled}
+                  focalDisabledReason={focalDisabledReason}
+                />
+                {formData.imageUrl && (
+                  <div className="mt-3 space-y-3">
+                    {treatmentOptions.length > 0 ? (
+                      <div>
+                        <Label size="xs">Treatment</Label>
+                        <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
+                          {treatmentOptions.map(({ value, label, hint }) => {
+                            const active = activeTreatment === value;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                title={hint}
+                                onClick={() => handleChange('imageTreatment', value)}
+                                className={cn(
+                                  'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
+                                  active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                )}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="font-sans text-[11px] text-muted-foreground">
+                        Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
+                      </p>
+                    )}
+                    <div>
+                      <Label size="xs">Alt text</Label>
+                      <Input
+                        className="mt-1.5"
+                        value={formData.imageAlt ?? ''}
+                        onChange={(e) => handleChange('imageAlt', e.target.value)}
+                        placeholder="Describe the image (leave blank if decorative)"
+                        maxLength={140}
+                      />
+                      <p className="mt-1 font-sans text-[11px] text-muted-foreground">
+                        Used by screen readers and indexed for SEO. Empty = decorative.
+                      </p>
                     </div>
                   </div>
-                ) : (
-                  <p className="font-sans text-[11px] text-muted-foreground">
-                    Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
-                  </p>
                 )}
-                <div>
-                  <Label size="xs">Alt text</Label>
-                  <Input
-                    className="mt-1.5"
-                    value={formData.imageAlt ?? ''}
-                    onChange={(e) => handleChange('imageAlt', e.target.value)}
-                    placeholder="Describe the image (leave blank if decorative)"
-                    maxLength={140}
-                  />
-                  <p className="mt-1 font-sans text-[11px] text-muted-foreground">
-                    Used by screen readers and indexed for SEO. Empty = decorative.
-                  </p>
-                </div>
-              </div>
+              </>
             );
           })()}
         </Field>
