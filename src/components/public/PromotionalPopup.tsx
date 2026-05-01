@@ -565,6 +565,30 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   if (!open) return fab;
 
+  const isClosing = popupPhase === 'closing';
+  // Per-variant exit animation classes. Each variant exits in the
+  // direction the FAB lives (corner-card → bottom-right corner; banner →
+  // top edge; modal → fade + scale toward FAB). Tailwind/animate utilities
+  // ship via tailwindcss-animate.
+  const cornerExitClasses = fabPos === 'bottom-left'
+    ? 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-left-4 duration-300'
+    : 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-right-4 duration-300';
+  const bannerExitClasses = 'animate-out fade-out slide-out-to-top-2 duration-300';
+  const modalExitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
+
+  // Single onAnimationEnd handler shared across variants. Only finalizes
+  // when we're actually in the `closing` phase — Tailwind's enter
+  // animations (slide-in-from-*) also fire animationend on the same root,
+  // and we must not unmount during the entering phase.
+  const handleRootAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
+    if (!isClosing) return;
+    // Only react to our slide-out animation, not nested children's animations
+    // (e.g. the countdown bar). Tailwind animate-out compiles to specific
+    // keyframe names — we accept any of them since all signal "close done".
+    if (e.target !== e.currentTarget) return;
+    finalizeClose();
+  };
+
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
     // Corner-card is the densest surface — operators can hide the image here
