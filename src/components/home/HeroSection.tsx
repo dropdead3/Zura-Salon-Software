@@ -303,17 +303,19 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
             </motion.h1>
 
             {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 3.6 }}
-              className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
-              style={{ y: subheadlineY }}
-            >
-              Where technical talent meets artistry.
-              <br />
-              We believe in more than just the status quo.
-            </motion.p>
+            {hasSubheadlineContent && (
+              <motion.p
+                initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ ...springTransition, delay: 3.6 }}
+                className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
+                style={{ y: subheadlineY }}
+              >
+                {subheadlineLine1}
+                {subheadlineLine1 && subheadlineLine2 && <br />}
+                {subheadlineLine2}
+              </motion.p>
+            )}
 
             {/* CTAs */}
             <motion.div
