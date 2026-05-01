@@ -9,7 +9,7 @@
  */
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Sun, ArrowDown, CircleDot, Aperture, EyeOff } from 'lucide-react';
+import { Sun, ArrowDown, CircleDot, Aperture, EyeOff, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HeroScrimStyle } from '@/hooks/useSectionConfig';
 
