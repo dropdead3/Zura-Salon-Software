@@ -383,7 +383,7 @@ export function Header() {
                 <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
                   <p className={cn(
                     "text-sm text-center md:text-left",
-                    effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground/80",
+                    effectiveDark ? "text-white" : "text-foreground/80",
                   )}>
                     {announcementSettings.message_prefix}{' '}
                     <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
@@ -395,7 +395,7 @@ export function Header() {
                     rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
                     className={cn(
                       "group inline-flex items-center gap-1.5 text-sm font-display uppercase tracking-wide hover:opacity-80 transition-opacity",
-                      effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground",
+                      effectiveDark ? "text-white" : "text-foreground",
                     )}
                   >
                     {announcementSettings.cta_text}
