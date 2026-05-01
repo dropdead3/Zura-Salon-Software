@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Loader2, Film, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { optimizeImage, autoCrunchImage, formatFileSize } from '@/lib/image-utils';
+import { optimizeImage, autoCrunchImage, formatFileSize, probeBlobDimensions } from '@/lib/image-utils';
 import {
   IMAGE_RECOMMENDED_HINT,
   IMAGE_SIZE_HARD_MB,
