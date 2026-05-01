@@ -291,7 +291,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
           {isEditingLive ? (
             <>
               <span
-                className="text-sm font-medium shrink-0 text-warning-foreground"
+                className="text-sm font-medium shrink-0 text-warning"
                 title="Showing unsaved edits — Save Draft to persist"
               >
                 Editing — unsaved
