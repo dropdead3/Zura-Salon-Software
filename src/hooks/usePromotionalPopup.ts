@@ -116,6 +116,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   customUrl: '',
   customUrlInstructions: '',
   autoMinimizeMs: 15000,
+  valueAnchor: '$45 value',
 };
 
 const SETTING_KEY = 'promotional_popup';
