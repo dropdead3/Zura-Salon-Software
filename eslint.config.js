@@ -145,6 +145,28 @@ export default tseslint.config(
           selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
           message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
         },
+        {
+          // Dirty-State Compare Doctrine — ban
+          //   JSON.stringify(local) !== JSON.stringify(server)
+          // (and the `===` variant). JSON.stringify is key-order sensitive,
+          // so after a save round-trip the two strings differ even when the
+          // objects are semantically equal — leaving the "Unsaved changes"
+          // pill stuck on forever (May 2026 hero-editor regression).
+          //
+          // Use `useDirtyState(local, server)` from @/hooks/useDirtyState,
+          // or `isStructurallyEqual` from @/lib/stableStringify if you need
+          // the boolean outside an editor.
+          //
+          // Override: `// eslint-disable-next-line no-restricted-syntax
+          // -- <reason>` for the rare case where stringify equality with
+          // a known-stable producer is genuinely what you want (e.g.
+          // comparing already-canonicalized cache keys).
+          //
+          // Doctrine anchor: mem://architecture/site-settings-event-ownership.md
+          // Test: src/test/lint-rule-dirty-state.test.ts
+          selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
+          message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
+        },
       ],
     },
   },
