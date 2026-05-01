@@ -7,6 +7,7 @@
 import { useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Crosshair } from 'lucide-react';
+import { DefaultBadge } from '@/components/ui/default-badge';
 
 interface FocalPointPickerProps {
   imageUrl: string;
@@ -70,19 +71,22 @@ export function FocalPointPicker({
         <Label className="text-xs inline-flex items-center gap-1.5">
           <Crosshair className="h-3.5 w-3.5" />
           {label}
-          {x === 50 && y === 50 && (
-            <span className="font-sans normal-case tracking-normal text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded-full border border-border/60">
-              Default
-            </span>
-          )}
+          {x === 50 && y === 50 && <DefaultBadge />}
         </Label>
-        <button
-          type="button"
-          onClick={onReset}
-          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-        >
-          Reset to center
-        </button>
+        {/*
+          Reset affordance is only meaningful when the value has diverged
+          from default. At default the <DefaultBadge /> already communicates
+          the state — a separate "Reset to center" link would be redundant.
+        */}
+        {!(x === 50 && y === 50) && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Reset to center
+          </button>
+        )}
       </div>
       <div
         ref={ref}
