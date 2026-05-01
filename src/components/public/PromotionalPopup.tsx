@@ -143,6 +143,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
+  // Bumped on every editor-driven reset so the popup root remounts and
+  // replays its CSS slide-in animation. Without this, calling `setOpen(true)`
+  // on an already-mounted root is a no-op for `animate-in slide-in-from-*`
+  // (Tailwind's animate utilities only fire on first paint), so operators
+  // saw the popup snap into place instead of sliding up. Used as the React
+  // `key` on each variant's root container.
+  const [animationNonce, setAnimationNonce] = useState(0);
   const triggeredRef = useRef(false);
 
   // Auto-suppress the entire offer prompt on the booking surface — if the
