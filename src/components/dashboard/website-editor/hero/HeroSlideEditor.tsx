@@ -16,6 +16,11 @@ import { BackgroundResolvedPreview } from '../BackgroundResolvedPreview';
 import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import {
+  SLIDE_BG_TYPE_OPTIONS,
+  SLIDE_BG_TYPE_LABELS,
+  SLIDE_BG_TYPE_TOOLTIPS,
+} from './slideBackgroundOptions';
 
 interface HeroSlideEditorProps {
   slide: HeroSlide;
@@ -77,10 +82,11 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
         <div className="space-y-2">
           <Label className="text-xs">Slide Background</Label>
           <div className="flex gap-2">
-            {(['inherit', 'image', 'video'] as const).map((opt) => (
+            {SLIDE_BG_TYPE_OPTIONS.map((opt) => (
               <button
                 key={opt}
                 type="button"
+                title={SLIDE_BG_TYPE_TOOLTIPS[opt]}
                 onClick={() =>
                   onUpdate({
                     background_type: opt,
@@ -94,7 +100,7 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
                     : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
                 )}
               >
-                {opt === 'inherit' ? 'None' : opt === 'image' ? 'Image' : 'Video'}
+                {SLIDE_BG_TYPE_LABELS[opt]}
               </button>
             ))}
           </div>

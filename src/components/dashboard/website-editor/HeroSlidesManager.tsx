@@ -24,6 +24,11 @@ import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
+  SLIDE_BG_TYPE_OPTIONS,
+  SLIDE_BG_TYPE_LABELS,
+  SLIDE_BG_TYPE_TOOLTIPS,
+} from './hero/slideBackgroundOptions';
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -168,9 +173,10 @@ function SlideRow({
           <div className="space-y-2">
             <Label className="text-xs">Slide Background</Label>
             <div className="flex gap-2">
-              {(['inherit', 'image', 'video'] as const).map((opt) => (
+              {SLIDE_BG_TYPE_OPTIONS.map((opt) => (
                 <button
                   key={opt}
+                  title={SLIDE_BG_TYPE_TOOLTIPS[opt]}
                   onClick={() => onUpdate(slide.id, { background_type: opt, ...(opt === 'inherit' ? { background_url: '', background_poster_url: '' } : {}) })}
                   className={`flex-1 px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
                     slide.background_type === opt
@@ -178,7 +184,7 @@ function SlideRow({
                       : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
                   }`}
                 >
-                  {opt === 'inherit' ? 'None' : opt === 'image' ? 'Image' : 'Video'}
+                  {SLIDE_BG_TYPE_LABELS[opt]}
                 </button>
               ))}
             </div>
