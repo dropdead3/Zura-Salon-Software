@@ -1616,7 +1616,7 @@ function SaveStatusPill({
   } else if (isDirty) {
     label = 'Unsaved changes';
     icon = <Circle className="h-2 w-2 fill-warning text-warning" />;
-    tone = 'text-warning-foreground bg-warning/15';
+    tone = 'text-warning bg-warning/15';
   } else if (lastSavedAt) {
     label = `Draft saved ${formatRelative(lastSavedAt)}`;
     icon = <Check className="h-3 w-3 text-success-foreground" />;
