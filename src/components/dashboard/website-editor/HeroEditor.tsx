@@ -31,7 +31,18 @@ export function HeroEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
-  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  // Stable-key serializer so two semantically equal configs (different key
+  // insertion order, e.g. one came from DEFAULT_HERO spread + field patches,
+  // the other from `{ ...DEFAULT_HERO, ...dbRow }`) compare as equal.
+  // Without this, dirty state stays "true" forever after save because the
+  // refetched `data` has a different JSON serialization than the local copy.
+  const stableStringify = (v: unknown): string => {
+    if (v === null || typeof v !== 'object') return JSON.stringify(v);
+    if (Array.isArray(v)) return `[${v.map(stableStringify).join(',')}]`;
+    const keys = Object.keys(v as Record<string, unknown>).sort();
+    return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify((v as Record<string, unknown>)[k])}`).join(',')}}`;
+  };
+  const isDirty = stableStringify(localConfig) !== stableStringify(data);
   useEditorDirtyState(isDirty);
 
   // Live-edit bridge: stream in-memory edits into the preview iframe so the
