@@ -17,6 +17,8 @@ import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
+import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from '@/lib/heroSpacing';
+import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
 import { HeroNotes } from './HeroNotes';
@@ -165,6 +167,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const mutedTone = heroColors.subheadlineClass || '';
   // Per-slide alignment overrides the section default; null/undefined inherits.
   const alignment = resolveHeroAlignment(slide.content_alignment ?? config.content_alignment);
+  // Container-aware spacing — see HeroSection for full rationale.
+  const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
+  const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
+  const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
 
   return (
     <section
@@ -206,7 +212,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
       {/* Foreground content */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className={alignment.wrapper}>
+          <div ref={contentWrapRef} className={alignment.wrapper}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`fg-${activeIndex}`}
@@ -221,7 +227,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   toneClass={mutedTone}
                   editable={isPreview}
                   fieldPath={`slides.${activeIndex}.eyebrow`}
-                  className="mb-4"
+                  className={spacing.eyebrow}
                 />
 
                 <h1
@@ -251,7 +257,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
                   <p
-                    className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                    className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                     style={heroColors.subheadlineStyle}
                   >
                     {isPreview ? (
@@ -284,7 +290,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   </p>
                 )}
 
-                <div className={cn("mt-6 flex flex-col gap-4", alignment.cta)}>
+                <div className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}>
                   <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                     <button
                       onClick={() => {

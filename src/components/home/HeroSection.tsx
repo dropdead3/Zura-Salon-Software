@@ -15,6 +15,8 @@ import { HeroScrollIndicator } from "@/components/home/HeroScrollIndicator";
 import { HeroRotatingWord } from "@/components/home/HeroRotatingWord";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
+import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from "@/lib/heroSpacing";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { cn } from "@/lib/utils";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
@@ -62,6 +64,14 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
   const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
   const alignment = resolveHeroAlignment(heroConfig?.content_alignment);
+  // Container-aware spacing: ResizeObserver on the text wrapper drops the
+  // hero into the `compact` ladder when the wrapper measures below
+  // `COMPACT_FORCE_BREAKPOINT`, regardless of the operator's chosen density.
+  // Honors the project's Container-Aware Responsiveness canon so embedded /
+  // narrow-pane previews don't break with the `airy` preset.
+  const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
+  const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
+  const spacing = resolveHeroSpacing(heroConfig?.content_spacing, forceCompact);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -138,13 +148,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} preload />
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
-            <div className={alignment.wrapper}>
+            <div ref={contentWrapRef} className={alignment.wrapper}>
               <HeroEyebrow
                 show={showEyebrow}
                 text={eyebrowText}
                 editable
                 fieldPath="eyebrow"
-                className="mb-4"
+                className={spacing.eyebrow}
               />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
@@ -165,7 +175,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                  className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
@@ -173,7 +183,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className={cn("mt-6 flex flex-col gap-4", alignment.cta)}>
+              <div className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}>
                 <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
@@ -271,7 +281,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          <div className={alignment.wrapper}>
+          <div ref={contentWrapRef} className={alignment.wrapper}>
             {/* Tagline */}
             {showEyebrow && (
               <motion.div
@@ -280,7 +290,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <HeroEyebrow show={true} text={eyebrowText} className="mb-4" />
+                <HeroEyebrow show={true} text={eyebrowText} className={spacing.eyebrow} />
               </motion.div>
             )}
 
@@ -322,7 +332,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                 style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
@@ -333,7 +343,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className={cn("mt-6 flex flex-col gap-4", alignment.cta)}
+              className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}
               style={{ y: ctaY }}
             >
               <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
