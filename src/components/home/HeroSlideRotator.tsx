@@ -166,6 +166,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             scrimStyle={scrimStyle}
             scrimStrength={scrimStrength}
             mediaWidth={mediaWidth}
+            // Preload only the first slide so the LCP fetch happens once,
+            // before hydration. Rotated slides cross-fade in via JS and don't
+            // benefit from a preload tag injected after-the-fact.
+            preload={activeIndex === 0}
           />
         </motion.div>
       </AnimatePresence>
