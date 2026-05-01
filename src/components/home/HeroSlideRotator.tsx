@@ -86,7 +86,42 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     setActiveIndex(((i % slides.length) + slides.length) % slides.length);
   }, [slides.length]);
 
-  const slide: HeroSlide | undefined = slides[activeIndex];
+  const rawSlide: HeroSlide | undefined = slides[activeIndex];
+
+  // Background-only mode: slides own only their backgrounds; foreground copy +
+  // CTAs come from the section-level fields. Per-slide copy is preserved on
+  // disk so toggling back to multi-slide restores it.
+  const rotatorMode = config.rotator_mode ?? 'multi_slide';
+  const slide: HeroSlide | undefined = useMemo(() => {
+    if (!rawSlide) return rawSlide;
+    if (rotatorMode !== 'background_only') return rawSlide;
+    return {
+      ...rawSlide,
+      eyebrow: config.eyebrow ?? '',
+      show_eyebrow: !!config.show_eyebrow,
+      headline_text: config.headline_text ?? '',
+      subheadline_line1: config.subheadline_line1 ?? '',
+      subheadline_line2: config.subheadline_line2 ?? '',
+      cta_new_client: config.cta_new_client ?? '',
+      cta_new_client_url: config.cta_new_client_url ?? '',
+      cta_returning_client: config.cta_returning_client ?? '',
+      cta_returning_client_url: config.cta_returning_client_url ?? '',
+      show_secondary_button: !!config.show_secondary_button,
+    };
+  }, [
+    rawSlide,
+    rotatorMode,
+    config.eyebrow,
+    config.show_eyebrow,
+    config.headline_text,
+    config.subheadline_line1,
+    config.subheadline_line2,
+    config.cta_new_client,
+    config.cta_new_client_url,
+    config.cta_returning_client,
+    config.cta_returning_client_url,
+    config.show_secondary_button,
+  ]);
 
   // Slide background overlay falls back to section default when null. Same
   // pattern for scrim style/strength: per-slide null → inherit section.
