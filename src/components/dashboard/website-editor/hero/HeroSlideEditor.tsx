@@ -16,6 +16,11 @@ import { BackgroundResolvedPreview } from '../BackgroundResolvedPreview';
 import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import {
+  SLIDE_BG_TYPE_OPTIONS,
+  SLIDE_BG_TYPE_LABELS,
+  SLIDE_BG_TYPE_TOOLTIPS,
+} from './slideBackgroundOptions';
 
 interface HeroSlideEditorProps {
   slide: HeroSlide;
