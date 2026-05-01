@@ -256,9 +256,19 @@ export function PromotionalPopupEditor() {
   const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
   useEffect(() => {
-    if (settings) {
+    if (!settings) return;
+    // Always refresh the saved snapshot — it must mirror the server so dirty
+    // detection stays correct after refetches triggered by sibling auto-saves.
+    setSavedSnapshot(settings);
+    // Only mirror into the live form when the operator has no pending edits.
+    // If formData diverges from the prior snapshot, the operator is mid-edit
+    // and a refetch from a sibling auto-save must NOT yank the rug — their
+    // unsaved typing/toggling wins until they Save or Discard.
+    const isDirtyNow =
+      JSON.stringify(formDataRef.current) !==
+      JSON.stringify(savedSnapshotRef.current);
+    if (!isDirtyNow) {
       setFormData(settings);
-      setSavedSnapshot(settings);
     }
   }, [settings]);
 
