@@ -25,7 +25,8 @@ import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
-import { Palette } from 'lucide-react';
+import { HeroScrimEditor } from './HeroScrimEditor';
+import { Palette, Layers } from 'lucide-react';
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
