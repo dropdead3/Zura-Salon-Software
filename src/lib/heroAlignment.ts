@@ -62,8 +62,11 @@ export interface HeroAlignmentClasses {
 const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   left: {
     wrapper: 'max-w-4xl mr-auto text-left',
-    shellWrapper: 'max-w-4xl mx-auto',
-    innerWrapper: 'mr-auto ml-0 text-left',
+    // Shell fills the container so the inner left/right wrappers can travel
+    // to the page padding edges. The width clamp lives on `innerWrapper` so
+    // the content column itself stays readable while the anchor moves.
+    shellWrapper: 'w-full',
+    innerWrapper: 'max-w-4xl mr-auto ml-0 text-left',
     headline: 'items-start',
     subheadline: 'mr-auto ml-0 max-w-md',
     cta: 'items-start',
@@ -72,8 +75,8 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   },
   center: {
     wrapper: 'max-w-4xl mx-auto text-center',
-    shellWrapper: 'max-w-4xl mx-auto',
-    innerWrapper: 'mx-auto text-center',
+    shellWrapper: 'w-full',
+    innerWrapper: 'max-w-4xl mx-auto text-center',
     headline: 'items-center',
     subheadline: 'mx-auto max-w-md',
     cta: 'items-center',
@@ -82,8 +85,8 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   },
   right: {
     wrapper: 'max-w-4xl ml-auto text-right',
-    shellWrapper: 'max-w-4xl mx-auto',
-    innerWrapper: 'ml-auto mr-0 text-right',
+    shellWrapper: 'w-full',
+    innerWrapper: 'max-w-4xl ml-auto mr-0 text-right',
     headline: 'items-end',
     subheadline: 'ml-auto mr-0 max-w-md',
     cta: 'items-end',
