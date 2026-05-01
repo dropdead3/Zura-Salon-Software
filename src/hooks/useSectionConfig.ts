@@ -174,6 +174,11 @@ export interface HeroConfig {
   pause_on_hover: boolean;
   /** Section-level color overrides; per-slide overrides win when set. */
   text_colors?: HeroTextColors;
+  /** Upload-time metadata for the section background. See HeroSlide notes. */
+  media_width?: number | null;
+  media_height?: number | null;
+  media_size_bytes?: number | null;
+  media_format?: string | null;
 }
 
 export interface BrandStatementConfig {
