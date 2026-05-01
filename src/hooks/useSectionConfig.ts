@@ -395,6 +395,7 @@ export const DEFAULT_HERO: HeroConfig = {
   slide_interval_ms: 6000,
   transition_style: 'crossfade',
   pause_on_hover: true,
+  text_colors: {},
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
