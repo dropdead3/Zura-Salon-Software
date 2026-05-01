@@ -1,50 +1,45 @@
 ## Goal
 
-Finish the four mechanical wiring tasks deferred from the prior turn so operators get visible upload feedback, AI focal detection runs against a bounded image, and the public srcSet is capped to the actual master width.
+Add a build-time regression guard so any future `pathPrefix="hero/…"` callsite is forced to also pass `qualityProfile="hero"`. Prevents a new hero surface from silently using the lossy `standard` profile (which is what caused the original pixelation bug).
 
-## Changes
+## Context
 
-### 1. Persist `meta` on upload + pass it back into `MediaUploadInput`
+- `MediaUploadInput` accepts a `qualityProfile?: 'standard' | 'hero'` prop. `'hero'` triggers the high-resolution path (3200px master, near-lossless WebP, dimension/size metadata).
+- Today exactly 2 hero callsites pass it correctly:
+  - `HeroSlidesManager.tsx` — `pathPrefix="hero/slides"` + `qualityProfile="hero"`
+  - `HeroBackgroundEditor.tsx` — `pathPrefix="hero"` + `qualityProfile="hero"`
+- Nothing prevents a future editor from adding `pathPrefix="hero/foo"` and forgetting the profile flag.
+- Captions + LCP preload from the prior turns are already in place — no further work there.
 
-**`src/components/dashboard/website-editor/HeroSlidesManager.tsx`** (`SlideRow` MediaUploadInput at lines 185–203)
-- Extend the `onChange` handler to read `meta` from the payload and persist `media_width`, `media_height`, `media_size_bytes`, `media_format` into the slide patch alongside `background_url`.
-- Add `meta={slide.media_width ? { width: slide.media_width, height: slide.media_height, sizeBytes: slide.media_size_bytes, format: slide.media_format } : null}` to the `<MediaUploadInput>` props.
+## Plan
 
-**`src/components/dashboard/website-editor/HeroBackgroundEditor.tsx`** (lines 83–99)
-- Same treatment on the section-level `MediaUploadInput`: persist `meta.*` into `config.media_*` via `onChange`, and pass the existing `config.media_*` back as `meta`.
+**1. Add Vitest regression test** — `src/test/hero-quality-profile.test.ts`
 
-### 2. Render the resolution caption strip on the preview tile
+   Walk every `.tsx` file under `src/`, parse out each `<MediaUploadInput …/>` opening tag, and for any tag whose `pathPrefix` prop value contains the substring `hero` (template literal or string literal), assert the same tag also contains `qualityProfile="hero"`. Failures list the file + line so the regression is obvious.
 
-**`src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx`** (preview block at lines 345–372)
-- When `meta?.width` is present and `kind === 'image'`, render a small caption strip absolutely positioned at the bottom-left of the preview tile (mirroring the existing top-left type chip):
-  - Format: `3200 × 2133 · WebP · 480 KB`
-  - Width pulled from `meta.width × meta.height`; format derived from `meta.format` (strip `image/` prefix, uppercase); size via existing `formatFileSize(meta.sizeBytes)`.
-  - Leading dot indicates resolution health: green ≥2400, amber 1200–2399, red <1200, mapped to `bg-emerald-500 / bg-amber-500 / bg-red-500`.
-  - Same `bg-background/80 backdrop-blur` glass treatment as the type chip; `text-[10px]`, `font-sans`, `tabular-nums`.
+   Implementation notes:
+   - Use a regex pass over file contents (no AST dependency needed) — match `<MediaUploadInput\b[^/>]*/?>` across multiple lines, then inspect the captured tag body.
+   - Skip `MediaUploadInput.tsx` itself (the component definition).
+   - Test file lives alongside existing lint-rule tests, so it auto-runs under `bun run test` / CI's vitest sweep.
 
-### 3. Bound focal-point fetch to 2048px
+**2. No production code changes.** Existing two callsites already satisfy the rule, so the test passes on first run and only bites future regressions.
 
-**`src/hooks/useFocalPointSuggestion.ts`** (line 28–35)
-- Before invoking `suggest-focal-point`, transform `imageUrl` via `withSupabaseImageWidth(imageUrl, 2048)` (imported from `@/lib/image-utils`). For non-Supabase URLs the helper is a no-op so external/blob URLs are unchanged.
-- Pass the transformed URL in the function `body`. Keep the `latestUrlRef` keyed on the *original* URL so concurrent-upload guards still match what callers compare against.
+## Out of scope (already shipped in prior turns)
 
-### 4. Pipe `mediaWidth` into `<HeroBackground>` from both consumers
+- Resolution caption strip + colored health dot on the upload tile
+- Metadata persistence (`media_width/height/size_bytes/format`) on slides + hero background
+- Tooltip on the resolution dot
+- `<link rel="preload" as="image" imageSrcSet imageSizes>` for the first hero slide
+- Video poster metadata probing
+- 2048-bounded URL for AI focal-point suggestion
+- `mediaWidth` cap piped into `<HeroBackground>` srcSet
 
-**`src/components/home/HeroSection.tsx`** (lines 123 + 198)
-- Read `heroConfig?.media_width` and pass `mediaWidth={heroConfig?.media_width ?? null}` to both `<HeroBackground>` instances.
+## Files touched
 
-**`src/components/home/HeroSlideRotator.tsx`** (line 149)
-- Resolve the active slide's master width: prefer `slide.media_width` when the slide owns its background; fall back to `config.media_width` when `background_type === 'inherit'` (mirrors the existing `bgUrl` resolution at lines 81–85).
-- Pass the resolved value as `mediaWidth` into `<HeroBackground>`.
+- `src/test/hero-quality-profile.test.ts` (new)
 
-## Out of scope (intentionally)
+## Enhancement suggestions for after this lands
 
-- `<link rel="preload" imageSrcSet>` for first slide LCP — separate optimization wave.
-- Build-time test asserting every `pathPrefix="hero/…"` callsite passes `qualityProfile="hero"` — separate canon enforcement task.
-- Backfill of `media_*` on legacy slides — captions silently degrade (UI tile shows no strip), which is the intended behavior.
-
-## Enhancement suggestions (for after this lands)
-
-1. Add a one-line tooltip on the resolution dot ("Recommended ≥2400px for retina hero") so the green/amber/red coding is self-explanatory.
-2. When `meta.sizeBytes > 1.5MB` AND format is JPEG/PNG, surface an inline "Re-uploading would crunch this to WebP" hint — operator-driven optimization without breaking existing uploads.
-3. Persist the `meta` capture on the `posterValue` upload path for videos too (currently only the video URL is captured) so the editor can show poster resolution health.
+1. Generalize the guard into a true ESLint rule (`hero-pathprefix-requires-quality-profile`) once a third hero callsite appears — easier IDE feedback than a Vitest failure.
+2. Add the inverse check too: `qualityProfile="hero"` without a `pathPrefix` containing `hero` is probably a copy-paste from a hero editor and worth flagging.
+3. Persist a `media_optimized_with_profile: 'hero' | 'standard'` field on the slide row, so the editor can surface a "Re-upload at higher quality" nudge for legacy assets uploaded before the hero profile existed.
