@@ -619,7 +619,16 @@ export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
   show_description: true,
   show_eyebrow: true,
   show_headline: true,
-  show_cta_button: true,
+};
+
+export const DEFAULT_STICKY_FOOTER_BAR: StickyFooterBarConfig = {
+  enabled: true,
+  cta_text: 'Book consult',
+  cta_url: '/booking',
+  show_phone_numbers: true,
+  visible_location_ids: [],
+  scroll_show_after_px: 180,
+  page_exclusions: [],
 };
 
 export const DEFAULT_LOCATIONS_SECTION: LocationsSectionConfig = {
