@@ -511,6 +511,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   function handleFabOpen() {
     setShowFab(false);
+    setPopupPhase('entering');
+    replayPopupMount();
     setOpen(true);
   }
 
