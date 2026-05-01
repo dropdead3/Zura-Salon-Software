@@ -184,6 +184,7 @@ function SlideRow({
                   posterValue={slide.background_poster_url}
                   kind={mediaKind}
                   imageOnly={slide.background_type === 'image'}
+                  qualityProfile="hero"
                   onChange={({ url, posterUrl, kind }) => {
                     const wasNewImage =
                       kind === 'image' && url && url !== slide.background_url;
