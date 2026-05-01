@@ -434,26 +434,36 @@ export function PromotionalPopupEditor() {
   // Auto-save for the binary Enable toggle — operators expect a switch to
   // "just work" without hunting for Save. We persist immediately, refresh
   // the preview, and skip the dirty-state path for this single field.
+  // Reads from `formDataRef` (not the captured `formData`) and routes through
+  // `enqueueWrite` so it can never race the manual "Save to preview" button —
+  // a stale-closure save can no longer overwrite the just-toggled enable bit.
   const handleEnableToggle = useCallback(
     async (checked: boolean) => {
-      const next = { ...formData, enabled: checked };
-      setFormData(next);
+      // Optimistic UI flip so the switch feels instant.
+      setFormData((prev) => ({ ...prev, enabled: checked }));
       setAutoSaving(true);
       try {
-        await updateSettings.mutateAsync(next);
-        setSavedSnapshot(next);
-        toast.success(checked ? 'Popup enabled' : 'Popup disabled');
-        triggerPreviewRefresh();
+        await enqueueWrite(
+          // Build the payload at write-time from the freshest form state so
+          // any in-flight typing is also captured by this auto-save.
+          () => ({ ...formDataRef.current, enabled: checked }),
+          () => {
+            toast.success(checked ? 'Popup enabled' : 'Popup disabled');
+            triggerPreviewRefresh();
+          },
+          () => {
+            // Roll back optimistic state on failure.
+            setFormData((prev) => ({ ...prev, enabled: !checked }));
+          },
+        );
       } catch (err) {
-        // Roll back optimistic state on failure
-        setFormData((prev) => ({ ...prev, enabled: !checked }));
         const msg = err instanceof Error ? err.message : 'unknown error';
         toast.error(`Failed to update: ${msg}`);
       } finally {
         setAutoSaving(false);
       }
     },
-    [formData, updateSettings],
+    [enqueueWrite],
   );
 
   const handlePreviewNow = useCallback(() => {
