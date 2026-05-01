@@ -21,6 +21,7 @@ import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from '@/lib/heroSpacing'
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
+import { HERO_OVERLAY_ANCHORS } from './heroOverlayAnchors';
 import { HeroNotes } from './HeroNotes';
 import { HeroRotatingWord } from './HeroRotatingWord';
 
