@@ -62,6 +62,14 @@ export interface MediaUploadChangePayload {
   kind: MediaKind;
   /** Present after a fresh upload; absent for pasted URLs / cleared values. */
   meta?: MediaUploadMeta;
+  /**
+   * High-fidelity JPEG `data:` URL captured from the **pre-crunch raw bitmap**
+   * (≤1600px long edge). Surfaced so AI consumers (focal-point detection,
+   * alt-text) can analyze the source pixels instead of the downsampled WebP
+   * we ship to Storage. Absent for non-image uploads, sources already
+   * smaller than the analysis target, or pasted URLs.
+   */
+  analysisDataUrl?: string;
 }
 
 interface MediaUploadInputProps {
