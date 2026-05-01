@@ -118,13 +118,6 @@ function summarizeRotator(c: HeroConfig): string {
   return `${n} slides · auto · ${seconds}s`;
 }
 
-function summarizeWords(c: HeroConfig): string {
-  const enabled = c.show_rotating_words ?? false;
-  const count = (c.rotating_words ?? []).filter((w) => w && w.trim()).length;
-  if (!enabled) return 'Off';
-  if (count === 0) return 'On · no words yet';
-  return `${count} word${count === 1 ? '' : 's'} · ${c.word_rotation_interval}s`;
-}
 
 function summarizeAdvanced(c: HeroConfig): string {
   return `${c.animation_start_delay}s start delay`;
