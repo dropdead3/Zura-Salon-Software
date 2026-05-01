@@ -154,6 +154,7 @@ function broadcastDraftWrite(orgId: string, key: string): void {
   if (typeof window === 'undefined') return;
   emitAmbientTelemetry('draft-write-broadcast', { orgId, key });
   try {
+    // eslint-disable-next-line no-restricted-syntax -- This module is the canonical owner of `site-settings-draft-write`. See doctrine in mem://architecture/site-settings-event-ownership.md.
     window.dispatchEvent(
       new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
     );
