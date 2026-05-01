@@ -22,6 +22,8 @@ interface HeroSlideEditorProps {
   /** Section-level config — used to resolve "inherit" + show defaults. */
   section: HeroConfig;
   onUpdate: (patch: Partial<HeroSlide>) => void;
+  /** Section-level updater for global fields surfaced inline (e.g. rotating words). */
+  onUpdateSection: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
 }
 
 /**
