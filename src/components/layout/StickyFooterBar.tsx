@@ -17,34 +17,21 @@ export function StickyFooterBar() {
   const locations = allLocations.filter((l) => !!l.phone);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    const SCROLL_DELTA = 6; // ignore micro-jitter
-
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
 
-      const delta = scrollY - lastScrollY;
+      // Show once user has scrolled past 40% of first viewport
+      const pastThreshold = scrollY > windowHeight * 0.4;
+      // Hide when within ~1 viewport of the bottom (to avoid covering footer CTAs)
+      const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 0.5;
 
-      // Show after scrolling past 50% of first viewport
-      const pastThreshold = scrollY > windowHeight * 0.5;
-      // Hide when near bottom (within 1.5 viewport heights of the bottom)
-      const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 1.5;
-
-      if (Math.abs(delta) >= SCROLL_DELTA) {
-        if (delta > 0) {
-          // Scrolling down — show bar (if past threshold and not at bottom)
-          setIsVisible(pastThreshold && !nearBottom);
-        } else {
-          // Scrolling up — hide bar
-          setIsVisible(false);
-        }
-        lastScrollY = scrollY;
-      }
+      setIsVisible(pastThreshold && !nearBottom);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
