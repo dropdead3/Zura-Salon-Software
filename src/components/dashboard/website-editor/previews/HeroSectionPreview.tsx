@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { Eyebrow } from '@/components/ui/Eyebrow';
+import { HeroNotes } from '@/components/home/HeroNotes';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
@@ -82,10 +83,11 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
                   <ArrowRight className="w-0 h-4 opacity-0 transition-all duration-300" />
                 </button>
               </div>
-              <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.notes)}>
-                <p>{config.consultation_note_line1}</p>
-                <p>{config.consultation_note_line2}</p>
-              </div>
+              <HeroNotes
+                alignment={alignment}
+                line1={config.consultation_note_line1}
+                line2={config.consultation_note_line2}
+              />
             </div>
           </div>
         </div>
