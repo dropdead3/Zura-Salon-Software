@@ -24,6 +24,8 @@ import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
+import { HeroTextColorsEditor } from './HeroTextColorsEditor';
+import { Palette } from 'lucide-react';
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
@@ -85,6 +87,17 @@ export function HeroEditor() {
         config={localConfig}
         onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
       />
+
+      <EditorCard
+        title="Text & Buttons"
+        icon={Palette}
+        description="Pick exact colors for the headline, subheadline, and CTA buttons. Leave any field empty to auto-contrast against your background."
+      >
+        <HeroTextColorsEditor
+          value={localConfig.text_colors}
+          onChange={(next) => updateField('text_colors', next)}
+        />
+      </EditorCard>
 
       <HeroSlidesManager
         config={localConfig}

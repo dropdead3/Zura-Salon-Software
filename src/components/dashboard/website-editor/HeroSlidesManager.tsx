@@ -16,6 +16,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
 import { EditorCard } from './EditorCard';
+import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
@@ -225,6 +226,16 @@ function SlideRow({ slide, index, onUpdate, onDelete }: SlideRowProps) {
                 step={0.05}
               />
             )}
+          </div>
+
+          {/* Per-slide text/button color overrides — empty fields inherit
+              from the section-level Text & Buttons panel. */}
+          <div className="space-y-2 pt-3 border-t border-border/30">
+            <HeroTextColorsEditor
+              value={slide.text_colors}
+              onChange={(next) => onUpdate(slide.id, { text_colors: next })}
+              compact
+            />
           </div>
         </CollapsibleContent>
       </Collapsible>

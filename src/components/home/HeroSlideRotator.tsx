@@ -15,6 +15,8 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
+import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
+import { cn } from '@/lib/utils';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
@@ -82,17 +84,15 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
   const handleHoverLeave = () => config.pause_on_hover && setIsPaused(false);
 
-  // Foreground text gets contrast against background media — when there's a
-  // background, text turns white; otherwise inherit theme foreground.
+  // Foreground text gets contrast against background media. The shared
+  // resolver merges section-level + per-slide overrides on top of the
+  // auto-contrast default (white when there's a media background, theme
+  // foreground otherwise).
   const hasBackground = bgType !== 'none' && !!bgUrl;
-  const textTone = hasBackground ? 'text-white' : 'text-foreground';
-  const mutedTone = hasBackground ? 'text-white/80' : 'text-muted-foreground';
-  const buttonPrimary = hasBackground
-    ? 'bg-white text-black hover:bg-white/90'
-    : 'bg-foreground text-background hover:bg-foreground/90';
-  const buttonSecondary = hasBackground
-    ? 'border-white text-white'
-    : 'border-foreground text-foreground';
+  const mergedColors = mergeHeroColors(config.text_colors, slide.text_colors);
+  const heroColors = resolveHeroColors(mergedColors, hasBackground);
+  // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
+  const mutedTone = heroColors.subheadlineClass || '';
 
   return (
     <section
@@ -152,8 +152,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 )}
 
                 <h1
-                  className={`font-display font-normal leading-[0.95] ${textTone}`}
-                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+                  className={cn("font-display font-normal leading-[0.95]", heroColors.headlineClass)}
+                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
                 >
                   {isPreview ? (
                     <InlineEditableText
@@ -169,7 +169,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 </h1>
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
-                  <p className={`mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed ${mutedTone}`}>
+                  <p
+                    className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                    style={heroColors.subheadlineStyle}
+                  >
                     {isPreview ? (
                       <InlineEditableText
                         as="span"
@@ -209,7 +212,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         setConsultationOpen(true);
                       }
                     }}
-                    className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonPrimary}`}
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.primaryButtonClass,
+                    )}
+                    style={heroColors.primaryButtonStyle}
                   >
                     <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
@@ -217,7 +224,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   {slide.show_secondary_button && (
                     <Link
                       to={slide.cta_returning_client_url || '/booking'}
-                      className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonSecondary}`}
+                      className={cn(
+                        "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                        heroColors.secondaryButtonClass,
+                      )}
+                      style={heroColors.secondaryButtonStyle}
                     >
                       <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
                       <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />

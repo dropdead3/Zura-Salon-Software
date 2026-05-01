@@ -10,6 +10,8 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
+import { resolveHeroColors } from "@/lib/heroColors";
+import { cn } from "@/lib/utils";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
 
@@ -44,6 +46,9 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const bgFit = heroConfig?.background_fit ?? 'cover';
   const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
   const hasMediaBackground = bgType !== 'none' && !!bgUrl;
+  // Resolve auto-contrast + operator color overrides for headline, subheadline,
+  // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
+  const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -126,11 +131,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 </p>
               )}
               <h1
-                className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+                className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
                 // (set on the SectionStyleWrapper); defaults to 1 so existing
                 // sections see no change. Section-level "H" chip cycles Sm→XL.
-                style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+                style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
               >
                 <InlineEditableText
                   as="span"
@@ -143,7 +148,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
               {hasSubheadlineContent && (
-                <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+                <p
+                  className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                  style={heroColors.subheadlineStyle}
+                >
                   {subheadlineLine1}
                   {subheadlineLine1 && subheadlineLine2 && <br />}
                   {subheadlineLine2}
@@ -153,13 +161,15 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full"
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
+                    style={heroColors.primaryButtonStyle}
                   >
                     I am a new client
                   </button>
                   <Link
                     to="/booking"
-                    className="w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full"
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass)}
+                    style={heroColors.secondaryButtonStyle}
                   >
                     I am a returning client
                   </Link>
@@ -261,11 +271,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* Main headline */}
             <motion.h1
-              className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+              className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
               style={{
                 y: headlineY,
                 filter: headingBlurFilter,
                 fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))',
+                ...heroColors.headlineStyle,
               }}
             >
               <motion.span 
@@ -308,8 +319,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
-                style={{ y: subheadlineY }}
+                className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
                 {subheadlineLine1 && subheadlineLine2 && <br />}
@@ -330,7 +341,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.primaryButtonClass,
+                    )}
+                    style={heroColors.primaryButtonStyle}
                   >
                     <span className="relative z-10">I am a new client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
@@ -343,7 +358,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.secondaryButtonClass,
+                    )}
+                    style={heroColors.secondaryButtonStyle}
                   >
                     <span className="relative z-10">I am a returning client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
