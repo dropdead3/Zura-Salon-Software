@@ -42,6 +42,8 @@ export function SectionNavItem({
   deletable = false,
   onDelete,
   onDuplicate,
+  onHover,
+  onHoverEnd,
 }: SectionNavItemProps) {
   const {
     attributes,
