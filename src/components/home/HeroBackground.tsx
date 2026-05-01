@@ -106,12 +106,12 @@ export function HeroBackground({
               rel="preload"
               as="image"
               href={url}
-              imagesrcset={srcSet}
-              imagesizes="100vw"
-              fetchpriority="high"
+              imageSrcSet={srcSet}
+              imageSizes="100vw"
+              fetchPriority="high"
             />
           ) : (
-            <link rel="preload" as="image" href={url} fetchpriority="high" />
+            <link rel="preload" as="image" href={url} fetchPriority="high" />
           )}
         </Helmet>
       )}
