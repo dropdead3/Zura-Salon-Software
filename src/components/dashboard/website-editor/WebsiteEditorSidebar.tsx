@@ -542,10 +542,29 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50">
-      {/* Search row. Sidebar collapse lives in the editor toolbar — keeping a
-          second collapse button here was redundant. */}
-      <div className="p-3 border-b border-border/40">
-        <WebsiteEditorSearch onSelectResult={onTabChange} />
+      {/* Search row + in-rail collapse. Collapse lives inside the rail it controls
+          so the affordance is anchored to the surface it acts on (not orphaned in
+          the toolbar where it reads as a back button). */}
+      <div className="p-3 border-b border-border/40 flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <WebsiteEditorSearch onSelectResult={onTabChange} />
+        </div>
+        {onToggleCollapse && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={onToggleCollapse}
+                aria-label="Hide sections panel"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Hide sections (⌘\)</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* Navigation — Zone 1 (this page) → Zone 2 (chrome) → Zone 3 (library) */}
