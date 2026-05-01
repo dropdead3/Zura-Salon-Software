@@ -446,6 +446,14 @@ export function HeroSlidesManager({ config, onChange }: HeroSlidesManagerProps) 
                     onDelete={deleteSlide}
                     sectionScrimStyle={config.scrim_style}
                     sectionScrimStrength={config.scrim_strength}
+                    sectionBgType={config.background_type}
+                    sectionBgUrl={config.background_url}
+                    sectionBgPoster={config.background_poster_url}
+                    sectionBgFit={config.background_fit}
+                    sectionFocalX={config.background_focal_x ?? 50}
+                    sectionFocalY={config.background_focal_y ?? 50}
+                    sectionOverlayMode={config.overlay_mode ?? 'darken'}
+                    sectionOverlayOpacity={config.overlay_opacity ?? 0.4}
                   />
                 ))}
               </div>
