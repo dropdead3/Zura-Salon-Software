@@ -250,25 +250,21 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
       {/* Foreground content
        *
-       * Slides are absolutely stacked inside the alignment wrapper so that
-       * the outgoing and incoming slide occupy the same coordinate during the
-       * crossfade. Without this, `mode="wait"` would unmount the outgoing
-       * slide first, the parent flex cell would collapse, and the new slide
-       * would visibly "snap through center" as it remounted. See plan.md.
+       * `mode="popLayout"` pops the exiting slide out of normal layout flow
+       * (framer absolutely positions it during exit) so the entering slide
+       * takes its slot immediately. This eliminates the "snap through center"
+       * regression where the outgoing slide unmounted, the flex cell
+       * collapsed, and the new slide visibly dropped into place. The exit
+       * crossfade overlaps the enter, hiding any sub-pixel layout shift.
+       *
+       * Pure opacity (no `y` translate) keeps the transition seamless.
        */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
           <div ref={contentWrapRef} className={cn(alignment.wrapper, 'relative w-full')}>
-            <AnimatePresence mode="sync" initial={false}>
+            <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
-                className={cn(
-                  // Stack slides on top of each other so they crossfade in place.
-                  // `fg-shared` (background-only mode) never re-keys, so the
-                  // absolute positioning is harmless — there's only ever one.
-                  'top-0 left-0 right-0',
-                  rotatorMode === 'background_only' ? 'relative' : 'absolute',
-                )}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
