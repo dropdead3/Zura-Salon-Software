@@ -214,8 +214,8 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
             step={0.05}
             description={
               overlayMode === 'lighten'
-                ? 'Brightens the media to keep dark text legible'
-                : 'Darkens the media to keep light text legible'
+                ? 'Uniform white wash applied across the whole image — the Background Scrim layers on top.'
+                : 'Uniform black wash applied across the whole image — the Background Scrim layers on top.'
             }
           />
 

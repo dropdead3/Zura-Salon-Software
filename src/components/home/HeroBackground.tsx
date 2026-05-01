@@ -81,12 +81,19 @@ export function HeroBackground({
   if (type === 'none' || !url) return null;
 
   const objectFit = fit === 'contain' ? 'object-contain' : 'object-cover';
-  // Resolve scrim style/strength with sensible fallbacks.
-  const style: HeroScrimStyle = scrimStyle ?? 'flat';
-  // overlayOpacity is the operator-facing control ("Overlay Darkness/Lightness").
-  // scrimStrength is a legacy fallback used only when overlayOpacity isn't supplied.
-  const strengthRaw = overlayOpacity ?? scrimStrength ?? 0.4;
-  const strength = Math.max(0, Math.min(1, strengthRaw));
+  // TWO INDEPENDENT LAYERS:
+  //   1. `overlayOpacity` — flat uniform wash. This is the operator-facing
+  //      "Overlay Darkness/Lightness" slider. ALWAYS applied so dragging the
+  //      slider has an immediate, visible effect regardless of scrim style.
+  //   2. `scrimStyle` + `scrimStrength` — editorial shape (gradient/vignette)
+  //      layered ON TOP of the wash for legibility in the text region.
+  //
+  // Previously these were fused into a single value, which made the
+  // "Overlay Darkness" slider invisible whenever scrim_style was a gradient
+  // (the bottom-only gradient hid all changes at the top of the hero).
+  const flatWash = Math.max(0, Math.min(1, overlayOpacity ?? 0));
+  const scrimShape: HeroScrimStyle = scrimStyle ?? 'flat';
+  const scrimPeak = Math.max(0, Math.min(1, scrimStrength ?? 0));
   const fx = Math.max(0, Math.min(100, focalX));
   const fy = Math.max(0, Math.min(100, focalY));
   const objectPosition = `${fx}% ${fy}%`;
@@ -141,10 +148,21 @@ export function HeroBackground({
           fetchPriority="high"
         />
       )}
-      {style !== 'none' && strength > 0 && (
+      {/* Layer 1 — flat uniform wash driven by the operator's
+          "Overlay Darkness/Lightness" slider. Always rendered when > 0. */}
+      {flatWash > 0 && (
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: buildScrimBackground(style, strength, overlayMode) }}
+          style={{
+            background: `rgba(${overlayMode === 'lighten' ? '255,255,255' : '0,0,0'},${flatWash.toFixed(3)})`,
+          }}
+        />
+      )}
+      {/* Layer 2 — editorial scrim shape (gradient/vignette) for legibility. */}
+      {scrimShape !== 'none' && scrimPeak > 0 && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: buildScrimBackground(scrimShape, scrimPeak, overlayMode) }}
         />
       )}
     </div>
