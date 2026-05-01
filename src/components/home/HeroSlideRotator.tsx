@@ -33,6 +33,27 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const [consultationOpen, setConsultationOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
+  // Section-level rotating words — globals shared across all slides (per
+  // Slider-Revolution doctrine: per-slide owns text/image, global decoration
+  // like the rotating word + consultation notes lives once at the section).
+  const rotatingWords = useMemo(
+    () => (config.rotating_words ?? []).filter((w) => w && w.trim() !== ''),
+    [config.rotating_words],
+  );
+  const showRotatingWords = !!config.show_rotating_words && rotatingWords.length > 0;
+  const wordInterval = Math.max(1500, config.word_rotation_interval ?? 5500);
+  const [wordIndex, setWordIndex] = useState(0);
+  useEffect(() => {
+    if (!showRotatingWords || isPreview || reduceMotion) return;
+    const id = window.setInterval(() => {
+      setWordIndex((i) => (i + 1) % rotatingWords.length);
+    }, wordInterval);
+    return () => window.clearInterval(id);
+  }, [showRotatingWords, isPreview, reduceMotion, wordInterval, rotatingWords.length]);
+  useEffect(() => {
+    if (wordIndex >= rotatingWords.length && rotatingWords.length > 0) setWordIndex(0);
+  }, [rotatingWords.length, wordIndex]);
+
   // Clamp the active index if slides shrink.
   useEffect(() => {
     if (activeIndex >= slides.length && slides.length > 0) {
