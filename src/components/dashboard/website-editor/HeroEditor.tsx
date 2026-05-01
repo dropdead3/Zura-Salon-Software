@@ -404,8 +404,9 @@ export function HeroEditor() {
       <div className="space-y-6">
         <EditorCard title="Hero Section" icon={ImageIcon}>
           <p className="text-sm text-muted-foreground -mt-1">
-            Each slide owns its own background and copy. Layout settings below
-            apply to every slide.
+            {rotatorMode === 'background_only'
+              ? 'Each slide owns its own background. Headline, subheadline & buttons are shared across all slides.'
+              : 'Each slide owns its own background and copy. Layout settings below apply to every slide.'}
           </p>
 
           {/* SLIDES group */}
@@ -440,6 +441,7 @@ export function HeroEditor() {
                         index={i}
                         isFirst={i === 0}
                         section={localConfig}
+                        rotatorMode={rotatorMode}
                         onClick={() => setView({ kind: 'slide', id: s.id })}
                         onDelete={() => deleteSlide(s.id)}
                         onToggleActive={(next) => updateSlide(s.id, { active: next })}
