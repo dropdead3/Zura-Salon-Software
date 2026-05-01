@@ -1,0 +1,390 @@
+import { useState } from 'react';
+import { Label } from '@/components/ui/label';
+import { Image as ImageIcon, Sparkles, Sun, Moon, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
+import { EditorCard } from '../EditorCard';
+import { MediaUploadInput } from '../inputs/MediaUploadInput';
+import { ToggleInput } from '../inputs/ToggleInput';
+import { SliderInput } from '../inputs/SliderInput';
+import { CharCountInput } from '../inputs/CharCountInput';
+import { UrlInput } from '../inputs/UrlInput';
+import { FocalPointPicker } from '../inputs/FocalPointPicker';
+import { HeroTextColorsEditor } from '../HeroTextColorsEditor';
+import { HeroScrimEditor } from '../HeroScrimEditor';
+import { BackgroundResolvedPreview } from '../BackgroundResolvedPreview';
+import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+
+interface HeroSlideEditorProps {
+  slide: HeroSlide;
+  index: number;
+  /** Section-level config — used to resolve "inherit" + show defaults. */
+  section: HeroConfig;
+  onUpdate: (patch: Partial<HeroSlide>) => void;
+}
+
+/**
+ * Focused per-slide editor. Surfaces only what legitimately varies per
+ * slide: background media, copy, CTAs. Layout-level concerns (alignment,
+ * scrim, colors, animation) are edited globally via the hub.
+ *
+ * Per-slide overrides for those global settings are tucked under a
+ * collapsed "Advanced overrides" section — present for power users but
+ * never the first thing operators see.
+ */
+export function HeroSlideEditor({ slide, index, section, onUpdate }: HeroSlideEditorProps) {
+  const [overridesOpen, setOverridesOpen] = useState(false);
+
+  const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
+
+  // Resolve effective background for the slide (per-slide media or inherited).
+  const resolvedBgType = slide.background_type === 'inherit' ? section.background_type : slide.background_type;
+  const resolvedBgUrl = slide.background_type === 'inherit' ? section.background_url : slide.background_url;
+  const resolvedBgPoster = slide.background_type === 'inherit' ? section.background_poster_url : slide.background_poster_url;
+  const fitOverridden = slide.background_fit != null;
+  const sectionFit = section.background_fit;
+  const resolvedFit: 'cover' | 'contain' = fitOverridden ? (slide.background_fit as 'cover' | 'contain') : sectionFit;
+  const focalOverridden = slide.background_focal_x != null && slide.background_focal_y != null;
+  const sectionFocalX = section.background_focal_x ?? 50;
+  const sectionFocalY = section.background_focal_y ?? 50;
+  const resolvedFocalX = focalOverridden ? (slide.background_focal_x as number) : sectionFocalX;
+  const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
+  const sectionOverlayMode: 'darken' | 'lighten' = section.overlay_mode ?? 'darken';
+  const sectionOverlayOpacity = section.overlay_opacity ?? 0.4;
+  const resolvedOverlayMode: 'darken' | 'lighten' = slide.overlay_mode ?? sectionOverlayMode;
+  const resolvedOverlayOpacity = slide.overlay_opacity ?? sectionOverlayOpacity;
+  const resolvedScrimStyle = slide.scrim_style ?? section.scrim_style ?? 'gradient-bottom';
+  const resolvedScrimStrength = slide.scrim_strength ?? section.scrim_strength ?? 0.55;
+  const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
+
+  const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
+    onUpdate({ background_focal_x: x, background_focal_y: y });
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* Background media */}
+      <EditorCard title={`Slide ${index + 1} · Background`} icon={ImageIcon}>
+        <p className="text-xs text-muted-foreground -mt-1">
+          The image or video shown behind this slide. Leave on "Use Section BG"
+          to inherit the hero's default background.
+        </p>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Slide Background</Label>
+          <div className="flex gap-2">
+            {(['inherit', 'image', 'video'] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() =>
+                  onUpdate({
+                    background_type: opt,
+                    ...(opt === 'inherit' ? { background_url: '', background_poster_url: '' } : {}),
+                  })
+                }
+                className={cn(
+                  'flex-1 px-3 py-1.5 rounded-full text-[11px] border transition-colors',
+                  slide.background_type === opt
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                )}
+              >
+                {opt === 'inherit' ? 'Use Section BG' : opt === 'image' ? 'Image' : 'Video'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {slide.background_type !== 'inherit' && (
+          <>
+            <MediaUploadInput
+              label=""
+              value={slide.background_url}
+              posterValue={slide.background_poster_url}
+              kind={mediaKind}
+              imageOnly={slide.background_type === 'image'}
+              qualityProfile="hero"
+              meta={
+                slide.media_width
+                  ? {
+                      width: slide.media_width,
+                      height: slide.media_height,
+                      sizeBytes: slide.media_size_bytes,
+                      format: slide.media_format,
+                      optimizedWithProfile: slide.media_optimized_with_profile,
+                    }
+                  : null
+              }
+              onChange={({ url, posterUrl, kind, meta, analysisDataUrl }) => {
+                const wasNewImage = kind === 'image' && url && url !== slide.background_url;
+                onUpdate({
+                  background_url: url,
+                  background_poster_url: posterUrl,
+                  background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
+                  media_width: meta?.width ?? (url ? slide.media_width ?? null : null),
+                  media_height: meta?.height ?? (url ? slide.media_height ?? null : null),
+                  media_size_bytes: meta?.sizeBytes ?? (url ? slide.media_size_bytes ?? null : null),
+                  media_format: meta?.format ?? (url ? slide.media_format ?? null : null),
+                  media_optimized_with_profile:
+                    meta?.optimizedWithProfile ?? (url ? slide.media_optimized_with_profile ?? null : null),
+                });
+                if (wasNewImage) suggestFocal(url, { analysisDataUrl });
+              }}
+              pathPrefix="hero/slides"
+            />
+            {focalPending && (
+              <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3 animate-pulse" />
+                Analyzing image to set focal point…
+              </p>
+            )}
+
+            {/* Per-slide fit override */}
+            <div className="space-y-2 pt-2">
+              <ToggleInput
+                label="Override Fit"
+                value={fitOverridden}
+                onChange={(v) => onUpdate({ background_fit: v ? sectionFit : null })}
+                description="Crop differently than the section default"
+              />
+              {fitOverridden && (
+                <div className="flex gap-2">
+                  {(['cover', 'contain'] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => onUpdate({ background_fit: opt })}
+                      className={cn(
+                        'flex-1 px-3 py-1.5 rounded-full text-[11px] border transition-colors',
+                        resolvedFit === opt
+                          ? 'bg-foreground text-background border-foreground'
+                          : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                      )}
+                    >
+                      {opt === 'cover' ? 'Cover' : 'Contain'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Per-slide focal point */}
+            {!!focalImageUrl && resolvedFit !== 'contain' && (
+              <div className="space-y-2 pt-3 border-t border-border/30">
+                <ToggleInput
+                  label="Override Focal Point"
+                  value={focalOverridden}
+                  onChange={(v) =>
+                    onUpdate({
+                      background_focal_x: v ? sectionFocalX : null,
+                      background_focal_y: v ? sectionFocalY : null,
+                    })
+                  }
+                  description="Anchor a different region of this slide's background"
+                />
+                {focalOverridden && (
+                  <FocalPointPicker
+                    imageUrl={focalImageUrl}
+                    isVideo={resolvedBgType === 'video'}
+                    x={resolvedFocalX}
+                    y={resolvedFocalY}
+                    onChange={(nx, ny) => onUpdate({ background_focal_x: nx, background_focal_y: ny })}
+                    onReset={() => onUpdate({ background_focal_x: 50, background_focal_y: 50 })}
+                    label="Slide Focal Point"
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Live preview */}
+        {resolvedBgType !== 'none' && !!resolvedBgUrl && (
+          <div className="pt-3 border-t border-border/30">
+            <BackgroundResolvedPreview
+              type={resolvedBgType}
+              url={resolvedBgUrl}
+              posterUrl={resolvedBgPoster}
+              fit={resolvedFit}
+              focalX={resolvedFocalX}
+              focalY={resolvedFocalY}
+              overlayMode={resolvedOverlayMode}
+              overlayOpacity={resolvedOverlayOpacity}
+              scrimStyle={resolvedScrimStyle}
+              scrimStrength={resolvedScrimStrength}
+            />
+          </div>
+        )}
+      </EditorCard>
+
+      {/* Copy */}
+      <EditorCard title={`Slide ${index + 1} · Copy`} icon={ImageIcon}>
+        <ToggleInput
+          label="Show Eyebrow"
+          value={slide.show_eyebrow}
+          onChange={(v) => onUpdate({ show_eyebrow: v })}
+        />
+        {slide.show_eyebrow && (
+          <CharCountInput
+            label="Eyebrow"
+            value={slide.eyebrow}
+            onChange={(v) => onUpdate({ eyebrow: v })}
+            maxLength={40}
+          />
+        )}
+        <CharCountInput
+          label="Headline"
+          value={slide.headline_text}
+          onChange={(v) => onUpdate({ headline_text: v })}
+          maxLength={60}
+        />
+        <CharCountInput
+          label="Subheadline Line 1"
+          value={slide.subheadline_line1}
+          onChange={(v) => onUpdate({ subheadline_line1: v })}
+          maxLength={80}
+        />
+        <CharCountInput
+          label="Subheadline Line 2"
+          value={slide.subheadline_line2}
+          onChange={(v) => onUpdate({ subheadline_line2: v })}
+          maxLength={80}
+        />
+      </EditorCard>
+
+      {/* CTAs */}
+      <EditorCard title={`Slide ${index + 1} · Buttons`} icon={ImageIcon}>
+        <CharCountInput
+          label="Primary Button"
+          value={slide.cta_new_client}
+          onChange={(v) => onUpdate({ cta_new_client: v })}
+          maxLength={30}
+        />
+        <UrlInput
+          label="Primary Button URL"
+          value={slide.cta_new_client_url}
+          onChange={(v) => onUpdate({ cta_new_client_url: v })}
+          placeholder="Leave empty to open consultation form"
+        />
+        <ToggleInput
+          label="Show Secondary Button"
+          value={slide.show_secondary_button}
+          onChange={(v) => onUpdate({ show_secondary_button: v })}
+        />
+        {slide.show_secondary_button && (
+          <>
+            <CharCountInput
+              label="Secondary Button"
+              value={slide.cta_returning_client}
+              onChange={(v) => onUpdate({ cta_returning_client: v })}
+              maxLength={30}
+            />
+            <UrlInput
+              label="Secondary Button URL"
+              value={slide.cta_returning_client_url}
+              onChange={(v) => onUpdate({ cta_returning_client_url: v })}
+              placeholder="/booking"
+            />
+          </>
+        )}
+      </EditorCard>
+
+      {/* Advanced overrides — collapsed by default */}
+      <Collapsible open={overridesOpen} onOpenChange={setOverridesOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 p-3 rounded-xl border border-dashed border-border/50 hover:border-foreground/30 transition-colors text-left"
+          >
+            {overridesOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />}
+            <div className="flex-1">
+              <div className="font-display text-[11px] tracking-wider text-foreground">
+                ADVANCED OVERRIDES
+              </div>
+              <div className="text-[11px] text-muted-foreground font-sans mt-0.5">
+                Override the section's scrim, overlay, or text colors for just this slide.
+              </div>
+            </div>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3 space-y-4">
+          {/* Overlay override */}
+          <EditorCard title="Overlay Override" icon={Moon}>
+            <ToggleInput
+              label="Override Overlay"
+              value={slide.overlay_opacity !== null || slide.overlay_mode != null}
+              onChange={(v) =>
+                onUpdate({
+                  overlay_opacity: v ? sectionOverlayOpacity : null,
+                  overlay_mode: v ? sectionOverlayMode : null,
+                })
+              }
+              description="Use a different overlay tint or strength than the section default"
+            />
+            {(slide.overlay_opacity !== null || slide.overlay_mode != null) && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Slide Overlay Type</Label>
+                  <div className="flex gap-2">
+                    {([
+                      { id: 'darken', label: 'Darken', icon: Moon },
+                      { id: 'lighten', label: 'Lighten', icon: Sun },
+                    ] as const).map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => onUpdate({ overlay_mode: id })}
+                        className={cn(
+                          'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] border transition-colors',
+                          (slide.overlay_mode ?? sectionOverlayMode) === id
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                        )}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <SliderInput
+                  label={(slide.overlay_mode ?? sectionOverlayMode) === 'lighten' ? 'Slide Overlay Lightness' : 'Slide Overlay Darkness'}
+                  value={slide.overlay_opacity ?? sectionOverlayOpacity}
+                  onChange={(v) => onUpdate({ overlay_opacity: v })}
+                  min={0}
+                  max={0.8}
+                  step={0.05}
+                />
+              </>
+            )}
+          </EditorCard>
+
+          {/* Scrim override */}
+          <EditorCard title="Scrim Override" icon={Moon}>
+            <HeroScrimEditor
+              scrimStyle={slide.scrim_style ?? null}
+              scrimStrength={slide.scrim_strength ?? null}
+              inheritedStyle={section.scrim_style ?? 'gradient-bottom'}
+              inheritedStrength={section.scrim_strength ?? 0.55}
+              allowInherit
+              onChange={(patch) => onUpdate(patch as Partial<HeroSlide>)}
+              title="Slide Scrim"
+              description="Override the section scrim for this slide. Useful when one video flashes brighter than others."
+            />
+          </EditorCard>
+
+          {/* Text color override */}
+          <EditorCard title="Text Color Override" icon={Moon}>
+            <HeroTextColorsEditor
+              value={slide.text_colors}
+              onChange={(next) => onUpdate({ text_colors: next })}
+              compact
+            />
+          </EditorCard>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
