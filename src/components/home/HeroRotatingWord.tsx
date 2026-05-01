@@ -59,14 +59,15 @@ export function HeroRotatingWord({ show, words, index, isOverDark = false, color
   // Contrast-aware gradient. Over dark media: bright white -> warm gold/cream
   // for a luxe shimmer that still reads as "light text". Over light bg:
   // foreground -> primary so it stays high-contrast against cream/light themes.
-  // Lengthened gradient: pin pure base color through ~50%, then ease into a
-  // softened gold (primary lightened ~18%) so the shimmer reads as luxe
-  // rather than saturated.
+  // Stops pin the base color through ~45% then ease into a softened gold by
+  // 100%. NOTE: do NOT add `[background-size:200%_100%]` — that pushes the
+  // gold endpoint outside the rendered glyph width and the word reads as
+  // pure white. Native 100% width keeps the shimmer visible end-to-end.
   const gradientClass = colorOverride
     ? ''
     : isOverDark
-      ? 'bg-gradient-to-r from-white from-10% via-white via-55% to-[hsl(var(--primary)/0.85)] to-100% bg-clip-text text-transparent [background-size:200%_100%]'
-      : 'bg-gradient-to-r from-foreground from-10% via-foreground via-55% to-[hsl(var(--primary)/0.75)] to-100% bg-clip-text text-transparent [background-size:200%_100%]';
+      ? 'bg-gradient-to-r from-white from-0% via-white via-45% to-[hsl(var(--primary)/0.95)] to-100% bg-clip-text text-transparent'
+      : 'bg-gradient-to-r from-foreground from-0% via-foreground via-45% to-[hsl(var(--primary)/0.85)] to-100% bg-clip-text text-transparent';
 
   return (
     <span data-hero-rotating-word className="block overflow-hidden h-[1.15em]">
