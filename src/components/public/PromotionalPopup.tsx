@@ -269,6 +269,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
+      // Bump the animation nonce BEFORE flipping `open` so React schedules
+      // a fresh mount of the popup root in the same render pass — that's
+      // what replays `animate-in slide-in-from-*`. Without this, an
+      // already-open popup just stays in place when the operator clicks
+      // restart and the slide-up never plays.
+      setAnimationNonce((n) => n + 1);
       // Re-derive the operator-configured duration via the canonical helper
       // (kept inline so this effect doesn't depend on autoMinimizeSeconds,
       // which is declared further down). Helper covers null-disable, the
