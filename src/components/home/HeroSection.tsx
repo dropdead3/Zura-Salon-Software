@@ -45,6 +45,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const bgPoster = heroConfig?.background_poster_url ?? '';
   const bgFit = heroConfig?.background_fit ?? 'cover';
   const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
+  const scrimStyle = heroConfig?.scrim_style ?? 'gradient-bottom';
+  const scrimStrength = heroConfig?.scrim_strength ?? 0.55;
   const hasMediaBackground = bgType !== 'none' && !!bgUrl;
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
