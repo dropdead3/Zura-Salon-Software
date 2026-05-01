@@ -283,9 +283,42 @@ export function Header() {
       }
       setIsOverDark(foundDark);
     };
-    window.addEventListener("scroll", detectTheme, { passive: true });
+
+    // Initial detection — run synchronously, then again after paint(s) so we
+    // catch the hero section once it has mounted (and once its
+    // `data-theme="dark"` attribute is present in the DOM). Without these
+    // re-runs, first paint sees no hero-section element under the sample
+    // point and the nav defaults to `text-foreground` (black) until the
+    // first scroll event re-triggers detection.
     detectTheme();
-    return () => window.removeEventListener("scroll", detectTheme);
+    const raf1 = requestAnimationFrame(() => {
+      detectTheme();
+      requestAnimationFrame(detectTheme);
+    });
+    const t1 = window.setTimeout(detectTheme, 150);
+    const t2 = window.setTimeout(detectTheme, 600);
+
+    window.addEventListener("scroll", detectTheme, { passive: true });
+    window.addEventListener("resize", detectTheme);
+
+    // Watch the DOM under the header for late-mounted hero sections (hero
+    // media loads async, theme provider can flip data-theme after hydration).
+    const observer = new MutationObserver(() => detectTheme());
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener("scroll", detectTheme);
+      window.removeEventListener("resize", detectTheme);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
