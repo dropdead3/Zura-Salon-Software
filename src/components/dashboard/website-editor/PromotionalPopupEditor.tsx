@@ -332,16 +332,54 @@ export function PromotionalPopupEditor() {
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const disclaimerRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Serialize every write through `savingChainRef` so the auto-save toggle and
+  // the manual Save can never interleave. Each new write awaits the previous
+  // one — last write wins, but only after the prior one finishes, eliminating
+  // the race where a stale-closure mutation lands AFTER a fresh one and
+  // overwrites it. Source-of-truth for the payload is `formDataRef`, not the
+  // captured `formData`, so a synchronous Save click that fires before React
+  // re-renders still serializes the *current* form state.
+  const enqueueWrite = useCallback(
+    (
+      buildNext: () => PromotionalPopupSettings,
+      onSuccess?: (next: PromotionalPopupSettings) => void,
+      onError?: (err: unknown, attemptedNext: PromotionalPopupSettings) => void,
+    ): Promise<void> => {
+      const run = savingChainRef.current.then(async () => {
+        const next = buildNext();
+        try {
+          await updateSettings.mutateAsync(next);
+          setSavedSnapshot(next);
+          onSuccess?.(next);
+        } catch (err) {
+          onError?.(err, next);
+          throw err;
+        }
+      });
+      // Don't break the chain on a single failure — subsequent writes should
+      // still be allowed to proceed against current form state.
+      savingChainRef.current = run.catch(() => {});
+      return run;
+    },
+    [updateSettings],
+  );
+
   const persist = useCallback(async () => {
     try {
-      await updateSettings.mutateAsync(formData);
-      setSavedSnapshot(formData);
-      toast.success('Promotional popup saved');
+      await enqueueWrite(
+        () => formDataRef.current,
+        () => {
+          toast.success('Promotional popup saved');
+          // Mirror the auto-save toggle's behavior: nudge the live preview
+          // iframe to reflect the just-saved draft without a manual reload.
+          triggerPreviewRefresh();
+        },
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
       toast.error(`Failed to save: ${msg}`);
     }
-  }, [formData, updateSettings]);
+  }, [enqueueWrite]);
 
   // Composed Save guards — overflow first (data loss), contrast second
   // (legibility). usePersistGuards picks the first blocking finding for the
