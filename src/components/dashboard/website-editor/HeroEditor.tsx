@@ -188,7 +188,7 @@ export function HeroEditor() {
           <p className="text-sm text-muted-foreground -mt-1">
             Configure how your homepage hero looks and reads. Pick a category to edit.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             {cards.map((card) => (
               <HeroEditorHubCard
                 key={card.id}
