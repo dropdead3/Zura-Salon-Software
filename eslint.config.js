@@ -120,6 +120,7 @@ export default tseslint.config(
       "src/components/home/HeroSlideRotator.tsx",
       "src/components/home/HeroNotes.tsx",
       "src/components/home/HeroScrollIndicator.tsx",
+      "src/components/home/HeroEyebrow.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
       // Lint fixtures live outside the real hero tree; include them
       // explicitly so the smoke tests (which use `ignore: false`) see
@@ -128,6 +129,7 @@ export default tseslint.config(
       "src/test/lint-fixtures/hero-alignment-*.tsx",
       "src/test/lint-fixtures/hero-notes-*.tsx",
       "src/test/lint-fixtures/hero-scroll-indicator-*.tsx",
+      "src/test/lint-fixtures/hero-eyebrow-*.tsx",
     ],
     extraSelectors: [
       {
@@ -176,6 +178,25 @@ export default tseslint.config(
         // Pairs with: src/test/lint-rule-hero-scroll-indicator.test.ts
         selector: "JSXOpeningElement[name.type='JSXMemberExpression'][name.object.name='motion'][name.property.name='button']",
         message: "Inline `<motion.button>` JSX is forbidden in hero files. Import and render <HeroScrollIndicator show={...} text={...} onMedia={...} /> from @/components/home/HeroScrollIndicator — it is the canonical owner of the scroll affordance and guarantees preview-vs-live parity. Hand-rolled scroll cues caused the May 2026 missing-indicator regression in the slide rotator.",
+      },
+      {
+        // Hero eyebrow parity canon: ban inline <Eyebrow> JSX in hero
+        // files outside HeroEyebrow.tsx itself. Pre-extraction the eyebrow
+        // shipped in three subtly different shapes across HeroSection,
+        // HeroSlideRotator, and HeroSectionPreview — exactly the divergence
+        // pattern that allowed the May 2026 hero-notes alignment regression
+        // to ship past the existing preview test. Slides now own
+        // `eyebrow` + `show_eyebrow` per slide, multiplying the drift
+        // surface; pre-empt by forcing every hero variant through the
+        // shared component.
+        //
+        // Override: `// eslint-disable-next-line no-restricted-syntax
+        // -- <reason>` only inside HeroEyebrow.tsx (the canonical owner).
+        // Every other hero file imports it.
+        //
+        // Pairs with: src/test/lint-rule-hero-eyebrow-shared.test.ts
+        selector: "JSXOpeningElement[name.name='Eyebrow']",
+        message: "Inline `<Eyebrow>` JSX is forbidden in hero files. Import and render <HeroEyebrow show={...} text={...} editable={isPreview} fieldPath={...} /> from @/components/home/HeroEyebrow — it is the canonical owner of hero eyebrow rendering, editable/static branching, and preview-vs-live parity. Inline siblings re-introduce the divergence pattern that drove the May 2026 hero-notes regression.",
       },
     ],
   }),

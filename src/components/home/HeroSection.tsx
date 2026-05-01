@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
-import { Eyebrow } from "@/components/ui/Eyebrow";
+import { HeroEyebrow } from "@/components/home/HeroEyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
@@ -137,17 +137,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className={alignment.wrapper}>
-              {showEyebrow && (
-                <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6 section-eyebrow">
-                  <InlineEditableText
-                    as="span"
-                    value={eyebrowText}
-                    sectionKey="section_hero"
-                    fieldPath="eyebrow"
-                    placeholder="Eyebrow"
-                  />
-                </p>
-              )}
+              <HeroEyebrow
+                show={showEyebrow}
+                text={eyebrowText}
+                editable
+                fieldPath="eyebrow"
+                className="mb-6"
+              />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
@@ -282,9 +278,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <Eyebrow className="text-muted-foreground mb-6 section-eyebrow">
-                  {eyebrowText}
-                </Eyebrow>
+                <HeroEyebrow show={true} text={eyebrowText} className="mb-6" />
               </motion.div>
             )}
 

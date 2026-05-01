@@ -11,7 +11,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
-import { Eyebrow } from '@/components/ui/Eyebrow';
+import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
@@ -190,23 +190,14 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
               >
-                {slide.show_eyebrow && slide.eyebrow && (
-                  <div className="mb-6">
-                    {isPreview ? (
-                      <p className={`text-xs uppercase tracking-[0.2em] font-display section-eyebrow ${mutedTone}`}>
-                        <InlineEditableText
-                          as="span"
-                          value={slide.eyebrow}
-                          sectionKey="section_hero"
-                          fieldPath={`slides.${activeIndex}.eyebrow`}
-                          placeholder="Eyebrow"
-                        />
-                      </p>
-                    ) : (
-                      <Eyebrow className={`section-eyebrow ${mutedTone}`}>{slide.eyebrow}</Eyebrow>
-                    )}
-                  </div>
-                )}
+                <HeroEyebrow
+                  show={!!slide.show_eyebrow}
+                  text={slide.eyebrow}
+                  toneClass={mutedTone}
+                  editable={isPreview}
+                  fieldPath={`slides.${activeIndex}.eyebrow`}
+                  className="mb-6"
+                />
 
                 <h1
                   className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
