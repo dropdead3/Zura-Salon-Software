@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
@@ -211,6 +211,26 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
   const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
 
+  // Stable foreground min-height: when slides change alignment (left → right),
+  // the outgoing slide fades out at its anchor and the incoming slide fades
+  // in at the new anchor. Holding a measured min-height on the shell prevents
+  // the section from collapsing in the gap between exit and enter.
+  const slideContentRef = useRef<HTMLDivElement | null>(null);
+  const [shellMinHeight, setShellMinHeight] = useState<number>(0);
+  useEffect(() => {
+    const el = slideContentRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const h = Math.ceil(entry.contentRect.height);
+        // Only grow — never shrink mid-transition (would cause its own jump).
+        setShellMinHeight((prev) => (h > prev ? h : prev));
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [activeIndex]);
+
   return (
     <section
       data-theme={hasBackground ? 'dark' : 'light'}
@@ -250,25 +270,42 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
       {/* Foreground content
        *
-       * `mode="popLayout"` pops the exiting slide out of normal layout flow
-       * (framer absolutely positions it during exit) so the entering slide
-       * takes its slot immediately. This eliminates the "snap through center"
-       * regression where the outgoing slide unmounted, the flex cell
-       * collapsed, and the new slide visibly dropped into place. The exit
-       * crossfade overlaps the enter, hiding any sub-pixel layout shift.
+       * Sequential handoff (NOT crossfade):
+       *   1. Outgoing slide fades to opacity 0 at its current alignment.
+       *   2. Once gone, incoming slide fades from opacity 0 to 1 at its new
+       *      alignment.
        *
-       * Pure opacity (no `y` translate) keeps the transition seamless.
+       * This eliminates the visible "passes through center" artifact when
+       * left-aligned content transitions to right-aligned (or vice versa).
+       * The previous overlapping crossfade made both alignments visible at
+       * once, which the eye reads as a horizontal slide through the middle.
+       *
+       * Layout ownership:
+       *   - The OUTER shell (`alignment.shellWrapper`) is centered + width-
+       *     clamped and never changes between slides — keeps the foreground
+       *     region stable.
+       *   - The INNER per-slide wrapper (`alignment.innerWrapper`) carries
+       *     left/center/right anchoring so each slide owns its anchor for
+       *     its full lifecycle (no mid-transition flip).
+       *   - A measured `min-height` on the shell prevents the section from
+       *     collapsing in the gap between exit and enter.
        */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div ref={contentWrapRef} className={cn(alignment.wrapper, 'relative w-full')}>
-            <AnimatePresence mode="popLayout" initial={false}>
+          <div
+            ref={contentWrapRef}
+            className={cn(alignment.shellWrapper, 'relative w-full')}
+            style={shellMinHeight > 0 ? { minHeight: shellMinHeight } : undefined}
+          >
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
+                ref={slideContentRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                className={cn('w-full', alignment.innerWrapper)}
               >
                 <HeroEyebrow
                   show={!!slide.show_eyebrow}

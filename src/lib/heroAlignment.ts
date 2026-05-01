@@ -18,8 +18,28 @@
 export type HeroContentAlignment = 'left' | 'center' | 'right';
 
 export interface HeroAlignmentClasses {
-  /** Outer text-block wrapper: width clamp + horizontal placement + text-align. */
+  /**
+   * Outer text-block wrapper: width clamp + horizontal placement + text-align.
+   * Used for static (non-rotating) hero surfaces — combines
+   * `shellWrapper` + `innerWrapper` semantics in a single class string.
+   */
   wrapper: string;
+  /**
+   * Stable outer shell for the rotating hero foreground. Centered + width-
+   * clamped regardless of slide alignment so the container itself does NOT
+   * change horizontal placement when the active slide changes.
+   *
+   * Pair with `innerWrapper` on the per-slide motion element so each slide
+   * carries its own horizontal anchor for the duration of its lifecycle.
+   */
+  shellWrapper: string;
+  /**
+   * Per-slide alignment + text-align, applied INSIDE the stable shell. Holds
+   * the slide-specific horizontal anchor (left/center/right) so the outgoing
+   * slide can fade out at its anchor and the incoming slide can fade in at
+   * the new anchor without the outer wrapper visibly flipping mid-transition.
+   */
+  innerWrapper: string;
   /** Headline `<h1>` flex-column item alignment. */
   headline: string;
   /** Subheadline `<p>` margin/alignment helper (mx-auto vs ml-0/mr-0). */
@@ -42,6 +62,8 @@ export interface HeroAlignmentClasses {
 const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   left: {
     wrapper: 'max-w-4xl mr-auto text-left',
+    shellWrapper: 'max-w-4xl mx-auto',
+    innerWrapper: 'mr-auto ml-0 text-left',
     headline: 'items-start',
     subheadline: 'mr-auto ml-0 max-w-md',
     cta: 'items-start',
@@ -50,6 +72,8 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   },
   center: {
     wrapper: 'max-w-4xl mx-auto text-center',
+    shellWrapper: 'max-w-4xl mx-auto',
+    innerWrapper: 'mx-auto text-center',
     headline: 'items-center',
     subheadline: 'mx-auto max-w-md',
     cta: 'items-center',
@@ -58,6 +82,8 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
   },
   right: {
     wrapper: 'max-w-4xl ml-auto text-right',
+    shellWrapper: 'max-w-4xl mx-auto',
+    innerWrapper: 'ml-auto mr-0 text-right',
     headline: 'items-end',
     subheadline: 'ml-auto mr-0 max-w-md',
     cta: 'items-end',
