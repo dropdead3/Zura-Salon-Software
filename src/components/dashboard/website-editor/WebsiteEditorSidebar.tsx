@@ -542,24 +542,10 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-card/60 backdrop-blur-xl border-r border-border/50">
-      {/* Search + collapse — single row, no orphan "Add Page" above it. The
-          page picker (and its + / settings buttons) lives in the toolbar. */}
-      <div className="p-3 border-b border-border/40 flex items-center gap-2">
-        <div className="flex-1 min-w-0">
-          <WebsiteEditorSearch onSelectResult={onTabChange} />
-        </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={onToggleCollapse}
-              className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-muted/60 text-muted-foreground transition-colors"
-              aria-label="Collapse sidebar"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Collapse sidebar (⌘\)</TooltipContent>
-        </Tooltip>
+      {/* Search row. Sidebar collapse lives in the editor toolbar — keeping a
+          second collapse button here was redundant. */}
+      <div className="p-3 border-b border-border/40">
+        <WebsiteEditorSearch onSelectResult={onTabChange} />
       </div>
 
       {/* Navigation — Zone 1 (this page) → Zone 2 (chrome) → Zone 3 (library) */}
