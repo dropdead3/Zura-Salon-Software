@@ -758,7 +758,7 @@ export function PromotionalPopupEditor() {
         </Field>
         <Field
           label="Value anchor (optional)"
-          hint='Small accent chip between headline and body. Gives the offer a number to latch onto (e.g. "$45 value", "Save 30%", "Limited to 10 bookings"). Modal layout only.'
+          hint='Small accent chip shown in the modal header next to the eyebrow tag. Gives the offer a number to latch onto (e.g. "$45 value", "Save 30%", "Limited to 10 bookings"). Modal layout only; hidden on mobile widths.'
         >
           <Input
             value={formData.valueAnchor ?? ''}
