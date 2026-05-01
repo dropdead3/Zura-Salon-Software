@@ -589,11 +589,27 @@ export function MediaUploadInput({
               </Tooltip>
             </TooltipProvider>
           ) : null}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button size={tokens.button.inline} variant="secondary" onClick={() => fileInputRef.current?.click()}>
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 z-10">
+            {isDirtyDraft ? null : null}
+            <Button
+              type="button"
+              size={tokens.button.inline}
+              variant="secondary"
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="h-7 px-2.5 text-[11px] bg-background/80 backdrop-blur hover:bg-background/95"
+            >
               Replace
             </Button>
-            <Button size={tokens.button.inline} variant="destructive" onClick={handleRemove}>
+            <Button
+              type="button"
+              size={tokens.button.inline}
+              variant="destructive"
+              onClick={(e) => { e.stopPropagation(); handleRemove(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="h-7 w-7 p-0"
+              aria-label="Remove"
+            >
               <X className="h-3 w-3" />
             </Button>
           </div>
