@@ -244,11 +244,6 @@ export function CanvasHeader({
           <TooltipContent>Redo (⌘⇧Z)</TooltipContent>
         </Tooltip>
 
-        <Button variant="outline" size="sm" className="h-8 px-3 gap-1.5" onClick={onPreview}>
-          <ExternalLink className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Preview</span>
-        </Button>
-
         {isDirty && (
           <Button size="sm" className="h-8 px-3" onClick={onSave} disabled={isSaving}>
             {isSaving
