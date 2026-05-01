@@ -190,7 +190,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                     I am a returning client
                   </Link>
                 </div>
-                <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.cta)}>
+                <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.notes)}>
                   <p>New clients begin with a $15 consultation</p>
                   <p>Returning clients are free to book their known services</p>
                 </div>
@@ -391,7 +391,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 5.1 }}
                 className={cn(
                   "flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans",
-                  alignment.cta,
+                  alignment.notes,
                 )}
               >
                 <p>New clients begin with a $15 consultation</p>
