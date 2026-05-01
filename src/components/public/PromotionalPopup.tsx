@@ -246,16 +246,28 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Auto-minimize after 15s of no interaction with a visible countdown.
+  // Auto-minimize after N seconds of no interaction with a visible countdown.
   // Visitors who don't engage get their reading flow back; the offer collapses
   // into the FAB so it remains one tap away rather than disappearing entirely.
   // Skipped in editor preview so operators QA'ing copy aren't fighting a timer.
-  // Any user action that flips `open` to false (Accept/Decline/Esc/X) cancels
-  // the interval via the cleanup below.
+  // Paused while the cursor is over the popup — active readers shouldn't be
+  // interrupted mid-sentence. Disabled entirely when operator sets
+  // `autoMinimizeMs` to null.
+  //
+  // Operator override: clamp to 5–60s window. Defaults to 15s.
+  const autoMinimizeMs = cfg?.autoMinimizeMs;
+  const autoMinimizeSeconds = useMemo(() => {
+    if (autoMinimizeMs === null) return null; // disabled
+    const ms = typeof autoMinimizeMs === 'number' ? autoMinimizeMs : 15000;
+    return Math.max(5, Math.min(60, Math.round(ms / 1000)));
+  }, [autoMinimizeMs]);
+
   useEffect(() => {
     if (!open) return;
-    setSecondsLeft(15);
+    if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
+    setSecondsLeft(autoMinimizeSeconds);
     if (isPreview) return; // Show full bar but never tick down during QA.
+    if (isHovered) return; // Pause while reader is engaged.
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
@@ -268,7 +280,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }, 1000);
     return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPreview]);
+  }, [open, isPreview, isHovered, autoMinimizeSeconds]);
 
   // If the popup is disabled or config missing, render nothing at all.
   if (!active || !cfg) return null;
