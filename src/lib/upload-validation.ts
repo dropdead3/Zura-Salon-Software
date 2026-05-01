@@ -118,12 +118,17 @@ export function validateVideoFile(file: File): GuardResult {
   return { ok: true };
 }
 
-/** Soft-warn threshold check — returns a toast-ready message when the file
- * is large enough that page loads will suffer, otherwise null. */
-export function getImageSizeWarning(file: File): string | null {
+/** Soft-warn threshold check for images. Auto-crunch handles oversized
+ * images transparently now, so this is a no-op kept for API compatibility
+ * with anything that still calls it. Always returns null. */
+export function getImageSizeWarning(_file: File): string | null {
+  return null;
+}
+
+export function getVideoSizeWarning(file: File): string | null {
   const sizeMB = file.size / (1024 * 1024);
-  if (sizeMB > IMAGE_SIZE_WARN_MB && sizeMB <= IMAGE_SIZE_HARD_MB) {
-    return `Large image (${bytesToMb(file.size)}MB) — page loads will be faster if you compress it first`;
+  if (sizeMB > VIDEO_SIZE_WARN_MB && sizeMB <= VIDEO_SIZE_HARD_MB) {
+    return `Large video (${bytesToMb(file.size)}MB) — consider compressing for faster page loads`;
   }
   return null;
 }
