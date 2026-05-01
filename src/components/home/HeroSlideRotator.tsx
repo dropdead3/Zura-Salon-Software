@@ -212,7 +212,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
       {/* Foreground content */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className={alignment.wrapper}>
+          <div ref={contentWrapRef} className={alignment.wrapper}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`fg-${activeIndex}`}
