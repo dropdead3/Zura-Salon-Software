@@ -3,6 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Monitor, Tablet, Smartphone, Maximize2, Minimize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { EDITOR_SECTION_HOVER_EVENT, type EditorSectionHoverDetail } from '@/lib/editorSectionHover';
 
 interface LivePreviewPanelProps {
   activeSectionId?: string;
