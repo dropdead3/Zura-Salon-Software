@@ -63,6 +63,10 @@ const newSlide = (): HeroSlide => ({
   cta_returning_client: 'Learn More',
   cta_returning_client_url: '/booking',
   show_secondary_button: true,
+  media_width: null,
+  media_height: null,
+  media_size_bytes: null,
+  media_format: null,
 });
 
 interface SlideRowProps {

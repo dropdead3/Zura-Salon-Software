@@ -6,8 +6,9 @@
  * Pure presentational; no editor coupling. Used by both single-slide and the
  * multi-slide rotator.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { HeroScrimStyle } from '@/hooks/useSectionConfig';
+import { buildSupabaseSrcSet, HERO_SRCSET_WIDTHS } from '@/lib/image-utils';
 
 interface HeroBackgroundProps {
   type: 'none' | 'image' | 'video';
@@ -29,6 +30,11 @@ interface HeroBackgroundProps {
   scrimStrength?: number;
   /** Overlay tint: darken = black, lighten = white. Mutually exclusive. */
   overlayMode?: 'darken' | 'lighten';
+  /**
+   * Natural pixel width of the source image, when known. Caps the responsive
+   * srcSet so we don't ask Storage for variants larger than the master upload.
+   */
+  mediaWidth?: number | null;
 }
 
 export function HeroBackground({
@@ -42,8 +48,16 @@ export function HeroBackground({
   scrimStyle,
   scrimStrength,
   overlayMode = 'darken',
+  mediaWidth,
 }: HeroBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Build responsive srcSet for Supabase-hosted images. Returns null for
+  // external URLs / blob: previews — caller falls back to plain `src`.
+  const srcSet = useMemo(
+    () => (type === 'image' ? buildSupabaseSrcSet(url, HERO_SRCSET_WIDTHS, mediaWidth ?? null) : null),
+    [type, url, mediaWidth],
+  );
 
   // Force a load() when the source URL changes so swapped videos restart cleanly.
   useEffect(() => {
@@ -91,11 +105,13 @@ export function HeroBackground({
       ) : (
         <img
           src={url}
+          {...(srcSet ? { srcSet, sizes: '100vw' } : {})}
           alt=""
           className={`w-full h-full ${objectFit}`}
           style={{ objectPosition }}
           loading="eager"
           decoding="async"
+          fetchPriority="high"
         />
       )}
       {style !== 'none' && strength > 0 && (

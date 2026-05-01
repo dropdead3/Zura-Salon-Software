@@ -116,6 +116,16 @@ export interface HeroSlide {
   show_secondary_button: boolean;
   /** Per-slide color overrides; empty fields inherit from section text_colors. */
   text_colors?: HeroTextColors;
+  /**
+   * Captured at upload time. Drives the editor's "3200×2133 · 480 KB" caption
+   * AND caps the public site's responsive srcSet (no point asking Storage for
+   * 3200px variants of a 1600px master). Optional — pasted URLs and legacy
+   * slides leave these unset and the UI silently degrades.
+   */
+  media_width?: number | null;
+  media_height?: number | null;
+  media_size_bytes?: number | null;
+  media_format?: string | null;
 }
 
 export interface HeroConfig {
@@ -164,6 +174,11 @@ export interface HeroConfig {
   pause_on_hover: boolean;
   /** Section-level color overrides; per-slide overrides win when set. */
   text_colors?: HeroTextColors;
+  /** Upload-time metadata for the section background. See HeroSlide notes. */
+  media_width?: number | null;
+  media_height?: number | null;
+  media_size_bytes?: number | null;
+  media_format?: string | null;
 }
 
 export interface BrandStatementConfig {
