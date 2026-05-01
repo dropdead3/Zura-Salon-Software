@@ -532,6 +532,47 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       ? 'side'
       : 'top';
   const modalWide = modalImageMode === 'side';
+  // Editorial header band: subtle accent wash behind the eyebrow + close.
+  // Provides depth without overpowering the operator's brand color.
+  const HeaderBand = (
+    <div
+      className="relative flex items-center justify-between gap-3 px-6 sm:px-8 py-4 border-b"
+      style={{
+        backgroundColor: `color-mix(in srgb, ${accent} 6%, transparent)`,
+        borderBottomColor: `color-mix(in srgb, ${accent} 20%, transparent)`,
+      }}
+    >
+      {cfg.eyebrow ? (() => {
+        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+        return (
+          <div className="flex items-center gap-2.5 min-w-0">
+            {Icon && (
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-md shrink-0"
+                style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+            )}
+            <p
+              className="font-display uppercase tracking-[0.2em] text-[11px] truncate"
+              style={{ color: accent }}
+            >
+              {cfg.eyebrow}
+            </p>
+          </div>
+        );
+      })() : <span />}
+      <button
+        onClick={handleSoftClose}
+        aria-label="Close"
+        className="shrink-0 text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-foreground/5 transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
@@ -544,20 +585,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-modal="true"
         aria-labelledby="promo-popup-title"
         className={cn(
-          'relative w-full rounded-2xl bg-card border border-border shadow-2xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          'relative w-full rounded-2xl bg-gradient-to-b from-card to-card/95 border border-border motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.18),0_8px_16px_-4px_rgba(0,0,0,0.08)]',
           modalWide ? 'max-w-2xl' : 'max-w-md',
         )}
-        style={{ borderTopColor: accent, borderTopWidth: 4 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <button
-          onClick={handleSoftClose}
-          aria-label="Close"
-          className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground p-1 rounded-full bg-card/60 backdrop-blur"
-        >
-          <X className="h-4 w-4" />
-        </button>
         {modalWide ? (
           <div className="grid grid-cols-[200px_1fr]">
             <div className="bg-muted">
@@ -567,14 +601,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-6 sm:p-8">
-              <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
+            <div className="flex flex-col">
+              {HeaderBand}
+              <div className="p-6 sm:p-8">
+                <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
+              </div>
             </div>
           </div>
         ) : (
-          <div className="p-6 sm:p-8">
-            <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
-          </div>
+          <>
+            {HeaderBand}
+            <div className="p-6 sm:p-8">
+              <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
+            </div>
+          </>
         )}
         {autoMinimizeSeconds !== null && (
           <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
@@ -591,6 +631,7 @@ function PromoBody({
   onDecline,
   compact = false,
   imageMode = 'top',
+  hideEyebrow = false,
 }: {
   cfg: PromotionalPopupSettings;
   accent: string;
@@ -601,11 +642,15 @@ function PromoBody({
   /** How (or whether) to render the image inline. `side` is handled by the
    *  parent layout (modal grid) and renders nothing here. */
   imageMode?: 'top' | 'side' | 'none';
+  /** Modal variant renders the eyebrow inside the editorial header band, so
+   *  the body should suppress its own eyebrow row to avoid duplication. */
+  hideEyebrow?: boolean;
 }) {
   const renderTopImage = imageMode === 'top' && cfg.imageUrl;
   // Mirror the parent's contrast pick so the CTA stays legible regardless
   // of the operator's accent. Re-derive (cheap) instead of threading a prop.
   const accentFg = readableForegroundFor(cfg.accentColor);
+  const valueAnchor = cfg.valueAnchor?.trim();
   return (
     <>
       {renderTopImage && (
@@ -622,7 +667,7 @@ function PromoBody({
           />
         </div>
       )}
-      {cfg.eyebrow && (() => {
+      {!hideEyebrow && cfg.eyebrow && (() => {
         const Icon = getEyebrowIcon(cfg.eyebrowIcon);
         return (
           <p
@@ -640,35 +685,56 @@ function PromoBody({
       <h2
         id="promo-popup-title"
         className={cn(
-          'font-display uppercase tracking-wide text-foreground mb-2',
-          compact ? 'text-base' : 'text-xl sm:text-2xl',
+          'font-display uppercase tracking-wide text-foreground mb-3',
+          compact ? 'text-base' : 'text-xl sm:text-2xl leading-[1.15]',
         )}
       >
         {cfg.headline}
       </h2>
+      {valueAnchor && !compact && (
+        <div className="mb-4">
+          <span
+            className="inline-flex items-center font-display uppercase tracking-[0.18em] text-[10px] px-3 h-6 rounded-full"
+            style={{ backgroundColor: accent, color: accentFg }}
+          >
+            {valueAnchor}
+          </span>
+        </div>
+      )}
       {cfg.body && (
         <p
           className={cn(
-            'font-sans text-muted-foreground mb-4',
-            compact ? 'text-sm' : 'text-sm sm:text-base',
+            'font-sans text-muted-foreground mb-5',
+            compact ? 'text-sm' : 'text-sm sm:text-base leading-relaxed',
           )}
         >
           {cfg.body}
         </p>
       )}
-      <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mb-3">
+      <div className={cn(
+        'flex items-center gap-4 mb-3',
+        compact ? 'flex-col-reverse sm:flex-row' : 'flex-row',
+      )}>
         <button
           onClick={onDecline}
-          className="font-sans text-sm px-4 py-2.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition"
+          className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0"
         >
           {cfg.ctaDeclineLabel}
         </button>
         <button
           onClick={onAccept}
-          className="flex-1 font-display uppercase tracking-wider text-xs sm:text-sm px-5 py-2.5 rounded-full text-primary-foreground transition hover:opacity-90"
-          style={{ backgroundColor: accent, color: accentFg }}
+          className={cn(
+            'group flex-1 inline-flex items-center justify-center gap-2 font-display uppercase tracking-wider px-6 rounded-full transition-all hover:opacity-95 hover:-translate-y-px',
+            compact ? 'text-xs h-10' : 'text-xs sm:text-sm h-12',
+          )}
+          style={{
+            backgroundColor: accent,
+            color: accentFg,
+            boxShadow: `0 10px 28px -10px ${accent}, 0 2px 6px -2px rgba(0,0,0,0.12)`,
+          }}
         >
-          {cfg.ctaAcceptLabel}
+          <span>{cfg.ctaAcceptLabel}</span>
+          <ChevronRight className="h-4 w-4 opacity-90 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
       </div>
       {cfg.acceptDestination === 'custom-url' && cfg.customUrlInstructions && (
@@ -680,7 +746,9 @@ function PromoBody({
         </p>
       )}
       {cfg.disclaimer && (
-        <p className="font-sans text-[11px] text-muted-foreground/80 leading-relaxed">{cfg.disclaimer}</p>
+        <p className="font-sans text-[11px] text-muted-foreground/80 leading-relaxed pt-4 mt-4 border-t border-border/40">
+          {cfg.disclaimer}
+        </p>
       )}
     </>
   );
@@ -695,6 +763,8 @@ function PromoBody({
  *   reading the offer (cursor over popup) can tell the timer is on hold.
  * - Under 3s remaining, the bar pulses subtly + the label switches to the
  *   warning token so the imminent collapse is felt, not just seen.
+ * - The numeric label sits inside the bar's right edge so it follows the
+ *   card's rounded corners cleanly instead of floating above them.
  */
 function CountdownBar({
   secondsLeft,
@@ -714,23 +784,25 @@ function CountdownBar({
       className="absolute bottom-0 inset-x-0 pointer-events-none"
       aria-hidden="true"
     >
-      <div className="relative h-1 w-full bg-foreground/5">
-        <div
-          className={cn(
-            'h-full transition-[width] ease-linear',
-            paused ? 'duration-200 opacity-50' : 'duration-1000',
-            urgent && 'motion-safe:animate-pulse',
-          )}
-          style={{ width: `${pct}%`, backgroundColor: accent }}
-        />
+      <div className="relative h-5 w-full overflow-hidden rounded-bl-2xl rounded-br-2xl">
+        <div className="absolute inset-x-0 bottom-0 h-1 bg-foreground/5">
+          <div
+            className={cn(
+              'h-full transition-[width] ease-linear',
+              paused ? 'duration-200 opacity-50' : 'duration-1000',
+              urgent && 'motion-safe:animate-pulse',
+            )}
+            style={{ width: `${pct}%`, backgroundColor: accent }}
+          />
+        </div>
         <span
           className={cn(
-            'absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] tabular-nums transition-colors',
+            'absolute right-3 bottom-1.5 font-display uppercase tracking-wider text-[9px] tabular-nums transition-colors',
             paused
               ? 'text-muted-foreground/40'
               : urgent
                 ? 'text-warning motion-safe:animate-pulse'
-                : 'text-muted-foreground/80',
+                : 'text-muted-foreground/70',
           )}
         >
           {paused ? 'paused' : `${secondsLeft}s`}

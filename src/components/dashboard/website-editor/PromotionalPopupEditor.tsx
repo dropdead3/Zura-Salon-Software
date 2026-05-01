@@ -756,6 +756,17 @@ export function PromotionalPopupEditor() {
             overflowVerb={formData.appearance === 'banner' ? 'Truncating' : 'Wrapping'}
           />
         </Field>
+        <Field
+          label="Value anchor (optional)"
+          hint='Small accent chip between headline and body. Gives the offer a number to latch onto (e.g. "$45 value", "Save 30%", "Limited to 10 bookings"). Modal layout only.'
+        >
+          <Input
+            value={formData.valueAnchor ?? ''}
+            onChange={(e) => handleChange('valueAnchor', e.target.value)}
+            placeholder="$45 value"
+            maxLength={32}
+          />
+        </Field>
         <Field label="Disclaimer (optional)" hint="Legal fine print — shown below the buttons.">
           <Textarea
             ref={disclaimerRef}
