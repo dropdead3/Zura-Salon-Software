@@ -96,9 +96,8 @@ export function usePreviewBridge<T>(sectionKey: string, value: T) {
       };
       try {
         win.postMessage(msg, targetOrigin);
-        console.log('[PreviewBridge] post', { sectionKey, orgId, targetOrigin, hasIframe: !!iframe });
-      } catch (err) {
-        console.warn('[PreviewBridge] post failed', err);
+      } catch {
+        // Cross-origin denial or iframe gone — silently ignore.
       }
     }, DEBOUNCE_MS);
 
