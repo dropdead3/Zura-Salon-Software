@@ -49,6 +49,11 @@ export interface PromotionalPopupSettings {
   imageAlt?: string;
   /** How the image renders per layout. Defaults to `cover`. */
   imageTreatment?: ImageTreatment;
+  /** Focal point as percentages 0..100 — drives CSS `object-position` on
+   *  every image render site (modal side rail, modal top strip, corner-card
+   *  top strip). Defaults to 50/50 (center). */
+  imageFocalX?: number;
+  imageFocalY?: number;
   // Offer
   offerCode: string;
   // Behavior
@@ -111,6 +116,8 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   endsAt: null,
   frequency: 'once-per-session',
   imageTreatment: 'cover',
+  imageFocalX: 50,
+  imageFocalY: 50,
   fabPosition: 'bottom-right',
   acceptDestination: 'booking',
   customUrl: '',
