@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useDirtyState } from '@/hooks/useDirtyState';
+import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import {
