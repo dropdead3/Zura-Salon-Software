@@ -180,8 +180,8 @@ export async function publishSiteSettingsDrafts(orgId: string): Promise<number> 
   // every site-settings query for this org — values may have changed.
   if (typeof window !== 'undefined') {
     try {
-      // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
       window.dispatchEvent(
+        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
         new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
       );
     } catch { /* SSR */ }
