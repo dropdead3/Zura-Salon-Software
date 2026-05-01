@@ -220,6 +220,35 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
                 Switch to Background-Only
               </button>
             </div>
+            <button
+              type="button"
+              onClick={dismissDuplicateHint}
+              className="h-5 w-5 inline-flex items-center justify-center rounded text-muted-foreground/60 hover:text-foreground hover:bg-background/60 transition-colors flex-shrink-0"
+              aria-label="Dismiss hint"
+              title={`Dismiss for ${HINT_SUPPRESSION_DAYS} days`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+        {staticHeroHint !== null && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-muted/40">
+            <Minimize2 className="h-3.5 w-3.5 text-foreground mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-foreground font-sans">
+                Background-Only with one active slide for {staticHeroHint}+ days.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                The rotator buys nothing here — Multi-Slide with one slide is simpler and saves a render layer.
+              </p>
+              <button
+                type="button"
+                onClick={() => switchMode('multi_slide')}
+                className="mt-1.5 text-[10px] underline text-foreground hover:text-foreground/80"
+              >
+                Collapse to single static hero
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -232,15 +261,22 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
       />
 
       {config.auto_rotate && (
-        <SliderInput
-          label="Slide Duration"
-          value={(config.slide_interval_ms ?? 6000) / 1000}
-          onChange={(v) => onChange('slide_interval_ms', Math.round(v * 1000))}
-          min={3}
-          max={15}
-          step={0.5}
-          unit="s"
-        />
+        <div className="space-y-1">
+          <SliderInput
+            label="Slide Duration"
+            value={(config.slide_interval_ms ?? 6000) / 1000}
+            onChange={(v) => onChange('slide_interval_ms', Math.round(v * 1000))}
+            min={minIntervalS}
+            max={15}
+            step={0.5}
+            unit="s"
+          />
+          {mode === 'background_only' && (
+            <p className="text-[10px] text-muted-foreground pl-1">
+              Minimum {minIntervalS}s — faster crossfades feel jittery against the static foreground.
+            </p>
+          )}
+        </div>
       )}
 
       <ToggleInput
