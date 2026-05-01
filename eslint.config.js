@@ -16,7 +16,7 @@ import tseslint from "typescript-eslint";
 // To add a new global selector: push to CONSOLIDATED_RESTRICTED_SYNTAX and
 // extend `src/test/lint-config-resolution.test.ts`. Do NOT spin up a new
 // config block with its own `no-restricted-syntax`.
-const CONSOLIDATED_RESTRICTED_SYNTAX = [
+export const CONSOLIDATED_RESTRICTED_SYNTAX = [
   {
     // Loader2 governance — see consolidated block doc below.
     selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
