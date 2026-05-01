@@ -110,6 +110,8 @@ function SlideRow({
   const resolvedBgType = slide.background_type === 'inherit' ? sectionBgType : slide.background_type;
   const resolvedBgUrl = slide.background_type === 'inherit' ? sectionBgUrl : slide.background_url;
   const resolvedBgPoster = slide.background_type === 'inherit' ? sectionBgPoster : slide.background_poster_url;
+  const fitOverridden = slide.background_fit != null;
+  const resolvedFit: 'cover' | 'contain' = fitOverridden ? (slide.background_fit as 'cover' | 'contain') : sectionBgFit;
   const focalOverridden = slide.background_focal_x != null && slide.background_focal_y != null;
   const resolvedFocalX = focalOverridden ? (slide.background_focal_x as number) : sectionFocalX;
   const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
@@ -118,6 +120,12 @@ function SlideRow({
   const resolvedScrimStyle = slide.scrim_style ?? sectionScrimStyle ?? 'gradient-bottom';
   const resolvedScrimStrength = slide.scrim_strength ?? sectionScrimStrength ?? 0.55;
   const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
+
+  // Auto-suggest focal point for newly uploaded slide images. Manual drags
+  // win — this only seeds when the operator hasn't anchored anything yet.
+  const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
+    onUpdate(slide.id, { background_focal_x: x, background_focal_y: y });
+  });
 
   return (
     <div ref={setNodeRef} style={style} className="border border-border/50 rounded-lg bg-background overflow-hidden">
