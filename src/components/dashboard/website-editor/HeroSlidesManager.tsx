@@ -8,17 +8,20 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
+import { FocalPointPicker } from './inputs/FocalPointPicker';
 import { EditorCard } from './EditorCard';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
+import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import {
   DndContext,
   closestCenter,
@@ -45,6 +48,9 @@ const newSlide = (): HeroSlide => ({
   overlay_opacity: null,
   scrim_style: null,
   scrim_strength: null,
+  background_focal_x: null,
+  background_focal_y: null,
+  overlay_mode: null,
   eyebrow: '',
   show_eyebrow: false,
   headline_text: 'New Slide',
@@ -65,14 +71,51 @@ interface SlideRowProps {
   /** Section-level scrim defaults; surfaced as the "inherit" preview values. */
   sectionScrimStyle?: HeroConfig['scrim_style'];
   sectionScrimStrength?: HeroConfig['scrim_strength'];
+  /** Section-level background fields used to resolve "inherit" + show the live preview. */
+  sectionBgType: HeroConfig['background_type'];
+  sectionBgUrl: HeroConfig['background_url'];
+  sectionBgPoster: HeroConfig['background_poster_url'];
+  sectionBgFit: HeroConfig['background_fit'];
+  sectionFocalX: number;
+  sectionFocalY: number;
+  sectionOverlayMode: 'darken' | 'lighten';
+  sectionOverlayOpacity: number;
 }
 
-function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, sectionScrimStrength }: SlideRowProps) {
+function SlideRow({
+  slide,
+  index,
+  onUpdate,
+  onDelete,
+  sectionScrimStyle,
+  sectionScrimStrength,
+  sectionBgType,
+  sectionBgUrl,
+  sectionBgPoster,
+  sectionBgFit,
+  sectionFocalX,
+  sectionFocalY,
+  sectionOverlayMode,
+  sectionOverlayOpacity,
+}: SlideRowProps) {
   const [open, setOpen] = useState(index === 0);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
   const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
+
+  // Resolve effective background for the slide (per-slide media or inherited from section).
+  const resolvedBgType = slide.background_type === 'inherit' ? sectionBgType : slide.background_type;
+  const resolvedBgUrl = slide.background_type === 'inherit' ? sectionBgUrl : slide.background_url;
+  const resolvedBgPoster = slide.background_type === 'inherit' ? sectionBgPoster : slide.background_poster_url;
+  const focalOverridden = slide.background_focal_x != null && slide.background_focal_y != null;
+  const resolvedFocalX = focalOverridden ? (slide.background_focal_x as number) : sectionFocalX;
+  const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
+  const resolvedOverlayMode: 'darken' | 'lighten' = slide.overlay_mode ?? sectionOverlayMode;
+  const resolvedOverlayOpacity = slide.overlay_opacity ?? sectionOverlayOpacity;
+  const resolvedScrimStyle = slide.scrim_style ?? sectionScrimStyle ?? 'gradient-bottom';
+  const resolvedScrimStrength = slide.scrim_strength ?? sectionScrimStrength ?? 0.55;
+  const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
 
   return (
     <div ref={setNodeRef} style={style} className="border border-border/50 rounded-lg bg-background overflow-hidden">
@@ -214,25 +257,87 @@ function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, section
             )}
           </div>
 
-          {/* Per-slide overlay override */}
+          {/* Per-slide overlay override (mode + strength share one toggle) */}
           <div className="space-y-2 pt-3 border-t border-border/30">
             <ToggleInput
-              label="Override Overlay Darkness"
-              value={slide.overlay_opacity !== null}
-              onChange={(v) => onUpdate(slide.id, { overlay_opacity: v ? 0.4 : null })}
-              description="Use a different overlay than the section default"
+              label="Override Overlay"
+              value={slide.overlay_opacity !== null || slide.overlay_mode != null}
+              onChange={(v) =>
+                onUpdate(slide.id, {
+                  overlay_opacity: v ? sectionOverlayOpacity : null,
+                  overlay_mode: v ? sectionOverlayMode : null,
+                })
+              }
+              description="Use a different overlay tint or strength than the section default"
             />
-            {slide.overlay_opacity !== null && (
-              <SliderInput
-                label="Slide Overlay"
-                value={slide.overlay_opacity}
-                onChange={(v) => onUpdate(slide.id, { overlay_opacity: v })}
-                min={0}
-                max={0.8}
-                step={0.05}
-              />
+            {(slide.overlay_opacity !== null || slide.overlay_mode != null) && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Slide Overlay Type</Label>
+                  <div className="flex gap-2">
+                    {([
+                      { id: 'darken', label: 'Darken', icon: Moon },
+                      { id: 'lighten', label: 'Lighten', icon: Sun },
+                    ] as const).map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => onUpdate(slide.id, { overlay_mode: id })}
+                        className={cn(
+                          'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] border transition-colors',
+                          (slide.overlay_mode ?? sectionOverlayMode) === id
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                        )}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <SliderInput
+                  label={(slide.overlay_mode ?? sectionOverlayMode) === 'lighten' ? 'Slide Overlay Lightness' : 'Slide Overlay Darkness'}
+                  value={slide.overlay_opacity ?? sectionOverlayOpacity}
+                  onChange={(v) => onUpdate(slide.id, { overlay_opacity: v })}
+                  min={0}
+                  max={0.8}
+                  step={0.05}
+                />
+              </>
             )}
           </div>
+
+          {/* Per-slide focal point override */}
+          {!!focalImageUrl && sectionBgFit !== 'contain' && (
+            <div className="space-y-2 pt-3 border-t border-border/30">
+              <ToggleInput
+                label="Override Focal Point"
+                value={focalOverridden}
+                onChange={(v) =>
+                  onUpdate(slide.id, {
+                    background_focal_x: v ? sectionFocalX : null,
+                    background_focal_y: v ? sectionFocalY : null,
+                  })
+                }
+                description="Anchor a different region of this slide's background"
+              />
+              {focalOverridden && (
+                <FocalPointPicker
+                  imageUrl={focalImageUrl}
+                  isVideo={resolvedBgType === 'video'}
+                  x={resolvedFocalX}
+                  y={resolvedFocalY}
+                  onChange={(nx, ny) =>
+                    onUpdate(slide.id, { background_focal_x: nx, background_focal_y: ny })
+                  }
+                  onReset={() =>
+                    onUpdate(slide.id, { background_focal_x: 50, background_focal_y: 50 })
+                  }
+                  label="Slide Focal Point"
+                />
+              )}
+            </div>
+          )}
 
           {/* Per-slide scrim style override — falls back to section-level
               when null. Critical for video slides whose luminance flickers. */}
@@ -258,6 +363,24 @@ function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, section
               compact
             />
           </div>
+
+          {/* Live preview of this slide's resolved background stack */}
+          {resolvedBgType !== 'none' && !!resolvedBgUrl && (
+            <div className="pt-3 border-t border-border/30">
+              <BackgroundResolvedPreview
+                type={resolvedBgType}
+                url={resolvedBgUrl}
+                posterUrl={resolvedBgPoster}
+                fit={sectionBgFit}
+                focalX={resolvedFocalX}
+                focalY={resolvedFocalY}
+                overlayMode={resolvedOverlayMode}
+                overlayOpacity={resolvedOverlayOpacity}
+                scrimStyle={resolvedScrimStyle}
+                scrimStrength={resolvedScrimStrength}
+              />
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </div>
@@ -323,6 +446,14 @@ export function HeroSlidesManager({ config, onChange }: HeroSlidesManagerProps) 
                     onDelete={deleteSlide}
                     sectionScrimStyle={config.scrim_style}
                     sectionScrimStrength={config.scrim_strength}
+                    sectionBgType={config.background_type}
+                    sectionBgUrl={config.background_url}
+                    sectionBgPoster={config.background_poster_url}
+                    sectionBgFit={config.background_fit}
+                    sectionFocalX={config.background_focal_x ?? 50}
+                    sectionFocalY={config.background_focal_y ?? 50}
+                    sectionOverlayMode={config.overlay_mode ?? 'darken'}
+                    sectionOverlayOpacity={config.overlay_opacity ?? 0.4}
                   />
                 ))}
               </div>
