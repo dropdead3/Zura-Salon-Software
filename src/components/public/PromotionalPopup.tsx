@@ -137,6 +137,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [showFab, setShowFab] = useState(false);
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
+  const [isHovered, setIsHovered] = useState(false);
   const triggeredRef = useRef(false);
 
   // Auto-suppress the entire offer prompt on the booking surface — if the
