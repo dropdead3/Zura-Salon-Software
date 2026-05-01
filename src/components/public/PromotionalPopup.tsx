@@ -484,6 +484,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             </button>
           </div>
         </div>
+        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
       </div>
     );
   }
