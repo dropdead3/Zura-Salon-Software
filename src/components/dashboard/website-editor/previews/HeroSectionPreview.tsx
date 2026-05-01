@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
+import { resolveHeroAlignment } from '@/lib/heroAlignment';
+import { cn } from '@/lib/utils';
 
 interface HeroSectionPreviewProps {
   config: HeroConfig;
