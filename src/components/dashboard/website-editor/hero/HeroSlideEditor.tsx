@@ -9,7 +9,7 @@ import { SliderInput } from '../inputs/SliderInput';
 import { CharCountInput } from '../inputs/CharCountInput';
 import { UrlInput } from '../inputs/UrlInput';
 import { DynamicArrayInput } from '../inputs/DynamicArrayInput';
-import { FocalPointPicker } from '../inputs/FocalPointPicker';
+
 import { HeroTextColorsEditor } from '../HeroTextColorsEditor';
 import { HeroScrimEditor } from '../HeroScrimEditor';
 import { BackgroundResolvedPreview } from '../BackgroundResolvedPreview';
