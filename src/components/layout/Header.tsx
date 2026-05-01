@@ -309,41 +309,50 @@ export function Header() {
         // Hide announcement bar on scroll-down past hero, slide back in on scroll-up.
         const announcementHidden = isScrolled && !isScrollingUp && !isHoverNearTop;
         return (
-          <div 
+          <div
             className={cn(
-              "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
-              "transition-[transform,opacity] duration-300 ease-out will-change-transform origin-top",
-              announcementHidden ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
-              !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
-              // Subtle top-down gradient scrim improves readability over photographic backgrounds
-              overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
-              // Warm cream overlay — sits above the glass to add a soft champagne tint
-              "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
-              "[&>*]:relative [&>*]:z-[1]",
+              "grid transition-[grid-template-rows] duration-300 ease-out",
+              announcementHidden ? "grid-rows-[0fr]" : "grid-rows-[1fr]",
             )}
-            style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
           >
-            <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-              <p className={cn(
-                "text-sm text-center md:text-left",
-                effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground/80",
-              )}>
-                {announcementSettings.message_prefix}{' '}
-                <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
-                {announcementSettings.message_suffix}
-              </p>
-              <a 
-                href={announcementSettings.cta_url || '#'} 
-                target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
-                rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
+            <div className="overflow-hidden">
+              <div
                 className={cn(
-                  "group inline-flex items-center gap-1.5 text-sm font-display uppercase tracking-wide hover:opacity-80 transition-opacity",
-                  effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground",
+                  "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+                  "transition-opacity duration-300 ease-out",
+                  announcementHidden ? "opacity-0 pointer-events-none" : "opacity-100",
+                  !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
+                  // Subtle top-down gradient scrim improves readability over photographic backgrounds
+                  overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
+                  // Warm cream overlay — sits above the glass to add a soft champagne tint
+                  "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
+                  "[&>*]:relative [&>*]:z-[1]",
                 )}
+                style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
               >
-                {announcementSettings.cta_text}
-                <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
+                <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
+                  <p className={cn(
+                    "text-sm text-center md:text-left",
+                    effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground/80",
+                  )}>
+                    {announcementSettings.message_prefix}{' '}
+                    <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
+                    {announcementSettings.message_suffix}
+                  </p>
+                  <a
+                    href={announcementSettings.cta_url || '#'}
+                    target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
+                    rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                    className={cn(
+                      "group inline-flex items-center gap-1.5 text-sm font-display uppercase tracking-wide hover:opacity-80 transition-opacity",
+                      effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground",
+                    )}
+                  >
+                    {announcementSettings.cta_text}
+                    <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         );
