@@ -139,7 +139,11 @@ export interface HeroConfig {
   background_url: string;
   background_poster_url: string;
   background_fit: 'cover' | 'contain';
-  overlay_opacity: number; // 0..0.8
+  overlay_opacity: number; // 0..0.8 — back-compat strength used when scrim_style === 'flat' or unset
+  /** Section-level scrim style. Defaults to `gradient-bottom` for media backgrounds. */
+  scrim_style?: HeroScrimStyle;
+  /** Section-level scrim strength (0..1). Defaults to 0.55 when set, else falls back to overlay_opacity. */
+  scrim_strength?: number;
   // Multi-slide rotator (Revolution Slider–style)
   slides: HeroSlide[];
   auto_rotate: boolean;
