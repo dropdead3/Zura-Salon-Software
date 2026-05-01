@@ -90,24 +90,24 @@ export function UnsavedChangesDialog({
         if (!next && !isSaving) onCancel();
       }}
     >
-      <AlertDialogContent className={cn('max-w-md gap-4 p-8 sm:p-8', className)}>
-        <AlertDialogHeader className="space-y-2">
+      <AlertDialogContent className={cn('max-w-md gap-6 p-10 sm:p-10', className)}>
+        <AlertDialogHeader className="space-y-3">
           <AlertDialogTitle className="font-display text-base tracking-wide uppercase">
             {title}
           </AlertDialogTitle>
           <AlertDialogDescription className="font-sans text-sm leading-relaxed">
             {description}
             {hint ? (
-              <span className="block mt-1.5 text-xs text-muted-foreground/80">
+              <span className="block mt-2 text-xs text-muted-foreground/80">
                 {hint}
               </span>
             ) : null}
-            <span className="block mt-1.5 text-[11px] text-muted-foreground/60">
+            <span className="block mt-2 text-[11px] text-muted-foreground/60">
               Press Esc to stay on this section.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 sm:gap-0">
+        <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-2 sm:gap-0 pt-2">
           {/* Passive escape — ghost, leftmost. */}
           <Button
             type="button"
