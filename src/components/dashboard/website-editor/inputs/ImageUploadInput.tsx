@@ -3,9 +3,14 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/image-utils';
+import {
+  IMAGE_RECOMMENDED_HINT,
+  IMAGE_SIZE_HARD_MB,
+  validateImageFile,
+} from '@/lib/upload-validation';
 import { toast } from 'sonner';
 
 interface ImageUploadInputProps {
@@ -30,11 +35,26 @@ export function ImageUploadInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
+    // Stage 1 — pre-flight validation. Catches the 80% case (HEIC, oversized
+    // DSLR JPEGs, zero-byte files) before we burn time on a canvas decode.
+    const guard = validateImageFile(file);
+    if (guard.ok === false) {
+      toast.error(guard.message);
+      return;
+    }
+
     setIsUploading(true);
+    let stage: 'decode' | 'upload' = 'decode';
     try {
-      const { blob } = await optimizeImage(file, { maxWidth: 1600, maxHeight: 1200, quality: 0.85, format: 'webp' });
+      const { blob } = await optimizeImage(file, {
+        maxWidth: 1600,
+        maxHeight: 1200,
+        quality: 0.85,
+        format: 'webp',
+      });
+
+      stage = 'upload';
       const fileName = `${pathPrefix}/${Date.now()}.webp`;
-      
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, blob, { contentType: 'image/webp', upsert: true });
@@ -45,8 +65,31 @@ export function ImageUploadInput({
       onChange(urlData.publicUrl);
       toast.success('Image uploaded');
     } catch (err) {
-      console.error('Upload error:', err);
-      toast.error('Failed to upload image');
+      const e = err as { message?: string; statusCode?: string | number };
+      // Stage-aware logging so future failures are debuggable from the console.
+      console.error(`[ImageUploadInput] ${stage} failure:`, {
+        stage,
+        bucket,
+        fileType: file.type,
+        fileSize: file.size,
+        fileName: file.name,
+        error: e?.message ?? err,
+        statusCode: e?.statusCode,
+      });
+
+      if (stage === 'decode') {
+        toast.error("Couldn't read this image — it may be corrupted or in a format the browser can't open");
+      } else {
+        // Storage error — surface the underlying message when it's actionable.
+        const code = String(e?.statusCode ?? '');
+        if (code === '413' || /size|large|exceeds/i.test(e?.message ?? '')) {
+          toast.error(`File is too large — keep images under ${IMAGE_SIZE_HARD_MB}MB`);
+        } else if (code === '401' || code === '403') {
+          toast.error('Not signed in or missing permission to upload here');
+        } else {
+          toast.error(`Upload failed${e?.message ? ` — ${e.message}` : ' — check connection and try again'}`);
+        }
+      }
     } finally {
       setIsUploading(false);
     }
@@ -56,7 +99,7 @@ export function ImageUploadInput({
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file?.type.startsWith('image/')) uploadFile(file);
+    if (file) uploadFile(file);
   }, [uploadFile]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +148,7 @@ export function ImageUploadInput({
             <div className="flex flex-col items-center gap-2">
               <Upload className="h-6 w-6 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">Drop image or click to upload</span>
+              <span className="text-[10px] text-muted-foreground/70">{IMAGE_RECOMMENDED_HINT}</span>
             </div>
           )}
         </div>
@@ -124,7 +168,7 @@ export function ImageUploadInput({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         onChange={handleFileSelect}
       />

@@ -1,128 +1,62 @@
-# Promotional Popup — Visual Enhancement Plan
+## Why uploads are silently failing
 
-## Quick prompt feedback
+The current uploader (`ImageUploadInput`, used by the Promotional Popup `Image (optional)` field) catches every error and shows a generic `Failed to upload image` toast. Looking at the code path, the realistic failure modes are:
 
-Strong, concise prompt — you pointed at a specific surface and asked an open visual question, which gives the most creative latitude. To get even sharper output next time, anchor the ask in a single goal verb ("make it feel more premium," "add more editorial hierarchy," "tighten the CTA gravity"). That narrows the design space and makes it easy to A/B between directions without rebuilding twice.
+1. **Unsupported source format** — HEIC/HEIF (default iPhone format) and AVIF can't be decoded by `<img>` in most browsers, so `optimizeImage` rejects with `Failed to load image` before any upload happens.
+2. **Oversized source files** — A 40MP DSLR JPEG or a 50MB PNG can blow past the canvas memory ceiling on Safari/iOS, causing `canvas.toBlob` to return `null` ("Failed to create image blob").
+3. **Animated GIFs** — Get silently flattened to a single WebP frame, which often surprises operators (not technically a failure, but reads as "broken").
+4. **Storage upload errors** — Bucket exists, public, no MIME/size limit, RLS allows authenticated. So most failures are client-side (cases 1–3), not server-side. But when a real network/auth error does happen, the user sees the same generic toast — no actionable information.
+5. **No visible guardrails** — The field has no recommended size, no max-MB shown, no aspect-ratio guidance. Operators upload phone screenshots (HEIC, 4–8MB) and get a mysterious failure.
 
-## What's working today
+The video uploader (`MediaUploadInput`) already has size limits and clearer messaging — we'll bring `ImageUploadInput` up to that bar and improve both.
 
-- Termina headline, Aeonik body, accent border-top — all on-canon
-- Countdown hairline + last-3s pulse + hover-pause already shipped
-- Auto-minimize → FAB collapse path works
+## What we'll change
 
-## What feels flat (from the screenshot)
+### 1. Pre-flight validation in `ImageUploadInput`
 
-```text
-┌──────────────────────────────────────────┐
-│ 🎁 NEW CLIENT SPECIAL              [✕]   │  ← eyebrow reads thin, no contrast
-│                                          │
-│ FREE HAIRCUT WITH                        │  ← headline floats; no rhythm anchor
-│ ANY COLOR SERVICE                        │
-│                                          │
-│ Book a color appointment this month…     │  ← body color too close to headline
-│                                          │
-│  [ No thanks ]   [   CLAIM OFFER    ]    │  ← decline button competes w/ CTA
-│                                          │
-│ New clients only. Cannot be combined…    │  ← disclaimer flush w/ body, no break
-│                                          │
-│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3s   │
-└──────────────────────────────────────────┘
-```
+Before calling `optimizeImage`, validate:
 
-Issues: uniform white field with no depth, decline button visually equal to accept, no value-anchor (price/savings), disclaimer not separated, accent only used as a 4px sliver on top.
+- **MIME type** — Accept only `image/jpeg`, `image/png`, `image/webp`, `image/gif`. Reject `image/heic`, `image/heif`, `image/avif` with an actionable toast: *"HEIC isn't supported — convert to JPG/PNG first (iPhone Settings → Camera → Formats → Most Compatible)."*
+- **File size** — Hard cap at **10 MB** for source images. Warn at **5 MB**. Toast names the actual size and the cap.
+- **Empty/zero-byte files** — Reject with clear message.
 
-## Proposed enhancements (modal variant only — banner/corner stay lean)
+### 2. Better error surfacing
 
-### 1. Editorial header band (replaces the bare top border)
+- Catch the specific failure stage (decode / canvas / upload) and surface it in the toast: *"Couldn't read this image — it may be corrupted or in an unsupported format"* vs *"Couldn't reach storage — check connection and try again."*
+- Log the underlying error code from Supabase (`error.message`, `error.statusCode`) into the console with context so future debugging is faster.
 
-Replace the 4px top border with a subtle accent-tinted band behind the eyebrow. Uses the operator's accent at ~6% opacity so it works for any brand color.
+### 3. Visible recommended-spec helper text
 
-```text
-┌──────────────────────────────────────────┐
-│▓▓▓▓ 🎁 NEW CLIENT SPECIAL ▓▓▓▓▓▓▓▓ [✕] │  ← accent/6 wash, 56px tall
-│──────────────────────────────────────────│  ← 1px accent/20 hairline
-│   FREE HAIRCUT WITH                      │
-│   ANY COLOR SERVICE                      │
-```
+Add a one-line caption under the dropzone (always visible, not just on hover):
 
-- Eyebrow icon gets a small accent-tinted rounded square container (matches card-header iconBox pattern from canon)
-- Close button moves into the band on the right with a hover bg
+- **Recommended:** 1200×800px or larger, JPG/PNG/WebP, under 10 MB
+- For video: MP4/WebM, 1080p, under 50 MB (already partially shown in `MediaUploadInput`, we'll polish wording)
 
-### 2. Value anchor chip (optional, operator-configurable)
+This caption uses `tokens.body.helper` styling so it matches existing field hints.
 
-Add an optional `valueAnchor` field to settings (e.g. "$45 value", "Save 30%", "Limited to 10 bookings"). Renders as a small pill *between* headline and body, in the accent color. This is the single most reliable conversion lift for offer modals — gives the brain a number to latch onto.
+### 4. Same guardrails in `MediaUploadInput` for the image branch
 
-```text
-   FREE HAIRCUT WITH
-   ANY COLOR SERVICE
-   ┌──────────────┐
-   │  $45 VALUE   │   ← accent bg, accent-fg text, font-display, h-6
-   └──────────────┘
-   Book a color appointment this month…
-```
+Currently `MediaUploadInput` only enforces size on videos. We'll mirror the image-side guard (10 MB cap, HEIC rejection, decode-stage error messaging) so both uploaders behave identically for image input.
 
-If unset, nothing renders — silence is valid output.
+### 5. Bucket-side hardening (defense in depth)
 
-### 3. CTA hierarchy fix
+The `website-sections` bucket has no `file_size_limit` or `allowed_mime_types`. We'll add:
 
-- Decline button: drop the border, render as a quiet text link ("No thanks") aligned **left** of the CTA, not equal-weight beside it
-- Accept CTA: keep pill shape, but add a soft accent-tinted glow (`shadow-[0_8px_24px_-8px_var(--accent)]`) so it lifts off the card
-- Keep ChevronRight icon inside CTA on hover translate-x — telegraphs forward motion
+- `file_size_limit`: **52428800** (50 MB) — covers the largest legitimate video, blocks accidental uploads of huge files at the edge before they consume bandwidth.
+- `allowed_mime_types`: `image/jpeg, image/png, image/webp, image/gif, video/mp4, video/webm`.
 
-```text
-            ╭──────────────────────────╮
-  No thanks │   CLAIM OFFER    →       │  ← CTA glows w/ accent, decline is text
-            ╰──────────────────────────╯
-```
+If a request slips past the client check, the storage API returns a clean error code we can map to a user-facing message.
 
-### 4. Disclaimer separation
+## Files to touch
 
-Move disclaimer below a thin `border-t border-border/40` divider with extra `pt-4 mt-4` spacing. Reads as legal footer, not body continuation.
+- `src/components/dashboard/website-editor/inputs/ImageUploadInput.tsx` — Add MIME + size pre-flight, stage-aware error handling, recommended-spec caption.
+- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — Mirror the image-side guards, polish caption to show both image and video recommended specs.
+- New migration — `ALTER` `storage.buckets` row for `website-sections` to set `file_size_limit` and `allowed_mime_types`.
 
-### 5. Card depth + entrance refinement
+No changes to RLS policies (already correct), no schema changes, no breaking changes to the calling editors.
 
-- Replace `bg-card` flat fill with a subtle vertical gradient: `bg-gradient-to-b from-card to-card/95`
-- Bump shadow from `shadow-2xl` to a layered combo: `shadow-[0_24px_48px_-12px_rgba(0,0,0,0.18),0_8px_16px_-4px_rgba(0,0,0,0.08)]`
-- Entrance: add a tiny scale overshoot (already has zoom-in-95 → 100, fine)
+## Out of scope
 
-### 6. Countdown polish
-
-- Move the `3s` numeric label from `-top-5` (which currently floats outside the rounded corner) to sit *inside* the bar at right, vertically centered — cleaner edge
-- Hairline gets `rounded-bl-2xl rounded-br-2xl` clipping so it follows the card corners
-
-## Out of scope (keep for later if needed)
-
-- Banner + corner-card variants (those are intentionally dense; visual lift would clutter them)
-- New imagery/illustration system
-- Animated headline reveal (would fight the 15s countdown)
-
-## Technical changes
-
-**`src/hooks/usePromotionalPopup.ts`**
-- Add `valueAnchor?: string | null` to `PromotionalPopupSettings` (optional, defaults to null)
-
-**`src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`**
-- Add a single text input "Value anchor (optional)" with placeholder `e.g. "$45 value"` and helper text explaining it shows as a small accent chip
-
-**`src/components/public/PromotionalPopup.tsx`**
-- Restructure modal variant: split into header band + body region instead of single padded block
-- Move close button into header band
-- Update `PromoBody` to render the optional `valueAnchor` chip between headline and body
-- Demote decline button to text-link style, reorder CTA row
-- Add accent-glow shadow to accept CTA via inline `style` (so it picks up the operator's accent)
-- Replace flat `bg-card` with vertical gradient
-- Reposition `CountdownBar` numeric label inside the bar; round bottom corners
-
-**No DB migration. No new dependencies. No changes to banner/corner-card variants.**
-
-## Files touched
-
-1. `src/hooks/usePromotionalPopup.ts` — one new optional field
-2. `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` — one new input
-3. `src/components/public/PromotionalPopup.tsx` — modal variant + PromoBody + CountdownBar tweaks
-
-## Suggested next enhancements (after this ships)
-
-1. **Operator A/B preview**: side-by-side toggle in the editor showing "before / after" so operators can sanity-check their accent color works with the new glow + band
-2. **Smart value-anchor inference**: if the offer code maps to a known service in the catalog, auto-suggest the dollar value as a chip (still operator-confirmed, never auto-published)
-3. **Headline length guardrail**: warn in the editor if headline exceeds ~40 chars — the new editorial layout assumes 2-line max
+- HEIC → JPG client-side transcoding (would require a 200 KB+ wasm dep; better to ask operators to convert).
+- Video transcoding/compression (operators bring their own optimized files, as documented in the existing `MediaUploadInput` header comment).
+- Replacing `ImageUploadInput` with `MediaUploadInput` everywhere — out of scope for a debugging pass; promo popup intentionally takes images only.
