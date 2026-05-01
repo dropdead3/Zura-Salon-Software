@@ -8,17 +8,20 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
+import { FocalPointPicker } from './inputs/FocalPointPicker';
 import { EditorCard } from './EditorCard';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
+import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 import {
   DndContext,
   closestCenter,
