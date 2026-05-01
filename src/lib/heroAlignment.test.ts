@@ -38,3 +38,43 @@ describe('resolveHeroAlignment — notes canon', () => {
     expect(resolveHeroAlignment(null).notes).toBe('items-center');
   });
 });
+
+describe('resolveHeroAlignment — shell vs inner wrapper canon', () => {
+  // The rotating hero needs a STABLE outer shell (centered + width-clamped)
+  // and a separate INNER per-slide wrapper that owns the horizontal anchor.
+  // Without this split, the outer wrapper flips alignment when slides change,
+  // making left→right transitions look like content slides through center.
+  it.each(ALL_ALIGNMENTS)(
+    'shellWrapper is centered + width-clamped regardless of alignment=%s',
+    (alignment) => {
+      const a = resolveHeroAlignment(alignment);
+      expect(a.shellWrapper).toContain('mx-auto');
+      expect(a.shellWrapper).toContain('max-w-4xl');
+      expect(a.shellWrapper).not.toContain('mr-auto');
+      expect(a.shellWrapper).not.toContain('ml-auto ');
+    },
+  );
+
+  it('innerWrapper carries left anchor for left alignment', () => {
+    const a = resolveHeroAlignment('left');
+    expect(a.innerWrapper).toContain('mr-auto');
+    expect(a.innerWrapper).toContain('text-left');
+  });
+
+  it('innerWrapper carries center anchor for center alignment', () => {
+    const a = resolveHeroAlignment('center');
+    expect(a.innerWrapper).toContain('mx-auto');
+    expect(a.innerWrapper).toContain('text-center');
+  });
+
+  it('innerWrapper carries right anchor for right alignment', () => {
+    const a = resolveHeroAlignment('right');
+    expect(a.innerWrapper).toContain('ml-auto');
+    expect(a.innerWrapper).toContain('text-right');
+  });
+
+  it('falls back to center innerWrapper for unset values', () => {
+    expect(resolveHeroAlignment(undefined).innerWrapper).toContain('text-center');
+    expect(resolveHeroAlignment(null).innerWrapper).toContain('text-center');
+  });
+});
