@@ -107,9 +107,8 @@ function summarizeScrim(c: HeroConfig): string {
 function summarizeAlignment(c: HeroConfig): string {
   const align = c.content_alignment ?? 'center';
   const scroll = c.show_scroll_indicator ? 'scroll cue on' : 'scroll cue off';
-  const words = c.show_rotating_words ? 'words on' : 'words off';
   const notes = c.show_consultation_notes ? 'notes on' : 'notes off';
-  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll} · ${words} · ${notes}`;
+  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll} · ${notes}`;
 }
 
 function summarizeRotator(c: HeroConfig): string {
@@ -120,8 +119,16 @@ function summarizeRotator(c: HeroConfig): string {
   return `${n} slides · auto · ${seconds}s`;
 }
 
+function summarizeWords(c: HeroConfig): string {
+  const enabled = c.show_rotating_words ?? false;
+  const count = (c.rotating_words ?? []).filter((w) => w && w.trim()).length;
+  if (!enabled) return 'Off';
+  if (count === 0) return 'On · no words yet';
+  return `${count} word${count === 1 ? '' : 's'} · ${c.word_rotation_interval}s`;
+}
+
 function summarizeAdvanced(c: HeroConfig): string {
-  return `${c.word_rotation_interval}s word rotation · ${c.animation_start_delay}s start delay`;
+  return `${c.animation_start_delay}s start delay`;
 }
 
 /* ─── Migration: synthesize Slide 1 from legacy section-level fields ─── */
