@@ -39,7 +39,7 @@ export function UnsavedChangesToast({
         'pointer-events-auto fixed z-50 flex items-center justify-between gap-3',
         'left-4 right-4 md:left-auto md:right-6 md:w-auto',
         'bottom-[max(1rem,env(safe-area-inset-bottom))] md:bottom-6',
-        'rounded-full border border-warning/30 bg-card/95 pl-4 pr-1.5 py-1.5',
+        'rounded-full border border-warning/30 bg-card/95 pl-4 pr-[8px] py-1.5',
         'shadow-2xl backdrop-blur-xl',
         'animate-in fade-in slide-in-from-bottom-4 duration-200',
         className,
