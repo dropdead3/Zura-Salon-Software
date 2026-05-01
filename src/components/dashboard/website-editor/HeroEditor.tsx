@@ -299,6 +299,14 @@ export function HeroEditor() {
 
   useEditorSaveAction(handleSave);
 
+  // Discard: revert local edits back to last-saved server config.
+  useEditorDiscardAction(useCallback(() => {
+    if (data) {
+      setLocalConfig(data);
+      clearPreviewOverride('section_hero', orgId);
+    }
+  }, [data, orgId]));
+
   const updateField = useCallback(
     <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => {
       setLocalConfig((prev) => ({ ...prev, [field]: value }));
