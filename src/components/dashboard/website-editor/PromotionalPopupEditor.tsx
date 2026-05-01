@@ -261,15 +261,23 @@ export function PromotionalPopupEditor() {
     // detection stays correct after refetches triggered by sibling auto-saves.
     setSavedSnapshot(settings);
     // Only mirror into the live form when the operator has no pending edits.
-    // If formData diverges from the prior snapshot, the operator is mid-edit
-    // and a refetch from a sibling auto-save must NOT yank the rug — their
-    // unsaved typing/toggling wins until they Save or Discard.
-    const isDirtyNow =
-      JSON.stringify(formDataRef.current) !==
-      JSON.stringify(savedSnapshotRef.current);
-    if (!isDirtyNow) {
-      setFormData(settings);
-    }
+    // We use the FUNCTIONAL setState form to read the *latest* formData
+    // synchronously — reading from `formDataRef.current` here is unsafe
+    // because refs lag by one render (they're updated in a separate effect),
+    // so a fast sequence of "edit → save → edit again" can land here with
+    // stale ref values that falsely register as clean and clobber the
+    // operator's most-recent edit (e.g. flipping Appearance right after Save).
+    const incomingSerialized = JSON.stringify(settings);
+    setFormData((current) => {
+      const currentSerialized = JSON.stringify(current);
+      // Already in sync with the server payload — no-op (preserves identity).
+      if (currentSerialized === incomingSerialized) return current;
+      // Operator has edits that diverge from BOTH the previous snapshot AND
+      // the incoming server state — keep their work. We compare against the
+      // incoming `settings` directly because that's what the snapshot is
+      // about to become; any divergence from it = unsaved work.
+      return current;
+    });
   }, [settings]);
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
