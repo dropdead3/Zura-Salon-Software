@@ -279,7 +279,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* Main headline */}
             <motion.h1
-              className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
+              className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
               style={{
                 y: headlineY,
                 filter: headingBlurFilter,
