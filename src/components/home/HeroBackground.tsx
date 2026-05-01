@@ -105,11 +105,13 @@ export function HeroBackground({
       ) : (
         <img
           src={url}
+          {...(srcSet ? { srcSet, sizes: '100vw' } : {})}
           alt=""
           className={`w-full h-full ${objectFit}`}
           style={{ objectPosition }}
           loading="eager"
           decoding="async"
+          fetchPriority="high"
         />
       )}
       {style !== 'none' && strength > 0 && (
