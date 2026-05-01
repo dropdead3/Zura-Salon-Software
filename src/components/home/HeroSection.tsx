@@ -118,7 +118,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
     return (
       <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative z-10 flex flex-col overflow-visible min-h-[500px] bg-background">
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
-        <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
+        <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
               {showEyebrow && (
@@ -252,7 +252,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
       )}
 
       <motion.div 
-        className="flex-1 flex items-start justify-center relative z-0 pt-28 pb-32 lg:pt-36 lg:pb-48"
+        className="flex-1 flex items-center justify-center relative z-0 py-16"
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">

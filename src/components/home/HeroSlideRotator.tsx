@@ -135,7 +135,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
       </AnimatePresence>
 
       {/* Foreground content */}
-      <div className="flex-1 flex items-center justify-center relative z-10 pt-28 pb-32 lg:pt-36 lg:pb-48">
+      <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
           <div className="max-w-4xl mx-auto text-center">
             <AnimatePresence mode="wait">
