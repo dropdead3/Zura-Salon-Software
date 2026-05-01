@@ -14,7 +14,7 @@ import {
   MousePointer2,
   PanelLeftOpen,
   PanelRightClose,
-  PanelRightOpen,
+  
   Plus,
   Redo2,
   RotateCcw,
