@@ -619,6 +619,7 @@ export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
   show_description: true,
   show_eyebrow: true,
   show_headline: true,
+  show_cta_button: true,
 };
 
 export const DEFAULT_STICKY_FOOTER_BAR: StickyFooterBarConfig = {
