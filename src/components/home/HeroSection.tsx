@@ -126,7 +126,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} preload />
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
-            <div className="max-w-4xl mx-auto text-center">
+            <div className={alignment.wrapper}>
               {showEyebrow && (
                 <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6 section-eyebrow">
                   <InlineEditableText
