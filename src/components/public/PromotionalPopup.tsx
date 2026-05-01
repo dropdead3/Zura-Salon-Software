@@ -246,9 +246,16 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // countdown → FAB lifecycle without a full iframe reload. Only listens
   // in preview mode so production visitors can't trigger this from the
   // console.
+  //
+  // Iframe boundary: when this component mounts inside the website-editor
+  // preview iframe, the parent-window CustomEvent never reaches us — the
+  // editor's `LivePreviewPanel` bridges it across as a `postMessage`
+  // (`PREVIEW_PROMO_POPUP_RESET`). We listen on BOTH channels: the
+  // CustomEvent for same-window mounts (e.g. ?preview=true in a top-level
+  // tab via "Open full preview"), and the message for the iframe path.
   useEffect(() => {
     if (!isPreview) return;
-    const onReset = () => {
+    const runReset = () => {
       // Full lifecycle reset: clear the one-shot trigger guard, dismiss
       // any visible FAB, force-reset the countdown to its full duration
       // (otherwise a prior cycle that completed leaves secondsLeft at 0
@@ -265,8 +272,19 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       }
       setOpen(true);
     };
+    const onReset = () => runReset();
+    const onMessage = (e: MessageEvent) => {
+      const data = e.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type !== 'PREVIEW_PROMO_POPUP_RESET') return;
+      runReset();
+    };
     window.addEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
-    return () => window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
+    window.addEventListener('message', onMessage);
+    return () => {
+      window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
+      window.removeEventListener('message', onMessage);
+    };
   }, [isPreview, cfg?.autoMinimizeMs]);
 
   // Echo lifecycle phase to the editor (preview only) so the "Restart
@@ -275,10 +293,25 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // `promo-popup-preview-state` event — see src/lib/promoPopupPreviewReset.ts
   // for ownership canon. Production visitors never dispatch (no listener
   // exists outside the editor anyway, but gating keeps it tidy).
+  //
+  // Iframe boundary: when mounted inside the editor's preview iframe, the
+  // parent-window listener can't see our CustomEvent. Also post the phase
+  // out to `window.parent` via postMessage; LivePreviewPanel re-broadcasts
+  // it as the canonical CustomEvent on the parent side so the button
+  // label memo + `getLastPromoPopupPreviewPhase()` cache stay in sync
+  // without either side knowing about the boundary.
   useEffect(() => {
     if (!isPreview) return;
     const phase = open ? 'open' : showFab ? 'fab' : 'idle';
     dispatchPromoPopupPreviewState(phase);
+    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: 'PREVIEW_PROMO_POPUP_STATE', phase }, '*');
+      } catch {
+        // Cross-origin parent — best-effort only; same-origin is the
+        // canonical case (preview iframe shares the app origin).
+      }
+    }
   }, [isPreview, open, showFab]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
