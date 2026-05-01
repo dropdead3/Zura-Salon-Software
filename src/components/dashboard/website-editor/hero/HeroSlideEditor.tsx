@@ -298,6 +298,41 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
           onChange={(v) => onUpdate({ subheadline_line2: v })}
           maxLength={80}
         />
+
+        {/* Consultation notes — section-level global, surfaced inline because
+            they visually live directly under the CTA buttons on every slide.
+            Same pattern as the rotating-word block above. */}
+        <div className="space-y-3 pl-3 border-l-2 border-border/40">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Notes Under Buttons</p>
+            <p className="text-[11px] text-muted-foreground">
+              Shared across all slides — appears below the CTA buttons.
+            </p>
+          </div>
+
+          <ToggleInput
+            label="Show Notes"
+            value={section.show_consultation_notes ?? false}
+            onChange={(v) => onUpdateSection('show_consultation_notes', v)}
+          />
+
+          {(section.show_consultation_notes ?? false) && (
+            <>
+              <CharCountInput
+                label="Note Line 1"
+                value={section.consultation_note_line1 ?? ''}
+                onChange={(v) => onUpdateSection('consultation_note_line1', v)}
+                maxLength={80}
+              />
+              <CharCountInput
+                label="Note Line 2"
+                value={section.consultation_note_line2 ?? ''}
+                onChange={(v) => onUpdateSection('consultation_note_line2', v)}
+                maxLength={80}
+              />
+            </>
+          )}
+        </div>
       </EditorCard>
 
       {/* CTAs */}
