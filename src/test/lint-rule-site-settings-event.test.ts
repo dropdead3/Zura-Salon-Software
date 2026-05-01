@@ -21,6 +21,11 @@ describe('no-restricted-syntax: site-settings-draft-write event ownership', () =
   const eslint = new ESLint({
     cwd: path.resolve(__dirname, '../..'),
     overrideConfigFile: path.resolve(__dirname, '../..', 'eslint.config.js'),
+    // Bypass top-level `ignores` so we can lint the intentionally-violating
+    // fixture file. Without this, the rule appears to pass because ESLint
+    // skipped the file entirely — exactly the silent-failure mode this
+    // smoke test is designed to catch.
+    ignore: false,
   });
 
   it('flags `new CustomEvent("site-settings-draft-write", ...)` outside siteSettingsDraft.ts', async () => {
