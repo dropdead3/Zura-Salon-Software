@@ -29,6 +29,40 @@
 // To add a new global selector: push to CONSOLIDATED_RESTRICTED_SYNTAX and
 // extend `src/test/lint-config-resolution.test.ts`. Do NOT spin up a new
 // config block with its own `no-restricted-syntax`.
+/**
+ * Build a `no-restricted-syntax` entry that enforces the CustomEvent
+ * Ownership canon: a single dispatcher module owns one named event, and
+ * every other site that constructs `new CustomEvent('<name>', ...)` is
+ * banned. Pair every entry with (a) a sole-dispatcher module that uses an
+ * inline `eslint-disable-next-line no-restricted-syntax` to perform the
+ * actual dispatch, (b) a banned fixture under src/test/lint-fixtures/, and
+ * (c) an assertion in src/test/lint-config-resolution.test.ts.
+ *
+ * Templates: src/lib/siteSettingsDraft.ts (site-settings-draft-write),
+ *            src/lib/promoPopupPreviewReset.ts (promo-popup-preview-{reset,state}).
+ *
+ * Usage:
+ *   defineEventOwnershipSelector({
+ *     event: 'my-event',
+ *     owner: 'src/lib/myEventOwner.ts',
+ *     dispatcher: 'dispatchMyEvent()',          // optional helper hint
+ *     rationale: 'centralizes payload shape',   // optional, appended to message
+ *   })
+ */
+export function defineEventOwnershipSelector({ event, owner, dispatcher, rationale }) {
+  if (!event || !owner) {
+    throw new Error("defineEventOwnershipSelector requires { event, owner }.");
+  }
+  const dispatcherHint = dispatcher
+    ? `Use \`${dispatcher}\` from that module instead of inlining a CustomEvent`
+    : `Add the dispatch inside ${owner} instead of inlining a CustomEvent`;
+  const tail = rationale ? ` — ${rationale}.` : ".";
+  return {
+    selector: `NewExpression[callee.name='CustomEvent']:has(Literal[value='${event}'])`,
+    message: `The \`${event}\` event is owned exclusively by ${owner}. ${dispatcherHint}${tail}`,
+  };
+}
+
 export const CONSOLIDATED_RESTRICTED_SYNTAX = [
   {
     // Loader2 governance — see consolidated block doc below.
@@ -39,18 +73,23 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
     message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
   },
-  {
-    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
-    message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
-  },
-  {
-    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-reset'])",
-    message: "The `promo-popup-preview-reset` event is owned exclusively by src/lib/promoPopupPreviewReset.ts. Use `dispatchPromoPopupPreviewReset()` from that module instead of inlining a CustomEvent — the helper centralizes the payload shape and lets the editor stay in lockstep with the popup listener.",
-  },
-  {
-    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-state'])",
-    message: "The `promo-popup-preview-state` event is owned exclusively by src/lib/promoPopupPreviewReset.ts (the popup is the sole dispatcher; the editor is the sole consumer). Use `dispatchPromoPopupPreviewState(phase)` from that module — inlining a CustomEvent breaks the typed phase union and the last-phase replay cache.",
-  },
+  defineEventOwnershipSelector({
+    event: "site-settings-draft-write",
+    owner: "src/lib/siteSettingsDraft.ts",
+    rationale: "empty-detail dispatches from helpers like triggerPreviewRefresh() caused the May 2026 promo-popup snap-back regression; if you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts",
+  }),
+  defineEventOwnershipSelector({
+    event: "promo-popup-preview-reset",
+    owner: "src/lib/promoPopupPreviewReset.ts",
+    dispatcher: "dispatchPromoPopupPreviewReset()",
+    rationale: "the helper centralizes the payload shape and keeps the editor in lockstep with the popup listener",
+  }),
+  defineEventOwnershipSelector({
+    event: "promo-popup-preview-state",
+    owner: "src/lib/promoPopupPreviewReset.ts",
+    dispatcher: "dispatchPromoPopupPreviewState(phase)",
+    rationale: "the popup is the sole dispatcher and the editor the sole consumer; inlining a CustomEvent breaks the typed phase union and the last-phase replay cache",
+  }),
   {
     selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
     message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
