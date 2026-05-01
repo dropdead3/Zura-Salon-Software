@@ -405,27 +405,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         </div>
       </motion.div>
 
-      {/* Scroll Indicator */}
-      <motion.button
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...springTransition, delay: 5.8 }}
+      {/* Scroll Indicator (operator-toggled, parity-shared with rotator) */}
+      <HeroScrollIndicator
+        show={heroConfig?.show_scroll_indicator ?? true}
+        text={heroConfig?.scroll_indicator_text}
+        onMedia={hasMediaBackground}
         onClick={scrollToContent}
-        className="absolute bottom-8 inset-x-0 mx-auto w-fit flex flex-col items-center gap-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer z-20"
-        aria-label="Scroll down"
-      >
-        <span className="text-xs uppercase tracking-normal md:tracking-[0.2em] font-display">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
-          }}
-        >
-          <ChevronDown size={20} />
-        </motion.div>
-      </motion.button>
+      />
 
       {/* Consultation Form Dialog */}
       <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
