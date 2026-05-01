@@ -1156,29 +1156,23 @@ function WebsiteEditorShellInner() {
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Exit Editor</span>
           </Button>
-          <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
+          {/* Mobile-only: opens the section sheet (no persistent rail on small screens). */}
           {isMobile && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full shrink-0"
-              onClick={() => setMobileSidebarOpen(true)}
-              title="Open sections"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
+            <>
+              <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-full shrink-0"
+                onClick={() => setMobileSidebarOpen(true)}
+                title="Open sections"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </>
           )}
-          {!isMobile && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full shrink-0"
-              onClick={() => setShowSidebar((v) => !v)}
-              title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
-            >
-              {showSidebar ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-            </Button>
-          )}
+          {/* Desktop collapse/expand control lives INSIDE the rail (header) and as a
+              re-expand stub on the preview's left edge — no orphaned toolbar button. */}
           {/* Breadcrumb: page › section. Hidden on small screens. */}
           <nav
             aria-label="Editor breadcrumb"
