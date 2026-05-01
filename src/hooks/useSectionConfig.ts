@@ -53,6 +53,23 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
 // Section Types
 // ============================================
 
+/**
+ * Per-section/per-slide color overrides for hero text + buttons. Every field
+ * is optional — empty/missing means "fall back to auto-contrast" (white over
+ * media, theme foreground otherwise). Operators set hex strings; renderers
+ * apply via inline style so any color value is supported.
+ */
+export interface HeroTextColors {
+  headline?: string;
+  subheadline?: string;
+  primary_button_bg?: string;
+  primary_button_fg?: string;
+  primary_button_hover_bg?: string;
+  secondary_button_border?: string;
+  secondary_button_fg?: string;
+  secondary_button_hover_bg?: string;
+}
+
 export interface HeroSlide {
   id: string;
   background_type: 'image' | 'video' | 'inherit';
@@ -69,6 +86,8 @@ export interface HeroSlide {
   cta_returning_client: string;
   cta_returning_client_url: string;
   show_secondary_button: boolean;
+  /** Per-slide color overrides; empty fields inherit from section text_colors. */
+  text_colors?: HeroTextColors;
 }
 
 export interface HeroConfig {
