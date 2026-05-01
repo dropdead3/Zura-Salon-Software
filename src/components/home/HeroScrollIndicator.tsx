@@ -34,8 +34,8 @@ export function HeroScrollIndicator({ show, text, onMedia, onClick }: HeroScroll
       transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
       onClick={onClick}
       className={cn(
-        'absolute bottom-8 inset-x-0 mx-auto w-fit flex flex-col items-center gap-2',
-        'cursor-pointer z-20 transition-colors',
+        HERO_OVERLAY_ANCHORS.bottomCenter,
+        'flex flex-col items-center gap-2 cursor-pointer transition-colors',
         onMedia
           ? 'text-white/80 hover:text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]'
           : 'text-foreground/70 hover:text-foreground',
