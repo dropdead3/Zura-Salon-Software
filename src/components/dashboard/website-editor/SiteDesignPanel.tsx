@@ -166,9 +166,17 @@ function hslTripletToHex(triplet: string | null): string {
 
 // ─── Live preview message ───
 // LivePreviewPanel forwards this to the iframe; DesignOverridesApplier listens.
+//
+// IMPORTANT — payload shape contract:
+//   detail = { overrides }   (NOT detail = overrides)
+// LivePreviewPanel reads `detail?.overrides` and forwards it as the
+// PREVIEW_DESIGN_OVERRIDES postMessage payload. Passing the bare overrides
+// object as `detail` causes the iframe to receive `overrides: undefined`,
+// which DesignOverridesApplier silently no-ops on — the bug that made every
+// slider/color picker feel "dead" until Save (Apr 2026 regression).
 function broadcastToPreview(overrides: DesignOverrides) {
   window.dispatchEvent(
-    new CustomEvent('editor-design-preview', { detail: overrides }),
+    new CustomEvent('editor-design-preview', { detail: { overrides } }),
   );
 }
 
