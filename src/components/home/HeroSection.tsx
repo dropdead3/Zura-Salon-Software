@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
