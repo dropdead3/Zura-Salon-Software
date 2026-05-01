@@ -103,7 +103,8 @@ function summarizeScrim(c: HeroConfig): string {
 
 function summarizeAlignment(c: HeroConfig): string {
   const align = c.content_alignment ?? 'center';
-  return `${align[0].toUpperCase()}${align.slice(1)} aligned`;
+  const scroll = c.show_scroll_indicator ? 'scroll cue on' : 'scroll cue off';
+  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll}`;
 }
 
 function summarizeRotator(c: HeroConfig): string {
@@ -115,7 +116,7 @@ function summarizeRotator(c: HeroConfig): string {
 }
 
 function summarizeAdvanced(c: HeroConfig): string {
-  return `${c.word_rotation_interval}s rotation · scroll ${c.show_scroll_indicator ? 'on' : 'off'}`;
+  return `${c.word_rotation_interval}s word rotation · ${c.animation_start_delay}s start delay`;
 }
 
 /* ─── Migration: synthesize Slide 1 from legacy section-level fields ─── */
