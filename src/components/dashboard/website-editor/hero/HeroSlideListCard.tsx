@@ -21,6 +21,8 @@ interface HeroSlideListCardProps {
   sectionBgUrl: string;
   sectionBgPoster: string;
   sectionBgType: HeroConfig['background_type'];
+  /** Whether the rotator runs in multi-slide or background-only mode. */
+  rotatorMode?: 'multi_slide' | 'background_only';
   onClick: () => void;
   onDelete: () => void;
   /** Toggle whether this slide is included in the public rotator. */
@@ -47,6 +49,7 @@ export function HeroSlideListCard({
   sectionBgUrl,
   sectionBgPoster,
   sectionBgType,
+  rotatorMode = 'multi_slide',
   onClick,
   onDelete,
   onToggleActive,
@@ -54,6 +57,7 @@ export function HeroSlideListCard({
 }: HeroSlideListCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const isActive = slide.active !== false;
+  const backgroundOnly = rotatorMode === 'background_only';
   const inherits = slide.background_type === 'inherit';
   const resolvedType = inherits ? sectionBgType : slide.background_type;
   const thumbUrl = inherits
@@ -131,12 +135,18 @@ export function HeroSlideListCard({
               </span>
             )}
           </div>
-          <div className={cn(
-            "text-sm truncate font-sans mt-0.5",
-            slide.headline_text ? "text-foreground" : "text-muted-foreground italic"
-          )}>
-            {slide.headline_text || 'No headline yet'}
-          </div>
+          {backgroundOnly ? (
+            <div className="text-sm truncate font-sans mt-0.5 text-muted-foreground italic">
+              Background only — content shared across slides
+            </div>
+          ) : (
+            <div className={cn(
+              "text-sm truncate font-sans mt-0.5",
+              slide.headline_text ? "text-foreground" : "text-muted-foreground italic"
+            )}>
+              {slide.headline_text || 'No headline yet'}
+            </div>
+          )}
           <div className="text-[11px] text-muted-foreground truncate font-sans">
             {summaryParts.join(' · ')}
           </div>
