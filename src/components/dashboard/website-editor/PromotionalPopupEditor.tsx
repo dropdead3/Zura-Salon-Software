@@ -228,6 +228,20 @@ export function PromotionalPopupEditor() {
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [autoSaving, setAutoSaving] = useState(false);
 
+  // Refs eliminate stale-closure races between the auto-save Enable toggle and
+  // the manual "Save to preview" button. Both save paths read the *current*
+  // form state from `formDataRef`, and `savingRef` serializes mutations so a
+  // late-arriving stale write can never overwrite a fresh one.
+  const formDataRef = useRef<PromotionalPopupSettings>(formData);
+  const savedSnapshotRef = useRef<PromotionalPopupSettings>(savedSnapshot);
+  const savingChainRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+  useEffect(() => {
+    savedSnapshotRef.current = savedSnapshot;
+  }, [savedSnapshot]);
+
   // Live count + 14-day velocity for the *saved* offer code. We track
   // savedSnapshot.offerCode (not formData) so the count reflects what's
   // actually in production, not in-flight edits — operators editing the code
@@ -242,9 +256,19 @@ export function PromotionalPopupEditor() {
   const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
   useEffect(() => {
-    if (settings) {
+    if (!settings) return;
+    // Always refresh the saved snapshot — it must mirror the server so dirty
+    // detection stays correct after refetches triggered by sibling auto-saves.
+    setSavedSnapshot(settings);
+    // Only mirror into the live form when the operator has no pending edits.
+    // If formData diverges from the prior snapshot, the operator is mid-edit
+    // and a refetch from a sibling auto-save must NOT yank the rug — their
+    // unsaved typing/toggling wins until they Save or Discard.
+    const isDirtyNow =
+      JSON.stringify(formDataRef.current) !==
+      JSON.stringify(savedSnapshotRef.current);
+    if (!isDirtyNow) {
       setFormData(settings);
-      setSavedSnapshot(settings);
     }
   }, [settings]);
 
@@ -308,16 +332,54 @@ export function PromotionalPopupEditor() {
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const disclaimerRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Serialize every write through `savingChainRef` so the auto-save toggle and
+  // the manual Save can never interleave. Each new write awaits the previous
+  // one — last write wins, but only after the prior one finishes, eliminating
+  // the race where a stale-closure mutation lands AFTER a fresh one and
+  // overwrites it. Source-of-truth for the payload is `formDataRef`, not the
+  // captured `formData`, so a synchronous Save click that fires before React
+  // re-renders still serializes the *current* form state.
+  const enqueueWrite = useCallback(
+    (
+      buildNext: () => PromotionalPopupSettings,
+      onSuccess?: (next: PromotionalPopupSettings) => void,
+      onError?: (err: unknown, attemptedNext: PromotionalPopupSettings) => void,
+    ): Promise<void> => {
+      const run = savingChainRef.current.then(async () => {
+        const next = buildNext();
+        try {
+          await updateSettings.mutateAsync(next);
+          setSavedSnapshot(next);
+          onSuccess?.(next);
+        } catch (err) {
+          onError?.(err, next);
+          throw err;
+        }
+      });
+      // Don't break the chain on a single failure — subsequent writes should
+      // still be allowed to proceed against current form state.
+      savingChainRef.current = run.catch(() => {});
+      return run;
+    },
+    [updateSettings],
+  );
+
   const persist = useCallback(async () => {
     try {
-      await updateSettings.mutateAsync(formData);
-      setSavedSnapshot(formData);
-      toast.success('Promotional popup saved');
+      await enqueueWrite(
+        () => formDataRef.current,
+        () => {
+          toast.success('Promotional popup saved');
+          // Mirror the auto-save toggle's behavior: nudge the live preview
+          // iframe to reflect the just-saved draft without a manual reload.
+          triggerPreviewRefresh();
+        },
+      );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
       toast.error(`Failed to save: ${msg}`);
     }
-  }, [formData, updateSettings]);
+  }, [enqueueWrite]);
 
   // Composed Save guards — overflow first (data loss), contrast second
   // (legibility). usePersistGuards picks the first blocking finding for the
@@ -372,26 +434,36 @@ export function PromotionalPopupEditor() {
   // Auto-save for the binary Enable toggle — operators expect a switch to
   // "just work" without hunting for Save. We persist immediately, refresh
   // the preview, and skip the dirty-state path for this single field.
+  // Reads from `formDataRef` (not the captured `formData`) and routes through
+  // `enqueueWrite` so it can never race the manual "Save to preview" button —
+  // a stale-closure save can no longer overwrite the just-toggled enable bit.
   const handleEnableToggle = useCallback(
     async (checked: boolean) => {
-      const next = { ...formData, enabled: checked };
-      setFormData(next);
+      // Optimistic UI flip so the switch feels instant.
+      setFormData((prev) => ({ ...prev, enabled: checked }));
       setAutoSaving(true);
       try {
-        await updateSettings.mutateAsync(next);
-        setSavedSnapshot(next);
-        toast.success(checked ? 'Popup enabled' : 'Popup disabled');
-        triggerPreviewRefresh();
+        await enqueueWrite(
+          // Build the payload at write-time from the freshest form state so
+          // any in-flight typing is also captured by this auto-save.
+          () => ({ ...formDataRef.current, enabled: checked }),
+          () => {
+            toast.success(checked ? 'Popup enabled' : 'Popup disabled');
+            triggerPreviewRefresh();
+          },
+          () => {
+            // Roll back optimistic state on failure.
+            setFormData((prev) => ({ ...prev, enabled: !checked }));
+          },
+        );
       } catch (err) {
-        // Roll back optimistic state on failure
-        setFormData((prev) => ({ ...prev, enabled: !checked }));
         const msg = err instanceof Error ? err.message : 'unknown error';
         toast.error(`Failed to update: ${msg}`);
       } finally {
         setAutoSaving(false);
       }
     },
-    [formData, updateSettings],
+    [enqueueWrite],
   );
 
   const handlePreviewNow = useCallback(() => {

@@ -1,59 +1,85 @@
-# Promo Attribution: Future-proof now, defer the dashboard card
+# Fix: Enable toggle gets reverted when "Save to preview" is clicked
 
-Two cheap structural moves that close the data gap without prematurely shipping a single-source analytics card. When a second redemption surface arrives (or Marketing OS Phase 2 begins), the analytics card becomes a thin read layer over data we're already capturing.
+## What's wrong
 
-## What we're building
+Two save paths write to the same `promotional_popup` draft and race each other:
 
-### 1. Persist `revenue_attributed` on every popup-driven redemption
+1. **Auto-save toggle** (`handleEnableToggle`) — fires the moment the operator flips "Show Promotional Popup".
+2. **Manual "Save to preview"** — dispatches the global `editor-save-request` event, which `useEditorSaveAction` routes to `guardedSave` → `persist()` → `updateSettings.mutateAsync(formData)`.
 
-`promotion_redemptions.revenue_attributed` already exists on the table (`numeric`, nullable) but the popup write-path leaves it null. That means today we know a redemption *happened* but not what it was *worth* — a future analytics card would have to retro-join `appointments` → transactions, which is slow and gets fragile the moment voids/refunds enter the picture.
+Both ultimately call the same mutation against `site_settings.draft_value`, but they capture `formData` via React closures that go stale across renders, and the editor's `useEffect` unconditionally overwrites in-flight `formData` whenever the query refetches.
 
-Stamp it at the moment of write, using the appointment's `final_amount` (already computed for the redemption row). This locks in the value at booking time — the operator's intent — independent of later modifications.
+### The exact race producing the symptom
 
-### 2. Surface "Lifetime revenue attributed" on the editor card
+1. Operator toggles Enable ON.
+   `handleEnableToggle` does `setFormData({…, enabled: true})` (schedules render) and starts `mutateAsync`.
+2. Operator immediately clicks **Save to preview** (common — they want to confirm).
+3. The click dispatches `editor-save-request` *synchronously*, before React has committed the new render and before `useEditorSaveAction` re-registered its handler with a fresh `persist` closure.
+4. The currently-registered handler holds a stale `persist` whose closed-over `formData` still has `enabled: false`.
+5. That stale mutation lands AFTER the toggle's mutation, overwriting `draft_value.enabled` back to `false`.
+6. The mutation's `onSuccess` invalidates the query → refetch returns `{enabled: false}` → `useEffect` resets `formData` and `savedSnapshot` to the reverted state. Toggle visibly flips off.
 
-One stat next to the existing redemption count, wrapped in `BlurredAmount` per privacy doctrine. Keeps the loop in-context where the operator already is, instead of forcing a dashboard trip for a single-surface metric.
+A second related defect: the `useEffect` that syncs `settings → formData/savedSnapshot` runs on every refetch and silently blows away any in-flight edits, so other field edits made during an auto-save round-trip can vanish too.
 
-Format: `$1,240 attributed · 8 redemptions · ↑ 2 in last 24h`
+## Fix
 
-### 3. Register the analytics-card deferral
+Two surgical changes in `PromotionalPopupEditor.tsx`, plus a guard inside the sync effect.
 
-Add a row to the Deferral Register in `mem://architecture/visibility-contracts.md` so this decision is recoverable months from now and auto-revisits when the trigger fires.
+### 1. Eliminate stale closures with a `formData` ref
 
-| Item | Revisit trigger |
-|---|---|
-| Promo Analytics Hub card | Second redemption surface ships (campaign/QR/SMS) **OR** any org accumulates ≥30 days × ≥10 popup redemptions |
+Track `formData` in a ref kept in sync via a layout effect. Both `handleEnableToggle` and `persist` read from the ref, not from a captured value:
 
-## What we're explicitly NOT building
+```text
+formDataRef.current = formData    (kept in sync each render)
 
-- No new Analytics Hub card. Single-surface attribution is noise, not signal — fails the materiality gate per Visibility Contracts.
-- No retro-join script. `revenue_attributed` populates forward-only; existing nulls stay null. Honest absence beats fabricated history.
-- No revenue-per-popup ranking, no decay alerts, no cross-org benchmarks. All Phase 2+ once Marketing OS exists.
+handleEnableToggle(checked):
+  next = { ...formDataRef.current, enabled: checked }
+  setFormData(next)
+  await mutateAsync(next)
 
-## Technical details
+persist():
+  await mutateAsync(formDataRef.current)
+```
 
-**Edge function** (`supabase/functions/create-public-booking/index.ts`, ~line 350):
-- Add `revenue_attributed: finalPrice ?? basePrice ?? null` to the `promotion_redemptions` insert payload
-- Rationale comment: "Stamp at booking time — represents the operator's marketing intent, not post-edit reality. Voids/refunds tracked separately."
+Result: whichever save path fires last writes the *current* form state, not a stale snapshot. The Enable toggle's value is preserved even if Save fires synchronously a frame later.
 
-**Hook** (`src/hooks/usePromotionalPopupRedemptions.ts`):
-- Extend the count query to also `sum(revenue_attributed)` for the same `surface = 'promotional_popup'` + `promo_code_used` scope
-- Return shape gains `revenueAttributed: number` (cents kept as numeric, displayed via `formatCurrency`)
-- Silence rule preserved: if no rows, returns `0` — never a fabricated estimate
+### 2. Serialize the two save paths
 
-**Editor card** (`src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`):
-- Render the new stat inline with the existing count + last-24h chip
-- Wrap in `<BlurredAmount>` per the privacy core rule
-- Token: `tokens.kpi.label` for the "Attributed" label (Termina), `tokens.kpi.value` for the number
+Add a single `savingRef` (boolean) so an in-flight auto-save makes the manual save wait, and vice versa. Both paths flip the ref true/false around their `mutateAsync`. If `persist()` is invoked while `savingRef.current` is true, it awaits the pending mutation (via a small promise queue) before issuing its own write. Prevents interleaved writes regardless of latency.
 
-**Memory update** (`mem://architecture/visibility-contracts.md`):
-- Append the deferral row above; no other content changes
+### 3. Don't clobber dirty `formData` in the sync effect
+
+Change the `useEffect` that mirrors `settings → formData`:
+
+- Always update `savedSnapshot` (so dirty detection stays correct).
+- Only update `formData` when the editor is **not dirty** (`formData` deep-equals the previous `savedSnapshot`). If the operator has unsaved edits, leave `formData` alone — the refetch reflects the server, but the operator's pending edits win until they save or discard.
+
+This stops the refetch from yanking the rug out from under the operator's other in-flight edits during any auto-save round-trip.
+
+### 4. Trigger preview refresh after manual save too
+
+`handleEnableToggle` already calls `triggerPreviewRefresh()`; `persist()` doesn't. Add it so manual Save behaves like the toggle (preview reloads, no manual nudge).
 
 ## Files touched
 
-- `supabase/functions/create-public-booking/index.ts` — one-line payload addition + comment
-- `src/hooks/usePromotionalPopupRedemptions.ts` — extend query + return shape
-- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` — render new stat with `BlurredAmount`
-- `mem://architecture/visibility-contracts.md` — Deferral Register entry
+- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`
+  - Add `formDataRef` + `savingRef`.
+  - Rewrite `handleEnableToggle` and `persist` to read from the ref and serialize through `savingRef`.
+  - Update the `settings → formData/savedSnapshot` `useEffect` to preserve dirty `formData`.
+  - Call `triggerPreviewRefresh()` after a successful manual `persist()`.
 
-No migration required (column already exists). No new edge function. No new RLS policy.
+No DB, schema, RLS, or edge-function changes. No new dependencies. Behavior of every other editor surface is untouched — this is local to the promotional popup editor.
+
+## QA after merge
+
+1. Toggle Enable ON, immediately click Save to preview → toggle stays ON, draft persists with `enabled: true`, preview reloads showing the popup.
+2. Edit headline, toggle Enable ON, then click Save → both the headline edit and the toggle persist together.
+3. Toggle Enable OFF then immediately Save → popup stays disabled.
+4. Make an edit, do not save, wait for any background refetch (e.g., focus blur) → edits remain in the form (not clobbered by the sync effect).
+5. Publish flow still works — the publish dialog reads the current `draft_value`.
+
+## Suggested follow-ups (not in this fix)
+
+1. Promote the ref + serialize pattern into a small `useSerializedMutation` helper so other editors with hybrid auto-save + manual-save (e.g., Announcement Bar when it gets a quick-toggle) inherit the same race protection by default.
+2. Add a visibility-contract dev-only log when the sync effect would have overwritten dirty `formData` — would have caught this regression in a code review.
+3. E2E test in `e2e/` covering the toggle-then-save race so a future refactor can't reintroduce it.
