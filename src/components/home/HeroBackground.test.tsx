@@ -39,12 +39,18 @@ describe('HeroBackground overlay layering', () => {
     const wash = container.querySelector('[data-hero-overlay="wash"]');
     const scrim = container.querySelector('[data-hero-overlay="scrim"]');
 
+    // The two-layer contract: BOTH overlays exist as distinct sibling divs.
+    // If they ever get re-fused into a single value, one of these is null.
     expect(wash).not.toBeNull();
     expect(scrim).not.toBeNull();
-    // eslint-disable-next-line no-console
-    console.log('SCRIM_HTML:', scrim!.outerHTML);
-    // eslint-disable-next-line no-console
-    console.log('WASH_HTML:', wash!.outerHTML);
+    expect(wash).not.toBe(scrim);
+    // The wash MUST be a flat rgba value (not a gradient) — that's the whole
+    // point of layer 1. jsdom's CSSOM accepts rgba so this assertion is safe.
+    expect(wash!.getAttribute('style') ?? '').toMatch(/rgba\(0,\s*0,\s*0,/);
+    // jsdom's CSSOM strips gradient values from inline style during render,
+    // so we can't assert the scrim's *content* — only its existence as a
+    // separate sibling layer above. Sibling separation is the regression
+    // guard; scrim shape is exercised in `buildScrimBackground` unit tests.
   });
 
   it('omits the wash layer when overlayOpacity is 0', () => {
