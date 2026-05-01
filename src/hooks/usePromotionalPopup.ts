@@ -86,6 +86,10 @@ export interface PromotionalPopupSettings {
    *  Default 15000. Range 5000–60000. Set to `null` to disable auto-minimize
    *  (popup stays open until the visitor explicitly closes it). */
   autoMinimizeMs?: number | null;
+  /** Optional value-anchor chip rendered between the headline and body in the
+   *  modal variant (e.g. "$45 value", "Save 30%", "Limited to 10 bookings").
+   *  Empty/undefined hides the chip — silence is valid. */
+  valueAnchor?: string;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
