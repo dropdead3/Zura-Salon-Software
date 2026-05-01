@@ -415,6 +415,8 @@ export const DEFAULT_HERO: HeroConfig = {
   background_poster_url: '',
   background_fit: 'cover',
   overlay_opacity: 0.4,
+  scrim_style: 'gradient-bottom',
+  scrim_strength: 0.55,
   slides: [],
   auto_rotate: true,
   slide_interval_ms: 6000,
