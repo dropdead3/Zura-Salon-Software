@@ -38,7 +38,7 @@ export function ImageUploadInput({
     // Stage 1 — pre-flight validation. Catches the 80% case (HEIC, oversized
     // DSLR JPEGs, zero-byte files) before we burn time on a canvas decode.
     const guard = validateImageFile(file);
-    if (!guard.ok) {
+    if (guard.ok === false) {
       toast.error(guard.message);
       return;
     }
