@@ -111,6 +111,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   acceptDestination: 'booking',
   customUrl: '',
   customUrlInstructions: '',
+  autoMinimizeMs: 15000,
 };
 
 const SETTING_KEY = 'promotional_popup';
