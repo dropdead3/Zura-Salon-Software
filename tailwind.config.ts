@@ -225,6 +225,8 @@ export default {
         "skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite",
         "nudge-right": "nudge-right 1s ease-in-out infinite",
         "dirty-pulse": "dirty-pulse 2s ease-in-out infinite",
+        "backdrop-blur-in-md": "backdrop-blur-in-md 0.55s ease-out both",
+        "backdrop-blur-in-2xl": "backdrop-blur-in-2xl 0.7s ease-out both",
       },
     },
   },
