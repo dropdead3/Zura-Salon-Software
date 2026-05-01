@@ -262,12 +262,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return Math.max(5, Math.min(60, Math.round(ms / 1000)));
   }, [autoMinimizeMs]);
 
+  // Reset countdown whenever the popup opens (or the operator changes the
+  // configured duration). Separated from the tick effect so hover-pause
+  // doesn't restart the timer at full each time the cursor enters/leaves.
+  useEffect(() => {
+    if (!open) return;
+    if (autoMinimizeSeconds === null) return;
+    setSecondsLeft(autoMinimizeSeconds);
+  }, [open, autoMinimizeSeconds]);
+
   useEffect(() => {
     if (!open) return;
     if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
-    setSecondsLeft(autoMinimizeSeconds);
     if (isPreview) return; // Show full bar but never tick down during QA.
-    if (isHovered) return; // Pause while reader is engaged.
+    if (isHovered) return; // Pause while reader is engaged — resume from current.
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
