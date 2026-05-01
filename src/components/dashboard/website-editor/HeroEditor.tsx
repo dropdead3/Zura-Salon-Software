@@ -102,9 +102,9 @@ export function HeroEditor() {
       </EditorCard>
 
       <EditorCard
-        title="Background Scrim"
+        title="Text-area Scrim"
         icon={Layers}
-        description="Choose how the dark overlay sits over your background media. Gradient is the editorial default — strongest where text lives, transparent everywhere else."
+        description="Editorial gradient/vignette layered on top of the Image Wash. Strongest where headline text lives — transparent everywhere else."
       >
         <HeroScrimEditor
           scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
