@@ -201,6 +201,17 @@ export interface HeroConfig {
    * Legacy configs without this field render as `multi_slide`.
    */
   rotator_mode?: 'multi_slide' | 'background_only';
+  /**
+   * ISO timestamp set when the operator switches into `background_only` mode.
+   * Used by the editor to detect "stuck in background-only with 1 slide for
+   * >7 days" and suggest collapsing to a static hero. Null/unset → no hint.
+   */
+  background_only_since?: string | null;
+  /**
+   * ISO timestamp set when the operator dismisses the duplicate-headline
+   * "Convert to Background-Only" hint. Suppresses the nudge for 30 days.
+   */
+  dismissed_convert_hint_at?: string | null;
   auto_rotate: boolean;
   slide_interval_ms: number;
   transition_style: 'fade' | 'crossfade' | 'slide-up';
