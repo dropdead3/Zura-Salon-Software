@@ -97,8 +97,7 @@ export function usePreviewBridge<T>(sectionKey: string, value: T) {
       try {
         win.postMessage(msg, targetOrigin);
       } catch {
-        // Cross-origin denial or iframe gone — silently ignore. Worst case the
-        // canvas just keeps showing last-saved state, which is current behavior.
+        // Cross-origin denial or iframe gone — silently ignore.
       }
     }, DEBOUNCE_MS);
 
