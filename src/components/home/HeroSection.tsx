@@ -142,11 +142,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 />
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
-              <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
-                Where technical talent meets artistry.
-                <br />
-                We believe in more than just the status quo.
-              </p>
+              {hasSubheadlineContent && (
+                <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+                  {subheadlineLine1}
+                  {subheadlineLine1 && subheadlineLine2 && <br />}
+                  {subheadlineLine2}
+                </p>
+              )}
               <div className="mt-10 flex flex-col items-center gap-3">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
