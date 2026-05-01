@@ -108,7 +108,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   return (
     <section
       data-theme={hasBackground ? 'dark' : 'light'}
-      className="relative flex flex-col overflow-hidden min-h-[600px] lg:min-h-screen"
+      className="relative flex flex-col overflow-visible min-h-[600px] lg:min-h-screen"
       onMouseEnter={handleHoverEnter}
       onMouseLeave={handleHoverLeave}
     >

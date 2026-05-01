@@ -116,7 +116,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // In preview/editor mode, render static HTML — no Framer Motion at all
   if (isPreview) {
     return (
-      <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
+      <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-visible min-h-[500px] bg-background">
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
         <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
@@ -190,7 +190,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   }
 
   return (
-    <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-screen">
+    <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-visible min-h-screen">
       {/* Operator-configured background (image or video) */}
       <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
 
