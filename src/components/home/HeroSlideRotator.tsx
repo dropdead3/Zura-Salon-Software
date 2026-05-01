@@ -248,17 +248,27 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         </motion.div>
       </AnimatePresence>
 
-      {/* Foreground content */}
+      {/* Foreground content
+       *
+       * `mode="popLayout"` pops the exiting slide out of normal layout flow
+       * (framer absolutely positions it during exit) so the entering slide
+       * takes its slot immediately. This eliminates the "snap through center"
+       * regression where the outgoing slide unmounted, the flex cell
+       * collapsed, and the new slide visibly dropped into place. The exit
+       * crossfade overlaps the enter, hiding any sub-pixel layout shift.
+       *
+       * Pure opacity (no `y` translate) keeps the transition seamless.
+       */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div ref={contentWrapRef} className={alignment.wrapper}>
-            <AnimatePresence mode="wait">
+          <div ref={contentWrapRef} className={cn(alignment.wrapper, 'relative w-full')}>
+            <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
               >
                 <HeroEyebrow
                   show={!!slide.show_eyebrow}
