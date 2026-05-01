@@ -177,21 +177,61 @@ function SlideRow({
               ))}
             </div>
             {slide.background_type !== 'inherit' && (
-              <MediaUploadInput
-                label=""
-                value={slide.background_url}
-                posterValue={slide.background_poster_url}
-                kind={mediaKind}
-                imageOnly={slide.background_type === 'image'}
-                onChange={({ url, posterUrl, kind }) =>
-                  onUpdate(slide.id, {
-                    background_url: url,
-                    background_poster_url: posterUrl,
-                    background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
-                  })
-                }
-                pathPrefix="hero/slides"
-              />
+              <>
+                <MediaUploadInput
+                  label=""
+                  value={slide.background_url}
+                  posterValue={slide.background_poster_url}
+                  kind={mediaKind}
+                  imageOnly={slide.background_type === 'image'}
+                  onChange={({ url, posterUrl, kind }) => {
+                    const wasNewImage =
+                      kind === 'image' && url && url !== slide.background_url;
+                    onUpdate(slide.id, {
+                      background_url: url,
+                      background_poster_url: posterUrl,
+                      background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
+                    });
+                    if (wasNewImage) suggestFocal(url);
+                  }}
+                  pathPrefix="hero/slides"
+                />
+                {focalPending && (
+                  <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 animate-pulse" />
+                    Analyzing image to set focal point…
+                  </p>
+                )}
+
+                {/* Per-slide fit override */}
+                <div className="space-y-2 pt-2">
+                  <ToggleInput
+                    label="Override Fit"
+                    value={fitOverridden}
+                    onChange={(v) =>
+                      onUpdate(slide.id, { background_fit: v ? sectionBgFit : null })
+                    }
+                    description="Crop differently than the section default"
+                  />
+                  {fitOverridden && (
+                    <div className="flex gap-2">
+                      {(['cover', 'contain'] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => onUpdate(slide.id, { background_fit: opt })}
+                          className={`flex-1 px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                            resolvedFit === opt
+                              ? 'bg-foreground text-background border-foreground'
+                              : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
+                          }`}
+                        >
+                          {opt === 'cover' ? 'Cover' : 'Contain'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
