@@ -48,6 +48,14 @@ interface MediaUploadInputProps {
   placeholder?: string;
   /** When true, accept only images (videos rejected). */
   imageOnly?: boolean;
+  /**
+   * 'standard' (default) — runs autoCrunch + a 1920×1200 @ q0.85 WebP re-encode.
+   *   Good for thumbnails, gallery tiles, testimonial avatars.
+   * 'hero' — full-bleed retina art. Skips the lossy second re-encode and
+   *   uploads the autoCrunch output directly (3200px @ q0.9 WebP), preserving
+   *   detail on faces/hair/edges where downsampling artifacts are visible.
+   */
+  qualityProfile?: 'standard' | 'hero';
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
