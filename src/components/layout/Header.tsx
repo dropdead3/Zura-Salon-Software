@@ -297,15 +297,19 @@ export function Header() {
       {/* Top Announcement Bar — translucent so hero media shows through */}
       {announcementSettings?.enabled && (() => {
         // Determine effective bg darkness for text contrast.
-        // When operator sets a bg_color, use it. Otherwise the bar is translucent
-        // over hero media — fall back to the section theme (isOverDark) detected
-        // by the same logic the main header uses.
+        // When operator sets a bg_color, derive contrast from that color.
+        // Otherwise the bar is translucent over hero media (which is dark in
+        // ~all real configurations — video footage, dim photography, gradient
+        // scrim) — default to white text so it stays legible. The previous
+        // logic relied on `isOverDark` detection from the main header's
+        // section, which can resolve to "light" when there's no IntersectionObserver
+        // signal yet, making the text render near-black over dark hero footage.
         const hasExplicitBg = !!announcementSettings.bg_color;
         const effectiveDark = hasExplicitBg
           ? isColorDark(announcementSettings.bg_color!)
-          : isOverDark;
+          : true;
         // Strengthen scrim over hero media so text stays legible on busy footage.
-        const overMediaDark = !hasExplicitBg && isOverDark;
+        const overMediaDark = !hasExplicitBg;
         // Hide announcement bar on scroll-down past hero, slide back in on scroll-up.
         const announcementHidden = isScrolled && !isScrollingUp && !isHoverNearTop;
         return (
