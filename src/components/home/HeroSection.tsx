@@ -14,7 +14,7 @@ import { HeroNotes } from "@/components/home/HeroNotes";
 import { HeroScrollIndicator } from "@/components/home/HeroScrollIndicator";
 import { HeroRotatingWord } from "@/components/home/HeroRotatingWord";
 import { resolveHeroColors } from "@/lib/heroColors";
-import { resolveHeroAlignment } from "@/lib/heroAlignment";
+import { resolveHeroAlignmentWithWidth } from "@/lib/heroAlignment";
 import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from "@/lib/heroSpacing";
 import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
   const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
-  const alignment = resolveHeroAlignment(heroConfig?.content_alignment);
+  const alignment = resolveHeroAlignmentWithWidth(
+    heroConfig?.content_alignment,
+    heroConfig?.content_width,
+  );
   // Container-aware spacing: ResizeObserver on the text wrapper drops the
   // hero into the `compact` ladder when the wrapper measures below
   // `COMPACT_FORCE_BREAKPOINT`, regardless of the operator's chosen density.
