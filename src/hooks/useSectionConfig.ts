@@ -186,6 +186,7 @@ export interface HeroConfig {
   media_height?: number | null;
   media_size_bytes?: number | null;
   media_format?: string | null;
+  media_optimized_with_profile?: 'standard' | 'hero' | null;
 }
 
 export interface BrandStatementConfig {
