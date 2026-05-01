@@ -247,22 +247,18 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
           <Label className="text-xs">Content Alignment</Label>
           <div className="flex gap-2">
             {([
-              { id: null, label: 'Inherit', Icon: AlignJustify },
               { id: 'left', label: 'Left', Icon: AlignLeft },
               { id: 'center', label: 'Center', Icon: AlignCenter },
               { id: 'right', label: 'Right', Icon: AlignRight },
             ] as const).map(({ id, label, Icon }) => {
-              const active = (slide.content_alignment ?? null) === id;
+              const effective = slide.content_alignment ?? section.content_alignment ?? 'center';
+              const active = effective === id;
               return (
                 <button
                   key={label}
                   type="button"
                   onClick={() => onUpdate({ content_alignment: id })}
-                  title={
-                    id === null
-                      ? `Use section default (${section.content_alignment ?? 'center'})`
-                      : `Align ${label.toLowerCase()}`
-                  }
+                  title={`Align ${label.toLowerCase()}`}
                   className={cn(
                     'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-[11px] border transition-colors',
                     active
@@ -276,11 +272,6 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
               );
             })}
           </div>
-          {slide.content_alignment == null && (
-            <p className="text-[10px] text-muted-foreground">
-              Currently inheriting <span className="font-medium text-foreground">{section.content_alignment ?? 'center'}</span> from the section default.
-            </p>
-          )}
         </div>
       </EditorCard>
 
