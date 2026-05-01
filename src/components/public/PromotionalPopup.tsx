@@ -642,12 +642,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         key={animationNonce}
         data-testid="promo-popup-root"
         data-animation-key={animationNonce}
+        data-popup-phase={popupPhase}
         role="dialog"
         aria-labelledby="promo-popup-title"
-        className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
+        className={cn(
+          'fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden',
+          isClosing ? bannerExitClasses : 'animate-in slide-in-from-top-2',
+        )}
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onAnimationEnd={handleRootAnimationEnd}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-3 pb-6 sm:pb-3">
           {/* Mobile-only close row keeps the X out of the headline's lane. */}
