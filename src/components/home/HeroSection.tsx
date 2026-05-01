@@ -56,6 +56,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
   const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
+  const alignment = resolveHeroAlignment(heroConfig?.content_alignment);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
