@@ -148,13 +148,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} preload />
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
-            <div className={alignment.wrapper}>
+            <div ref={contentWrapRef} className={alignment.wrapper}>
               <HeroEyebrow
                 show={showEyebrow}
                 text={eyebrowText}
                 editable
                 fieldPath="eyebrow"
-                className="mb-4"
+                className={spacing.eyebrow}
               />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
