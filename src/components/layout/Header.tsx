@@ -340,14 +340,16 @@ export function Header() {
         const hasExplicitBg = !!announcementSettings.bg_color;
         // Mirror the nav's contrast signal so the announcement bar text color
         // ALWAYS matches the nav menu. The nav uses `isOverDark` (true →
-        // white text). When the operator sets an explicit `bg_color` we still
-        // honor that color's own luminance, since the bar is no longer
-        // see-through and the nav signal would be misleading.
+        // white text). When the operator sets an explicit `bg_color` the bar
+        // is no longer see-through, so we honor that color's own luminance
+        // instead — the nav signal would be misleading there.
         const effectiveDark = hasExplicitBg
           ? isColorDark(announcementSettings.bg_color!)
-          : isOverDark || true; // default-dark when detection hasn't resolved yet
-        // Strengthen scrim over hero media so text stays legible on busy footage.
-        const overMediaDark = !hasExplicitBg;
+          : isOverDark;
+        // Apply a dark scrim only when we're actually rendering white text
+        // over hero media — otherwise the scrim fights the light-section
+        // contrast picked by `effectiveDark`.
+        const overMediaDark = !hasExplicitBg && effectiveDark;
         // Hide announcement bar on scroll-down past hero, slide back in on scroll-up only.
         // Hover-near-top intentionally does NOT reveal it — it's a promotional strip,
         // not a navigation surface, so accidental top-edge hovers shouldn't pop it back.
