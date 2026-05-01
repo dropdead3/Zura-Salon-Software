@@ -183,6 +183,7 @@ export function MediaUploadInput({
   qualityProfile = 'standard',
   meta = null,
   isDirtyDraft = false,
+  focal,
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
