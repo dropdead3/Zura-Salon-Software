@@ -16,6 +16,7 @@ import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
+import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
 
 interface HeroSlideRotatorProps {
