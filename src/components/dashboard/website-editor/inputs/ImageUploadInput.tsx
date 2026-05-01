@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { optimizeImage } from '@/lib/image-utils';
+import { optimizeImage, autoCrunchImage, formatFileSize } from '@/lib/image-utils';
 import {
   IMAGE_RECOMMENDED_HINT,
   IMAGE_SIZE_HARD_MB,
@@ -31,19 +31,32 @@ export function ImageUploadInput({
   placeholder = 'https://...',
 }: ImageUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
-    // Stage 1 — pre-flight validation. Catches the 80% case (HEIC, oversized
-    // DSLR JPEGs, zero-byte files) before we burn time on a canvas decode.
-    const guard = validateImageFile(file);
+    setIsUploading(true);
+    setStatusLabel('Preparing image...');
+
+    // Stage 0 — auto-crunch. Runs BEFORE validation so raw phone shots
+    // (12–30MB+) don't trip the size cap. Auto-crunch never throws.
+    const crunched = await autoCrunchImage(file);
+    const workingFile = crunched.file;
+    const crunchNote = crunched.didCrunch
+      ? ` · compressed ${formatFileSize(crunched.originalSizeBytes)} → ${formatFileSize(crunched.finalSizeBytes)}`
+      : '';
+
+    // Stage 1 — pre-flight validation. Catches HEIC, AVIF, zero-byte, and
+    // anything still over the canvas-safe ceiling after auto-crunch.
+    const guard = validateImageFile(workingFile);
     if (guard.ok === false) {
       toast.error(guard.message);
+      setIsUploading(false);
       return;
     }
 
-    setIsUploading(true);
+    setStatusLabel('Uploading...');
     let stage: 'auth' | 'decode' | 'upload' = 'auth';
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -54,7 +67,7 @@ export function ImageUploadInput({
         return;
       }
       stage = 'decode';
-      const { blob } = await optimizeImage(file, {
+      const { blob } = await optimizeImage(workingFile, {
         maxWidth: 1600,
         maxHeight: 1200,
         quality: 0.85,
@@ -71,7 +84,7 @@ export function ImageUploadInput({
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
       onChange(urlData.publicUrl);
-      toast.success('Image uploaded');
+      toast.success(`Image uploaded${crunchNote}`);
     } catch (err) {
       const e = err as { message?: string; statusCode?: string | number };
       // Stage-aware logging so future failures are debuggable from the console.
@@ -150,7 +163,7 @@ export function ImageUploadInput({
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Uploading...</span>
+              <span className="text-xs text-muted-foreground">{statusLabel}</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
