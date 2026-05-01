@@ -131,8 +131,11 @@ export function HeroSlideListCard({
               </span>
             )}
           </div>
-          <div className="text-sm text-foreground truncate font-sans mt-0.5">
-            {slide.headline_text || '(untitled slide)'}
+          <div className={cn(
+            "text-sm truncate font-sans mt-0.5",
+            slide.headline_text ? "text-foreground" : "text-muted-foreground italic"
+          )}>
+            {slide.headline_text || 'No headline yet'}
           </div>
           <div className="text-[11px] text-muted-foreground truncate font-sans">
             {summaryParts.join(' · ')}

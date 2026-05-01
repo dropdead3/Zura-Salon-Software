@@ -191,7 +191,7 @@ function makeEmptySlide(): HeroSlide {
     background_fit: null,
     eyebrow: '',
     show_eyebrow: false,
-    headline_text: 'New Slide',
+    headline_text: '',
     subheadline_line1: '',
     subheadline_line2: '',
     cta_new_client: 'Get Started',
