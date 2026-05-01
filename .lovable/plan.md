@@ -1,39 +1,97 @@
-## Plan
+# Consolidate Media Upload + Focal Point Picker
 
-Good catch — your prompt was clear and specific ("left/right not at the right areas, too much padding"), which is exactly the right level of detail. A slightly stronger version next time: "Left-aligned slide should hug the page's left padding edge, right-aligned should hug the right edge. Currently both look pulled inward toward center." That removes any ambiguity about whether you mean container edges vs viewport edges.
+## Problem
 
-### What's wrong
+Both the section background editor and per-slide background editor render the **same uploaded image twice** stacked vertically:
 
-In the previous fix I made the stable shell `max-w-4xl mx-auto` (a centered ~896px column). The inner per-slide wrapper then aligns left/right *within that narrow column*, not within the full hero region. That's why "NEW SLIDE" lands mid-screen on the right-aligned slide instead of hugging the right edge.
+1. `MediaUploadInput` shows the thumbnail with metadata + Replace/Remove
+2. `FocalPointPicker` shows the SAME image again with a draggable crosshair
 
-### Fix
+On a tall portrait hero photo (e.g. 1920×2880) this consumes nearly a full screen of editor space and reads as redundant — you can see the focal-point overlay perfectly well on the upload tile itself.
 
-Move the width clamp from the shell to the inner wrapper:
+## Approach
 
-- `shellWrapper`: `w-full` (fills the hero region edge-to-edge inside the page padding)
-- `innerWrapper`: keeps `max-w-4xl` + alignment anchor (`mr-auto` / `mx-auto` / `ml-auto`)
+Make the upload tile **focal-aware**. When `focal` props are provided and the asset is an image (or video with a poster), the existing thumbnail becomes the interactive focal-point surface — same drag handle, reset link, and helper copy as today's `FocalPointPicker`, just rendered inside the upload tile instead of as a separate card below it.
 
-Now:
-- Left slide → content column hugs the left padding edge.
-- Right slide → content column hugs the right padding edge.
-- Center slide → still centered (unchanged behavior).
-- Stable shell still holds the foreground region against vertical/horizontal flicker during the sequential fade transition.
+The standalone `FocalPointPicker` stays exported for places that pass it a non-uploaded image, but the two hero editors stop rendering it.
 
-### Files to edit
+```text
+BEFORE                              AFTER
+┌─────────────┐                     ┌─────────────┐
+│ Upload tile │  (thumbnail #1)     │ Upload tile │  ← drag crosshair lives
+│   [DRAFT]   │                     │   [DRAFT]   │    here, on the same image
+│  [1920×2880]│                     │  [1920×2880]│
+└─────────────┘                     │      ◯      │  ← focal handle overlay
+or paste URL [____]                 └─────────────┘
+                                    Reset to center  (1 line, only when off-default)
+[Override Focal Point ▢]            or paste URL [____]
+┌─────────────┐
+│ Focal pick  │  (thumbnail #2)
+│      ◯      │
+└─────────────┘
+Reset to center
+```
 
-- `src/lib/heroAlignment.ts` — swap `shellWrapper` and `innerWrapper` width-clamp ownership for all three alignments.
-- `src/lib/heroAlignment.test.ts` — update the shell canon tests to assert `w-full` on the shell and `max-w-4xl` on the inner wrapper.
+## Scope
 
-### Out of scope
+### New: `MediaUploadInput` gains an optional `focal` prop
 
-- No change to `HeroSlideRotator.tsx` itself — it already consumes `shellWrapper` + `innerWrapper`, so this is a pure token-resolution fix.
-- No change to the static `HeroSection` (it uses `wrapper`, which stays `max-w-4xl mr-auto/mx-auto/ml-auto`).
-- No change to the transition mechanics — sequential fade stays as-is.
+```ts
+focal?: {
+  x: number;
+  y: number;
+  onChange: (x: number, y: number) => void;
+  onReset: () => void;
+  /** When false, suppresses the overlay (e.g. fit=contain or override toggle off). */
+  enabled?: boolean;
+};
+```
 
-### Enhancement suggestions
+When `focal` is provided AND the tile is showing an image (or video poster), the tile renders:
+- Pointer-event surface mirroring `FocalPointPicker.handlePointerDown/Move/Up`
+- The same crosshair handle absolutely positioned at `({x}%, {y}%)`
+- `objectPosition: ${x}% ${y}%` on the existing `<img>` so the operator sees the live crop
+- `cursor-crosshair` on the tile when enabled
+- "Reset to center" link rendered above the tile (only when not at 50/50, matching today's UX)
 
-1. **Edge breathing room control**: add an alignment-side padding token (`pl-2`/`pr-2` on left/right inner wrappers) so flush-left/flush-right content doesn't visually kiss the page padding edge on wide viewports.
-2. **Per-slide content width override**: let operators choose the inner column width (`max-w-2xl` / `max-w-4xl` / `max-w-6xl`) so a punchy single-line slide can flex wider than a copy-heavy one.
-3. **Alignment-aware safe zone for overlay UI**: the bottom-left pagination dots and bottom-right "SEE OFFER" pill currently sit in fixed corners — when content is right-aligned, the right edge can crowd the offer pill. Consider an alignment-aware nudge on the overlay anchors.
+When `focal` is omitted (every other consumer of `MediaUploadInput`), behavior is unchanged.
 
-Approve and I'll ship the fix.
+### Updated: `HeroBackgroundEditor` (section-level)
+
+- Remove the standalone `<FocalPointPicker>` block (the `!!background_url && fit === 'cover'` branch)
+- Pass `focal={...}` to `<MediaUploadInput>` with `enabled = !!background_url && background_fit === 'cover'`
+
+### Updated: `HeroSlideEditor` (per-slide)
+
+- Keep the "Override Focal Point" toggle (it has semantic meaning — without override, the slide inherits the section focal)
+- When the toggle is ON, pass `focal={...}` to `<MediaUploadInput>` instead of rendering a separate picker below
+- When OFF, omit `focal` so the tile is a plain upload preview
+- The "Override Fit" toggle and its Cover/Contain pills stay where they are (they're not redundant)
+
+### Tests
+
+Add a Vitest for `MediaUploadInput` covering:
+- `focal` prop renders crosshair handle at the correct percentages
+- `cursor-crosshair` only applied when `focal.enabled !== false`
+- `onChange` fires with clamped 0-100 percentages on pointer events
+- No focal overlay when `focal` prop is absent (back-compat)
+
+## Files Touched
+
+- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — extend props + render focal overlay inside the existing thumbnail block
+- `src/components/dashboard/website-editor/HeroBackgroundEditor.tsx` — drop standalone picker, pass `focal` prop
+- `src/components/dashboard/website-editor/hero/HeroSlideEditor.tsx` — drop standalone picker, pass `focal` prop gated on `focalOverridden`
+- `src/components/dashboard/website-editor/inputs/MediaUploadInput.test.tsx` (new) — focal overlay behavior
+
+`FocalPointPicker.tsx` is left in place (still exported) so any future consumer that needs a focal picker over a non-uploaded image isn't blocked.
+
+## Out of Scope
+
+- Visual restyle of the upload tile (size, aspect ratio, badges) — keeps the existing 16:9-ish 128px-tall preview
+- Changes to the public site renderers
+- Changes to schema, hooks, or the `useFocalPointSuggestion` AI seeding flow
+
+## Risks
+
+- **Pointer events vs Replace/Remove hover overlay**: Today the tile has a hover overlay with Replace/Remove buttons. The pointer-down handler for focal must not swallow clicks on those buttons. Mitigation: render the focal pointer-surface on the `<img>` only (via `pointer-events-auto` + capture on the image element), and keep the hover overlay layered above with its own `pointer-events-auto`. Verified pattern: today's `FocalPointPicker` uses `setPointerCapture` on the target — easy to replicate.
+- **Video kind**: For videos the focal target is the poster image; the tile currently renders a `<video>` element, not an `<img>`. The focal overlay must render on the poster (an `<img>` we'll layer on top when `focal` is present and the asset is a video with a poster). Behavior matches today's `FocalPointPicker`, which already uses `posterUrl` for video sources.
