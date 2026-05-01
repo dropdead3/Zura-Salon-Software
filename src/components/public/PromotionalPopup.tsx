@@ -278,10 +278,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
-          // In editor preview, loop the countdown so operators can QA the
-          // hairline + last-3s pulse + numeric label without the popup
-          // collapsing mid-edit. Real visitors get the soft-close + FAB.
-          if (isPreview) return autoMinimizeSeconds;
+          // Let preview run the FULL lifecycle — countdown completes,
+          // popup soft-closes, FAB takes over. Operators told us the
+          // earlier "loop forever" behavior masked the real visitor flow
+          // and made the FAB un-QA-able. To re-run the lifecycle, hit
+          // "Preview popup now" in the editor (forces an iframe reload).
           window.clearInterval(interval);
           handleSoftClose();
           return 0;
