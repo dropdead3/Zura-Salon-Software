@@ -28,7 +28,7 @@ import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
 import { HeroAlignmentEditor } from './hero/HeroAlignmentEditor';
 import { HeroRotatorEditor } from './hero/HeroRotatorEditor';
-import { HeroRotatingWordsEditor } from './hero/HeroRotatingWordsEditor';
+
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
 
