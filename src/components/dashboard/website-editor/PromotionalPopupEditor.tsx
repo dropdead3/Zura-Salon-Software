@@ -36,6 +36,7 @@ import {
   type PromoPopupPreviewPhase,
   type PromoPopupPreviewStateDetail,
 } from '@/lib/promoPopupPreviewReset';
+import { coerceAutoMinimizeMs } from '@/lib/clampAutoMinimizeSeconds';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
@@ -1264,13 +1265,12 @@ export function PromotionalPopupEditor() {
                 : Math.round(formData.autoMinimizeMs / 1000)
             }
             onChange={(e) => {
-              const raw = e.target.value;
-              if (raw === '') {
-                handleChange('autoMinimizeMs', null);
-                return;
-              }
-              const seconds = Math.max(5, Math.min(60, Number(raw)));
-              handleChange('autoMinimizeMs', seconds * 1000);
+              // Single canonical write path. Coercion handles empty
+              // string (= disabled), numeric strings, NaN, and the
+              // 5000–60000ms clamp — see clampAutoMinimizeSeconds.test.ts.
+              // DB now stores only canonical values; the renderer's
+              // defensive clamp becomes back-compat-only.
+              handleChange('autoMinimizeMs', coerceAutoMinimizeMs(e.target.value));
             }}
             placeholder="15"
           />
