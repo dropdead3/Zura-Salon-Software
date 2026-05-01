@@ -15,6 +15,8 @@ import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
+import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
+import { cn } from '@/lib/utils';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
