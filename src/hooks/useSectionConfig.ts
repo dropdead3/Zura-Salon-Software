@@ -125,6 +125,8 @@ export interface HeroConfig {
   slide_interval_ms: number;
   transition_style: 'fade' | 'crossfade' | 'slide-up';
   pause_on_hover: boolean;
+  /** Section-level color overrides; per-slide overrides win when set. */
+  text_colors?: HeroTextColors;
 }
 
 export interface BrandStatementConfig {
