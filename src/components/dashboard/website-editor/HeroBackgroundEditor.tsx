@@ -7,13 +7,14 @@ import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Image as ImageIcon, Layers, Sun, Moon } from 'lucide-react';
+import { Image as ImageIcon, Layers, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { SliderInput } from './inputs/SliderInput';
 import { FocalPointPicker } from './inputs/FocalPointPicker';
 import { EditorCard } from './EditorCard';
 import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
+import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
 import { cn } from '@/lib/utils';
 
 interface HeroBackgroundEditorProps {
@@ -30,6 +31,12 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
   const focalX = config.background_focal_x ?? 50;
   const focalY = config.background_focal_y ?? 50;
   const overlayMode = config.overlay_mode ?? 'darken';
+
+  // Auto-suggest focal point when a new image is uploaded. Manual drags
+  // always win — this only seeds the initial value.
+  const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
+    onChange({ background_focal_x: x, background_focal_y: y });
+  });
 
   const clearSlideMedia = () => {
     onChange({
@@ -78,15 +85,24 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
         value={config.background_url}
         posterValue={config.background_poster_url}
         kind={kind}
-        onChange={({ url, posterUrl, kind: k }) =>
+        onChange={({ url, posterUrl, kind: k }) => {
+          const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({
             background_url: url,
             background_poster_url: posterUrl,
             background_type: k === 'video' ? 'video' : k === 'image' ? 'image' : 'none',
-          })
-        }
+          });
+          if (wasNewImage) suggestFocal(url);
+        }}
         pathPrefix="hero"
       />
+
+      {focalPending && (
+        <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 animate-pulse" />
+          Analyzing image to set focal point…
+        </p>
+      )}
 
       {config.background_type !== 'none' && (
         <>

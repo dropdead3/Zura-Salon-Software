@@ -102,6 +102,8 @@ export interface HeroSlide {
   background_focal_y?: number | null;
   /** Per-slide overlay mode override. null/undefined = inherit from section. */
   overlay_mode?: 'darken' | 'lighten' | null;
+  /** Per-slide fit override. null/undefined = inherit from section. */
+  background_fit?: 'cover' | 'contain' | null;
   eyebrow: string;
   show_eyebrow: boolean;
   headline_text: string;

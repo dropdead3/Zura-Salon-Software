@@ -8,7 +8,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon } from 'lucide-react';
+import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -20,6 +20,7 @@ import { EditorCard } from './EditorCard';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
 import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
+import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import {
@@ -51,6 +52,7 @@ const newSlide = (): HeroSlide => ({
   background_focal_x: null,
   background_focal_y: null,
   overlay_mode: null,
+  background_fit: null,
   eyebrow: '',
   show_eyebrow: false,
   headline_text: 'New Slide',
@@ -108,6 +110,8 @@ function SlideRow({
   const resolvedBgType = slide.background_type === 'inherit' ? sectionBgType : slide.background_type;
   const resolvedBgUrl = slide.background_type === 'inherit' ? sectionBgUrl : slide.background_url;
   const resolvedBgPoster = slide.background_type === 'inherit' ? sectionBgPoster : slide.background_poster_url;
+  const fitOverridden = slide.background_fit != null;
+  const resolvedFit: 'cover' | 'contain' = fitOverridden ? (slide.background_fit as 'cover' | 'contain') : sectionBgFit;
   const focalOverridden = slide.background_focal_x != null && slide.background_focal_y != null;
   const resolvedFocalX = focalOverridden ? (slide.background_focal_x as number) : sectionFocalX;
   const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
@@ -116,6 +120,12 @@ function SlideRow({
   const resolvedScrimStyle = slide.scrim_style ?? sectionScrimStyle ?? 'gradient-bottom';
   const resolvedScrimStrength = slide.scrim_strength ?? sectionScrimStrength ?? 0.55;
   const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
+
+  // Auto-suggest focal point for newly uploaded slide images. Manual drags
+  // win — this only seeds when the operator hasn't anchored anything yet.
+  const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
+    onUpdate(slide.id, { background_focal_x: x, background_focal_y: y });
+  });
 
   return (
     <div ref={setNodeRef} style={style} className="border border-border/50 rounded-lg bg-background overflow-hidden">
@@ -167,21 +177,61 @@ function SlideRow({
               ))}
             </div>
             {slide.background_type !== 'inherit' && (
-              <MediaUploadInput
-                label=""
-                value={slide.background_url}
-                posterValue={slide.background_poster_url}
-                kind={mediaKind}
-                imageOnly={slide.background_type === 'image'}
-                onChange={({ url, posterUrl, kind }) =>
-                  onUpdate(slide.id, {
-                    background_url: url,
-                    background_poster_url: posterUrl,
-                    background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
-                  })
-                }
-                pathPrefix="hero/slides"
-              />
+              <>
+                <MediaUploadInput
+                  label=""
+                  value={slide.background_url}
+                  posterValue={slide.background_poster_url}
+                  kind={mediaKind}
+                  imageOnly={slide.background_type === 'image'}
+                  onChange={({ url, posterUrl, kind }) => {
+                    const wasNewImage =
+                      kind === 'image' && url && url !== slide.background_url;
+                    onUpdate(slide.id, {
+                      background_url: url,
+                      background_poster_url: posterUrl,
+                      background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
+                    });
+                    if (wasNewImage) suggestFocal(url);
+                  }}
+                  pathPrefix="hero/slides"
+                />
+                {focalPending && (
+                  <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 animate-pulse" />
+                    Analyzing image to set focal point…
+                  </p>
+                )}
+
+                {/* Per-slide fit override */}
+                <div className="space-y-2 pt-2">
+                  <ToggleInput
+                    label="Override Fit"
+                    value={fitOverridden}
+                    onChange={(v) =>
+                      onUpdate(slide.id, { background_fit: v ? sectionBgFit : null })
+                    }
+                    description="Crop differently than the section default"
+                  />
+                  {fitOverridden && (
+                    <div className="flex gap-2">
+                      {(['cover', 'contain'] as const).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => onUpdate(slide.id, { background_fit: opt })}
+                          className={`flex-1 px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                            resolvedFit === opt
+                              ? 'bg-foreground text-background border-foreground'
+                              : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
+                          }`}
+                        >
+                          {opt === 'cover' ? 'Cover' : 'Contain'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
@@ -308,7 +358,7 @@ function SlideRow({
           </div>
 
           {/* Per-slide focal point override */}
-          {!!focalImageUrl && sectionBgFit !== 'contain' && (
+          {!!focalImageUrl && resolvedFit !== 'contain' && (
             <div className="space-y-2 pt-3 border-t border-border/30">
               <ToggleInput
                 label="Override Focal Point"
@@ -371,7 +421,7 @@ function SlideRow({
                 type={resolvedBgType}
                 url={resolvedBgUrl}
                 posterUrl={resolvedBgPoster}
-                fit={sectionBgFit}
+                fit={resolvedFit}
                 focalX={resolvedFocalX}
                 focalY={resolvedFocalY}
                 overlayMode={resolvedOverlayMode}
