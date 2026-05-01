@@ -649,3 +649,31 @@ function PromoBody({
     </>
   );
 }
+
+/**
+ * Thin progress hairline + numeric label that depletes over the 15s
+ * auto-minimize window. Telegraphs the collapse-to-FAB behavior so the
+ * offer never appears to "vanish" without warning.
+ */
+function CountdownBar({ secondsLeft, accent }: { secondsLeft: number; accent: string }) {
+  const total = 15;
+  const pct = Math.max(0, Math.min(100, (secondsLeft / total) * 100));
+  return (
+    <div
+      className="absolute bottom-0 inset-x-0 pointer-events-none"
+      aria-hidden="true"
+    >
+      <div className="relative h-1 w-full bg-foreground/5">
+        <div
+          className="h-full transition-[width] duration-1000 ease-linear"
+          style={{ width: `${pct}%`, backgroundColor: accent }}
+        />
+        <span
+          className="absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] text-muted-foreground/80 tabular-nums"
+        >
+          {secondsLeft}s
+        </span>
+      </div>
+    </div>
+  );
+}
