@@ -1047,7 +1047,10 @@ function WebsiteEditorShellInner() {
         </Button>
       </div>
 
-      {/* Save status pill — slim row under header so the user always sees draft state */}
+      {/* Save status pill — slim row under header so the user always sees draft state.
+          The "Unsaved changes" state is intentionally hoisted to a floating
+          bottom-right toast (see UnsavedChangesToast below) so it stays visible
+          while the operator scrolls through long editor panels. */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
         <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
         <div className="flex items-center gap-2">
