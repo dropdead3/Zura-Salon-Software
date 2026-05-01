@@ -81,18 +81,18 @@ export function HeroSlideListCard({
       {/* Drag handle */}
       <button
         type="button"
-        className="px-2 flex items-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+        className="px-2 flex items-center text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing flex-shrink-0"
         aria-label="Drag to reorder"
         {...dragHandleProps}
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
-      {/* Main clickable area */}
+      {/* Main clickable area (thumbnail + title) */}
       <button
         type="button"
         onClick={onClick}
-        className="flex-1 flex items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+        className="flex-1 min-w-0 flex items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
       >
         {/* Thumbnail */}
         <div
@@ -120,7 +120,7 @@ export function HeroSlideListCard({
 
         {/* Title + summary */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="font-display text-[11px] tracking-wider text-muted-foreground">
               SLIDE {index + 1}
             </span>
@@ -151,34 +151,42 @@ export function HeroSlideListCard({
             {summaryParts.join(' · ')}
           </div>
         </div>
-
-        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
       </button>
 
-      {/* Active toggle */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); onToggleActive(!isActive); }}
-        className={cn(
-          'px-3 flex items-center transition-colors',
-          isActive ? 'text-muted-foreground hover:text-foreground' : 'text-amber-600 dark:text-amber-400 hover:text-amber-500',
-        )}
-        aria-label={isActive ? 'Deactivate slide (hide from live site)' : 'Activate slide (show on live site)'}
-        title={isActive ? 'Deactivate — hide from live site' : 'Activate — show on live site'}
-      >
-        {isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-      </button>
+      {/* Action zone — separate from main click target so all controls are reachable */}
+      <div className="flex items-stretch flex-shrink-0 border-l border-border/40">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleActive(!isActive); }}
+          className={cn(
+            'px-2.5 flex items-center transition-colors hover:bg-muted/40',
+            isActive ? 'text-muted-foreground hover:text-foreground' : 'text-amber-600 dark:text-amber-400 hover:text-amber-500',
+          )}
+          aria-label={isActive ? 'Deactivate slide (hide from live site)' : 'Activate slide (show on live site)'}
+          title={isActive ? 'Deactivate — hide from live site' : 'Activate — show on live site'}
+        >
+          {isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+        </button>
 
-      {/* Delete (with confirmation) */}
-      <button
-        type="button"
-        onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); }}
-        className="px-3 flex items-center text-muted-foreground hover:text-destructive transition-colors"
-        aria-label="Delete slide"
-        title="Delete slide permanently"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); }}
+          className="px-2.5 flex items-center text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors border-l border-border/40"
+          aria-label="Delete slide"
+          title="Delete slide permanently"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+
+        <button
+          type="button"
+          onClick={onClick}
+          className="px-2.5 flex items-center text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-l border-border/40"
+          aria-label="Open slide editor"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
