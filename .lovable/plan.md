@@ -1,105 +1,108 @@
-# Site Design / Site Theme — Bug Fixes
+## Problem
 
-The Site Design panel has three independent bugs that compound to make theme switching feel broken: the Site Theme picker won't reliably let you pick the same theme twice in a row, the iframe doesn't actually repaint many of the design knobs (sliders, color pickers), and several themes are CSS-defined but visually so similar that switching feels like nothing happened.
+When you upload a dark background image to the Hero section, the dark theme text and dark buttons disappear because the Hero always uses `text-foreground` / `bg-foreground` regardless of what's behind it. The slide rotator has a small auto-contrast helper (forces white text when any background image is set), but:
 
-## Bugs found
+- The static Hero (no slides) ignores it entirely.
+- Auto-contrast can't be overridden — operators have no way to pick a specific brand color or fix edge cases (light photos with bright sky, mid-tone images, etc).
+- Buttons have no color control at all.
 
-### 1. Site Theme picker can get stuck on a selection (the "won't go back to Cream Lux" bug)
+## Solution
 
-`WebsiteThemePicker.handlePick` short-circuits with `if (id === theme) return`. The displayed `theme` is read from `useWebsiteColorTheme`, which reads `site_settings.draft_value`. The optimistic broadcast (`editor-theme-preview`) only updates the iframe's local override — it does NOT update `theme`. So:
+Two layers, working together.
 
-- Pick Neon → mutation writes draft → after refetch, `theme === 'neon'`, picker highlights Neon. Good.
-- Pick Cream Lux → optimistic class swap fires → mutation writes draft. But before the refetch lands, the picker UI's `isActive` is computed against the still-stale `theme === 'neon'`, so Cream Lux looks unselected. If the user clicks again to "force it", the click fires while `theme` may have just refetched to `'cream-lux'` and the `id === theme` short-circuit silently no-ops. The iframe never gets its second optimistic swap, and any in-flight theme-mismatch in `Layout.tsx`'s reconciliation effect (line 163–167) clears `previewThemeOverride` prematurely.
+### 1. Smart auto-contrast (default behavior)
 
-There is also no React Query optimistic cache update for `website_active_color_theme` (compare `useColorTheme.ts` line 230 which does `queryClient.setQueryData` — `useUpdateWebsiteColorTheme` does not).
+Apply the existing slide-rotator pattern to the static Hero too. Whenever `background_type !== 'none'` and a `background_url` is set, the Hero automatically switches to a light text palette (white headline, white-80% subhead, white-on-black primary button, white-outline secondary button). No operator action required — the most common case (uploaded photo) just works.
 
-### 2. Site Design sliders and color pickers don't live-preview at all
+### 2. Explicit color overrides (operator control)
 
-`SiteDesignPanel.broadcastToPreview()` dispatches:
-```ts
-new CustomEvent('editor-design-preview', { detail: overrides })
+A new "Text & Buttons" panel inside the Hero editor (under Background Media) that lets the operator pin specific colors when auto-contrast isn't right:
+
+- Headline color
+- Subheadline / muted color
+- Primary button — background, text, hover background
+- Secondary button — border, text, hover background
+- Reset button (clears all overrides → back to auto-contrast)
+
+Each input is a color picker + hex field, matching the pattern in `SectionStyleEditor`. Empty / unset = inherit auto-contrast.
+
+Per-slide overrides follow the same shape but default to "inherit from section" so multi-slide heroes can keep one global look or vary per slide.
+
+### Visual layout
+
+```text
+┌─ HERO SECTION EDITOR ──────────────────┐
+│ [Background Media]                     │
+│   Section Background  [image preview]  │
+│   Fit  [Cover] [Contain]               │
+│   Overlay Darkness  ────●──── 0.4      │
+│                                        │
+│ [Text & Buttons]               ← NEW   │
+│   ▸ Auto-contrast active               │
+│     (text turns white on dark photos)  │
+│                                        │
+│   Headline color    [■] #ffffff   [×]  │
+│   Subhead color     [■] #ffffffcc [×]  │
+│                                        │
+│   Primary button                       │
+│     Background     [■] #ffffff    [×]  │
+│     Text color     [■] #000000    [×]  │
+│   Secondary button                     │
+│     Border         [■] #ffffff    [×]  │
+│     Text color     [■] #ffffff    [×]  │
+│                                        │
+│   [Reset all colors]                   │
+│ [Hero Slides]                          │
+│ [Hero Section content...]              │
+└────────────────────────────────────────┘
 ```
 
-`LivePreviewPanel.tsx` line 177 reads it as:
+### Doctrine compliance
+
+- **Persona scaling**: defaults stay smart, advanced overrides stay opt-in — solo operators never need to think about it; multi-location operators get fine control.
+- **Silence is valid**: empty overrides render nothing different — no "Custom" badge spam unless a value is actually set.
+- **Live preview**: overrides flow through the existing `usePreviewBridge` so changes appear instantly in the iframe without saving.
+
+## Technical changes
+
+### Schema (`src/hooks/useSectionConfig.ts`)
+
+Add to `HeroConfig` and `HeroSlide`:
+
 ```ts
-const overrides = (e as CustomEvent).detail?.overrides ?? null;
-post({ type: 'PREVIEW_DESIGN_OVERRIDES', overrides });
+text_colors: {
+  headline?: string;        // hex, empty = auto
+  subheadline?: string;
+  primary_button_bg?: string;
+  primary_button_fg?: string;
+  primary_button_hover_bg?: string;
+  secondary_button_border?: string;
+  secondary_button_fg?: string;
+  secondary_button_hover_bg?: string;
+};
 ```
 
-`detail.overrides` is always `undefined` because the panel passes the overrides as `detail` directly, not wrapped in `{ overrides }`. The iframe receives `{ type: 'PREVIEW_DESIGN_OVERRIDES', overrides: null }`, and `DesignOverridesApplier` no-ops. Operators only see slider/color changes after Save (which uses the separate draft-write → refetch path).
+Default = `{}` (empty object → auto-contrast wins). Slides use `text_colors` with the same fields, all empty = inherit from section.
 
-### 3. Several Site Themes look near-identical when applied
+### Editor (`src/components/dashboard/website-editor/`)
 
-Themes are defined per-class in `index.css` (lines 93–3138). The visual delta between e.g. Cream Lux ↔ Sage ↔ Jade ↔ Marine is too subtle on the live site for a non-power-user to perceive a switch as "real". Combined with bug #1, this reads as "themes don't change very well."
+- New file `HeroTextColorsEditor.tsx` — color-picker grid with section-level + per-slide modes.
+- Wire into `HeroEditor.tsx` between `HeroBackgroundEditor` and `HeroSlidesManager`.
+- Add a per-slide collapsible "Text & Buttons (override section)" inside `HeroSlidesManager.tsx`'s `SlideRow`.
 
-The miniature swatches in the picker are vivid because they pull straight from `colorThemes[].lightPreview` (raw HSL values), but the actual theme classes apply a much narrower delta to `--primary`, `--accent`, `--background`. The on-site repaint needs more contrast budget — particularly for the visitor-facing surfaces (hero gradient, CTA buttons, section tints, link color).
+### Renderers
 
-## Plan
+- `src/components/home/HeroSection.tsx`: derive `hasMediaBackground`, compute auto-contrast tones, then layer overrides via inline `style={{ color: ... }}` on the headline / subheadline / button containers. Auto-contrast applies only when override is empty.
+- `src/components/home/HeroSlideRotator.tsx`: replace hard-coded `text-white` / `text-black` with the same merge logic — `slide.text_colors[X] ?? config.text_colors[X] ?? autoContrastDefault`.
+- Use inline styles (not Tailwind classes) for the override values since hex picks can't be expressed as utility classes. Keep Tailwind classes for the auto-contrast fallback to preserve hover transitions.
 
-### A. Fix the Site Theme picker (highest priority)
+### Backwards compatibility
 
-**File:** `src/components/dashboard/website-editor/SiteDesignPanel.tsx` (`WebsiteThemePicker`)
-
-1. Remove the `if (id === theme) return` short-circuit. A re-click should always re-broadcast the optimistic preview event (idempotent on the iframe side) and re-issue the mutation. Currently this guard hides the bug but also blocks recovery from any stale state.
-2. Track an optimistic local `pickedTheme` state in the picker. Compute `isActive = pickedTheme ?? theme`. Clear `pickedTheme` once `theme` from the hook catches up. This makes the "ring" follow the click instantly instead of waiting for the refetch.
-3. Disable the tile only while *that specific tile's* mutation is pending, not all tiles (currently `update.isPending` greys every tile and looks like the picker froze).
-
-**File:** `src/hooks/useWebsiteColorTheme.ts`
-
-4. Add an optimistic cache update inside `useUpdateWebsiteColorTheme` (mirror `useColorTheme.ts` line 230). Write `{ theme }` into the query cache for both `'draft'` and `'live'` modes immediately on `mutate`, so any consumer of `useWebsiteColorTheme` repaints in the same tick the user clicks.
-
-**File:** `src/components/layout/Layout.tsx`
-
-5. The reconciliation effect at lines 163–167 clears `previewThemeOverride` as soon as `theme-${websiteTheme}` matches. With #4 in place this is fine, but add a tiny debounce / one-frame deferral so the optimistic class is held for at least one paint, preventing a visible flash on slow networks.
-
-### B. Fix the Site Design live-preview event payload mismatch
-
-**File:** `src/components/dashboard/website-editor/SiteDesignPanel.tsx`
-
-Change `broadcastToPreview` to dispatch the wrapped shape the iframe bridge expects:
-```ts
-new CustomEvent('editor-design-preview', { detail: { overrides } })
-```
-
-This restores live-preview for every slider, color picker, density toggle, button-shape toggle, hero overlay, and section tint — all of which currently appear "dead" until Save.
-
-### C. Make theme switches more visible on the site
-
-**File:** `src/index.css`
-
-For each of the 12 site themes, audit the override block (`.theme-zura`, `.theme-cream-lux`, etc.) and ensure the following tokens carry enough contrast to register as a real switch on the public site:
-
-- `--primary` (CTA buttons, links, header accents)
-- `--accent` (badges, section tints)
-- `--background` and `--card` (overall page tone)
-- `--ring` (focus state — picks up the brand color)
-- `--font-display` and `--font-sans` if the theme has a typographic identity (e.g. Cream Lux = serif accents, Neon = mono display)
-
-Also add a small `--theme-hero-tint` token used by the hero overlay so each theme nudges the hero gradient visibly.
-
-This is the largest piece by line count but the most visible to operators.
-
-### D. Regression coverage
-
-1. **Vitest** — add `useWebsiteColorTheme.test.tsx` asserting:
-   - Re-clicking the same theme re-issues the optimistic broadcast.
-   - The picker `isActive` flips to the clicked theme synchronously, before the mutation resolves.
-   - Optimistic cache write lands for both `draft` and `live` query keys.
-2. **Vitest** — add `SiteDesignPanel.preview.test.tsx` asserting `editor-design-preview` dispatches `detail.overrides` (wrapped) and the iframe bridge forwards the non-null overrides into `PREVIEW_DESIGN_OVERRIDES`.
+- Existing rows with no `text_colors` field → treated as `{}` → auto-contrast kicks in. No migration needed (jsonb shape).
+- `DEFAULT_HERO` adds `text_colors: {}` so the dirty-state hook doesn't false-fire on first load.
 
 ## Out of scope
 
-- Reorganising the picker grid / brand looks layout (the current grid is fine).
-- Changing how Brand Looks ("Cream Classic", "Ocean Modern", etc.) interact with Site Themes — that's a separate `website_themes` table system and not part of this report.
-- The publishing pipeline (the bug is in editor draft mode; live-site publish-then-view is unaffected).
-
-## Technical details
-
-| Surface | File | Change |
-|---|---|---|
-| Picker stale state | `SiteDesignPanel.tsx` (`WebsiteThemePicker`) | Add `pickedTheme` local state, drop `id === theme` guard, scope `disabled` to the in-flight tile |
-| Optimistic cache | `useWebsiteColorTheme.ts` | `queryClient.setQueryData` for `['site-settings', orgId, 'website_active_color_theme', mode]` × {draft, live} on `mutate` |
-| Reconciliation flicker | `Layout.tsx` lines 163–167 | One-frame `requestAnimationFrame` before clearing `previewThemeOverride` |
-| Live-preview payload | `SiteDesignPanel.tsx` line 171 | Wrap detail: `{ detail: { overrides } }` |
-| Theme contrast | `index.css` per-theme blocks | Strengthen `--primary`/`--accent`/`--background`/`--ring` + add `--theme-hero-tint` |
-| Tests | `src/hooks/__tests__/useWebsiteColorTheme.test.tsx`, `src/components/dashboard/website-editor/__tests__/SiteDesignPanel.preview.test.tsx` | New |
+- Global theme overrides at the Site Design level (those already exist via `SiteDesignPanel`).
+- Adding the same control to non-Hero sections — happy to follow up in a separate change if you want it for `BrandStatement`, `FooterCTA`, etc.
+- Eyedropper / "pick color from image" tooling. Operators can use any external picker on their photo and paste the hex.
