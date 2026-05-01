@@ -55,11 +55,22 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
   const slide: HeroSlide | undefined = slides[activeIndex];
 
-  // Slide background overlay falls back to section default when null.
+  // Slide background overlay falls back to section default when null. Same
+  // pattern for scrim style/strength: per-slide null → inherit section.
   const overlay = useMemo(() => {
     if (!slide) return config.overlay_opacity ?? 0.4;
     return slide.overlay_opacity ?? config.overlay_opacity ?? 0.4;
   }, [slide, config.overlay_opacity]);
+
+  const scrimStyle = useMemo(() => {
+    if (!slide) return config.scrim_style ?? 'gradient-bottom';
+    return slide.scrim_style ?? config.scrim_style ?? 'gradient-bottom';
+  }, [slide, config.scrim_style]);
+
+  const scrimStrength = useMemo(() => {
+    if (!slide) return config.scrim_strength ?? 0.55;
+    return slide.scrim_strength ?? config.scrim_strength ?? 0.55;
+  }, [slide, config.scrim_strength]);
 
   const bgType = useMemo(() => {
     if (!slide) return 'none' as const;
