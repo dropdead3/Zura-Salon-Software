@@ -1,5 +1,6 @@
 import { MarketingNav } from './MarketingNav';
 import { MarketingFooter } from './MarketingFooter';
+import { StickyFooterBar } from '@/components/layout/StickyFooterBar';
 
 interface MarketingLayoutProps {
   children: React.ReactNode;
@@ -27,6 +28,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
         {children}
       </main>
       <MarketingFooter />
+      <StickyFooterBar />
     </div>
   );
 }

@@ -199,7 +199,7 @@ export function MarketingNav() {
     </header>
 
       <AnimatePresence>
-        {!navVisible && (
+        {!navVisible && false && (
           <motion.div
             initial={{ y: 100, x: '-50%' }}
             animate={{ y: 0, x: '-50%' }}

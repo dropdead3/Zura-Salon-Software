@@ -21,11 +21,12 @@ export function StickyFooterBar() {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
+      const maxScroll = Math.max(documentHeight - windowHeight, 0);
 
-      // Show once user has scrolled past 40% of first viewport
-      const pastThreshold = scrollY > windowHeight * 0.4;
-      // Hide when within ~1 viewport of the bottom (to avoid covering footer CTAs)
-      const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 0.5;
+      // Show once user has clearly moved into the page.
+      const pastThreshold = scrollY > Math.min(windowHeight * 0.25, 180);
+      // Only hide when truly approaching the footer, not halfway down shorter pages.
+      const nearBottom = maxScroll > 240 && scrollY >= maxScroll - 120;
 
       setIsVisible(pastThreshold && !nearBottom);
     };
