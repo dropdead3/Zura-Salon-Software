@@ -86,7 +86,42 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     setActiveIndex(((i % slides.length) + slides.length) % slides.length);
   }, [slides.length]);
 
-  const slide: HeroSlide | undefined = slides[activeIndex];
+  const rawSlide: HeroSlide | undefined = slides[activeIndex];
+
+  // Background-only mode: slides own only their backgrounds; foreground copy +
+  // CTAs come from the section-level fields. Per-slide copy is preserved on
+  // disk so toggling back to multi-slide restores it.
+  const rotatorMode = config.rotator_mode ?? 'multi_slide';
+  const slide: HeroSlide | undefined = useMemo(() => {
+    if (!rawSlide) return rawSlide;
+    if (rotatorMode !== 'background_only') return rawSlide;
+    return {
+      ...rawSlide,
+      eyebrow: config.eyebrow ?? '',
+      show_eyebrow: !!config.show_eyebrow,
+      headline_text: config.headline_text ?? '',
+      subheadline_line1: config.subheadline_line1 ?? '',
+      subheadline_line2: config.subheadline_line2 ?? '',
+      cta_new_client: config.cta_new_client ?? '',
+      cta_new_client_url: config.cta_new_client_url ?? '',
+      cta_returning_client: config.cta_returning_client ?? '',
+      cta_returning_client_url: config.cta_returning_client_url ?? '',
+      show_secondary_button: !!config.show_secondary_button,
+    };
+  }, [
+    rawSlide,
+    rotatorMode,
+    config.eyebrow,
+    config.show_eyebrow,
+    config.headline_text,
+    config.subheadline_line1,
+    config.subheadline_line2,
+    config.cta_new_client,
+    config.cta_new_client_url,
+    config.cta_returning_client,
+    config.cta_returning_client_url,
+    config.show_secondary_button,
+  ]);
 
   // Slide background overlay falls back to section default when null. Same
   // pattern for scrim style/strength: per-slide null → inherit section.
@@ -219,7 +254,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           <div ref={contentWrapRef} className={alignment.wrapper}>
             <AnimatePresence mode="wait">
               <motion.div
-                key={`fg-${activeIndex}`}
+                key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -230,7 +265,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   text={slide.eyebrow}
                   toneClass={mutedTone}
                   editable={isPreview}
-                  fieldPath={`slides.${activeIndex}.eyebrow`}
+                  fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
                   className={spacing.eyebrow}
                 />
 
@@ -244,7 +279,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                       className="whitespace-nowrap block"
                       value={slide.headline_text}
                       sectionKey="section_hero"
-                      fieldPath={`slides.${activeIndex}.headline_text`}
+                      fieldPath={rotatorMode === 'background_only' ? 'headline_text' : `slides.${activeIndex}.headline_text`}
                       placeholder="Headline"
                     />
                   ) : (
@@ -269,7 +304,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         as="span"
                         value={slide.subheadline_line1}
                         sectionKey="section_hero"
-                        fieldPath={`slides.${activeIndex}.subheadline_line1`}
+                        fieldPath={rotatorMode === 'background_only' ? 'subheadline_line1' : `slides.${activeIndex}.subheadline_line1`}
                         placeholder="Subheadline line 1"
                       />
                     ) : (
@@ -283,7 +318,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                             as="span"
                             value={slide.subheadline_line2}
                             sectionKey="section_hero"
-                            fieldPath={`slides.${activeIndex}.subheadline_line2`}
+                            fieldPath={rotatorMode === 'background_only' ? 'subheadline_line2' : `slides.${activeIndex}.subheadline_line2`}
                             placeholder="Subheadline line 2"
                           />
                         ) : (

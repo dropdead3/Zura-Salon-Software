@@ -190,6 +190,17 @@ export interface HeroConfig {
   scrim_strength?: number;
   // Multi-slide rotator (Revolution Slider–style)
   slides: HeroSlide[];
+  /**
+   * How the rotator presents slides:
+   * - `multi_slide` (default): each slide owns its own background AND its own
+   *   foreground copy/CTAs. Foreground re-animates per slide.
+   * - `background_only`: slides own only the background; foreground copy +
+   *   CTAs come from the section-level fields and stay still while the
+   *   imagery cross-fades. Per-slide copy is preserved (just not rendered)
+   *   so switching back to `multi_slide` restores it.
+   * Legacy configs without this field render as `multi_slide`.
+   */
+  rotator_mode?: 'multi_slide' | 'background_only';
   auto_rotate: boolean;
   slide_interval_ms: number;
   transition_style: 'fade' | 'crossfade' | 'slide-up';
@@ -512,6 +523,7 @@ export const DEFAULT_HERO: HeroConfig = {
   scrim_style: 'gradient-bottom',
   scrim_strength: 0.55,
   slides: [],
+  rotator_mode: 'multi_slide',
   auto_rotate: true,
   slide_interval_ms: 6000,
   transition_style: 'crossfade',

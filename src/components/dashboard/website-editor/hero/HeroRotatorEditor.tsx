@@ -17,6 +17,7 @@ interface HeroRotatorEditorProps {
 export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) {
   const slides = config.slides ?? [];
   const hasMultiple = slides.length > 1;
+  const mode = config.rotator_mode ?? 'multi_slide';
 
   return (
     <EditorCard title="Slides Rotator" icon={Settings2}>
@@ -24,6 +25,50 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
         Controls how the hero cycles between slides. When you have only one
         slide, the rotator is silent — these settings start mattering at two+.
       </p>
+
+      {/* Rotator Mode picker — defines what each slide owns. */}
+      <div className="space-y-2 pt-1">
+        <label className="text-xs text-muted-foreground">Rotator Mode</label>
+        <div className="flex gap-2">
+          {([
+            {
+              id: 'multi_slide' as const,
+              label: 'Multi-Slide',
+              desc: 'Each slide has its own background, copy & buttons.',
+            },
+            {
+              id: 'background_only' as const,
+              label: 'Background-Only',
+              desc: 'Shared copy & buttons, only the background rotates.',
+            },
+          ]).map(({ id, label, desc }) => {
+            const active = mode === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onChange('rotator_mode', id)}
+                title={desc}
+                className={`flex-1 px-3 py-2 rounded-xl text-left border transition-colors ${
+                  active
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
+                }`}
+              >
+                <div className="text-[12px] font-sans font-medium">{label}</div>
+                <div className={`text-[10px] mt-0.5 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
+                  {desc}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {mode === 'background_only' && (
+          <p className="text-[10px] text-muted-foreground">
+            Slide-specific copy is preserved and will return if you switch back to Multi-Slide.
+          </p>
+        )}
+      </div>
 
       <ToggleInput
         label="Auto-Rotate"

@@ -29,6 +29,7 @@ import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
 import { HeroAlignmentEditor } from './hero/HeroAlignmentEditor';
 import { HeroRotatorEditor } from './hero/HeroRotatorEditor';
+import { HeroSharedContentEditor } from './hero/HeroSharedContentEditor';
 
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
@@ -51,7 +52,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced';
+type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
@@ -63,6 +64,7 @@ const GLOBAL_LABELS: Record<GlobalView, string> = {
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
   advanced: 'Advanced',
+  shared_content: 'Shared Hero Content',
 };
 
 function viewStorageKey(orgId: string | undefined | null): string {
@@ -215,6 +217,7 @@ function SortableSlideRow({
   index,
   isFirst,
   section,
+  rotatorMode,
   onClick,
   onDelete,
   onToggleActive,
@@ -223,6 +226,7 @@ function SortableSlideRow({
   index: number;
   isFirst: boolean;
   section: HeroConfig;
+  rotatorMode: 'multi_slide' | 'background_only';
   onClick: () => void;
   onDelete: () => void;
   onToggleActive: (next: boolean) => void;
@@ -238,6 +242,7 @@ function SortableSlideRow({
         sectionBgUrl={section.background_url}
         sectionBgPoster={section.background_poster_url}
         sectionBgType={section.background_type}
+        rotatorMode={rotatorMode}
         onClick={onClick}
         onDelete={onDelete}
         onToggleActive={onToggleActive}
@@ -359,15 +364,28 @@ export function HeroEditor() {
     });
   };
 
+  const rotatorMode = localConfig.rotator_mode ?? 'multi_slide';
+  const sharedContentSummary = (() => {
+    const h = (localConfig.headline_text ?? '').trim();
+    return h ? `“${h.length > 32 ? h.slice(0, 30) + '…' : h}”` : 'No shared headline yet';
+  })();
+
   const globalCards = useMemo(
-    () => [
-      { id: 'alignment' as const, title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
-      { id: 'colors' as const, title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
-      { id: 'scrim' as const, title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
-      { id: 'rotator' as const, title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
-      { id: 'advanced' as const, title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
-    ],
-    [localConfig],
+    () => {
+      const cards: Array<{ id: GlobalView; title: string; icon: typeof AlignJustify; summary: string }> = [];
+      if (rotatorMode === 'background_only') {
+        cards.push({ id: 'shared_content', title: 'Shared Hero Content', icon: ImageIcon, summary: sharedContentSummary });
+      }
+      cards.push(
+        { id: 'alignment', title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
+        { id: 'colors', title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
+        { id: 'scrim', title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
+        { id: 'rotator', title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
+        { id: 'advanced', title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
+      );
+      return cards;
+    },
+    [localConfig, rotatorMode, sharedContentSummary],
   );
 
   if (isLoading) {
@@ -386,8 +404,9 @@ export function HeroEditor() {
       <div className="space-y-6">
         <EditorCard title="Hero Section" icon={ImageIcon}>
           <p className="text-sm text-muted-foreground -mt-1">
-            Each slide owns its own background and copy. Layout settings below
-            apply to every slide.
+            {rotatorMode === 'background_only'
+              ? 'Each slide owns its own background. Headline, subheadline & buttons are shared across all slides.'
+              : 'Each slide owns its own background and copy. Layout settings below apply to every slide.'}
           </p>
 
           {/* SLIDES group */}
@@ -422,6 +441,7 @@ export function HeroEditor() {
                         index={i}
                         isFirst={i === 0}
                         section={localConfig}
+                        rotatorMode={rotatorMode}
                         onClick={() => setView({ kind: 'slide', id: s.id })}
                         onDelete={() => deleteSlide(s.id)}
                         onToggleActive={(next) => updateSlide(s.id, { active: next })}
@@ -543,6 +563,9 @@ export function HeroEditor() {
         <HeroRotatorEditor config={localConfig} onChange={updateField} />
       )}
 
+      {view.kind === 'global' && view.id === 'shared_content' && (
+        <HeroSharedContentEditor config={localConfig} onChange={updateField} />
+      )}
 
       {view.kind === 'global' && view.id === 'advanced' && (
         <HeroAdvancedEditor config={localConfig} onChange={updateField} />
@@ -563,6 +586,7 @@ export function HeroEditor() {
             slide={slides[idx]}
             index={idx}
             section={localConfig}
+            rotatorMode={rotatorMode}
             onUpdate={(patch) => updateSlide(view.id, patch)}
             onUpdateSection={updateField}
           />

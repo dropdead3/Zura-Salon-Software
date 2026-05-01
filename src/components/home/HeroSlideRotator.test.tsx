@@ -137,3 +137,31 @@ describe('HeroSlideRotator — global decorations regression guard', () => {
     expect(container.querySelector('[data-hero-notes]')).toBeNull();
   });
 });
+
+describe('HeroSlideRotator — rotator_mode background_only', () => {
+  it('renders section-level headline (not the per-slide one) when rotator_mode is background_only', () => {
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared Headline',
+      cta_new_client: 'Shared Primary',
+      slides: [makeSlide({ headline_text: 'Per-Slide Headline', cta_new_client: 'Per-Slide CTA' })],
+      rotator_mode: 'background_only',
+    };
+    const { container, getByText } = renderRotator(config);
+    expect(getByText('Shared Headline')).toBeTruthy();
+    expect(container.textContent).not.toContain('Per-Slide Headline');
+    expect(getByText('Shared Primary')).toBeTruthy();
+  });
+
+  it('renders per-slide headline when rotator_mode is multi_slide (default)', () => {
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared Headline',
+      slides: [makeSlide({ headline_text: 'Per-Slide Headline' })],
+      // no rotator_mode → defaults to multi_slide
+    };
+    const { container, getByText } = renderRotator(config);
+    expect(getByText('Per-Slide Headline')).toBeTruthy();
+    expect(container.textContent).not.toContain('Shared Headline');
+  });
+});

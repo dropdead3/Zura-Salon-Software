@@ -27,6 +27,8 @@ interface HeroSlideEditorProps {
   index: number;
   /** Section-level config — used to resolve "inherit" + show defaults. */
   section: HeroConfig;
+  /** Whether the rotator runs in multi-slide or background-only mode. */
+  rotatorMode?: 'multi_slide' | 'background_only';
   onUpdate: (patch: Partial<HeroSlide>) => void;
   /** Section-level updater for global fields surfaced inline (e.g. rotating words). */
   onUpdateSection: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
@@ -40,9 +42,14 @@ interface HeroSlideEditorProps {
  * Per-slide overrides for those global settings are tucked under a
  * collapsed "Advanced overrides" section — present for power users but
  * never the first thing operators see.
+ *
+ * In `background_only` rotator mode the per-slide Copy and Buttons cards
+ * are hidden — those fields are edited once at the section level via the
+ * Shared Hero Content card on the hub.
  */
-export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSection }: HeroSlideEditorProps) {
+export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_slide', onUpdate, onUpdateSection }: HeroSlideEditorProps) {
   const [overridesOpen, setOverridesOpen] = useState(false);
+  const backgroundOnly = rotatorMode === 'background_only';
 
   const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
 
@@ -277,6 +284,7 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
         </div>
       </EditorCard>
 
+      {!backgroundOnly && (<>
       {/* Copy */}
       <EditorCard title={`Slide ${index + 1} · Copy`} icon={ImageIcon}>
         <ToggleInput
@@ -426,6 +434,15 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
           </>
         )}
       </EditorCard>
+      </>)}
+
+      {backgroundOnly && (
+        <div className="rounded-xl border border-dashed border-border/50 px-4 py-3 text-[11px] text-muted-foreground font-sans">
+          Headline, subheadline & buttons are shared across all slides in
+          Background-Only mode. Edit them under{' '}
+          <span className="text-foreground font-medium">Shared Hero Content</span> on the hub.
+        </div>
+      )}
 
       {/* Advanced overrides — collapsed by default */}
       <Collapsible open={overridesOpen} onOpenChange={setOverridesOpen}>
