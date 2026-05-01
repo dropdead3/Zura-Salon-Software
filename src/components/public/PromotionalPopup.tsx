@@ -144,6 +144,18 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
+  // Three-phase visual lifecycle for the popup root:
+  //   'entering' → slide-in animation (replayable via animationNonce)
+  //   'visible'  → static, awaiting timer / interaction
+  //   'closing'  → slide-out toward the FAB position; on animationend we
+  //                flip to FAB and unmount the popup. Without this phase
+  //                the popup hard-cuts on close and the lifecycle preview
+  //                reads as broken to operators.
+  const [popupPhase, setPopupPhase] = useState<'entering' | 'visible' | 'closing'>('entering');
+  // Captures which exit handler should fire after the close animation
+  // completes (soft-close = surface FAB; accept = no FAB). Decouples the
+  // animation contract from the dismissal semantics.
+  const pendingExitRef = useRef<null | 'soft' | 'decline' | 'accept'>(null);
   // Editor-driven reset replays the CSS slide-in by bumping the React `key`
   // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
   // fires on first paint, so without a fresh mount the popup snaps into
