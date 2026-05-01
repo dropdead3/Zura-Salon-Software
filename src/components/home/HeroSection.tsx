@@ -338,10 +338,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className="mt-10 flex flex-col items-center gap-3"
+              className={cn("mt-10 flex flex-col gap-3", alignment.cta)}
               style={{ y: ctaY }}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
