@@ -12,6 +12,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
