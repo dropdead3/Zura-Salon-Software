@@ -284,6 +284,7 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
         </div>
       </EditorCard>
 
+      {!backgroundOnly && (<>
       {/* Copy */}
       <EditorCard title={`Slide ${index + 1} · Copy`} icon={ImageIcon}>
         <ToggleInput
@@ -433,6 +434,15 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
           </>
         )}
       </EditorCard>
+      </>)}
+
+      {backgroundOnly && (
+        <div className="rounded-xl border border-dashed border-border/50 px-4 py-3 text-[11px] text-muted-foreground font-sans">
+          Headline, subheadline & buttons are shared across all slides in
+          Background-Only mode. Edit them under{' '}
+          <span className="text-foreground font-medium">Shared Hero Content</span> on the hub.
+        </div>
+      )}
 
       {/* Advanced overrides — collapsed by default */}
       <Collapsible open={overridesOpen} onOpenChange={setOverridesOpen}>
