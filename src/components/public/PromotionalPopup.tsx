@@ -137,6 +137,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [showFab, setShowFab] = useState(false);
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
+  const [isHovered, setIsHovered] = useState(false);
   const triggeredRef = useRef(false);
 
   // Auto-suppress the entire offer prompt on the booking surface — if the
@@ -245,16 +246,36 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Auto-minimize after 15s of no interaction with a visible countdown.
+  // Auto-minimize after N seconds of no interaction with a visible countdown.
   // Visitors who don't engage get their reading flow back; the offer collapses
   // into the FAB so it remains one tap away rather than disappearing entirely.
   // Skipped in editor preview so operators QA'ing copy aren't fighting a timer.
-  // Any user action that flips `open` to false (Accept/Decline/Esc/X) cancels
-  // the interval via the cleanup below.
+  // Paused while the cursor is over the popup — active readers shouldn't be
+  // interrupted mid-sentence. Disabled entirely when operator sets
+  // `autoMinimizeMs` to null.
+  //
+  // Operator override: clamp to 5–60s window. Defaults to 15s.
+  const autoMinimizeMs = cfg?.autoMinimizeMs;
+  const autoMinimizeSeconds = useMemo(() => {
+    if (autoMinimizeMs === null) return null; // disabled
+    const ms = typeof autoMinimizeMs === 'number' ? autoMinimizeMs : 15000;
+    return Math.max(5, Math.min(60, Math.round(ms / 1000)));
+  }, [autoMinimizeMs]);
+
+  // Reset countdown whenever the popup opens (or the operator changes the
+  // configured duration). Separated from the tick effect so hover-pause
+  // doesn't restart the timer at full each time the cursor enters/leaves.
   useEffect(() => {
     if (!open) return;
-    setSecondsLeft(15);
+    if (autoMinimizeSeconds === null) return;
+    setSecondsLeft(autoMinimizeSeconds);
+  }, [open, autoMinimizeSeconds]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
     if (isPreview) return; // Show full bar but never tick down during QA.
+    if (isHovered) return; // Pause while reader is engaged — resume from current.
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
@@ -267,7 +288,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }, 1000);
     return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPreview]);
+  }, [open, isPreview, isHovered, autoMinimizeSeconds]);
 
   // If the popup is disabled or config missing, render nothing at all.
   if (!active || !cfg) return null;
@@ -420,9 +441,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-4"
         style={{ borderTopColor: accent, borderTopWidth: 3 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
-        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
+        {autoMinimizeSeconds !== null && (
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+        )}
       </div>
     );
   }
@@ -435,6 +460,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
@@ -484,7 +511,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             </button>
           </div>
         </div>
-        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
+        {autoMinimizeSeconds !== null && (
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+        )}
       </div>
     );
   }
@@ -516,6 +545,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           modalWide ? 'max-w-2xl' : 'max-w-md',
         )}
         style={{ borderTopColor: accent, borderTopWidth: 4 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <button
           onClick={handleSoftClose}
@@ -542,7 +573,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
           </div>
         )}
-        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
+        {autoMinimizeSeconds !== null && (
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+        )}
       </div>
     </div>
   );
@@ -651,13 +684,28 @@ function PromoBody({
 }
 
 /**
- * Thin progress hairline + numeric label that depletes over the 15s
- * auto-minimize window. Telegraphs the collapse-to-FAB behavior so the
- * offer never appears to "vanish" without warning.
+ * Thin progress hairline + numeric label that depletes over the auto-minimize
+ * window. Telegraphs the collapse-to-FAB behavior so the offer never appears
+ * to "vanish" without warning.
+ *
+ * - `paused` freezes the fill animation and softens the label so visitors
+ *   reading the offer (cursor over popup) can tell the timer is on hold.
+ * - Under 3s remaining, the bar pulses subtly + the label switches to the
+ *   warning token so the imminent collapse is felt, not just seen.
  */
-function CountdownBar({ secondsLeft, accent }: { secondsLeft: number; accent: string }) {
-  const total = 15;
-  const pct = Math.max(0, Math.min(100, (secondsLeft / total) * 100));
+function CountdownBar({
+  secondsLeft,
+  totalSeconds,
+  accent,
+  paused = false,
+}: {
+  secondsLeft: number;
+  totalSeconds: number;
+  accent: string;
+  paused?: boolean;
+}) {
+  const pct = Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100));
+  const urgent = !paused && secondsLeft <= 3 && secondsLeft > 0;
   return (
     <div
       className="absolute bottom-0 inset-x-0 pointer-events-none"
@@ -665,13 +713,24 @@ function CountdownBar({ secondsLeft, accent }: { secondsLeft: number; accent: st
     >
       <div className="relative h-1 w-full bg-foreground/5">
         <div
-          className="h-full transition-[width] duration-1000 ease-linear"
+          className={cn(
+            'h-full transition-[width] ease-linear',
+            paused ? 'duration-200 opacity-50' : 'duration-1000',
+            urgent && 'motion-safe:animate-pulse',
+          )}
           style={{ width: `${pct}%`, backgroundColor: accent }}
         />
         <span
-          className="absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] text-muted-foreground/80 tabular-nums"
+          className={cn(
+            'absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] tabular-nums transition-colors',
+            paused
+              ? 'text-muted-foreground/40'
+              : urgent
+                ? 'text-warning motion-safe:animate-pulse'
+                : 'text-muted-foreground/80',
+          )}
         >
-          {secondsLeft}s
+          {paused ? 'paused' : `${secondsLeft}s`}
         </span>
       </div>
     </div>

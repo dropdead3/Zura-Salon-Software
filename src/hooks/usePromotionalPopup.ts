@@ -82,6 +82,10 @@ export interface PromotionalPopupSettings {
    *  destination is `custom-url`. Lets the visitor know what to do at the
    *  destination (e.g. "Mention code FREEHAIR when you call"). */
   customUrlInstructions?: string;
+  /** Auto-minimize the popup into the FAB after this many ms of no interaction.
+   *  Default 15000. Range 5000–60000. Set to `null` to disable auto-minimize
+   *  (popup stays open until the visitor explicitly closes it). */
+  autoMinimizeMs?: number | null;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
@@ -107,6 +111,7 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   acceptDestination: 'booking',
   customUrl: '',
   customUrlInstructions: '',
+  autoMinimizeMs: 15000,
 };
 
 const SETTING_KEY = 'promotional_popup';
