@@ -16,13 +16,15 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
 
   useEffect(() => {
     if (config.rotating_words.length === 0) return;
-    
+
+    // word_rotation_interval is stored in SECONDS — convert to ms.
+    const intervalMs = Math.max(1500, (config.word_rotation_interval ?? 5.5) * 1000);
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % config.rotating_words.length);
-    }, 2500);
+    }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [config.rotating_words.length]);
+  }, [config.rotating_words.length, config.word_rotation_interval]);
 
   // Reset index if words change
   useEffect(() => {
