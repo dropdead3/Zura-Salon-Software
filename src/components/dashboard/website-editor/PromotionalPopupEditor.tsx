@@ -527,7 +527,7 @@ export function PromotionalPopupEditor() {
     switch (popupPhase) {
       case 'open':
         return {
-          label: 'Restart preview',
+          label: 'Restart popup preview',
           title: 'Reset the countdown and re-open the popup from the top',
         };
       case 'fab':
@@ -544,23 +544,35 @@ export function PromotionalPopupEditor() {
     }
   }, [popupPhase]);
 
-  const handlePreviewNow = useCallback(() => {
-    // Lightweight: dispatch the canonical reset event so the popup
-    // re-runs its full lifecycle in place — no iframe reload, no lost
-    // scroll position. The popup component (sole listener) clears its
-    // triggered ref + FAB state and re-opens. See
-    // `src/lib/promoPopupPreviewReset.ts` for event ownership.
-    dispatchPromoPopupPreviewReset({ reason: 'editor-button' });
-    toast.success('Popup preview restarted');
-  }, []);
+  // Count of per-org dismissal records currently in localStorage. Surfaced
+  // in the restart button's tooltip so operators understand the side-effect
+  // ("also clears N visitor dismissal records") before clicking. Recomputed
+  // when the lifecycle phase changes — that's the only moment the count can
+  // change between operator-driven restart clicks.
+  const dismissalRecordCount = useMemo(() => {
+    if (typeof window === 'undefined' || !orgId) return 0;
+    try {
+      const prefix = `zura.promo.${orgId}.`;
+      let count = 0;
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i);
+        if (k && k.startsWith(prefix)) count += 1;
+      }
+      return count;
+    } catch {
+      return 0;
+    }
+    // popupPhase intentionally included — recompute when lifecycle shifts.
+  }, [orgId, popupPhase]);
 
+  // Single canonical restart action. Clears per-org dismissal records +
+  // session sentinel, then dispatches the canonical preview-reset event so
+  // the popup re-runs its full lifecycle (slide-in → countdown → soft-close
+  // into FAB) in-place — no iframe reload, no lost scroll position.
+  // See `src/lib/promoPopupPreviewReset.ts` for event ownership canon.
   const handleResetSession = useCallback(() => {
     if (typeof window === 'undefined' || !orgId) return;
     try {
-      // Clear all per-org promo dismissal records + session sentinel so a
-      // real visitor would re-see the popup on next load. (Preview itself
-      // already bypasses frequency caps, but operators expect this button
-      // to also reset the underlying visitor-side state.)
       const prefix = `zura.promo.${orgId}.`;
       const toDelete: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
@@ -569,19 +581,11 @@ export function PromotionalPopupEditor() {
       }
       toDelete.forEach((k) => window.localStorage.removeItem(k));
       window.sessionStorage.removeItem('zura.promo.session');
-      // Re-run the FULL lifecycle in-place via the canonical reset event
-      // (sole owner: src/lib/promoPopupPreviewReset.ts). The popup re-opens
-      // with its slide-in animation, the countdown restarts at the
-      // operator-configured duration, and on countdown completion it
-      // soft-closes into the "See Offer" FAB — exactly mirroring what a
-      // real visitor would experience. Heavyweight `triggerPreviewRefresh()`
-      // (full iframe reload) is avoided so the operator never loses scroll
-      // position or mid-edit form state in adjacent editors.
       dispatchPromoPopupPreviewReset({ reason: 'manual' });
       toast.success(
         toDelete.length > 0
           ? `Cleared ${toDelete.length} dismissal record(s) — popup restarted`
-          : 'Popup session restarted',
+          : 'Popup preview restarted',
       );
     } catch (err) {
       toast.error('Could not reset session storage');
@@ -639,27 +643,38 @@ export function PromotionalPopupEditor() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePreviewNow}
-            className="gap-2"
-            title={restartButtonCopy.title}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            {restartButtonCopy.label}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleResetSession}
-            className="gap-2"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset popup session
-          </Button>
+          {/* Single phase-aware restart button. Collapses what used to be
+              two buttons ("Restart preview" + "Reset popup session") — the
+              former was a strict subset of the latter once both started
+              dispatching the canonical lifecycle event. Tooltip surfaces
+              the side-effect (clearing N visitor dismissal records) so the
+              loss of the "restart without clearing storage" affordance is
+              explicit; preview already bypasses dismissals so that
+              affordance had no QA value. */}
+          <TooltipProvider delayDuration={120}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSession}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {restartButtonCopy.label}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="font-sans text-xs">{restartButtonCopy.title}</p>
+                <p className="font-sans text-[11px] text-muted-foreground mt-1">
+                  {dismissalRecordCount > 0
+                    ? `Also clears ${dismissalRecordCount} visitor dismissal record${dismissalRecordCount === 1 ? '' : 's'}.`
+                    : 'No visitor dismissal records to clear.'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button
             type="button"
             variant="ghost"
