@@ -175,7 +175,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                  className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
