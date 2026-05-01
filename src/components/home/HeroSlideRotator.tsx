@@ -16,7 +16,8 @@ import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
-import { resolveHeroAlignment } from '@/lib/heroAlignment';
+import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
+import { publishHeroAlignment, clearHeroAlignment } from '@/lib/heroAlignmentSignal';
 import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from '@/lib/heroSpacing';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
@@ -204,12 +205,24 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const heroColors = resolveHeroColors(mergedColors, hasBackground);
   // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
   const mutedTone = heroColors.subheadlineClass || '';
-  // Per-slide alignment overrides the section default; null/undefined inherits.
-  const alignment = resolveHeroAlignment(slide.content_alignment ?? config.content_alignment);
+  // Per-slide alignment + width override the section default; null/undefined inherits.
+  const effectiveAlignment = slide.content_alignment ?? config.content_alignment ?? 'center';
+  const alignment = resolveHeroAlignmentWithWidth(
+    effectiveAlignment,
+    slide.content_width ?? config.content_width,
+  );
   // Container-aware spacing — see HeroSection for full rationale.
   const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
   const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
   const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
+
+  // Publish the active alignment for global overlays (e.g. promo FAB) to
+  // shift out of the way when right-aligned content would crowd them.
+  // Cleared on unmount so non-public-site routes don't carry stale state.
+  useEffect(() => {
+    publishHeroAlignment(effectiveAlignment);
+    return () => clearHeroAlignment();
+  }, [effectiveAlignment]);
 
   // Stable foreground min-height: when slides change alignment (left → right),
   // the outgoing slide fades out at its anchor and the incoming slide fades

@@ -143,6 +143,15 @@ export interface HeroSlide {
    */
   content_alignment?: 'left' | 'center' | 'right' | null;
   /**
+   * Per-slide content column width override. `null` / undefined inherits
+   * the section-level `content_width` (which itself defaults to 'default'
+   * for legacy back-compat).
+   *   - 'narrow'  → tighter column for copy-heavy slides
+   *   - 'default' → balanced 896px column
+   *   - 'wide'    → flex wider for punchy single-line headlines
+   */
+  content_width?: 'narrow' | 'default' | 'wide' | null;
+  /**
    * Whether the slide is included in the public rotator. `false` hides it
    * from the live site without deleting (operator can re-enable). Default
    * is `true` — `null`/`undefined` is treated as active for legacy slides.
@@ -230,6 +239,11 @@ export interface HeroConfig {
    * Per-slide `content_alignment` overrides this when set.
    */
   content_alignment?: 'left' | 'center' | 'right';
+  /**
+   * Section-level content column width default. Per-slide `content_width`
+   * overrides this when set. Defaults to 'default' (896px) for back-compat.
+   */
+  content_width?: 'narrow' | 'default' | 'wide';
   /**
    * Section-level vertical spacing density. Picks one of three preset
    * rhythms (compact / standard / airy) defined in `src/lib/heroSpacing.ts`.

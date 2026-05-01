@@ -273,6 +273,42 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
             })}
           </div>
         </div>
+
+        {/* Per-slide content column width — punchy single-line headlines can
+            flex wider than copy-heavy slides. Inherits the section default
+            when unset (mirrors content_alignment inheritance behavior). */}
+        <div className="space-y-2 pt-2">
+          <Label className="text-xs">Content Width</Label>
+          <div className="flex gap-2">
+            {([
+              { id: 'narrow', label: 'Narrow', hint: 'Tight column for copy-heavy slides' },
+              { id: 'default', label: 'Default', hint: 'Balanced 896px column' },
+              { id: 'wide', label: 'Wide', hint: 'Flex wider for punchy headlines' },
+            ] as const).map(({ id, label, hint }) => {
+              const effective = slide.content_width ?? section.content_width ?? 'default';
+              const active = effective === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => onUpdate({ content_width: id })}
+                  title={hint}
+                  className={cn(
+                    'flex-1 inline-flex items-center justify-center px-3 py-2 rounded-full text-[11px] border transition-colors',
+                    active
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Wide is best for short, single-line headlines; narrow tightens copy-heavy slides.
+          </p>
+        </div>
       </EditorCard>
 
       {!backgroundOnly && (<>

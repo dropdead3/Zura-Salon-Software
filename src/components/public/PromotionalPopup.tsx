@@ -22,6 +22,7 @@ import {
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 import { useReplayableMount } from '@/hooks/useReplayableMount';
 import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
+import { subscribeHeroAlignment, type HeroAlignmentSignal } from '@/lib/heroAlignmentSignal';
 
 interface Props {
   /**
@@ -145,6 +146,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
+  // Track the active hero alignment (published via <html data-hero-alignment>)
+  // so the FAB can shift up out of the way when a right-aligned hero would
+  // crowd the bottom-right anchor (and vice versa for bottom-left).
+  const [heroAlignment, setHeroAlignment] = useState<HeroAlignmentSignal | null>(null);
+  useEffect(() => subscribeHeroAlignment(setHeroAlignment), []);
   // Three-phase visual lifecycle for the popup root (entering → visible →
   // closing). The `closing` phase keeps the popup mounted so its CSS exit
   // animation plays before unmount; `onAnimationEnd` then flips `open` and
@@ -507,10 +513,18 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   // FAB element rendered after dismissal. Reuses the offer's accent color and
   // headline so the visitor can re-open the offer at any time during the session.
+  // Alignment-aware safe zone: when the active hero pushes content into the
+  // FAB's corner (right-hero + bottom-right FAB, or left-hero + bottom-left
+  // FAB), nudge the FAB upward so it doesn't visually crowd the headline.
+  // Smooth-transitioned so the lift reads as intentional, not glitchy.
+  const fabCrowded =
+    (heroAlignment === 'right' && fabPos === 'bottom-right') ||
+    (heroAlignment === 'left' && fabPos === 'bottom-left');
   const fab = showFab && !open ? (
     <div
       className={cn(
-        'fixed bottom-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
+        'fixed z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 transition-[bottom] duration-300 ease-out',
+        fabCrowded ? 'bottom-24' : 'bottom-6',
         fabPos === 'bottom-left' ? 'left-6 flex-row-reverse' : 'right-6',
       )}
     >
