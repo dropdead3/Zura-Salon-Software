@@ -52,7 +52,7 @@ export function SectionDisplayEditor<T extends object>({
 }: SectionDisplayEditorProps<T>) {
   const __saveTelemetry = useSaveTelemetry(`section-display-editor:${title}`);
   const [localConfig, setLocalConfig] = useState<T>(data);
-  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  const isDirty = !isStructurallyEqual(localConfig, data);
   useEditorDirtyState(isDirty);
 
   useEffect(() => {
