@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, RotateCcw, Layout } from 'lucide-react';
+import { Loader2, Settings2, RotateCcw, Layout, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
