@@ -197,7 +197,15 @@ export default {
         "dirty-pulse": {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--warning) / 0.35)" },
           "50%": { boxShadow: "0 0 0 6px hsl(var(--warning) / 0)" },
+        "backdrop-blur-in-md": {
+          "0%": { backdropFilter: "blur(0px) saturate(100%)", WebkitBackdropFilter: "blur(0px) saturate(100%)" },
+          "100%": { backdropFilter: "blur(12px) saturate(120%)", WebkitBackdropFilter: "blur(12px) saturate(120%)" },
         },
+        "backdrop-blur-in-2xl": {
+          "0%": { backdropFilter: "blur(0px) saturate(100%)", WebkitBackdropFilter: "blur(0px) saturate(100%)" },
+          "100%": { backdropFilter: "blur(40px) saturate(150%)", WebkitBackdropFilter: "blur(40px) saturate(150%)" },
+        },
+      },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -217,6 +225,8 @@ export default {
         "skeleton-pulse": "skeleton-pulse 2s ease-in-out infinite",
         "nudge-right": "nudge-right 1s ease-in-out infinite",
         "dirty-pulse": "dirty-pulse 2s ease-in-out infinite",
+        "backdrop-blur-in-md": "backdrop-blur-in-md 0.55s ease-out both",
+        "backdrop-blur-in-2xl": "backdrop-blur-in-2xl 0.7s ease-out both",
       },
     },
   },
