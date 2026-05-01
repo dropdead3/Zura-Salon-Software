@@ -178,7 +178,7 @@ function SlideRow({
                       : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
                   }`}
                 >
-                  {opt === 'inherit' ? 'Use Section BG' : opt === 'image' ? 'Image' : 'Video'}
+                  {opt === 'inherit' ? 'None' : opt === 'image' ? 'Image' : 'Video'}
                 </button>
               ))}
             </div>
