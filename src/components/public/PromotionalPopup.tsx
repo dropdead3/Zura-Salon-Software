@@ -702,7 +702,7 @@ function PromoBody({
       >
         {cfg.headline}
       </h2>
-      {valueAnchor && !compact && (
+      {valueAnchor && !compact && !hideEyebrow && (
         <div className="mb-4">
           <span
             className="inline-flex items-center font-display uppercase tracking-[0.18em] text-[10px] px-3 h-6 rounded-full"
