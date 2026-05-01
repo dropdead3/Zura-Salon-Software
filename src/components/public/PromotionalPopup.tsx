@@ -449,7 +449,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       >
         <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     );
@@ -515,7 +515,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           </div>
         </div>
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     );
@@ -577,7 +577,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           </div>
         )}
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     </div>
