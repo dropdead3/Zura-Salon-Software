@@ -107,6 +107,15 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
       previewOrigin
     );
+    // Persistent selection: keep the matched section ringed for as long as
+    // the editor tab is open on it. The renderer reads
+    // PREVIEW_SET_ACTIVE_SECTION and toggles the .preview-selected class —
+    // distinct from the brief .preview-highlight flash below, which doubles
+    // as a "scroll landed here" cue.
+    iframe.contentWindow.postMessage(
+      { type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId },
+      previewOrigin
+    );
     setTimeout(() => {
       iframe.contentWindow?.postMessage(
         { type: 'PREVIEW_HIGHLIGHT_SECTION', sectionId },
@@ -116,13 +125,24 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   }, [previewOrigin]);
 
   useEffect(() => {
-    if (!activeSectionId) return;
+    if (!activeSectionId) {
+      // Editor returned to a non-section tab (Pages, Site Design, etc.) —
+      // clear the persistent ring so the canvas isn't ambiguously lit.
+      const iframe = iframeRef.current;
+      if (iframe?.contentWindow && iframeReadyRef.current) {
+        iframe.contentWindow.postMessage(
+          { type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId: null },
+          previewOrigin
+        );
+      }
+      return;
+    }
     if (iframeReadyRef.current) {
       sendScrollMessage(activeSectionId);
     } else {
       pendingSectionRef.current = activeSectionId;
     }
-  }, [activeSectionId, sendScrollMessage]);
+  }, [activeSectionId, sendScrollMessage, previewOrigin]);
 
   const handleIframeLoad = useCallback(() => {
     setIsLoading(false);
