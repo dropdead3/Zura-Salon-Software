@@ -1,8 +1,10 @@
 /**
  * BackgroundResolvedPreview — small live-preview thumbnail showing the fully
- * resolved background stack (image/video + focal point + scrim style + tint
- * mode + strength) using the same `<HeroBackground />` the public site uses.
- * Lets operators see the lighten effect without leaving the editor.
+ * resolved background stack (image/video + focal point + image wash + scrim
+ * shape + scrim strength) using the same `<HeroBackground />` the public site
+ * uses. Surfaces a per-layer contribution caption so operators can see exactly
+ * which layer is contributing what to the final composite, instead of guessing
+ * why a slider drag "did nothing".
  */
 import { HeroBackground } from '@/components/home/HeroBackground';
 import { Label } from '@/components/ui/label';
@@ -21,8 +23,27 @@ interface BackgroundResolvedPreviewProps {
   scrimStrength?: number;
 }
 
+const SCRIM_LABEL: Record<HeroScrimStyle, string> = {
+  'flat': 'flat',
+  'gradient-bottom': 'gradient-bottom',
+  'gradient-radial': 'gradient-radial',
+  'vignette': 'vignette',
+  'none': 'none',
+};
+
 export function BackgroundResolvedPreview(props: BackgroundResolvedPreviewProps) {
   if (props.type === 'none' || !props.url) return null;
+
+  const wash = Math.round((props.overlayOpacity ?? 0) * 100);
+  const scrim = Math.round((props.scrimStrength ?? 0) * 100);
+  const scrimShape = props.scrimStyle ?? 'flat';
+  const tintWord = props.overlayMode === 'lighten' ? 'lighten' : 'darken';
+
+  const layers: string[] = [];
+  if (wash > 0) layers.push(`${tintWord} wash ${wash}%`);
+  if (scrim > 0 && scrimShape !== 'none') layers.push(`${SCRIM_LABEL[scrimShape]} ${scrim}%`);
+  const composite = layers.length ? layers.join(' + ') : 'no overlay layers active';
+
   return (
     <div className="space-y-2">
       <Label className="text-xs">Resolved Preview</Label>
@@ -43,8 +64,11 @@ export function BackgroundResolvedPreview(props: BackgroundResolvedPreviewProps)
           scrimStrength={props.scrimStrength}
         />
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        Live preview of the final rendered background — focal point, scrim, and {props.overlayMode === 'lighten' ? 'lighten' : 'darken'} tint applied.
+      <p
+        className="text-[11px] text-muted-foreground font-mono"
+        title="Each overlay layer rendered onto the background, in stacking order"
+      >
+        {composite}
       </p>
     </div>
   );
