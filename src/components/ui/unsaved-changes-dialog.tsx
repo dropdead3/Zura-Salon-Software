@@ -90,8 +90,13 @@ export function UnsavedChangesDialog({
         if (!next && !isSaving) onCancel();
       }}
     >
-      <AlertDialogContent className={cn('max-w-md gap-6 p-10 sm:p-10', className)}>
-        <AlertDialogHeader className="space-y-3">
+      <AlertDialogContent
+        className={cn(
+          'w-[min(92vw,56rem)] max-w-[56rem] gap-7 px-6 py-7 sm:px-12 sm:py-10',
+          className,
+        )}
+      >
+        <AlertDialogHeader className="space-y-4">
           <AlertDialogTitle className="font-display text-base tracking-wide uppercase">
             {title}
           </AlertDialogTitle>
@@ -107,7 +112,7 @@ export function UnsavedChangesDialog({
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 gap-2 sm:gap-0 pt-2">
+         <AlertDialogFooter className="flex-col-reverse gap-2 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:space-x-0">
           {/* Passive escape — ghost, leftmost. */}
           <Button
             type="button"
