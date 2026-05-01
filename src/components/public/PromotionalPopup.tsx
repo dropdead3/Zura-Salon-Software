@@ -534,6 +534,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const modalWide = modalImageMode === 'side';
   // Editorial header band: subtle accent wash behind the eyebrow + close.
   // Provides depth without overpowering the operator's brand color.
+  const headerValueAnchor = cfg.valueAnchor?.trim();
   const HeaderBand = (
     <div
       className="relative flex items-center justify-between gap-3 px-6 sm:px-8 py-4 border-b"
@@ -542,27 +543,37 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         borderBottomColor: `color-mix(in srgb, ${accent} 20%, transparent)`,
       }}
     >
-      {cfg.eyebrow ? (() => {
-        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
-        return (
-          <div className="flex items-center gap-2.5 min-w-0">
-            {Icon && (
-              <span
-                className="flex h-7 w-7 items-center justify-center rounded-md shrink-0"
-                style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        {cfg.eyebrow && (() => {
+          const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+          return (
+            <>
+              {Icon && (
+                <span
+                  className="flex h-7 w-7 items-center justify-center rounded-md shrink-0"
+                  style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              )}
+              <p
+                className="font-display uppercase tracking-[0.2em] text-[11px] truncate"
+                style={{ color: accent }}
               >
-                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-              </span>
-            )}
-            <p
-              className="font-display uppercase tracking-[0.2em] text-[11px] truncate"
-              style={{ color: accent }}
-            >
-              {cfg.eyebrow}
-            </p>
-          </div>
-        );
-      })() : <span />}
+                {cfg.eyebrow}
+              </p>
+            </>
+          );
+        })()}
+        {headerValueAnchor && (
+          <span
+            className="hidden sm:inline-flex items-center font-display uppercase tracking-[0.16em] text-[10px] px-2.5 h-5 rounded-full shrink-0"
+            style={{ backgroundColor: accent, color: accentFg }}
+          >
+            {headerValueAnchor}
+          </span>
+        )}
+      </div>
       <button
         onClick={handleSoftClose}
         aria-label="Close"
