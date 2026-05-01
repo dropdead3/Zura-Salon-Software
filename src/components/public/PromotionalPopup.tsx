@@ -542,6 +542,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
           </div>
         )}
+        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
       </div>
     </div>
   );
