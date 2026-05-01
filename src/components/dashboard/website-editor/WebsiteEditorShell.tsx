@@ -1049,35 +1049,11 @@ function WebsiteEditorShellInner() {
       </div>
 
       {/* Save status pill — slim row under header so the user always sees draft state.
-          The "Unsaved changes" state is intentionally hoisted to a floating
-          bottom-right toast (see UnsavedChangesToast below) so it stays visible
-          while the operator scrolls through long editor panels. */}
+          Discard + Save actions live exclusively in the floating
+          UnsavedChangesToast (bottom-right) when the editor is dirty, so the
+          rail header stays calm and uncluttered. */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
         <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
-        <div className="flex items-center gap-2">
-          {/* Discard Changes — appears only when the editor has unsaved
-              edits. Reverts local working copy to last-saved server data. */}
-          {isDirty && !isSaving && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setRevertDraftOpen(true)}
-              title="Discard unsaved changes in this section"
-            >
-              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Discard
-            </Button>
-          )}
-          {/* Save button — uses canonical DirtyActionButton primitive so the
-              amber-when-dirty + breathing-ring cue stays identical across every
-              inline editor (Site Design, Themes, future surfaces). */}
-          <DirtyActionButton
-            isDirty={isDirty}
-            isSaving={isSaving}
-            onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
-          />
-        </div>
       </div>
 
       {/* Editor body */}
