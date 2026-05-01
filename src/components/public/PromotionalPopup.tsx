@@ -607,7 +607,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/35 backdrop-blur-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
       }}
@@ -617,8 +617,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-modal="true"
         aria-labelledby="promo-popup-title"
         className={cn(
-          'relative w-full rounded-2xl bg-gradient-to-b from-card to-card/95 border border-border motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
-          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.18),0_8px_16px_-4px_rgba(0,0,0,0.08)]',
+          'relative w-full rounded-2xl bg-gradient-to-b from-card/75 to-card/65 backdrop-blur-2xl backdrop-saturate-150 border border-border/60 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.22),0_8px_16px_-4px_rgba(0,0,0,0.1),inset_0_1px_0_0_hsl(var(--background)/0.4)]',
           modalWide ? 'max-w-2xl' : 'max-w-md',
         )}
         onMouseEnter={() => setIsHovered(true)}
