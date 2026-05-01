@@ -184,9 +184,11 @@ export function MediaUploadInput({
     // the validator surface a real error.
     let workingFile = file;
     let crunchNote = '';
+    let analysisDataUrl: string | undefined;
     if (isImageInitial) {
       const crunched = await autoCrunchImage(file);
       workingFile = crunched.file;
+      analysisDataUrl = crunched.analysisDataUrl;
       if (crunched.didCrunch) {
         crunchNote = ` · compressed ${formatFileSize(crunched.originalSizeBytes)} → ${formatFileSize(crunched.finalSizeBytes)}`;
       }
