@@ -9,7 +9,7 @@ import { SliderInput } from '../inputs/SliderInput';
 import { CharCountInput } from '../inputs/CharCountInput';
 import { UrlInput } from '../inputs/UrlInput';
 import { DynamicArrayInput } from '../inputs/DynamicArrayInput';
-import { FocalPointPicker } from '../inputs/FocalPointPicker';
+
 import { HeroTextColorsEditor } from '../HeroTextColorsEditor';
 import { HeroScrimEditor } from '../HeroScrimEditor';
 import { BackgroundResolvedPreview } from '../BackgroundResolvedPreview';
@@ -133,6 +133,17 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
                     }
                   : null
               }
+              focal={
+                focalImageUrl
+                  ? {
+                      x: resolvedFocalX,
+                      y: resolvedFocalY,
+                      onChange: (nx, ny) => onUpdate({ background_focal_x: nx, background_focal_y: ny }),
+                      onReset: () => onUpdate({ background_focal_x: 50, background_focal_y: 50 }),
+                      enabled: focalOverridden && resolvedFit !== 'contain',
+                    }
+                  : undefined
+              }
               onChange={({ url, posterUrl, kind, meta, analysisDataUrl }) => {
                 const wasNewImage = kind === 'image' && url && url !== slide.background_url;
                 onUpdate({
@@ -186,7 +197,8 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
               )}
             </div>
 
-            {/* Per-slide focal point */}
+            {/* Per-slide focal point — toggle only; the picker itself lives
+                inside the upload tile above (consolidated, no duplicate image). */}
             {!!focalImageUrl && resolvedFit !== 'contain' && (
               <div className="space-y-2 pt-3 border-t border-border/30">
                 <ToggleInput
@@ -198,19 +210,8 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
                       background_focal_y: v ? sectionFocalY : null,
                     })
                   }
-                  description="Anchor a different region of this slide's background"
+                  description="Drag the crosshair on the image above to anchor a different region for this slide"
                 />
-                {focalOverridden && (
-                  <FocalPointPicker
-                    imageUrl={focalImageUrl}
-                    isVideo={resolvedBgType === 'video'}
-                    x={resolvedFocalX}
-                    y={resolvedFocalY}
-                    onChange={(nx, ny) => onUpdate({ background_focal_x: nx, background_focal_y: ny })}
-                    onReset={() => onUpdate({ background_focal_x: 50, background_focal_y: 50 })}
-                    label="Slide Focal Point"
-                  />
-                )}
               </div>
             )}
           </>

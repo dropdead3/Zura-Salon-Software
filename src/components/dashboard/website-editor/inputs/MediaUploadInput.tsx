@@ -19,7 +19,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Loader2, Film, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, Film, ImageIcon, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,6 +111,24 @@ interface MediaUploadInputProps {
    * the editor level — the input itself stays presentation-only.
    */
   isDirtyDraft?: boolean;
+  /**
+   * When provided AND the tile is showing an image (or video poster), the
+   * existing thumbnail becomes a focal-point picker — drag the crosshair to
+   * anchor the most important region. Set `enabled: false` to suppress the
+   * overlay (e.g. fit=contain or an "Override Focal Point" toggle is off)
+   * while keeping the prop wired so the parent doesn't have to remount.
+   *
+   * Replaces the old pattern of rendering `<MediaUploadInput>` and a
+   * standalone `<FocalPointPicker>` with the same image stacked below it —
+   * one tile, one image, one crop preview.
+   */
+  focal?: {
+    x: number;
+    y: number;
+    onChange: (x: number, y: number) => void;
+    onReset: () => void;
+    enabled?: boolean;
+  };
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
@@ -165,6 +183,7 @@ export function MediaUploadInput({
   qualityProfile = 'standard',
   meta = null,
   isDirtyDraft = false,
+  focal,
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
@@ -387,12 +406,72 @@ export function MediaUploadInput({
     ? 'image/jpeg,image/png,image/webp,image/gif'
     : 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
 
+  // Focal overlay is meaningful only when (a) caller passed `focal`,
+  // (b) the tile is showing an image OR a video with a poster, and
+  // (c) the caller hasn't explicitly disabled it (e.g. fit=contain).
+  // Off-default values still render the reset link so operators can recover
+  // even when the overlay itself is hidden by `enabled: false`.
+  const focalImageSrc = kind === 'video' ? (posterValue || '') : (kind === 'image' ? value : '');
+  const focalEnabled = !!focal && (focal.enabled ?? true) && !!focalImageSrc;
+  const focalOffDefault = !!focal && (focal.x !== 50 || focal.y !== 50);
+
+  const focalContainerRef = useRef<HTMLDivElement>(null);
+  const focalDragging = useRef(false);
+  const updateFocalFromEvent = useCallback((clientX: number, clientY: number) => {
+    if (!focal) return;
+    const el = focalContainerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const nx = ((clientX - rect.left) / rect.width) * 100;
+    const ny = ((clientY - rect.top) / rect.height) * 100;
+    focal.onChange(
+      Math.round(Math.max(0, Math.min(100, nx))),
+      Math.round(Math.max(0, Math.min(100, ny))),
+    );
+  }, [focal]);
+
   return (
     <div className="space-y-2">
       {label && <Label className="text-xs">{label}</Label>}
 
       {value ? (
-        <div className="relative group rounded-lg overflow-hidden border bg-muted/30">
+        <>
+          {focal && focalOffDefault && (
+            <div className="flex items-center justify-between -mb-1">
+              <Label className="text-xs inline-flex items-center gap-1.5 text-muted-foreground">
+                <Crosshair className="h-3.5 w-3.5" />
+                Focal point ({focal.x}%, {focal.y}%)
+              </Label>
+              <button
+                type="button"
+                onClick={focal.onReset}
+                className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Reset to center
+              </button>
+            </div>
+          )}
+          <div
+            ref={focalContainerRef}
+            onPointerDown={focalEnabled ? (e) => {
+              focalDragging.current = true;
+              (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+              updateFocalFromEvent(e.clientX, e.clientY);
+            } : undefined}
+            onPointerMove={focalEnabled ? (e) => {
+              if (!focalDragging.current) return;
+              updateFocalFromEvent(e.clientX, e.clientY);
+            } : undefined}
+            onPointerUp={focalEnabled ? (e) => {
+              focalDragging.current = false;
+              (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+            } : undefined}
+            onPointerCancel={focalEnabled ? () => { focalDragging.current = false; } : undefined}
+            className={cn(
+              'relative group rounded-lg overflow-hidden border bg-muted/30 select-none touch-none',
+              focalEnabled && 'cursor-crosshair',
+            )}
+          >
           {kind === 'video' ? (
             <video
               src={value}
@@ -402,11 +481,26 @@ export function MediaUploadInput({
               playsInline
               loop
               autoPlay
+              style={focalEnabled ? { objectPosition: `${focal!.x}% ${focal!.y}%` } : undefined}
             />
           ) : (
-            <img src={value} alt="Uploaded" className="w-full h-32 object-cover" />
+            <img
+              src={value}
+              alt="Uploaded"
+              draggable={false}
+              className="w-full h-32 object-cover pointer-events-none"
+              style={focalEnabled ? { objectPosition: `${focal!.x}% ${focal!.y}%` } : undefined}
+            />
           )}
-          <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-medium">
+          {focalEnabled && (
+            <div
+              className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.5)] pointer-events-none"
+              style={{ left: `${focal!.x}%`, top: `${focal!.y}%` }}
+            >
+              <div className="absolute left-1/2 top-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+            </div>
+          )}
+          <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-medium pointer-events-none">
             {kind === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
             {kind === 'video' ? 'Video' : 'Image'}
           </div>
@@ -504,6 +598,7 @@ export function MediaUploadInput({
             </Button>
           </div>
         </div>
+        </>
       ) : (
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}

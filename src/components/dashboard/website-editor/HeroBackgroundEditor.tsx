@@ -11,7 +11,7 @@ import { Image as ImageIcon, Layers, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { SliderInput } from './inputs/SliderInput';
-import { FocalPointPicker } from './inputs/FocalPointPicker';
+
 import { EditorCard } from './EditorCard';
 import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
 import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
@@ -108,6 +108,17 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
             : null
         }
         isDirtyDraft={isDirty}
+        focal={
+          config.background_url
+            ? {
+                x: focalX,
+                y: focalY,
+                onChange: (nx, ny) => onChange({ background_focal_x: nx, background_focal_y: ny }),
+                onReset: () => onChange({ background_focal_x: 50, background_focal_y: 50 }),
+                enabled: config.background_fit === 'cover',
+              }
+            : undefined
+        }
         onChange={({ url, posterUrl, kind: k, meta, analysisDataUrl }) => {
           const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({
@@ -155,27 +166,12 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
                 </button>
               ))}
             </div>
+            {!!config.background_url && config.background_fit === 'cover' && (
+              <p className="text-[11px] text-muted-foreground">
+                Drag the crosshair on the image above to anchor the most important region.
+              </p>
+            )}
           </div>
-
-          {/* Focal point picker — only meaningful when there's a real URL and fit is cover */}
-          {!!config.background_url && config.background_fit === 'cover' && (
-            <FocalPointPicker
-              imageUrl={
-                config.background_type === 'video'
-                  ? config.background_poster_url || ''
-                  : config.background_url
-              }
-              isVideo={config.background_type === 'video'}
-              x={focalX}
-              y={focalY}
-              onChange={(nx, ny) =>
-                onChange({ background_focal_x: nx, background_focal_y: ny })
-              }
-              onReset={() =>
-                onChange({ background_focal_x: 50, background_focal_y: 50 })
-              }
-            />
-          )}
 
           {/* Overlay mode — mutually exclusive Darken vs Lighten */}
           <div className="space-y-2">
