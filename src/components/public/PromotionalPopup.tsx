@@ -549,7 +549,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   if (!open) return fab;
 
-  const isClosing = popupPhase === 'closing';
+  const isClosing = popupLifecycle.isClosing;
   // Per-variant exit animation classes. Each variant exits in the
   // direction the FAB lives (corner-card → bottom-right corner; banner →
   // top edge; modal → fade + scale toward FAB). Tailwind/animate utilities
@@ -560,18 +560,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const bannerExitClasses = 'animate-out fade-out slide-out-to-top-2 duration-300';
   const modalExitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
 
-  // Single onAnimationEnd handler shared across variants. Only finalizes
-  // when we're actually in the `closing` phase — Tailwind's enter
-  // animations (slide-in-from-*) also fire animationend on the same root,
-  // and we must not unmount during the entering phase.
-  const handleRootAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
-    if (!isClosing) return;
-    // Only react to our slide-out animation, not nested children's animations
-    // (e.g. the countdown bar). Tailwind animate-out compiles to specific
-    // keyframe names — we accept any of them since all signal "close done".
-    if (e.target !== e.currentTarget) return;
-    finalizeClose();
-  };
+  // Shared `onAnimationEnd` handler from `usePresenceLifecycle`. The hook
+  // gates on `phase === 'closing'` AND `target === currentTarget`, so
+  // entering animations and bubbling child animations (e.g. the countdown
+  // bar) cannot prematurely unmount the popup.
+  const handleRootAnimationEnd = popupLifecycle.onAnimationEnd;
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
