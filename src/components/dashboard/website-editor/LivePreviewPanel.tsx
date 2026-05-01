@@ -227,6 +227,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
 
   const handleRefresh = () => {
     if (!previewUrl) return;
+    // Manual reload button = explicit hard remount (operator wants a clean slate).
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
     iframeReadyRef.current = false;
@@ -510,7 +511,5 @@ function DeviceButton({
   );
 }
 
-// Helper to trigger preview refresh from anywhere
-export function triggerPreviewRefresh() {
-  window.dispatchEvent(new CustomEvent('website-preview-refresh'));
-}
+// Re-export from preview-utils so legacy imports keep working.
+export { triggerPreviewRefresh, triggerPreviewHardReload } from '@/lib/preview-utils';
