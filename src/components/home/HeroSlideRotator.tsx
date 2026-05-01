@@ -20,6 +20,7 @@ import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
 import { HeroNotes } from './HeroNotes';
+import { HeroRotatingWord } from './HeroRotatingWord';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
@@ -237,22 +238,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   ) : (
                     <span className="whitespace-nowrap block">{slide.headline_text}</span>
                   )}
-                  {showRotatingWords && (
-                    <span className="block overflow-hidden h-[1.15em]">
-                      <AnimatePresence mode="wait">
-                        <motion.span
-                          key={rotatingWords[wordIndex]}
-                          className="block"
-                          initial={{ y: '100%', opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          exit={{ y: '-100%', opacity: 0 }}
-                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                        >
-                          {rotatingWords[wordIndex]}
-                        </motion.span>
-                      </AnimatePresence>
-                    </span>
-                  )}
+                  <HeroRotatingWord
+                    show={showRotatingWords}
+                    words={rotatingWords}
+                    index={wordIndex}
+                  />
                 </h1>
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
