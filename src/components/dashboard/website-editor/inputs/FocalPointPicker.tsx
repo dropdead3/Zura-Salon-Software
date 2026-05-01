@@ -70,6 +70,11 @@ export function FocalPointPicker({
         <Label className="text-xs inline-flex items-center gap-1.5">
           <Crosshair className="h-3.5 w-3.5" />
           {label}
+          {x === 50 && y === 50 && (
+            <span className="font-sans normal-case tracking-normal text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded-full border border-border/60">
+              Default
+            </span>
+          )}
         </Label>
         <button
           type="button"
