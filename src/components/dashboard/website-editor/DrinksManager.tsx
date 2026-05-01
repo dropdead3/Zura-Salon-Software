@@ -15,6 +15,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import {
   DndContext,
@@ -148,6 +149,7 @@ function SortableDrinkItem({ drink, onUpdate, onDelete, onImageUpload, isUploadi
 }
 
 export function DrinksManager() {
+  const __saveTelemetry = useSaveTelemetry('drinks-manager');
   const { data, isLoading, isSaving, update } = useDrinkMenuConfig();
   const [localConfig, setLocalConfig] = useState<DrinkMenuConfig>(DEFAULT_DRINK_MENU);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -175,7 +177,7 @@ export function DrinksManager() {
       await update(localConfig);
       toast.success('Drink Menu saved successfully');
       clearPreviewOverride('section_drink_menu', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save drink menu');
     }

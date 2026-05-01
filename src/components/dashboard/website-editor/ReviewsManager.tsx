@@ -41,6 +41,7 @@ import {
 } from '@/hooks/useTestimonials';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import {
   DndContext,
@@ -215,6 +216,7 @@ interface ReviewsManagerProps {
 }
 
 export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManagerProps) {
+  const __saveTelemetry = useSaveTelemetry('reviews-manager');
   const [activeSurface, setActiveSurface] = useState<TestimonialSurface>(
     lockedSurface ?? 'general',
   );
@@ -376,7 +378,7 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
 
       toast.success('Reviews saved');
       clearPreviewOverride(previewKeyFor(surface), orgId);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch (e) {
       toast.error('Failed to save reviews');
       console.error(e);

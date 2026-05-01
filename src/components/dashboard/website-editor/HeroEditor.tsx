@@ -18,12 +18,14 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
 
 export function HeroEditor() {
+  const __saveTelemetry = useSaveTelemetry('hero-editor');
   const { data, isLoading, isSaving, update } = useHeroConfig();
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -50,7 +52,7 @@ export function HeroEditor() {
       // Drop the iframe's live override so it re-renders from the freshly
       // invalidated DB read instead of holding our stale postMessage value.
       clearPreviewOverride('section_hero', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

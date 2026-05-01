@@ -14,9 +14,11 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 
 export function FooterCTAEditor() {
+  const __saveTelemetry = useSaveTelemetry('footer-cta-editor');
   const { data, isLoading, isSaving, update } = useFooterCTAConfig();
   const [localConfig, setLocalConfig] = useState<FooterCTAConfig>(DEFAULT_FOOTER_CTA);
   const debouncedConfig = useDebounce(localConfig, 300);
@@ -35,7 +37,7 @@ export function FooterCTAEditor() {
       await update(localConfig);
       toast.success('Footer CTA section saved');
       clearPreviewOverride('section_footer_cta', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

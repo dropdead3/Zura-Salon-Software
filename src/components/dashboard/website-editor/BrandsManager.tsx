@@ -14,6 +14,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import {
   DndContext,
@@ -169,6 +170,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
 }
 
 export function BrandsManager() {
+  const __saveTelemetry = useSaveTelemetry('brands-manager');
   const { data, isLoading, isSaving, update } = useBrandsConfig();
   const [localConfig, setLocalConfig] = useState(DEFAULT_BRANDS);
   const [uploadingBrandId, setUploadingBrandId] = useState<string | null>(null);
@@ -267,7 +269,7 @@ export function BrandsManager() {
       await update({ ...localConfig, brands: validBrands });
       toast.success('Brands section saved');
       clearPreviewOverride('section_brands', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }
