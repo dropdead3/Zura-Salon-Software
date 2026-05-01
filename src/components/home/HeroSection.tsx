@@ -121,6 +121,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // Shared spring config for organic animations
   const springTransition = { type: "spring" as const, stiffness: 50, damping: 20 };
 
+  // Multi-slide rotator takes over when operators have configured slides.
+  // Branch AFTER all hooks above to keep hook order stable across renders.
+  if (hasSlides) {
+    return <HeroSlideRotator config={heroConfig} isPreview={isPreview} />;
+  }
+
   // In preview/editor mode, render static HTML — no Framer Motion at all
   if (isPreview) {
     return (
