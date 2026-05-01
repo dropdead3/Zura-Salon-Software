@@ -601,12 +601,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         key={animationNonce}
         data-testid="promo-popup-root"
         data-animation-key={animationNonce}
+        data-popup-phase={popupPhase}
         role="dialog"
         aria-modal="false"
         aria-labelledby="promo-popup-title"
-        className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-4"
+        className={cn(
+          'fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
+          isClosing ? cornerExitClasses : 'animate-in fade-in slide-in-from-bottom-4',
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onAnimationEnd={handleRootAnimationEnd}
       >
         {/* Close (X) — soft-dismisses the popup. Sits absolute so it doesn't
             shift PromoBody's eyebrow/headline alignment. */}
