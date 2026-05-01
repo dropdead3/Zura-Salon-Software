@@ -217,6 +217,7 @@ function SortableSlideRow({
   index,
   isFirst,
   section,
+  rotatorMode,
   onClick,
   onDelete,
   onToggleActive,
@@ -225,6 +226,7 @@ function SortableSlideRow({
   index: number;
   isFirst: boolean;
   section: HeroConfig;
+  rotatorMode: 'multi_slide' | 'background_only';
   onClick: () => void;
   onDelete: () => void;
   onToggleActive: (next: boolean) => void;
@@ -240,6 +242,7 @@ function SortableSlideRow({
         sectionBgUrl={section.background_url}
         sectionBgPoster={section.background_poster_url}
         sectionBgType={section.background_type}
+        rotatorMode={rotatorMode}
         onClick={onClick}
         onDelete={onDelete}
         onToggleActive={onToggleActive}
