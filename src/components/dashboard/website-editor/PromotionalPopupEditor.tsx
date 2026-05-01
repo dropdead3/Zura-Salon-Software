@@ -42,6 +42,7 @@ import {
   type PopupAcceptDestination,
 } from '@/hooks/usePromotionalPopup';
 import { useBookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
+import { useHydratedFormState } from '@/hooks/useHydratedFormState';
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
   { value: 'home', label: 'Home page', description: 'Show on the homepage only' },
