@@ -64,6 +64,7 @@ const LOADER2_SELECTOR_FRAGMENT = "openingElement.name.name='Loader2'";
 const UNSAVED_CHANGES_SELECTOR_FRAGMENT = "openingElement.name.name='AlertDialogTitle'";
 const SITE_SETTINGS_SELECTOR_FRAGMENT = 'site-settings-draft-write';
 const DIRTY_STATE_SELECTOR_FRAGMENT = "callee.property.name='stringify'";
+const HERO_ALIGNMENT_SELECTOR_FRAGMENT = "object.name='alignment'";
 
 describe('eslint.config.js: flat-config resolution meta-test', () => {
   it('keeps the Loader2 doctrine selector on a representative source file', async () => {
