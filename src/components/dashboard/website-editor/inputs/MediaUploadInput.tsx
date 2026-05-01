@@ -111,6 +111,24 @@ interface MediaUploadInputProps {
    * the editor level — the input itself stays presentation-only.
    */
   isDirtyDraft?: boolean;
+  /**
+   * When provided AND the tile is showing an image (or video poster), the
+   * existing thumbnail becomes a focal-point picker — drag the crosshair to
+   * anchor the most important region. Set `enabled: false` to suppress the
+   * overlay (e.g. fit=contain or an "Override Focal Point" toggle is off)
+   * while keeping the prop wired so the parent doesn't have to remount.
+   *
+   * Replaces the old pattern of rendering `<MediaUploadInput>` and a
+   * standalone `<FocalPointPicker>` with the same image stacked below it —
+   * one tile, one image, one crop preview.
+   */
+  focal?: {
+    x: number;
+    y: number;
+    onChange: (x: number, y: number) => void;
+    onReset: () => void;
+    enabled?: boolean;
+  };
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
