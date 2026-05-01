@@ -218,6 +218,7 @@ export function Layout({ children }: LayoutProps) {
         </main>
         <FooterCTA />
         <Footer />
+        <StickyFooterBar />
         <PromotionalPopup surface={popupSurface} />
       </div>
     );
