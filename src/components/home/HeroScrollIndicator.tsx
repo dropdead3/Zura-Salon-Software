@@ -11,6 +11,7 @@
 import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HERO_OVERLAY_ANCHORS } from './heroOverlayAnchors';
 
 interface HeroScrollIndicatorProps {
   show: boolean;
