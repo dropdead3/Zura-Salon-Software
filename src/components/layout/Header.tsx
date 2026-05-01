@@ -360,7 +360,11 @@ export function Header() {
                   "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
                   "transition-opacity duration-300 ease-out",
                   announcementHidden ? "opacity-0 pointer-events-none" : "opacity-100",
-                  !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
+                  // Default to dark scrim over hero media — same default-dark
+                  // assumption as the text contrast above. The light variant
+                  // (`bg-secondary/90`) only kicks in once theme detection
+                  // confirms a light section is behind the bar (post-scroll).
+                  !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-black/50"),
                   // Subtle top-down gradient scrim improves readability over photographic backgrounds
                   overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
                   // Warm cream overlay — sits above the glass to add a soft champagne tint.
