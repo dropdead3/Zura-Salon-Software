@@ -7,6 +7,7 @@
 import { useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Crosshair } from 'lucide-react';
+import { DefaultBadge } from '@/components/ui/default-badge';
 
 interface FocalPointPickerProps {
   imageUrl: string;
