@@ -92,7 +92,7 @@ export function UnsavedChangesDialog({
     >
       <AlertDialogContent
         className={cn(
-          'w-[min(92vw,56rem)] max-w-[56rem] gap-7 px-6 py-7 sm:px-12 sm:py-10',
+          'w-[min(92vw,32rem)] max-w-[32rem] gap-6 px-6 py-7 sm:px-8 sm:py-8',
           className,
         )}
       >
