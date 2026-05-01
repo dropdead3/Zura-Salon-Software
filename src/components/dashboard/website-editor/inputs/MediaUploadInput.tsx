@@ -131,8 +131,19 @@ export function MediaUploadInput({
     if (warning) toast.warning(warning);
 
     setIsUploading(true);
-    let stage: 'decode' | 'upload' = 'decode';
+    let stage: 'auth' | 'decode' | 'upload' = 'auth';
     try {
+      // Pre-flight auth check. Storage RLS requires `auth.role() =
+      // 'authenticated'`, so a missing session yields an opaque 401/403 from
+      // the storage API. Surface it cleanly here instead.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        console.error('[MediaUploadInput] no active session — storage upload would 401');
+        toast.error('Your session expired — please refresh the page and sign in again');
+        setIsUploading(false);
+        return;
+      }
+      stage = 'decode';
       if (isImage) {
         const { blob } = await optimizeImage(file, {
           maxWidth: 1920,

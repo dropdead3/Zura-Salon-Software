@@ -44,8 +44,16 @@ export function ImageUploadInput({
     }
 
     setIsUploading(true);
-    let stage: 'decode' | 'upload' = 'decode';
+    let stage: 'auth' | 'decode' | 'upload' = 'auth';
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) {
+        console.error('[ImageUploadInput] no active session — storage upload would 401');
+        toast.error('Your session expired — please refresh the page and sign in again');
+        setIsUploading(false);
+        return;
+      }
+      stage = 'decode';
       const { blob } = await optimizeImage(file, {
         maxWidth: 1600,
         maxHeight: 1200,
