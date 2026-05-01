@@ -1,44 +1,81 @@
-## Problem
+## Plan
 
-The hero foreground "snaps through center" when slides change because:
+I like this direction — your prompt is strong because it names the exact perceived failure mode, not just “make it smoother.” A slightly stronger version for future prompts would be: “Use a two-phase transition: outgoing content fades to 0 in place, then incoming content fades in at its new alignment with no overlap-driven reflow.” That gives a clear motion rule and avoids ambiguity about whether slides should crossfade or sequence.
 
-1. **`AnimatePresence mode="wait"`** unmounts the outgoing slide before mounting the new one. Between frames, the foreground container has zero content, so the surrounding flex cell (`items-center justify-center`) reflows. When the new slide mounts, it visibly drops into place from a different baseline.
-2. **`y: 20 → 0` enter + `y: -10` exit** translate values mean the content travels ~30px vertically through the transition — so even with a perfect crossfade, the eye sees a vertical "hop."
-3. The motion `<div>` is **inline-block in the layout flow** (no absolute positioning), so the slides cannot occupy the same coordinate during the crossfade — they have to take turns, which forces the reflow.
-4. The container's intrinsic width changes per slide (different headline length → different wrapper width because `max-w-4xl` shrink-wraps), so horizontal centering recomputes mid-transition and content appears to "shift toward center."
+### What I’ll change
 
-## Fix
+1. Convert the foreground transition from an overlapping crossfade into a short sequential handoff:
+   - Outgoing slide fades out quickly while staying anchored at its current alignment.
+   - Incoming slide waits until the old one is effectively gone, then fades in quickly at the new alignment.
+   - This removes the moment where left/right aligned content appears to pass through a centered intermediate state.
 
-Move the foreground slide into an **absolutely-stacked layer** so both the outgoing and incoming slide occupy the *same* coordinate space and crossfade in place — no reflow, no center-snap, no vertical hop.
+2. Stabilize layout ownership so alignment does not flip on the outer wrapper mid-transition:
+   - Keep a stable outer foreground container that does not change horizontal placement during slide swaps.
+   - Move the left/center/right alignment classes onto the per-slide inner content wrapper so each slide keeps its own anchor during its lifecycle.
 
-### Changes — `src/components/home/HeroSlideRotator.tsx`
+3. Preserve vertical stability during the sequential fade:
+   - Measure the foreground content box and keep a stable minimum height during transitions so the hero doesn’t collapse between exit and enter.
+   - Reuse the project’s ResizeObserver-based container sizing pattern instead of introducing viewport-based logic.
 
-1. **Wrap the foreground in a `relative` positioning context** with a stable min-height so the parent flex cell doesn't collapse during the crossfade.
+4. Tune motion timing for the effect you described:
+   - Use a fast fade-out and fast fade-in with a very small gap/overlap balance so the change feels intentional rather than laggy.
+   - Keep it opacity-only by default so there is no lateral or vertical travel fighting the alignment change.
 
-2. **Switch `AnimatePresence` from `mode="wait"` to `mode="sync"`** (matching the background layer) so old + new slides render simultaneously during the ~0.6s overlap.
+5. Add regression coverage for the new alignment contract:
+   - Extend the hero alignment helper so it can represent a stable outer wrapper plus an inner per-slide alignment wrapper.
+   - Add/update tests to lock the contract so future refactors don’t reintroduce wrapper-level alignment flipping.
 
-3. **Make each `motion.div` slide `absolute inset-0`** with the alignment wrapper *inside it*, so both slides paint into the same box. Add `pointer-events-none` to the exiting slide via a CSS state hook (or rely on `AnimatePresence` removing it after exit completes).
+### Files to update
 
-4. **Drop the vertical `y` translate** — pure opacity crossfade is what makes it feel "seamless." Keep a tiny `y: 8 → 0` only on enter (no exit translate) if we want subtle motion, but default to opacity-only to match the user's "seamless" ask.
+- `src/components/home/HeroSlideRotator.tsx`
+  - Change foreground animation sequencing.
+  - Introduce stable outer shell + per-slide alignment wrapper.
+  - Hold container height stable during exit/enter.
 
-5. **Lengthen exit slightly** (e.g. `exit: { duration: 0.7 }`) so the outgoing slide is still ~30% visible when the new one reaches full opacity — this is the classic Slider-Revolution overlap that hides any sub-pixel layout difference.
+- `src/lib/heroAlignment.ts`
+  - Split current alignment responsibilities so width clamp / stable shell are separate from per-slide alignment classes.
 
-6. **Stabilize the wrapper width** by moving `max-w-4xl mx-auto` (the alignment wrapper) up one level so it sits on the *positioning container*, not on each per-slide motion div. This way, horizontal centering is computed once on the outer box, not re-derived per slide content.
+- `src/lib/heroAlignment.test.ts`
+  - Add assertions for the new alignment shape and fallback behavior.
 
-### Why this works
+- `src/components/home/HeroSlideRotator.test.tsx`
+  - Add a regression-oriented test around mode/alignment rendering contracts if needed.
 
-The background layer already does this correctly (absolute, opacity-only, `mode="sync"`) — that's why backgrounds crossfade smoothly while the foreground hops. We're applying the same pattern to the foreground.
+### Technical details
 
-For the **`background_only` mode** (where the key is `'fg-shared'`), nothing changes — there's only ever one foreground render, so `AnimatePresence` never triggers a transition. The fix is fully scoped to multi-slide mode.
+Proposed structure:
 
-### Out of scope
+```text
+foreground shell (stable width / relative positioning / min-height)
+└── AnimatePresence
+    └── motion slide (absolute only while exiting, otherwise normal content layer)
+        └── inner alignment wrapper (left / center / right per slide)
+```
 
-- No DB / schema changes.
-- No editor UI changes.
-- The `HeroSection` (single static hero) is unaffected — only the rotator transition is touched.
-- `HeroNotes`, `HeroEyebrow`, and the rotating word continue to work as-is; they sit *inside* the slide and inherit the smoother transition.
+Proposed behavior:
 
-### Files touched
+- Replace the current overlapping `popLayout` crossfade with a sequential presence strategy so the outgoing content reaches opacity 0 before the new alignment becomes visible.
+- Keep the shell centered and width-stable.
+- Apply `text-left/text-center/text-right`, `ml-auto/mx-auto/mr-auto`, and CTA alignment classes inside the slide-specific wrapper.
+- Use measured min-height on the shell so the opacity handoff doesn’t cause a layout dip.
 
-- `src/components/home/HeroSlideRotator.tsx` (transition wrapper + motion props only)
-- `src/components/home/HeroSlideRotator.test.tsx` (update the test that asserts the transition props if it pins exact `y` values)
+### Why this should solve the issue
+
+Right now the visible jump is coming from alignment state changing at a container level while both slides are participating in the transition. Your suggestion avoids that entire class of artifact: instead of trying to visually blend left-aligned content into right-aligned content, we let the first disappear cleanly and then bring in the next one already settled in its final position.
+
+### Enhancement suggestions
+
+After this lands, the next refinements I’d suggest are:
+
+1. Per-mode timing:
+   - `multi_slide`: slightly quicker handoff.
+   - `background_only`: a softer, slower dissolve.
+
+2. Motion policy by alignment delta:
+   - Same-alignment slide changes can still crossfade.
+   - Left↔center↔right changes use the new sequential fade.
+
+3. Reduced-motion polish:
+   - For reduced-motion users, switch to an almost immediate content swap with minimal opacity animation.
+
+Approve this plan and I’ll implement it.
