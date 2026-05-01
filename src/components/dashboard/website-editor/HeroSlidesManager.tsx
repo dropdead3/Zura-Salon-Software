@@ -42,6 +42,8 @@ const newSlide = (): HeroSlide => ({
   background_url: '',
   background_poster_url: '',
   overlay_opacity: null,
+  scrim_style: null,
+  scrim_strength: null,
   eyebrow: '',
   show_eyebrow: false,
   headline_text: 'New Slide',
