@@ -9,6 +9,7 @@
  */
 import { useCallback, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { withSupabaseImageWidth } from '@/lib/image-utils';
 import { toast } from 'sonner';
 
 interface SuggestResult {
@@ -30,8 +31,12 @@ export function useFocalPointSuggestion(
     latestUrlRef.current = imageUrl;
     setPending(true);
     try {
+      // Bound the AI server's fetch to a 2048px variant so face/subject
+      // detection runs against a manageable payload (full hero masters can be
+      // 3200px @ ~1MB+). No-op for non-Supabase URLs.
+      const boundedUrl = withSupabaseImageWidth(imageUrl, 2048);
       const { data, error } = await supabase.functions.invoke('suggest-focal-point', {
-        body: { imageUrl },
+        body: { imageUrl: boundedUrl },
       });
       // Bail if a newer upload superseded this one mid-flight.
       if (latestUrlRef.current !== imageUrl) return;
