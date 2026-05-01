@@ -244,6 +244,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                     show={showRotatingWords}
                     words={rotatingWords}
                     index={wordIndex}
+                    isOverDark={hasBackground}
+                    colorOverride={!!heroColors.headlineStyle.color}
                   />
                 </h1>
 
