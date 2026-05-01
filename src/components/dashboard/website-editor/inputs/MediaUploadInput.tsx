@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload, X, Loader2, Film, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage, autoCrunchImage, formatFileSize, probeBlobDimensions } from '@/lib/image-utils';
 import {
@@ -274,6 +275,8 @@ export function MediaUploadInput({
         const { data: vUrl } = supabase.storage.from(bucket).getPublicUrl(videoName);
 
         let posterUrl = '';
+        let posterDims: { width: number; height: number } | null = null;
+        let posterSize: number | null = null;
         const posterBlob = await captureVideoPoster(file);
         if (posterBlob) {
           const posterName = `${pathPrefix}/${ts}-poster.jpg`;
@@ -283,9 +286,26 @@ export function MediaUploadInput({
           if (!pErr) {
             const { data: pUrl } = supabase.storage.from(bucket).getPublicUrl(posterName);
             posterUrl = `${pUrl.publicUrl}?t=${ts}`;
+            // Probe poster dimensions so video slides also get a resolution
+            // health dot — poster crispness drives perceived quality before
+            // the video buffers, especially on slow connections.
+            posterDims = await probeBlobDimensions(posterBlob);
+            posterSize = posterBlob.size;
           }
         }
-        onChange({ url: `${vUrl.publicUrl}?t=${ts}`, posterUrl, kind: 'video' });
+        onChange({
+          url: `${vUrl.publicUrl}?t=${ts}`,
+          posterUrl,
+          kind: 'video',
+          meta: posterDims
+            ? {
+                width: posterDims.width,
+                height: posterDims.height,
+                sizeBytes: posterSize,
+                format: 'image/jpeg',
+              }
+            : undefined,
+        });
         toast.success('Video uploaded');
       }
     } catch (err) {
@@ -362,26 +382,40 @@ export function MediaUploadInput({
             {kind === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
             {kind === 'video' ? 'Video' : 'Image'}
           </div>
-          {kind === 'image' && meta?.width ? (
-            <div className="absolute bottom-2 left-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-sans tabular-nums">
-              <span
-                aria-hidden
-                className={cn(
-                  'h-1.5 w-1.5 rounded-full',
-                  meta.width >= 2400
-                    ? 'bg-emerald-500'
+          {meta?.width ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute bottom-2 left-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-sans tabular-nums cursor-help">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        'h-1.5 w-1.5 rounded-full',
+                        meta.width >= 2400
+                          ? 'bg-emerald-500'
+                          : meta.width >= 1200
+                            ? 'bg-amber-500'
+                            : 'bg-red-500',
+                      )}
+                    />
+                    <span>
+                      {meta.width.toLocaleString()}
+                      {meta.height ? ` × ${meta.height.toLocaleString()}` : ''}
+                      {meta.format ? ` · ${meta.format.replace(/^image\//i, '').toUpperCase()}` : ''}
+                      {typeof meta.sizeBytes === 'number' ? ` · ${formatFileSize(meta.sizeBytes)}` : ''}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                  {kind === 'video' ? 'Video poster resolution. ' : ''}
+                  {meta.width >= 2400
+                    ? 'Sharp on retina hero displays (recommended ≥2400px).'
                     : meta.width >= 1200
-                      ? 'bg-amber-500'
-                      : 'bg-red-500',
-                )}
-              />
-              <span>
-                {meta.width.toLocaleString()}
-                {meta.height ? ` × ${meta.height.toLocaleString()}` : ''}
-                {meta.format ? ` · ${meta.format.replace(/^image\//i, '').toUpperCase()}` : ''}
-                {typeof meta.sizeBytes === 'number' ? ` · ${formatFileSize(meta.sizeBytes)}` : ''}
-              </span>
-            </div>
+                      ? 'Acceptable, but may soften on retina hero displays. Recommended ≥2400px.'
+                      : 'Too small for full-bleed hero — will appear pixelated. Recommended ≥2400px.'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : null}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button size={tokens.button.inline} variant="secondary" onClick={() => fileInputRef.current?.click()}>
