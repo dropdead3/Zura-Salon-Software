@@ -77,16 +77,17 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
     return () => clearTimeout(startDelay);
   }, [isPreview]);
 
-  // Cycle through words
+  // Cycle through words. word_rotation_interval is stored in SECONDS — convert to ms.
+  const wordIntervalMs = Math.max(1500, (heroConfig.word_rotation_interval ?? 5.5) * 1000);
   useEffect(() => {
     if (!isAnimationReady) return;
-    
+
     const interval = setInterval(() => {
       setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
-    }, 5500);
+    }, wordIntervalMs);
 
     return () => clearInterval(interval);
-  }, [isAnimationReady]);
+  }, [isAnimationReady, wordIntervalMs, rotatingWords.length]);
   const sectionRef = useRef<HTMLElement>(null);
   
   const { scrollYProgress } = useScroll({
