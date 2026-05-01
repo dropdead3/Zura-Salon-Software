@@ -446,6 +446,16 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Close (X) — soft-dismisses the popup. Sits absolute so it doesn't
+            shift PromoBody's eyebrow/headline alignment. */}
+        <button
+          type="button"
+          onClick={handleSoftClose}
+          aria-label="Close promotional offer"
+          className="absolute top-3 right-3 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
         <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
         {autoMinimizeSeconds !== null && (
           <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
