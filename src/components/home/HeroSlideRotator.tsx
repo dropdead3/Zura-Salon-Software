@@ -128,6 +128,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             posterUrl={bgPoster}
             fit={config.background_fit}
             overlayOpacity={overlay}
+            scrimStyle={scrimStyle}
+            scrimStrength={scrimStrength}
           />
         </motion.div>
       </AnimatePresence>
