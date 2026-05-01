@@ -86,12 +86,16 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
   const slides = config.slides ?? [];
   const hasMultiple = slides.length > 1;
   const mode = config.rotator_mode ?? 'multi_slide';
+  const minIntervalS = MIN_INTERVAL_S[mode];
 
-  // "Convert to Background-Only" detector: if 3+ slides share identical
-  // headline_text while in multi_slide mode, the operator is maintaining the
-  // same copy in N places — Background-Only is the cleaner architecture.
+  // "Convert to Background-Only" detector — gated by:
+  //   1. multi_slide mode + 3+ slides
+  //   2. 3+ slides share identical headline_text
+  //   3. operator hasn't dismissed in the last 30 days
   const duplicateHeadlineHint = (() => {
     if (mode !== 'multi_slide' || slides.length < 3) return null;
+    const dismissedDays = daysSince(config.dismissed_convert_hint_at);
+    if (dismissedDays !== null && dismissedDays < HINT_SUPPRESSION_DAYS) return null;
     const counts = new Map<string, number>();
     for (const s of slides) {
       const h = (s.headline_text ?? '').trim();
@@ -103,9 +107,24 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
     return max >= 3 ? max : null;
   })();
 
+  // Reverse detector: stuck in background-only with only 1 active slide for
+  // >7 days. The complexity of "rotator mode" buys nothing — suggest
+  // collapsing back to a single-slide static hero.
+  const staticHeroHint = (() => {
+    if (mode !== 'background_only') return null;
+    const activeSlides = slides.filter((s) => s.active !== false);
+    if (activeSlides.length !== 1) return null;
+    const days = daysSince(config.background_only_since);
+    if (days === null || days < STATIC_HERO_HINT_AFTER_DAYS) return null;
+    return Math.floor(days);
+  })();
+
   const switchMode = (next: 'multi_slide' | 'background_only') => {
     if (next === mode) return;
     onChange('rotator_mode', next);
+    // Stamp the entry timestamp when moving INTO background_only; clear when
+    // leaving so the reverse detector resets cleanly.
+    onChange('background_only_since', next === 'background_only' ? new Date().toISOString() : null);
     // Mode-aware defaults: only nudge transition + interval if the operator
     // is currently sitting on the *other* mode's defaults (i.e. they haven't
     // customized). This preserves intentional choices.
@@ -119,7 +138,18 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
     if (onOtherDefaults || unset) {
       onChange('transition_style', target.transition_style);
       onChange('slide_interval_ms', target.slide_interval_ms);
+    } else {
+      // Even without nudging defaults, enforce the new mode's minimum
+      // interval — a 3s rotator from multi_slide would be jittery in
+      // background_only.
+      const currentMs = config.slide_interval_ms ?? 6000;
+      const floorMs = MIN_INTERVAL_S[next] * 1000;
+      if (currentMs < floorMs) onChange('slide_interval_ms', floorMs);
     }
+  };
+
+  const dismissDuplicateHint = () => {
+    onChange('dismissed_convert_hint_at', new Date().toISOString());
   };
 
   return (
