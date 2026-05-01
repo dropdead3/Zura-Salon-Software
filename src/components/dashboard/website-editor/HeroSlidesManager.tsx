@@ -404,7 +404,9 @@ function SlideRow({
             )}
           </div>
 
-          {/* Per-slide focal point override */}
+          {/* Per-slide focal point override — toggle only; the picker itself
+              lives inside the upload tile above (consolidated, no duplicate
+              image rendered below the upload preview). */}
           {!!focalImageUrl && resolvedFit !== 'contain' && (
             <div className="space-y-2 pt-3 border-t border-border/30">
               <ToggleInput
@@ -416,23 +418,8 @@ function SlideRow({
                     background_focal_y: v ? sectionFocalY : null,
                   })
                 }
-                description="Anchor a different region of this slide's background"
+                description="Drag the crosshair on the image above to anchor a different region for this slide"
               />
-              {focalOverridden && (
-                <FocalPointPicker
-                  imageUrl={focalImageUrl}
-                  isVideo={resolvedBgType === 'video'}
-                  x={resolvedFocalX}
-                  y={resolvedFocalY}
-                  onChange={(nx, ny) =>
-                    onUpdate(slide.id, { background_focal_x: nx, background_focal_y: ny })
-                  }
-                  onReset={() =>
-                    onUpdate(slide.id, { background_focal_x: 50, background_focal_y: 50 })
-                  }
-                  label="Slide Focal Point"
-                />
-              )}
             </div>
           )}
 
