@@ -32,12 +32,7 @@ function walk(dir: string, out: string[] = []): string[] {
 // first '>' that is not inside an attribute. JSX self-close (`/>`) is fine.
 const TAG_RE = /<MediaUploadInput\b([^>]*?)\/?>/gs;
 
-interface Offender {
-  file: string;
-  line: number;
-  pathPrefix: string;
-  snippet: string;
-}
+
 
 describe('hero MediaUploadInput callsites', () => {
   function collectCallsites() {
