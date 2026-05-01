@@ -239,4 +239,41 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       `Hero shared-component selector missing from resolved config.\nResolved selectors:\n${selectors.join('\n')}`,
     ).toBe(true);
   });
+
+  it('keeps the FocalPointPicker Isolation selectors on the banned fixture', async () => {
+    // The fixture lives outside the canonical owner / consumer paths and
+    // is the file the doctrine's smoke surface lints. If either selector
+    // is missing here, a future PR reintroducing <FocalPointPicker>
+    // outside MediaUploadInput will pass lint silently — the exact
+    // regression the November 2026 hero consolidation closed.
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/focal-point-picker-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes("name.name='FocalPointPicker'")),
+      `FocalPointPicker JSX-usage selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+    expect(
+      selectors.some((s) => s.includes("imported.name='FocalPointPicker'")),
+      `FocalPointPicker import-specifier selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('does NOT apply the FocalPointPicker ban to the canonical owner or consumer', async () => {
+    // The owner (FocalPointPicker.tsx) defines the component and the
+    // consumer (MediaUploadInput.tsx) renders it as an overlay. Both are
+    // ignored by the doctrine block; this assertion guards against a
+    // future maintainer dropping the `ignores` entries and breaking the
+    // owner module's own self-reference.
+    for (const ownerPath of [
+      'src/components/dashboard/website-editor/inputs/FocalPointPicker.tsx',
+      'src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx',
+    ]) {
+      const selectors = await getRestrictedSyntaxSelectors(ownerPath);
+      expect(
+        selectors.every((s) => !s.includes("imported.name='FocalPointPicker'")),
+        `FocalPointPicker import ban should NOT apply to ${ownerPath} — that file is the canonical owner / consumer. The doctrine's \`ignores\` block must list it.`,
+      ).toBe(true);
+    }
+  });
 });
