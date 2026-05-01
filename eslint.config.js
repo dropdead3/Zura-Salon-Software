@@ -56,7 +56,7 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
  * active. Pair every new scope with an assertion in
  * `src/test/lint-config-resolution.test.ts`.
  */
-function defineScopedDoctrine({ files, ignores, extraSelectors = [] }) {
+export function defineScopedDoctrine({ files, ignores, extraSelectors = [] }) {
   return {
     files,
     ...(ignores ? { ignores } : {}),
@@ -87,7 +87,7 @@ function defineScopedDoctrine({ files, ignores, extraSelectors = [] }) {
 // To add a new globally-banned import: push to PLATFORM_PRIMITIVE_PATHS
 // (or define a new array if it's a different doctrine) and use
 // `defineScopedImportDoctrine()`.
-const PLATFORM_PRIMITIVE_PATHS = [
+export const PLATFORM_PRIMITIVE_PATHS = [
   { name: "@/components/ui/checkbox",     message: "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer." },
   { name: "@/components/ui/switch",       message: "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme." },
   { name: "@/components/ui/alert-dialog", message: "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme." },
@@ -117,7 +117,7 @@ const PLATFORM_PRIMITIVE_PATHS = [
  * cleanly. Pair every new scope with an assertion in
  * `src/test/lint-config-resolution.test.ts`.
  */
-function defineScopedImportDoctrine({
+export function defineScopedImportDoctrine({
   files,
   ignores,
   basePaths = PLATFORM_PRIMITIVE_PATHS,
