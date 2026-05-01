@@ -278,10 +278,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
-          // In editor preview, loop the countdown so operators can QA the
-          // hairline + last-3s pulse + numeric label without the popup
-          // collapsing mid-edit. Real visitors get the soft-close + FAB.
-          if (isPreview) return autoMinimizeSeconds;
+          // Let preview run the FULL lifecycle — countdown completes,
+          // popup soft-closes, FAB takes over. Operators told us the
+          // earlier "loop forever" behavior masked the real visitor flow
+          // and made the FAB un-QA-able. To re-run the lifecycle, hit
+          // "Preview popup now" in the editor (forces an iframe reload).
           window.clearInterval(interval);
           handleSoftClose();
           return 0;
@@ -362,7 +363,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
     setOpen(false);
-    if (!isPreview) setShowFab(true);
+    // Always surface the FAB — preview must mirror the real visitor
+    // lifecycle so operators can QA the "See Offer" affordance without
+    // leaving the editor. Real-visitor side effects (dismissal write,
+    // analytics) stay gated above.
+    setShowFab(true);
   }
 
   function handleSoftClose() {
@@ -373,7 +378,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
     setOpen(false);
-    if (!isPreview) setShowFab(true);
+    setShowFab(true);
   }
 
   function handleFabOpen() {
