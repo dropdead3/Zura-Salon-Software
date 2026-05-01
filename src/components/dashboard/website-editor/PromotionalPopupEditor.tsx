@@ -242,6 +242,11 @@ export function PromotionalPopupEditor() {
   );
   const [autoSaving, setAutoSaving] = useState(false);
 
+  // Dev-only save-trace telemetry. Records every step of a save attempt
+  // (click → mutation success → refetch result → form snapshot) and emits
+  // a single grouped console log on flush. No-op in production builds.
+  const telemetryRef = useRef(createEditorTelemetry('promo-editor'));
+
   // Refs eliminate stale-closure races between the auto-save Enable toggle and
   // the manual "Save to preview" button. Both save paths read the *current*
   // form state from `formDataRef`, and `savingRef` serializes mutations so a
@@ -255,6 +260,17 @@ export function PromotionalPopupEditor() {
   useEffect(() => {
     savedSnapshotRef.current = savedSnapshot;
   }, [savedSnapshot]);
+
+  // Telemetry checkpoint: every refetch result that lands during an active
+  // save trace. Lets us see at a glance whether a stale/null payload arrived
+  // mid-save (the original snap-back bug fingerprint).
+  useEffect(() => {
+    telemetryRef.current.event('refetch-result', {
+      hasSettings: settings != null,
+      headline: settings?.headline,
+      enabled: settings?.enabled,
+    });
+  }, [settings]);
 
   // Live count + 14-day velocity for the *saved* offer code. We track
   // savedSnapshot.offerCode (not formData) so the count reflects what's
