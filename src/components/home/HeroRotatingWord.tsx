@@ -56,18 +56,26 @@ export function HeroRotatingWord({ show, words, index, isOverDark = false, color
   const word = words[safeIndex];
   if (!word) return null;
 
-  // Contrast-aware gradient. Over dark media: bright white -> warm gold/cream
-  // for a luxe shimmer that still reads as "light text". Over light bg:
-  // foreground -> primary so it stays high-contrast against cream/light themes.
-  // Stops pin the base color through ~45% then ease into a softened gold by
-  // 100%. NOTE: do NOT add `[background-size:200%_100%]` — that pushes the
-  // gold endpoint outside the rendered glyph width and the word reads as
-  // pure white. Native 100% width keeps the shimmer visible end-to-end.
+  // Contrast-aware DIAGONAL gradient (~135deg, top-left -> bottom-right) so
+  // the sheen reads as raking light across the letters rather than a flat
+  // left-to-right fade. Over dark media: bright white -> warm gold/cream.
+  // Over light bg: foreground -> softened primary. Stops pin the base color
+  // through ~45% then ease into the accent by 100%. NOTE: keep native
+  // background-size; doubling it pushes the accent endpoint outside the
+  // rendered glyph width and the word reads as pure white.
   const gradientClass = colorOverride
     ? ''
     : isOverDark
-      ? 'bg-gradient-to-r from-white from-0% via-white via-45% to-[hsl(var(--primary)/0.95)] to-100% bg-clip-text text-transparent'
-      : 'bg-gradient-to-r from-foreground from-0% via-foreground via-45% to-[hsl(var(--primary)/0.85)] to-100% bg-clip-text text-transparent';
+      ? 'bg-gradient-to-br from-white from-0% via-white via-45% to-[hsl(var(--primary)/0.95)] to-100% bg-clip-text text-transparent'
+      : 'bg-gradient-to-br from-foreground from-0% via-foreground via-45% to-[hsl(var(--primary)/0.85)] to-100% bg-clip-text text-transparent';
+
+  // Subtle grain overlay — breaks up the plasticky look of pure CSS gradients
+  // and gives the sheen a brushed-metal feel. Rendered as a sibling absolute
+  // span clipped to the word via mix-blend-overlay at low opacity. Hidden
+  // when the operator overrides the headline color so we never silently
+  // muddy a chosen brand color.
+  const grainSvg =
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")";
 
   return (
     <span data-hero-rotating-word className="block overflow-hidden h-[1.15em]">
@@ -75,13 +83,28 @@ export function HeroRotatingWord({ show, words, index, isOverDark = false, color
         {/* eslint-disable-next-line no-restricted-syntax -- canonical owner of rotating-word JSX; every other hero file imports this component instead of hand-rolling motion.span. */}
         <motion.span
           key={word}
-          className={cn('block', gradientClass)}
+          className={cn('relative inline-block align-top', gradientClass)}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '-100%', opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
           {word}
+          {!colorOverride && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-[0.18]"
+              style={{
+                backgroundImage: grainSvg,
+                backgroundSize: '160px 160px',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              {word}
+            </span>
+          )}
         </motion.span>
       </AnimatePresence>
     </span>
