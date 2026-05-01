@@ -1,4 +1,4 @@
-import { Settings2, Sparkles } from 'lucide-react';
+import { Settings2, Sparkles, X, Minimize2 } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { ToggleInput } from '../inputs/ToggleInput';
 import { SliderInput } from '../inputs/SliderInput';
@@ -7,6 +7,25 @@ import type { HeroConfig } from '@/hooks/useSectionConfig';
 interface HeroRotatorEditorProps {
   config: HeroConfig;
   onChange: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
+}
+
+/** Per-mode minimum slide interval (seconds). Background-Only floors at 5s
+ *  because faster crossfades make the static foreground feel jittery as the
+ *  imagery flickers underneath. Multi-Slide can go faster since the whole
+ *  composition changes on each tick. */
+const MIN_INTERVAL_S = { multi_slide: 3, background_only: 5 } as const;
+
+/** How long (days) to suppress the duplicate-headline hint after dismissal. */
+const HINT_SUPPRESSION_DAYS = 30;
+/** How long (days) before we suggest collapsing background-only-with-1-slide
+ *  to a static hero. Below this, the operator may still be authoring. */
+const STATIC_HERO_HINT_AFTER_DAYS = 7;
+
+function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  return (Date.now() - t) / 86_400_000;
 }
 
 /**
