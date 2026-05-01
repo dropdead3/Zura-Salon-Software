@@ -15,6 +15,8 @@ import { HeroScrollIndicator } from "@/components/home/HeroScrollIndicator";
 import { HeroRotatingWord } from "@/components/home/HeroRotatingWord";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
+import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from "@/lib/heroSpacing";
+import { useContainerWidth } from "@/hooks/useContainerWidth";
 import { cn } from "@/lib/utils";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
