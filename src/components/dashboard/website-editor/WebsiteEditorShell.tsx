@@ -49,6 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes-dialog';
 import { DirtyActionButton } from '@/components/ui/dirty-action-button';
+import { UnsavedChangesToast } from '@/components/ui/unsaved-changes-toast';
 import {
   Dialog,
   DialogContent,
