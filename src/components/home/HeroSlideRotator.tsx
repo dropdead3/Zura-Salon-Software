@@ -208,7 +208,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 )}
 
                 <h1
-                  className={cn("font-display font-normal leading-[0.95]", heroColors.headlineClass)}
+                  className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
                   style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
                 >
                   {isPreview ? (
