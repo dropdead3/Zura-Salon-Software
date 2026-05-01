@@ -126,7 +126,13 @@ export interface HeroSlide {
   media_height?: number | null;
   media_size_bytes?: number | null;
   media_format?: string | null;
-}
+  /**
+   * Which `qualityProfile` was active when this asset was uploaded. Drives the
+   * editor's "Re-upload at higher quality" nudge for legacy assets that landed
+   * before the hero profile existed (or were uploaded through a non-hero
+   * surface). `null` / absent = unknown legacy upload.
+   */
+  media_optimized_with_profile?: 'standard' | 'hero' | null;
 
 export interface HeroConfig {
   headline_text: string;
