@@ -291,7 +291,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
           {isEditingLive ? (
             <>
               <span
-                className="text-sm font-medium shrink-0 text-warning-foreground"
+                className="text-sm font-medium shrink-0 text-warning"
                 title="Showing unsaved edits — Save Draft to persist"
               >
                 Editing — unsaved
@@ -302,7 +302,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             <>
               <span className="text-sm font-medium shrink-0">Draft Preview</span>
               <span
-                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-warning/15 text-warning-foreground border border-warning/30"
+                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-warning/15 text-warning border border-warning/30"
                 title="This preview shows your unpublished draft. Visitors still see the last published version until you Publish."
               >
                 Not live
