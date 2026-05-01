@@ -21,6 +21,7 @@ import {
 } from '@/lib/promoPopupPreviewReset';
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 import { useReplayableMount } from '@/hooks/useReplayableMount';
+import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
 
 interface Props {
   /**
@@ -144,18 +145,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
-  // Three-phase visual lifecycle for the popup root:
-  //   'entering' → slide-in animation (replayable via animationNonce)
-  //   'visible'  → static, awaiting timer / interaction
-  //   'closing'  → slide-out toward the FAB position; on animationend we
-  //                flip to FAB and unmount the popup. Without this phase
-  //                the popup hard-cuts on close and the lifecycle preview
-  //                reads as broken to operators.
-  const [popupPhase, setPopupPhase] = useState<'entering' | 'visible' | 'closing'>('entering');
-  // Captures which exit handler should fire after the close animation
-  // completes (soft-close = surface FAB; accept = no FAB). Decouples the
-  // animation contract from the dismissal semantics.
-  const pendingExitRef = useRef<null | 'soft' | 'decline' | 'accept'>(null);
+  // Three-phase visual lifecycle for the popup root (entering → visible →
+  // closing). The `closing` phase keeps the popup mounted so its CSS exit
+  // animation plays before unmount; `onAnimationEnd` then flips `open` and
+  // surfaces the FAB. Without this the popup hard-cuts to the FAB and the
+  // lifecycle preview reads as broken to operators. See `usePresenceLifecycle`.
+  const popupLifecycle = usePresenceLifecycle<'soft' | 'decline' | 'accept'>({
+    onExit: (reason) => {
+      setOpen(false);
+      // Accept = offer claimed → no FAB re-prompt. Soft + decline both
+      // surface the FAB so the visitor can re-open during the session.
+      setShowFab(reason !== 'accept');
+    },
+  });
+  const popupPhase = popupLifecycle.phase;
   // Editor-driven reset replays the CSS slide-in by bumping the React `key`
   // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
   // fires on first paint, so without a fresh mount the popup snaps into
@@ -199,7 +202,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const fire = () => {
       if (triggeredRef.current) return;
       triggeredRef.current = true;
-      setPopupPhase('entering');
+      popupLifecycle.reset();
       setOpen(true);
     };
 
@@ -282,8 +285,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
-      pendingExitRef.current = null;
-      setPopupPhase('entering');
+      popupLifecycle.reset();
       // Replay the mount BEFORE flipping `open` so React schedules a fresh
       // mount of the popup root in the same render pass — that's what
       // replays `animate-in slide-in-from-*`. Without this, an already-open
@@ -414,32 +416,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
-  // Begin the visual close animation. The popup root keeps mounting until
-  // its `animationend` fires, at which point `finalizeClose()` flips
-  // `open=false` and (for soft/decline) surfaces the FAB. Side effects
-  // (dismissal writes, analytics, navigation) fire IMMEDIATELY — only the
-  // visual unmount waits for the animation. This is what gives operators
-  // the "popup animates closed into the FAB" lifecycle they expect.
-  function beginClose(reason: 'soft' | 'decline' | 'accept') {
-    // Idempotent: if we're already in `closing` and a second close fires
-    // (e.g. timer + Esc), keep the original reason — the animation is
-    // already in flight.
-    if (popupPhase === 'closing' && pendingExitRef.current) return;
-    pendingExitRef.current = reason;
-    setPopupPhase('closing');
-  }
-
-  // Called by each variant root's `onAnimationEnd` when the closing
-  // animation completes. Performs the actual unmount + FAB surfacing.
-  function finalizeClose() {
-    const reason = pendingExitRef.current;
-    pendingExitRef.current = null;
-    setOpen(false);
-    setPopupPhase('visible'); // reset for the next open cycle
-    // Accept never re-prompts (offer claimed). Soft + decline both
-    // surface the FAB so the visitor can re-open.
-    setShowFab(reason !== 'accept');
-  }
+  // Begin the visual close animation. The popup root stays mounted until
+  // its `animationend` fires, at which point `usePresenceLifecycle`'s
+  // `onExit` flips `open=false` and (for soft/decline) surfaces the FAB.
+  // Side effects (dismissal writes, analytics, navigation) fire
+  // IMMEDIATELY — only the visual unmount waits for the animation. This
+  // is what gives operators the "popup animates closed into the FAB"
+  // lifecycle they expect.
+  const beginClose = popupLifecycle.beginExit;
 
   function handleAccept() {
     const destination = cfg.acceptDestination ?? 'booking';
@@ -511,7 +495,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   function handleFabOpen() {
     setShowFab(false);
-    setPopupPhase('entering');
+    popupLifecycle.reset();
     replayPopupMount();
     setOpen(true);
   }
@@ -565,7 +549,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   if (!open) return fab;
 
-  const isClosing = popupPhase === 'closing';
+  const isClosing = popupLifecycle.isClosing;
   // Per-variant exit animation classes. Each variant exits in the
   // direction the FAB lives (corner-card → bottom-right corner; banner →
   // top edge; modal → fade + scale toward FAB). Tailwind/animate utilities
@@ -576,18 +560,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const bannerExitClasses = 'animate-out fade-out slide-out-to-top-2 duration-300';
   const modalExitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
 
-  // Single onAnimationEnd handler shared across variants. Only finalizes
-  // when we're actually in the `closing` phase — Tailwind's enter
-  // animations (slide-in-from-*) also fire animationend on the same root,
-  // and we must not unmount during the entering phase.
-  const handleRootAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
-    if (!isClosing) return;
-    // Only react to our slide-out animation, not nested children's animations
-    // (e.g. the countdown bar). Tailwind animate-out compiles to specific
-    // keyframe names — we accept any of them since all signal "close done".
-    if (e.target !== e.currentTarget) return;
-    finalizeClose();
-  };
+  // Shared `onAnimationEnd` handler from `usePresenceLifecycle`. The hook
+  // gates on `phase === 'closing'` AND `target === currentTarget`, so
+  // entering animations and bubbling child animations (e.g. the countdown
+  // bar) cannot prematurely unmount the popup.
+  const handleRootAnimationEnd = popupLifecycle.onAnimationEnd;
 
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
