@@ -254,7 +254,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           <div ref={contentWrapRef} className={alignment.wrapper}>
             <AnimatePresence mode="wait">
               <motion.div
-                key={`fg-${activeIndex}`}
+                key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
