@@ -75,6 +75,10 @@ export function SectionNavItem({
         !enabled && 'opacity-50'
       )}
       onClick={onSelect}
+      onMouseEnter={onHover}
+      onMouseLeave={onHoverEnd}
+      onFocus={onHover}
+      onBlur={onHoverEnd}
     >
       {/* Drag Handle */}
       <button
