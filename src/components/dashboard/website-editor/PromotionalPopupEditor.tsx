@@ -630,10 +630,10 @@ export function PromotionalPopupEditor() {
             size="sm"
             onClick={handlePreviewNow}
             className="gap-2"
-            title="Re-run the full open → countdown → FAB lifecycle in the preview"
+            title={restartButtonCopy.title}
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Restart popup preview
+            {restartButtonCopy.label}
           </Button>
           <Button
             type="button"
