@@ -281,7 +281,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          <div className={alignment.wrapper}>
+          <div ref={contentWrapRef} className={alignment.wrapper}>
             {/* Tagline */}
             {showEyebrow && (
               <motion.div
