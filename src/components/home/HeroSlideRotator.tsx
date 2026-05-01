@@ -16,6 +16,7 @@ import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
+import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
 
 interface HeroSlideRotatorProps {
@@ -136,6 +137,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const heroColors = resolveHeroColors(mergedColors, hasBackground);
   // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
   const mutedTone = heroColors.subheadlineClass || '';
+  // Per-slide alignment overrides the section default; null/undefined inherits.
+  const alignment = resolveHeroAlignment(slide.content_alignment ?? config.content_alignment);
 
   return (
     <section
@@ -177,7 +180,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
       {/* Foreground content */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className={alignment.wrapper}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`fg-${activeIndex}`}
@@ -205,7 +208,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 )}
 
                 <h1
-                  className={cn("font-display font-normal leading-[0.95]", heroColors.headlineClass)}
+                  className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
                   style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
                 >
                   {isPreview ? (
@@ -223,7 +226,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
                   <p
-                    className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                    className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                     style={heroColors.subheadlineStyle}
                   >
                     {isPreview ? (
@@ -256,7 +259,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   </p>
                 )}
 
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className={cn("mt-10 flex flex-col sm:flex-row items-center gap-3", alignment.cta, alignment.ctaRow)}>
                   <button
                     onClick={() => {
                       if (slide.cta_new_client_url) {

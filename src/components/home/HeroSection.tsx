@@ -11,6 +11,7 @@ import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
 import { resolveHeroColors } from "@/lib/heroColors";
+import { resolveHeroAlignment } from "@/lib/heroAlignment";
 import { cn } from "@/lib/utils";
 
 const rotatingWords = ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"];
@@ -55,6 +56,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
   const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
+  const alignment = resolveHeroAlignment(heroConfig?.content_alignment);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
@@ -124,7 +126,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} preload />
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
-            <div className="max-w-4xl mx-auto text-center">
+            <div className={alignment.wrapper}>
               {showEyebrow && (
                 <p className="text-xs uppercase tracking-[0.2em] font-display text-muted-foreground mb-6 section-eyebrow">
                   <InlineEditableText
@@ -137,7 +139,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 </p>
               )}
               <h1
-                className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
+                className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
                 // (set on the SectionStyleWrapper); defaults to 1 so existing
                 // sections see no change. Section-level "H" chip cycles Sm→XL.
@@ -155,7 +157,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                  className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
@@ -163,8 +165,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className="mt-10 flex flex-col items-center gap-3">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
+                <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
                     className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
@@ -260,7 +262,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
         style={{ opacity }}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className={alignment.wrapper}>
             {/* Tagline */}
             {showEyebrow && (
               <motion.div
@@ -277,7 +279,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* Main headline */}
             <motion.h1
-              className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
+              className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
               style={{
                 y: headlineY,
                 filter: headingBlurFilter,
@@ -325,7 +327,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                 style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
@@ -336,10 +338,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className="mt-10 flex flex-col items-center gap-3"
+              className={cn("mt-10 flex flex-col gap-3", alignment.cta)}
               style={{ y: ctaY }}
             >
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
                 <motion.div
                   initial={{ opacity: 0, y: 25, filter: "blur(8px)" }}
                   animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}

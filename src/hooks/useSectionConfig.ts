@@ -133,6 +133,11 @@ export interface HeroSlide {
    * surface). `null` / absent = unknown legacy upload.
    */
   media_optimized_with_profile?: 'standard' | 'hero' | null;
+  /**
+   * Per-slide horizontal alignment override for headline/subheadline/CTAs.
+   * `null` / undefined = inherit the section-level `content_alignment`.
+   */
+  content_alignment?: 'left' | 'center' | 'right' | null;
 }
 
 export interface HeroConfig {
@@ -187,6 +192,12 @@ export interface HeroConfig {
   media_size_bytes?: number | null;
   media_format?: string | null;
   media_optimized_with_profile?: 'standard' | 'hero' | null;
+  /**
+   * Section-level horizontal alignment for headline/subheadline/CTAs.
+   * Defaults to 'center' for back-compat with pre-alignment hero layouts.
+   * Per-slide `content_alignment` overrides this when set.
+   */
+  content_alignment?: 'left' | 'center' | 'right';
 }
 
 export interface BrandStatementConfig {
@@ -488,6 +499,7 @@ export const DEFAULT_HERO: HeroConfig = {
   transition_style: 'crossfade',
   pause_on_hover: true,
   text_colors: {},
+  content_alignment: 'center',
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
+import { resolveHeroAlignment } from '@/lib/heroAlignment';
+import { cn } from '@/lib/utils';
 
 interface HeroSectionPreviewProps {
   config: HeroConfig;
@@ -28,11 +30,13 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
 
   const currentWord = config.rotating_words[currentWordIndex] || 'Salon';
 
+  const alignment = resolveHeroAlignment(config.content_alignment);
+
   return (
     <section data-theme="light" className="relative min-h-screen flex flex-col overflow-hidden bg-background">
       <div className="flex-1 flex items-start justify-center pt-28 pb-32 lg:pt-36 lg:pb-48 relative z-0">
         <div className="container mx-auto px-6 lg:px-12">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className={alignment.wrapper}>
             {/* Tagline */}
             <div>
               <Eyebrow className="text-muted-foreground mb-6">
@@ -41,7 +45,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
             </div>
 
             {/* Main headline */}
-            <h1 className="font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col items-center">
+            <h1 className={cn("font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col", alignment.headline)}>
               <span className="whitespace-nowrap block">{config.headline_text}</span>
               <span className="block overflow-hidden h-[1.15em]">
                 <AnimatePresence mode="wait">
@@ -60,15 +64,15 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
             </h1>
 
             {/* Subheadline */}
-            <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+            <p className={cn("mt-8 text-sm md:text-base text-muted-foreground font-sans font-light leading-relaxed", alignment.subheadline)}>
               {config.subheadline_line1}
               <br />
               {config.subheadline_line2}
             </p>
 
             {/* CTAs */}
-            <div className="mt-10 flex flex-col items-center gap-3">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
+              <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
                 <button className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 text-center inline-flex items-center justify-center gap-0">
                   <span className="relative z-10">{config.cta_new_client}</span>
                   <ArrowRight className="w-0 h-4 opacity-0 transition-all duration-300" />
@@ -78,7 +82,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
                   <ArrowRight className="w-0 h-4 opacity-0 transition-all duration-300" />
                 </button>
               </div>
-              <div className="flex flex-col items-center gap-1 text-xs md:text-sm text-muted-foreground font-sans">
+              <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.cta)}>
                 <p>{config.consultation_note_line1}</p>
                 <p>{config.consultation_note_line2}</p>
               </div>
