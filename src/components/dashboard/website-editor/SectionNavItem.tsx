@@ -18,6 +18,10 @@ interface SectionNavItemProps {
   deletable?: boolean;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  /** Fired when the row is hovered/focused; used to outline the matching
+   *  section in the live-preview iframe. Hover-end fires `onHoverEnd`. */
+  onHover?: () => void;
+  onHoverEnd?: () => void;
 }
 
 // Fixed width reserved for the right-side action cluster, regardless of hover
