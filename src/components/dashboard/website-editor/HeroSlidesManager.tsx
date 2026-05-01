@@ -358,7 +358,7 @@ function SlideRow({
           </div>
 
           {/* Per-slide focal point override */}
-          {!!focalImageUrl && sectionBgFit !== 'contain' && (
+          {!!focalImageUrl && resolvedFit !== 'contain' && (
             <div className="space-y-2 pt-3 border-t border-border/30">
               <ToggleInput
                 label="Override Focal Point"
@@ -421,7 +421,7 @@ function SlideRow({
                 type={resolvedBgType}
                 url={resolvedBgUrl}
                 posterUrl={resolvedBgPoster}
-                fit={sectionBgFit}
+                fit={resolvedFit}
                 focalX={resolvedFocalX}
                 focalY={resolvedFocalY}
                 overlayMode={resolvedOverlayMode}
