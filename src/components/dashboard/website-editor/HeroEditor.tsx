@@ -362,6 +362,7 @@ export function HeroEditor() {
       { id: 'colors' as const, title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
       { id: 'scrim' as const, title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
       { id: 'rotator' as const, title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
+      { id: 'words' as const, title: 'Rotating Words', icon: Repeat, summary: summarizeWords(localConfig) },
       { id: 'advanced' as const, title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
     ],
     [localConfig],
