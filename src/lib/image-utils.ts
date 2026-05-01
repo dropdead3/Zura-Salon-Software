@@ -152,10 +152,15 @@ export function formatFileSize(bytes: number): string {
 // throws — auto-crunch must NEVER be the reason an upload fails.
 
 const CRUNCH_TRIGGER_BYTES = 8 * 1024 * 1024; // 8MB
-const CRUNCH_TRIGGER_DIMENSION = 4000;
-const CRUNCH_PASS1_MAX_EDGE = 2400;
-const CRUNCH_PASS2_QUALITY = 0.72;
-const CRUNCH_PASS2_THRESHOLD_BYTES = 2 * 1024 * 1024; // 2MB
+const CRUNCH_TRIGGER_DIMENSION = 5000;
+// Hero/slide art is rendered full-bleed at retina densities (a 1440px CSS
+// hero on a 2x display = 2880 device px). Cap the long edge at 3200 so we
+// retain real pixels instead of upscaling a downsampled WebP — earlier
+// 2400px cap was the root cause of "pixelated slider images" reports.
+const CRUNCH_PASS1_MAX_EDGE = 3200;
+const CRUNCH_PASS1_QUALITY = 0.9;
+const CRUNCH_PASS2_QUALITY = 0.82;
+const CRUNCH_PASS2_THRESHOLD_BYTES = 3 * 1024 * 1024; // 3MB
 
 // Formats that the browser <canvas> + createImageBitmap path cannot decode.
 // We skip auto-crunch for these so the validator's actionable error fires.
@@ -231,7 +236,7 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
   }
 
   try {
-    let blob = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, 0.82);
+    let blob = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, CRUNCH_PASS1_QUALITY);
     if (blob && blob.size > CRUNCH_PASS2_THRESHOLD_BYTES) {
       const second = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, CRUNCH_PASS2_QUALITY);
       if (second && second.size < blob.size) blob = second;
