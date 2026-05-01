@@ -25,6 +25,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
   const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
+  const showSubheadline = heroConfig?.show_subheadline ?? DEFAULT_HERO.show_subheadline;
+  // Use ?? not || so an explicit empty string (operator cleared the field) is honored
+  // and does not fall back to the DEFAULT_HERO copy.
+  const subheadlineLine1 = heroConfig?.subheadline_line1 ?? DEFAULT_HERO.subheadline_line1;
+  const subheadlineLine2 = heroConfig?.subheadline_line2 ?? DEFAULT_HERO.subheadline_line2;
+  const hasSubheadlineContent = showSubheadline && (subheadlineLine1.trim() !== '' || subheadlineLine2.trim() !== '');
   const slides = heroConfig?.slides ?? [];
 
   // Multi-slide rotator takes over when operators have configured slides.
