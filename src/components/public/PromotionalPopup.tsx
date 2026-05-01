@@ -569,6 +569,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const EyebrowIconCmp = cfg.eyebrow ? getEyebrowIcon(cfg.eyebrowIcon) : null;
     return (
       <div
+        key={animationNonce}
         role="dialog"
         aria-labelledby="promo-popup-title"
         className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
