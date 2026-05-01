@@ -117,7 +117,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   if (isPreview) {
     return (
       <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-[500px] bg-background">
-        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
         <div className="flex-1 flex items-start justify-center relative z-10 pt-16 pb-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
