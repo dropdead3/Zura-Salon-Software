@@ -149,9 +149,10 @@ export function HeroBackground({
         />
       )}
       {/* Layer 1 — flat uniform wash driven by the operator's
-          "Overlay Darkness/Lightness" slider. Always rendered when > 0. */}
+          "Image Wash" slider. Always rendered when > 0. */}
       {flatWash > 0 && (
         <div
+          data-hero-overlay="wash"
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `rgba(${overlayMode === 'lighten' ? '255,255,255' : '0,0,0'},${flatWash.toFixed(3)})`,
@@ -161,6 +162,7 @@ export function HeroBackground({
       {/* Layer 2 — editorial scrim shape (gradient/vignette) for legibility. */}
       {scrimShape !== 'none' && scrimPeak > 0 && (
         <div
+          data-hero-overlay="scrim"
           className="absolute inset-0 pointer-events-none"
           style={{ background: buildScrimBackground(scrimShape, scrimPeak, overlayMode) }}
         />
