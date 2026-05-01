@@ -799,6 +799,6 @@ export function Header() {
           )}
         </AnimatePresence>
       </header>
-    </>
+    </div>
   );
 }
