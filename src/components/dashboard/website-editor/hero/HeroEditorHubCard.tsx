@@ -42,10 +42,10 @@ export function HeroEditorHubCard({
         <Icon className="w-5 h-5 text-primary" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-display text-sm tracking-wide text-foreground truncate">
+        <div className="font-display text-[11px] tracking-wide text-foreground truncate">
           {title}
         </div>
-        <div className="text-xs text-muted-foreground mt-0.5 truncate font-sans">
+        <div className="text-[11px] text-muted-foreground mt-0.5 truncate font-sans">
           {summary}
         </div>
       </div>
