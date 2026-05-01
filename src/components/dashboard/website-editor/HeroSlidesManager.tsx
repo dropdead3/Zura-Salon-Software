@@ -67,6 +67,7 @@ const newSlide = (): HeroSlide => ({
   media_height: null,
   media_size_bytes: null,
   media_format: null,
+  media_optimized_with_profile: null,
 });
 
 interface SlideRowProps {
