@@ -104,6 +104,7 @@ import { BrandsManager } from './BrandsManager';
 import { DrinksManager } from './DrinksManager';
 import { FooterCTAEditor } from './FooterCTAEditor';
 import { FooterEditor } from './FooterEditor';
+import { StickyFooterBarEditor } from './StickyFooterBarEditor';
 import { ServicesPreviewEditor } from './ServicesPreviewEditor';
 import { PopularServicesEditor } from './PopularServicesEditor';
 import { GalleryDisplayEditor } from './GalleryDisplayEditor';
@@ -160,6 +161,7 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   drinks: DrinksManager,
   'footer-cta': FooterCTAEditor,
   footer: FooterEditor,
+  'sticky-footer': StickyFooterBarEditor,
   pages: PagesManager,
 };
 
@@ -204,6 +206,7 @@ const TAB_LABELS: Record<string, string> = {
   drinks: 'Drink Menu',
   'footer-cta': 'Footer CTA',
   footer: 'Footer Settings',
+  'sticky-footer': 'Sticky Footer',
   pages: 'All Pages',
   'page-settings': 'Page Settings',
   navigation: 'Navigation Menus',
