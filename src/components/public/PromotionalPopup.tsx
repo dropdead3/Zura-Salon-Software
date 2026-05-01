@@ -629,9 +629,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className={cn(
           'fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden',
-          isClosing ? bannerExitClasses : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-4 motion-safe:duration-500 motion-safe:ease-out',
+          isClosing ? bannerExitClasses : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-12',
         )}
-        style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
+        style={{
+          borderBottomColor: accent,
+          borderBottomWidth: 2,
+          ...(!isClosing ? {
+            animationDuration: '900ms',
+            animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            animationFillMode: 'both',
+          } : {}),
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onAnimationEnd={handleRootAnimationEnd}
