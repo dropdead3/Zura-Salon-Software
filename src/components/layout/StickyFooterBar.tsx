@@ -58,6 +58,7 @@ export function StickyFooterBar() {
     }
 
     const threshold = Math.max(0, config.scroll_show_after_px ?? 180);
+    let lastY = window.scrollY;
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -65,14 +66,27 @@ export function StickyFooterBar() {
       const documentHeight = document.documentElement.scrollHeight;
       const maxScroll = Math.max(documentHeight - windowHeight, 0);
 
+      // Direction-aware: only reveal while the user is actively scrolling
+      // DOWN past the threshold. Any upward scroll hides the bar so it never
+      // covers content the visitor is scrolling back up to read.
+      const delta = scrollY - lastY;
+      const scrollingDown = delta > 2; // small dead-zone to ignore jitter
+      const scrollingUp = delta < -2;
       const pastThreshold = scrollY > threshold;
       const nearBottom = maxScroll > 240 && scrollY >= maxScroll - 120;
 
-      setIsVisible(pastThreshold && !nearBottom);
+      setIsVisible((prev) => {
+        if (nearBottom) return false;
+        if (!pastThreshold) return false;
+        if (scrollingDown) return true;
+        if (scrollingUp) return false;
+        return prev; // no movement → preserve current state
+      });
+
+      lastY = scrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isEditorPreview, config.enabled, config.scroll_show_after_px]);
 
