@@ -212,7 +212,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         setConsultationOpen(true);
                       }
                     }}
-                    className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonPrimary}`}
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.primaryButtonClass,
+                    )}
+                    style={heroColors.primaryButtonStyle}
                   >
                     <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
@@ -220,7 +224,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   {slide.show_secondary_button && (
                     <Link
                       to={slide.cta_returning_client_url || '/booking'}
-                      className={`group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6 ${buttonSecondary}`}
+                      className={cn(
+                        "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                        heroColors.secondaryButtonClass,
+                      )}
+                      style={heroColors.secondaryButtonStyle}
                     >
                       <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
                       <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
