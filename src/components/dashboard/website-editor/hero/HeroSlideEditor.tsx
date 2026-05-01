@@ -70,7 +70,7 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
       {/* Background media */}
       <EditorCard title={`Slide ${index + 1} · Background`} icon={ImageIcon}>
         <p className="text-xs text-muted-foreground -mt-1">
-          The image or video shown behind this slide. Leave on "Use Section BG"
+          The image or video shown behind this slide. Leave on "None"
           to inherit the hero's default background.
         </p>
 
