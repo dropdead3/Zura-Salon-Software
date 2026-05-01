@@ -23,10 +23,10 @@ interface HeroAlignmentEditorProps {
  */
 export function HeroAlignmentEditor({ config, onChange }: HeroAlignmentEditorProps) {
   return (
-    <EditorCard title="Content Alignment" icon={AlignJustify}>
+    <EditorCard title="Default Content Alignment" icon={AlignJustify}>
       <p className="text-xs text-muted-foreground -mt-1">
-        Horizontal placement of the headline, subheadline, and call-to-action buttons.
-        Applies to every slide unless a slide overrides it.
+        Default horizontal placement for headline, subheadline, and CTA buttons.
+        Each slide can override this from its own editor.
       </p>
       <div className="space-y-2">
         <Label className="text-xs">Alignment</Label>
