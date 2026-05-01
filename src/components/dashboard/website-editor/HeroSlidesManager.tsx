@@ -16,6 +16,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
 import { EditorCard } from './EditorCard';
+import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
