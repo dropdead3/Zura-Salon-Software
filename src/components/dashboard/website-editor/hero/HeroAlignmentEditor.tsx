@@ -4,6 +4,7 @@ import { AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { ToggleInput } from '../inputs/ToggleInput';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
+import { HERO_SPACING_PRESETS } from '@/lib/heroSpacing';
 
 interface HeroAlignmentEditorProps {
   config: HeroConfig;
