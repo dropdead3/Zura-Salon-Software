@@ -643,27 +643,38 @@ export function PromotionalPopupEditor() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePreviewNow}
-            className="gap-2"
-            title={restartButtonCopy.title}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            {restartButtonCopy.label}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleResetSession}
-            className="gap-2"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset popup session
-          </Button>
+          {/* Single phase-aware restart button. Collapses what used to be
+              two buttons ("Restart preview" + "Reset popup session") — the
+              former was a strict subset of the latter once both started
+              dispatching the canonical lifecycle event. Tooltip surfaces
+              the side-effect (clearing N visitor dismissal records) so the
+              loss of the "restart without clearing storage" affordance is
+              explicit; preview already bypasses dismissals so that
+              affordance had no QA value. */}
+          <TooltipProvider delayDuration={120}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetSession}
+                  className="gap-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {restartButtonCopy.label}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p className="font-sans text-xs">{restartButtonCopy.title}</p>
+                <p className="font-sans text-[11px] text-muted-foreground mt-1">
+                  {dismissalRecordCount > 0
+                    ? `Also clears ${dismissalRecordCount} visitor dismissal record${dismissalRecordCount === 1 ? '' : 's'}.`
+                    : 'No visitor dismissal records to clear.'}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button
             type="button"
             variant="ghost"
