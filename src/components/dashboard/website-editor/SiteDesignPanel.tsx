@@ -604,9 +604,30 @@ function WebsiteThemePicker() {
   const { theme, isLoading } = useWebsiteColorTheme();
   const update = useUpdateWebsiteColorTheme();
   const { toast } = useToast();
+  // Optimistic local selection — the ring follows the click in the same tick
+  // instead of waiting for the site_settings refetch. We clear it once the
+  // hook's `theme` catches up. Without this, re-clicking the same theme
+  // (after a draft write) appeared to do nothing because `isActive` was
+  // computed against stale data.
+  const [pickedTheme, setPickedTheme] = useState<ColorTheme | null>(null);
+  // Per-tile in-flight marker — avoids greying out the entire grid when a
+  // single mutation is pending (which read as "the picker froze").
+  const [pendingTile, setPendingTile] = useState<ColorTheme | null>(null);
+
+  useEffect(() => {
+    if (pickedTheme && pickedTheme === theme) {
+      setPickedTheme(null);
+    }
+  }, [pickedTheme, theme]);
+
+  const activeTheme = pickedTheme ?? theme;
 
   const handlePick = async (id: ColorTheme, name: string) => {
-    if (id === theme) return;
+    // No `id === theme` short-circuit: a re-click is a recovery action.
+    // The optimistic broadcast + cache write are idempotent, and re-issuing
+    // the mutation re-asserts the persisted draft if it drifted.
+    setPickedTheme(id);
+    setPendingTile(id);
     // Optimistic broadcast: paint the iframe with the new theme class the
     // instant the operator clicks, instead of waiting for the site_settings
     // round-trip + react-query invalidation. Mirrors the PREVIEW_DESIGN_OVERRIDES
@@ -621,11 +642,15 @@ function WebsiteThemePicker() {
         description: `Visitors now see the ${name} theme.`,
       });
     } catch (err) {
+      // Roll back the optimistic ring — surface persisted state.
+      setPickedTheme(null);
       toast({
         title: 'Could not update site theme',
         description: err instanceof Error ? err.message : 'Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setPendingTile(null);
     }
   };
 
@@ -640,13 +665,14 @@ function WebsiteThemePicker() {
       </div>
       <div className="grid grid-cols-4 gap-2">
         {colorThemes.map((t) => {
-          const isActive = !isLoading && t.id === theme;
+          const isActive = !isLoading && t.id === activeTheme;
+          const isThisPending = pendingTile === t.id;
           return (
             <button
               key={t.id}
               type="button"
               onClick={() => handlePick(t.id, t.name)}
-              disabled={update.isPending}
+              disabled={isThisPending}
               aria-pressed={isActive}
               aria-label={`Apply ${t.name} theme to public site`}
               title={`${t.name} — ${t.description}`}
@@ -656,7 +682,7 @@ function WebsiteThemePicker() {
                 isActive
                   ? 'border-primary ring-2 ring-primary/30'
                   : 'border-border hover:border-foreground/30',
-                update.isPending && 'opacity-60 cursor-wait',
+                isThisPending && 'opacity-60 cursor-wait',
               )}
             >
               {/* Mini-hero mock — composes the theme's own tokens into the
