@@ -386,7 +386,19 @@ export function Header() {
                     effectiveDark ? "text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.45)]" : "text-foreground/80",
                   )}>
                     {announcementSettings.message_prefix}{' '}
-                    <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
+                    <span
+                      className={cn(
+                        "font-medium bg-clip-text text-transparent bg-gradient-to-r",
+                        // Contrast-aware gradient using theme tokens.
+                        // Over dark: light → accent for luminous pop.
+                        // Over light: primary → accent for brand emphasis.
+                        effectiveDark
+                          ? "from-[hsl(var(--primary-foreground))] via-[hsl(var(--accent))] to-[hsl(var(--primary-foreground))] [text-shadow:none]"
+                          : "from-[hsl(var(--primary))] via-[hsl(var(--accent))] to-[hsl(var(--primary))]",
+                      )}
+                    >
+                      {announcementSettings.message_highlight}
+                    </span>{' '}
                     {announcementSettings.message_suffix}
                   </p>
                   <a
