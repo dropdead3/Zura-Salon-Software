@@ -94,13 +94,15 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     ).toBe(true);
   });
 
-  it('does NOT apply the Site Settings rule to the owning module', async () => {
-    // Inverse assertion: the owning module is the one valid call site
-    // and must be excluded from the rule.
+  it('applies the Site Settings rule to the owning module (suppression is per-line)', async () => {
+    // The owning module is no longer excluded via `ignores`; instead each
+    // dispatch site uses `// eslint-disable-next-line no-restricted-syntax`.
+    // This keeps the unrelated Loader2 + UnsavedChanges selectors active
+    // on the file (flat-config replacement would otherwise drop them).
     const selectors = await getRestrictedSyntaxSelectors('src/lib/siteSettingsDraft.ts');
     expect(
       selectors.some((s) => s.includes(SITE_SETTINGS_SELECTOR_FRAGMENT)),
-      'Site Settings Event Ownership selector should be excluded from src/lib/siteSettingsDraft.ts (the owning module). Check the rule\'s `ignores` block.',
-    ).toBe(false);
+      'Site Settings rule should be active on src/lib/siteSettingsDraft.ts; the dispatch sites suppress it with inline eslint-disable comments.',
+    ).toBe(true);
   });
 });
