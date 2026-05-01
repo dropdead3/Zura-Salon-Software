@@ -103,6 +103,14 @@ interface MediaUploadInputProps {
    * resolution health dot (green ≥2400, amber ≥1200, red <1200).
    */
   meta?: MediaUploadMeta | null;
+  /**
+   * When true, renders a small `DRAFT` chip on the preview tile to signal
+   * that the parent site_settings key has unpublished changes. Operators
+   * use this to find what's queued for publish without opening the
+   * publish-changes dialog. Wire from `useIsKeyDirty(<setting_key>)` at
+   * the editor level — the input itself stays presentation-only.
+   */
+  isDirtyDraft?: boolean;
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
