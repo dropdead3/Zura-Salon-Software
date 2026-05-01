@@ -341,7 +341,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full hover:bg-foreground/90 hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.primaryButtonClass,
+                    )}
+                    style={heroColors.primaryButtonStyle}
                   >
                     <span className="relative z-10">I am a new client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
@@ -354,7 +358,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
-                    className="group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6"
+                    className={cn(
+                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                      heroColors.secondaryButtonClass,
+                    )}
+                    style={heroColors.secondaryButtonStyle}
                   >
                     <span className="relative z-10">I am a returning client</span>
                     <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
