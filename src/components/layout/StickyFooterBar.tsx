@@ -13,7 +13,8 @@ export function StickyFooterBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const routeLocation = useLocation();
   const isBookingPage = routeLocation.pathname === "/booking";
-  const { data: locations = [] } = useActiveLocations();
+  const { data: allLocations = [] } = useActiveLocations();
+  const locations = allLocations.filter((l) => !!l.phone);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
