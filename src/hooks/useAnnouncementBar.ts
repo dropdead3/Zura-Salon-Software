@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
-import { useIsEditorPreview } from './useIsEditorPreview';
+import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 export interface AnnouncementBarSettings {
@@ -27,8 +27,7 @@ const DEFAULT_SETTINGS: AnnouncementBarSettings = {
 
 export function useAnnouncementBarSettings(explicitOrgId?: string) {
   const orgId = useSettingsOrgId(explicitOrgId);
-  const isPreview = useIsEditorPreview();
-  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
+  const mode: 'live' | 'draft' = useIsDraftReader() ? 'draft' : 'live';
 
   return useQuery({
     queryKey: ['site-settings', orgId, 'announcement_bar', mode],
