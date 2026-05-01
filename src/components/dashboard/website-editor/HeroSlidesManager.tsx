@@ -315,7 +315,15 @@ export function HeroSlidesManager({ config, onChange }: HeroSlidesManagerProps) 
             <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
                 {slides.map((s, i) => (
-                  <SlideRow key={s.id} slide={s} index={i} onUpdate={updateSlide} onDelete={deleteSlide} />
+                  <SlideRow
+                    key={s.id}
+                    slide={s}
+                    index={i}
+                    onUpdate={updateSlide}
+                    onDelete={deleteSlide}
+                    sectionScrimStyle={config.scrim_style}
+                    sectionScrimStrength={config.scrim_strength}
+                  />
                 ))}
               </div>
             </SortableContext>
