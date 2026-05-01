@@ -228,13 +228,30 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   {isPreview ? (
                     <InlineEditableText
                       as="span"
+                      className="whitespace-nowrap block"
                       value={slide.headline_text}
                       sectionKey="section_hero"
                       fieldPath={`slides.${activeIndex}.headline_text`}
                       placeholder="Headline"
                     />
                   ) : (
-                    slide.headline_text
+                    <span className="whitespace-nowrap block">{slide.headline_text}</span>
+                  )}
+                  {showRotatingWords && (
+                    <span className="block overflow-hidden h-[1.15em]">
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={rotatingWords[wordIndex]}
+                          className="block"
+                          initial={{ y: '100%', opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: '-100%', opacity: 0 }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          {rotatingWords[wordIndex]}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>
                   )}
                 </h1>
 
@@ -273,36 +290,45 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   </p>
                 )}
 
-                <div className={cn("mt-10 flex flex-col sm:flex-row items-center gap-3", alignment.cta, alignment.ctaRow)}>
-                  <button
-                    onClick={() => {
-                      if (slide.cta_new_client_url) {
-                        window.location.href = slide.cta_new_client_url;
-                      } else {
-                        setConsultationOpen(true);
-                      }
-                    }}
-                    className={cn(
-                      "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
-                      heroColors.primaryButtonClass,
-                    )}
-                    style={heroColors.primaryButtonStyle}
-                  >
-                    <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
-                    <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                  </button>
-                  {slide.show_secondary_button && (
-                    <Link
-                      to={slide.cta_returning_client_url || '/booking'}
+                <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
+                  <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
+                    <button
+                      onClick={() => {
+                        if (slide.cta_new_client_url) {
+                          window.location.href = slide.cta_new_client_url;
+                        } else {
+                          setConsultationOpen(true);
+                        }
+                      }}
                       className={cn(
-                        "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
-                        heroColors.secondaryButtonClass,
+                        "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                        heroColors.primaryButtonClass,
                       )}
-                      style={heroColors.secondaryButtonStyle}
+                      style={heroColors.primaryButtonStyle}
                     >
-                      <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
+                      <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
                       <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                    </Link>
+                    </button>
+                    {slide.show_secondary_button && (
+                      <Link
+                        to={slide.cta_returning_client_url || '/booking'}
+                        className={cn(
+                          "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
+                          heroColors.secondaryButtonClass,
+                        )}
+                        style={heroColors.secondaryButtonStyle}
+                      >
+                        <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
+                        <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
+                      </Link>
+                    )}
+                  </div>
+                  {config.show_consultation_notes && (config.consultation_note_line1 || config.consultation_note_line2) && (
+                    <HeroNotes
+                      alignment={alignment}
+                      line1={config.consultation_note_line1 ?? ''}
+                      line2={config.consultation_note_line2 ?? ''}
+                    />
                   )}
                 </div>
               </motion.div>
