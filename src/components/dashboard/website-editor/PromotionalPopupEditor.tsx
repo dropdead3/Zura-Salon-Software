@@ -377,19 +377,37 @@ export function PromotionalPopupEditor() {
   );
 
   const persist = useCallback(async () => {
+    const t = telemetryRef.current;
+    t.event('save-clicked', {
+      headline: formDataRef.current.headline,
+      enabled: formDataRef.current.enabled,
+      appearance: formDataRef.current.appearance,
+    });
     try {
       await enqueueWrite(
         () => formDataRef.current,
-        () => {
+        (next) => {
+          t.event('mutation-success', { headline: next.headline, enabled: next.enabled });
           toast.success('Promotional popup saved');
           // Mirror the auto-save toggle's behavior: nudge the live preview
           // iframe to reflect the just-saved draft without a manual reload.
           triggerPreviewRefresh();
+          // Snapshot the form state immediately after save so the trace
+          // shows whether anything mutated between save and the next render.
+          t.event('form-snapshot', {
+            headline: formDataRef.current.headline,
+            enabled: formDataRef.current.enabled,
+          });
         },
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown error';
+      t.event('mutation-error', { message: msg });
       toast.error(`Failed to save: ${msg}`);
+    } finally {
+      // Defer flush so the post-save refetch checkpoint (above effect) lands
+      // in the same grouped log instead of a separate one.
+      setTimeout(() => t.flush(), 250);
     }
   }, [enqueueWrite]);
 
