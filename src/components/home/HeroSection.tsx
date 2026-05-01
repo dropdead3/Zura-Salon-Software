@@ -10,6 +10,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
+import { HeroNotes } from "@/components/home/HeroNotes";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
 import { cn } from "@/lib/utils";
@@ -190,10 +191,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                     I am a returning client
                   </Link>
                 </div>
-                <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.notes)}>
-                  <p>New clients begin with a $15 consultation</p>
-                  <p>Returning clients are free to book their known services</p>
-                </div>
+                <HeroNotes
+                  alignment={alignment}
+                  line1="New clients begin with a $15 consultation"
+                  line2="Returning clients are free to book their known services"
+                />
               </div>
             </div>
           </div>
@@ -357,6 +359,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
+                    // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.primaryButtonClass,
@@ -374,6 +377,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
+                    // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.secondaryButtonClass,
@@ -385,17 +389,16 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   </Link>
                 </motion.div>
               </div>
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 5.1 }}
-                className={cn(
-                  "flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans",
-                  alignment.notes,
-                )}
               >
-                <p>New clients begin with a $15 consultation</p>
-                <p>Returning clients are free to book their known services</p>
+                <HeroNotes
+                  alignment={alignment}
+                  line1="New clients begin with a $15 consultation"
+                  line2="Returning clients are free to book their known services"
+                />
               </motion.div>
             </motion.div>
           </div>

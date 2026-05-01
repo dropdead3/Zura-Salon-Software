@@ -187,6 +187,81 @@ export default tseslint.config(
     },
   },
   {
+    // Hero Alignment Canon — hero-files-only override.
+    // ──────────────────────────────────────────────────────────────────
+    // The `items-(center|start|end)` ban is too noisy as a global rule
+    // (thousands of legitimate flex-layout call sites across the app).
+    // Scoping it to hero files via a dedicated block keeps the canon
+    // enforced at exactly the surfaces that consume `resolveHeroAlignment`.
+    //
+    // FLAT-CONFIG REPLACEMENT WARNING:
+    //   This block defines `no-restricted-syntax`. ESLint flat config
+    //   REPLACES (does not merge) rule options when two blocks both
+    //   match a file. To avoid silently dropping the consolidated block's
+    //   selectors on hero files, we re-include all 5 consolidated
+    //   selectors verbatim below and add the hero-specific 6th.
+    //
+    //   The meta-test `src/test/lint-config-resolution.test.ts` asserts
+    //   that ALL 6 selectors survive in the resolved config for a
+    //   representative hero file. If you add a new selector to the
+    //   consolidated block, you MUST also add it here AND extend the
+    //   meta-test, or hero files will silently lose coverage.
+    //
+    // Override: `// eslint-disable-next-line no-restricted-syntax
+    // -- <reason>` for the rare cross-axis-only `items-center` that
+    // genuinely doesn't relate to hero content alignment.
+    files: [
+      "src/components/home/Hero*.{ts,tsx}",
+      "src/components/home/HeroSection.tsx",
+      "src/components/home/HeroSlideRotator.tsx",
+      "src/components/home/HeroNotes.tsx",
+      "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
+      // Lint fixtures live outside the real hero tree; include them
+      // explicitly so the smoke test (which uses `ignore: false`) sees
+      // the rule applied. Top-level `ignores` keeps `npm run lint`
+      // from picking these up.
+      "src/test/lint-fixtures/hero-alignment-*.tsx",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        // Re-included consolidated selectors (see eslint.config.js block above).
+        // If any of these drift from the consolidated source of truth, the
+        // canon is silently broken for hero files. Tracked via the meta-test.
+        {
+          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates.",
+        },
+        {
+          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
+          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern.",
+        },
+        {
+          selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
+          message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts.",
+        },
+        {
+          selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
+          message: "Brittle dirty-state check: JSON.stringify is key-order sensitive. Use `useDirtyState` or `isStructurallyEqual`.",
+        },
+        {
+          selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
+          message: "Use the canonical hero overlay labels: 'Image Wash' and 'Text-area Scrim'.",
+        },
+        // Hero-specific: ban hardcoded items-center|start|end inside cn()
+        // calls that don't reference `alignment.*`. Routes horizontal
+        // placement through resolveHeroAlignment.
+        //
+        // Pairs with: src/test/lint-rule-hero-alignment.test.ts and the
+        // Vitest at src/components/home/HeroNotes.test.tsx.
+        {
+          selector: "CallExpression[callee.name='cn']:has(Literal[value=/(^| )items-(center|start|end)( |$)/]):not(:has(MemberExpression[object.name='alignment']))",
+          message: "Hero files must route horizontal placement through `alignment.notes` / `alignment.cta` / `alignment.ctaRow` / `alignment.headline` (from resolveHeroAlignment). Hardcoded `items-center|start|end` inside `cn()` was the root cause of the May 2026 hero-notes alignment regression — the literal silently overrode the operator's content_alignment choice.",
+        },
+      ],
+    },
+  },
+  {
     // Platform-primitive isolation gate. Banning raw shadcn primitives in
     // the platform layer prevents org-theme tokens (--primary, --background,
     // --muted, etc.) from bleeding into platform admin surfaces. Every
