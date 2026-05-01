@@ -119,6 +119,7 @@ export default tseslint.config(
       "src/components/home/HeroSection.tsx",
       "src/components/home/HeroSlideRotator.tsx",
       "src/components/home/HeroNotes.tsx",
+      "src/components/home/HeroScrollIndicator.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
       // Lint fixtures live outside the real hero tree; include them
       // explicitly so the smoke tests (which use `ignore: false`) see
@@ -126,6 +127,7 @@ export default tseslint.config(
       // from picking these up.
       "src/test/lint-fixtures/hero-alignment-*.tsx",
       "src/test/lint-fixtures/hero-notes-*.tsx",
+      "src/test/lint-fixtures/hero-scroll-indicator-*.tsx",
     ],
     extraSelectors: [
       {
@@ -151,6 +153,29 @@ export default tseslint.config(
         // Pairs with: src/test/lint-rule-hero-notes-shared.test.ts
         selector: "JSXElement[openingElement.name.name='p']:has(MemberExpression[property.name=/^consultation_note_line[12]$/])",
         message: "Inline `<p>{config.consultation_note_lineN}</p>` JSX is forbidden in hero files. Import and render <HeroNotes config={config} contentAlignment={...} /> from @/components/home/HeroNotes — it is the canonical owner of consultation-note rendering, alignment routing, and preview-vs-live parity. Inline siblings re-introduce the May 2026 alignment drift.",
+      },
+      {
+        // Hero scroll-indicator parity canon: ban inline <motion.button> in
+        // hero files outside HeroScrollIndicator.tsx itself. The May 2026
+        // bug shipped because the slide rotator never rendered a scroll
+        // affordance at all — a future hero variant (parallax hero,
+        // seasonal hero) could re-introduce the same drift by hand-rolling
+        // its own scroll cue with motion.button instead of importing the
+        // shared component. This rule blocks that at authoring time.
+        //
+        // Why motion.button (not aria-label match): esquery cannot match
+        // strings inside JSXExpressionContainer template literals reliably,
+        // and no other hero file uses `motion.button` for any purpose.
+        // Banning the construct keeps the canonical-owner pattern simple
+        // and matches the HeroNotes precedent.
+        //
+        // Override: `// eslint-disable-next-line no-restricted-syntax
+        // -- <reason>` only inside HeroScrollIndicator.tsx (the canonical
+        // owner). Every other hero file imports it.
+        //
+        // Pairs with: src/test/lint-rule-hero-scroll-indicator.test.ts
+        selector: "JSXOpeningElement[name.type='JSXMemberExpression'][name.object.name='motion'][name.property.name='button']",
+        message: "Inline `<motion.button>` JSX is forbidden in hero files. Import and render <HeroScrollIndicator show={...} text={...} onMedia={...} /> from @/components/home/HeroScrollIndicator — it is the canonical owner of the scroll affordance and guarantees preview-vs-live parity. Hand-rolled scroll cues caused the May 2026 missing-indicator regression in the slide rotator.",
       },
     ],
   }),
