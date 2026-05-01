@@ -961,6 +961,20 @@ export function PromotionalPopupEditor() {
                   })}
                 </div>
               </div>
+              <FocalPointPicker
+                imageUrl={formData.imageUrl}
+                x={formData.imageFocalX ?? 50}
+                y={formData.imageFocalY ?? 50}
+                onChange={(x, y) => {
+                  handleChange('imageFocalX', x);
+                  handleChange('imageFocalY', y);
+                }}
+                onReset={() => {
+                  handleChange('imageFocalX', 50);
+                  handleChange('imageFocalY', 50);
+                }}
+                helper="Click or drag to anchor the most important area — it stays in view across modal, side-rail, and corner-card layouts."
+              />
               <div>
                 <Label className="text-xs">Alt text</Label>
                 <Input
