@@ -90,6 +90,24 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.background_poster_url;
   }, [slide, config.background_poster_url]);
 
+  const focalX = useMemo(() => {
+    const sectionFx = config.background_focal_x ?? 50;
+    if (!slide) return sectionFx;
+    return slide.background_focal_x ?? sectionFx;
+  }, [slide, config.background_focal_x]);
+
+  const focalY = useMemo(() => {
+    const sectionFy = config.background_focal_y ?? 50;
+    if (!slide) return sectionFy;
+    return slide.background_focal_y ?? sectionFy;
+  }, [slide, config.background_focal_y]);
+
+  const overlayMode = useMemo<'darken' | 'lighten'>(() => {
+    const sectionMode = config.overlay_mode ?? 'darken';
+    if (!slide) return sectionMode;
+    return slide.overlay_mode ?? sectionMode;
+  }, [slide, config.overlay_mode]);
+
   if (!slide) return null;
 
   const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
@@ -127,9 +145,9 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             url={bgUrl}
             posterUrl={bgPoster}
             fit={config.background_fit}
-            focalX={config.background_focal_x ?? 50}
-            focalY={config.background_focal_y ?? 50}
-            overlayMode={config.overlay_mode ?? 'darken'}
+            focalX={focalX}
+            focalY={focalY}
+            overlayMode={overlayMode}
             overlayOpacity={overlay}
             scrimStyle={scrimStyle}
             scrimStrength={scrimStrength}
