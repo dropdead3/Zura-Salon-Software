@@ -234,6 +234,21 @@ function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, section
             )}
           </div>
 
+          {/* Per-slide scrim style override — falls back to section-level
+              when null. Critical for video slides whose luminance flickers. */}
+          <div className="space-y-2 pt-3 border-t border-border/30">
+            <HeroScrimEditor
+              scrimStyle={slide.scrim_style ?? null}
+              scrimStrength={slide.scrim_strength ?? null}
+              inheritedStyle={sectionScrimStyle ?? 'gradient-bottom'}
+              inheritedStrength={sectionScrimStrength ?? 0.55}
+              allowInherit
+              onChange={(patch) => onUpdate(slide.id, patch as Partial<HeroSlide>)}
+              title="Slide Scrim"
+              description="Override the section scrim for this slide. Useful when one video flashes brighter than others."
+            />
+          </div>
+
           {/* Per-slide text/button color overrides — empty fields inherit
               from the section-level Text & Buttons panel. */}
           <div className="space-y-2 pt-3 border-t border-border/30">
