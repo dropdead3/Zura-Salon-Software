@@ -265,6 +265,7 @@ export function MediaUploadInput({
             height: dims?.height ?? null,
             sizeBytes: uploadBlob.size,
             format: uploadContentType,
+            optimizedWithProfile: qualityProfile,
           },
         });
         toast.success(`Image uploaded${crunchNote}`);
