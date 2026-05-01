@@ -19,6 +19,7 @@ import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
+import { HeroNotes } from './HeroNotes';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
