@@ -11,13 +11,18 @@
  * have already gone over the wire.
  */
 
-export const IMAGE_SIZE_HARD_MB = 10;
-export const IMAGE_SIZE_WARN_MB = 5;
+// 40MB is roughly the safe ceiling for `createImageBitmap` + canvas decode
+// on mid-tier mobile. Anything over this risks tab crashes — and we still
+// want a definite cap so the auto-crunch path doesn't try to decode a 200MB
+// scanner TIFF. The previous 10MB cap was the source of upload friction:
+// raw phone shots routinely exceed it. Auto-crunch now handles those quietly
+// before this validator runs.
+export const IMAGE_SIZE_HARD_MB = 40;
 export const VIDEO_SIZE_HARD_MB = 50;
 export const VIDEO_SIZE_WARN_MB = 25;
 
 export const IMAGE_RECOMMENDED_HINT =
-  `Recommended: 1200×800 or larger · JPG, PNG, WebP, GIF · under ${IMAGE_SIZE_HARD_MB}MB`;
+  `JPG, PNG, WebP, GIF · we'll auto-compress large files`;
 
 export const VIDEO_RECOMMENDED_HINT =
   `Video: MP4 or WebM · 1080p · under ${VIDEO_SIZE_HARD_MB}MB`;
