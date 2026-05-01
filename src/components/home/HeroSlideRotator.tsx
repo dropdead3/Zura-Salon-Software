@@ -422,7 +422,6 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           </div>
         </div>
       </div>
-      </div>
 
       {/* Pagination + arrows */}
       {slides.length > 1 && (
