@@ -115,4 +115,28 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       `Dirty-State Compare selector missing from resolved config for src/App.tsx.\nResolved selectors:\n${selectors.join('\n')}`,
     ).toBe(true);
   });
+
+  it('keeps the Hero Alignment Canon selector on a hero file (hero-scoped block)', async () => {
+    // The hero-scoped config block defines its own `no-restricted-syntax`,
+    // which under flat-config replacement semantics REPLACES the consolidated
+    // block's array. The hero block re-includes all 5 consolidated selectors
+    // verbatim PLUS the hero-specific 6th. This test asserts every doctrine
+    // selector survives on a representative hero file.
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/components/home/HeroSection.tsx',
+    );
+    const fragments = [
+      ['Hero Alignment Canon (items-* in cn without alignment.*)', HERO_ALIGNMENT_SELECTOR_FRAGMENT],
+      ['Loader2 governance', LOADER2_SELECTOR_FRAGMENT],
+      ['UnsavedChangesDialog', UNSAVED_CHANGES_SELECTOR_FRAGMENT],
+      ['Site Settings Event Ownership', SITE_SETTINGS_SELECTOR_FRAGMENT],
+      ['Dirty-State Compare', DIRTY_STATE_SELECTOR_FRAGMENT],
+    ] as const;
+    for (const [label, fragment] of fragments) {
+      expect(
+        selectors.some((s) => s.includes(fragment)),
+        `${label} selector missing from resolved config for src/components/home/HeroSection.tsx (hero-scoped block dropped a consolidated selector).\nResolved selectors:\n${selectors.join('\n')}`,
+      ).toBe(true);
+    }
+  });
 });
