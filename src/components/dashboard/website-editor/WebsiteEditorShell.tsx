@@ -1679,9 +1679,11 @@ function SaveStatusPill({
     icon = <Loader2 className="h-3 w-3 animate-spin" />;
     tone = 'text-muted-foreground bg-muted/60';
   } else if (isDirty) {
-    label = 'Unsaved changes';
-    icon = <Circle className="h-2 w-2 fill-warning text-warning" />;
-    tone = 'text-warning bg-warning/15';
+    // Dirty state is owned by the floating bottom-right toast
+    // (UnsavedChangesToast) so the operator sees it while scrolling
+    // through long editor panels. Inline pill stays silent here to
+    // avoid double-signaling.
+    return null;
   } else if (lastSavedAt) {
     label = `Draft saved ${formatRelative(lastSavedAt)}`;
     icon = <Check className="h-3 w-3 text-success-foreground" />;
@@ -1698,6 +1700,52 @@ function SaveStatusPill({
       {icon}
       {label}
     </span>
+  );
+}
+
+// ─── Unsaved changes floating toast ───
+// Persists in the bottom-right of the editor surface for the entire
+// duration the active editor is dirty. Auto-dismisses the moment Save
+// or Discard succeeds (isDirty flips false). Includes inline Discard +
+// Save shortcuts so the operator can resolve the state without
+// scrolling back to the header.
+function UnsavedChangesToast({
+  isDirty,
+  isSaving,
+  onDiscard,
+  onSave,
+}: {
+  isDirty: boolean;
+  isSaving: boolean;
+  onDiscard: () => void;
+  onSave: () => void;
+}) {
+  if (!isDirty) return null;
+  return (
+    <div
+      className="pointer-events-auto fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full border border-warning/30 bg-card/95 pl-4 pr-1.5 py-1.5 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 duration-200"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="flex items-center gap-2 text-[12px] font-medium text-warning">
+        <Circle className="h-2 w-2 fill-warning text-warning" />
+        Unsaved changes
+      </span>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 rounded-full text-muted-foreground hover:text-foreground"
+          onClick={onDiscard}
+          disabled={isSaving}
+          title="Discard unsaved changes in this section"
+        >
+          <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+          Discard
+        </Button>
+        <DirtyActionButton isDirty={isDirty} isSaving={isSaving} onClick={onSave} />
+      </div>
+    </div>
   );
 }
 
