@@ -12,7 +12,15 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
   const isPreview = useIsEditorPreview();
-  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
+  // The dashboard editor surface itself (e.g. /dashboard/admin/website-hub)
+  // is NOT inside a `?preview=true` iframe, so `useIsEditorPreview` returns
+  // false there. Without this fallback the editor would read LIVE values
+  // while operators edit DRAFT — the upload preview tile would go blank
+  // immediately after save because live `value` is still empty until publish.
+  // Anchor: the dashboard mounts under `/dashboard` (and `/org/:slug/dashboard`).
+  const isDashboardEditor =
+    typeof window !== 'undefined' && window.location.pathname.includes('/dashboard');
+  const mode: 'live' | 'draft' = isPreview || isDashboardEditor ? 'draft' : 'live';
 
   const query = useQuery({
     // Cache key includes mode so the editor iframe and public visitor never
