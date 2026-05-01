@@ -564,6 +564,7 @@ export function HeroEditor() {
             index={idx}
             section={localConfig}
             onUpdate={(patch) => updateSlide(view.id, patch)}
+            onUpdateSection={updateField}
           />
         );
       })()}
