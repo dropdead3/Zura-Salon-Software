@@ -197,7 +197,15 @@ export default {
         "dirty-pulse": {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(var(--warning) / 0.35)" },
           "50%": { boxShadow: "0 0 0 6px hsl(var(--warning) / 0)" },
+        "backdrop-blur-in-md": {
+          "0%": { backdropFilter: "blur(0px) saturate(100%)", WebkitBackdropFilter: "blur(0px) saturate(100%)" },
+          "100%": { backdropFilter: "blur(12px) saturate(120%)", WebkitBackdropFilter: "blur(12px) saturate(120%)" },
         },
+        "backdrop-blur-in-2xl": {
+          "0%": { backdropFilter: "blur(0px) saturate(100%)", WebkitBackdropFilter: "blur(0px) saturate(100%)" },
+          "100%": { backdropFilter: "blur(40px) saturate(150%)", WebkitBackdropFilter: "blur(40px) saturate(150%)" },
+        },
+      },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
