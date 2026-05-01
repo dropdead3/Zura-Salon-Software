@@ -563,6 +563,9 @@ export function HeroEditor() {
         <HeroRotatorEditor config={localConfig} onChange={updateField} />
       )}
 
+      {view.kind === 'global' && view.id === 'shared_content' && (
+        <HeroSharedContentEditor config={localConfig} onChange={updateField} />
+      )}
 
       {view.kind === 'global' && view.id === 'advanced' && (
         <HeroAdvancedEditor config={localConfig} onChange={updateField} />
@@ -583,6 +586,7 @@ export function HeroEditor() {
             slide={slides[idx]}
             index={idx}
             section={localConfig}
+            rotatorMode={rotatorMode}
             onUpdate={(patch) => updateSlide(view.id, patch)}
             onUpdateSection={updateField}
           />
