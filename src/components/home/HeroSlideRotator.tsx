@@ -21,6 +21,7 @@ import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from '@/lib/heroSpacing'
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
+import { HERO_OVERLAY_ANCHORS } from './heroOverlayAnchors';
 import { HeroNotes } from './HeroNotes';
 import { HeroRotatingWord } from './HeroRotatingWord';
 
@@ -339,7 +340,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
       {/* Pagination + arrows */}
       {slides.length > 1 && (
-        <div className="absolute bottom-8 inset-x-0 z-20 flex items-center justify-center gap-6">
+        <div className={`${HERO_OVERLAY_ANCHORS.bottomLeft} flex items-center gap-6`}>
           <button
             onClick={() => goTo(activeIndex - 1)}
             aria-label="Previous slide"
