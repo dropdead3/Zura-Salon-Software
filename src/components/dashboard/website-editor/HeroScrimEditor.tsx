@@ -76,8 +76,8 @@ export function HeroScrimEditor({
   inheritedStrength = 0.55,
   onChange,
   allowInherit = false,
-  title = 'Background Scrim',
-  description = 'Keeps text readable when a video flashes between bright and dark frames.',
+  title = 'Text-area Scrim',
+  description = 'Editorial gradient/vignette layered on top of the Image Wash to keep text readable in the headline region.',
 }: HeroScrimEditorProps) {
   const isInheriting = allowInherit && (scrimStyle == null || scrimStrength == null);
   // Effective values used for display/preview when slide is inheriting.
