@@ -54,6 +54,7 @@ const GLOBAL_ELEMENTS = [
   { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide top banner', icon: Megaphone },
   { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
   { tab: 'footer', label: 'Footer', description: 'Footer links & copyright', icon: PanelBottom },
+  { tab: 'sticky-footer', label: 'Sticky Footer', description: 'Floating CTA bar above the fold', icon: PanelBottom },
 ];
 
 // Content Managers (data sources used by sections)
