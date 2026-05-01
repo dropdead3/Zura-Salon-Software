@@ -101,14 +101,15 @@ export function MediaUploadInput({
   imageOnly = false,
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadFile = useCallback(async (file: File) => {
     const isVideo = file.type.startsWith('video/');
-    const isImage = file.type.startsWith('image/');
+    const isImageInitial = file.type.startsWith('image/');
 
-    if (!isImage && !isVideo) {
+    if (!isImageInitial && !isVideo) {
       toast.error('Pick an image (JPG/PNG/WebP/GIF) or video (MP4/WebM)');
       return;
     }
@@ -117,19 +118,41 @@ export function MediaUploadInput({
       return;
     }
 
+    setIsUploading(true);
+    setStatusLabel(isVideo ? 'Uploading...' : 'Preparing image...');
+
+    // Stage 0 — auto-crunch (images only). Runs BEFORE validation so raw
+    // phone shots (12–30MB+) don't trip the size cap. Auto-crunch never
+    // throws; on failure we fall through with the original file and let
+    // the validator surface a real error.
+    let workingFile = file;
+    let crunchNote = '';
+    if (isImageInitial) {
+      const crunched = await autoCrunchImage(file);
+      workingFile = crunched.file;
+      if (crunched.didCrunch) {
+        crunchNote = ` · compressed ${formatFileSize(crunched.originalSizeBytes)} → ${formatFileSize(crunched.finalSizeBytes)}`;
+      }
+    }
+
+    const isImage = workingFile.type.startsWith('image/');
+
     // Stage 1 — pre-flight validation. Identical rules to ImageUploadInput.
-    const guard = isVideo ? validateVideoFile(file) : validateImageFile(file);
+    const guard = isVideo ? validateVideoFile(workingFile) : validateImageFile(workingFile);
     if (guard.ok === false) {
       toast.error(guard.message);
+      setIsUploading(false);
       return;
     }
 
-    // Soft-warn for "large but legal" files so operators know page loads
-    // will suffer.
-    const warning = isVideo ? getVideoSizeWarning(file) : getImageSizeWarning(file);
-    if (warning) toast.warning(warning);
+    // Soft-warn for "large but legal" videos so operators know page loads
+    // will suffer. (Images: auto-crunch already handled it.)
+    if (isVideo) {
+      const warning = getVideoSizeWarning(workingFile);
+      if (warning) toast.warning(warning);
+    }
 
-    setIsUploading(true);
+    setStatusLabel('Uploading...');
     let stage: 'auth' | 'decode' | 'upload' = 'auth';
     try {
       // Pre-flight auth check. Storage RLS requires `auth.role() =
@@ -144,7 +167,7 @@ export function MediaUploadInput({
       }
       stage = 'decode';
       if (isImage) {
-        const { blob } = await optimizeImage(file, {
+        const { blob } = await optimizeImage(workingFile, {
           maxWidth: 1920,
           maxHeight: 1200,
           quality: 0.85,
@@ -161,7 +184,7 @@ export function MediaUploadInput({
         // can't serve a stale cached object under the same path on re-upload.
         const bustedUrl = `${urlData.publicUrl}?t=${Date.now()}`;
         onChange({ url: bustedUrl, posterUrl: '', kind: 'image' });
-        toast.success('Image uploaded');
+        toast.success(`Image uploaded${crunchNote}`);
       } else {
         // Video: upload original + capture+upload poster frame.
         stage = 'upload';
