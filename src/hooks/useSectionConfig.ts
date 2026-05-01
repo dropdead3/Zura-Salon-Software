@@ -142,6 +142,12 @@ export interface HeroSlide {
    * `null` / undefined = inherit the section-level `content_alignment`.
    */
   content_alignment?: 'left' | 'center' | 'right' | null;
+  /**
+   * Whether the slide is included in the public rotator. `false` hides it
+   * from the live site without deleting (operator can re-enable). Default
+   * is `true` — `null`/`undefined` is treated as active for legacy slides.
+   */
+  active?: boolean | null;
 }
 
 export interface HeroConfig {

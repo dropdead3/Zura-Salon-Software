@@ -217,6 +217,7 @@ function SortableSlideRow({
   section,
   onClick,
   onDelete,
+  onToggleActive,
 }: {
   slide: HeroSlide;
   index: number;
@@ -224,6 +225,7 @@ function SortableSlideRow({
   section: HeroConfig;
   onClick: () => void;
   onDelete: () => void;
+  onToggleActive: (next: boolean) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
@@ -238,6 +240,7 @@ function SortableSlideRow({
         sectionBgType={section.background_type}
         onClick={onClick}
         onDelete={onDelete}
+        onToggleActive={onToggleActive}
         dragHandleProps={{ ...attributes, ...listeners }}
       />
     </div>
@@ -421,6 +424,7 @@ export function HeroEditor() {
                         section={localConfig}
                         onClick={() => setView({ kind: 'slide', id: s.id })}
                         onDelete={() => deleteSlide(s.id)}
+                        onToggleActive={(next) => updateSlide(s.id, { active: next })}
                       />
                     ))}
                   </div>
