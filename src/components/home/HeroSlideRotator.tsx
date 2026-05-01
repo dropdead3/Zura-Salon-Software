@@ -206,14 +206,23 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
   const mutedTone = heroColors.subheadlineClass || '';
   // Per-slide alignment + width override the section default; null/undefined inherits.
+  const effectiveAlignment = slide.content_alignment ?? config.content_alignment ?? 'center';
   const alignment = resolveHeroAlignmentWithWidth(
-    slide.content_alignment ?? config.content_alignment,
+    effectiveAlignment,
     slide.content_width ?? config.content_width,
   );
   // Container-aware spacing — see HeroSection for full rationale.
   const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
   const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
   const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
+
+  // Publish the active alignment for global overlays (e.g. promo FAB) to
+  // shift out of the way when right-aligned content would crowd them.
+  // Cleared on unmount so non-public-site routes don't carry stale state.
+  useEffect(() => {
+    publishHeroAlignment(effectiveAlignment);
+    return () => clearHeroAlignment();
+  }, [effectiveAlignment]);
 
   // Stable foreground min-height: when slides change alignment (left → right),
   // the outgoing slide fades out at its anchor and the incoming slide fades
