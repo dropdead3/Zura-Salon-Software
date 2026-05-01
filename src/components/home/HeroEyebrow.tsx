@@ -80,11 +80,10 @@ export function HeroEyebrow({
   }
 
   return (
-    <Eyebrow
-      data-hero-eyebrow
-      className={cn('section-eyebrow', toneClass, className)}
-    >
-      {text}
-    </Eyebrow>
+    <span data-hero-eyebrow>
+      <Eyebrow className={cn('section-eyebrow', toneClass, className)}>
+        {text}
+      </Eyebrow>
+    </span>
   );
 }
