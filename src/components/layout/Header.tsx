@@ -356,7 +356,7 @@ export function Header() {
           "sticky top-0 left-0 right-0 z-50 px-4 md:px-6 lg:px-8",
           "transition-[padding,transform,opacity] duration-300 ease-out will-change-transform",
           isScrolledDesktop ? "pt-3 md:pt-4 lg:pt-5" : "pt-2",
-          isScrolled && !isScrollingUp ? "-translate-y-[120%] opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
+          isScrolled && !isScrollingUp && !isHoverNearTop ? "-translate-y-[120%] opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
         )}
       >
         <motion.div
