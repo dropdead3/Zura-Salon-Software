@@ -48,8 +48,16 @@ export function HeroBackground({
   scrimStyle,
   scrimStrength,
   overlayMode = 'darken',
+  mediaWidth,
 }: HeroBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Build responsive srcSet for Supabase-hosted images. Returns null for
+  // external URLs / blob: previews — caller falls back to plain `src`.
+  const srcSet = useMemo(
+    () => (type === 'image' ? buildSupabaseSrcSet(url, HERO_SRCSET_WIDTHS, mediaWidth ?? null) : null),
+    [type, url, mediaWidth],
+  );
 
   // Force a load() when the source URL changes so swapped videos restart cleanly.
   useEffect(() => {
