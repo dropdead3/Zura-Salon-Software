@@ -737,6 +737,8 @@ export function WebsiteEditorSidebar({
                     deletable={section.deletable}
                     onDelete={() => setPageDeleteTarget(section)}
                     onDuplicate={() => onPageSectionDuplicate?.(section)}
+                    onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
+                    onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
                   />
                 ))}
               </SortableContext>
