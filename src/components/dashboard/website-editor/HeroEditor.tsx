@@ -8,7 +8,6 @@ import {
   Palette,
   Layers,
   Settings2,
-  Type,
   AlignJustify,
   Plus,
 } from 'lucide-react';
