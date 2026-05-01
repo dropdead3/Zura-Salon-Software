@@ -133,6 +133,11 @@ export interface HeroSlide {
    * surface). `null` / absent = unknown legacy upload.
    */
   media_optimized_with_profile?: 'standard' | 'hero' | null;
+  /**
+   * Per-slide horizontal alignment override for headline/subheadline/CTAs.
+   * `null` / undefined = inherit the section-level `content_alignment`.
+   */
+  content_alignment?: 'left' | 'center' | 'right' | null;
 }
 
 export interface HeroConfig {
