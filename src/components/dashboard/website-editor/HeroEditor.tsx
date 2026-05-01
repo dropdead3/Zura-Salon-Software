@@ -21,6 +21,7 @@ import { useHeroConfig, type HeroConfig, type HeroSlide, DEFAULT_HERO } from '@/
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
@@ -409,36 +410,52 @@ export function HeroEditor() {
               : 'Each slide owns its own background and copy. Layout settings below apply to every slide.'}
           </p>
 
-          {/* Rotator mode picker — surfaced at the top so the architectural choice is one click away. */}
+          {/* Rotator mode picker — segmented control style, compact and visual. */}
           <div className="space-y-2 pt-2">
             <h3 className="font-display text-[11px] tracking-wider text-muted-foreground uppercase">
               Rotator Mode
             </h3>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="flex p-1 gap-1 rounded-full border border-border/60 bg-muted/30">
               {([
-                { id: 'multi_slide' as const, label: 'Multi-Slide', desc: 'Each slide has its own copy & buttons.' },
-                { id: 'background_only' as const, label: 'Background-Only', desc: 'One shared content, rotating backgrounds.' },
-              ]).map(({ id, label, desc }) => {
+                {
+                  id: 'multi_slide' as const,
+                  label: 'Multi-Slide',
+                  hint: 'Per-slide copy',
+                  icon: Layers,
+                },
+                {
+                  id: 'background_only' as const,
+                  label: 'Background-Only',
+                  hint: 'Shared copy',
+                  icon: ImageIcon,
+                },
+              ]).map(({ id, label, hint, icon: Icon }) => {
                 const active = rotatorMode === id;
                 return (
                   <button
                     key={id}
                     type="button"
                     onClick={() => updateField('rotator_mode', id)}
-                    className={`px-3 py-2 rounded-xl text-left border transition-colors ${
+                    title={hint}
+                    aria-pressed={active}
+                    className={cn(
+                      'flex-1 inline-flex items-center justify-center gap-2 px-3 h-9 rounded-full text-[12px] font-sans font-medium transition-all',
                       active
-                        ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
-                    }`}
+                        ? 'bg-foreground text-background shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-background/60',
+                    )}
                   >
-                    <div className="text-[12px] font-sans font-medium">{label}</div>
-                    <div className={`text-[10px] mt-0.5 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
-                      {desc}
-                    </div>
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{label}</span>
                   </button>
                 );
               })}
             </div>
+            <p className="text-[10px] text-muted-foreground pl-1">
+              {rotatorMode === 'background_only'
+                ? 'One shared headline & buttons. Only backgrounds rotate.'
+                : 'Each slide has its own headline, copy & buttons.'}
+            </p>
           </div>
 
           {/* SLIDES group */}
