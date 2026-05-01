@@ -433,7 +433,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       <div
         role="dialog"
         aria-labelledby="promo-popup-title"
-        className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md animate-in slide-in-from-top-2"
+        className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
