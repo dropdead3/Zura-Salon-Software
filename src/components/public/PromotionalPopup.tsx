@@ -202,7 +202,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const fire = () => {
       if (triggeredRef.current) return;
       triggeredRef.current = true;
-      setPopupPhase('entering');
+      popupLifecycle.reset();
       setOpen(true);
     };
 
