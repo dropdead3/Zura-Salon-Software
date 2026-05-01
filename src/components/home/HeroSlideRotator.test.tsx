@@ -23,7 +23,7 @@ import { DEFAULT_HERO, type HeroConfig, type HeroSlide } from '@/hooks/useSectio
 function makeSlide(overrides: Partial<HeroSlide> = {}): HeroSlide {
   return {
     id: 'slide-test-1',
-    background_type: 'none',
+    background_type: 'inherit',
     background_url: '',
     background_poster_url: '',
     overlay_opacity: null,
