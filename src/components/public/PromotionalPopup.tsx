@@ -144,18 +144,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
-  // Three-phase visual lifecycle for the popup root:
-  //   'entering' → slide-in animation (replayable via animationNonce)
-  //   'visible'  → static, awaiting timer / interaction
-  //   'closing'  → slide-out toward the FAB position; on animationend we
-  //                flip to FAB and unmount the popup. Without this phase
-  //                the popup hard-cuts on close and the lifecycle preview
-  //                reads as broken to operators.
-  const [popupPhase, setPopupPhase] = useState<'entering' | 'visible' | 'closing'>('entering');
-  // Captures which exit handler should fire after the close animation
-  // completes (soft-close = surface FAB; accept = no FAB). Decouples the
-  // animation contract from the dismissal semantics.
-  const pendingExitRef = useRef<null | 'soft' | 'decline' | 'accept'>(null);
+  // Three-phase visual lifecycle for the popup root (entering → visible →
+  // closing). The `closing` phase keeps the popup mounted so its CSS exit
+  // animation plays before unmount; `onAnimationEnd` then flips `open` and
+  // surfaces the FAB. Without this the popup hard-cuts to the FAB and the
+  // lifecycle preview reads as broken to operators. See `usePresenceLifecycle`.
+  const popupLifecycle = usePresenceLifecycle<'soft' | 'decline' | 'accept'>({
+    onExit: (reason) => {
+      setOpen(false);
+      // Accept = offer claimed → no FAB re-prompt. Soft + decline both
+      // surface the FAB so the visitor can re-open during the session.
+      setShowFab(reason !== 'accept');
+    },
+  });
+  const popupPhase = popupLifecycle.phase;
   // Editor-driven reset replays the CSS slide-in by bumping the React `key`
   // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
   // fires on first paint, so without a fresh mount the popup snaps into
