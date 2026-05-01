@@ -3151,6 +3151,38 @@ html.dark.theme-orchid {
 }
 
 /* ============================================================
+   PUBLIC-SITE THEME AMPLIFIER
+   The mesh gradients above paint to body::before, which on the
+   public site gets covered by Layout's `bg-secondary` outer
+   container + `bg-background` main. The result: theme switches
+   only repaint CTAs/links/borders, leaving the dominant page
+   surface visually identical across themes.
+
+   This rule injects a per-theme gradient tint *behind* the main
+   content surface, scoped to the public Layout via [data-public-site].
+   It uses the active theme's --primary token so every theme paints
+   a recognizable tint without needing 12 separate gradient stops.
+
+   Opacity is conservative (~6%) — enough to make a Marine vs Sage
+   vs Cream Lux switch register at a glance, not enough to fight the
+   foreground content. Light mode only; dark themes already register
+   distinctly via their darker --background.
+   ============================================================ */
+[data-public-site]:not(.dark)::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(at 20% 15%, hsl(var(--primary) / 0.10) 0px, transparent 55%),
+    radial-gradient(at 80% 85%, hsl(var(--primary) / 0.08) 0px, transparent 55%),
+    radial-gradient(at 85% 20%, hsl(var(--accent) / 0.18) 0px, transparent 50%);
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+/* ============================================================
    Input shape canon — autofill normalization + pill geometry
    Browsers (Chrome/Safari) repaint autofilled inputs with their
    own background and a sharp-cornered fill, which visually breaks
