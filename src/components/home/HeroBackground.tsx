@@ -57,7 +57,9 @@ export function HeroBackground({
   const strength = Math.max(0, Math.min(1, strengthRaw));
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden">
+    // `-bottom-1.5` (6px bleed) prevents subpixel gaps where the next section's
+    // background would otherwise show through at the hero's bottom edge.
+    <div className="absolute inset-x-0 top-0 -bottom-1.5 z-0 overflow-hidden">
       {type === 'video' ? (
         <video
           ref={videoRef}
