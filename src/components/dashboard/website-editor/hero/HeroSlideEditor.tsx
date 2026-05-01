@@ -223,6 +223,7 @@ export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSecti
               overlayOpacity={resolvedOverlayOpacity}
               scrimStyle={resolvedScrimStyle}
               scrimStrength={resolvedScrimStrength}
+              inherited={slide.background_type === 'inherit'}
             />
           </div>
         )}
