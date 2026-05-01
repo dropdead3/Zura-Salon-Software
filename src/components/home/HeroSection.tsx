@@ -192,7 +192,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   return (
     <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative flex flex-col overflow-hidden min-h-screen">
       {/* Operator-configured background (image or video) */}
-      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} />
+      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
 
       {/* Legacy explicit videoSrc prop (back-compat) */}
       {!hasMediaBackground && videoSrc && (
