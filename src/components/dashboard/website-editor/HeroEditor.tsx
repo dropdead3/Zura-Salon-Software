@@ -364,15 +364,28 @@ export function HeroEditor() {
     });
   };
 
+  const rotatorMode = localConfig.rotator_mode ?? 'multi_slide';
+  const sharedContentSummary = (() => {
+    const h = (localConfig.headline_text ?? '').trim();
+    return h ? `“${h.length > 32 ? h.slice(0, 30) + '…' : h}”` : 'No shared headline yet';
+  })();
+
   const globalCards = useMemo(
-    () => [
-      { id: 'alignment' as const, title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
-      { id: 'colors' as const, title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
-      { id: 'scrim' as const, title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
-      { id: 'rotator' as const, title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
-      { id: 'advanced' as const, title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
-    ],
-    [localConfig],
+    () => {
+      const cards: Array<{ id: GlobalView; title: string; icon: typeof AlignJustify; summary: string }> = [];
+      if (rotatorMode === 'background_only') {
+        cards.push({ id: 'shared_content', title: 'Shared Hero Content', icon: ImageIcon, summary: sharedContentSummary });
+      }
+      cards.push(
+        { id: 'alignment', title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
+        { id: 'colors', title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
+        { id: 'scrim', title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
+        { id: 'rotator', title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
+        { id: 'advanced', title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
+      );
+      return cards;
+    },
+    [localConfig, rotatorMode, sharedContentSummary],
   );
 
   if (isLoading) {
