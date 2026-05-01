@@ -532,6 +532,47 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       ? 'side'
       : 'top';
   const modalWide = modalImageMode === 'side';
+  // Editorial header band: subtle accent wash behind the eyebrow + close.
+  // Provides depth without overpowering the operator's brand color.
+  const HeaderBand = (
+    <div
+      className="relative flex items-center justify-between gap-3 px-6 sm:px-8 py-4 border-b"
+      style={{
+        backgroundColor: `color-mix(in srgb, ${accent} 6%, transparent)`,
+        borderBottomColor: `color-mix(in srgb, ${accent} 20%, transparent)`,
+      }}
+    >
+      {cfg.eyebrow ? (() => {
+        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
+        return (
+          <div className="flex items-center gap-2.5 min-w-0">
+            {Icon && (
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-md shrink-0"
+                style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
+              >
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+            )}
+            <p
+              className="font-display uppercase tracking-[0.2em] text-[11px] truncate"
+              style={{ color: accent }}
+            >
+              {cfg.eyebrow}
+            </p>
+          </div>
+        );
+      })() : <span />}
+      <button
+        onClick={handleSoftClose}
+        aria-label="Close"
+        className="shrink-0 text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-foreground/5 transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
@@ -544,20 +585,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-modal="true"
         aria-labelledby="promo-popup-title"
         className={cn(
-          'relative w-full rounded-2xl bg-card border border-border shadow-2xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          'relative w-full rounded-2xl bg-gradient-to-b from-card to-card/95 border border-border motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out overflow-hidden',
+          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.18),0_8px_16px_-4px_rgba(0,0,0,0.08)]',
           modalWide ? 'max-w-2xl' : 'max-w-md',
         )}
-        style={{ borderTopColor: accent, borderTopWidth: 4 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <button
-          onClick={handleSoftClose}
-          aria-label="Close"
-          className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground p-1 rounded-full bg-card/60 backdrop-blur"
-        >
-          <X className="h-4 w-4" />
-        </button>
         {modalWide ? (
           <div className="grid grid-cols-[200px_1fr]">
             <div className="bg-muted">
@@ -567,14 +601,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="p-6 sm:p-8">
-              <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
+            <div className="flex flex-col">
+              {HeaderBand}
+              <div className="p-6 sm:p-8">
+                <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
+              </div>
             </div>
           </div>
         ) : (
-          <div className="p-6 sm:p-8">
-            <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} />
-          </div>
+          <>
+            {HeaderBand}
+            <div className="p-6 sm:p-8">
+              <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
+            </div>
+          </>
         )}
         {autoMinimizeSeconds !== null && (
           <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
