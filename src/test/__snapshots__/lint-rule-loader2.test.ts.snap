@@ -2,10 +2,34 @@
 
 exports[`no-restricted-syntax: Loader2 ban > selector config matches snapshot (regression guard) 1`] = `
 [
-  1,
+  2,
   {
     "message": "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add \`// eslint-disable-next-line no-restricted-syntax\` with a one-line reason.",
     "selector": "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+  },
+  {
+    "message": "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
+    "selector": "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
+  },
+  {
+    "message": "The \`site-settings-draft-write\` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
+    "selector": "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
+  },
+  {
+    "message": "The \`promo-popup-preview-reset\` event is owned exclusively by src/lib/promoPopupPreviewReset.ts. Use \`dispatchPromoPopupPreviewReset()\` from that module instead of inlining a CustomEvent — the helper centralizes the payload shape and lets the editor stay in lockstep with the popup listener.",
+    "selector": "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-reset'])",
+  },
+  {
+    "message": "The \`promo-popup-preview-state\` event is owned exclusively by src/lib/promoPopupPreviewReset.ts (the popup is the sole dispatcher; the editor is the sole consumer). Use \`dispatchPromoPopupPreviewState(phase)\` from that module — inlining a CustomEvent breaks the typed phase union and the last-phase replay cache.",
+    "selector": "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-state'])",
+  },
+  {
+    "message": "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use \`useDirtyState(local, server)\` from @/hooks/useDirtyState (preferred for editors) or \`isStructurallyEqual\` from @/lib/stableStringify.",
+    "selector": "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
+  },
+  {
+    "message": "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
+    "selector": "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
   },
 ]
 `;
