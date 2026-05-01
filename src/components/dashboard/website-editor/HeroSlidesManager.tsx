@@ -62,9 +62,12 @@ interface SlideRowProps {
   index: number;
   onUpdate: (id: string, patch: Partial<HeroSlide>) => void;
   onDelete: (id: string) => void;
+  /** Section-level scrim defaults; surfaced as the "inherit" preview values. */
+  sectionScrimStyle?: HeroConfig['scrim_style'];
+  sectionScrimStrength?: HeroConfig['scrim_strength'];
 }
 
-function SlideRow({ slide, index, onUpdate, onDelete }: SlideRowProps) {
+function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, sectionScrimStrength }: SlideRowProps) {
   const [open, setOpen] = useState(index === 0);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
