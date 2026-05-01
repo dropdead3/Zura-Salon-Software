@@ -524,26 +524,19 @@ export function PromotionalPopupEditor() {
   // Phase-aware copy. Higher cognitive fit than a static label —
   // operators QA'ing the FAB transition see what the next click will do
   // without having to remember which phase they're in.
-  const restartButtonCopy = useMemo<{ label: string; title: string }>(() => {
-    switch (popupPhase) {
-      case 'open':
-        return {
-          label: 'Restart popup preview',
-          title: 'Reset the countdown and re-open the popup from the top',
-        };
-      case 'fab':
-        return {
-          label: 'Reopen from FAB',
-          title: 'Re-run the full open → countdown → FAB lifecycle in the preview',
-        };
-      case 'idle':
-      default:
-        return {
-          label: 'Trigger popup',
-          title: 'Open the popup in the preview to QA the lifecycle',
-        };
-    }
-  }, [popupPhase]);
+  // Single canonical label regardless of phase. Each click restarts the
+  // full lifecycle: slide-up → countdown → close-into-FAB. Phase-aware
+  // copy was removed — operators told us the consistent label is clearer
+  // because the action it performs is always the same (replay the cycle).
+  const restartButtonCopy = useMemo<{ label: string; title: string }>(
+    () => ({
+      label: 'Preview Popup Offer',
+      title: 'Replay the full lifecycle: slide up → countdown → close into FAB',
+    }),
+    [],
+  );
+  // popupPhase is still tracked for the dismissal-count recount trigger below.
+  void popupPhase;
 
   // Count of per-org dismissal records currently in localStorage. Surfaced
   // in the restart button's tooltip so operators understand the side-effect
