@@ -83,6 +83,6 @@ describe('HeroBackground overlay layering', () => {
       overlayMode: 'lighten',
     });
     const wash = container.querySelector('[data-hero-overlay="wash"]')!;
-    expect(wash.getAttribute('style') ?? '').toMatch(/rgba\(255,\s*255,\s*255,/);
+    expect(wash.outerHTML).toMatch(/rgba\(255,\s*255,\s*255,/);
   });
 });
