@@ -640,6 +640,8 @@ export function WebsiteEditorSidebar({
                             onSelect={() => onTabChange(getSectionTab(section))}
                             onToggle={(enabled) => handleToggleSection(section.id, enabled)}
                             onDuplicate={() => handleDuplicateSection(section)}
+                            onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
+                            onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
                           />
                         ))}
                     </div>
