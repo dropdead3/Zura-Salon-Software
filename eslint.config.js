@@ -216,6 +216,11 @@ export default tseslint.config(
       "src/components/home/HeroSlideRotator.tsx",
       "src/components/home/HeroNotes.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
+      // Lint fixtures live outside the real hero tree; include them
+      // explicitly so the smoke test (which uses `ignore: false`) sees
+      // the rule applied. Top-level `ignores` keeps `npm run lint`
+      // from picking these up.
+      "src/test/lint-fixtures/hero-alignment-*.tsx",
     ],
     rules: {
       "no-restricted-syntax": [
