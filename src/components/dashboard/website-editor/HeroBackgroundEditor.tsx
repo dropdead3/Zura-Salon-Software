@@ -93,6 +93,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
                 height: config.media_height,
                 sizeBytes: config.media_size_bytes,
                 format: config.media_format,
+                optimizedWithProfile: config.media_optimized_with_profile,
               }
             : null
         }
@@ -108,6 +109,9 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
             media_height: meta?.height ?? (url ? config.media_height ?? null : null),
             media_size_bytes: meta?.sizeBytes ?? (url ? config.media_size_bytes ?? null : null),
             media_format: meta?.format ?? (url ? config.media_format ?? null : null),
+            media_optimized_with_profile:
+              meta?.optimizedWithProfile ??
+              (url ? config.media_optimized_with_profile ?? null : null),
           });
           if (wasNewImage) suggestFocal(url);
         }}
