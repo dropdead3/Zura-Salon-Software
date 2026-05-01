@@ -122,6 +122,16 @@ export default tseslint.config(
       "src/test/**/*.test.{ts,tsx}",
     ],
     rules: {
+      // ⚠️  FLAT-CONFIG REPLACEMENT SEMANTICS  ⚠️
+      // This `no-restricted-syntax` REPLACES the earlier block's options
+      // for any file matched by both blocks (it does NOT merge). For
+      // most files this block matches, that's fine — the Loader2 rule
+      // also fires because most source files match the earlier block
+      // and the resolved config there keeps the Loader2 selector. But
+      // if you change this block's `files`/`ignores` and start matching
+      // a new path, you may silently drop the Loader2 rule on that path.
+      // The meta-test `src/test/lint-config-resolution.test.ts` asserts
+      // both doctrine selectors survive on representative files.
       "no-restricted-syntax": [
         "error",
         {
