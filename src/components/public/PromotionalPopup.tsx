@@ -414,6 +414,33 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
+  // Begin the visual close animation. The popup root keeps mounting until
+  // its `animationend` fires, at which point `finalizeClose()` flips
+  // `open=false` and (for soft/decline) surfaces the FAB. Side effects
+  // (dismissal writes, analytics, navigation) fire IMMEDIATELY — only the
+  // visual unmount waits for the animation. This is what gives operators
+  // the "popup animates closed into the FAB" lifecycle they expect.
+  function beginClose(reason: 'soft' | 'decline' | 'accept') {
+    // Idempotent: if we're already in `closing` and a second close fires
+    // (e.g. timer + Esc), keep the original reason — the animation is
+    // already in flight.
+    if (popupPhase === 'closing' && pendingExitRef.current) return;
+    pendingExitRef.current = reason;
+    setPopupPhase('closing');
+  }
+
+  // Called by each variant root's `onAnimationEnd` when the closing
+  // animation completes. Performs the actual unmount + FAB surfacing.
+  function finalizeClose() {
+    const reason = pendingExitRef.current;
+    pendingExitRef.current = null;
+    setOpen(false);
+    setPopupPhase('visible'); // reset for the next open cycle
+    // Accept never re-prompts (offer claimed). Soft + decline both
+    // surface the FAB so the visitor can re-open.
+    setShowFab(reason !== 'accept');
+  }
+
   function handleAccept() {
     const destination = cfg.acceptDestination ?? 'booking';
 
@@ -431,16 +458,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
               : `Visitor would see your custom instructions${cfg.customUrlInstructions ? `: "${cfg.customUrlInstructions}"` : '.'}`
             : `Visitor would be sent to /booking with ${codeLabel}.`;
       toast.success('Claim Offer (preview)', { description: simulated });
-      setOpen(false);
-      setShowFab(false);
+      beginClose('accept');
       return;
     }
 
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
     void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
-    setOpen(false);
-    setShowFab(false); // Offer claimed — no need for the re-entry FAB.
+    beginClose('accept');
 
     // Custom URL: open externally in a new tab. tel:/mailto: URLs trigger
     // the device handler. Operator-supplied — we only sanity-check the prefix.
@@ -468,12 +493,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
-    setOpen(false);
-    // Always surface the FAB — preview must mirror the real visitor
-    // lifecycle so operators can QA the "See Offer" affordance without
-    // leaving the editor. Real-visitor side effects (dismissal write,
+    // Animated close → FAB. Real-visitor side effects (dismissal write,
     // analytics) stay gated above.
-    setShowFab(true);
+    beginClose('decline');
   }
 
   function handleSoftClose() {
@@ -483,9 +505,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
-    setOpen(false);
-    setShowFab(true);
+    beginClose('soft');
   }
+
 
   function handleFabOpen() {
     setShowFab(false);
