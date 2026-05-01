@@ -257,7 +257,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
                   <p
-                    className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                    className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                     style={heroColors.subheadlineStyle}
                   >
                     {isPreview ? (
