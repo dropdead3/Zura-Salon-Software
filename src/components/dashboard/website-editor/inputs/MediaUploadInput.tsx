@@ -245,7 +245,20 @@ export function MediaUploadInput({
         // Cache-bust the public URL so the iframe (and any <img>/preloader)
         // can't serve a stale cached object under the same path on re-upload.
         const bustedUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-        onChange({ url: bustedUrl, posterUrl: '', kind: 'image' });
+        // Probe the actual uploaded blob for dimensions so the editor can show
+        // a "3200×2133 · WebP · 480 KB" caption + cap the public srcSet.
+        const dims = await probeBlobDimensions(uploadBlob);
+        onChange({
+          url: bustedUrl,
+          posterUrl: '',
+          kind: 'image',
+          meta: {
+            width: dims?.width ?? null,
+            height: dims?.height ?? null,
+            sizeBytes: uploadBlob.size,
+            format: uploadContentType,
+          },
+        });
         toast.success(`Image uploaded${crunchNote}`);
       } else {
         // Video: upload original + capture+upload poster frame.
