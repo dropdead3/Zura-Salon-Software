@@ -11,7 +11,7 @@ import { Image as ImageIcon, Layers, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { SliderInput } from './inputs/SliderInput';
-import { FocalPointPicker } from './inputs/FocalPointPicker';
+
 import { EditorCard } from './EditorCard';
 import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
 import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
