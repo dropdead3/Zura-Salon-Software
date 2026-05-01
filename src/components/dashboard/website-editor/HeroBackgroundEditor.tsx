@@ -206,7 +206,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
           </div>
 
           <SliderInput
-            label={overlayMode === 'lighten' ? 'Overlay Lightness' : 'Overlay Darkness'}
+            label={overlayMode === 'lighten' ? 'Image Wash (Lighten)' : 'Image Wash (Darken)'}
             value={config.overlay_opacity}
             onChange={(v) => onChange({ overlay_opacity: v })}
             min={0}
@@ -214,8 +214,8 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
             step={0.05}
             description={
               overlayMode === 'lighten'
-                ? 'Uniform white wash applied across the whole image — the Background Scrim layers on top.'
-                : 'Uniform black wash applied across the whole image — the Background Scrim layers on top.'
+                ? 'Uniform white wash applied across the whole image — the Text-area Scrim layers on top.'
+                : 'Uniform black wash applied across the whole image — the Text-area Scrim layers on top.'
             }
           />
 
