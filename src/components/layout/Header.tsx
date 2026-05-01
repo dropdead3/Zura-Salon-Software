@@ -284,10 +284,10 @@ export function Header() {
       {announcementSettings?.enabled && (
         <div 
           className={cn(
-            "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-md",
-            !announcementSettings.bg_color && "bg-secondary/85"
+            "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+            !announcementSettings.bg_color && "bg-secondary/95"
           )}
-          style={announcementSettings.bg_color ? { backgroundColor: `${announcementSettings.bg_color}D9` } : undefined}
+          style={announcementSettings.bg_color ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
         >
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
             <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
