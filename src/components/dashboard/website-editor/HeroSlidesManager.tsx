@@ -71,14 +71,51 @@ interface SlideRowProps {
   /** Section-level scrim defaults; surfaced as the "inherit" preview values. */
   sectionScrimStyle?: HeroConfig['scrim_style'];
   sectionScrimStrength?: HeroConfig['scrim_strength'];
+  /** Section-level background fields used to resolve "inherit" + show the live preview. */
+  sectionBgType: HeroConfig['background_type'];
+  sectionBgUrl: HeroConfig['background_url'];
+  sectionBgPoster: HeroConfig['background_poster_url'];
+  sectionBgFit: HeroConfig['background_fit'];
+  sectionFocalX: number;
+  sectionFocalY: number;
+  sectionOverlayMode: 'darken' | 'lighten';
+  sectionOverlayOpacity: number;
 }
 
-function SlideRow({ slide, index, onUpdate, onDelete, sectionScrimStyle, sectionScrimStrength }: SlideRowProps) {
+function SlideRow({
+  slide,
+  index,
+  onUpdate,
+  onDelete,
+  sectionScrimStyle,
+  sectionScrimStrength,
+  sectionBgType,
+  sectionBgUrl,
+  sectionBgPoster,
+  sectionBgFit,
+  sectionFocalX,
+  sectionFocalY,
+  sectionOverlayMode,
+  sectionOverlayOpacity,
+}: SlideRowProps) {
   const [open, setOpen] = useState(index === 0);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
   const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
+
+  // Resolve effective background for the slide (per-slide media or inherited from section).
+  const resolvedBgType = slide.background_type === 'inherit' ? sectionBgType : slide.background_type;
+  const resolvedBgUrl = slide.background_type === 'inherit' ? sectionBgUrl : slide.background_url;
+  const resolvedBgPoster = slide.background_type === 'inherit' ? sectionBgPoster : slide.background_poster_url;
+  const focalOverridden = slide.background_focal_x != null && slide.background_focal_y != null;
+  const resolvedFocalX = focalOverridden ? (slide.background_focal_x as number) : sectionFocalX;
+  const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
+  const resolvedOverlayMode: 'darken' | 'lighten' = slide.overlay_mode ?? sectionOverlayMode;
+  const resolvedOverlayOpacity = slide.overlay_opacity ?? sectionOverlayOpacity;
+  const resolvedScrimStyle = slide.scrim_style ?? sectionScrimStyle ?? 'gradient-bottom';
+  const resolvedScrimStrength = slide.scrim_strength ?? sectionScrimStrength ?? 0.55;
+  const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
 
   return (
     <div ref={setNodeRef} style={style} className="border border-border/50 rounded-lg bg-background overflow-hidden">
