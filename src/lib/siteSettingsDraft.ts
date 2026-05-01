@@ -20,6 +20,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { emitAmbientTelemetry } from './editor-telemetry';
 
 export interface SiteSettingRow {
   /** Live-published value. Public site reads this. */
