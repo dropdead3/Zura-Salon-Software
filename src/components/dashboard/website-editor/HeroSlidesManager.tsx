@@ -201,7 +201,7 @@ function SlideRow({
                         }
                       : null
                   }
-                  onChange={({ url, posterUrl, kind, meta }) => {
+                  onChange={({ url, posterUrl, kind, meta, analysisDataUrl }) => {
                     const wasNewImage =
                       kind === 'image' && url && url !== slide.background_url;
                     onUpdate(slide.id, {
@@ -219,7 +219,7 @@ function SlideRow({
                         meta?.optimizedWithProfile ??
                         (url ? slide.media_optimized_with_profile ?? null : null),
                     });
-                    if (wasNewImage) suggestFocal(url);
+                    if (wasNewImage) suggestFocal(url, { analysisDataUrl });
                   }}
                   pathPrefix="hero/slides"
                 />
