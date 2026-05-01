@@ -67,6 +67,13 @@ interface HeroScrimEditorProps {
   /** Optional title above the picker. */
   title?: string;
   description?: string;
+  /**
+   * Background media type — drives the unscrimmed-video advisory banner.
+   * Unscrimmed video is the most common cause of unreadable hero copy
+   * (white text on a frame that flashes white). When provided and bgType
+   * is 'video' with no active scrim, surface a one-click recommendation.
+   */
+  bgType?: 'none' | 'image' | 'video';
 }
 
 export function HeroScrimEditor({
@@ -78,6 +85,7 @@ export function HeroScrimEditor({
   allowInherit = false,
   title = 'Text-area Scrim',
   description = 'Editorial gradient/vignette layered on top of the Image Wash to keep text readable in the headline region.',
+  bgType,
 }: HeroScrimEditorProps) {
   const isInheriting = allowInherit && (scrimStyle == null || scrimStrength == null);
   // Effective values used for display/preview when slide is inheriting.
