@@ -24,8 +24,13 @@ export interface HeroAlignmentClasses {
   headline: string;
   /** Subheadline `<p>` margin/alignment helper (mx-auto vs ml-0/mr-0). */
   subheadline: string;
-  /** CTA row + below-button-notes container alignment. */
+  /** CTA column container alignment (vertical stack on mobile). */
   cta: string;
+  /**
+   * CTA row justify on `sm:` and up — full classes (no string concat) so
+   * Tailwind's JIT can statically extract them.
+   */
+  ctaRow: string;
 }
 
 const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
@@ -34,18 +39,21 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
     headline: 'items-start',
     subheadline: 'mr-auto ml-0 max-w-md',
     cta: 'items-start',
+    ctaRow: 'sm:justify-start',
   },
   center: {
     wrapper: 'max-w-4xl mx-auto text-center',
     headline: 'items-center',
     subheadline: 'mx-auto max-w-md',
     cta: 'items-center',
+    ctaRow: 'sm:justify-center',
   },
   right: {
     wrapper: 'max-w-4xl ml-auto text-right',
     headline: 'items-end',
     subheadline: 'ml-auto mr-0 max-w-md',
     cta: 'items-end',
+    ctaRow: 'sm:justify-end',
   },
 };
 
