@@ -87,6 +87,17 @@ export default function WebsiteHub() {
   const { dashPath } = useOrgDashboardPath();
   const { publicUrl, isUsingCustomDomain, customDomain } = useOrgPublicUrl();
   const [searchParams] = useSearchParams();
+  // HOOK ORDER CONTRACT — keep these status hooks above the editor/deep-link
+  // early returns below. Clicking the "Edit Website" card flips `tab=editor`
+  // on the same component instance; if hooks lived after that conditional
+  // return, React would see fewer hooks than the previous render and crash.
+  const { data: themes } = useWebsiteThemes();
+  const { data: activeThemeSetting } = useActiveTheme();
+  const { data: booking } = useWebsiteBookingSettings();
+  const { data: retail } = useWebsiteRetailSettings();
+  const { data: seo } = useWebsiteSeoLegalSettings();
+  const { data: social } = useWebsiteSocialLinksSettings();
+  const { hasChanges, totalChanges } = useChangelogSummary();
   const activeTab = searchParams.get('tab');
 
   // Immersive editor mode: hide dashboard sidebar, top bar, and page header so
@@ -119,16 +130,7 @@ export default function WebsiteHub() {
     );
   }
 
-  // ── Live status for cards ──
-  const { data: themes } = useWebsiteThemes();
-  const { data: activeThemeSetting } = useActiveTheme();
   const activeTheme = themes?.find((t) => t.id === (activeThemeSetting?.theme_id || 'cream_classic'));
-
-  const { data: booking } = useWebsiteBookingSettings();
-  const { data: retail } = useWebsiteRetailSettings();
-  const { data: seo } = useWebsiteSeoLegalSettings();
-  const { data: social } = useWebsiteSocialLinksSettings();
-  const { hasChanges, totalChanges } = useChangelogSummary();
 
   const sitePreviewUrl = publicUrl();
   const previewBadge = isUsingCustomDomain && customDomain ? customDomain : undefined;
