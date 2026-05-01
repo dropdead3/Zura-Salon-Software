@@ -248,17 +248,31 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         </motion.div>
       </AnimatePresence>
 
-      {/* Foreground content */}
+      {/* Foreground content
+       *
+       * Slides are absolutely stacked inside the alignment wrapper so that
+       * the outgoing and incoming slide occupy the same coordinate during the
+       * crossfade. Without this, `mode="wait"` would unmount the outgoing
+       * slide first, the parent flex cell would collapse, and the new slide
+       * would visibly "snap through center" as it remounted. See plan.md.
+       */}
       <div className="flex-1 flex items-center justify-center relative z-10 py-16">
         <div className="container mx-auto px-6 lg:px-12">
-          <div ref={contentWrapRef} className={alignment.wrapper}>
-            <AnimatePresence mode="wait">
+          <div ref={contentWrapRef} className={cn(alignment.wrapper, 'relative w-full')}>
+            <AnimatePresence mode="sync" initial={false}>
               <motion.div
                 key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                className={cn(
+                  // Stack slides on top of each other so they crossfade in place.
+                  // `fg-shared` (background-only mode) never re-keys, so the
+                  // absolute positioning is harmless — there's only ever one.
+                  'top-0 left-0 right-0',
+                  rotatorMode === 'background_only' ? 'relative' : 'absolute',
+                )}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.9, ease: [0.4, 0, 0.2, 1] }}
               >
                 <HeroEyebrow
                   show={!!slide.show_eyebrow}
