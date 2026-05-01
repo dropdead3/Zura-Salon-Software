@@ -144,7 +144,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 text={eyebrowText}
                 editable
                 fieldPath="eyebrow"
-                className="mb-8"
+                className="mb-4"
               />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
@@ -165,7 +165,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-10 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                  className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
@@ -173,7 +173,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className={cn("mt-10 flex flex-col gap-6", alignment.cta)}>
+              <div className={cn("mt-6 flex flex-col gap-4", alignment.cta)}>
                 <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
@@ -280,7 +280,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <HeroEyebrow show={true} text={eyebrowText} className="mb-8" />
+                <HeroEyebrow show={true} text={eyebrowText} className="mb-4" />
               </motion.div>
             )}
 
@@ -322,7 +322,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className={cn("mt-10 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
+                className={cn("mt-5 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                 style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
@@ -333,7 +333,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* CTAs */}
             <motion.div
-              className={cn("mt-10 flex flex-col gap-6", alignment.cta)}
+              className={cn("mt-6 flex flex-col gap-4", alignment.cta)}
               style={{ y: ctaY }}
             >
               <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
