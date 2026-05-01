@@ -35,7 +35,7 @@ interface HeroSlideEditorProps {
  * collapsed "Advanced overrides" section — present for power users but
  * never the first thing operators see.
  */
-export function HeroSlideEditor({ slide, index, section, onUpdate }: HeroSlideEditorProps) {
+export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSection }: HeroSlideEditorProps) {
   const [overridesOpen, setOverridesOpen] = useState(false);
 
   const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
