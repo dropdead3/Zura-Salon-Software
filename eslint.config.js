@@ -39,52 +39,13 @@ export default tseslint.config(
       // usage in adapter/edge boundaries while still surfacing it for
       // future cleanup. Was the dominant error source (4104 of 4322).
       "@typescript-eslint/no-explicit-any": "warn",
-      // ⚠️  FLAT-CONFIG REPLACEMENT SEMANTICS  ⚠️
-      // `no-restricted-syntax` is defined in MULTIPLE config blocks below
-      // (this one, plus the Site Settings Event Ownership block). When
-      // two flat-config objects both match a file and both set the same
-      // rule, ESLint REPLACES — it does NOT merge the options arrays.
-      // The later block wins entirely. If you add a new selector here
-      // and it stops firing on a file matched by another block, the
-      // other block silently dropped this rule's options. The meta-test
-      // `src/test/lint-config-resolution.test.ts` guards against this
-      // by asserting both doctrine selectors survive in the resolved
-      // config for representative source files.
-      //
-      // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
-      // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
-      // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>, or
-      // any component whose name ends in `Button` / `IconButton`.
-      // TODO(wave-2): promote severity from 'warn' to 'error' once the
-      // Wave 2 Loader2 sweep clears existing leaks (~150 call sites).
-      // Trigger: `grep -rn 'Loader2' src/` returns only button-context hits.
-      // Tracked in mem://architecture/visibility-contracts.md Deferral Register.
-      "no-restricted-syntax": [
-        "warn",
-        {
-          // Flag <Loader2 /> usages NOT nested inside a Button-like ancestor.
-          // The two `:not(... descendant ...)` clauses exclude Loader2 elements
-          // that appear inside <button>, <Button>, or any <*Button> JSX.
-          // Note: do NOT add `:not(:has(JSXElement))` — esquery's `:has()`
-          // walks the whole subtree and false-negatives self-closing Loader2.
-          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
-          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
-        },
-        {
-          // UnsavedChangesDialog canon — ban ad-hoc "Unsaved changes" titles
-          // inside AlertDialogTitle. Once the canonical <UnsavedChangesDialog />
-          // exists (src/components/ui/unsaved-changes-dialog.tsx), forking it
-          // ad-hoc means future copy/UX tweaks leave call sites diverged.
-          // Aligns with Canon Pattern (mem://architecture/canon-pattern).
-          //
-          // Override: if you genuinely need a custom navigate-away dialog
-          // (e.g. with extra fields), add `// eslint-disable-next-line
-          // no-restricted-syntax -- <reason>` and document why the canonical
-          // component doesn't fit.
-          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
-          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
-        },
-      ],
+      // NOTE: `no-restricted-syntax` is intentionally NOT defined here.
+      // It lives consolidated in the Site Settings Event Ownership block
+      // below as a single source of truth for ALL restricted-syntax
+      // doctrines (Loader2, UnsavedChanges, Site Settings event). Adding
+      // a `no-restricted-syntax` entry here would be silently overridden
+      // by that block via flat-config replacement semantics, dropping
+      // any selectors you add. See the consolidated block for the canon.
     },
   },
   {
