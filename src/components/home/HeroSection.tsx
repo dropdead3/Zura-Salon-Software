@@ -131,11 +131,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 </p>
               )}
               <h1
-                className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+                className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
                 // (set on the SectionStyleWrapper); defaults to 1 so existing
                 // sections see no change. Section-level "H" chip cycles Sm→XL.
-                style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+                style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
               >
                 <InlineEditableText
                   as="span"
@@ -148,7 +148,10 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
               {hasSubheadlineContent && (
-                <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+                <p
+                  className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                  style={heroColors.subheadlineStyle}
+                >
                   {subheadlineLine1}
                   {subheadlineLine1 && subheadlineLine2 && <br />}
                   {subheadlineLine2}
@@ -158,13 +161,15 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className="w-full sm:w-auto px-8 py-4 text-base font-sans font-normal bg-foreground text-background rounded-full"
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
+                    style={heroColors.primaryButtonStyle}
                   >
                     I am a new client
                   </button>
                   <Link
                     to="/booking"
-                    className="w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border border-foreground text-foreground rounded-full"
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass)}
+                    style={heroColors.secondaryButtonStyle}
                   >
                     I am a returning client
                   </Link>
