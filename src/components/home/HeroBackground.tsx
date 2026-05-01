@@ -57,9 +57,10 @@ export function HeroBackground({
   const strength = Math.max(0, Math.min(1, strengthRaw));
 
   return (
-    // `-bottom-1.5` (6px bleed) prevents subpixel gaps where the next section's
-    // background would otherwise show through at the hero's bottom edge.
-    <div className="absolute inset-x-0 top-0 -bottom-1.5 z-0 overflow-hidden">
+    // Extra bottom bleed helps when the site is rendered inside a scaled iframe
+    // in the editor preview, where subpixel compositing can reveal the next
+    // section by a pixel or two at the hero boundary.
+    <div className="absolute inset-x-0 top-0 -bottom-3 z-0 overflow-hidden">
       {type === 'video' ? (
         <video
           ref={videoRef}
