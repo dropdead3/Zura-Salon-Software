@@ -309,7 +309,7 @@ export function MediaUploadInput({
           {isUploading ? (
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Uploading...</span>
+              <span className="text-xs text-muted-foreground">{statusLabel}</span>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
