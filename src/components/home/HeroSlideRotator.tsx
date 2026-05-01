@@ -11,7 +11,6 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
-import { Eyebrow } from '@/components/ui/Eyebrow';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
