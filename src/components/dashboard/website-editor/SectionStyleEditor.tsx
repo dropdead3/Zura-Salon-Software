@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
+import { SectionBackgroundColorPicker } from './inputs/SectionBackgroundColorPicker';
 
 interface SectionStyleEditorProps {
   value: Partial<StyleOverrides>;
@@ -46,28 +47,23 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
       </div>
 
       {/* Background Value */}
-      {merged.background_type !== 'none' && (
+      {merged.background_type === 'color' && (
+        // Per-section background picker: theme tokens + brand presets +
+        // custom hex with an explicit "None" affordance. Mirrors the
+        // Promo Popup accent pattern so operators get a consistent
+        // chip-row vocabulary across every editor surface.
+        <SectionBackgroundColorPicker
+          value={merged.background_value}
+          onChange={(v) => update('background_value', v)}
+          label="Background Color"
+        />
+      )}
+      {merged.background_type !== 'none' && merged.background_type !== 'color' && (
         <div className="space-y-2">
           <Label className="text-xs">
-            {merged.background_type === 'color' ? 'Color' :
-             merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL'}
+            {merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL'}
           </Label>
-          {merged.background_type === 'color' ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={merged.background_value || '#000000'}
-                onChange={e => update('background_value', e.target.value)}
-                className="h-8 w-10 rounded border cursor-pointer"
-              />
-              <Input
-                value={merged.background_value}
-                onChange={e => update('background_value', e.target.value)}
-                placeholder="#000000"
-                className="h-8 text-xs flex-1"
-              />
-            </div>
-          ) : merged.background_type === 'image' ? (
+          {merged.background_type === 'image' ? (
             <ImageUploadInput
               value={merged.background_value}
               onChange={v => update('background_value', v)}
