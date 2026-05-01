@@ -227,6 +227,16 @@ function SlideRow({ slide, index, onUpdate, onDelete }: SlideRowProps) {
               />
             )}
           </div>
+
+          {/* Per-slide text/button color overrides — empty fields inherit
+              from the section-level Text & Buttons panel. */}
+          <div className="space-y-2 pt-3 border-t border-border/30">
+            <HeroTextColorsEditor
+              value={slide.text_colors}
+              onChange={(next) => onUpdate(slide.id, { text_colors: next })}
+              compact
+            />
+          </div>
         </CollapsibleContent>
       </Collapsible>
     </div>
