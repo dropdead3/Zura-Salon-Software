@@ -10,6 +10,7 @@ import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -51,7 +52,7 @@ export function SectionDisplayEditor<T extends object>({
 }: SectionDisplayEditorProps<T>) {
   const __saveTelemetry = useSaveTelemetry(`section-display-editor:${title}`);
   const [localConfig, setLocalConfig] = useState<T>(data);
-  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  const isDirty = !isStructurallyEqual(localConfig, data);
   useEditorDirtyState(isDirty);
 
   useEffect(() => {

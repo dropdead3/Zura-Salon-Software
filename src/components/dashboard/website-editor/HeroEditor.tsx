@@ -19,6 +19,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
@@ -31,7 +32,10 @@ export function HeroEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
-  const isDirty = JSON.stringify(localConfig) !== JSON.stringify(data);
+  // Use stable (key-sorted) structural compare. Naive `JSON.stringify` would
+  // diff on key insertion order alone, leaving "Unsaved changes" stuck on
+  // forever after save. See `src/lib/stableStringify.ts`.
+  const isDirty = !isStructurallyEqual(localConfig, data);
   useEditorDirtyState(isDirty);
 
   // Live-edit bridge: stream in-memory edits into the preview iframe so the
