@@ -328,8 +328,10 @@ export function Header() {
                   !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
                   // Subtle top-down gradient scrim improves readability over photographic backgrounds
                   overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
-                  // Warm cream overlay — sits above the glass to add a soft champagne tint
-                  "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
+                  // Warm cream overlay — sits above the glass to add a soft champagne tint.
+                  // Only apply when an explicit bg_color is set; over hero media it
+                  // washes out the dark scrim and hurts white-text contrast.
+                  hasExplicitBg && "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
                   "[&>*]:relative [&>*]:z-[1]",
                 )}
                 style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
