@@ -10,6 +10,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
+import { HeroNotes } from "@/components/home/HeroNotes";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
 import { cn } from "@/lib/utils";
@@ -190,10 +191,11 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                     I am a returning client
                   </Link>
                 </div>
-                <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.notes)}>
-                  <p>New clients begin with a $15 consultation</p>
-                  <p>Returning clients are free to book their known services</p>
-                </div>
+                <HeroNotes
+                  alignment={alignment}
+                  line1="New clients begin with a $15 consultation"
+                  line2="Returning clients are free to book their known services"
+                />
               </div>
             </div>
           </div>
