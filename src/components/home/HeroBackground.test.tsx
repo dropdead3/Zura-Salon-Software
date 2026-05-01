@@ -41,10 +41,12 @@ describe('HeroBackground overlay layering', () => {
 
     expect(wash).not.toBeNull();
     expect(scrim).not.toBeNull();
-    // Wash must be a flat rgba, not a gradient — that's the whole point.
-    expect((wash as HTMLElement).style.background).toMatch(/^rgba\(0,\s*0,\s*0,/);
-    // Scrim must carry the gradient shape.
-    expect((scrim as HTMLElement).style.background).toMatch(/linear-gradient/);
+    // jsdom drops gradient values from CSSStyleDeclaration.background, so
+    // assert against the raw inline style attribute the React render emitted.
+    const washStyle = wash!.getAttribute('style') ?? '';
+    const scrimStyle = scrim!.getAttribute('style') ?? '';
+    expect(washStyle).toMatch(/rgba\(0,\s*0,\s*0,/);
+    expect(scrimStyle).toMatch(/linear-gradient/);
   });
 
   it('omits the wash layer when overlayOpacity is 0', () => {
