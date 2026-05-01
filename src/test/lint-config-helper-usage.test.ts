@@ -2,7 +2,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { parse } from '@typescript-eslint/typescript-estree';
 
 /**
  * Authoring-time meta-test: every file-scoped `no-restricted-syntax` and
@@ -14,16 +13,22 @@ import { parse } from '@typescript-eslint/typescript-estree';
  *   `PLATFORM_PRIMITIVE_PATHS` with scope-specific entries. If a future
  *   author bypasses the helpers and writes a raw
  *     `{ files: [...], rules: { "no-restricted-syntax": ["error", ...] } }`
- *   block, flat-config replacement semantics will silently drop every
- *   entry from the consolidated array on files matched by both blocks —
- *   the same footgun that motivated the helpers in the first place.
+ *   block in eslint.config.js, flat-config replacement semantics will
+ *   silently drop every entry from the consolidated array on files
+ *   matched by both blocks — the same footgun the helpers exist to prevent.
  *
- *   This test scans the AST of eslint.config.js and asserts that any
- *   object literal containing a `"no-restricted-syntax"` or
- *   `"no-restricted-imports"` property key lives directly inside a
- *   `defineScopedDoctrine(...)` / `defineScopedImportDoctrine(...)`
- *   call (specifically: inside the helper function body itself, which
- *   is the only place those raw keys are permitted).
+ *   The helpers themselves (eslint.helpers.js) are the ONLY permitted
+ *   sites for raw-rule literals, because that's where the helpers BUILD
+ *   the consolidated rule arrays.
+ *
+ * Implementation:
+ *   We scan eslint.config.js for `"no-restricted-syntax":` /
+ *   `"no-restricted-imports":` literal patterns. A regex scan is
+ *   sufficient and has zero parser dependencies — the footgun is
+ *   syntactically obvious (you can't write a flat-config rule block
+ *   without the literal key string), and false positives would only
+ *   happen if someone embeds those strings in a comment or message,
+ *   which is detected and ignored via comment stripping.
  *
  * If this test fails:
  *   1. The flagged location is a raw rule definition that bypasses the
@@ -31,65 +36,63 @@ import { parse } from '@typescript-eslint/typescript-estree';
  *      or `defineScopedImportDoctrine({ files, extraPaths })`.
  *   2. Do NOT add an exception list — that re-opens the shadowing
  *      footgun the helpers exist to prevent.
+ *   3. If you have a TRULY exceptional reason to author a raw block,
+ *      add the rule literal to a comment-suppressed region (the test
+ *      strips comments before scanning) AND document why in
+ *      mem://architecture/preview-live-parity-pattern.md.
  */
 
-const RESTRICTED_RULE_KEYS = new Set([
-  'no-restricted-syntax',
-  'no-restricted-imports',
-]);
-
-function getKeyName(prop: any): string | null {
-  if (!prop || prop.type !== 'Property') return null;
-  if (prop.key?.type === 'Literal' && typeof prop.key.value === 'string') return prop.key.value;
-  if (prop.key?.type === 'Identifier') return prop.key.name;
-  return null;
+// Strip line + block comments so doctrine prose mentioning the rule
+// names doesn't trigger false positives. Same approach the SQL doctrine
+// scanners use.
+function stripComments(src: string): string {
+  return src
+    // Block comments — non-greedy, multi-line.
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    // Line comments — to end of line.
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 }
 
 interface Finding {
   rule: string;
   line: number;
-  column: number;
-  file: string;
+  context: string;
 }
 
-function findRawRestrictedRules(filePath: string): Finding[] {
-  const source = readFileSync(filePath, 'utf-8');
-  const ast = parse(source, { loc: true, range: true });
+function findRawRestrictedRuleLiterals(filePath: string): Finding[] {
+  const raw = readFileSync(filePath, 'utf-8');
+  const stripped = stripComments(raw);
+  const lines = stripped.split('\n');
   const findings: Finding[] = [];
 
-  function walk(node: any) {
-    if (!node || typeof node !== 'object') return;
+  // Match a property-key literal followed by `:`. Both `"foo":` and `'foo':`
+  // shapes covered. We deliberately do NOT match the bare identifier form
+  // (rule keys are kebab-case, so they MUST be quoted in JS object literals).
+  const pattern = /["'](no-restricted-(?:syntax|imports))["']\s*:/g;
 
-    if (node.type === 'Property') {
-      const key = getKeyName(node);
-      if (key && RESTRICTED_RULE_KEYS.has(key)) {
-        findings.push({
-          rule: key,
-          line: node.loc?.start?.line ?? 0,
-          column: node.loc?.start?.column ?? 0,
-          file: filePath,
-        });
-      }
+  lines.forEach((line, idx) => {
+    let m: RegExpExecArray | null;
+    pattern.lastIndex = 0;
+    while ((m = pattern.exec(line)) !== null) {
+      findings.push({
+        rule: m[1],
+        line: idx + 1,
+        context: line.trim().slice(0, 120),
+      });
     }
+  });
 
-    for (const k of Object.keys(node)) {
-      const v = (node as any)[k];
-      if (Array.isArray(v)) v.forEach(walk);
-      else if (v && typeof v === 'object' && k !== 'parent' && k !== 'loc' && k !== 'range') walk(v);
-    }
-  }
-  walk(ast);
   return findings;
 }
 
 describe('eslint.config.js: helper-usage meta-test', () => {
-  it('contains zero raw `no-restricted-syntax` / `no-restricted-imports` keys (every callsite must use the helpers)', () => {
+  it('contains zero raw `no-restricted-syntax` / `no-restricted-imports` literals (every callsite must use the helpers)', () => {
     const configPath = path.resolve(__dirname, '../..', 'eslint.config.js');
-    const findings = findRawRestrictedRules(configPath);
+    const findings = findRawRestrictedRuleLiterals(configPath);
 
     if (findings.length > 0) {
       const detail = findings
-        .map((f) => `  - ${f.file}:${f.line}:${f.column}  →  raw "${f.rule}" key`)
+        .map((f) => `  - eslint.config.js:${f.line}  →  raw "${f.rule}" key  |  ${f.context}`)
         .join('\n');
       throw new Error(
         `Found ${findings.length} raw restricted-rule key(s) in eslint.config.js. ` +
@@ -101,13 +104,12 @@ describe('eslint.config.js: helper-usage meta-test', () => {
     expect(findings).toHaveLength(0);
   });
 
-  it('helper definitions in eslint.helpers.js are the ONLY permitted raw-key sites', () => {
-    // Sanity check: the helpers themselves contain raw keys (that's their
-    // whole purpose). If this assertion ever drops to 0, the helpers were
-    // refactored away and the doctrine is unenforced — we want to fail
-    // loudly so the maintainer notices.
+  it('helper module retains the raw keys (sanity check that the helpers still build the rule blocks)', () => {
+    // If this drops to 0, the helpers were refactored away and the doctrine
+    // is unenforced — fail loudly so the maintainer notices. Expect at least
+    // 2 (one per helper: defineScopedDoctrine + defineScopedImportDoctrine).
     const helpersPath = path.resolve(__dirname, '../..', 'eslint.helpers.js');
-    const findings = findRawRestrictedRules(helpersPath);
+    const findings = findRawRestrictedRuleLiterals(helpersPath);
     expect(
       findings.length,
       `eslint.helpers.js should contain exactly the raw rule keys for the scope helpers (one per helper). Found ${findings.length}.`,
