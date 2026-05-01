@@ -90,7 +90,7 @@ export function UnsavedChangesDialog({
         if (!next && !isSaving) onCancel();
       }}
     >
-      <AlertDialogContent className={cn('max-w-md gap-4', className)}>
+      <AlertDialogContent className={cn('max-w-md gap-4 p-8 sm:p-8', className)}>
         <AlertDialogHeader className="space-y-2">
           <AlertDialogTitle className="font-display text-base tracking-wide uppercase">
             {title}
