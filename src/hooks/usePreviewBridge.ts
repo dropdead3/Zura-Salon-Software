@@ -162,12 +162,14 @@ export function useLiveOverride<T>(sectionKey: string, dbValue: T | undefined): 
     if (!orgId) return;
 
     const handler = (event: MessageEvent<BridgeMessage<T>>) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+      if ((msg as { type?: string }).type !== 'EDITOR_LIVE_UPDATE' && (msg as { type?: string }).type !== 'EDITOR_LIVE_CLEAR') return;
+      console.log('[PreviewBridge:recv]', { origin: event.origin, windowOrigin: window.location.origin, sectionKey: msg.sectionKey, msgOrgId: msg.orgId, ctxOrgId: orgId, expectedKey: sectionKey });
       // Origin pin — same-origin only. Sandbox & custom-domain previews are
       // always same-origin in our setup.
       if (event.origin !== window.location.origin) return;
 
-      const msg = event.data;
-      if (!msg || typeof msg !== 'object') return;
       if (msg.sectionKey !== sectionKey) return;
       if (msg.orgId !== orgId) return; // tenant isolation
 
