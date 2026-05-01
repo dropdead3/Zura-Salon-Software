@@ -7,6 +7,7 @@
  * multi-slide rotator.
  */
 import { useEffect, useMemo, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import type { HeroScrimStyle } from '@/hooks/useSectionConfig';
 import { buildSupabaseSrcSet, HERO_SRCSET_WIDTHS } from '@/lib/image-utils';
 
@@ -35,6 +36,12 @@ interface HeroBackgroundProps {
    * srcSet so we don't ask Storage for variants larger than the master upload.
    */
   mediaWidth?: number | null;
+  /**
+   * When true, emit a `<link rel="preload" as="image">` for this background
+   * so the browser starts the LCP fetch before React hydrates. Only the
+   * first/active hero should set this — multiple preloads waste bandwidth.
+   */
+  preload?: boolean;
 }
 
 export function HeroBackground({
@@ -49,6 +56,7 @@ export function HeroBackground({
   scrimStrength,
   overlayMode = 'darken',
   mediaWidth,
+  preload = false,
 }: HeroBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -88,6 +96,25 @@ export function HeroBackground({
     // in the editor preview, where subpixel compositing can reveal the next
     // section by a pixel or two at the hero boundary.
     <div className="absolute inset-x-0 top-0 -bottom-3 z-0 overflow-hidden">
+      {/* LCP preload — emit only for the active first hero so the browser
+          starts the image fetch in parallel with the JS bundle. Helmet
+          de-dupes if multiple HeroBackgrounds slip into the tree. */}
+      {preload && type === 'image' && url && (
+        <Helmet>
+          {srcSet ? (
+            <link
+              rel="preload"
+              as="image"
+              href={url}
+              imageSrcSet={srcSet}
+              imageSizes="100vw"
+              fetchPriority="high"
+            />
+          ) : (
+            <link rel="preload" as="image" href={url} fetchPriority="high" />
+          )}
+        </Helmet>
+      )}
       {type === 'video' ? (
         <video
           ref={videoRef}
