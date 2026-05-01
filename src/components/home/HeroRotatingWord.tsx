@@ -19,8 +19,16 @@
  * already coordinate index state with other animations (e.g. headline
  * delay-in). Centralising the interval here would force both to reimport
  * useEffect plumbing; passing the index in keeps the component a pure leaf.
+ *
+ * Gradient treatment: a luxe gradient is applied via bg-clip-text. The
+ * gradient stops swap based on `isOverDark` so contrast stays correct
+ * whether the headline is rendered over hero media (white-spectrum) or a
+ * light theme background (foreground-spectrum). Operator color overrides
+ * still win — when the parent passes a `style.color`, we skip the gradient
+ * via the `colorOverride` prop so we never silently override the override.
  */
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface HeroRotatingWordProps {
   /** Operator's `show_rotating_words` toggle. False short-circuits to null. */
@@ -29,13 +37,33 @@ interface HeroRotatingWordProps {
   words: string[];
   /** Active word index, owned by the caller. Clamped if out of bounds. */
   index: number;
+  /**
+   * True when the headline sits on dark media (auto-contrast = white text).
+   * Drives gradient stop selection. Defaults to false (light theme).
+   */
+  isOverDark?: boolean;
+  /**
+   * Set to true when the parent applies an explicit color override
+   * (operator-picked headline color). Suppresses the gradient so the
+   * override wins.
+   */
+  colorOverride?: boolean;
 }
 
-export function HeroRotatingWord({ show, words, index }: HeroRotatingWordProps) {
+export function HeroRotatingWord({ show, words, index, isOverDark = false, colorOverride = false }: HeroRotatingWordProps) {
   if (!show || words.length === 0) return null;
   const safeIndex = ((index % words.length) + words.length) % words.length;
   const word = words[safeIndex];
   if (!word) return null;
+
+  // Contrast-aware gradient. Over dark media: bright white -> warm gold/cream
+  // for a luxe shimmer that still reads as "light text". Over light bg:
+  // foreground -> primary so it stays high-contrast against cream/light themes.
+  const gradientClass = colorOverride
+    ? ''
+    : isOverDark
+      ? 'bg-gradient-to-r from-white via-white to-[hsl(var(--primary))] bg-clip-text text-transparent'
+      : 'bg-gradient-to-r from-foreground via-foreground to-[hsl(var(--primary))] bg-clip-text text-transparent';
 
   return (
     <span data-hero-rotating-word className="block overflow-hidden h-[1.15em]">
@@ -43,7 +71,7 @@ export function HeroRotatingWord({ show, words, index }: HeroRotatingWordProps) 
         {/* eslint-disable-next-line no-restricted-syntax -- canonical owner of rotating-word JSX; every other hero file imports this component instead of hand-rolling motion.span. */}
         <motion.span
           key={word}
-          className="block"
+          className={cn('block', gradientClass)}
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '-100%', opacity: 0 }}

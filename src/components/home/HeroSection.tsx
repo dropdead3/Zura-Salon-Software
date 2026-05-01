@@ -161,7 +161,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   fieldPath="headline_text"
                   placeholder="Headline"
                 />
-                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} />
+                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} isOverDark={hasMediaBackground} colorOverride={!!heroColors.headlineStyle.color} />
               </h1>
               {hasSubheadlineContent && (
                 <p
@@ -312,7 +312,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.5 }}
                 style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
               >
-                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} />
+                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} isOverDark={hasMediaBackground} colorOverride={!!heroColors.headlineStyle.color} />
               </motion.span>
             </motion.h1>
 
