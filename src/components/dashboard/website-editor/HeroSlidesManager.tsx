@@ -208,6 +208,19 @@ function SlideRow({
                         }
                       : null
                   }
+                  focal={
+                    focalImageUrl
+                      ? {
+                          x: resolvedFocalX,
+                          y: resolvedFocalY,
+                          onChange: (nx, ny) =>
+                            onUpdate(slide.id, { background_focal_x: nx, background_focal_y: ny }),
+                          onReset: () =>
+                            onUpdate(slide.id, { background_focal_x: 50, background_focal_y: 50 }),
+                          enabled: focalOverridden && resolvedFit !== 'contain',
+                        }
+                      : undefined
+                  }
                   onChange={({ url, posterUrl, kind, meta, analysisDataUrl }) => {
                     const wasNewImage =
                       kind === 'image' && url && url !== slide.background_url;
