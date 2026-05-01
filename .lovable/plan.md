@@ -1,85 +1,49 @@
-# Fix: Enable toggle gets reverted when "Save to preview" is clicked
+# Promotional popup: auto-minimize after 15s + FAB reads "See Offer"
 
-## What's wrong
+Two small changes to `src/components/public/PromotionalPopup.tsx`.
 
-Two save paths write to the same `promotional_popup` draft and race each other:
+## 1. Auto-minimize after 15 seconds of no interaction
 
-1. **Auto-save toggle** (`handleEnableToggle`) — fires the moment the operator flips "Show Promotional Popup".
-2. **Manual "Save to preview"** — dispatches the global `editor-save-request` event, which `useEditorSaveAction` routes to `guardedSave` → `persist()` → `updateSettings.mutateAsync(formData)`.
+Today the popup stays open until the visitor clicks Accept, Decline, hits Esc, or closes the X. If they ignore it, it just sits there blocking content — the same friction the FAB was designed to solve, just delayed.
 
-Both ultimately call the same mutation against `site_settings.draft_value`, but they capture `formData` via React closures that go stale across renders, and the editor's `useEffect` unconditionally overwrites in-flight `formData` whenever the query refetches.
+Add a single effect that arms a 15s timer when `open` flips true and calls `handleSoftClose()` on expiry:
 
-### The exact race producing the symptom
-
-1. Operator toggles Enable ON.
-   `handleEnableToggle` does `setFormData({…, enabled: true})` (schedules render) and starts `mutateAsync`.
-2. Operator immediately clicks **Save to preview** (common — they want to confirm).
-3. The click dispatches `editor-save-request` *synchronously*, before React has committed the new render and before `useEditorSaveAction` re-registered its handler with a fresh `persist` closure.
-4. The currently-registered handler holds a stale `persist` whose closed-over `formData` still has `enabled: false`.
-5. That stale mutation lands AFTER the toggle's mutation, overwriting `draft_value.enabled` back to `false`.
-6. The mutation's `onSuccess` invalidates the query → refetch returns `{enabled: false}` → `useEffect` resets `formData` and `savedSnapshot` to the reverted state. Toggle visibly flips off.
-
-A second related defect: the `useEffect` that syncs `settings → formData/savedSnapshot` runs on every refetch and silently blows away any in-flight edits, so other field edits made during an auto-save round-trip can vanish too.
-
-## Fix
-
-Two surgical changes in `PromotionalPopupEditor.tsx`, plus a guard inside the sync effect.
-
-### 1. Eliminate stale closures with a `formData` ref
-
-Track `formData` in a ref kept in sync via a layout effect. Both `handleEnableToggle` and `persist` read from the ref, not from a captured value:
+- `handleSoftClose` already does the right thing: records a `'soft'` response (respects frequency cap, no false "decline" signal), closes the modal, and sets `showFab = true` so the offer collapses into the bottom FAB.
+- Skip the timer when `isPreview` is true so operators QA'ing copy aren't fighting a countdown.
+- Skip in `'always'` frequency? No — `handleSoftClose` already calls `markSessionDismissed()` which only matters for `'once-per-session'`. Other frequencies behave correctly.
+- Any user interaction that closes the popup (Accept/Decline/Esc/X) cancels the timer automatically because the effect cleanup clears it when `open` flips false.
 
 ```text
-formDataRef.current = formData    (kept in sync each render)
-
-handleEnableToggle(checked):
-  next = { ...formDataRef.current, enabled: checked }
-  setFormData(next)
-  await mutateAsync(next)
-
-persist():
-  await mutateAsync(formDataRef.current)
+useEffect:
+  if !open or isPreview → return
+  t = setTimeout(handleSoftClose, 15_000)
+  cleanup → clearTimeout(t)
 ```
 
-Result: whichever save path fires last writes the *current* form state, not a stale snapshot. The Enable toggle's value is preserved even if Save fires synchronously a frame later.
+## 2. FAB label: "See Offer"
 
-### 2. Serialize the two save paths
+Currently the FAB on desktop reads `cfg.headline` (e.g. "Free Haircut with Any Color Service"), truncated. After auto-minimize this can read like the popup just moved positions rather than collapsed into a re-entry control.
 
-Add a single `savingRef` (boolean) so an in-flight auto-save makes the manual save wait, and vice versa. Both paths flip the ref true/false around their `mutateAsync`. If `persist()` is invoked while `savingRef.current` is true, it awaits the pending mutation (via a small promise queue) before issuing its own write. Prevents interleaved writes regardless of latency.
-
-### 3. Don't clobber dirty `formData` in the sync effect
-
-Change the `useEffect` that mirrors `settings → formData`:
-
-- Always update `savedSnapshot` (so dirty detection stays correct).
-- Only update `formData` when the editor is **not dirty** (`formData` deep-equals the previous `savedSnapshot`). If the operator has unsaved edits, leave `formData` alone — the refetch reflects the server, but the operator's pending edits win until they save or discard.
-
-This stops the refetch from yanking the rug out from under the operator's other in-flight edits during any auto-save round-trip.
-
-### 4. Trigger preview refresh after manual save too
-
-`handleEnableToggle` already calls `triggerPreviewRefresh()`; `persist()` doesn't. Add it so manual Save behaves like the toggle (preview reloads, no manual nudge).
+Change the FAB's visible label to a fixed `See Offer` so the affordance is unambiguous. The `aria-label` keeps the headline for screen readers (`Reopen offer: ${cfg.headline}`) so context isn't lost. No layout change — `See Offer` is shorter than the current truncated headline, so the existing `max-w-[180px] truncate` is now effectively a non-op.
 
 ## Files touched
 
-- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`
-  - Add `formDataRef` + `savingRef`.
-  - Rewrite `handleEnableToggle` and `persist` to read from the ref and serialize through `savingRef`.
-  - Update the `settings → formData/savedSnapshot` `useEffect` to preserve dirty `formData`.
-  - Call `triggerPreviewRefresh()` after a successful manual `persist()`.
+- `src/components/public/PromotionalPopup.tsx`
+  - Add the 15s auto-minimize `useEffect` next to the existing Esc-key effect.
+  - Replace `{cfg.headline}` inside the FAB button with the literal `See Offer` (keep the `aria-label` referencing the headline).
 
-No DB, schema, RLS, or edge-function changes. No new dependencies. Behavior of every other editor surface is untouched — this is local to the promotional popup editor.
+No DB, no edge functions, no design tokens. No other call sites change. Editor preview behavior is preserved (no auto-minimize during QA).
 
 ## QA after merge
 
-1. Toggle Enable ON, immediately click Save to preview → toggle stays ON, draft persists with `enabled: true`, preview reloads showing the popup.
-2. Edit headline, toggle Enable ON, then click Save → both the headline edit and the toggle persist together.
-3. Toggle Enable OFF then immediately Save → popup stays disabled.
-4. Make an edit, do not save, wait for any background refetch (e.g., focus blur) → edits remain in the form (not clobbered by the sync effect).
-5. Publish flow still works — the publish dialog reads the current `draft_value`.
+1. Public visitor: load page → popup opens → wait 15s → popup collapses to bottom FAB labeled `See Offer`.
+2. Click `See Offer` → popup re-opens.
+3. Visitor interacts (Accept/Decline/Esc/X) within 15s → timer is cancelled, FAB behavior matches today.
+4. Editor preview at `/org/<slug>?preview=true` → popup stays open indefinitely (no auto-minimize during QA).
+5. Frequency cap honored — `'once-per-session'` will not re-trigger the popup on next page load after auto-minimize, but the FAB remains as the re-entry path.
 
-## Suggested follow-ups (not in this fix)
+## Suggested follow-ups
 
-1. Promote the ref + serialize pattern into a small `useSerializedMutation` helper so other editors with hybrid auto-save + manual-save (e.g., Announcement Bar when it gets a quick-toggle) inherit the same race protection by default.
-2. Add a visibility-contract dev-only log when the sync effect would have overwritten dirty `formData` — would have caught this regression in a code review.
-3. E2E test in `e2e/` covering the toggle-then-save race so a future refactor can't reintroduce it.
+1. Make the 15s threshold operator-configurable (`autoMinimizeMs`) on the popup settings, defaulting to 15000. Some offers warrant a longer dwell.
+2. Pause the auto-minimize countdown while the visitor's mouse is hovered over the popup (`mouseenter`/`mouseleave`) — current rule auto-collapses even mid-read, which is the right default but a hover-pause respects active engagement.
+3. Tiny progress hairline along the bottom of the popup that depletes over 15s, telegraphing the minimize behavior so it never feels like the offer "vanished".
