@@ -92,7 +92,7 @@ html, body, #root {
   :root,
   .theme-cream-lux {
     /* Luxury-light: bone-warm near-neutral. Lightness ladder per shared spec. */
-    --background: 35 12% 95%;
+    --background: 35 22% 95%;
     --foreground: 30 18% 8%;
 
     --card: 35 12% 100%;
@@ -192,7 +192,7 @@ html, body, #root {
 
   /* ===== THEME: ROSEWOOD (Dusty rose & warm pink — light) ===== */
   .theme-rosewood {
-    --background: 350 22% 95%;
+    --background: 350 32% 95%;
     --foreground: 350 30% 10%;
 
     --card: 350 22% 100%;
@@ -380,7 +380,7 @@ html, body, #root {
 
   /* ===== THEME: SAGE (Mint Green Pastel) ===== */
   .theme-sage {
-    --background: 145 22% 95%;
+    --background: 145 32% 95%;
     --foreground: 145 30% 8%;
 
     --card: 145 22% 100%;
@@ -505,7 +505,7 @@ html, body, #root {
 
   /* ===== THEME: JADE (Premium teal jewel-tone & gold) ===== */
   .theme-jade {
-    --background: 180 22% 95%;
+    --background: 180 35% 95%;
     --foreground: 180 30% 8%;
 
     --card: 180 22% 100%;
@@ -628,7 +628,7 @@ html, body, #root {
 
   /* ===== THEME: MARINE (Deep navy & electric blue) ===== */
   .theme-marine {
-    --background: 218 30% 95%;
+    --background: 218 45% 94%;
     --foreground: 220 40% 10%;
 
     --card: 218 30% 100%;
@@ -753,7 +753,7 @@ html, body, #root {
 
   /* ===== THEME: ZURA (Brand Violet/Purple) ===== */
   .theme-zura {
-    --background: 260 22% 95%;
+    --background: 260 35% 95%;
     --foreground: 260 25% 8%;
 
     --card: 260 22% 100%;
@@ -878,7 +878,7 @@ html, body, #root {
 
   /* ===== THEME: COGNAC (Bourbon amber & leather) ===== */
   .theme-cognac {
-    --background: 25 25% 95%;
+    --background: 25 38% 95%;
     --foreground: 20 28% 8%;
 
     --card: 25 25% 100%;
@@ -1123,7 +1123,7 @@ html, body, #root {
   }
 
   .theme-neon {
-    --background: 330 22% 95%;
+    --background: 330 38% 95%;
     --foreground: 330 30% 8%;
 
     --card: 330 22% 100%;
@@ -1246,7 +1246,7 @@ html, body, #root {
 
   /* ===== THEME: MATRIX (Neon emerald on deep navy — cyberpunk terminal) ===== */
   .theme-matrix {
-    --background: 220 22% 95%;
+    --background: 220 32% 95%;
     --foreground: 220 40% 8%;
 
     --card: 220 22% 100%;
@@ -1369,7 +1369,7 @@ html, body, #root {
 
   /* ===== THEME: PEACH (Coral peach on warm cream — sorbet) ===== */
   .theme-peach {
-    --background: 25 35% 95%;
+    --background: 25 50% 94%;
     --foreground: 18 35% 10%;
 
     --card: 25 35% 100%;
@@ -1493,7 +1493,7 @@ html, body, #root {
   /* ===== THEME: ROSE GOLD (Rose gold + dusty pink duotone) ===== */
   /* Class key remains theme-orchid to avoid migration of stored prefs */
   .theme-orchid {
-    --background: 40 30% 95%;
+    --background: 40 42% 95%;
     --foreground: 30 30% 14%;
 
     --card: 40 28% 100%;
