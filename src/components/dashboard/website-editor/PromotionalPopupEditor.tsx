@@ -29,6 +29,7 @@ import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
 import { readableForegroundFor, bestTextContrast } from '@/lib/color-contrast';
