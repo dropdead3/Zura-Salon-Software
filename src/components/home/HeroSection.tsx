@@ -271,11 +271,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
 
             {/* Main headline */}
             <motion.h1
-              className="font-display font-normal text-foreground leading-[0.95] flex flex-col items-center"
+              className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
               style={{
                 y: headlineY,
                 filter: headingBlurFilter,
                 fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))',
+                ...heroColors.headlineStyle,
               }}
             >
               <motion.span 
