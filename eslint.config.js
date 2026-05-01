@@ -108,7 +108,9 @@ export default tseslint.config(
         "error",
         {
           // Match: new CustomEvent('site-settings-draft-write', ...)
-          selector: "NewExpression[callee.name='CustomEvent'][arguments.0.type='Literal'][arguments.0.value='site-settings-draft-write']",
+          // esquery uses :nth-child(N) (1-indexed) for positional array
+          // access — `arguments.0.value` is not valid selector syntax.
+          selector: "NewExpression[callee.name='CustomEvent'] > Literal:nth-child(1)[value='site-settings-draft-write']",
           message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
         },
       ],
