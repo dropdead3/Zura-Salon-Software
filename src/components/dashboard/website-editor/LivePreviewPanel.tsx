@@ -262,12 +262,21 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       });
     };
 
+    // Sidebar→canvas hover bridge. Forwards the typed CustomEvent across
+    // the iframe boundary as a postMessage so the renderer can outline the
+    // matching section without re-implementing the dispatcher contract.
+    const onSectionHover = (e: Event) => {
+      const detail = (e as CustomEvent<EditorSectionHoverDetail>).detail;
+      post({ type: 'PREVIEW_HOVER_SECTION', sectionId: detail?.sectionId ?? null });
+    };
+
     window.addEventListener('editor-design-preview', onDesign);
     window.addEventListener('editor-provisional-order', onProvisionalOrder);
     window.addEventListener('editor-commit-order', onCommitOrder);
     window.addEventListener('site-settings-draft-write', onDraftWrite);
     window.addEventListener('editor-theme-preview', onThemePreview);
     window.addEventListener('promo-popup-preview-reset', onPromoReset);
+    window.addEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
     window.addEventListener('message', onPromoPhaseMessage);
     return () => {
       window.removeEventListener('editor-design-preview', onDesign);
@@ -276,6 +285,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       window.removeEventListener('site-settings-draft-write', onDraftWrite);
       window.removeEventListener('editor-theme-preview', onThemePreview);
       window.removeEventListener('promo-popup-preview-reset', onPromoReset);
+      window.removeEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
       window.removeEventListener('message', onPromoPhaseMessage);
     };
   }, [previewOrigin]);
