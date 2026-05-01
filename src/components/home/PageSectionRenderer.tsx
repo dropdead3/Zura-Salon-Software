@@ -103,6 +103,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
         'PREVIEW_SCROLL_TO_SECTION',
         'PREVIEW_HIGHLIGHT_SECTION',
         'PREVIEW_SET_ACTIVE_SECTION',
+        'PREVIEW_HOVER_SECTION',
         'PREVIEW_PROVISIONAL_ORDER',
         'PREVIEW_REORDER_SECTIONS',
         'PREVIEW_REFRESH_DRAFT',
@@ -123,6 +124,23 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
 
       if (msg.type === 'PREVIEW_SET_ACTIVE_SECTION') {
         setSelectedSectionId(msg.sectionId || null);
+      }
+
+      // Sidebar→canvas hover bridge: outline the matching section while
+      // the operator's cursor is on the corresponding sidebar row. Pure
+      // DOM toggle (no React re-render) so the highlight is instant and
+      // doesn't race the in-iframe rAF cycle.
+      if (msg.type === 'PREVIEW_HOVER_SECTION') {
+        // Clear any stale hover first — the message stream is monotonic
+        // (enter → leave) but defensive cleanup keeps the canvas calm
+        // if a leave event is dropped (cross-iframe message loss).
+        document.querySelectorAll('.preview-hover').forEach((el) => {
+          el.classList.remove('preview-hover');
+        });
+        if (msg.sectionId) {
+          const el = document.getElementById(`section-${msg.sectionId}`);
+          if (el) el.classList.add('preview-hover');
+        }
       }
 
       // Live drag-reorder reflow.

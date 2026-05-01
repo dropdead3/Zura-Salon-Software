@@ -90,6 +90,12 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     dispatcher: "dispatchPromoPopupPreviewState(phase)",
     rationale: "the popup is the sole dispatcher and the editor the sole consumer; inlining a CustomEvent breaks the typed phase union and the last-phase replay cache",
   }),
+  defineEventOwnershipSelector({
+    event: "editor-section-hover",
+    owner: "src/lib/editorSectionHover.ts",
+    dispatcher: "dispatchEditorSectionHover({ sectionId })",
+    rationale: "sidebar→canvas hover bridge depends on a single typed payload shape; inlining the CustomEvent risks string drift between dispatcher and the LivePreviewPanel forwarder",
+  }),
   {
     selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
     message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",

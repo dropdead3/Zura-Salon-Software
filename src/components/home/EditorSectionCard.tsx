@@ -154,7 +154,15 @@ export function EditorSectionCard({
   }, [sectionId]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // Don't select if clicking controls
+    // Click-through opt-out for nested editables.
+    // Any descendant that should NOT route the click into the
+    // EDITOR_SELECT_SECTION pipeline must mark its root with
+    // `data-editor-control` (or call `e.stopPropagation()` itself).
+    // Examples already using the pattern: hover-header chips, drag handle,
+    // duplicate / delete / hide buttons, the Style popover. Add the
+    // attribute to any future inline-edit affordance (text, CTA copy,
+    // image picker, etc.) so the section selector doesn't swallow the
+    // click and yank the operator away from inline editing.
     if ((e.target as HTMLElement).closest('[data-editor-control]')) return;
     sendMessage('EDITOR_SELECT_SECTION');
   }, [sendMessage]);

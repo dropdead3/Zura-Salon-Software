@@ -61,6 +61,7 @@ import {
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useEditorSidebarPrefs } from '@/hooks/useEditorSidebarPrefs';
 import { SectionNavItem } from './SectionNavItem';
+import { dispatchEditorSectionHover } from '@/lib/editorSectionHover';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { ContentNavItem } from './ContentNavItem';
 import { WebsiteEditorSearch } from './WebsiteEditorSearch';
@@ -639,6 +640,8 @@ export function WebsiteEditorSidebar({
                             onSelect={() => onTabChange(getSectionTab(section))}
                             onToggle={(enabled) => handleToggleSection(section.id, enabled)}
                             onDuplicate={() => handleDuplicateSection(section)}
+                            onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
+                            onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
                           />
                         ))}
                     </div>
@@ -671,6 +674,8 @@ export function WebsiteEditorSidebar({
                             deletable
                             onDelete={() => setDeleteTarget(section)}
                             onDuplicate={() => handleDuplicateSection(section)}
+                            onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
+                            onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
                           />
                         ))}
                     </div>
@@ -732,6 +737,8 @@ export function WebsiteEditorSidebar({
                     deletable={section.deletable}
                     onDelete={() => setPageDeleteTarget(section)}
                     onDuplicate={() => onPageSectionDuplicate?.(section)}
+                    onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
+                    onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
                   />
                 ))}
               </SortableContext>

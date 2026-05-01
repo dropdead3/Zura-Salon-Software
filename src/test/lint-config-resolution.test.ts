@@ -204,6 +204,24 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     ).toBe(true);
   });
 
+  it('keeps the editor-section-hover selector on the banned fixture', async () => {
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/editor-section-hover-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes('editor-section-hover')),
+      `editor-section-hover selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('applies the editor-section-hover rule to the owning module (suppression is per-line)', async () => {
+    const selectors = await getRestrictedSyntaxSelectors('src/lib/editorSectionHover.ts');
+    expect(
+      selectors.some((s) => s.includes('editor-section-hover')),
+      'editor-section-hover rule should be active on src/lib/editorSectionHover.ts; the dispatch goes through dispatchOwnedEvent which carries an inline eslint-disable.',
+    ).toBe(true);
+  });
+
   it('keeps the hero-specific selector (alignment + shared component) on hero files', async () => {
     // The hero block appends two extraSelectors via defineScopedDoctrine.
     // Auto-iteration above covers the consolidated 5; this one asserts

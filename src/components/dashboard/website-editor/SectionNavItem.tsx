@@ -18,6 +18,10 @@ interface SectionNavItemProps {
   deletable?: boolean;
   onDelete?: () => void;
   onDuplicate?: () => void;
+  /** Fired when the row is hovered/focused; used to outline the matching
+   *  section in the live-preview iframe. Hover-end fires `onHoverEnd`. */
+  onHover?: () => void;
+  onHoverEnd?: () => void;
 }
 
 // Fixed width reserved for the right-side action cluster, regardless of hover
@@ -38,6 +42,8 @@ export function SectionNavItem({
   deletable = false,
   onDelete,
   onDuplicate,
+  onHover,
+  onHoverEnd,
 }: SectionNavItemProps) {
   const {
     attributes,
@@ -69,6 +75,10 @@ export function SectionNavItem({
         !enabled && 'opacity-50'
       )}
       onClick={onSelect}
+      onMouseEnter={onHover}
+      onMouseLeave={onHoverEnd}
+      onFocus={onHover}
+      onBlur={onHoverEnd}
     >
       {/* Drag Handle */}
       <button

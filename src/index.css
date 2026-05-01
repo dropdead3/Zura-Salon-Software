@@ -2616,10 +2616,24 @@ html, body, #root {
 .sidebar-dark .hover\:text-foreground:hover { color: hsl(0 0% 100%) !important; }
 .sidebar-dark .bg-white\/\[0\.04\] { background: hsl(0 0% 100% / 0.04) !important; }
 
-/* ===== PREVIEW HIGHLIGHT ===== */
+/* ===== PREVIEW HIGHLIGHT (transient flash on scroll-to) ===== */
 .preview-highlight {
   box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
   transition: box-shadow 0.3s ease;
+}
+
+/* ===== PREVIEW HOVER (sidebar→canvas hover bridge) =====
+   Lit while the operator hovers the matching sidebar row. Slightly stronger
+   than .preview-highlight so it reads as an active intent rather than a
+   passive flash. Selection (the persistent ring on the active editor tab)
+   is rendered by EditorSectionCard.isSelected and uses --primary at full
+   strength — the hover tone steps down to /60 to keep the hierarchy:
+   selected > hover > flash. */
+.preview-hover {
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.6);
+  transition: box-shadow 0.15s ease;
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== GLOBAL — Native overlay scrollbars (no gutter anywhere) ===== */

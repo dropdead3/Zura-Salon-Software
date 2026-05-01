@@ -3,6 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Monitor, Tablet, Smartphone, Maximize2, Minimize2, RefreshCw, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { EDITOR_SECTION_HOVER_EVENT, type EditorSectionHoverDetail } from '@/lib/editorSectionHover';
 
 interface LivePreviewPanelProps {
   activeSectionId?: string;
@@ -107,6 +108,15 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
       previewOrigin
     );
+    // Persistent selection: keep the matched section ringed for as long as
+    // the editor tab is open on it. The renderer reads
+    // PREVIEW_SET_ACTIVE_SECTION and toggles the .preview-selected class —
+    // distinct from the brief .preview-highlight flash below, which doubles
+    // as a "scroll landed here" cue.
+    iframe.contentWindow.postMessage(
+      { type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId },
+      previewOrigin
+    );
     setTimeout(() => {
       iframe.contentWindow?.postMessage(
         { type: 'PREVIEW_HIGHLIGHT_SECTION', sectionId },
@@ -116,13 +126,24 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
   }, [previewOrigin]);
 
   useEffect(() => {
-    if (!activeSectionId) return;
+    if (!activeSectionId) {
+      // Editor returned to a non-section tab (Pages, Site Design, etc.) —
+      // clear the persistent ring so the canvas isn't ambiguously lit.
+      const iframe = iframeRef.current;
+      if (iframe?.contentWindow && iframeReadyRef.current) {
+        iframe.contentWindow.postMessage(
+          { type: 'PREVIEW_SET_ACTIVE_SECTION', sectionId: null },
+          previewOrigin
+        );
+      }
+      return;
+    }
     if (iframeReadyRef.current) {
       sendScrollMessage(activeSectionId);
     } else {
       pendingSectionRef.current = activeSectionId;
     }
-  }, [activeSectionId, sendScrollMessage]);
+  }, [activeSectionId, sendScrollMessage, previewOrigin]);
 
   const handleIframeLoad = useCallback(() => {
     setIsLoading(false);
@@ -241,12 +262,21 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       });
     };
 
+    // Sidebar→canvas hover bridge. Forwards the typed CustomEvent across
+    // the iframe boundary as a postMessage so the renderer can outline the
+    // matching section without re-implementing the dispatcher contract.
+    const onSectionHover = (e: Event) => {
+      const detail = (e as CustomEvent<EditorSectionHoverDetail>).detail;
+      post({ type: 'PREVIEW_HOVER_SECTION', sectionId: detail?.sectionId ?? null });
+    };
+
     window.addEventListener('editor-design-preview', onDesign);
     window.addEventListener('editor-provisional-order', onProvisionalOrder);
     window.addEventListener('editor-commit-order', onCommitOrder);
     window.addEventListener('site-settings-draft-write', onDraftWrite);
     window.addEventListener('editor-theme-preview', onThemePreview);
     window.addEventListener('promo-popup-preview-reset', onPromoReset);
+    window.addEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
     window.addEventListener('message', onPromoPhaseMessage);
     return () => {
       window.removeEventListener('editor-design-preview', onDesign);
@@ -255,6 +285,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       window.removeEventListener('site-settings-draft-write', onDraftWrite);
       window.removeEventListener('editor-theme-preview', onThemePreview);
       window.removeEventListener('promo-popup-preview-reset', onPromoReset);
+      window.removeEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
       window.removeEventListener('message', onPromoPhaseMessage);
     };
   }, [previewOrigin]);
