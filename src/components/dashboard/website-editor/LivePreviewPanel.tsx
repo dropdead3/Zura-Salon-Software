@@ -211,17 +211,51 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       post({ type: 'PREVIEW_THEME_CLASS', themeClass: detail.themeClass });
     };
 
+    // Promo popup preview reset → forward across the iframe boundary.
+    // The parent-window CustomEvent (sole-dispatcher canon) cannot reach
+    // the popup which lives inside the preview iframe; bridge it via
+    // postMessage. Mirror handler in PromotionalPopup listens for the
+    // PREVIEW_PROMO_POPUP_RESET message and runs the same reset logic.
+    const onPromoReset = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      post({ type: 'PREVIEW_PROMO_POPUP_RESET', reason: detail.reason });
+    };
+
+    // Promo popup → editor phase echo. The popup posts its lifecycle
+    // phase out of the iframe via window.parent.postMessage; we
+    // re-broadcast it as the canonical parent-side CustomEvent so the
+    // editor's button-label memo (which subscribes to the CustomEvent)
+    // and `getLastPromoPopupPreviewPhase()` cache both stay populated
+    // without each side knowing about the iframe boundary.
+    const onPromoPhaseMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type !== 'PREVIEW_PROMO_POPUP_STATE') return;
+      if (typeof data.phase !== 'string') return;
+      // Re-dispatch through the canonical owner module so the cached
+      // last-phase getter stays in sync. Deferred-import-free: the helper
+      // is already loaded transitively via the editor.
+      import('@/lib/promoPopupPreviewReset').then((m) => {
+        m.dispatchPromoPopupPreviewState(data.phase);
+      });
+    };
+
     window.addEventListener('editor-design-preview', onDesign);
     window.addEventListener('editor-provisional-order', onProvisionalOrder);
     window.addEventListener('editor-commit-order', onCommitOrder);
     window.addEventListener('site-settings-draft-write', onDraftWrite);
     window.addEventListener('editor-theme-preview', onThemePreview);
+    window.addEventListener('promo-popup-preview-reset', onPromoReset);
+    window.addEventListener('message', onPromoPhaseMessage);
     return () => {
       window.removeEventListener('editor-design-preview', onDesign);
       window.removeEventListener('editor-provisional-order', onProvisionalOrder);
       window.removeEventListener('editor-commit-order', onCommitOrder);
       window.removeEventListener('site-settings-draft-write', onDraftWrite);
       window.removeEventListener('editor-theme-preview', onThemePreview);
+      window.removeEventListener('promo-popup-preview-reset', onPromoReset);
+      window.removeEventListener('message', onPromoPhaseMessage);
     };
   }, [previewOrigin]);
 
