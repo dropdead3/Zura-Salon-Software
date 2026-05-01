@@ -40,18 +40,29 @@ describe('resolveHeroAlignment — notes canon', () => {
 });
 
 describe('resolveHeroAlignment — shell vs inner wrapper canon', () => {
-  // The rotating hero needs a STABLE outer shell (centered + width-clamped)
-  // and a separate INNER per-slide wrapper that owns the horizontal anchor.
-  // Without this split, the outer wrapper flips alignment when slides change,
-  // making left→right transitions look like content slides through center.
+  // The rotating hero needs a STABLE outer shell that fills the container
+  // edge-to-edge so the inner per-slide wrapper can travel to the correct
+  // page-padding edge for left/right alignment. The width clamp lives on
+  // `innerWrapper` so the content column itself stays readable.
+  // Without this split, left/right alignment got trapped inside a centered
+  // ~896px column and looked stranded mid-screen instead of hugging the edge.
   it.each(ALL_ALIGNMENTS)(
-    'shellWrapper is centered + width-clamped regardless of alignment=%s',
+    'shellWrapper fills the container regardless of alignment=%s',
     (alignment) => {
       const a = resolveHeroAlignment(alignment);
-      expect(a.shellWrapper).toContain('mx-auto');
-      expect(a.shellWrapper).toContain('max-w-4xl');
-      expect(a.shellWrapper).not.toContain('mr-auto');
-      expect(a.shellWrapper).not.toContain('ml-auto ');
+      expect(a.shellWrapper).toContain('w-full');
+      // Width clamp must NOT live on the shell — it belongs on the inner
+      // wrapper so left/right alignment can travel to the page edges.
+      expect(a.shellWrapper).not.toContain('max-w-4xl');
+      expect(a.shellWrapper).not.toContain('mx-auto');
+    },
+  );
+
+  it.each(ALL_ALIGNMENTS)(
+    'innerWrapper carries the width clamp for alignment=%s',
+    (alignment) => {
+      const a = resolveHeroAlignment(alignment);
+      expect(a.innerWrapper).toContain('max-w-4xl');
     },
   );
 
