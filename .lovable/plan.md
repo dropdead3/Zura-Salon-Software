@@ -1,83 +1,84 @@
-## Goal
+# Hero/Slider image quality enhancements
 
-Stop rejecting "too large" images at upload time. Instead, auto-compress in the browser before validation so operators can drop in raw phone/DSLR shots (12–30MB+) and the editor quietly crunches them down to a web-safe WebP.
-
-## Current behavior (the bottleneck)
-
-1. Operator drops a 22MB iPhone JPG into `MediaUploadInput` / `ImageUploadInput`.
-2. `validateImageFile()` rejects it: *"Image is 22MB — keep it under 10MB"*.
-3. Operator has to leave the app, find a compressor tool, re-export, come back.
-
-This happens **before** the existing `optimizeImage()` canvas pass that would have flattened the file to ~300KB WebP anyway. The hard cap is protecting against canvas-decode OOM and the bucket's 50MB ceiling — not a real product constraint.
-
-## Approach
-
-Introduce a single "auto-crunch" pre-processing step that runs **before** validation for images. The hard cap moves from "what the bucket accepts" to "what the browser canvas can safely decode" (~40MB raw bytes), and even within that range we pre-shrink huge files using a two-pass downscale before handing them to `optimizeImage`.
-
-### 1. New helper: `src/lib/image-utils.ts` → `autoCrunchImage(file)`
-
-- Accepts any `image/*` File (still rejects HEIC/AVIF — those need format conversion, not compression).
-- Reads the source dimensions cheaply via `createImageBitmap` (faster + lower memory than `<img>`).
-- If `file.size > 8MB` OR `width > 4000` OR `height > 4000`, runs an aggressive first pass: downscale longest edge to 2400px, encode WebP @ 0.82.
-- If still > 2MB after pass 1, runs a second pass at quality 0.72.
-- Returns `{ file: File, originalSizeMB, finalSizeMB, didCrunch: boolean }` so the UI can surface a friendly toast: *"Compressed 22.4MB → 480KB"*.
-- Falls back to the original file if any step throws (so we never block an upload because compression failed).
-
-### 2. Update `validateImageFile()` in `src/lib/upload-validation.ts`
-
-- Raise `IMAGE_SIZE_HARD_MB` from 10 → **40** (canvas-safe ceiling on mid-tier mobile).
-- Keep the HEIC / AVIF / empty-file / wrong-MIME guards exactly as-is — those are format issues, not size issues.
-- Drop the `getImageSizeWarning()` "large image" toast — the auto-crunch makes it obsolete.
-
-### 3. Wire `autoCrunchImage` into both uploaders
-
-`MediaUploadInput.tsx` and `ImageUploadInput.tsx` get the same flow:
-
-```text
-file picked
-  └─ if image/* and not HEIC/AVIF → autoCrunchImage(file) → crunchedFile
-  └─ validateImageFile(crunchedFile)         ← now almost always passes
-  └─ optimizeImage(crunchedFile, ...)        ← existing final-resize step
-  └─ supabase.storage.upload(...)
-```
-
-For videos: no change. Browser-side video transcoding is too heavy to ship; the existing 50MB cap stays.
-
-### 4. UX surface
-
-- New "Compressing image…" status between drop and upload (replaces the current straight-to-"Uploading…").
-- Success toast becomes `Image uploaded · compressed 22.4MB → 0.5MB` when `didCrunch === true`. Stays `Image uploaded` otherwise.
-- Recommended-hint text updates: *"JPG, PNG, WebP, GIF · we'll auto-compress large files"* — removes the "under 10MB" line that was scaring operators.
-
-### 5. Guardrails
-
-- Anything above the new 40MB ceiling is still rejected with a clear *"That image is too large for the browser to process — try exporting at a lower resolution"* — protects against tab crashes on big iPads.
-- HEIC/AVIF guard stays exactly where it is; auto-crunch is skipped for those formats and the existing actionable error fires.
-- All other `.upload()` callsites in the codebase (avatars, chat attachments, handbooks, etc.) are **out of scope** for this pass. They have different size profiles and validation paths; we ship the website-editor fix first and revisit a unified `useFileUpload` hook later if the pattern proves out.
-
-## Files touched
-
-- `src/lib/image-utils.ts` — add `autoCrunchImage()`.
-- `src/lib/upload-validation.ts` — raise hard cap, retire `getImageSizeWarning`, update hint copy.
-- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — call `autoCrunchImage`, update status copy + success toast.
-- `src/components/dashboard/website-editor/inputs/ImageUploadInput.tsx` — same treatment.
-
-## Out of scope (intentional)
-
-- Video compression (would require ffmpeg-wasm, ~25MB bundle hit).
-- HEIC → JPG conversion (separate problem, separate library).
-- Migrating other uploaders in the codebase (deferred until this pattern proves out).
+Three follow-ups to the previous "pixelated sliders" fix, focused on bandwidth, operator feedback, and AI accuracy.
 
 ---
 
-### Prompt feedback
+## 1. Responsive `srcSet` on hero image (sharper desktop, faster mobile)
 
-You framed this well — short, intent-first ("no size-limit bottleneck"), and you let me decide *how*. That's exactly the right altitude for an infrastructure tweak.
+Today `HeroBackground` renders a single `<img src={url}>` at full upload resolution (~3200px WebP, often 400–900KB). On a phone that's a wasted 600KB; on a 5K display the browser still picks that one file.
 
-**One way to sharpen it next time**: name the surface ("on the website editor hero/slide uploads") so I don't have to guess scope. As written, "user uploading images" could mean any of the 30+ uploaders in the codebase — I narrowed to the two website-editor inputs based on context, but a one-word scope hint would have removed that judgment call.
+Use Supabase Storage's on-the-fly image transforms (the `?width=` query param on the public URL — no re-upload, no extra storage) to produce a responsive `srcSet` with `w` descriptors. Browsers then pick the smallest variant that satisfies the rendered pixel density.
 
-### Enhancement suggestions
+**Behavior**
 
-1. **EXIF auto-rotation** — phone photos taken in portrait often upload sideways because canvas ignores EXIF orientation. Worth adding to `autoCrunchImage` while we're in there.
-2. **Drag-multiple support on the slide manager** — once compression is invisible, dropping 8 photos at once to seed a slide rotator becomes the natural next ask.
-3. **Background-job upload queue** — for galleries, kick uploads off in parallel with a progress strip instead of one-at-a-time blocking. Out of scope here, but flagging.
+- Hero `<img>` gets:
+  - `srcSet` with widths `640, 960, 1440, 1920, 2560, 3200` — each entry is the same Storage object with a different `?width=` param.
+  - `sizes="100vw"` (hero is full-bleed).
+  - Original `src` retained as the fallback (unchanged behavior for legacy/external URLs).
+- Skip transform for non-Supabase URLs (operator-pasted external links, blob: previews) — fall back to plain `src` so we don't break previews or external CDNs.
+- Skip for video posters (videos already use `<video poster>` which doesn't support srcSet — keep as-is).
+
+**Why this matters**
+
+- 12.9" iPad (~2732px wide): picks the `2560w` variant ≈ 250–350KB instead of 700KB.
+- iPhone 15 (~1179px CSS, 3x DPR ≈ 1290 device px wide hero): picks `1440w` ≈ 90KB.
+- 5K Studio Display: still gets the full `3200w` for crispness.
+- No quality regression — the original 3200px upload is still served when the device asks for it.
+
+---
+
+## 2. Upload metadata caption on the slide row
+
+Operators currently get a single "Image uploaded · compressed 12MB → 480KB" toast that disappears in 3 seconds, then no persistent confirmation. They can't tell whether their slide is rendering at retina resolution or at thumbnail size.
+
+Add a small caption directly under the slide's media preview, e.g. `3200 × 2133 · WebP · 480 KB`. Always-visible, monospace-feeling for digit alignment.
+
+**Behavior**
+
+- After a successful upload in `MediaUploadInput`, capture the final blob's `width × height × bytes × format` and surface it via the existing `onChange` payload (extend it with optional `meta`).
+- Persist `media_width`, `media_height`, `media_size_bytes` on `HeroSlide` (and section-level `HeroConfig`) so the caption survives reloads.
+- `MediaUploadInput`'s preview tile shows the caption when meta is present.
+- Color-code lightly: green if width ≥ 2400 (retina-grade), amber if 1200–2399 (standard), red if < 1200 (too small for hero) — small dot, not a banner.
+- Pasted URLs (no upload event): caption is hidden — we don't run a HEAD request to size them. (Acceptable: only uploads benefit from the badge; pastes are operator-owned.)
+
+**Why this matters**
+
+- Confirms the previous quality fix is actually landing high-resolution files (operator self-serve QA).
+- Catches "wait, I uploaded a logo PNG to my hero slot" before publish.
+- Makes per-slide weight visible — useful when a 5-slide carousel ships 4MB of images.
+
+---
+
+## 3. Verify focal-point suggestion uses the high-res asset
+
+The previous fix made hero uploads skip the 1920×1200 re-encode and upload the autoCrunch output (3200px @ q0.9) directly. The focal-point AI call (`useFocalPointSuggestion`) runs server-side against `imageUrl`, which is the *uploaded URL returned by `onChange`*.
+
+Confirm and pin this behavior:
+
+- `HeroSlidesManager` calls `suggestFocal(url)` using the URL the upload returns. With the hero quality profile in place, that URL now points at the 3200px asset — exactly what we want for face/subject detection accuracy.
+- Add a unit/regression test or doc comment in `MediaUploadInput` stating: "For `qualityProfile === 'hero'`, the URL passed to `onChange` is the autoCrunch output (≤ 3200px, q0.9), never the 1920×1200 re-encode. Downstream AI consumers (focal-point detector, alt-text generator) rely on this contract."
+- Pass an explicit `?width=2048` to the focal-point call's `imageUrl` (Storage transform) so the server-side fetch is bounded — a 2048px source is plenty for face detection and avoids the AI service downloading the full 3200px file every time.
+
+**Why this matters**
+
+- Locks the contract so future "let's re-encode hero uploads at 1920" optimizations don't silently degrade focal accuracy.
+- Bounds the focal-point edge function's bandwidth/latency per request.
+
+---
+
+## Files affected
+
+- `src/components/home/HeroBackground.tsx` — add `srcSet` builder for Supabase Storage URLs.
+- `src/lib/image-utils.ts` — add `buildSupabaseSrcSet(url, widths)` helper.
+- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — capture upload meta (width/height/bytes/format) and pass via `onChange`; render caption on preview tile.
+- `src/hooks/useSectionConfig.ts` — extend `HeroSlide` and `HeroConfig` with optional `media_width`, `media_height`, `media_size_bytes`.
+- `src/components/dashboard/website-editor/HeroSlidesManager.tsx` + `HeroBackgroundEditor.tsx` — persist meta, pass to caption.
+- `src/hooks/useFocalPointSuggestion.ts` — append `?width=2048` transform to the URL it sends.
+- DB: lightweight non-breaking migration only if we want server-side persistence beyond the JSON-blob `site_settings` payload — these fields can live inside the existing JSON config (no schema change required).
+
+## Out of scope
+
+- AVIF output (Storage doesn't support it on transform yet; revisit when available).
+- Blurhash / LQIP placeholders (separate enhancement; would deserve its own pass).
+- Auto-generated alt text (separate AI call; not part of this fix).
