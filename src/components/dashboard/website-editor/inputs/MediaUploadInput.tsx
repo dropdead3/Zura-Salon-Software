@@ -144,6 +144,7 @@ export function MediaUploadInput({
         return;
       }
       stage = 'decode';
+      if (isImage) {
         const { blob } = await optimizeImage(file, {
           maxWidth: 1920,
           maxHeight: 1200,
