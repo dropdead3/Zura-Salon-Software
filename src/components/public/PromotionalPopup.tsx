@@ -511,7 +511,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
             </button>
           </div>
         </div>
-        <CountdownBar secondsLeft={secondsLeft} accent={accent} />
+        {autoMinimizeSeconds !== null && (
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+        )}
       </div>
     );
   }
