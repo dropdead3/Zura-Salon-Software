@@ -6,8 +6,9 @@
  * Pure presentational; no editor coupling. Used by both single-slide and the
  * multi-slide rotator.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { HeroScrimStyle } from '@/hooks/useSectionConfig';
+import { buildSupabaseSrcSet, HERO_SRCSET_WIDTHS } from '@/lib/image-utils';
 
 interface HeroBackgroundProps {
   type: 'none' | 'image' | 'video';
@@ -29,6 +30,11 @@ interface HeroBackgroundProps {
   scrimStrength?: number;
   /** Overlay tint: darken = black, lighten = white. Mutually exclusive. */
   overlayMode?: 'darken' | 'lighten';
+  /**
+   * Natural pixel width of the source image, when known. Caps the responsive
+   * srcSet so we don't ask Storage for variants larger than the master upload.
+   */
+  mediaWidth?: number | null;
 }
 
 export function HeroBackground({
