@@ -310,6 +310,7 @@ export function MediaUploadInput({
                 height: posterDims.height,
                 sizeBytes: posterSize,
                 format: 'image/jpeg',
+                optimizedWithProfile: qualityProfile,
               }
             : undefined,
         });
