@@ -265,7 +265,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   text={slide.eyebrow}
                   toneClass={mutedTone}
                   editable={isPreview}
-                  fieldPath={`slides.${activeIndex}.eyebrow`}
+                  fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
                   className={spacing.eyebrow}
                 />
 
