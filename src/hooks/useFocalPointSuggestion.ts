@@ -26,17 +26,25 @@ export function useFocalPointSuggestion(
   // upload's focal point.
   const latestUrlRef = useRef<string | null>(null);
 
-  const suggest = useCallback(async (imageUrl: string) => {
+  const suggest = useCallback(async (
+    imageUrl: string,
+    options?: { analysisDataUrl?: string },
+  ) => {
     if (!imageUrl) return;
     latestUrlRef.current = imageUrl;
     setPending(true);
     try {
-      // Bound the AI server's fetch to a 2048px variant so face/subject
-      // detection runs against a manageable payload (full hero masters can be
-      // 3200px @ ~1MB+). No-op for non-Supabase URLs.
-      const boundedUrl = withSupabaseImageWidth(imageUrl, 2048);
+      // Prefer the pre-crunch analysis data URL when the upload pipeline
+      // captured one — it's encoded directly from the raw source bitmap
+      // (≤1600px JPEG) and skips Storage's downscale pipeline entirely. For
+      // ≥3200px DSLR/phone shots this materially improves face/subject
+      // detection accuracy. Falls back to a Storage-bounded variant of the
+      // public URL when no data URL is available (pasted URLs, sources
+      // already smaller than the analysis target, encode failures).
+      const analysisUrl =
+        options?.analysisDataUrl ?? withSupabaseImageWidth(imageUrl, 2048);
       const { data, error } = await supabase.functions.invoke('suggest-focal-point', {
-        body: { imageUrl: boundedUrl },
+        body: { imageUrl: analysisUrl },
       });
       // Bail if a newer upload superseded this one mid-flight.
       if (latestUrlRef.current !== imageUrl) return;
