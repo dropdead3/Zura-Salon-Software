@@ -279,12 +279,15 @@ export function Header() {
   }, [location]);
 
   return (
-    <>
-      {/* Top Announcement Bar */}
+    <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
+      {/* Top Announcement Bar — translucent so hero media shows through */}
       {announcementSettings?.enabled && (
         <div 
-          className={cn("py-4 md:py-2.5 px-4 md:px-6", !announcementSettings.bg_color && "bg-secondary")}
-          style={announcementSettings.bg_color ? { backgroundColor: announcementSettings.bg_color } : undefined}
+          className={cn(
+            "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-md",
+            !announcementSettings.bg_color && "bg-secondary/85"
+          )}
+          style={announcementSettings.bg_color ? { backgroundColor: `${announcementSettings.bg_color}D9` } : undefined}
         >
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
             <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
@@ -305,7 +308,7 @@ export function Header() {
         </div>
       )}
 
-      {/* Main Header */}
+      {/* Main Header — overlays hero media; sticks to top on scroll */}
       <header 
         ref={headerRef}
         className={cn(
