@@ -295,10 +295,13 @@ export function Header() {
         return (
           <div 
             className={cn(
-              "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+              "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
               !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
               // Subtle top-down gradient scrim improves readability over photographic backgrounds
               overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
+              // Warm cream overlay — sits above the glass to add a soft champagne tint
+              "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
+              "[&>*]:relative [&>*]:z-[1]",
             )}
             style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
           >
