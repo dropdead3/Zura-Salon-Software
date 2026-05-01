@@ -8,7 +8,7 @@
  */
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
