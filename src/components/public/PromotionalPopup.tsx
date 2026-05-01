@@ -363,7 +363,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
     setOpen(false);
-    if (!isPreview) setShowFab(true);
+    // Always surface the FAB — preview must mirror the real visitor
+    // lifecycle so operators can QA the "See Offer" affordance without
+    // leaving the editor. Real-visitor side effects (dismissal write,
+    // analytics) stay gated above.
+    setShowFab(true);
   }
 
   function handleSoftClose() {
@@ -374,7 +378,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
     setOpen(false);
-    if (!isPreview) setShowFab(true);
+    setShowFab(true);
   }
 
   function handleFabOpen() {
