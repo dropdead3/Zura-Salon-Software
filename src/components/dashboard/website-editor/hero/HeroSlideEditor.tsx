@@ -8,6 +8,7 @@ import { ToggleInput } from '../inputs/ToggleInput';
 import { SliderInput } from '../inputs/SliderInput';
 import { CharCountInput } from '../inputs/CharCountInput';
 import { UrlInput } from '../inputs/UrlInput';
+import { DynamicArrayInput } from '../inputs/DynamicArrayInput';
 import { FocalPointPicker } from '../inputs/FocalPointPicker';
 import { HeroTextColorsEditor } from '../HeroTextColorsEditor';
 import { HeroScrimEditor } from '../HeroScrimEditor';
@@ -22,6 +23,8 @@ interface HeroSlideEditorProps {
   /** Section-level config — used to resolve "inherit" + show defaults. */
   section: HeroConfig;
   onUpdate: (patch: Partial<HeroSlide>) => void;
+  /** Section-level updater for global fields surfaced inline (e.g. rotating words). */
+  onUpdateSection: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
 }
 
 /**
@@ -33,7 +36,7 @@ interface HeroSlideEditorProps {
  * collapsed "Advanced overrides" section — present for power users but
  * never the first thing operators see.
  */
-export function HeroSlideEditor({ slide, index, section, onUpdate }: HeroSlideEditorProps) {
+export function HeroSlideEditor({ slide, index, section, onUpdate, onUpdateSection }: HeroSlideEditorProps) {
   const [overridesOpen, setOverridesOpen] = useState(false);
 
   const mediaKind = slide.background_type === 'video' ? 'video' : slide.background_type === 'image' ? 'image' : '';
@@ -240,6 +243,49 @@ export function HeroSlideEditor({ slide, index, section, onUpdate }: HeroSlideEd
           onChange={(v) => onUpdate({ headline_text: v })}
           maxLength={60}
         />
+
+        {/* Rotating word — section-level global, surfaced inline because it
+            visually lives inside the headline. Editing here updates every slide. */}
+        <div className="space-y-3 pl-3 border-l-2 border-border/40">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Rotating Word in Headline</p>
+              <p className="text-[11px] text-muted-foreground">
+                Shared across all slides — animates inside every headline.
+              </p>
+            </div>
+          </div>
+
+          <ToggleInput
+            label="Show Rotating Word"
+            value={section.show_rotating_words ?? false}
+            onChange={(v) => onUpdateSection('show_rotating_words', v)}
+          />
+
+          {(section.show_rotating_words ?? false) && (
+            <>
+              <DynamicArrayInput
+                label="Word List"
+                items={section.rotating_words ?? []}
+                onChange={(next) => onUpdateSection('rotating_words', next)}
+                placeholder="Add a word..."
+                maxItems={12}
+                minItems={0}
+                description="Each word appears in turn. 2–6 works best."
+              />
+              <SliderInput
+                label="Rotation Interval"
+                value={section.word_rotation_interval}
+                onChange={(v) => onUpdateSection('word_rotation_interval', v)}
+                min={2}
+                max={10}
+                step={0.5}
+                unit="s"
+                description="How long each word stays on screen"
+              />
+            </>
+          )}
+        </div>
         <CharCountInput
           label="Subheadline Line 1"
           value={slide.subheadline_line1}
