@@ -249,7 +249,20 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Section theme detection
+  // Reveal hidden header when the mouse moves near the top of the viewport.
+  useEffect(() => {
+    const HOVER_REVEAL_THRESHOLD = 80; // px from top edge
+    const handleMouseMove = (e: MouseEvent) => {
+      setIsHoverNearTop(e.clientY <= HOVER_REVEAL_THRESHOLD);
+    };
+    const handleMouseLeave = () => setIsHoverNearTop(false);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
   useEffect(() => {
     const detectTheme = () => {
       const headerEl = headerRef.current;
