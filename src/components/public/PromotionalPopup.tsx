@@ -146,6 +146,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
+  // Track the active hero alignment (published via <html data-hero-alignment>)
+  // so the FAB can shift up out of the way when a right-aligned hero would
+  // crowd the bottom-right anchor (and vice versa for bottom-left).
+  const [heroAlignment, setHeroAlignment] = useState<HeroAlignmentSignal | null>(null);
+  useEffect(() => subscribeHeroAlignment(setHeroAlignment), []);
   // Three-phase visual lifecycle for the popup root (entering → visible →
   // closing). The `closing` phase keeps the popup mounted so its CSS exit
   // animation plays before unmount; `onAnimationEnd` then flips `open` and
