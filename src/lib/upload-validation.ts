@@ -33,7 +33,7 @@ export const ACCEPTED_VIDEO_MIMES = ['video/mp4', 'video/webm'] as const;
 
 const HEIC_MIMES = new Set(['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence']);
 
-type GuardResult = { ok: true } | { ok: false; message: string };
+export type GuardResult = { ok: true } | { ok: false; message: string };
 
 function bytesToMb(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1);
