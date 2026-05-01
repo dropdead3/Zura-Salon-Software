@@ -424,6 +424,7 @@ export function HeroEditor() {
                         section={localConfig}
                         onClick={() => setView({ kind: 'slide', id: s.id })}
                         onDelete={() => deleteSlide(s.id)}
+                        onToggleActive={(next) => updateSlide(s.id, { active: next })}
                       />
                     ))}
                   </div>
