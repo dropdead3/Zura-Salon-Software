@@ -4,8 +4,10 @@
  * as the inherited fallback for slides whose background_type is 'inherit'.
  */
 import { tokens } from '@/lib/design-tokens';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Image as ImageIcon } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Image as ImageIcon, Layers } from 'lucide-react';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { SliderInput } from './inputs/SliderInput';
@@ -18,6 +20,24 @@ interface HeroBackgroundEditorProps {
 
 export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorProps) {
   const kind = config.background_type === 'video' ? 'video' : config.background_type === 'image' ? 'image' : '';
+  const slideMediaCount = (config.slides ?? []).filter(
+    (slide) => slide.background_type !== 'inherit' && !!slide.background_url,
+  ).length;
+
+  const clearSlideMedia = () => {
+    onChange({
+      slides: (config.slides ?? []).map((slide) =>
+        slide.background_type === 'inherit'
+          ? slide
+          : {
+              ...slide,
+              background_type: 'inherit',
+              background_url: '',
+              background_poster_url: '',
+            },
+      ),
+    });
+  };
 
   return (
     <EditorCard
@@ -25,6 +45,27 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
       icon={ImageIcon}
       description="Optional image or short video shown behind the hero text"
     >
+      {slideMediaCount > 0 && (
+        <Alert className="border-border/60 bg-muted/30">
+          <Layers className="h-4 w-4" />
+          <AlertTitle>Preview is using slide media</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-3">
+              <p>
+                {slideMediaCount === 1
+                  ? 'One hero slide has its own background, so the preview can still show media even when the section background is empty.'
+                  : `${slideMediaCount} hero slides have their own backgrounds, so the preview can still show media even when the section background is empty.`}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size={tokens.button.inline} onClick={clearSlideMedia}>
+                  Clear slide media
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <MediaUploadInput
         label="Section Background"
         value={config.background_url}
