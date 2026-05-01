@@ -292,10 +292,14 @@ export function Header() {
           : isOverDark;
         // Strengthen scrim over hero media so text stays legible on busy footage.
         const overMediaDark = !hasExplicitBg && isOverDark;
+        // Hide announcement bar on scroll-down past hero, slide back in on scroll-up.
+        const announcementHidden = isScrolled && !isScrollingUp;
         return (
           <div 
             className={cn(
               "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+              "transition-[transform,opacity] duration-300 ease-out will-change-transform origin-top",
+              announcementHidden ? "-translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
               !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-secondary/90"),
               // Subtle top-down gradient scrim improves readability over photographic backgrounds
               overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
