@@ -500,29 +500,31 @@ export function MediaUploadInput({
               <div className="absolute left-1/2 top-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
             </div>
           )}
-          <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-medium pointer-events-none">
-            {kind === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-            {kind === 'video' ? 'Video' : 'Image'}
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 pointer-events-none">
+            <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 backdrop-blur text-[10px] font-medium">
+              {kind === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+              {kind === 'video' ? 'Video' : 'Image'}
+            </div>
+            {isDirtyDraft && (
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/95 text-amber-950 backdrop-blur text-[10px] font-display tracking-wider uppercase font-medium cursor-help pointer-events-auto"
+                      aria-label="This section has unpublished changes"
+                    >
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-950/80" />
+                      Draft
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[220px] text-xs">
+                    This section has unpublished changes. Click Publish at the top of
+                    the editor to make them live.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
-          {isDirtyDraft && (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/95 text-amber-950 backdrop-blur text-[10px] font-display tracking-wider uppercase font-medium cursor-help"
-                    aria-label="This section has unpublished changes"
-                  >
-                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-950/80" />
-                    Draft
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[220px] text-xs">
-                  This section has unpublished changes. Click Publish at the top of
-                  the editor to make them live.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
           {meta?.width ? (
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -589,11 +591,27 @@ export function MediaUploadInput({
               </Tooltip>
             </TooltipProvider>
           ) : null}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button size={tokens.button.inline} variant="secondary" onClick={() => fileInputRef.current?.click()}>
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 z-10">
+            {isDirtyDraft ? null : null}
+            <Button
+              type="button"
+              size={tokens.button.inline}
+              variant="secondary"
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="h-7 px-2.5 text-[11px] bg-background/80 backdrop-blur hover:bg-background/95"
+            >
               Replace
             </Button>
-            <Button size={tokens.button.inline} variant="destructive" onClick={handleRemove}>
+            <Button
+              type="button"
+              size={tokens.button.inline}
+              variant="destructive"
+              onClick={(e) => { e.stopPropagation(); handleRemove(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="h-7 w-7 p-0"
+              aria-label="Remove"
+            >
               <X className="h-3 w-3" />
             </Button>
           </div>
