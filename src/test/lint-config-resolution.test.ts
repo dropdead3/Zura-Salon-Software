@@ -106,4 +106,12 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       'Site Settings rule should be active on src/lib/siteSettingsDraft.ts; the dispatch sites suppress it with inline eslint-disable comments.',
     ).toBe(true);
   });
+
+  it('keeps the Dirty-State Compare doctrine selector on a representative source file', async () => {
+    const selectors = await getRestrictedSyntaxSelectors('src/App.tsx');
+    expect(
+      selectors.some((s) => s.includes(DIRTY_STATE_SELECTOR_FRAGMENT)),
+      `Dirty-State Compare selector missing from resolved config for src/App.tsx.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
 });
