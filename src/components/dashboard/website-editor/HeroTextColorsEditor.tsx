@@ -36,8 +36,8 @@ function ColorRow({ label, value, onChange, placeholder }: ColorRowProps) {
         <Input
           value={display}
           onChange={(e) => onChange(e.target.value || undefined)}
-          placeholder={placeholder ?? 'auto'}
-          className="h-8 text-xs flex-1"
+          placeholder={placeholder ?? '#000000 (leave blank for auto)'}
+          className="h-8 text-xs flex-1 font-mono"
         />
         {display && (
           <Button
