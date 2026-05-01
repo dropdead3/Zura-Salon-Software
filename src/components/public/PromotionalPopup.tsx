@@ -535,6 +535,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       !cfg.imageUrl || cfg.imageTreatment === 'hidden-on-corner' ? 'none' : 'top';
     return (
       <div
+        key={animationNonce}
         role="dialog"
         aria-modal="false"
         aria-labelledby="promo-popup-title"
