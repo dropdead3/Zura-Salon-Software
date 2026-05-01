@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Megaphone, Loader2, Eye, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Megaphone, Loader2, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
@@ -29,6 +29,7 @@ import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { dispatchPromoPopupPreviewReset } from '@/lib/promoPopupPreviewReset';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
@@ -497,8 +498,13 @@ export function PromotionalPopupEditor() {
   );
 
   const handlePreviewNow = useCallback(() => {
-    triggerPreviewRefresh();
-    toast.success('Preview reloaded — popup will trigger immediately');
+    // Lightweight: dispatch the canonical reset event so the popup
+    // re-runs its full lifecycle in place — no iframe reload, no lost
+    // scroll position. The popup component (sole listener) clears its
+    // triggered ref + FAB state and re-opens. See
+    // `src/lib/promoPopupPreviewReset.ts` for event ownership.
+    dispatchPromoPopupPreviewReset({ reason: 'editor-button' });
+    toast.success('Popup preview restarted');
   }, []);
 
   const handleResetSession = useCallback(() => {
@@ -577,9 +583,10 @@ export function PromotionalPopupEditor() {
             size="sm"
             onClick={handlePreviewNow}
             className="gap-2"
+            title="Re-run the full open → countdown → FAB lifecycle in the preview"
           >
-            <Eye className="h-3.5 w-3.5" />
-            Preview popup now
+            <RotateCcw className="h-3.5 w-3.5" />
+            Restart popup preview
           </Button>
           <Button
             type="button"

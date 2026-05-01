@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { readableForegroundFor } from '@/lib/color-contrast';
+import { PROMO_POPUP_PREVIEW_RESET_EVENT } from '@/lib/promoPopupPreviewReset';
 
 interface Props {
   /**
@@ -234,6 +235,23 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }, 30_000);
     return () => window.clearTimeout(t);
   }, [showFab, open, isPreview, PULSE_SESSION_KEY]);
+
+  // Editor-driven lifecycle reset. Operators hit "Restart popup preview"
+  // in the editor; that dispatches the canonical event (sole owner:
+  // `src/lib/promoPopupPreviewReset.ts`) and we re-run the open →
+  // countdown → FAB lifecycle without a full iframe reload. Only listens
+  // in preview mode so production visitors can't trigger this from the
+  // console.
+  useEffect(() => {
+    if (!isPreview) return;
+    const onReset = () => {
+      triggeredRef.current = false;
+      setShowFab(false);
+      setOpen(true);
+    };
+    window.addEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
+    return () => window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
+  }, [isPreview]);
 
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
