@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
-import { Eyebrow } from '@/components/ui/Eyebrow';
+import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import { HeroNotes } from '@/components/home/HeroNotes';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
@@ -40,9 +40,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
           <div className={alignment.wrapper}>
             {/* Tagline */}
             <div>
-              <Eyebrow className="text-muted-foreground mb-6">
-                {config.eyebrow}
-              </Eyebrow>
+              <HeroEyebrow show={!!config.show_eyebrow} text={config.eyebrow} className="mb-6" />
             </div>
 
             {/* Main headline */}
