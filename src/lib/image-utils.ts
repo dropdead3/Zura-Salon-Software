@@ -172,7 +172,44 @@ export interface AutoCrunchResult {
   originalSizeBytes: number;
   finalSizeBytes: number;
   didCrunch: boolean;
+  /**
+   * A JPEG `data:` URL encoded directly from the **pre-crunch raw bitmap**
+   * at ANALYSIS_MAX_EDGE px on the long edge. Surfaced so AI consumers
+   * (focal-point detection, alt-text) can analyze the source pixels instead
+   * of the downsampled WebP we ship to Storage. Absent when:
+   *   - the source was already smaller than the crunched output (no benefit)
+   *   - encoding failed
+   *   - autoCrunch was skipped entirely
+   * Callers should fall back to the public URL when this is undefined.
+   */
+  analysisDataUrl?: string;
   skippedReason?: 'unsupported-format' | 'not-image' | 'within-budget' | 'error';
+}
+
+// Subject-detection sweet spot for vision LLMs — large enough for accurate
+// face/feature anchoring, small enough to inline as base64 without blowing
+// the edge function's request body.
+const ANALYSIS_MAX_EDGE = 1600;
+const ANALYSIS_QUALITY = 0.85;
+
+async function encodeBitmapToAnalysisDataUrl(bitmap: ImageBitmap): Promise<string | null> {
+  try {
+    const ratio = Math.min(1, ANALYSIS_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * ratio));
+    const h = Math.max(1, Math.round(bitmap.height * ratio));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    // toDataURL is synchronous and avoids an extra blob→FileReader hop.
+    return canvas.toDataURL('image/jpeg', ANALYSIS_QUALITY);
+  } catch {
+    return null;
+  }
 }
 
 async function encodeBitmapToWebp(
