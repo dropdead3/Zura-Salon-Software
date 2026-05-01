@@ -254,14 +254,19 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
-      if (autoMinimizeSeconds !== null) {
-        setSecondsLeft(autoMinimizeSeconds);
+      // Re-derive the operator-configured duration here (kept inline so
+      // this effect doesn't depend on autoMinimizeSeconds, which is
+      // declared further down).
+      const ms = cfg?.autoMinimizeMs;
+      if (ms !== null) {
+        const seconds = typeof ms === 'number' ? ms : 15000;
+        setSecondsLeft(Math.max(5, Math.min(60, Math.round(seconds / 1000))));
       }
       setOpen(true);
     };
     window.addEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
     return () => window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
-  }, [isPreview, autoMinimizeSeconds]);
+  }, [isPreview, cfg?.autoMinimizeMs]);
 
   // Echo lifecycle phase to the editor (preview only) so the "Restart
   // popup preview" button can render a context-aware label without
