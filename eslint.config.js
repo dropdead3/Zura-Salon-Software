@@ -98,10 +98,16 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     ignores: [
       "src/lib/siteSettingsDraft.ts",
-      "src/test/lint-fixtures/**",
+      // NOTE: do NOT ignore `src/test/lint-fixtures/**` here. The
+      // top-level `ignores` already excludes the fixtures from `npm run
+      // lint`, and the smoke test uses ESLint's `ignore: false` option
+      // to deliberately bypass that exclusion. Re-listing the fixtures
+      // path here would silently drop this rule from the fixture's
+      // resolved config (the second block's `no-restricted-syntax`
+      // would win by replacement), making the test report 0 violations.
       // Vitest tests may legitimately simulate the event for unit coverage.
       "src/**/__tests__/**",
-      "src/test/**",
+      "src/test/**/*.test.{ts,tsx}",
     ],
     rules: {
       "no-restricted-syntax": [
