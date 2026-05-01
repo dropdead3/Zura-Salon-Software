@@ -421,15 +421,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             confusion actually happens (the canvas), not via an editor-strip
             label they may have missed. Pointer-events-none so it never
             blocks click-to-edit on sections beneath it. */}
-        {isEditingLive && previewUrl && paneSize.w > 0 && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3">
-            <div className="flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1.5 text-xs shadow-lg backdrop-blur-sm border border-primary/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary/80 animate-pulse" />
-              <span className="font-medium">Showing last saved version</span>
-              <span className="opacity-80">— click Save to refresh</span>
-            </div>
-          </div>
-        )}
+        {/* Pill moved to toolbar top-left — no overlay duplicate here. */}
         {previewUrl ? (
           paneSize.w > 0 && (
             <div
