@@ -12,7 +12,7 @@ export type PopupAudience = 'all' | 'new-visitors-only';
 export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
 export type FabPosition = 'bottom-right' | 'bottom-left';
 /** Curated companion glyph for the eyebrow tag. `none` hides the icon. */
-export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles';
+export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles' | 'scissors';
 /** Per-layout image treatment.
  *  - `cover`: full-width image strip above the headline (default).
  *  - `side`: image rendered as a left rail on modal (ignored on corner-card).
