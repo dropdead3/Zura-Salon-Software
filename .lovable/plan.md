@@ -1,84 +1,50 @@
-# Hero/Slider image quality enhancements
+## Goal
 
-Three follow-ups to the previous "pixelated sliders" fix, focused on bandwidth, operator feedback, and AI accuracy.
+Finish the four mechanical wiring tasks deferred from the prior turn so operators get visible upload feedback, AI focal detection runs against a bounded image, and the public srcSet is capped to the actual master width.
 
----
+## Changes
 
-## 1. Responsive `srcSet` on hero image (sharper desktop, faster mobile)
+### 1. Persist `meta` on upload + pass it back into `MediaUploadInput`
 
-Today `HeroBackground` renders a single `<img src={url}>` at full upload resolution (~3200px WebP, often 400–900KB). On a phone that's a wasted 600KB; on a 5K display the browser still picks that one file.
+**`src/components/dashboard/website-editor/HeroSlidesManager.tsx`** (`SlideRow` MediaUploadInput at lines 185–203)
+- Extend the `onChange` handler to read `meta` from the payload and persist `media_width`, `media_height`, `media_size_bytes`, `media_format` into the slide patch alongside `background_url`.
+- Add `meta={slide.media_width ? { width: slide.media_width, height: slide.media_height, sizeBytes: slide.media_size_bytes, format: slide.media_format } : null}` to the `<MediaUploadInput>` props.
 
-Use Supabase Storage's on-the-fly image transforms (the `?width=` query param on the public URL — no re-upload, no extra storage) to produce a responsive `srcSet` with `w` descriptors. Browsers then pick the smallest variant that satisfies the rendered pixel density.
+**`src/components/dashboard/website-editor/HeroBackgroundEditor.tsx`** (lines 83–99)
+- Same treatment on the section-level `MediaUploadInput`: persist `meta.*` into `config.media_*` via `onChange`, and pass the existing `config.media_*` back as `meta`.
 
-**Behavior**
+### 2. Render the resolution caption strip on the preview tile
 
-- Hero `<img>` gets:
-  - `srcSet` with widths `640, 960, 1440, 1920, 2560, 3200` — each entry is the same Storage object with a different `?width=` param.
-  - `sizes="100vw"` (hero is full-bleed).
-  - Original `src` retained as the fallback (unchanged behavior for legacy/external URLs).
-- Skip transform for non-Supabase URLs (operator-pasted external links, blob: previews) — fall back to plain `src` so we don't break previews or external CDNs.
-- Skip for video posters (videos already use `<video poster>` which doesn't support srcSet — keep as-is).
+**`src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx`** (preview block at lines 345–372)
+- When `meta?.width` is present and `kind === 'image'`, render a small caption strip absolutely positioned at the bottom-left of the preview tile (mirroring the existing top-left type chip):
+  - Format: `3200 × 2133 · WebP · 480 KB`
+  - Width pulled from `meta.width × meta.height`; format derived from `meta.format` (strip `image/` prefix, uppercase); size via existing `formatFileSize(meta.sizeBytes)`.
+  - Leading dot indicates resolution health: green ≥2400, amber 1200–2399, red <1200, mapped to `bg-emerald-500 / bg-amber-500 / bg-red-500`.
+  - Same `bg-background/80 backdrop-blur` glass treatment as the type chip; `text-[10px]`, `font-sans`, `tabular-nums`.
 
-**Why this matters**
+### 3. Bound focal-point fetch to 2048px
 
-- 12.9" iPad (~2732px wide): picks the `2560w` variant ≈ 250–350KB instead of 700KB.
-- iPhone 15 (~1179px CSS, 3x DPR ≈ 1290 device px wide hero): picks `1440w` ≈ 90KB.
-- 5K Studio Display: still gets the full `3200w` for crispness.
-- No quality regression — the original 3200px upload is still served when the device asks for it.
+**`src/hooks/useFocalPointSuggestion.ts`** (line 28–35)
+- Before invoking `suggest-focal-point`, transform `imageUrl` via `withSupabaseImageWidth(imageUrl, 2048)` (imported from `@/lib/image-utils`). For non-Supabase URLs the helper is a no-op so external/blob URLs are unchanged.
+- Pass the transformed URL in the function `body`. Keep the `latestUrlRef` keyed on the *original* URL so concurrent-upload guards still match what callers compare against.
 
----
+### 4. Pipe `mediaWidth` into `<HeroBackground>` from both consumers
 
-## 2. Upload metadata caption on the slide row
+**`src/components/home/HeroSection.tsx`** (lines 123 + 198)
+- Read `heroConfig?.media_width` and pass `mediaWidth={heroConfig?.media_width ?? null}` to both `<HeroBackground>` instances.
 
-Operators currently get a single "Image uploaded · compressed 12MB → 480KB" toast that disappears in 3 seconds, then no persistent confirmation. They can't tell whether their slide is rendering at retina resolution or at thumbnail size.
+**`src/components/home/HeroSlideRotator.tsx`** (line 149)
+- Resolve the active slide's master width: prefer `slide.media_width` when the slide owns its background; fall back to `config.media_width` when `background_type === 'inherit'` (mirrors the existing `bgUrl` resolution at lines 81–85).
+- Pass the resolved value as `mediaWidth` into `<HeroBackground>`.
 
-Add a small caption directly under the slide's media preview, e.g. `3200 × 2133 · WebP · 480 KB`. Always-visible, monospace-feeling for digit alignment.
+## Out of scope (intentionally)
 
-**Behavior**
+- `<link rel="preload" imageSrcSet>` for first slide LCP — separate optimization wave.
+- Build-time test asserting every `pathPrefix="hero/…"` callsite passes `qualityProfile="hero"` — separate canon enforcement task.
+- Backfill of `media_*` on legacy slides — captions silently degrade (UI tile shows no strip), which is the intended behavior.
 
-- After a successful upload in `MediaUploadInput`, capture the final blob's `width × height × bytes × format` and surface it via the existing `onChange` payload (extend it with optional `meta`).
-- Persist `media_width`, `media_height`, `media_size_bytes` on `HeroSlide` (and section-level `HeroConfig`) so the caption survives reloads.
-- `MediaUploadInput`'s preview tile shows the caption when meta is present.
-- Color-code lightly: green if width ≥ 2400 (retina-grade), amber if 1200–2399 (standard), red if < 1200 (too small for hero) — small dot, not a banner.
-- Pasted URLs (no upload event): caption is hidden — we don't run a HEAD request to size them. (Acceptable: only uploads benefit from the badge; pastes are operator-owned.)
+## Enhancement suggestions (for after this lands)
 
-**Why this matters**
-
-- Confirms the previous quality fix is actually landing high-resolution files (operator self-serve QA).
-- Catches "wait, I uploaded a logo PNG to my hero slot" before publish.
-- Makes per-slide weight visible — useful when a 5-slide carousel ships 4MB of images.
-
----
-
-## 3. Verify focal-point suggestion uses the high-res asset
-
-The previous fix made hero uploads skip the 1920×1200 re-encode and upload the autoCrunch output (3200px @ q0.9) directly. The focal-point AI call (`useFocalPointSuggestion`) runs server-side against `imageUrl`, which is the *uploaded URL returned by `onChange`*.
-
-Confirm and pin this behavior:
-
-- `HeroSlidesManager` calls `suggestFocal(url)` using the URL the upload returns. With the hero quality profile in place, that URL now points at the 3200px asset — exactly what we want for face/subject detection accuracy.
-- Add a unit/regression test or doc comment in `MediaUploadInput` stating: "For `qualityProfile === 'hero'`, the URL passed to `onChange` is the autoCrunch output (≤ 3200px, q0.9), never the 1920×1200 re-encode. Downstream AI consumers (focal-point detector, alt-text generator) rely on this contract."
-- Pass an explicit `?width=2048` to the focal-point call's `imageUrl` (Storage transform) so the server-side fetch is bounded — a 2048px source is plenty for face detection and avoids the AI service downloading the full 3200px file every time.
-
-**Why this matters**
-
-- Locks the contract so future "let's re-encode hero uploads at 1920" optimizations don't silently degrade focal accuracy.
-- Bounds the focal-point edge function's bandwidth/latency per request.
-
----
-
-## Files affected
-
-- `src/components/home/HeroBackground.tsx` — add `srcSet` builder for Supabase Storage URLs.
-- `src/lib/image-utils.ts` — add `buildSupabaseSrcSet(url, widths)` helper.
-- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — capture upload meta (width/height/bytes/format) and pass via `onChange`; render caption on preview tile.
-- `src/hooks/useSectionConfig.ts` — extend `HeroSlide` and `HeroConfig` with optional `media_width`, `media_height`, `media_size_bytes`.
-- `src/components/dashboard/website-editor/HeroSlidesManager.tsx` + `HeroBackgroundEditor.tsx` — persist meta, pass to caption.
-- `src/hooks/useFocalPointSuggestion.ts` — append `?width=2048` transform to the URL it sends.
-- DB: lightweight non-breaking migration only if we want server-side persistence beyond the JSON-blob `site_settings` payload — these fields can live inside the existing JSON config (no schema change required).
-
-## Out of scope
-
-- AVIF output (Storage doesn't support it on transform yet; revisit when available).
-- Blurhash / LQIP placeholders (separate enhancement; would deserve its own pass).
-- Auto-generated alt text (separate AI call; not part of this fix).
+1. Add a one-line tooltip on the resolution dot ("Recommended ≥2400px for retina hero") so the green/amber/red coding is self-explanatory.
+2. When `meta.sizeBytes > 1.5MB` AND format is JPEG/PNG, surface an inline "Re-uploading would crunch this to WebP" hint — operator-driven optimization without breaking existing uploads.
+3. Persist the `meta` capture on the `posterValue` upload path for videos too (currently only the video URL is captured) so the editor can show poster resolution health.

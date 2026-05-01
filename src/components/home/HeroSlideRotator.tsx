@@ -114,6 +114,14 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.background_fit ?? sectionFit;
   }, [slide, config.background_fit]);
 
+  // Resolve the master width for srcSet capping: per-slide media owns its own
+  // width; inherited slides borrow the section background's master width.
+  const mediaWidth = useMemo<number | null>(() => {
+    if (!slide) return config.media_width ?? null;
+    if (slide.background_type === 'inherit') return config.media_width ?? null;
+    return slide.media_width ?? null;
+  }, [slide, config.media_width]);
+
   if (!slide) return null;
 
   const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
@@ -157,6 +165,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             overlayOpacity={overlay}
             scrimStyle={scrimStyle}
             scrimStrength={scrimStrength}
+            mediaWidth={mediaWidth}
           />
         </motion.div>
       </AnimatePresence>

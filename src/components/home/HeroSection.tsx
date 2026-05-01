@@ -50,6 +50,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
   const scrimStyle = heroConfig?.scrim_style ?? 'gradient-bottom';
   const scrimStrength = heroConfig?.scrim_strength ?? 0.55;
+  const mediaWidth = heroConfig?.media_width ?? null;
   const hasMediaBackground = bgType !== 'none' && !!bgUrl;
   // Resolve auto-contrast + operator color overrides for headline, subheadline,
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
@@ -120,7 +121,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   if (isPreview) {
     return (
       <section data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative z-10 flex flex-col overflow-visible min-h-[500px] bg-background">
-        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
+        <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} />
         <div className="flex-1 flex items-center justify-center relative z-10 py-16">
           <div className="container mx-auto px-6 lg:px-12">
             <div className="max-w-4xl mx-auto text-center">
@@ -195,7 +196,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   return (
     <section ref={sectionRef} data-theme={hasMediaBackground ? 'dark' : 'light'} className="relative z-10 flex flex-col overflow-visible min-h-screen">
       {/* Operator-configured background (image or video) */}
-      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} />
+      <HeroBackground type={bgType} url={bgUrl} posterUrl={bgPoster} fit={bgFit} focalX={focalX} focalY={focalY} overlayMode={overlayMode} overlayOpacity={overlayOpacity} scrimStyle={scrimStyle} scrimStrength={scrimStrength} mediaWidth={mediaWidth} />
 
       {/* Legacy explicit videoSrc prop (back-compat) */}
       {!hasMediaBackground && videoSrc && (

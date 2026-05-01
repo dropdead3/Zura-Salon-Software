@@ -189,13 +189,30 @@ function SlideRow({
                   kind={mediaKind}
                   imageOnly={slide.background_type === 'image'}
                   qualityProfile="hero"
-                  onChange={({ url, posterUrl, kind }) => {
+                  meta={
+                    slide.media_width
+                      ? {
+                          width: slide.media_width,
+                          height: slide.media_height,
+                          sizeBytes: slide.media_size_bytes,
+                          format: slide.media_format,
+                        }
+                      : null
+                  }
+                  onChange={({ url, posterUrl, kind, meta }) => {
                     const wasNewImage =
                       kind === 'image' && url && url !== slide.background_url;
                     onUpdate(slide.id, {
                       background_url: url,
                       background_poster_url: posterUrl,
                       background_type: kind === 'video' ? 'video' : kind === 'image' ? 'image' : 'inherit',
+                      // Persist upload-time metadata so the editor can render
+                      // the resolution caption + the public srcSet can cap
+                      // variants at the master width. Cleared values reset.
+                      media_width: meta?.width ?? (url ? slide.media_width ?? null : null),
+                      media_height: meta?.height ?? (url ? slide.media_height ?? null : null),
+                      media_size_bytes: meta?.sizeBytes ?? (url ? slide.media_size_bytes ?? null : null),
+                      media_format: meta?.format ?? (url ? slide.media_format ?? null : null),
                     });
                     if (wasNewImage) suggestFocal(url);
                   }}

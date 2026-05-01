@@ -86,12 +86,28 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
         posterValue={config.background_poster_url}
         kind={kind}
         qualityProfile="hero"
-        onChange={({ url, posterUrl, kind: k }) => {
+        meta={
+          config.media_width
+            ? {
+                width: config.media_width,
+                height: config.media_height,
+                sizeBytes: config.media_size_bytes,
+                format: config.media_format,
+              }
+            : null
+        }
+        onChange={({ url, posterUrl, kind: k, meta }) => {
           const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({
             background_url: url,
             background_poster_url: posterUrl,
             background_type: k === 'video' ? 'video' : k === 'image' ? 'image' : 'none',
+            // Capture upload-time metadata so the editor renders the
+            // resolution caption + the public srcSet caps at the master width.
+            media_width: meta?.width ?? (url ? config.media_width ?? null : null),
+            media_height: meta?.height ?? (url ? config.media_height ?? null : null),
+            media_size_bytes: meta?.sizeBytes ?? (url ? config.media_size_bytes ?? null : null),
+            media_format: meta?.format ?? (url ? config.media_format ?? null : null),
           });
           if (wasNewImage) suggestFocal(url);
         }}
