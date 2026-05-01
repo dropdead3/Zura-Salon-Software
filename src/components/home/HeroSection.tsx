@@ -312,7 +312,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.5 }}
                 style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
               >
-                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} />
+                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} isOverDark={hasMediaBackground} colorOverride={!!heroColors.headlineStyle.color} />
               </motion.span>
             </motion.h1>
 
