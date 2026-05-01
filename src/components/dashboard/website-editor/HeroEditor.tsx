@@ -10,6 +10,7 @@ import {
   Settings2,
   AlignJustify,
   Plus,
+  Repeat,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
