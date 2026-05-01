@@ -139,7 +139,12 @@ export interface HeroConfig {
   background_url: string;
   background_poster_url: string;
   background_fit: 'cover' | 'contain';
-  overlay_opacity: number; // 0..0.8 — back-compat strength used when scrim_style === 'flat' or unset
+  /** Focal point as percentages 0..100 (CSS object-position). Default 50/50. */
+  background_focal_x?: number;
+  background_focal_y?: number;
+  /** Overlay mode: darken (black scrim) or lighten (white scrim). Mutually exclusive. */
+  overlay_mode?: 'darken' | 'lighten';
+  overlay_opacity: number; // 0..0.8 — strength used when scrim_style === 'flat' or unset
   /** Section-level scrim style. Defaults to `gradient-bottom` for media backgrounds. */
   scrim_style?: HeroScrimStyle;
   /** Section-level scrim strength (0..1). Defaults to 0.55 when set, else falls back to overlay_opacity. */
@@ -414,6 +419,9 @@ export const DEFAULT_HERO: HeroConfig = {
   background_url: '',
   background_poster_url: '',
   background_fit: 'cover',
+  background_focal_x: 50,
+  background_focal_y: 50,
+  overlay_mode: 'darken',
   overlay_opacity: 0.4,
   scrim_style: 'gradient-bottom',
   scrim_strength: 0.55,
