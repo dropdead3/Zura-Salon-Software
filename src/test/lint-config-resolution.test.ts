@@ -176,6 +176,34 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     ).toBe(true);
   });
 
+  it('keeps the Promo Popup preview event selectors on the banned fixture', async () => {
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/promo-popup-events-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes('promo-popup-preview-reset')),
+      `promo-popup-preview-reset selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+    expect(
+      selectors.some((s) => s.includes('promo-popup-preview-state')),
+      `promo-popup-preview-state selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('applies the Promo Popup preview event rules to the owning module (suppression is per-line)', async () => {
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/lib/promoPopupPreviewReset.ts',
+    );
+    expect(
+      selectors.some((s) => s.includes('promo-popup-preview-reset')),
+      'promo-popup-preview-reset rule should be active on the owning module; dispatch sites use inline eslint-disable comments.',
+    ).toBe(true);
+    expect(
+      selectors.some((s) => s.includes('promo-popup-preview-state')),
+      'promo-popup-preview-state rule should be active on the owning module; dispatch sites use inline eslint-disable comments.',
+    ).toBe(true);
+  });
+
   it('keeps the hero-specific selector (alignment + shared component) on hero files', async () => {
     // The hero block appends two extraSelectors via defineScopedDoctrine.
     // Auto-iteration above covers the consolidated 5; this one asserts

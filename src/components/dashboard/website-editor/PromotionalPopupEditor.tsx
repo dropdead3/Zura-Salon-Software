@@ -29,7 +29,13 @@ import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
-import { dispatchPromoPopupPreviewReset } from '@/lib/promoPopupPreviewReset';
+import {
+  dispatchPromoPopupPreviewReset,
+  getLastPromoPopupPreviewPhase,
+  PROMO_POPUP_PREVIEW_STATE_EVENT,
+  type PromoPopupPreviewPhase,
+  type PromoPopupPreviewStateDetail,
+} from '@/lib/promoPopupPreviewReset';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
@@ -497,6 +503,47 @@ export function PromotionalPopupEditor() {
     [enqueueWrite],
   );
 
+  // Subscribe to the popup's lifecycle phase so the restart button can
+  // render a context-aware label. Echoed by `PromotionalPopup.tsx` only
+  // in preview mode; sole event owner is `src/lib/promoPopupPreviewReset.ts`.
+  // Seeded from the cached last phase so a late mount renders the right
+  // label on first paint without waiting for a transition.
+  const [popupPhase, setPopupPhase] = useState<PromoPopupPreviewPhase>(
+    () => getLastPromoPopupPreviewPhase(),
+  );
+  useEffect(() => {
+    const onState = (e: Event) => {
+      const detail = (e as CustomEvent<PromoPopupPreviewStateDetail>).detail;
+      if (detail?.phase) setPopupPhase(detail.phase);
+    };
+    window.addEventListener(PROMO_POPUP_PREVIEW_STATE_EVENT, onState);
+    return () => window.removeEventListener(PROMO_POPUP_PREVIEW_STATE_EVENT, onState);
+  }, []);
+
+  // Phase-aware copy. Higher cognitive fit than a static label —
+  // operators QA'ing the FAB transition see what the next click will do
+  // without having to remember which phase they're in.
+  const restartButtonCopy = useMemo<{ label: string; title: string }>(() => {
+    switch (popupPhase) {
+      case 'open':
+        return {
+          label: 'Restart preview',
+          title: 'Reset the countdown and re-open the popup from the top',
+        };
+      case 'fab':
+        return {
+          label: 'Reopen from FAB',
+          title: 'Re-run the full open → countdown → FAB lifecycle in the preview',
+        };
+      case 'idle':
+      default:
+        return {
+          label: 'Trigger popup',
+          title: 'Open the popup in the preview to QA the lifecycle',
+        };
+    }
+  }, [popupPhase]);
+
   const handlePreviewNow = useCallback(() => {
     // Lightweight: dispatch the canonical reset event so the popup
     // re-runs its full lifecycle in place — no iframe reload, no lost
@@ -583,10 +630,10 @@ export function PromotionalPopupEditor() {
             size="sm"
             onClick={handlePreviewNow}
             className="gap-2"
-            title="Re-run the full open → countdown → FAB lifecycle in the preview"
+            title={restartButtonCopy.title}
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Restart popup preview
+            {restartButtonCopy.label}
           </Button>
           <Button
             type="button"

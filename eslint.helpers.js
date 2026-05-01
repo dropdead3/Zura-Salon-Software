@@ -44,6 +44,14 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
   },
   {
+    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-reset'])",
+    message: "The `promo-popup-preview-reset` event is owned exclusively by src/lib/promoPopupPreviewReset.ts. Use `dispatchPromoPopupPreviewReset()` from that module instead of inlining a CustomEvent — the helper centralizes the payload shape and lets the editor stay in lockstep with the popup listener.",
+  },
+  {
+    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='promo-popup-preview-state'])",
+    message: "The `promo-popup-preview-state` event is owned exclusively by src/lib/promoPopupPreviewReset.ts (the popup is the sole dispatcher; the editor is the sole consumer). Use `dispatchPromoPopupPreviewState(phase)` from that module — inlining a CustomEvent breaks the typed phase union and the last-phase replay cache.",
+  },
+  {
     selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
     message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
   },
