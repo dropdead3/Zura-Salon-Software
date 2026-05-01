@@ -39,6 +39,18 @@ export default tseslint.config(
       // usage in adapter/edge boundaries while still surfacing it for
       // future cleanup. Was the dominant error source (4104 of 4322).
       "@typescript-eslint/no-explicit-any": "warn",
+      // ⚠️  FLAT-CONFIG REPLACEMENT SEMANTICS  ⚠️
+      // `no-restricted-syntax` is defined in MULTIPLE config blocks below
+      // (this one, plus the Site Settings Event Ownership block). When
+      // two flat-config objects both match a file and both set the same
+      // rule, ESLint REPLACES — it does NOT merge the options arrays.
+      // The later block wins entirely. If you add a new selector here
+      // and it stops firing on a file matched by another block, the
+      // other block silently dropped this rule's options. The meta-test
+      // `src/test/lint-config-resolution.test.ts` guards against this
+      // by asserting both doctrine selectors survive in the resolved
+      // config for representative source files.
+      //
       // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
       // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
       // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>, or
