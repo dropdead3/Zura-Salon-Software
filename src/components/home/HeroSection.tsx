@@ -64,6 +64,14 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
   const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
   const alignment = resolveHeroAlignment(heroConfig?.content_alignment);
+  // Container-aware spacing: ResizeObserver on the text wrapper drops the
+  // hero into the `compact` ladder when the wrapper measures below
+  // `COMPACT_FORCE_BREAKPOINT`, regardless of the operator's chosen density.
+  // Honors the project's Container-Aware Responsiveness canon so embedded /
+  // narrow-pane previews don't break with the `airy` preset.
+  const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
+  const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
+  const spacing = resolveHeroSpacing(heroConfig?.content_spacing, forceCompact);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
