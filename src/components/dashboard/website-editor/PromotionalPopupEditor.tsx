@@ -498,8 +498,13 @@ export function PromotionalPopupEditor() {
   );
 
   const handlePreviewNow = useCallback(() => {
-    triggerPreviewRefresh();
-    toast.success('Preview reloaded — popup will trigger immediately');
+    // Lightweight: dispatch the canonical reset event so the popup
+    // re-runs its full lifecycle in place — no iframe reload, no lost
+    // scroll position. The popup component (sole listener) clears its
+    // triggered ref + FAB state and re-opens. See
+    // `src/lib/promoPopupPreviewReset.ts` for event ownership.
+    dispatchPromoPopupPreviewReset({ reason: 'editor-button' });
+    toast.success('Popup preview restarted');
   }, []);
 
   const handleResetSession = useCallback(() => {
