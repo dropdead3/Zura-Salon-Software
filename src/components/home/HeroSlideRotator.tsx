@@ -17,6 +17,7 @@ import { HeroBackground } from './HeroBackground';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
+import { publishHeroAlignment, clearHeroAlignment } from '@/lib/heroAlignmentSignal';
 import { resolveHeroSpacing, COMPACT_FORCE_BREAKPOINT } from '@/lib/heroSpacing';
 import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
