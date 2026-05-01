@@ -536,6 +536,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return (
       <div
         key={animationNonce}
+        data-testid="promo-popup-root"
+        data-animation-key={animationNonce}
         role="dialog"
         aria-modal="false"
         aria-labelledby="promo-popup-title"
@@ -570,6 +572,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return (
       <div
         key={animationNonce}
+        data-testid="promo-popup-root"
+        data-animation-key={animationNonce}
         role="dialog"
         aria-labelledby="promo-popup-title"
         className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
@@ -715,6 +719,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   return (
     <div
       key={animationNonce}
+      data-testid="promo-popup-root"
+      data-animation-key={animationNonce}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
