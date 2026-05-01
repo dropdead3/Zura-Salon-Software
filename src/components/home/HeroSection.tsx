@@ -166,7 +166,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 </p>
               )}
               <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className={cn("flex flex-col sm:flex-row items-center gap-3", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
                     className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
