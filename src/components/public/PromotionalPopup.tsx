@@ -282,6 +282,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
+      pendingExitRef.current = null;
+      setPopupPhase('entering');
       // Replay the mount BEFORE flipping `open` so React schedules a fresh
       // mount of the popup root in the same render pass — that's what
       // replays `animate-in slide-in-from-*`. Without this, an already-open
