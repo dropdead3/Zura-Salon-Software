@@ -133,15 +133,35 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     }
   }, [sendScrollMessage]);
 
+  // SOFT refresh: post a draft-invalidation message into the iframe so its
+  // React Query cache for site-settings re-fetches in place. No remount, no
+  // JS/CSS cold reparse, no white flash. The actual postMessage forwarding
+  // happens in the `site-settings-draft-write` listener below — preview-utils
+  // dispatches both events for back-compat with existing call sites.
   useEffect(() => {
-    const handleStorageChange = () => {
+    const handleSoftRefresh = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      const iframe = iframeRef.current;
+      if (!iframe?.contentWindow) return;
+      iframe.contentWindow.postMessage(
+        { type: 'PREVIEW_REFRESH_DRAFT', orgId: detail.orgId, key: detail.key },
+        previewOrigin
+      );
+    };
+    // HARD reload: bump key → full iframe remount. Reserved for manual reload
+    // and structural swaps (theme, layout). Most save flows should use soft.
+    const handleHardReload = () => {
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
       iframeReadyRef.current = false;
     };
-    window.addEventListener('website-preview-refresh', handleStorageChange);
-    return () => window.removeEventListener('website-preview-refresh', handleStorageChange);
-  }, []);
+    window.addEventListener('website-preview-refresh', handleSoftRefresh);
+    window.addEventListener('website-preview-hard-reload', handleHardReload);
+    return () => {
+      window.removeEventListener('website-preview-refresh', handleSoftRefresh);
+      window.removeEventListener('website-preview-hard-reload', handleHardReload);
+    };
+  }, [previewOrigin]);
 
   // ── Editor → iframe bridge ──
   // Forward parent CustomEvents (live design tweaks, provisional reorder during drag)
@@ -207,6 +227,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
 
   const handleRefresh = () => {
     if (!previewUrl) return;
+    // Manual reload button = explicit hard remount (operator wants a clean slate).
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
     iframeReadyRef.current = false;
@@ -490,7 +511,5 @@ function DeviceButton({
   );
 }
 
-// Helper to trigger preview refresh from anywhere
-export function triggerPreviewRefresh() {
-  window.dispatchEvent(new CustomEvent('website-preview-refresh'));
-}
+// Re-export from preview-utils so legacy imports keep working.
+export { triggerPreviewRefresh, triggerPreviewHardReload } from '@/lib/preview-utils';
