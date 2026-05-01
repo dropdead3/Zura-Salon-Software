@@ -32,20 +32,18 @@ function walk(dir: string, out: string[] = []): string[] {
 // first '>' that is not inside an attribute. JSX self-close (`/>`) is fine.
 const TAG_RE = /<MediaUploadInput\b([^>]*?)\/?>/gs;
 
-interface Offender {
-  file: string;
-  line: number;
-  pathPrefix: string;
-  snippet: string;
-}
+
 
 describe('hero MediaUploadInput callsites', () => {
-  it('every hero pathPrefix passes qualityProfile="hero"', () => {
-    const files = walk(SRC_ROOT).filter(
-      (f) => !f.endsWith('MediaUploadInput.tsx'),
-    );
-
-    const offenders: Offender[] = [];
+  function collectCallsites() {
+    const files = walk(SRC_ROOT).filter((f) => !f.endsWith('MediaUploadInput.tsx'));
+    const callsites: Array<{
+      file: string;
+      line: number;
+      pathPrefix: string;
+      hasHeroProfile: boolean;
+      snippet: string;
+    }> = [];
 
     for (const file of files) {
       const src = readFileSync(file, 'utf8');
@@ -54,32 +52,35 @@ describe('hero MediaUploadInput callsites', () => {
       for (const match of src.matchAll(TAG_RE)) {
         const tagBody = match[1] ?? '';
 
-        // Extract pathPrefix value. Supports "literal" and {`template`} forms
-        // (and {expression} — we only flag when the expression text contains
-        // the substring 'hero', conservative but catches realistic regressions).
         const literal = tagBody.match(/pathPrefix\s*=\s*"([^"]*)"/);
         const expr = tagBody.match(/pathPrefix\s*=\s*\{([^}]*)\}/);
         const pathPrefixValue = literal?.[1] ?? expr?.[1] ?? '';
 
-        if (!pathPrefixValue) continue;
-
-        const isHero = /(^|[^a-zA-Z])hero([^a-zA-Z]|$|\/)/i.test(
-          pathPrefixValue,
-        );
-        if (!isHero) continue;
-
         const hasHeroProfile = /qualityProfile\s*=\s*"hero"/.test(tagBody);
-        if (hasHeroProfile) continue;
-
         const lineNo = src.slice(0, match.index ?? 0).split('\n').length;
-        offenders.push({
+
+        callsites.push({
           file: relative(PROJECT_ROOT, file),
           line: lineNo,
           pathPrefix: pathPrefixValue,
+          hasHeroProfile,
           snippet: match[0].replace(/\s+/g, ' ').slice(0, 200),
         });
       }
     }
+
+    return callsites;
+  }
+
+  // Match "hero" as a path segment: start-of-string OR a non-letter boundary,
+  // then "hero", then end / non-letter / "/". Avoids false positives on
+  // "heroes", "antiheroic", etc.
+  const HERO_SEGMENT = /(^|[^a-zA-Z])hero([^a-zA-Z]|$|\/)/i;
+
+  it('every hero pathPrefix passes qualityProfile="hero"', () => {
+    const offenders = collectCallsites().filter(
+      (c) => c.pathPrefix && HERO_SEGMENT.test(c.pathPrefix) && !c.hasHeroProfile,
+    );
 
     if (offenders.length > 0) {
       const msg = offenders
@@ -90,6 +91,30 @@ describe('hero MediaUploadInput callsites', () => {
         .join('\n');
       throw new Error(
         `MediaUploadInput hero regression — every hero pathPrefix must pass qualityProfile="hero":\n${msg}`,
+      );
+    }
+
+    expect(offenders).toEqual([]);
+  });
+
+  // Inverse guard: catches copy-paste bugs where a non-hero editor inherited
+  // `qualityProfile="hero"` from a hero template. Wastes Storage on 3200px
+  // masters for thumbnail-sized surfaces and skips the lossy re-encode that
+  // those surfaces actually want.
+  it('every qualityProfile="hero" sits on a hero pathPrefix', () => {
+    const offenders = collectCallsites().filter(
+      (c) => c.hasHeroProfile && c.pathPrefix && !HERO_SEGMENT.test(c.pathPrefix),
+    );
+
+    if (offenders.length > 0) {
+      const msg = offenders
+        .map(
+          (o) =>
+            `  • ${o.file}:${o.line} — qualityProfile="hero" on non-hero pathPrefix="${o.pathPrefix}" (likely copy-paste from a hero editor)\n    ${o.snippet}`,
+        )
+        .join('\n');
+      throw new Error(
+        `MediaUploadInput inverse regression — qualityProfile="hero" must only appear on hero pathPrefix callsites:\n${msg}`,
       );
     }
 

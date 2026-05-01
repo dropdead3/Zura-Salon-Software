@@ -48,6 +48,12 @@ export interface MediaUploadMeta {
   height?: number | null;
   sizeBytes?: number | null;
   format?: string | null;
+  /**
+   * Which `qualityProfile` was active when this asset was uploaded. Lets the
+   * editor surface a "Re-upload at higher quality" nudge for assets that
+   * landed before the hero profile existed (legacy = absent/null).
+   */
+  optimizedWithProfile?: 'standard' | 'hero' | null;
 }
 
 export interface MediaUploadChangePayload {
@@ -259,6 +265,7 @@ export function MediaUploadInput({
             height: dims?.height ?? null,
             sizeBytes: uploadBlob.size,
             format: uploadContentType,
+            optimizedWithProfile: qualityProfile,
           },
         });
         toast.success(`Image uploaded${crunchNote}`);
@@ -303,6 +310,7 @@ export function MediaUploadInput({
                 height: posterDims.height,
                 sizeBytes: posterSize,
                 format: 'image/jpeg',
+                optimizedWithProfile: qualityProfile,
               }
             : undefined,
         });
@@ -413,6 +421,37 @@ export function MediaUploadInput({
                     : meta.width >= 1200
                       ? 'Acceptable, but may soften on retina hero displays. Recommended ≥2400px.'
                       : 'Too small for full-bleed hero — will appear pixelated. Recommended ≥2400px.'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
+          {/*
+            Hero re-upload nudge: this surface declared `qualityProfile="hero"`
+            but the asset was uploaded under a different (or unknown / legacy)
+            profile. Operators should re-upload to get the 3200px master
+            instead of the 1920px lossy variant. Renders only when meta exists
+            (skip blank legacy slots so we don't shame empty fields).
+          */}
+          {qualityProfile === 'hero' &&
+          meta &&
+          meta.optimizedWithProfile !== 'hero' ? (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-2 right-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/90 text-amber-950 backdrop-blur text-[10px] font-sans font-medium hover:bg-amber-500 transition-colors"
+                  >
+                    <Upload className="h-3 w-3" />
+                    Re-upload at higher quality
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
+                  This asset was uploaded before the hero quality profile
+                  existed. Re-uploading captures the original at full
+                  resolution (≤3200px, near-lossless WebP) instead of the
+                  smaller standard variant.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
