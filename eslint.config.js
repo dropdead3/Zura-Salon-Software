@@ -183,6 +183,33 @@ export default tseslint.config(
           selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
           message: "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
         },
+        {
+          // Hero Alignment Canon — `cn()` calls in hero files must route
+          // horizontal-placement decisions through the `alignment.*` keys
+          // returned by `resolveHeroAlignment()`. Hardcoding `items-center`
+          // / `items-start` / `items-end` inside `cn()` re-introduces the
+          // May 2026 notes-misalignment regression: the live hero ignored
+          // the operator's `content_alignment` choice because the notes
+          // container had a literal `items-center`, while the editor
+          // preview correctly used `alignment.notes`.
+          //
+          // The selector matches a `cn(...)` CallExpression that contains
+          // an `items-(center|start|end)` string literal AND does NOT also
+          // reference any `alignment.*` member access. Legitimate
+          // cross-axis centering (e.g. centering icons inside a button row
+          // whose horizontal alignment IS routed through `alignment.ctaRow`)
+          // is not flagged because the same `cn()` call references
+          // `alignment.ctaRow`.
+          //
+          // Override: `// eslint-disable-next-line no-restricted-syntax
+          // -- <reason>` for non-hero-content uses (e.g. a true cross-axis
+          // icon-row inside a hero file that doesn't touch alignment).
+          //
+          // Pairs with: src/test/lint-rule-hero-alignment.test.ts and the
+          // Vitest at src/components/home/HeroNotes.test.tsx.
+          selector: "CallExpression[callee.name='cn']:has(Literal[value=/(^| )items-(center|start|end)( |$)/]):not(:has(MemberExpression[object.name='alignment']))",
+          message: "Hero files must route horizontal placement through `alignment.notes` / `alignment.cta` / `alignment.ctaRow` / `alignment.headline` (from resolveHeroAlignment). Hardcoded `items-center|start|end` inside `cn()` was the root cause of the May 2026 hero-notes alignment bug — the literal silently overrode the operator's content_alignment choice.",
+        },
       ],
     },
   },
