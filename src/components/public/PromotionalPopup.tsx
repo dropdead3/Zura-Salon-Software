@@ -15,7 +15,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { readableForegroundFor } from '@/lib/color-contrast';
-import { PROMO_POPUP_PREVIEW_RESET_EVENT } from '@/lib/promoPopupPreviewReset';
+import {
+  PROMO_POPUP_PREVIEW_RESET_EVENT,
+  dispatchPromoPopupPreviewState,
+} from '@/lib/promoPopupPreviewReset';
 
 interface Props {
   /**
