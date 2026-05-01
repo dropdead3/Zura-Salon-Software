@@ -530,9 +530,6 @@ export function HeroEditor() {
         <HeroRotatorEditor config={localConfig} onChange={updateField} />
       )}
 
-      {view.kind === 'global' && view.id === 'words' && (
-        <HeroRotatingWordsEditor config={localConfig} onChange={updateField} />
-      )}
 
       {view.kind === 'global' && view.id === 'advanced' && (
         <HeroAdvancedEditor config={localConfig} onChange={updateField} />
