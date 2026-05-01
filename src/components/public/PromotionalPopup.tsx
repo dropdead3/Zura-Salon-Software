@@ -19,6 +19,7 @@ import {
   PROMO_POPUP_PREVIEW_RESET_EVENT,
   dispatchPromoPopupPreviewState,
 } from '@/lib/promoPopupPreviewReset';
+import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 
 interface Props {
   /**
@@ -254,13 +255,13 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
-      // Re-derive the operator-configured duration here (kept inline so
-      // this effect doesn't depend on autoMinimizeSeconds, which is
-      // declared further down).
-      const ms = cfg?.autoMinimizeMs;
-      if (ms !== null) {
-        const seconds = typeof ms === 'number' ? ms : 15000;
-        setSecondsLeft(Math.max(5, Math.min(60, Math.round(seconds / 1000))));
+      // Re-derive the operator-configured duration via the canonical helper
+      // (kept inline so this effect doesn't depend on autoMinimizeSeconds,
+      // which is declared further down). Helper covers null-disable, the
+      // 5–60s clamp, and the 15s default — see clampAutoMinimizeSeconds.test.ts.
+      const seconds = clampAutoMinimizeSeconds(cfg?.autoMinimizeMs);
+      if (seconds !== null) {
+        setSecondsLeft(seconds);
       }
       setOpen(true);
     };
@@ -301,11 +302,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   //
   // Operator override: clamp to 5–60s window. Defaults to 15s.
   const autoMinimizeMs = cfg?.autoMinimizeMs;
-  const autoMinimizeSeconds = useMemo(() => {
-    if (autoMinimizeMs === null) return null; // disabled
-    const ms = typeof autoMinimizeMs === 'number' ? autoMinimizeMs : 15000;
-    return Math.max(5, Math.min(60, Math.round(ms / 1000)));
-  }, [autoMinimizeMs]);
+  const autoMinimizeSeconds = useMemo(
+    () => clampAutoMinimizeSeconds(autoMinimizeMs),
+    [autoMinimizeMs],
+  );
 
   // Reset countdown whenever the popup opens (or the operator changes the
   // configured duration). Separated from the tick effect so hover-pause
