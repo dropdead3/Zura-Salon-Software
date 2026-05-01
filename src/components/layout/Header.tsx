@@ -281,32 +281,42 @@ export function Header() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
       {/* Top Announcement Bar — translucent so hero media shows through */}
-      {announcementSettings?.enabled && (
-        <div 
-          className={cn(
-            "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
-            !announcementSettings.bg_color && "bg-secondary/95"
-          )}
-          style={announcementSettings.bg_color ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
-        >
-          <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-            <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
-              {announcementSettings.message_prefix}{' '}
-              <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
-              {announcementSettings.message_suffix}
-            </p>
-            <a 
-              href={announcementSettings.cta_url || '#'} 
-              target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
-              rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
-              className={cn("group inline-flex items-center gap-1.5 text-sm font-display uppercase tracking-wide hover:opacity-70 transition-opacity", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white" : "text-foreground")}
-            >
-              {announcementSettings.cta_text}
-              <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-            </a>
+      {announcementSettings?.enabled && (() => {
+        // Determine effective bg darkness for text contrast.
+        // When operator sets a bg_color, use it. Otherwise the bar is translucent
+        // over hero media — fall back to the section theme (isOverDark) detected
+        // by the same logic the main header uses.
+        const hasExplicitBg = !!announcementSettings.bg_color;
+        const effectiveDark = hasExplicitBg
+          ? isColorDark(announcementSettings.bg_color!)
+          : isOverDark;
+        return (
+          <div 
+            className={cn(
+              "py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+              !hasExplicitBg && (isOverDark ? "bg-black/55" : "bg-secondary/90")
+            )}
+            style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
+          >
+            <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
+              <p className={cn("text-sm text-center md:text-left", effectiveDark ? "text-white/85" : "text-foreground/80")}>
+                {announcementSettings.message_prefix}{' '}
+                <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
+                {announcementSettings.message_suffix}
+              </p>
+              <a 
+                href={announcementSettings.cta_url || '#'} 
+                target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
+                rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
+                className={cn("group inline-flex items-center gap-1.5 text-sm font-display uppercase tracking-wide hover:opacity-70 transition-opacity", effectiveDark ? "text-white" : "text-foreground")}
+              >
+                {announcementSettings.cta_text}
+                <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+              </a>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Main Header — overlays hero media; sticks to top on scroll */}
       <header 
