@@ -291,13 +291,33 @@ export function EditorSectionCard({
   return (
     <div
       onClick={handleClick}
+      title={`Click to edit ${sectionLabel}`}
       className={cn(
         'group relative transition-all duration-200',
         'cursor-pointer',
-        isSelected && 'ring-2 ring-primary/20 ring-offset-2 ring-offset-background',
+        // Hover affordance: subtle ring + label badge so operators see
+        // exactly which section a click will route them into. Selection
+        // remains the stronger primary ring.
+        'hover:ring-2 hover:ring-primary/40 hover:ring-offset-2 hover:ring-offset-background hover:rounded-sm',
+        isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background rounded-sm',
         !enabled && 'opacity-50'
       )}
     >
+      {/* Hover-only "Edit {section}" pill — bottom-left, never collides
+          with the top hover header. Pointer-events-none so it never
+          steals the click. */}
+      <div
+        className={cn(
+          'absolute bottom-3 left-4 z-10 pointer-events-none',
+          'opacity-0 group-hover:opacity-100 transition-opacity duration-150',
+          isSelected && 'group-hover:opacity-0',
+        )}
+      >
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-2.5 py-1 text-[10px] font-sans shadow-md">
+          <Sparkles className="h-3 w-3" />
+          Edit {sectionLabel}
+        </span>
+      </div>
       {/* Hover header row */}
       <div
         data-editor-control
