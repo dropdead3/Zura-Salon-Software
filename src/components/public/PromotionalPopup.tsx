@@ -873,6 +873,7 @@ function PromoBody({
             src={cfg.imageUrl}
             alt={cfg.imageAlt ?? ''}
             className="w-full h-full object-cover"
+            style={{ objectPosition: `${cfg.imageFocalX ?? 50}% ${cfg.imageFocalY ?? 50}%` }}
           />
         </div>
       )}
