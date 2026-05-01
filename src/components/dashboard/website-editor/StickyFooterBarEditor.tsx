@@ -37,6 +37,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { EditorCard } from './EditorCard';
 import { cn } from '@/lib/utils';
 
@@ -57,6 +58,12 @@ export function StickyFooterBarEditor() {
   );
 
   usePreviewBridge('section_sticky_footer_bar', debouncedConfig);
+
+  // Canonical dirty-state wiring — broadcasts `editor-dirty-state` so the
+  // editor shell's Save/UnsavedChanges UI activates as soon as any field
+  // diverges from the server snapshot. Without this the Save button stays
+  // dormant and toggle changes appear to "do nothing".
+  useDirtyState(localConfig, data);
 
   useEffect(() => {
     if (data && !isLoading) {
