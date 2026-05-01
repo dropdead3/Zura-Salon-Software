@@ -264,6 +264,10 @@ function WebsiteEditorShellInner() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  // Per-editor "Discard Changes" — reverts the active editor's local working
+  // copy back to last-saved state. Distinct from `discardOpen` which reverts
+  // *all* unpublished drafts back to live.
+  const [revertDraftOpen, setRevertDraftOpen] = useState(false);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
