@@ -131,16 +131,32 @@ export const CanvasPanel = memo(function CanvasPanel({
     return () => window.removeEventListener('message', handler);
   }, [sendScrollMessage]);
 
+  // Soft refresh: post a draft-invalidation into the iframe (no remount).
+  // Hard reload: full key bump. See src/lib/preview-utils.ts for the contract.
   useEffect(() => {
-    const handleRefresh = () => {
+    const handleSoftRefresh = (e: Event) => {
+      const detail = (e as CustomEvent).detail ?? {};
+      const iframe = iframeRef.current;
+      if (!iframe?.contentWindow) return;
+      const origin = previewUrl ? new URL(previewUrl).origin : window.location.origin;
+      iframe.contentWindow.postMessage(
+        { type: 'PREVIEW_REFRESH_DRAFT', orgId: detail.orgId, key: detail.key },
+        origin
+      );
+    };
+    const handleHardReload = () => {
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
       loadStartRef.current = Date.now();
       iframeReadyRef.current = false;
     };
-    window.addEventListener('website-preview-refresh', handleRefresh);
-    return () => window.removeEventListener('website-preview-refresh', handleRefresh);
-  }, []);
+    window.addEventListener('website-preview-refresh', handleSoftRefresh);
+    window.addEventListener('website-preview-hard-reload', handleHardReload);
+    return () => {
+      window.removeEventListener('website-preview-refresh', handleSoftRefresh);
+      window.removeEventListener('website-preview-hard-reload', handleHardReload);
+    };
+  }, [previewUrl]);
 
   // Measure container for desktop scaling
   useEffect(() => {
