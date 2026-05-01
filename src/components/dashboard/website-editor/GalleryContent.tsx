@@ -293,6 +293,7 @@ export function GalleryContent() {
                       label="Image"
                       value={newImage.src}
                       onChange={(url) => setNewImage(prev => ({ ...prev, src: url }))}
+                      bucket="business-logos"
                       folder="gallery/images"
                       aspectRatio="3/4"
                     />
@@ -368,6 +369,7 @@ export function GalleryContent() {
                         label="Before Image"
                         value={newTransform.beforeImage}
                         onChange={(url) => setNewTransform(prev => ({ ...prev, beforeImage: url }))}
+                        bucket="business-logos"
                         folder="gallery/transformations"
                         aspectRatio="3/4"
                       />
@@ -375,6 +377,7 @@ export function GalleryContent() {
                         label="After Image"
                         value={newTransform.afterImage}
                         onChange={(url) => setNewTransform(prev => ({ ...prev, afterImage: url }))}
+                        bucket="business-logos"
                         folder="gallery/transformations"
                         aspectRatio="3/4"
                       />
