@@ -997,7 +997,7 @@ export function PromotionalPopupEditor() {
                                 title={hint}
                                 onClick={() => handleChange('imageTreatment', value)}
                                 className={cn(
-                                  'h-7 px-3 rounded-full font-display uppercase tracking-wider text-[10px] transition-colors',
+                                  'h-7 px-3 rounded-full font-sans text-xs transition-colors',
                                   active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
                                 )}
                               >
