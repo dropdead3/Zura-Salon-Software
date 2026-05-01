@@ -66,27 +66,25 @@ export default tseslint.config(
       // any selectors you add. See the consolidated block for the canon.
     },
   },
-  {
-    // Site Settings Event Ownership canon — applies CONSOLIDATED_RESTRICTED_SYNTAX
-    // (defined at top of file) to most source files. The doctrines bundled
-    // in there are: Loader2 governance, UnsavedChangesDialog, Site Settings
-    // Event Ownership, Dirty-State Compare, and Hero Overlay Rename.
-    //
-    // FLAT-CONFIG REPLACEMENT WARNING:
-    //   ESLint flat config REPLACES (does not merge) `no-restricted-syntax`
-    //   options when two blocks both match a file. Any scope-specific
-    //   override (hero, platform, wizard) MUST go through the
-    //   `defineScopedDoctrine()` helper — it concatenates
-    //   CONSOLIDATED_RESTRICTED_SYNTAX with the scope's extra selectors so
-    //   nothing is silently dropped. The meta-test
-    //   `src/test/lint-config-resolution.test.ts` asserts every doctrine
-    //   selector survives in the resolved config for representative files.
-    //
-    // Per-file ignore semantics (e.g. the Site Settings rule must not fire
-    // inside siteSettingsDraft.ts) are handled by `eslint-disable-next-line`
-    // overrides at the call site, not by splitting the rule across blocks.
-    //
-    // Pairs with: src/test/lint-rule-site-settings-event.test.ts
+  // ─────────────────────────────────────────────────────────────────────
+  // Global doctrine block — applies CONSOLIDATED_RESTRICTED_SYNTAX
+  // (Loader2, UnsavedChangesDialog, Site Settings event, Dirty-State
+  // Compare, Hero Overlay Rename) to almost every source file.
+  //
+  // Built via defineScopedDoctrine() (with no extraSelectors) for
+  // doctrinal symmetry with the scoped blocks below — the helper-usage
+  // meta-test (src/test/lint-config-helper-usage.test.ts) bans raw
+  // `"no-restricted-syntax": [...]` literals in this file specifically
+  // to prevent a future author from re-opening the flat-config
+  // replacement footgun.
+  //
+  // Per-file ignore semantics (e.g. the Site Settings rule must not fire
+  // inside siteSettingsDraft.ts) are handled by `eslint-disable-next-line`
+  // overrides at the call site, not by splitting the rule across blocks.
+  //
+  // Pairs with: src/test/lint-rule-site-settings-event.test.ts
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedDoctrine({
     files: ["**/*.{ts,tsx}"],
     ignores: [
       // NOTE: do NOT ignore `src/lib/siteSettingsDraft.ts` here — the
@@ -100,10 +98,7 @@ export default tseslint.config(
       "src/**/__tests__/**",
       "src/test/**/*.test.{ts,tsx}",
     ],
-    rules: {
-      "no-restricted-syntax": ["error", ...CONSOLIDATED_RESTRICTED_SYNTAX],
-    },
-  },
+  }),
   // ─────────────────────────────────────────────────────────────────────
   // Hero Alignment Canon — hero-files-only override.
   // Built via defineScopedDoctrine() so the consolidated 5 selectors stay
