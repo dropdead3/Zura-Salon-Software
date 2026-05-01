@@ -409,8 +409,40 @@ export function HeroEditor() {
               : 'Each slide owns its own background and copy. Layout settings below apply to every slide.'}
           </p>
 
-          {/* SLIDES group */}
+          {/* Rotator mode picker — surfaced at the top so the architectural choice is one click away. */}
           <div className="space-y-2 pt-2">
+            <h3 className="font-display text-[11px] tracking-wider text-muted-foreground uppercase">
+              Rotator Mode
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { id: 'multi_slide' as const, label: 'Multi-Slide', desc: 'Each slide has its own copy & buttons.' },
+                { id: 'background_only' as const, label: 'Background-Only', desc: 'One shared content, rotating backgrounds.' },
+              ]).map(({ id, label, desc }) => {
+                const active = rotatorMode === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => updateField('rotator_mode', id)}
+                    className={`px-3 py-2 rounded-xl text-left border transition-colors ${
+                      active
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
+                    }`}
+                  >
+                    <div className="text-[12px] font-sans font-medium">{label}</div>
+                    <div className={`text-[10px] mt-0.5 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
+                      {desc}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SLIDES group */}
+          <div className="space-y-2 pt-4 border-t border-border/40">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-[11px] tracking-wider text-muted-foreground uppercase">
                 Slides
