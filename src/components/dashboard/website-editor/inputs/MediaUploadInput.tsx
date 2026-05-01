@@ -19,7 +19,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Loader2, Film, ImageIcon } from 'lucide-react';
+import { Upload, X, Loader2, Film, ImageIcon, Crosshair } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
