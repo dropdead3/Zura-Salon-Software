@@ -61,7 +61,9 @@ export function HeroBackground({
   const objectFit = fit === 'contain' ? 'object-contain' : 'object-cover';
   // Resolve scrim style/strength with sensible fallbacks.
   const style: HeroScrimStyle = scrimStyle ?? 'flat';
-  const strengthRaw = scrimStrength ?? overlayOpacity ?? 0.4;
+  // overlayOpacity is the operator-facing control ("Overlay Darkness/Lightness").
+  // scrimStrength is a legacy fallback used only when overlayOpacity isn't supplied.
+  const strengthRaw = overlayOpacity ?? scrimStrength ?? 0.4;
   const strength = Math.max(0, Math.min(1, strengthRaw));
   const fx = Math.max(0, Math.min(100, focalX));
   const fy = Math.max(0, Math.min(100, focalY));
