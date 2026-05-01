@@ -499,6 +499,7 @@ export const DEFAULT_HERO: HeroConfig = {
   transition_style: 'crossfade',
   pause_on_hover: true,
   text_colors: {},
+  content_alignment: 'center',
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
