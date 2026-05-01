@@ -192,6 +192,12 @@ export interface HeroConfig {
   media_size_bytes?: number | null;
   media_format?: string | null;
   media_optimized_with_profile?: 'standard' | 'hero' | null;
+  /**
+   * Section-level horizontal alignment for headline/subheadline/CTAs.
+   * Defaults to 'center' for back-compat with pre-alignment hero layouts.
+   * Per-slide `content_alignment` overrides this when set.
+   */
+  content_alignment?: 'left' | 'center' | 'right';
 }
 
 export interface BrandStatementConfig {
