@@ -512,6 +512,7 @@ export const DEFAULT_HERO: HeroConfig = {
   pause_on_hover: true,
   text_colors: {},
   content_alignment: 'center',
+  content_spacing: 'compact',
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
