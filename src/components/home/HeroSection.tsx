@@ -139,7 +139,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 </p>
               )}
               <h1
-                className={cn("font-display font-normal leading-[0.95] flex flex-col items-center", heroColors.headlineClass)}
+                className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
                 // Heading scale opt-in — multiplied by `--section-heading-scale`
                 // (set on the SectionStyleWrapper); defaults to 1 so existing
                 // sections see no change. Section-level "H" chip cycles Sm→XL.
@@ -157,7 +157,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               </h1>
               {hasSubheadlineContent && (
                 <p
-                  className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                  className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                   style={heroColors.subheadlineStyle}
                 >
                   {subheadlineLine1}
@@ -165,8 +165,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className="mt-10 flex flex-col items-center gap-3">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <div className={cn("mt-10 flex flex-col gap-3", alignment.cta)}>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
                   <button
                     onClick={() => setConsultationOpen(true)}
                     className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
