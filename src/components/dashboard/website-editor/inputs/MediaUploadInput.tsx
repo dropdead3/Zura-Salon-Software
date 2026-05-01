@@ -598,6 +598,7 @@ export function MediaUploadInput({
             </Button>
           </div>
         </div>
+        </>
       ) : (
         <div
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
