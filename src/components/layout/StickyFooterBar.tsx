@@ -8,7 +8,10 @@ import { useOrgPath } from "@/hooks/useOrgPath";
 
 export function StickyFooterBar() {
   const orgPath = useOrgPath();
-  const [isVisible, setIsVisible] = useState(false);
+  const isEditorPreview =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("preview") === "true";
+  const [isVisible, setIsVisible] = useState(isEditorPreview);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const routeLocation = useLocation();
@@ -17,6 +20,13 @@ export function StickyFooterBar() {
   const locations = allLocations.filter((l) => !!l.phone);
 
   useEffect(() => {
+    // In the website-editor preview iframe, always show the bar so operators
+    // can see/style it without scrolling inside the iframe.
+    if (isEditorPreview) {
+      setIsVisible(true);
+      return;
+    }
+
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
@@ -34,7 +44,7 @@ export function StickyFooterBar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isEditorPreview]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
