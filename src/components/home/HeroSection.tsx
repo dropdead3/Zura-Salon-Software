@@ -25,6 +25,12 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const headlineText = heroConfig?.headline_text ?? DEFAULT_HERO.headline_text;
   const eyebrowText = heroConfig?.eyebrow ?? DEFAULT_HERO.eyebrow;
   const showEyebrow = heroConfig?.show_eyebrow ?? DEFAULT_HERO.show_eyebrow;
+  const showSubheadline = heroConfig?.show_subheadline ?? DEFAULT_HERO.show_subheadline;
+  // Use ?? not || so an explicit empty string (operator cleared the field) is honored
+  // and does not fall back to the DEFAULT_HERO copy.
+  const subheadlineLine1 = heroConfig?.subheadline_line1 ?? DEFAULT_HERO.subheadline_line1;
+  const subheadlineLine2 = heroConfig?.subheadline_line2 ?? DEFAULT_HERO.subheadline_line2;
+  const hasSubheadlineContent = showSubheadline && (subheadlineLine1.trim() !== '' || subheadlineLine2.trim() !== '');
   const slides = heroConfig?.slides ?? [];
 
   // Multi-slide rotator takes over when operators have configured slides.
@@ -136,11 +142,13 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 />
                 <span className="block">{rotatingWords[currentWordIndex]}</span>
               </h1>
-              <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
-                Where technical talent meets artistry.
-                <br />
-                We believe in more than just the status quo.
-              </p>
+              {hasSubheadlineContent && (
+                <p className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed">
+                  {subheadlineLine1}
+                  {subheadlineLine1 && subheadlineLine2 && <br />}
+                  {subheadlineLine2}
+                </p>
+              )}
               <div className="mt-10 flex flex-col items-center gap-3">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
@@ -295,17 +303,19 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
             </motion.h1>
 
             {/* Subheadline */}
-            <motion.p
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ ...springTransition, delay: 3.6 }}
-              className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
-              style={{ y: subheadlineY }}
-            >
-              Where technical talent meets artistry.
-              <br />
-              We believe in more than just the status quo.
-            </motion.p>
+            {hasSubheadlineContent && (
+              <motion.p
+                initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ ...springTransition, delay: 3.6 }}
+                className="mt-8 text-sm md:text-base text-muted-foreground font-sans font-light max-w-md mx-auto leading-relaxed"
+                style={{ y: subheadlineY }}
+              >
+                {subheadlineLine1}
+                {subheadlineLine1 && subheadlineLine2 && <br />}
+                {subheadlineLine2}
+              </motion.p>
+            )}
 
             {/* CTAs */}
             <motion.div
