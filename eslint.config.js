@@ -252,4 +252,65 @@ export default tseslint.config(
       "src/pages/dashboard/platform/**/*.{ts,tsx}",
     ],
   }),
+  // ─────────────────────────────────────────────────────────────────────
+  // FocalPointPicker Isolation canon — codifies the November 2026 hero
+  // editor consolidation: the standalone <FocalPointPicker> component is
+  // owned exclusively by MediaUploadInput, which renders it as an
+  // overlay on top of the upload tile. Stacking a second focal preview
+  // beneath the upload thumbnail (the pre-consolidation pattern) wastes
+  // vertical space, duplicates the image preview, and re-introduces the
+  // "two thumbnails for one image" UX regression.
+  //
+  // Allowed sites:
+  //   - src/components/dashboard/website-editor/inputs/FocalPointPicker.tsx
+  //     (the component definition itself)
+  //   - src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx
+  //     (the canonical consumer that renders it as an overlay)
+  //
+  // If a future surface genuinely needs a focal picker without an
+  // upload tile (e.g. an AI-suggested crop dialog operating on an
+  // already-uploaded asset), extend MediaUploadInput's `focal` prop OR
+  // factor a hookless <FocalOverlay> primitive — do NOT re-import
+  // <FocalPointPicker> directly. Override:
+  //   // eslint-disable-next-line no-restricted-syntax -- <reason>
+  //
+  // Pairs with: src/test/lint-config-resolution.test.ts (asserts the
+  // selector survives flat-config resolution on a representative
+  // website-editor file).
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedDoctrine({
+    files: [
+      "src/components/dashboard/website-editor/**/*.{ts,tsx}",
+      "src/components/home/**/*.{ts,tsx}",
+      "src/components/public/**/*.{ts,tsx}",
+      // Lint fixture lives outside the real editor tree; include it
+      // explicitly so the meta-test (which uses `ignore: false`) sees
+      // the rule applied. Top-level `ignores` keeps `npm run lint`
+      // from picking it up.
+      "src/test/lint-fixtures/focal-point-picker-banned.tsx",
+    ],
+    ignores: [
+      // The component itself defines & exports FocalPointPicker.
+      "src/components/dashboard/website-editor/inputs/FocalPointPicker.tsx",
+      // The canonical consumer renders it as an overlay inside the
+      // consolidated upload tile.
+      "src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx",
+    ],
+    extraSelectors: [
+      {
+        // Ban JSX usage — covers the actual mounted-component case.
+        selector: "JSXOpeningElement[name.name='FocalPointPicker']",
+        message: "Inline <FocalPointPicker> usage is forbidden outside MediaUploadInput.tsx. Wire focal control through the consolidated <MediaUploadInput focal={{ x, y, onChange, onReset, enabled }} /> overlay instead — stacking a separate focal preview under the upload tile re-introduces the duplicate-thumbnail UX regression that the November 2026 consolidation removed.",
+      },
+      {
+        // Ban named import — catches the case where someone imports it
+        // for a non-JSX use (HOC wrap, indirection through a wrapper
+        // component, etc.). `no-restricted-imports` would need a path
+        // entry, but this picker has no separate import path; the
+        // selector form keeps the doctrine self-contained in one block.
+        selector: "ImportSpecifier[imported.name='FocalPointPicker']",
+        message: "Importing FocalPointPicker outside MediaUploadInput.tsx is forbidden. The component is owned exclusively by the consolidated upload tile — use <MediaUploadInput focal={{ ... }} /> instead. If you need a focal picker without an upload tile, extend MediaUploadInput's focal prop or factor a hookless <FocalOverlay> primitive rather than re-importing this component.",
+      },
+    ],
+  }),
 );
