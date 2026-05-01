@@ -527,7 +527,7 @@ export function PromotionalPopupEditor() {
     switch (popupPhase) {
       case 'open':
         return {
-          label: 'Restart preview',
+          label: 'Restart popup preview',
           title: 'Reset the countdown and re-open the popup from the top',
         };
       case 'fab':
