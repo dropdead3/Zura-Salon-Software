@@ -107,6 +107,7 @@ export function MediaUploadInput({
   pathPrefix = 'uploads',
   placeholder = 'https://...',
   imageOnly = false,
+  qualityProfile = 'standard',
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
