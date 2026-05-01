@@ -13,31 +13,38 @@ export function StickyFooterBar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const routeLocation = useLocation();
   const isBookingPage = routeLocation.pathname === "/booking";
-  const { data: locations = [] } = useActiveLocations();
+  const { data: allLocations = [] } = useActiveLocations();
+  const locations = allLocations.filter((l) => !!l.phone);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
-    
+    const SCROLL_DELTA = 6; // ignore micro-jitter
+
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      
-      // Detect scroll direction
-      const isScrollingDown = scrollY > lastScrollY;
-      lastScrollY = scrollY;
-      
+
+      const delta = scrollY - lastScrollY;
+
       // Show after scrolling past 50% of first viewport
       const pastThreshold = scrollY > windowHeight * 0.5;
-      
       // Hide when near bottom (within 1.5 viewport heights of the bottom)
       const nearBottom = scrollY + windowHeight > documentHeight - windowHeight * 1.5;
-      
-      // Show on scroll down, hide on scroll up
-      setIsVisible(pastThreshold && !nearBottom && isScrollingDown);
+
+      if (Math.abs(delta) >= SCROLL_DELTA) {
+        if (delta > 0) {
+          // Scrolling down — show bar (if past threshold and not at bottom)
+          setIsVisible(pastThreshold && !nearBottom);
+        } else {
+          // Scrolling up — hide bar
+          setIsVisible(false);
+        }
+        lastScrollY = scrollY;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
