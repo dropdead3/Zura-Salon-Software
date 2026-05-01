@@ -996,7 +996,7 @@ export function PromotionalPopupEditor() {
                   </p>
                 )}
                 <div>
-                  <Label className="text-xs">Alt text</Label>
+                  <Label size="xs">Alt text</Label>
                   <Input
                     className="mt-1.5"
                     value={formData.imageAlt ?? ''}
