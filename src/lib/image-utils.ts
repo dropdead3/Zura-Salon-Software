@@ -263,3 +263,114 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
     return baseResult({ skippedReason: 'error' });
   }
 }
+
+// ---------------------------------------------------------------------------
+// Supabase Storage on-the-fly transforms
+// ---------------------------------------------------------------------------
+//
+// Storage exposes per-request image transforms via `?width=` (and `height`,
+// `quality`, `resize`). We use that to build responsive `srcSet` strings for
+// hero/full-bleed art without re-uploading multiple variants. The original
+// upload remains the highest-quality master.
+//
+// Skipped for non-Supabase URLs: external CDNs, blob:/data: previews, and
+// operator-pasted absolute URLs that don't live in our project. Returning
+// `null` lets callers fall through to a plain `src` and avoids breaking
+// previews or third-party embeds.
+
+const SUPABASE_STORAGE_PATH_RE = /\/storage\/v1\/object\/(public|sign)\//i;
+
+/** True when `url` is a Supabase Storage public/signed object URL. */
+export function isSupabaseStorageUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  if (!/^https?:\/\//i.test(url)) return false;
+  return SUPABASE_STORAGE_PATH_RE.test(url);
+}
+
+/**
+ * Convert a Supabase Storage object URL into a transform-rendered URL by
+ * swapping `/object/` for `/render/image/` and appending the requested width.
+ * Preserves any existing query params (e.g. our cache-busting `?t=…`).
+ *
+ * Returns the input untouched when the URL is not a Storage URL — callers
+ * can pass any URL and decide based on the result whether to use srcSet.
+ */
+export function withSupabaseImageWidth(url: string, width: number): string {
+  if (!isSupabaseStorageUrl(url)) return url;
+  const rendered = url.replace(
+    /\/storage\/v1\/object\/(public|sign)\//i,
+    '/storage/v1/render/image/$1/',
+  );
+  const sep = rendered.includes('?') ? '&' : '?';
+  // `resize=contain` keeps aspect ratio; we only ever cap on the long edge.
+  return `${rendered}${sep}width=${width}&resize=contain`;
+}
+
+/**
+ * Build a `srcSet` string for a Supabase Storage image at multiple widths.
+ * Returns `null` when the URL isn't a Storage URL (caller should omit the
+ * srcSet attribute entirely and rely on the plain `src`).
+ *
+ * Widths are capped at the source's natural width when known — there's no
+ * point asking Storage for a 3200px variant of a 1600px upload, the CDN
+ * would just upscale and we'd waste a request.
+ */
+export function buildSupabaseSrcSet(
+  url: string,
+  widths: number[],
+  naturalWidth?: number | null,
+): string | null {
+  if (!isSupabaseStorageUrl(url)) return null;
+  const cap = typeof naturalWidth === 'number' && naturalWidth > 0 ? naturalWidth : Infinity;
+  const useful = widths
+    .filter((w) => w > 0 && w <= cap)
+    .sort((a, b) => a - b);
+  // Always include the cap itself so the largest screens get a 1:1 source.
+  if (cap !== Infinity && !useful.includes(cap)) useful.push(cap);
+  if (useful.length === 0) return null;
+  return useful.map((w) => `${withSupabaseImageWidth(url, w)} ${w}w`).join(', ');
+}
+
+/** Default width ladder for full-bleed hero/slider art. */
+export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200];
+
+// ---------------------------------------------------------------------------
+// Image dimension probe (post-upload metadata capture)
+// ---------------------------------------------------------------------------
+
+/**
+ * Probe a Blob/File for its decoded pixel dimensions. Used post-upload so the
+ * editor can show "3200 × 2133 · 480 KB" feedback on the slide preview tile.
+ * Resolves to `null` on any failure — never throws, never blocks the upload.
+ */
+export async function probeBlobDimensions(
+  blob: Blob,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    if (typeof createImageBitmap === 'function') {
+      const bmp = await createImageBitmap(blob);
+      const result = { width: bmp.width, height: bmp.height };
+      bmp.close();
+      return result;
+    }
+  } catch {
+    // Fall through to <img> path below.
+  }
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+      img.src = url;
+    } catch {
+      resolve(null);
+    }
+  });
+}
