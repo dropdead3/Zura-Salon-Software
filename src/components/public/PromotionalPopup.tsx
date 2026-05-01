@@ -144,6 +144,18 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
+  // Three-phase visual lifecycle for the popup root:
+  //   'entering' → slide-in animation (replayable via animationNonce)
+  //   'visible'  → static, awaiting timer / interaction
+  //   'closing'  → slide-out toward the FAB position; on animationend we
+  //                flip to FAB and unmount the popup. Without this phase
+  //                the popup hard-cuts on close and the lifecycle preview
+  //                reads as broken to operators.
+  const [popupPhase, setPopupPhase] = useState<'entering' | 'visible' | 'closing'>('entering');
+  // Captures which exit handler should fire after the close animation
+  // completes (soft-close = surface FAB; accept = no FAB). Decouples the
+  // animation contract from the dismissal semantics.
+  const pendingExitRef = useRef<null | 'soft' | 'decline' | 'accept'>(null);
   // Editor-driven reset replays the CSS slide-in by bumping the React `key`
   // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
   // fires on first paint, so without a fresh mount the popup snaps into
@@ -187,6 +199,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const fire = () => {
       if (triggeredRef.current) return;
       triggeredRef.current = true;
+      setPopupPhase('entering');
       setOpen(true);
     };
 
@@ -269,6 +282,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
+      pendingExitRef.current = null;
+      setPopupPhase('entering');
       // Replay the mount BEFORE flipping `open` so React schedules a fresh
       // mount of the popup root in the same render pass — that's what
       // replays `animate-in slide-in-from-*`. Without this, an already-open
@@ -399,6 +414,33 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
+  // Begin the visual close animation. The popup root keeps mounting until
+  // its `animationend` fires, at which point `finalizeClose()` flips
+  // `open=false` and (for soft/decline) surfaces the FAB. Side effects
+  // (dismissal writes, analytics, navigation) fire IMMEDIATELY — only the
+  // visual unmount waits for the animation. This is what gives operators
+  // the "popup animates closed into the FAB" lifecycle they expect.
+  function beginClose(reason: 'soft' | 'decline' | 'accept') {
+    // Idempotent: if we're already in `closing` and a second close fires
+    // (e.g. timer + Esc), keep the original reason — the animation is
+    // already in flight.
+    if (popupPhase === 'closing' && pendingExitRef.current) return;
+    pendingExitRef.current = reason;
+    setPopupPhase('closing');
+  }
+
+  // Called by each variant root's `onAnimationEnd` when the closing
+  // animation completes. Performs the actual unmount + FAB surfacing.
+  function finalizeClose() {
+    const reason = pendingExitRef.current;
+    pendingExitRef.current = null;
+    setOpen(false);
+    setPopupPhase('visible'); // reset for the next open cycle
+    // Accept never re-prompts (offer claimed). Soft + decline both
+    // surface the FAB so the visitor can re-open.
+    setShowFab(reason !== 'accept');
+  }
+
   function handleAccept() {
     const destination = cfg.acceptDestination ?? 'booking';
 
@@ -416,16 +458,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
               : `Visitor would see your custom instructions${cfg.customUrlInstructions ? `: "${cfg.customUrlInstructions}"` : '.'}`
             : `Visitor would be sent to /booking with ${codeLabel}.`;
       toast.success('Claim Offer (preview)', { description: simulated });
-      setOpen(false);
-      setShowFab(false);
+      beginClose('accept');
       return;
     }
 
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
     void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
-    setOpen(false);
-    setShowFab(false); // Offer claimed — no need for the re-entry FAB.
+    beginClose('accept');
 
     // Custom URL: open externally in a new tab. tel:/mailto: URLs trigger
     // the device handler. Operator-supplied — we only sanity-check the prefix.
@@ -453,12 +493,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
-    setOpen(false);
-    // Always surface the FAB — preview must mirror the real visitor
-    // lifecycle so operators can QA the "See Offer" affordance without
-    // leaving the editor. Real-visitor side effects (dismissal write,
+    // Animated close → FAB. Real-visitor side effects (dismissal write,
     // analytics) stay gated above.
-    setShowFab(true);
+    beginClose('decline');
   }
 
   function handleSoftClose() {
@@ -468,12 +505,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
-    setOpen(false);
-    setShowFab(true);
+    beginClose('soft');
   }
+
 
   function handleFabOpen() {
     setShowFab(false);
+    setPopupPhase('entering');
+    replayPopupMount();
     setOpen(true);
   }
 
@@ -526,6 +565,30 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   if (!open) return fab;
 
+  const isClosing = popupPhase === 'closing';
+  // Per-variant exit animation classes. Each variant exits in the
+  // direction the FAB lives (corner-card → bottom-right corner; banner →
+  // top edge; modal → fade + scale toward FAB). Tailwind/animate utilities
+  // ship via tailwindcss-animate.
+  const cornerExitClasses = fabPos === 'bottom-left'
+    ? 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-left-4 duration-300'
+    : 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-right-4 duration-300';
+  const bannerExitClasses = 'animate-out fade-out slide-out-to-top-2 duration-300';
+  const modalExitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
+
+  // Single onAnimationEnd handler shared across variants. Only finalizes
+  // when we're actually in the `closing` phase — Tailwind's enter
+  // animations (slide-in-from-*) also fire animationend on the same root,
+  // and we must not unmount during the entering phase.
+  const handleRootAnimationEnd = (e: React.AnimationEvent<HTMLDivElement>) => {
+    if (!isClosing) return;
+    // Only react to our slide-out animation, not nested children's animations
+    // (e.g. the countdown bar). Tailwind animate-out compiles to specific
+    // keyframe names — we accept any of them since all signal "close done".
+    if (e.target !== e.currentTarget) return;
+    finalizeClose();
+  };
+
   // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
     // Corner-card is the densest surface — operators can hide the image here
@@ -538,12 +601,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         key={animationNonce}
         data-testid="promo-popup-root"
         data-animation-key={animationNonce}
+        data-popup-phase={popupPhase}
         role="dialog"
         aria-modal="false"
         aria-labelledby="promo-popup-title"
-        className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-4"
+        className={cn(
+          'fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
+          isClosing ? cornerExitClasses : 'animate-in fade-in slide-in-from-bottom-4',
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onAnimationEnd={handleRootAnimationEnd}
       >
         {/* Close (X) — soft-dismisses the popup. Sits absolute so it doesn't
             shift PromoBody's eyebrow/headline alignment. */}
@@ -574,12 +642,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         key={animationNonce}
         data-testid="promo-popup-root"
         data-animation-key={animationNonce}
+        data-popup-phase={popupPhase}
         role="dialog"
         aria-labelledby="promo-popup-title"
-        className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
+        className={cn(
+          'fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden',
+          isClosing ? bannerExitClasses : 'animate-in slide-in-from-top-2',
+        )}
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onAnimationEnd={handleRootAnimationEnd}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-3 pb-6 sm:pb-3">
           {/* Mobile-only close row keeps the X out of the headline's lane. */}
@@ -721,10 +794,17 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       key={animationNonce}
       data-testid="promo-popup-root"
       data-animation-key={animationNonce}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
+      data-popup-phase={popupPhase}
+      className={cn(
+        'fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md',
+        isClosing
+          ? modalExitClasses
+          : 'motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500',
+      )}
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
       }}
+      onAnimationEnd={handleRootAnimationEnd}
     >
       <div
         role="dialog"
