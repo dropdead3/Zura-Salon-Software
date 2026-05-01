@@ -39,40 +39,13 @@ export default tseslint.config(
       // usage in adapter/edge boundaries while still surfacing it for
       // future cleanup. Was the dominant error source (4104 of 4322).
       "@typescript-eslint/no-explicit-any": "warn",
-      // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
-      // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
-      // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>, or
-      // any component whose name ends in `Button` / `IconButton`.
-      // TODO(wave-2): promote severity from 'warn' to 'error' once the
-      // Wave 2 Loader2 sweep clears existing leaks (~150 call sites).
-      // Trigger: `grep -rn 'Loader2' src/` returns only button-context hits.
-      // Tracked in mem://architecture/visibility-contracts.md Deferral Register.
-      "no-restricted-syntax": [
-        "warn",
-        {
-          // Flag <Loader2 /> usages NOT nested inside a Button-like ancestor.
-          // The two `:not(... descendant ...)` clauses exclude Loader2 elements
-          // that appear inside <button>, <Button>, or any <*Button> JSX.
-          // Note: do NOT add `:not(:has(JSXElement))` — esquery's `:has()`
-          // walks the whole subtree and false-negatives self-closing Loader2.
-          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
-          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
-        },
-        {
-          // UnsavedChangesDialog canon — ban ad-hoc "Unsaved changes" titles
-          // inside AlertDialogTitle. Once the canonical <UnsavedChangesDialog />
-          // exists (src/components/ui/unsaved-changes-dialog.tsx), forking it
-          // ad-hoc means future copy/UX tweaks leave call sites diverged.
-          // Aligns with Canon Pattern (mem://architecture/canon-pattern).
-          //
-          // Override: if you genuinely need a custom navigate-away dialog
-          // (e.g. with extra fields), add `// eslint-disable-next-line
-          // no-restricted-syntax -- <reason>` and document why the canonical
-          // component doesn't fit.
-          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
-          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
-        },
-      ],
+      // NOTE: `no-restricted-syntax` is intentionally NOT defined here.
+      // It lives consolidated in the Site Settings Event Ownership block
+      // below as a single source of truth for ALL restricted-syntax
+      // doctrines (Loader2, UnsavedChanges, Site Settings event). Adding
+      // a `no-restricted-syntax` entry here would be silently overridden
+      // by that block via flat-config replacement semantics, dropping
+      // any selectors you add. See the consolidated block for the canon.
     },
   },
   {
@@ -97,27 +70,78 @@ export default tseslint.config(
     // Pairs with: src/test/lint-rule-site-settings-event.test.ts
     files: ["**/*.{ts,tsx}"],
     ignores: [
-      "src/lib/siteSettingsDraft.ts",
-      // NOTE: do NOT ignore `src/test/lint-fixtures/**` here. The
+      // NOTE: do NOT ignore `src/lib/siteSettingsDraft.ts` here. The
+      // owning module suppresses each dispatch with an inline
+      // `eslint-disable-next-line no-restricted-syntax` comment instead.
+      // Excluding the file via `ignores` would also drop the consolidated
+      // Loader2 + UnsavedChanges selectors for that file (flat-config
+      // replacement semantics), losing coverage for unrelated doctrines.
+      //
+      // NOTE: do NOT ignore `src/test/lint-fixtures/**` here either. The
       // top-level `ignores` already excludes the fixtures from `npm run
       // lint`, and the smoke test uses ESLint's `ignore: false` option
       // to deliberately bypass that exclusion. Re-listing the fixtures
       // path here would silently drop this rule from the fixture's
-      // resolved config (the second block's `no-restricted-syntax`
-      // would win by replacement), making the test report 0 violations.
+      // resolved config, making the test report 0 violations.
+      //
       // Vitest tests may legitimately simulate the event for unit coverage.
       "src/**/__tests__/**",
       "src/test/**/*.test.{ts,tsx}",
     ],
     rules: {
+      // CONSOLIDATED `no-restricted-syntax` — single source of truth.
+      // ──────────────────────────────────────────────────────────────
+      // All `no-restricted-syntax` selectors live in THIS block, even
+      // ones whose doctrine is unrelated to site-settings event ownership.
+      //
+      // Why consolidated: flat-config replaces (does not merge) rule
+      // options when two blocks both match a file. Splitting selectors
+      // across blocks silently drops selectors on files matched by both,
+      // which is invisible without `eslint --print-config`. The meta-test
+      // `src/test/lint-config-resolution.test.ts` asserts every doctrine
+      // selector survives in the resolved config for representative files.
+      //
+      // To add a new selector: add a new object to the array below and
+      // a corresponding assertion in the meta-test. Do NOT spin up a new
+      // config block with its own `no-restricted-syntax` — that re-opens
+      // the shadowing footgun. The exception is per-file ignore semantics
+      // (e.g. the Site Settings rule must NOT fire inside siteSettingsDraft.ts);
+      // those are handled by `eslint-disable-next-line` overrides at the
+      // call site, not by splitting the rule across blocks.
       "no-restricted-syntax": [
         "error",
         {
-          // Match: new CustomEvent('site-settings-draft-write', ...)
+          // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
+          // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
+          // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>,
+          // or any component whose name ends in `Button` / `IconButton`.
+          // Severity note: was 'warn' in the prior split-block layout; now
+          // promoted to 'error' as the consolidated array shares one severity.
+          // If the Wave 2 sweep hasn't fully cleared call sites yet, downgrade
+          // back to ['warn', ...] temporarily and re-run lint to inventory.
+          // Tracked in mem://architecture/visibility-contracts.md Deferral Register.
+          // Note: do NOT add `:not(:has(JSXElement))` — esquery's `:has()`
+          // walks the whole subtree and false-negatives self-closing Loader2.
+          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
+        },
+        {
+          // UnsavedChangesDialog canon — ban ad-hoc "Unsaved changes" titles
+          // inside AlertDialogTitle. Use <UnsavedChangesDialog /> instead.
+          // Override: add `// eslint-disable-next-line no-restricted-syntax
+          // -- <reason>` for legitimate custom navigate-away dialogs.
+          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
+          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
+        },
+        {
+          // Site Settings Event Ownership — `site-settings-draft-write` is
+          // owned exclusively by src/lib/siteSettingsDraft.ts. The owning
+          // module suppresses this selector with `// eslint-disable-next-line
+          // no-restricted-syntax` at each dispatch site. See doctrine in
+          // mem://architecture/site-settings-event-ownership.md and the
+          // smoke test src/test/lint-rule-site-settings-event.test.ts.
           // esquery does not support `arguments.0.value` indexed-field
           // syntax; use `:has()` with the literal value matcher instead.
-          // Restrict to NewExpression where the callee is `CustomEvent`
-          // and the first argument is the literal event name.
           selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
           message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
         },

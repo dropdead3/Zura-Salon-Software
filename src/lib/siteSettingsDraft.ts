@@ -155,6 +155,7 @@ function broadcastDraftWrite(orgId: string, key: string): void {
   emitAmbientTelemetry('draft-write-broadcast', { orgId, key });
   try {
     window.dispatchEvent(
+      // eslint-disable-next-line no-restricted-syntax -- Canonical owner of `site-settings-draft-write`; see mem://architecture/site-settings-event-ownership.md.
       new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
     );
   } catch {
@@ -180,6 +181,7 @@ export async function publishSiteSettingsDrafts(orgId: string): Promise<number> 
   if (typeof window !== 'undefined') {
     try {
       window.dispatchEvent(
+        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
         new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
       );
     } catch { /* SSR */ }
@@ -202,6 +204,7 @@ export async function discardSiteSettingsDrafts(orgId: string): Promise<number> 
   if (typeof window !== 'undefined') {
     try {
       window.dispatchEvent(
+        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
         new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
       );
     } catch { /* SSR */ }
