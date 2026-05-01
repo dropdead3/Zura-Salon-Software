@@ -31,6 +31,12 @@ export interface HeroAlignmentClasses {
    * Tailwind's JIT can statically extract them.
    */
   ctaRow: string;
+  /**
+   * Below-CTA notes container (consultation copy lines). Mirrors `cta` so the
+   * shrunk note block sits on the correct horizontal edge. Centralized so
+   * future hero variants don't reintroduce hardcoded `items-center`.
+   */
+  notes: string;
 }
 
 const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
@@ -40,6 +46,7 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
     subheadline: 'mr-auto ml-0 max-w-md',
     cta: 'items-start',
     ctaRow: 'sm:justify-start',
+    notes: 'items-start',
   },
   center: {
     wrapper: 'max-w-4xl mx-auto text-center',
@@ -47,6 +54,7 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
     subheadline: 'mx-auto max-w-md',
     cta: 'items-center',
     ctaRow: 'sm:justify-center',
+    notes: 'items-center',
   },
   right: {
     wrapper: 'max-w-4xl ml-auto text-right',
@@ -54,6 +62,7 @@ const ALIGNMENT_MAP: Record<HeroContentAlignment, HeroAlignmentClasses> = {
     subheadline: 'ml-auto mr-0 max-w-md',
     cta: 'items-end',
     ctaRow: 'sm:justify-end',
+    notes: 'items-end',
   },
 };
 

@@ -82,7 +82,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
                   <ArrowRight className="w-0 h-4 opacity-0 transition-all duration-300" />
                 </button>
               </div>
-              <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.cta)}>
+              <div className={cn("flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans", alignment.notes)}>
                 <p>{config.consultation_note_line1}</p>
                 <p>{config.consultation_note_line2}</p>
               </div>
