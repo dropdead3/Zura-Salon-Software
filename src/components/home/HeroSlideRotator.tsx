@@ -259,7 +259,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   </p>
                 )}
 
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className={cn("mt-10 flex flex-col sm:flex-row items-center gap-3", alignment.cta, "sm:" + alignment.cta.replace('items-', 'justify-'))}>
                   <button
                     onClick={() => {
                       if (slide.cta_new_client_url) {
