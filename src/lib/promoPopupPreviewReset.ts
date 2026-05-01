@@ -22,6 +22,8 @@
  * resets — not a fresh iframe.
  */
 
+import { dispatchOwnedEvent } from './eventOwnership';
+
 // ── Reset event ──────────────────────────────────────────────────────────
 export const PROMO_POPUP_PREVIEW_RESET_EVENT = 'promo-popup-preview-reset';
 
