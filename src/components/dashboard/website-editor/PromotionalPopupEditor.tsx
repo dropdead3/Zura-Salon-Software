@@ -16,8 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
-import { ImageUploadInput } from './inputs/ImageUploadInput';
-import { FocalPointPicker } from './inputs/FocalPointPicker';
+import { ImageWithFocalPointInput } from './inputs/ImageWithFocalPointInput';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import {
@@ -924,10 +923,19 @@ export function PromotionalPopupEditor() {
           />
         </Field>
         <Field label="Image (optional)" hint="Auto-optimized to WebP. Treatment + alt text below.">
-          <ImageUploadInput
-            label=""
+          <ImageWithFocalPointInput
             value={formData.imageUrl ?? ''}
             onChange={(url) => handleChange('imageUrl', url)}
+            focalX={formData.imageFocalX ?? 50}
+            focalY={formData.imageFocalY ?? 50}
+            onFocalChange={(x, y) => {
+              handleChange('imageFocalX', x);
+              handleChange('imageFocalY', y);
+            }}
+            onFocalReset={() => {
+              handleChange('imageFocalX', 50);
+              handleChange('imageFocalY', 50);
+            }}
             pathPrefix="promotional-popup"
             placeholder="https://..."
           />
@@ -935,8 +943,7 @@ export function PromotionalPopupEditor() {
             // Treatment options vary per appearance: in `corner-card` the
             // surface is a single ~360px tile, so "cover" and "side" both
             // collapse to a top strip — exposing both would be a phantom
-            // choice. Banner doesn't render an image at all. The dynamic
-            // option set keeps every visible button structurally meaningful.
+            // choice. Banner doesn't render an image at all.
             type TreatmentOption = {
               value: 'cover' | 'side' | 'hidden-on-corner';
               label: string;
@@ -984,26 +991,10 @@ export function PromotionalPopupEditor() {
                     </div>
                   </div>
                 ) : (
-                  // Banner appearance ignores the image entirely; tell the
-                  // operator instead of silently rendering nothing.
                   <p className="font-sans text-[11px] text-muted-foreground">
                     Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
                   </p>
                 )}
-                <FocalPointPicker
-                  imageUrl={formData.imageUrl}
-                  x={formData.imageFocalX ?? 50}
-                  y={formData.imageFocalY ?? 50}
-                  onChange={(x, y) => {
-                    handleChange('imageFocalX', x);
-                    handleChange('imageFocalY', y);
-                  }}
-                  onReset={() => {
-                    handleChange('imageFocalX', 50);
-                    handleChange('imageFocalY', 50);
-                  }}
-                  helper="Click or drag to anchor the most important area — it stays in view across modal, side-rail, and corner-card layouts."
-                />
                 <div>
                   <Label className="text-xs">Alt text</Label>
                   <Input
