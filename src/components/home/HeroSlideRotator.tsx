@@ -84,17 +84,15 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
   const handleHoverLeave = () => config.pause_on_hover && setIsPaused(false);
 
-  // Foreground text gets contrast against background media — when there's a
-  // background, text turns white; otherwise inherit theme foreground.
+  // Foreground text gets contrast against background media. The shared
+  // resolver merges section-level + per-slide overrides on top of the
+  // auto-contrast default (white when there's a media background, theme
+  // foreground otherwise).
   const hasBackground = bgType !== 'none' && !!bgUrl;
-  const textTone = hasBackground ? 'text-white' : 'text-foreground';
-  const mutedTone = hasBackground ? 'text-white/80' : 'text-muted-foreground';
-  const buttonPrimary = hasBackground
-    ? 'bg-white text-black hover:bg-white/90'
-    : 'bg-foreground text-background hover:bg-foreground/90';
-  const buttonSecondary = hasBackground
-    ? 'border-white text-white'
-    : 'border-foreground text-foreground';
+  const mergedColors = mergeHeroColors(config.text_colors, slide.text_colors);
+  const heroColors = resolveHeroColors(mergedColors, hasBackground);
+  // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
+  const mutedTone = heroColors.subheadlineClass || '';
 
   return (
     <section
