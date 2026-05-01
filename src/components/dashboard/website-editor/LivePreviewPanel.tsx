@@ -421,15 +421,6 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
               <Button variant="ghost" size={tokens.button.inline} className="h-7 w-7 p-0" onClick={handleCopyUrl} title="Copy preview URL">
                 <Copy className="h-3.5 w-3.5" />
               </Button>
-              <Button
-                variant="ghost"
-                size={tokens.button.inline}
-                className="h-7 w-7 p-0"
-                onClick={() => window.open(previewMeta.displayUrl!, '_blank', 'noopener,noreferrer')}
-                title="Open preview in new tab"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
             </div>
           )}
         </div>
