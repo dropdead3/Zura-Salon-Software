@@ -38,12 +38,9 @@ export interface PromoPopupPreviewResetDetail {
 export function dispatchPromoPopupPreviewReset(
   detail: PromoPopupPreviewResetDetail = {},
 ): void {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    // eslint-disable-next-line no-restricted-syntax -- Canonical owner of `promo-popup-preview-reset`; see this module's header.
-    new CustomEvent<PromoPopupPreviewResetDetail>(PROMO_POPUP_PREVIEW_RESET_EVENT, {
-      detail,
-    }),
+  dispatchOwnedEvent<PromoPopupPreviewResetDetail>(
+    PROMO_POPUP_PREVIEW_RESET_EVENT,
+    detail,
   );
 }
 
@@ -80,10 +77,8 @@ export function dispatchPromoPopupPreviewState(phase: PromoPopupPreviewPhase): v
   if (typeof window === 'undefined') return;
   if (phase === lastPhase) return;
   lastPhase = phase;
-  window.dispatchEvent(
-    // eslint-disable-next-line no-restricted-syntax -- Canonical owner of `promo-popup-preview-state`; see this module's header.
-    new CustomEvent<PromoPopupPreviewStateDetail>(PROMO_POPUP_PREVIEW_STATE_EVENT, {
-      detail: { phase },
-    }),
+  dispatchOwnedEvent<PromoPopupPreviewStateDetail>(
+    PROMO_POPUP_PREVIEW_STATE_EVENT,
+    { phase },
   );
 }
