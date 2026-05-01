@@ -1423,7 +1423,38 @@ function WebsiteEditorShellInner() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Exit Editor confirm — guards unsaved/unpublished changes */}
+      {/* Per-editor Discard Changes — reverts the active editor's unsaved
+          edits back to its last-saved state. Does not touch other sections
+          or the published live site. */}
+      <AlertDialog open={revertDraftOpen} onOpenChange={setRevertDraftOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This reverts the current section back to its last-saved state.
+              Unsaved edits in this editor will be lost. Other sections and
+              your live site are not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('editor-discard-request'));
+                setRevertDraftOpen(false);
+                toast({
+                  title: 'Changes discarded',
+                  description: 'Reverted to last saved state.',
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={exitConfirmOpen} onOpenChange={setExitConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
