@@ -33,6 +33,7 @@ import {
   Megaphone,
   MousePointerClick,
   PanelBottom,
+  PanelBottomClose,
   Plus,
   Trash2,
   FileText,
@@ -99,6 +100,7 @@ const SITE_CONTENT_GROUPS: { title: string; caption: string; items: SiteContentI
       { tab: 'navigation', label: 'Navigation', description: 'Header & footer menus', icon: Layers },
       { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
       { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
+      { tab: 'sticky-footer', label: 'Sticky Footer', description: 'Floating CTA bar above the fold', icon: PanelBottomClose },
     ],
   },
   {

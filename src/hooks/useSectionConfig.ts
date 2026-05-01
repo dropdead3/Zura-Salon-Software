@@ -339,6 +339,33 @@ export interface FooterCTAConfig {
   show_cta_button: boolean;
 }
 
+/**
+ * Floating "Sticky Footer" bar (the glassmorphism call-bar that appears
+ * after the visitor scrolls past the hero). Lives in `<StickyFooterBar />`.
+ * Defaults preserve today's hardcoded behavior so legacy installs render
+ * unchanged on first read.
+ */
+export interface StickyFooterBarConfig {
+  /** Master kill-switch. When false the bar never renders site-wide. */
+  enabled: boolean;
+  cta_text: string;
+  cta_url: string;
+  show_phone_numbers: boolean;
+  /**
+   * Ordered allow-list of location IDs whose phone tile renders in the bar.
+   * Empty array = show every active location with a phone (legacy behavior).
+   */
+  visible_location_ids: string[];
+  /** Pixels scrolled before the bar slides in. Editor exposes 0–600. */
+  scroll_show_after_px: number;
+  /**
+   * Pathnames where the bar is suppressed in addition to `/booking` (which
+   * is always implicit — no escape hatch for that since the booking page
+   * has its own footer CTA and the bar would collide).
+   */
+  page_exclusions: string[];
+}
+
 export interface LocationsSectionConfig {
   section_eyebrow: string;
   section_title: string;
@@ -595,6 +622,16 @@ export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
   show_cta_button: true,
 };
 
+export const DEFAULT_STICKY_FOOTER_BAR: StickyFooterBarConfig = {
+  enabled: true,
+  cta_text: 'Book consult',
+  cta_url: '/booking',
+  show_phone_numbers: true,
+  visible_location_ids: [],
+  scroll_show_after_px: 180,
+  page_exclusions: [],
+};
+
 export const DEFAULT_LOCATIONS_SECTION: LocationsSectionConfig = {
   section_eyebrow: "Find Us",
   section_title: "Our Locations",
@@ -701,6 +738,13 @@ export function useDrinkMenuConfig() {
 
 export function useFooterCTAConfig() {
   return useSectionConfig<FooterCTAConfig>('section_footer_cta', DEFAULT_FOOTER_CTA);
+}
+
+export function useStickyFooterBarConfig() {
+  return useSectionConfig<StickyFooterBarConfig>(
+    'section_sticky_footer_bar',
+    DEFAULT_STICKY_FOOTER_BAR,
+  );
 }
 
 export function useLocationsSectionConfig() {
