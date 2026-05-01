@@ -12,6 +12,8 @@
  *   full document re-render.
  */
 
+import { emitAmbientTelemetry } from './editor-telemetry';
+
 export interface PreviewRefreshDetail {
   /** Optional org scope — if provided, only that org's site-settings invalidate. */
   orgId?: string;
