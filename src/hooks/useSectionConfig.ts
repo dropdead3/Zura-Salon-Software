@@ -202,6 +202,14 @@ export interface HeroConfig {
    * Per-slide `content_alignment` overrides this when set.
    */
   content_alignment?: 'left' | 'center' | 'right';
+  /**
+   * Section-level vertical spacing density. Picks one of three preset
+   * rhythms (compact / standard / airy) defined in `src/lib/heroSpacing.ts`.
+   * Defaults to 'compact' so existing operators see the tightened May 2026
+   * rhythm. Container-aware compression forces 'compact' on narrow widths
+   * regardless of this value.
+   */
+  content_spacing?: 'compact' | 'standard' | 'airy';
 }
 
 export interface BrandStatementConfig {
