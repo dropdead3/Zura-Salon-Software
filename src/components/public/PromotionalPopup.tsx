@@ -20,6 +20,7 @@ import {
   dispatchPromoPopupPreviewState,
 } from '@/lib/promoPopupPreviewReset';
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
+import { useReplayableMount } from '@/hooks/useReplayableMount';
 
 interface Props {
   /**
@@ -143,13 +144,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
-  // Bumped on every editor-driven reset so the popup root remounts and
-  // replays its CSS slide-in animation. Without this, calling `setOpen(true)`
-  // on an already-mounted root is a no-op for `animate-in slide-in-from-*`
-  // (Tailwind's animate utilities only fire on first paint), so operators
-  // saw the popup snap into place instead of sliding up. Used as the React
-  // `key` on each variant's root container.
-  const [animationNonce, setAnimationNonce] = useState(0);
+  // Editor-driven reset replays the CSS slide-in by bumping the React `key`
+  // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
+  // fires on first paint, so without a fresh mount the popup snaps into
+  // place instead of sliding up. See `useReplayableMount` for the canonical
+  // pattern and rationale.
+  const { key: animationNonce, replay: replayPopupMount } = useReplayableMount();
   const triggeredRef = useRef(false);
 
   // Auto-suppress the entire offer prompt on the booking surface — if the
@@ -269,12 +269,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
-      // Bump the animation nonce BEFORE flipping `open` so React schedules
-      // a fresh mount of the popup root in the same render pass — that's
-      // what replays `animate-in slide-in-from-*`. Without this, an
-      // already-open popup just stays in place when the operator clicks
-      // restart and the slide-up never plays.
-      setAnimationNonce((n) => n + 1);
+      // Replay the mount BEFORE flipping `open` so React schedules a fresh
+      // mount of the popup root in the same render pass — that's what
+      // replays `animate-in slide-in-from-*`. Without this, an already-open
+      // popup just stays in place when the operator clicks restart and the
+      // slide-up never plays.
+      replayPopupMount();
       // Re-derive the operator-configured duration via the canonical helper
       // (kept inline so this effect doesn't depend on autoMinimizeSeconds,
       // which is declared further down). Helper covers null-disable, the
@@ -536,6 +536,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return (
       <div
         key={animationNonce}
+        data-testid="promo-popup-root"
+        data-animation-key={animationNonce}
         role="dialog"
         aria-modal="false"
         aria-labelledby="promo-popup-title"
@@ -570,6 +572,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return (
       <div
         key={animationNonce}
+        data-testid="promo-popup-root"
+        data-animation-key={animationNonce}
         role="dialog"
         aria-labelledby="promo-popup-title"
         className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
@@ -715,6 +719,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   return (
     <div
       key={animationNonce}
+      data-testid="promo-popup-root"
+      data-animation-key={animationNonce}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
