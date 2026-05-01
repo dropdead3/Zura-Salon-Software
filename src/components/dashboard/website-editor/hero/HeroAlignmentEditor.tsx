@@ -56,6 +56,34 @@ export function HeroAlignmentEditor({ config, onChange }: HeroAlignmentEditorPro
         </div>
       </div>
 
+      <div className="space-y-2 pt-4 border-t border-border/40">
+        <Label className="text-xs">Vertical Spacing</Label>
+        <p className="text-[11px] text-muted-foreground -mt-1">
+          Controls the gap rhythm between eyebrow, headline, subheadline, and
+          buttons. Narrow preview frames automatically force Compact.
+        </p>
+        <div className="flex gap-2">
+          {HERO_SPACING_PRESETS.map(({ id, label, description }) => {
+            const active = (config.content_spacing ?? 'compact') === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onChange('content_spacing', id)}
+                title={description}
+                className={`flex-1 inline-flex items-center justify-center px-3 py-2 rounded-full text-xs border transition-colors ${
+                  active
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="space-y-3 pt-4 border-t border-border/40">
         <h4 className="font-display text-[11px] tracking-wider text-muted-foreground uppercase">
           Scroll Indicator
