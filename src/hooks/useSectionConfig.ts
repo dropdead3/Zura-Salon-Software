@@ -339,6 +339,33 @@ export interface FooterCTAConfig {
   show_cta_button: boolean;
 }
 
+/**
+ * Floating "Sticky Footer" bar (the glassmorphism call-bar that appears
+ * after the visitor scrolls past the hero). Lives in `<StickyFooterBar />`.
+ * Defaults preserve today's hardcoded behavior so legacy installs render
+ * unchanged on first read.
+ */
+export interface StickyFooterBarConfig {
+  /** Master kill-switch. When false the bar never renders site-wide. */
+  enabled: boolean;
+  cta_text: string;
+  cta_url: string;
+  show_phone_numbers: boolean;
+  /**
+   * Ordered allow-list of location IDs whose phone tile renders in the bar.
+   * Empty array = show every active location with a phone (legacy behavior).
+   */
+  visible_location_ids: string[];
+  /** Pixels scrolled before the bar slides in. Editor exposes 0–600. */
+  scroll_show_after_px: number;
+  /**
+   * Pathnames where the bar is suppressed in addition to `/booking` (which
+   * is always implicit — no escape hatch for that since the booking page
+   * has its own footer CTA and the bar would collide).
+   */
+  page_exclusions: string[];
+}
+
 export interface LocationsSectionConfig {
   section_eyebrow: string;
   section_title: string;
