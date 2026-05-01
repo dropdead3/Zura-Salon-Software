@@ -279,7 +279,7 @@ export function Header() {
   }, [location]);
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
+    <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none [&>*]:pointer-events-auto">
       {/* Top Announcement Bar — translucent so hero media shows through */}
       {announcementSettings?.enabled && (
         <div 
