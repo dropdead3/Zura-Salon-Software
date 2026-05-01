@@ -183,7 +183,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   {subheadlineLine2}
                 </p>
               )}
-              <div className={cn("mt-6 flex flex-col gap-4", alignment.cta)}>
+              <div className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}>
                 <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
