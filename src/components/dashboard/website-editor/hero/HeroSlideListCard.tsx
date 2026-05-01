@@ -1,6 +1,17 @@
-import { ChevronRight, GripVertical, Trash2, Image as ImageIcon, Video, Star } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRight, GripVertical, Trash2, Image as ImageIcon, Video, Star, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HeroSlide, HeroConfig } from '@/hooks/useSectionConfig';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface HeroSlideListCardProps {
   slide: HeroSlide;
@@ -12,14 +23,22 @@ interface HeroSlideListCardProps {
   sectionBgType: HeroConfig['background_type'];
   onClick: () => void;
   onDelete: () => void;
+  /** Toggle whether this slide is included in the public rotator. */
+  onToggleActive: (next: boolean) => void;
   /** Drag handle props from @dnd-kit useSortable. */
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }
 
 /**
  * Slide row in the Hero hub. Click → opens that slide's focused editor.
- * Designed to mirror Slider Revolution's slide list: thumbnail + headline +
- * one-line summary + drag handle + delete.
+ * Mirrors Slider Revolution's slide list: thumbnail + headline + summary +
+ * drag handle + active toggle + delete (with confirmation).
+ *
+ * Active vs delete:
+ * - Active toggle (Eye/EyeOff) hides the slide from the live rotator without
+ *   destroying the config — useful for seasonal/draft slides.
+ * - Delete is destructive and confirmed via AlertDialog. Last-slide deletion
+ *   is allowed; the rotator handles an empty list gracefully.
  */
 export function HeroSlideListCard({
   slide,
@@ -30,8 +49,11 @@ export function HeroSlideListCard({
   sectionBgType,
   onClick,
   onDelete,
+  onToggleActive,
   dragHandleProps,
 }: HeroSlideListCardProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const isActive = slide.active !== false;
   const inherits = slide.background_type === 'inherit';
   const resolvedType = inherits ? sectionBgType : slide.background_type;
   const thumbUrl = inherits
@@ -46,7 +68,12 @@ export function HeroSlideListCard({
   if (ctaCount) summaryParts.push(`${ctaCount} CTA${ctaCount === 1 ? '' : 's'}`);
 
   return (
-    <div className="group relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl shadow-sm overflow-hidden flex items-stretch hover:border-foreground/30 hover:shadow-md transition-all">
+    <div
+      className={cn(
+        'group relative bg-card/80 backdrop-blur-xl border border-border/50 rounded-xl shadow-sm overflow-hidden flex items-stretch hover:border-foreground/30 hover:shadow-md transition-all',
+        !isActive && 'opacity-60',
+      )}
+    >
       {/* Drag handle */}
       <button
         type="button"
@@ -74,7 +101,10 @@ export function HeroSlideListCard({
             <img
               src={thumbUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover"
+              className={cn(
+                'absolute inset-0 w-full h-full object-cover',
+                !isActive && 'grayscale',
+              )}
               loading="lazy"
             />
           ) : (
@@ -95,6 +125,11 @@ export function HeroSlideListCard({
                 <Star className="h-2.5 w-2.5" /> Default
               </span>
             )}
+            {!isActive && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-sans uppercase tracking-wider text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/5">
+                <EyeOff className="h-2.5 w-2.5" /> Inactive
+              </span>
+            )}
           </div>
           <div className="text-sm text-foreground truncate font-sans mt-0.5">
             {slide.headline_text || '(untitled slide)'}
@@ -107,15 +142,51 @@ export function HeroSlideListCard({
         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
       </button>
 
-      {/* Delete */}
+      {/* Active toggle */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+        onClick={(e) => { e.stopPropagation(); onToggleActive(!isActive); }}
+        className={cn(
+          'px-3 flex items-center transition-colors',
+          isActive ? 'text-muted-foreground hover:text-foreground' : 'text-amber-600 dark:text-amber-400 hover:text-amber-500',
+        )}
+        aria-label={isActive ? 'Deactivate slide (hide from live site)' : 'Activate slide (show on live site)'}
+        title={isActive ? 'Deactivate — hide from live site' : 'Activate — show on live site'}
+      >
+        {isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+      </button>
+
+      {/* Delete (with confirmation) */}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setConfirmOpen(true); }}
         className="px-3 flex items-center text-muted-foreground hover:text-destructive transition-colors"
         aria-label="Delete slide"
+        title="Delete slide permanently"
       >
         <Trash2 className="h-4 w-4" />
       </button>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Slide {index + 1}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes "{slide.headline_text || 'this slide'}" and all of its
+              copy, media references, and overrides. To temporarily hide it instead, use the eye icon to deactivate.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setConfirmOpen(false); onDelete(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Slide
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
