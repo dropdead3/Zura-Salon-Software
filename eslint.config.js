@@ -167,6 +167,22 @@ export default tseslint.config(
           selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
           message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
         },
+        {
+          // Hero overlay rename canon — the legacy labels "Overlay Darkness"
+          // and "Background Scrim" mislead operators into thinking the two
+          // controls do the same thing (which is what hid the May 2026
+          // single-value-fusion regression). The current canon is:
+          //   "Image Wash"     → flat uniform tint (overlay_opacity)
+          //   "Text-area Scrim" → editorial gradient/vignette shape
+          // Banning the literal strings prevents a copy-only revert from
+          // sneaking the conflict back in.
+          //
+          // Override: `// eslint-disable-next-line no-restricted-syntax
+          // -- <reason>` only if you're authoring a deprecation notice or
+          // a migration changelog that must literally quote the old name.
+          selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
+          message: "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
+        },
       ],
     },
   },
