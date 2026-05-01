@@ -1,4 +1,4 @@
-import { Settings2 } from 'lucide-react';
+import { Settings2, Sparkles } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { ToggleInput } from '../inputs/ToggleInput';
 import { SliderInput } from '../inputs/SliderInput';
@@ -10,6 +10,55 @@ interface HeroRotatorEditorProps {
 }
 
 /**
+ * Mode-appropriate defaults. When an operator switches modes, we nudge
+ * transition_style + slide_interval_ms into a sensible starting point —
+ * but only if their current values still match the *other* mode's defaults
+ * (i.e. they haven't manually customized). This avoids stomping on intent.
+ */
+const MODE_DEFAULTS = {
+  multi_slide: { transition_style: 'slide-up' as const, slide_interval_ms: 6000 },
+  background_only: { transition_style: 'crossfade' as const, slide_interval_ms: 7000 },
+};
+
+/**
+ * Tiny inline illustration for the mode picker. Multi-slide shows a
+ * full-card swap; background-only shows a static foreground over a
+ * rotating background.
+ */
+function ModeIllustration({ mode, active }: { mode: 'multi_slide' | 'background_only'; active: boolean }) {
+  const stroke = active ? 'currentColor' : 'currentColor';
+  const opacity = active ? 1 : 0.55;
+  if (mode === 'multi_slide') {
+    return (
+      <svg viewBox="0 0 64 28" className="w-full h-7" fill="none" stroke={stroke} strokeWidth={1.2} style={{ opacity }}>
+        <rect x="1" y="3" width="28" height="22" rx="3" />
+        <rect x="6" y="9" width="14" height="2" rx="1" fill={stroke} />
+        <rect x="6" y="14" width="10" height="2" rx="1" fill={stroke} opacity={0.5} />
+        <rect x="6" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+        <path d="M33 14 L37 14 M35 12 L37 14 L35 16" />
+        <rect x="35" y="3" width="28" height="22" rx="3" />
+        <rect x="40" y="9" width="10" height="2" rx="1" fill={stroke} />
+        <rect x="40" y="14" width="14" height="2" rx="1" fill={stroke} opacity={0.5} />
+        <rect x="40" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 64 28" className="w-full h-7" fill="none" stroke={stroke} strokeWidth={1.2} style={{ opacity }}>
+      <rect x="1" y="3" width="28" height="22" rx="3" />
+      <path d="M4 8 L26 8 M4 12 L20 12" stroke={stroke} opacity={0.4} />
+      <rect x="6" y="14" width="14" height="2" rx="1" fill={stroke} />
+      <rect x="6" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+      <path d="M33 14 L37 14 M35 12 L37 14 L35 16" />
+      <rect x="35" y="3" width="28" height="22" rx="3" />
+      <path d="M38 8 L60 8 M38 12 L54 12" stroke={stroke} opacity={0.85} />
+      <rect x="40" y="14" width="14" height="2" rx="1" fill={stroke} />
+      <rect x="40" y="19" width="8" height="3" rx="1.5" fill={stroke} />
+    </svg>
+  );
+}
+
+/**
  * Slides rotator behavior: auto-advance, interval, transition, pause-on-hover.
  * Slide *content* is edited per-slide elsewhere; this controls how the
  * rotator cycles between them.
@@ -18,6 +67,41 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
   const slides = config.slides ?? [];
   const hasMultiple = slides.length > 1;
   const mode = config.rotator_mode ?? 'multi_slide';
+
+  // "Convert to Background-Only" detector: if 3+ slides share identical
+  // headline_text while in multi_slide mode, the operator is maintaining the
+  // same copy in N places — Background-Only is the cleaner architecture.
+  const duplicateHeadlineHint = (() => {
+    if (mode !== 'multi_slide' || slides.length < 3) return null;
+    const counts = new Map<string, number>();
+    for (const s of slides) {
+      const h = (s.headline_text ?? '').trim();
+      if (!h) continue;
+      counts.set(h, (counts.get(h) ?? 0) + 1);
+    }
+    let max = 0;
+    for (const v of counts.values()) if (v > max) max = v;
+    return max >= 3 ? max : null;
+  })();
+
+  const switchMode = (next: 'multi_slide' | 'background_only') => {
+    if (next === mode) return;
+    onChange('rotator_mode', next);
+    // Mode-aware defaults: only nudge transition + interval if the operator
+    // is currently sitting on the *other* mode's defaults (i.e. they haven't
+    // customized). This preserves intentional choices.
+    const other = MODE_DEFAULTS[mode];
+    const target = MODE_DEFAULTS[next];
+    const onOtherDefaults =
+      (config.transition_style ?? 'fade') === other.transition_style &&
+      (config.slide_interval_ms ?? 6000) === other.slide_interval_ms;
+    const unset =
+      config.transition_style === undefined && config.slide_interval_ms === undefined;
+    if (onOtherDefaults || unset) {
+      onChange('transition_style', target.transition_style);
+      onChange('slide_interval_ms', target.slide_interval_ms);
+    }
+  };
 
   return (
     <EditorCard title="Slides Rotator" icon={Settings2}>
@@ -47,7 +131,7 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
               <button
                 key={id}
                 type="button"
-                onClick={() => onChange('rotator_mode', id)}
+                onClick={() => switchMode(id)}
                 title={desc}
                 className={`flex-1 px-3 py-2 rounded-xl text-left border transition-colors ${
                   active
@@ -55,7 +139,8 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
                     : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
                 }`}
               >
-                <div className="text-[12px] font-sans font-medium">{label}</div>
+                <ModeIllustration mode={id} active={active} />
+                <div className="text-[12px] font-sans font-medium mt-1.5">{label}</div>
                 <div className={`text-[10px] mt-0.5 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
                   {desc}
                 </div>
@@ -67,6 +152,26 @@ export function HeroRotatorEditor({ config, onChange }: HeroRotatorEditorProps) 
           <p className="text-[10px] text-muted-foreground">
             Slide-specific copy is preserved and will return if you switch back to Multi-Slide.
           </p>
+        )}
+        {duplicateHeadlineHint && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-muted/40">
+            <Sparkles className="h-3.5 w-3.5 text-foreground mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] text-foreground font-sans">
+                {duplicateHeadlineHint} slides share the same headline.
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Background-Only mode shares one headline across all slides — easier to maintain than editing the same copy in {duplicateHeadlineHint} places.
+              </p>
+              <button
+                type="button"
+                onClick={() => switchMode('background_only')}
+                className="mt-1.5 text-[10px] underline text-foreground hover:text-foreground/80"
+              >
+                Switch to Background-Only
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
