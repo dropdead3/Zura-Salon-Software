@@ -21,6 +21,7 @@ import {
 } from '@/lib/promoPopupPreviewReset';
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 import { useReplayableMount } from '@/hooks/useReplayableMount';
+import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
 
 interface Props {
   /**
