@@ -12,10 +12,9 @@ interface HeroAdvancedEditorProps {
  * Advanced sub-editor: animation timing only.
  *
  * Note: scroll-indicator controls used to live here but were promoted to
- * the Content Alignment editor — operators reasonably expect "show scroll
- * cue" to live next to other foreground content settings, not buried under
- * a generic "Advanced" card. The discoverability gap surfaced when an
- * operator toggled it on but couldn't find it on the page.
+ * the Content Alignment editor. The word-rotation interval was promoted to
+ * the dedicated Rotating Words editor so all word-cycling controls live
+ * together.
  */
 export function HeroAdvancedEditor({ config, onChange }: HeroAdvancedEditorProps) {
   return (
@@ -32,18 +31,7 @@ export function HeroAdvancedEditor({ config, onChange }: HeroAdvancedEditorProps
           unit="s"
           description="When word rotation begins after page load"
         />
-        <SliderInput
-          label="Word Rotation Interval"
-          value={config.word_rotation_interval}
-          onChange={(value) => onChange('word_rotation_interval', value)}
-          min={2}
-          max={10}
-          step={0.5}
-          unit="s"
-          description="How long each rotating word displays"
-        />
       </div>
     </EditorCard>
   );
 }
-

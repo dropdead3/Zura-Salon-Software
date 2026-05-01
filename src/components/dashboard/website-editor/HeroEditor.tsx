@@ -10,6 +10,7 @@ import {
   Settings2,
   AlignJustify,
   Plus,
+  Repeat,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
@@ -28,6 +29,7 @@ import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
 import { HeroAlignmentEditor } from './hero/HeroAlignmentEditor';
 import { HeroRotatorEditor } from './hero/HeroRotatorEditor';
+import { HeroRotatingWordsEditor } from './hero/HeroRotatingWordsEditor';
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
 
@@ -49,7 +51,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced';
+type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'words' | 'advanced';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
@@ -60,6 +62,7 @@ const GLOBAL_LABELS: Record<GlobalView, string> = {
   scrim: 'Text-area Scrim',
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
+  words: 'Rotating Words',
   advanced: 'Advanced',
 };
 
@@ -104,9 +107,8 @@ function summarizeScrim(c: HeroConfig): string {
 function summarizeAlignment(c: HeroConfig): string {
   const align = c.content_alignment ?? 'center';
   const scroll = c.show_scroll_indicator ? 'scroll cue on' : 'scroll cue off';
-  const words = c.show_rotating_words ? 'words on' : 'words off';
   const notes = c.show_consultation_notes ? 'notes on' : 'notes off';
-  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll} · ${words} · ${notes}`;
+  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll} · ${notes}`;
 }
 
 function summarizeRotator(c: HeroConfig): string {
@@ -117,8 +119,16 @@ function summarizeRotator(c: HeroConfig): string {
   return `${n} slides · auto · ${seconds}s`;
 }
 
+function summarizeWords(c: HeroConfig): string {
+  const enabled = c.show_rotating_words ?? false;
+  const count = (c.rotating_words ?? []).filter((w) => w && w.trim()).length;
+  if (!enabled) return 'Off';
+  if (count === 0) return 'On · no words yet';
+  return `${count} word${count === 1 ? '' : 's'} · ${c.word_rotation_interval}s`;
+}
+
 function summarizeAdvanced(c: HeroConfig): string {
-  return `${c.word_rotation_interval}s word rotation · ${c.animation_start_delay}s start delay`;
+  return `${c.animation_start_delay}s start delay`;
 }
 
 /* ─── Migration: synthesize Slide 1 from legacy section-level fields ─── */
@@ -352,6 +362,7 @@ export function HeroEditor() {
       { id: 'colors' as const, title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
       { id: 'scrim' as const, title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
       { id: 'rotator' as const, title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
+      { id: 'words' as const, title: 'Rotating Words', icon: Repeat, summary: summarizeWords(localConfig) },
       { id: 'advanced' as const, title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
     ],
     [localConfig],
@@ -527,6 +538,10 @@ export function HeroEditor() {
 
       {view.kind === 'global' && view.id === 'rotator' && (
         <HeroRotatorEditor config={localConfig} onChange={updateField} />
+      )}
+
+      {view.kind === 'global' && view.id === 'words' && (
+        <HeroRotatingWordsEditor config={localConfig} onChange={updateField} />
       )}
 
       {view.kind === 'global' && view.id === 'advanced' && (
