@@ -244,6 +244,21 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Auto-minimize after 15s of no interaction. Visitors who don't engage get
+  // their reading flow back; the offer collapses into the FAB so it remains
+  // one tap away rather than disappearing entirely. Skipped in editor preview
+  // so operators QA'ing copy aren't fighting a countdown timer. Any user
+  // action that flips `open` to false (Accept/Decline/Esc/X) cancels the
+  // timer via the cleanup below.
+  useEffect(() => {
+    if (!open || isPreview) return;
+    const t = window.setTimeout(() => {
+      handleSoftClose();
+    }, 15_000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isPreview]);
+
   // If the popup is disabled or config missing, render nothing at all.
   if (!active || !cfg) return null;
   // Auto-suppress on /booking — the visitor is in the funnel; the offer code
