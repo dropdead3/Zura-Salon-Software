@@ -46,6 +46,9 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
   const bgFit = heroConfig?.background_fit ?? 'cover';
   const overlayOpacity = heroConfig?.overlay_opacity ?? 0.4;
   const hasMediaBackground = bgType !== 'none' && !!bgUrl;
+  // Resolve auto-contrast + operator color overrides for headline, subheadline,
+  // and CTA buttons. See src/lib/heroColors.ts for the merge rules.
+  const heroColors = resolveHeroColors(heroConfig?.text_colors ?? {}, hasMediaBackground);
   const [consultationOpen, setConsultationOpen] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isAnimationReady, setIsAnimationReady] = useState(false);
