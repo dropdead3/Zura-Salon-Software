@@ -35,13 +35,34 @@ import { toast } from 'sonner';
 
 type MediaKind = 'image' | 'video' | '';
 
+/**
+ * Captured at upload time so the editor can persistently surface
+ * "3200×2133 · WebP · 480 KB" on the slide preview AND so the public site can
+ * cap its responsive srcSet at the master width. All fields are best-effort
+ * and may be absent (legacy uploads, pasted URLs, dimension probe failure).
+ */
+export interface MediaUploadMeta {
+  width?: number | null;
+  height?: number | null;
+  sizeBytes?: number | null;
+  format?: string | null;
+}
+
+export interface MediaUploadChangePayload {
+  url: string;
+  posterUrl: string;
+  kind: MediaKind;
+  /** Present after a fresh upload; absent for pasted URLs / cleared values. */
+  meta?: MediaUploadMeta;
+}
+
 interface MediaUploadInputProps {
   value: string;
   /** Optional: poster URL captured for videos. */
   posterValue?: string;
   /** Reflects the actual mime-family of the uploaded asset. */
   kind: MediaKind;
-  onChange: (next: { url: string; posterUrl: string; kind: MediaKind }) => void;
+  onChange: (next: MediaUploadChangePayload) => void;
   label?: string;
   bucket?: string;
   pathPrefix?: string;
@@ -52,10 +73,20 @@ interface MediaUploadInputProps {
    * 'standard' (default) — runs autoCrunch + a 1920×1200 @ q0.85 WebP re-encode.
    *   Good for thumbnails, gallery tiles, testimonial avatars.
    * 'hero' — full-bleed retina art. Skips the lossy second re-encode and
-   *   uploads the autoCrunch output directly (3200px @ q0.9 WebP), preserving
-   *   detail on faces/hair/edges where downsampling artifacts are visible.
+   *   uploads the autoCrunch output directly (≤3200px @ q0.9 WebP),
+   *   preserving detail on faces/hair/edges where downsampling artifacts are
+   *   visible. The URL passed to `onChange` is the autoCrunch output (or the
+   *   original file when it was already small enough to skip crunching),
+   *   never a downsampled re-encode. Downstream AI consumers (focal-point
+   *   detector, alt-text generator) rely on this contract.
    */
   qualityProfile?: 'standard' | 'hero';
+  /**
+   * Persisted upload metadata for the current `value`. When provided, the
+   * preview tile renders a "3200 × 2133 · WebP · 480 KB" caption with a
+   * resolution health dot (green ≥2400, amber ≥1200, red <1200).
+   */
+  meta?: MediaUploadMeta | null;
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
