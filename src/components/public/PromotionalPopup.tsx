@@ -256,6 +256,18 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     return () => window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
   }, [isPreview]);
 
+  // Echo lifecycle phase to the editor (preview only) so the "Restart
+  // popup preview" button can render a context-aware label without
+  // duplicating this state machine. Sole dispatcher of the
+  // `promo-popup-preview-state` event — see src/lib/promoPopupPreviewReset.ts
+  // for ownership canon. Production visitors never dispatch (no listener
+  // exists outside the editor anyway, but gating keeps it tidy).
+  useEffect(() => {
+    if (!isPreview) return;
+    const phase = open ? 'open' : showFab ? 'fab' : 'idle';
+    dispatchPromoPopupPreviewState(phase);
+  }, [isPreview, open, showFab]);
+
   // Esc key closes (counts as soft dismiss — operator told us silence is valid).
   useEffect(() => {
     if (!open) return;
