@@ -290,7 +290,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <HeroEyebrow show={true} text={eyebrowText} className="mb-4" />
+                <HeroEyebrow show={true} text={eyebrowText} className={spacing.eyebrow} />
               </motion.div>
             )}
 
