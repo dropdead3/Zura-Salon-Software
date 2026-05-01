@@ -332,6 +332,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         </div>
       )}
 
+      {/* Operator-toggled scroll affordance — same component the fallback hero uses */}
+      <HeroScrollIndicator
+        show={config.show_scroll_indicator ?? true}
+        text={config.scroll_indicator_text}
+        onMedia={hasBackground}
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: window.innerHeight - 100, behavior: 'smooth' });
+          }
+        }}
+      />
+
       <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
     </section>
   );
