@@ -274,11 +274,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   useEffect(() => {
     if (!open) return;
     if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
-    if (isPreview) return; // Show full bar but never tick down during QA.
     if (isHovered) return; // Pause while reader is engaged — resume from current.
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
+          // In editor preview, loop the countdown so operators can QA the
+          // hairline + last-3s pulse + numeric label without the popup
+          // collapsing mid-edit. Real visitors get the soft-close + FAB.
+          if (isPreview) return autoMinimizeSeconds;
           window.clearInterval(interval);
           handleSoftClose();
           return 0;
@@ -446,7 +449,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       >
         <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     );
@@ -512,7 +515,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           </div>
         </div>
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     );
@@ -574,7 +577,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           </div>
         )}
         {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered || isPreview} />
+          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
         )}
       </div>
     </div>
