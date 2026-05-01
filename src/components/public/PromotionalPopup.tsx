@@ -460,6 +460,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-labelledby="promo-popup-title"
         className="fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden animate-in slide-in-from-top-2"
         style={{ borderBottomColor: accent, borderBottomWidth: 2 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
