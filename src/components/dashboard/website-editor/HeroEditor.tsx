@@ -1,48 +1,121 @@
-import { useState, useEffect, useCallback } from 'react';
-import { tokens } from '@/lib/design-tokens';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, RotateCcw, Layout, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import {
+  Loader2,
+  RotateCcw,
+  ArrowLeft,
+  Image as ImageIcon,
+  Palette,
+  Layers,
+  Images,
+  Type,
+  Settings2,
+} from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
-import { RotatingWordsInput } from './RotatingWordsInput';
-import { SliderInput } from './inputs/SliderInput';
-import { UrlInput } from './inputs/UrlInput';
-import { ToggleInput } from './inputs/ToggleInput';
-import { CharCountInput } from './inputs/CharCountInput';
-import { useDebounce } from '@/hooks/use-debounce';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 
-import { SectionGroupHeader } from './SectionGroupHeader';
-import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
-import { Palette, Layers } from 'lucide-react';
+import { EditorCard } from './EditorCard';
+import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
+import { HeroContentEditor } from './hero/HeroContentEditor';
+import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
+
+type HeroView = 'hub' | 'background' | 'colors' | 'scrim' | 'slides' | 'content' | 'advanced';
+
+const VIEW_LABELS: Record<Exclude<HeroView, 'hub'>, string> = {
+  background: 'Background Media',
+  colors: 'Text & Buttons Color',
+  scrim: 'Text-area Scrim',
+  slides: 'Slides Rotator',
+  content: 'Content & Copy',
+  advanced: 'Advanced',
+};
+
+function viewStorageKey(orgId: string | undefined | null): string {
+  return `zura.heroEditor.view.${orgId ?? 'anon'}`;
+}
+
+function readPersistedView(orgId: string | undefined | null): HeroView {
+  if (typeof window === 'undefined') return 'hub';
+  try {
+    const raw = window.localStorage.getItem(viewStorageKey(orgId));
+    if (raw && (raw === 'hub' || raw in VIEW_LABELS)) return raw as HeroView;
+  } catch {
+    /* ignore */
+  }
+  return 'hub';
+}
+
+function writePersistedView(orgId: string | undefined | null, view: HeroView): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(viewStorageKey(orgId), view);
+  } catch {
+    /* ignore */
+  }
+}
+
+/* ─── Status summary helpers ─── */
+
+function summarizeBackground(c: HeroConfig): string {
+  if (c.background_type === 'none') return 'No background set';
+  const kind = c.background_type === 'video' ? 'Video' : 'Image';
+  const fit = c.background_fit === 'contain' ? 'Contain' : 'Cover';
+  const focal = c.background_focal_x !== 50 || c.background_focal_y !== 50;
+  return `${kind} · ${fit} · ${focal ? 'Custom focus' : 'Centered'}`;
+}
+
+function summarizeColors(c: HeroConfig): string {
+  const t = c.text_colors ?? {};
+  const overrides = Object.values(t).filter(Boolean).length;
+  return overrides === 0 ? 'Auto-contrast' : `${overrides} color${overrides === 1 ? '' : 's'} customized`;
+}
+
+function summarizeScrim(c: HeroConfig): string {
+  const style = c.scrim_style ?? 'gradient-bottom';
+  const strength = Math.round((c.scrim_strength ?? 0.55) * 100);
+  return `${style.replace(/-/g, ' ')} · ${strength}%`;
+}
+
+function summarizeSlides(c: HeroConfig): string {
+  const n = c.slides?.length ?? 0;
+  if (n === 0) return 'Off · using fallback content';
+  return `${n} slide${n === 1 ? '' : 's'}${c.auto_rotate ? ' · auto-rotating' : ''}`;
+}
+
+function summarizeContent(c: HeroConfig): string {
+  const align = c.content_alignment ?? 'center';
+  const headline = (c.headline_text || '').trim();
+  const preview = headline.length > 24 ? `${headline.slice(0, 24)}…` : headline || 'No headline';
+  return `${align[0].toUpperCase()}${align.slice(1)} aligned · "${preview}"`;
+}
+
+function summarizeAdvanced(c: HeroConfig): string {
+  return `${c.word_rotation_interval}s rotation · scroll ${c.show_scroll_indicator ? 'on' : 'off'}`;
+}
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
-  const { data, isLoading, isSaving, update } = useHeroConfig();
-  const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const debouncedConfig = useDebounce(localConfig, 300);
+  const { data, isLoading, update } = useHeroConfig();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id ?? null;
 
-  // Canonical dirty-state hook (key-order-stable structural compare + UI wiring).
-  // See src/hooks/useDirtyState.ts for why JSON.stringify is forbidden here.
-  // The 'hero' debug label routes any sticky-dirty diagnostic to the console.
+  const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
+  const [view, setView] = useState<HeroView>(() => readPersistedView(orgId));
+
+  // Canonical dirty-state hook (key-order-stable structural compare).
   useDirtyState(localConfig, data, 'hero');
 
-  // Live-edit bridge: stream in-memory edits into the preview iframe so the
-  // canvas reflects what's being typed RIGHT NOW, not just the last save.
-  const { effectiveOrganization } = useOrganizationContext();
+  // Live-edit bridge: stream in-memory edits into the preview iframe.
   usePreviewBridge('section_hero', localConfig);
 
   useEffect(() => {
@@ -51,29 +124,53 @@ export function HeroEditor() {
     }
   }, [data, isLoading]);
 
+  // Re-read persisted view when org context changes (per-tenant view memory).
+  useEffect(() => {
+    setView(readPersistedView(orgId));
+  }, [orgId]);
+
+  useEffect(() => {
+    writePersistedView(orgId, view);
+  }, [orgId, view]);
+
   const handleSave = useCallback(async () => {
     try {
       await update(localConfig);
       toast.success('Hero section saved');
-      // Drop the iframe's live override so it re-renders from the freshly
-      // invalidated DB read instead of holding our stale postMessage value.
-      clearPreviewOverride('section_hero', effectiveOrganization?.id ?? null);
-      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
+      clearPreviewOverride('section_hero', orgId);
+      __saveTelemetry.event('save-success');
+      triggerPreviewRefresh();
+      __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }
-  }, [localConfig, update, effectiveOrganization?.id]);
+  }, [localConfig, update, orgId]);
 
   useEditorSaveAction(handleSave);
 
-  const updateField = <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => {
-    setLocalConfig(prev => ({ ...prev, [field]: value }));
-  };
+  const updateField = useCallback(
+    <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => {
+      setLocalConfig((prev) => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
   const handleReset = () => {
     setLocalConfig(DEFAULT_HERO);
     toast.info('Reset to defaults — save to apply');
   };
+
+  const cards = useMemo(
+    () => [
+      { id: 'background' as const, title: 'Background Media', icon: ImageIcon, summary: summarizeBackground(localConfig) },
+      { id: 'colors' as const, title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
+      { id: 'scrim' as const, title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
+      { id: 'slides' as const, title: 'Slides Rotator', icon: Images, summary: summarizeSlides(localConfig) },
+      { id: 'content' as const, title: 'Content & Copy', icon: Type, summary: summarizeContent(localConfig) },
+      { id: 'advanced' as const, title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
+    ],
+    [localConfig],
+  );
 
   if (isLoading) {
     return (
@@ -83,299 +180,113 @@ export function HeroEditor() {
     );
   }
 
+  /* ─── Hub view ─── */
+  if (view === 'hub') {
+    return (
+      <div className="space-y-6">
+        <EditorCard title="Hero Section" icon={ImageIcon}>
+          <p className="text-sm text-muted-foreground -mt-1">
+            Configure how your homepage hero looks and reads. Pick a category to edit.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {cards.map((card) => (
+              <HeroEditorHubCard
+                key={card.id}
+                title={card.title}
+                icon={card.icon}
+                summary={card.summary}
+                onClick={() => setView(card.id)}
+              />
+            ))}
+          </div>
+          <div className="pt-2 flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              className="text-muted-foreground gap-1.5"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset hero to defaults
+            </Button>
+          </div>
+        </EditorCard>
+      </div>
+    );
+  }
+
+  /* ─── Sub-editor view ─── */
   return (
-    <div className="space-y-6">
-      <HeroBackgroundEditor
-        config={localConfig}
-        onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
-      />
-
-      <EditorCard
-        title="Text & Buttons"
-        icon={Palette}
-        description="Pick exact colors for the headline, subheadline, and CTA buttons. Leave any field empty to auto-contrast against your background."
+    <div className="space-y-4">
+      {/* Breadcrumb back-bar */}
+      <button
+        type="button"
+        onClick={() => setView('hub')}
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <HeroTextColorsEditor
-          value={localConfig.text_colors}
-          onChange={(next) => updateField('text_colors', next)}
-        />
-      </EditorCard>
+        <ArrowLeft className="h-4 w-4" />
+        <span className="font-sans">
+          Hero
+          <span className="mx-1.5 text-border">/</span>
+          <span className="text-foreground">{VIEW_LABELS[view]}</span>
+        </span>
+      </button>
 
-      <EditorCard
-        title="Text-area Scrim"
-        icon={Layers}
-        description="Editorial gradient/vignette layered on top of the Image Wash. Strongest where headline text lives — transparent everywhere else."
-      >
-        <HeroScrimEditor
-          scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
-          scrimStrength={localConfig.scrim_strength ?? 0.55}
-          bgType={localConfig.background_type}
-          onChange={(patch) => {
-            if (patch.scrim_style !== undefined) updateField('scrim_style', patch.scrim_style ?? undefined);
-            if (patch.scrim_strength !== undefined) updateField('scrim_strength', patch.scrim_strength ?? undefined);
-          }}
-        />
-      </EditorCard>
-
-      <HeroSlidesManager
-        config={localConfig}
-        onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
-      />
-
-      <EditorCard
-        title="Hero Section"
-        icon={Layout}
-        description={localConfig.slides.length > 0
-          ? "Default fallback content (used when slides above are empty)"
-          : "Configure the main hero banner on your homepage"}
-        headerActions={
-          <Button variant="ghost" size={tokens.button.inline} onClick={handleReset} className="text-muted-foreground gap-1.5">
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset
-          </Button>
-        }
-      >
-
-      {/* Content alignment — drives horizontal placement of headline/sub/CTAs */}
-      <div className="space-y-2">
-        <Label className="text-xs">Content Alignment</Label>
-        <div className="flex gap-2">
-          {([
-            { id: 'left', label: 'Left', Icon: AlignLeft },
-            { id: 'center', label: 'Center', Icon: AlignCenter },
-            { id: 'right', label: 'Right', Icon: AlignRight },
-          ] as const).map(({ id, label, Icon }) => {
-            const active = (localConfig.content_alignment ?? 'center') === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => updateField('content_alignment', id)}
-                className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs border transition-colors ${
-                  active
-                    ? 'bg-foreground text-background border-foreground'
-                    : 'bg-background text-muted-foreground border-border hover:border-foreground/40'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <p className="text-[11px] text-muted-foreground">
-          Horizontal placement of the headline, subheadline, and call-to-action buttons.
-        </p>
-      </div>
-
-      {/* Eyebrow */}
-      <ToggleInput
-        label="Show Eyebrow"
-        value={localConfig.show_eyebrow}
-        onChange={(value) => updateField('show_eyebrow', value)}
-        description="Display the small text above the main headline"
-      />
-      {localConfig.show_eyebrow && (
-        <CharCountInput
-          label="Eyebrow Text"
-          value={localConfig.eyebrow}
-          onChange={(value) => updateField('eyebrow', value)}
-          maxLength={40}
-          placeholder="Hair • Color • Artistry"
-          aiFieldType="eyebrow"
+      {view === 'background' && (
+        <HeroBackgroundEditor
+          config={localConfig}
+          onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
         />
       )}
 
-      {/* Headline Text */}
-      <CharCountInput
-        label="Headline Text"
-        value={localConfig.headline_text}
-        onChange={(value) => updateField('headline_text', value)}
-        maxLength={30}
-        placeholder="Your Salon"
-        description="The static headline above the rotating words"
-        aiFieldType="hero_headline"
-      />
-
-      {/* Rotating Words */}
-      <ToggleInput
-        label="Show Rotating Words"
-        value={localConfig.show_rotating_words}
-        onChange={(value) => updateField('show_rotating_words', value)}
-        description="Toggle the animated rotating headline words"
-      />
-      {localConfig.show_rotating_words && (
-        <RotatingWordsInput
-          words={localConfig.rotating_words}
-          onChange={(words) => updateField('rotating_words', words)}
-          label="Headline Rotating Words"
-          placeholder="e.g. Salon, Extensions..."
-        />
-      )}
-
-      {/* Subheadline */}
-      <ToggleInput
-        label="Show Subheadline"
-        value={localConfig.show_subheadline}
-        onChange={(value) => updateField('show_subheadline', value)}
-        description="Display supporting text below the main headline"
-      />
-      {localConfig.show_subheadline && (
-        <div className="space-y-4">
-          <CharCountInput
-            label="Subheadline Line 1"
-            value={localConfig.subheadline_line1}
-            onChange={(value) => updateField('subheadline_line1', value)}
-            maxLength={60}
-            description="First line of supporting text below the headline"
-            aiFieldType="hero_subheadline"
+      {view === 'colors' && (
+        <EditorCard
+          title="Text & Buttons Color"
+          icon={Palette}
+        >
+          <p className="text-xs text-muted-foreground -mt-1">
+            Pick exact colors for the headline, subheadline, and CTA buttons. Leave any
+            field empty to auto-contrast against your background.
+          </p>
+          <HeroTextColorsEditor
+            value={localConfig.text_colors}
+            onChange={(next) => updateField('text_colors', next)}
           />
-          <CharCountInput
-            label="Subheadline Line 2"
-            value={localConfig.subheadline_line2}
-            onChange={(value) => updateField('subheadline_line2', value)}
-            maxLength={60}
-            description="Second line of supporting text"
-          />
-        </div>
+        </EditorCard>
       )}
 
-      {/* CTAs */}
-      <div className="space-y-4 pt-4 border-t border-border/40">
-        <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-        <CharCountInput
-          label="Primary Button Text"
-          value={localConfig.cta_new_client}
-          onChange={(value) => updateField('cta_new_client', value)}
-          maxLength={30}
-          description="Main call-to-action button"
-          aiFieldType="cta_button"
-        />
-        <UrlInput
-          label="Primary Button URL"
-          value={localConfig.cta_new_client_url}
-          onChange={(value) => updateField('cta_new_client_url', value)}
-          placeholder="Leave empty to open the default form"
-          description="Leave empty to open the default form dialog"
-        />
+      {view === 'scrim' && (
+        <EditorCard title="Text-area Scrim" icon={Layers}>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Editorial gradient/vignette layered on top of the Image Wash. Strongest
+            where headline text lives — transparent everywhere else.
+          </p>
+          <HeroScrimEditor
+            scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
+            scrimStrength={localConfig.scrim_strength ?? 0.55}
+            bgType={localConfig.background_type}
+            onChange={(patch) => {
+              if (patch.scrim_style !== undefined) updateField('scrim_style', patch.scrim_style ?? undefined);
+              if (patch.scrim_strength !== undefined) updateField('scrim_strength', patch.scrim_strength ?? undefined);
+            }}
+          />
+        </EditorCard>
+      )}
 
-        {/* Secondary Button with visibility toggle */}
-        <ToggleInput
-          label="Show Secondary Button"
-          value={localConfig.show_secondary_button}
-          onChange={(value) => updateField('show_secondary_button', value)}
-          description="Display a second CTA button below the primary"
+      {view === 'slides' && (
+        <HeroSlidesManager
+          config={localConfig}
+          onChange={(patch) => setLocalConfig((prev) => ({ ...prev, ...patch }))}
         />
-        {localConfig.show_secondary_button && (
-          <>
-            <CharCountInput
-              label="Secondary Button Text"
-              value={localConfig.cta_returning_client}
-              onChange={(value) => updateField('cta_returning_client', value)}
-              maxLength={30}
-            />
-            <UrlInput
-              label="Secondary Button URL"
-              value={localConfig.cta_returning_client_url}
-              onChange={(value) => updateField('cta_returning_client_url', value)}
-              placeholder="/booking"
-            />
-          </>
-        )}
-      </div>
+      )}
 
-      {/* Below-Button Notes */}
-      <div className="space-y-4 pt-4 border-t border-border/40">
-        <ToggleInput
-          label="Show Below-Button Notes"
-          value={localConfig.show_consultation_notes}
-          onChange={(value) => updateField('show_consultation_notes', value)}
-          description="Display helper text below the CTA buttons"
-        />
-        {localConfig.show_consultation_notes && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="note1">Note Line 1</Label>
-              <Input
-                id="note1"
-                value={localConfig.consultation_note_line1}
-                onChange={(e) => updateField('consultation_note_line1', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="note2">Note Line 2</Label>
-              <Input
-                id="note2"
-                value={localConfig.consultation_note_line2}
-                onChange={(e) => updateField('consultation_note_line2', e.target.value)}
-              />
-            </div>
-          </>
-        )}
-      </div>
+      {view === 'content' && (
+        <HeroContentEditor config={localConfig} onChange={updateField} />
+      )}
 
-      {/* Advanced Settings */}
-      <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-        <CollapsibleTrigger asChild>
-          <Button variant="outline" className="w-full justify-between mt-4">
-            <span className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              Advanced Settings
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {showAdvanced ? 'Hide' : 'Show'}
-            </span>
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-6 pt-4">
-          {/* Animation Timing */}
-          <div className="space-y-4 p-3 bg-muted/50 rounded-lg">
-            <h4 className="font-medium text-sm">Animation Timing</h4>
-            <SliderInput
-              label="Animation Start Delay"
-              value={localConfig.animation_start_delay}
-              onChange={(value) => updateField('animation_start_delay', value)}
-              min={1}
-              max={8}
-              step={0.5}
-              unit="s"
-              description="When word rotation begins after page load"
-            />
-            <SliderInput
-              label="Word Rotation Interval"
-              value={localConfig.word_rotation_interval}
-              onChange={(value) => updateField('word_rotation_interval', value)}
-              min={2}
-              max={10}
-              step={0.5}
-              unit="s"
-              description="How long each rotating word displays"
-            />
-          </div>
-
-          {/* Scroll Indicator */}
-          <div className="space-y-4 p-3 bg-muted/50 rounded-lg">
-            <h4 className="font-medium text-sm">Scroll Indicator</h4>
-            <ToggleInput
-              label="Show Scroll Indicator"
-              value={localConfig.show_scroll_indicator}
-              onChange={(value) => updateField('show_scroll_indicator', value)}
-              description="Show the scroll arrow at the bottom"
-            />
-            {localConfig.show_scroll_indicator && (
-              <div className="space-y-2">
-                <Label>Scroll Indicator Text</Label>
-                <Input
-                  value={localConfig.scroll_indicator_text}
-                  onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
-                  placeholder="Scroll"
-                />
-              </div>
-            )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-      </EditorCard>
+      {view === 'advanced' && (
+        <HeroAdvancedEditor config={localConfig} onChange={updateField} />
+      )}
     </div>
   );
 }
