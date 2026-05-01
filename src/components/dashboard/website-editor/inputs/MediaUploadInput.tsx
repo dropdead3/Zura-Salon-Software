@@ -1,12 +1,17 @@
 /**
  * MediaUploadInput — image OR video upload with drag/drop.
  *
- * Handles both static images (jpg/png/webp) and short MP4/WebM videos. For
- * videos, we capture the first frame to a poster image so the hero shows
+ * Handles both static images (jpg/png/webp/gif) and short MP4/WebM videos.
+ * For videos, we capture the first frame to a poster image so the hero shows
  * something instantly while the video loads.
  *
- * Uses the existing public `website-sections` bucket. No transcoding —
- * operators are responsible for sane file sizes (<25MB recommended).
+ * Pre-flight validation lives in `@/lib/upload-validation` so this component
+ * and `ImageUploadInput` enforce the exact same rules. Stage-aware error
+ * surfacing tells operators where the failure happened (decode vs upload)
+ * instead of a single opaque "Failed to upload" toast.
+ *
+ * Uses the public `website-sections` bucket. The bucket itself caps uploads
+ * at 50MB and restricts MIME types as a defense-in-depth backstop.
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -17,6 +22,16 @@ import { Label } from '@/components/ui/label';
 import { Upload, X, Loader2, Film, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage } from '@/lib/image-utils';
+import {
+  IMAGE_RECOMMENDED_HINT,
+  IMAGE_SIZE_HARD_MB,
+  VIDEO_RECOMMENDED_HINT,
+  VIDEO_SIZE_HARD_MB,
+  getImageSizeWarning,
+  getVideoSizeWarning,
+  validateImageFile,
+  validateVideoFile,
+} from '@/lib/upload-validation';
 import { toast } from 'sonner';
 
 type MediaKind = 'image' | 'video' | '';
@@ -35,9 +50,6 @@ interface MediaUploadInputProps {
   /** When true, accept only images (videos rejected). */
   imageOnly?: boolean;
 }
-
-const VIDEO_SIZE_WARN_MB = 25;
-const VIDEO_SIZE_HARD_MB = 50;
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
   return new Promise((resolve) => {
@@ -96,27 +108,30 @@ export function MediaUploadInput({
   const uploadFile = useCallback(async (file: File) => {
     const isVideo = file.type.startsWith('video/');
     const isImage = file.type.startsWith('image/');
+
     if (!isImage && !isVideo) {
-      toast.error('Unsupported file type');
+      toast.error('Pick an image (JPG/PNG/WebP/GIF) or video (MP4/WebM)');
       return;
     }
     if (isVideo && imageOnly) {
-      toast.error('Only images are allowed here');
+      toast.error('Only images are allowed in this slot');
       return;
     }
 
-    if (isVideo) {
-      const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > VIDEO_SIZE_HARD_MB) {
-        toast.error(`Video is ${sizeMB.toFixed(1)}MB — keep it under ${VIDEO_SIZE_HARD_MB}MB`);
-        return;
-      }
-      if (sizeMB > VIDEO_SIZE_WARN_MB) {
-        toast.warning(`Large video (${sizeMB.toFixed(1)}MB) — consider compressing for faster page loads`);
-      }
+    // Stage 1 — pre-flight validation. Identical rules to ImageUploadInput.
+    const guard = isVideo ? validateVideoFile(file) : validateImageFile(file);
+    if (guard.ok === false) {
+      toast.error(guard.message);
+      return;
     }
 
+    // Soft-warn for "large but legal" files so operators know page loads
+    // will suffer.
+    const warning = isVideo ? getVideoSizeWarning(file) : getImageSizeWarning(file);
+    if (warning) toast.warning(warning);
+
     setIsUploading(true);
+    let stage: 'decode' | 'upload' = 'decode';
     try {
       if (isImage) {
         const { blob } = await optimizeImage(file, {
@@ -125,6 +140,7 @@ export function MediaUploadInput({
           quality: 0.85,
           format: 'webp',
         });
+        stage = 'upload';
         const fileName = `${pathPrefix}/${Date.now()}.webp`;
         const { error } = await supabase.storage
           .from(bucket)
@@ -135,6 +151,7 @@ export function MediaUploadInput({
         toast.success('Image uploaded');
       } else {
         // Video: upload original + capture+upload poster frame.
+        stage = 'upload';
         const ext = file.name.split('.').pop() || 'mp4';
         const ts = Date.now();
         const videoName = `${pathPrefix}/${ts}.${ext}`;
@@ -160,8 +177,30 @@ export function MediaUploadInput({
         toast.success('Video uploaded');
       }
     } catch (err) {
-      console.error('Upload error:', err);
-      toast.error('Failed to upload media');
+      const e = err as { message?: string; statusCode?: string | number };
+      console.error(`[MediaUploadInput] ${stage} failure:`, {
+        stage,
+        bucket,
+        fileType: file.type,
+        fileSize: file.size,
+        fileName: file.name,
+        error: e?.message ?? err,
+        statusCode: e?.statusCode,
+      });
+
+      if (stage === 'decode') {
+        toast.error("Couldn't read this image — it may be corrupted or in a format the browser can't open");
+      } else {
+        const code = String(e?.statusCode ?? '');
+        const cap = isVideo ? VIDEO_SIZE_HARD_MB : IMAGE_SIZE_HARD_MB;
+        if (code === '413' || /size|large|exceeds/i.test(e?.message ?? '')) {
+          toast.error(`File is too large — keep ${isVideo ? 'videos' : 'images'} under ${cap}MB`);
+        } else if (code === '401' || code === '403') {
+          toast.error('Not signed in or missing permission to upload here');
+        } else {
+          toast.error(`Upload failed${e?.message ? ` — ${e.message}` : ' — check connection and try again'}`);
+        }
+      }
     } finally {
       setIsUploading(false);
     }
@@ -184,7 +223,9 @@ export function MediaUploadInput({
     onChange({ url: '', posterUrl: '', kind: '' });
   };
 
-  const accept = imageOnly ? 'image/*' : 'image/*,video/mp4,video/webm';
+  const accept = imageOnly
+    ? 'image/jpeg,image/png,image/webp,image/gif'
+    : 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
 
   return (
     <div className="space-y-2">
@@ -240,8 +281,9 @@ export function MediaUploadInput({
               <span className="text-xs text-muted-foreground">
                 {imageOnly ? 'Drop image or click to upload' : 'Drop image or video, or click to upload'}
               </span>
+              <span className="text-[10px] text-muted-foreground/70">{IMAGE_RECOMMENDED_HINT}</span>
               {!imageOnly && (
-                <span className="text-[10px] text-muted-foreground/70">MP4/WebM up to {VIDEO_SIZE_HARD_MB}MB</span>
+                <span className="text-[10px] text-muted-foreground/70">{VIDEO_RECOMMENDED_HINT}</span>
               )}
             </div>
           )}
