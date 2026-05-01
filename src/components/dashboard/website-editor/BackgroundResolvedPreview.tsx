@@ -27,6 +27,8 @@ interface BackgroundResolvedPreviewProps {
   overlayOpacity: number;
   scrimStyle?: HeroScrimStyle;
   scrimStrength?: number;
+  /** When true, captions the preview as inherited (not a per-slide media). */
+  inherited?: boolean;
 }
 
 const SCRIM_LABEL: Record<HeroScrimStyle, string> = {
