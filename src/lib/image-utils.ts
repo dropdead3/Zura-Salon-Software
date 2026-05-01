@@ -236,7 +236,7 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
   }
 
   try {
-    let blob = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, 0.82);
+    let blob = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, CRUNCH_PASS1_QUALITY);
     if (blob && blob.size > CRUNCH_PASS2_THRESHOLD_BYTES) {
       const second = await encodeBitmapToWebp(bitmap, CRUNCH_PASS1_MAX_EDGE, CRUNCH_PASS2_QUALITY);
       if (second && second.size < blob.size) blob = second;
