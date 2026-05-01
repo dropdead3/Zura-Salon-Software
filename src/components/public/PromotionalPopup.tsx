@@ -545,6 +545,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
           modalWide ? 'max-w-2xl' : 'max-w-md',
         )}
         style={{ borderTopColor: accent, borderTopWidth: 4 }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <button
           onClick={handleSoftClose}
