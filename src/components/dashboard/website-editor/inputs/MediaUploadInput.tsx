@@ -48,6 +48,12 @@ export interface MediaUploadMeta {
   height?: number | null;
   sizeBytes?: number | null;
   format?: string | null;
+  /**
+   * Which `qualityProfile` was active when this asset was uploaded. Lets the
+   * editor surface a "Re-upload at higher quality" nudge for assets that
+   * landed before the hero profile existed (legacy = absent/null).
+   */
+  optimizedWithProfile?: 'standard' | 'hero' | null;
 }
 
 export interface MediaUploadChangePayload {
