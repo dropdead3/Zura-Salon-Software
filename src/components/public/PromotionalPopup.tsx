@@ -375,8 +375,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
           <Gift className="h-4 w-4" />
         </span>
-        <span className="hidden sm:inline font-display uppercase tracking-wider text-xs max-w-[180px] truncate">
-          {cfg.headline}
+        <span className="hidden sm:inline font-display uppercase tracking-wider text-xs">
+          See Offer
         </span>
         <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
       </button>
