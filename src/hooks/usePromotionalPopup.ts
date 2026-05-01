@@ -116,6 +116,8 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   endsAt: null,
   frequency: 'once-per-session',
   imageTreatment: 'cover',
+  imageFocalX: 50,
+  imageFocalY: 50,
   fabPosition: 'bottom-right',
   acceptDestination: 'booking',
   customUrl: '',
