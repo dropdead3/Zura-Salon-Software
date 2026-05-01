@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useDirtyState } from '@/hooks/useDirtyState';
+import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import {
@@ -133,6 +134,15 @@ export function useSectionEditor<T extends object>(
   // a dead Save button — bundling it here means the gap is structurally
   // impossible for editors that adopt this scaffold.
   const isDirty = useDirtyState(localConfig, data);
+
+  // Reset local working copy back to last-saved server data when the shell
+  // dispatches `editor-discard-request`. Confirmation lives in the shell.
+  useEditorDiscardAction(useCallback(() => {
+    if (data) {
+      setLocalConfig(data);
+      clearPreviewOverride(sectionKey, effectiveOrganization?.id ?? null);
+    }
+  }, [data, sectionKey, effectiveOrganization?.id]));
 
   const updateField = useCallback(
     <K extends keyof T>(field: K, value: T[K]) => {

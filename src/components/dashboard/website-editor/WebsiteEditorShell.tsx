@@ -264,6 +264,10 @@ function WebsiteEditorShellInner() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
+  // Per-editor "Discard Changes" — reverts the active editor's local working
+  // copy back to last-saved state. Distinct from `discardOpen` which reverts
+  // *all* unpublished drafts back to live.
+  const [revertDraftOpen, setRevertDraftOpen] = useState(false);
   const [addPageOpen, setAddPageOpen] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [deletePageTarget, setDeletePageTarget] = useState<PageConfig | null>(null);
@@ -1046,14 +1050,30 @@ function WebsiteEditorShellInner() {
       {/* Save status pill — slim row under header so the user always sees draft state */}
       <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
         <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
-        {/* Save button — uses canonical DirtyActionButton primitive so the
-            amber-when-dirty + breathing-ring cue stays identical across every
-            inline editor (Site Design, Themes, future surfaces). */}
-        <DirtyActionButton
-          isDirty={isDirty}
-          isSaving={isSaving}
-          onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
-        />
+        <div className="flex items-center gap-2">
+          {/* Discard Changes — appears only when the editor has unsaved
+              edits. Reverts local working copy to last-saved server data. */}
+          {isDirty && !isSaving && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setRevertDraftOpen(true)}
+              title="Discard unsaved changes in this section"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+              Discard
+            </Button>
+          )}
+          {/* Save button — uses canonical DirtyActionButton primitive so the
+              amber-when-dirty + breathing-ring cue stays identical across every
+              inline editor (Site Design, Themes, future surfaces). */}
+          <DirtyActionButton
+            isDirty={isDirty}
+            isSaving={isSaving}
+            onClick={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
+          />
+        </div>
       </div>
 
       {/* Editor body */}
@@ -1403,7 +1423,38 @@ function WebsiteEditorShellInner() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Exit Editor confirm — guards unsaved/unpublished changes */}
+      {/* Per-editor Discard Changes — reverts the active editor's unsaved
+          edits back to its last-saved state. Does not touch other sections
+          or the published live site. */}
+      <AlertDialog open={revertDraftOpen} onOpenChange={setRevertDraftOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This reverts the current section back to its last-saved state.
+              Unsaved edits in this editor will be lost. Other sections and
+              your live site are not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('editor-discard-request'));
+                setRevertDraftOpen(false);
+                toast({
+                  title: 'Changes discarded',
+                  description: 'Reverted to last saved state.',
+                });
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={exitConfirmOpen} onOpenChange={setExitConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

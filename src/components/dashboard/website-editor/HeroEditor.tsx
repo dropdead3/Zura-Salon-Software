@@ -12,6 +12,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -297,6 +298,14 @@ export function HeroEditor() {
   }, [localConfig, update, orgId]);
 
   useEditorSaveAction(handleSave);
+
+  // Discard: revert local edits back to last-saved server config.
+  useEditorDiscardAction(useCallback(() => {
+    if (data) {
+      setLocalConfig(data);
+      clearPreviewOverride('section_hero', orgId);
+    }
+  }, [data, orgId]));
 
   const updateField = useCallback(
     <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => {
