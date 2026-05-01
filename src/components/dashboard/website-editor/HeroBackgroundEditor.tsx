@@ -105,7 +105,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
               }
             : null
         }
-        onChange={({ url, posterUrl, kind: k, meta }) => {
+        onChange={({ url, posterUrl, kind: k, meta, analysisDataUrl }) => {
           const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({
             background_url: url,
@@ -121,7 +121,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
               meta?.optimizedWithProfile ??
               (url ? config.media_optimized_with_profile ?? null : null),
           });
-          if (wasNewImage) suggestFocal(url);
+          if (wasNewImage) suggestFocal(url, { analysisDataUrl });
         }}
         pathPrefix="hero"
       />
