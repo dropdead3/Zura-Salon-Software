@@ -137,6 +137,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const heroColors = resolveHeroColors(mergedColors, hasBackground);
   // Eyebrow + nav use the same muted tone as the subheadline; reuse its class.
   const mutedTone = heroColors.subheadlineClass || '';
+  // Per-slide alignment overrides the section default; null/undefined inherits.
+  const alignment = resolveHeroAlignment(slide.content_alignment ?? config.content_alignment);
 
   return (
     <section
