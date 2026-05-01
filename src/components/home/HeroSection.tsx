@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { ConsultationFormDialog } from "@/components/ConsultationFormDialog";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { HeroEyebrow } from "@/components/home/HeroEyebrow";
 import { useHeroConfig, DEFAULT_HERO } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
