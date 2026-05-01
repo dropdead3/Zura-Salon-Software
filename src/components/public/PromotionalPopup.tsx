@@ -416,32 +416,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
-  // Begin the visual close animation. The popup root keeps mounting until
-  // its `animationend` fires, at which point `finalizeClose()` flips
-  // `open=false` and (for soft/decline) surfaces the FAB. Side effects
-  // (dismissal writes, analytics, navigation) fire IMMEDIATELY — only the
-  // visual unmount waits for the animation. This is what gives operators
-  // the "popup animates closed into the FAB" lifecycle they expect.
-  function beginClose(reason: 'soft' | 'decline' | 'accept') {
-    // Idempotent: if we're already in `closing` and a second close fires
-    // (e.g. timer + Esc), keep the original reason — the animation is
-    // already in flight.
-    if (popupPhase === 'closing' && pendingExitRef.current) return;
-    pendingExitRef.current = reason;
-    setPopupPhase('closing');
-  }
-
-  // Called by each variant root's `onAnimationEnd` when the closing
-  // animation completes. Performs the actual unmount + FAB surfacing.
-  function finalizeClose() {
-    const reason = pendingExitRef.current;
-    pendingExitRef.current = null;
-    setOpen(false);
-    setPopupPhase('visible'); // reset for the next open cycle
-    // Accept never re-prompts (offer claimed). Soft + decline both
-    // surface the FAB so the visitor can re-open.
-    setShowFab(reason !== 'accept');
-  }
+  // Begin the visual close animation. The popup root stays mounted until
+  // its `animationend` fires, at which point `usePresenceLifecycle`'s
+  // `onExit` flips `open=false` and (for soft/decline) surfaces the FAB.
+  // Side effects (dismissal writes, analytics, navigation) fire
+  // IMMEDIATELY — only the visual unmount waits for the animation. This
+  // is what gives operators the "popup animates closed into the FAB"
+  // lifecycle they expect.
+  const beginClose = popupLifecycle.beginExit;
 
   function handleAccept() {
     const destination = cfg.acceptDestination ?? 'booking';
