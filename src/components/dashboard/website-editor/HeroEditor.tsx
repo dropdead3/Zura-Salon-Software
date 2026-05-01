@@ -106,13 +106,12 @@ function summarizeAdvanced(c: HeroConfig): string {
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
-  const { data, isLoading, isSaving, update } = useHeroConfig();
+  const { data, isLoading, update } = useHeroConfig();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id ?? null;
 
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
   const [view, setView] = useState<HeroView>(() => readPersistedView(orgId));
-  const debouncedConfig = useDebounce(localConfig, 300);
 
   // Canonical dirty-state hook (key-order-stable structural compare).
   useDirtyState(localConfig, data, 'hero');
