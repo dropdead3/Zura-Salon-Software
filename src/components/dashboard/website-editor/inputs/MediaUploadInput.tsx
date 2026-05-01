@@ -176,17 +176,38 @@ export function MediaUploadInput({
       }
       stage = 'decode';
       if (isImage) {
-        const { blob } = await optimizeImage(workingFile, {
-          maxWidth: 1920,
-          maxHeight: 1200,
-          quality: 0.85,
-          format: 'webp',
-        });
+        // Hero/slide profile uploads the autoCrunch output (3200px @ q0.9 WebP)
+        // directly. The standard re-encode at 1920×1200 @ q0.85 is what made
+        // full-bleed sliders look pixelated on retina — a 1920px source has
+        // to upscale to ~2880 device px on a 2x display. Skipping it for hero
+        // preserves real pixels with minimal file-size cost.
+        let uploadBlob: Blob = workingFile;
+        let uploadContentType = workingFile.type || 'image/webp';
+        let uploadExt = 'webp';
+
+        if (qualityProfile === 'standard') {
+          const { blob } = await optimizeImage(workingFile, {
+            maxWidth: 1920,
+            maxHeight: 1200,
+            quality: 0.85,
+            format: 'webp',
+          });
+          uploadBlob = blob;
+          uploadContentType = 'image/webp';
+          uploadExt = 'webp';
+        } else {
+          // Hero: keep the autoCrunch result. If autoCrunch didn't run
+          // (file was already small + within budget), upload the original
+          // bytes — a 1.5MB JPEG beats a re-encoded 800KB WebP for fidelity.
+          uploadExt = workingFile.name.split('.').pop()?.toLowerCase() || 'webp';
+          if (!/^(webp|jpe?g|png|gif)$/i.test(uploadExt)) uploadExt = 'webp';
+        }
+
         stage = 'upload';
-        const fileName = `${pathPrefix}/${Date.now()}.webp`;
+        const fileName = `${pathPrefix}/${Date.now()}.${uploadExt}`;
         const { error } = await supabase.storage
           .from(bucket)
-          .upload(fileName, blob, { contentType: 'image/webp', upsert: true });
+          .upload(fileName, uploadBlob, { contentType: uploadContentType, upsert: true });
         if (error) throw error;
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
         // Cache-bust the public URL so the iframe (and any <img>/preloader)
