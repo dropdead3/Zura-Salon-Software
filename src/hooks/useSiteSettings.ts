@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
-import { useIsEditorPreview } from './useIsEditorPreview';
+import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 interface HomepageStylistsSettings {
@@ -11,12 +11,11 @@ interface HomepageStylistsSettings {
 type SiteSettingValue = HomepageStylistsSettings | Record<string, unknown>;
 
 // Reads route through the draft layer:
-//   - Editor / preview iframe → coalesce(draft_value, value)
-//   - Public visitor          → value
+//   - Editor surface + preview iframe → coalesce(draft_value, value)
+//   - Public visitor                  → value
 export function useSiteSettings<T extends SiteSettingValue = SiteSettingValue>(key: string, explicitOrgId?: string) {
   const orgId = useSettingsOrgId(explicitOrgId);
-  const isPreview = useIsEditorPreview();
-  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
+  const mode: 'live' | 'draft' = useIsDraftReader() ? 'draft' : 'live';
 
   return useQuery({
     queryKey: ['site-settings', orgId, key, mode],

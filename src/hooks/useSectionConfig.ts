@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
-import { useIsEditorPreview } from './useIsEditorPreview';
+import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 // Generic hook for section configurations.
@@ -11,16 +11,9 @@ import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft
 function useSectionConfig<T>(sectionId: string, defaultValue: T) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
-  const isPreview = useIsEditorPreview();
-  // The dashboard editor surface itself (e.g. /dashboard/admin/website-hub)
-  // is NOT inside a `?preview=true` iframe, so `useIsEditorPreview` returns
-  // false there. Without this fallback the editor would read LIVE values
-  // while operators edit DRAFT — the upload preview tile would go blank
-  // immediately after save because live `value` is still empty until publish.
-  // Anchor: the dashboard mounts under `/dashboard` (and `/org/:slug/dashboard`).
-  const isDashboardEditor =
-    typeof window !== 'undefined' && window.location.pathname.includes('/dashboard');
-  const mode: 'live' | 'draft' = isPreview || isDashboardEditor ? 'draft' : 'live';
+  // Single source of truth: draft mode for both the iframe and the
+  // dashboard editor surface; live mode for public visitors.
+  const mode: 'live' | 'draft' = useIsDraftReader() ? 'draft' : 'live';
 
   const query = useQuery({
     // Cache key includes mode so the editor iframe and public visitor never
@@ -45,6 +38,9 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
       // Invalidate every cached mode for this key so the editor sees the
       // fresh draft AND any open preview iframe re-fetches on next focus.
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, sectionId] });
+      // Refresh the per-key dirty-draft set so the DRAFT chip on editor
+      // inputs (see useDirtyDraftKey) flips on immediately after save.
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts', orgId] });
     },
   });
 

@@ -15,6 +15,7 @@ import { FocalPointPicker } from './inputs/FocalPointPicker';
 import { EditorCard } from './EditorCard';
 import { BackgroundResolvedPreview } from './BackgroundResolvedPreview';
 import { useFocalPointSuggestion } from '@/hooks/useFocalPointSuggestion';
+import { useIsKeyDirty } from '@/hooks/useDirtyDraftKey';
 import { cn } from '@/lib/utils';
 
 interface HeroBackgroundEditorProps {
@@ -23,6 +24,7 @@ interface HeroBackgroundEditorProps {
 }
 
 export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorProps) {
+  const isDirty = useIsKeyDirty('section_hero');
   const kind = config.background_type === 'video' ? 'video' : config.background_type === 'image' ? 'image' : '';
   const slideMediaCount = (config.slides ?? []).filter(
     (slide) => slide.background_type !== 'inherit' && !!slide.background_url,
@@ -105,6 +107,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
               }
             : null
         }
+        isDirtyDraft={isDirty}
         onChange={({ url, posterUrl, kind: k, meta, analysisDataUrl }) => {
           const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({

@@ -4,7 +4,7 @@ import type { SectionConfig, WebsiteSectionsConfig } from './useWebsiteSections'
 import { BUILTIN_SECTION_TYPES, SECTION_LABELS, SECTION_DESCRIPTIONS } from './useWebsiteSections';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { useSettingsOrgId } from './useSettingsOrgId';
-import { useIsEditorPreview } from './useIsEditorPreview';
+import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
 
 export interface PageConfig {
@@ -101,8 +101,7 @@ function migrateFromSections(sectionsConfig: WebsiteSectionsConfig): WebsitePage
 export function useWebsitePages(explicitOrgId?: string) {
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId(explicitOrgId);
-  const isPreview = useIsEditorPreview();
-  const mode: 'live' | 'draft' = isPreview ? 'draft' : 'live';
+  const mode: 'live' | 'draft' = useIsDraftReader() ? 'draft' : 'live';
 
   return useQuery({
     queryKey: ['site-settings', orgId, 'website_pages', mode],

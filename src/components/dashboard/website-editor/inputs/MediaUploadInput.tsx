@@ -103,6 +103,14 @@ interface MediaUploadInputProps {
    * resolution health dot (green ≥2400, amber ≥1200, red <1200).
    */
   meta?: MediaUploadMeta | null;
+  /**
+   * When true, renders a small `DRAFT` chip on the preview tile to signal
+   * that the parent site_settings key has unpublished changes. Operators
+   * use this to find what's queued for publish without opening the
+   * publish-changes dialog. Wire from `useIsKeyDirty(<setting_key>)` at
+   * the editor level — the input itself stays presentation-only.
+   */
+  isDirtyDraft?: boolean;
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
@@ -156,6 +164,7 @@ export function MediaUploadInput({
   imageOnly = false,
   qualityProfile = 'standard',
   meta = null,
+  isDirtyDraft = false,
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
@@ -401,6 +410,25 @@ export function MediaUploadInput({
             {kind === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
             {kind === 'video' ? 'Video' : 'Image'}
           </div>
+          {isDirtyDraft && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/95 text-amber-950 backdrop-blur text-[10px] font-display tracking-wider uppercase font-medium cursor-help"
+                    aria-label="This section has unpublished changes"
+                  >
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-amber-950/80" />
+                    Draft
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                  This section has unpublished changes. Click Publish at the top of
+                  the editor to make them live.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {meta?.width ? (
             <TooltipProvider delayDuration={200}>
               <Tooltip>
