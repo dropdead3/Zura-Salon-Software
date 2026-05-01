@@ -443,7 +443,6 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         aria-modal="false"
         aria-labelledby="promo-popup-title"
         className="fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden animate-in fade-in slide-in-from-bottom-4"
-        style={{ borderTopColor: accent, borderTopWidth: 3 }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
