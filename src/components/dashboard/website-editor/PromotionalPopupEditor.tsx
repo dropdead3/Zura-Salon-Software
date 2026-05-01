@@ -42,6 +42,7 @@ import {
   type PopupAcceptDestination,
 } from '@/hooks/usePromotionalPopup';
 import { useBookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
+import { useHydratedFormState } from '@/hooks/useHydratedFormState';
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
   { value: 'home', label: 'Home page', description: 'Show on the homepage only' },
@@ -224,8 +225,20 @@ export function PromotionalPopupEditor() {
   // when the org doesn't have a public URL ready yet.
   const publicBookingUrl = publicPageUrl('booking') ?? null;
 
-  const [formData, setFormData] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
-  const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
+  // Hydration is delegated to a shared hook that survives the post-save
+  // refetch race (see `useHydratedFormState` for the contract). Direct
+  // useEffect+ref logic here previously clobbered fast post-save edits like
+  // flipping Appearance right after Save.
+  const {
+    formData,
+    setFormData,
+    savedSnapshot,
+    setSavedSnapshot,
+    isDirty,
+  } = useHydratedFormState<PromotionalPopupSettings>(
+    settings ?? null,
+    DEFAULT_PROMO_POPUP,
+  );
   const [autoSaving, setAutoSaving] = useState(false);
 
   // Refs eliminate stale-closure races between the auto-save Enable toggle and
@@ -255,44 +268,6 @@ export function PromotionalPopupEditor() {
   const revenueAttributed = redemptionData?.revenueAttributed ?? 0;
   const revenueAttributedSince = redemptionData?.revenueAttributedSince ?? null;
 
-  // Tracks whether we've ever hydrated the form from the server. The first
-  // arrival of `settings` must fully populate the form (initial load). Every
-  // subsequent arrival is a refetch — those must preserve in-progress edits.
-  const hasHydratedRef = useRef(false);
-  useEffect(() => {
-    if (!settings) return;
-    const incomingSerialized = JSON.stringify(settings);
-    // First load — populate both saved snapshot AND live form so the operator
-    // sees their persisted config instead of the DEFAULT placeholder.
-    if (!hasHydratedRef.current) {
-      hasHydratedRef.current = true;
-      setSavedSnapshot(settings);
-      setFormData(settings);
-      return;
-    }
-    // Refetch (after a save, sibling auto-save, or window-focus revalidation).
-    // We compare *inside* the setState callbacks so we read the freshest
-    // values — reading from refs here lags by one render and can clobber
-    // a just-typed edit (the original bug: editing Appearance right after a
-    // Save would race the post-save refetch and revert the appearance).
-    setSavedSnapshot((prevSnapshot) => {
-      // Only update the snapshot if it actually changed — preserves identity
-      // and avoids spurious dirty-state recomputes.
-      return JSON.stringify(prevSnapshot) === incomingSerialized
-        ? prevSnapshot
-        : settings;
-    });
-    setFormData((current) => {
-      // If the form already mirrors the incoming payload, no-op.
-      if (JSON.stringify(current) === incomingSerialized) return current;
-      // Operator has unsaved edits — keep them. The dirty-state check below
-      // will compare against the freshly-updated snapshot and correctly
-      // light up the Save button.
-      return current;
-    });
-  }, [settings]);
-
-  const isDirty = JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
   // Broadcast dirty state to the editor shell so it can:
   // (1) light up the Save button, (2) intercept Done / tab switches with the
   // unsaved-changes guard instead of silently dropping the operator's edits.
