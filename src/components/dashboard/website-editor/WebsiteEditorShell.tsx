@@ -1647,6 +1647,16 @@ function WebsiteEditorShellInner() {
           window.dispatchEvent(new CustomEvent('editor-save-request'));
         }}
       />
+
+      {/* Persistent unsaved-changes toast — bottom-right, stays until
+          Save or Discard succeeds. Replaces the inline header chip
+          so the cue is visible regardless of scroll position. */}
+      <UnsavedChangesToast
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onDiscard={() => setRevertDraftOpen(true)}
+        onSave={() => window.dispatchEvent(new CustomEvent('editor-save-request'))}
+      />
     </div>
   );
 }
