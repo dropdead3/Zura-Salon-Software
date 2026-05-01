@@ -455,8 +455,12 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     );
   }
 
-  // ── Variant: banner (top of viewport, full-width) ──
+  // ── Variant: banner / top drawer (top of viewport, full-width) ──
+  // Desktop keeps the slim single-row banner. Mobile reshapes into a taller
+  // top drawer where eyebrow / headline / body / CTAs stack vertically and
+  // wrap fully — no truncation, no X colliding with the headline.
   if (cfg.appearance === 'banner') {
+    const EyebrowIconCmp = cfg.eyebrow ? getEyebrowIcon(cfg.eyebrowIcon) : null;
     return (
       <div
         role="dialog"
@@ -466,52 +470,69 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            {cfg.eyebrow && (() => {
-              const Icon = getEyebrowIcon(cfg.eyebrowIcon);
-              return (
-                <p
-                  className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-0.5 truncate inline-flex items-center gap-1"
-                  style={{ color: accent }}
-                >
-                  {Icon && <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />}
-                  <span className="truncate">{cfg.eyebrow}</span>
-                </p>
-              );
-            })()}
-            <p
-              id="promo-popup-title"
-              className="font-display uppercase tracking-wide text-sm sm:text-base text-foreground truncate"
-            >
-              {cfg.headline}
-            </p>
-            {cfg.body && (
-              <p className="font-sans text-xs sm:text-sm text-muted-foreground truncate">{cfg.body}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleAccept}
-              className="font-display uppercase tracking-wider text-xs px-4 py-2 rounded-full text-primary-foreground"
-              style={{ backgroundColor: accent, color: accentFg }}
-            >
-              {cfg.ctaAcceptLabel}
-            </button>
-            <button
-              onClick={handleDecline}
-              className="font-sans text-xs text-muted-foreground hover:text-foreground px-3 py-2"
-              aria-label={cfg.ctaDeclineLabel}
-            >
-              {cfg.ctaDeclineLabel}
-            </button>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-3 pb-6 sm:pb-3">
+          {/* Mobile-only close row keeps the X out of the headline's lane. */}
+          <div className="flex sm:hidden justify-end -mt-1 -mr-1 mb-1">
             <button
               onClick={handleSoftClose}
               aria-label="Dismiss"
-              className="text-muted-foreground hover:text-foreground p-1"
+              className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-foreground/5 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {cfg.eyebrow && (
+                <p
+                  className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-1 sm:mb-0.5 inline-flex items-center gap-1.5"
+                  style={{ color: accent }}
+                >
+                  {EyebrowIconCmp && (
+                    <EyebrowIconCmp className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  )}
+                  <span className="sm:truncate">{cfg.eyebrow}</span>
+                </p>
+              )}
+              <p
+                id="promo-popup-title"
+                className="font-display uppercase tracking-wide text-base sm:text-base text-foreground leading-snug sm:truncate"
+              >
+                {cfg.headline}
+              </p>
+              {cfg.body && (
+                <p className="font-sans text-sm sm:text-sm text-muted-foreground leading-relaxed mt-1 sm:mt-0 sm:truncate">
+                  {cfg.body}
+                </p>
+              )}
+            </div>
+
+            {/* CTA cluster: stretches to full width on mobile, inline on desktop. */}
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <button
+                onClick={handleAccept}
+                className="font-display uppercase tracking-wider text-xs px-4 py-2.5 sm:py-2 rounded-full text-primary-foreground flex-1 sm:flex-none"
+                style={{ backgroundColor: accent, color: accentFg }}
+              >
+                {cfg.ctaAcceptLabel}
+              </button>
+              <button
+                onClick={handleDecline}
+                className="font-sans text-xs text-muted-foreground hover:text-foreground px-3 py-2 shrink-0"
+                aria-label={cfg.ctaDeclineLabel}
+              >
+                {cfg.ctaDeclineLabel}
+              </button>
+              {/* Desktop close — mobile uses the dedicated row above. */}
+              <button
+                onClick={handleSoftClose}
+                aria-label="Dismiss"
+                className="hidden sm:inline-flex text-muted-foreground hover:text-foreground p-1"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
         {autoMinimizeSeconds !== null && (
