@@ -33,6 +33,7 @@ import {
   Megaphone,
   MousePointerClick,
   PanelBottom,
+  PanelBottomClose,
   Plus,
   Trash2,
   FileText,
