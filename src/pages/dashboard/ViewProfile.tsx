@@ -29,6 +29,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PageExplainer } from '@/components/ui/PageExplainer';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 
 const DAYS_OF_WEEK = [
@@ -179,7 +180,7 @@ export default function ViewProfile() {
 
   // Track changes
   useEffect(() => {
-    const isChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const isChanged = !isStructurallyEqual(formData, initialFormData);
     setHasUnsavedChanges(isChanged);
     
     if (isChanged && !showUnsavedToast) {

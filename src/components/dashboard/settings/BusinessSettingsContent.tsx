@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { TeamLoginUrlCard } from './TeamLoginUrlCard';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 const ALLOWED_TYPES = ['image/svg+xml', 'image/png'];
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -91,7 +92,7 @@ export function BusinessSettingsContent() {
 
   const isDirty = useMemo(() => {
     if (!initialFormData) return false;
-    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    return !isStructurallyEqual(formData, initialFormData);
   }, [formData, initialFormData]);
 
   const validateFile = (file: File): string | null => {

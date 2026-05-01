@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface ReminderChannels {
   email: boolean;
@@ -91,8 +92,8 @@ export function PayrollReminderSettings() {
   const hasChanges =
     settings &&
     (enabled !== (settings.reminder_enabled ?? true) ||
-      JSON.stringify(daysBefore) !== JSON.stringify((settings.reminder_days_before as number[]) ?? [3, 1, 0]) ||
-      JSON.stringify(channels) !== JSON.stringify((settings.reminder_channels as unknown as ReminderChannels | null) ?? { email: true, push: true, sms_on_missed: true }));
+      !isStructurallyEqual(daysBefore, (settings.reminder_days_before as number[]) ?? [3, 1, 0]) ||
+      !isStructurallyEqual(channels, (settings.reminder_channels as unknown as ReminderChannels | null) ?? { email: true, push: true, sms_on_missed: true }));
 
   if (isLoading) {
     return (

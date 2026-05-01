@@ -75,6 +75,7 @@ import {
 } from '@/components/ui/select';
 import { BookingVisibilityCard } from './BookingVisibilityCard';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
   instagram: '',
@@ -119,7 +120,7 @@ function IntegrationsTab() {
     if (socialSettings) setSocialLocal(socialSettings);
   }, [socialSettings]);
 
-  const socialHasChanges = socialSettings && JSON.stringify(socialLocal) !== JSON.stringify(socialSettings);
+  const socialHasChanges = socialSettings && !isStructurallyEqual(socialLocal, socialSettings);
 
   const handleSaveSocial = () => {
     updateSocial.mutate(
@@ -293,7 +294,7 @@ function BookingTab() {
     if (settings) setLocal(settings);
   }, [settings]);
 
-  const hasChanges = settings && JSON.stringify(local) !== JSON.stringify(settings);
+  const hasChanges = settings && !isStructurallyEqual(local, settings);
 
   const handleSave = () => {
     updateBooking.mutate(
@@ -406,7 +407,7 @@ function RetailTab() {
     if (settings) setLocal(settings);
   }, [settings]);
 
-  const hasChanges = settings && JSON.stringify(local) !== JSON.stringify(settings);
+  const hasChanges = settings && !isStructurallyEqual(local, settings);
 
   const handleSave = () => {
     updateRetail.mutate(
@@ -598,7 +599,7 @@ function SeoLegalTab() {
     if (settings) setLocal(settings);
   }, [settings]);
 
-  const hasChanges = settings && JSON.stringify(local) !== JSON.stringify(settings);
+  const hasChanges = settings && !isStructurallyEqual(local, settings);
 
   const handleSave = () => {
     updateSeo.mutate(

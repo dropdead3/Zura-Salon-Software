@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchAllBatched } from '@/utils/fetchAllBatched';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 /**
  * Sums total_price from ALL phorest_appointments in a date range
@@ -336,7 +337,7 @@ export function useRevenueGapAnalysis(
         if (!actual) {
           reason = isApptToday ? 'not_concluded' : 'no_pos_record';
         } else {
-          const servicesChanged = JSON.stringify(scheduled.services.sort()) !== JSON.stringify(actual.services.sort());
+          const servicesChanged = !isStructurallyEqual(scheduled.services.sort(), actual.services.sort());
           if (actual.hasDiscount) reason = 'discount';
           else if (servicesChanged) reason = 'service_changed';
           else reason = 'pricing_diff';

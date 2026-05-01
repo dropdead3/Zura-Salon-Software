@@ -66,6 +66,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { EmailTemplateEditor, type EmailTemplateEditorRef } from './EmailTemplateEditor';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 // Default HTML for new templates
 function getDefaultEmailHtml() {
@@ -151,7 +152,7 @@ export function EmailTemplatesManager() {
       editForm.html_body !== initialEditFormRef.current.html_body ||
       editForm.description !== initialEditFormRef.current.description ||
       editForm.is_active !== initialEditFormRef.current.is_active ||
-      JSON.stringify(editForm.blocks_json) !== JSON.stringify(initialEditFormRef.current.blocks_json);
+      !isStructurallyEqual(editForm.blocks_json, initialEditFormRef.current.blocks_json);
     
     setHasUnsavedChanges(hasChanges);
     

@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface BusinessSettingsDialogProps {
   open: boolean;
@@ -80,7 +81,7 @@ export function BusinessSettingsDialog({ open, onOpenChange }: BusinessSettingsD
 
   const isDirty = useMemo(() => {
     if (!initialFormData) return false;
-    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    return !isStructurallyEqual(formData, initialFormData);
   }, [formData, initialFormData]);
 
   const forceClose = useCallback(() => {

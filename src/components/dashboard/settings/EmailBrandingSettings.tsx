@@ -21,6 +21,7 @@ import { Loader2, Save, Send, Monitor, Smartphone, Info, Instagram, Globe, Faceb
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { cn } from '@/lib/utils';
 import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
   'cream-lux': '#A8763A',
@@ -226,7 +227,7 @@ export function EmailBrandingSettings() {
     logoUrl !== (branding?.email_logo_url || null) ||
     footerText !== ((branding?.email_footer_text as string) || '') ||
     physicalAddress !== ((branding as any)?.email_physical_address || '') ||
-    JSON.stringify(socialLinks) !== JSON.stringify((branding?.email_social_links as SocialLinks) || {}) ||
+    !isStructurallyEqual(socialLinks, (branding?.email_social_links as SocialLinks) || {}) ||
     showAttribution !== (branding?.email_show_attribution !== false) ||
     buttonRadius !== ((branding?.email_button_radius as string) || 'rounded') ||
     headerStyle !== ((branding?.email_header_style as string) || 'centered');

@@ -8,6 +8,7 @@ import { Loader2, Save, RotateCcw, Info } from 'lucide-react';
 import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface WeightConfig {
   id: string;
@@ -66,7 +67,7 @@ export function LeaderboardWeightsManager() {
     weights.extensions_weight;
 
   const isValid = Math.abs(totalWeight - 1) < 0.01; // Allow small floating point errors
-  const hasChanges = JSON.stringify(weights) !== JSON.stringify(initialWeights);
+  const hasChanges = !isStructurallyEqual(weights, initialWeights);
 
   const handleSave = async () => {
     if (!isValid) {

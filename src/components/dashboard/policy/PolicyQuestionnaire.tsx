@@ -25,6 +25,7 @@ import type {
   RuleSection,
 } from '@/lib/policy/configurator-schemas';
 import type { PolicyAudience } from '@/lib/policy/build-provenance-line';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface QuestionEntry {
   field: RuleField;
@@ -195,7 +196,7 @@ export function PolicyQuestionnaire({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {field.presets.map((preset) => {
             const selected =
-              JSON.stringify(value) === JSON.stringify(preset.value);
+              isStructurallyEqual(value, preset.value);
             return (
               <button
                 key={String(preset.value)}
