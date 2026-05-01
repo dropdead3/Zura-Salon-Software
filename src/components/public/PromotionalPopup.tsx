@@ -684,13 +684,28 @@ function PromoBody({
 }
 
 /**
- * Thin progress hairline + numeric label that depletes over the 15s
- * auto-minimize window. Telegraphs the collapse-to-FAB behavior so the
- * offer never appears to "vanish" without warning.
+ * Thin progress hairline + numeric label that depletes over the auto-minimize
+ * window. Telegraphs the collapse-to-FAB behavior so the offer never appears
+ * to "vanish" without warning.
+ *
+ * - `paused` freezes the fill animation and softens the label so visitors
+ *   reading the offer (cursor over popup) can tell the timer is on hold.
+ * - Under 3s remaining, the bar pulses subtly + the label switches to the
+ *   warning token so the imminent collapse is felt, not just seen.
  */
-function CountdownBar({ secondsLeft, accent }: { secondsLeft: number; accent: string }) {
-  const total = 15;
-  const pct = Math.max(0, Math.min(100, (secondsLeft / total) * 100));
+function CountdownBar({
+  secondsLeft,
+  totalSeconds,
+  accent,
+  paused = false,
+}: {
+  secondsLeft: number;
+  totalSeconds: number;
+  accent: string;
+  paused?: boolean;
+}) {
+  const pct = Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100));
+  const urgent = !paused && secondsLeft <= 3 && secondsLeft > 0;
   return (
     <div
       className="absolute bottom-0 inset-x-0 pointer-events-none"
@@ -698,13 +713,24 @@ function CountdownBar({ secondsLeft, accent }: { secondsLeft: number; accent: st
     >
       <div className="relative h-1 w-full bg-foreground/5">
         <div
-          className="h-full transition-[width] duration-1000 ease-linear"
+          className={cn(
+            'h-full transition-[width] ease-linear',
+            paused ? 'duration-200 opacity-50' : 'duration-1000',
+            urgent && 'motion-safe:animate-pulse',
+          )}
           style={{ width: `${pct}%`, backgroundColor: accent }}
         />
         <span
-          className="absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] text-muted-foreground/80 tabular-nums"
+          className={cn(
+            'absolute right-2 -top-5 font-display uppercase tracking-wider text-[10px] tabular-nums transition-colors',
+            paused
+              ? 'text-muted-foreground/40'
+              : urgent
+                ? 'text-warning motion-safe:animate-pulse'
+                : 'text-muted-foreground/80',
+          )}
         >
-          {secondsLeft}s
+          {paused ? 'paused' : `${secondsLeft}s`}
         </span>
       </div>
     </div>
