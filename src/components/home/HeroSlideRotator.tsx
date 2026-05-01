@@ -152,8 +152,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 )}
 
                 <h1
-                  className={`font-display font-normal leading-[0.95] ${textTone}`}
-                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))' }}
+                  className={cn("font-display font-normal leading-[0.95]", heroColors.headlineClass)}
+                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
                 >
                   {isPreview ? (
                     <InlineEditableText
@@ -169,7 +169,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 </h1>
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
-                  <p className={`mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed ${mutedTone}`}>
+                  <p
+                    className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                    style={heroColors.subheadlineStyle}
+                  >
                     {isPreview ? (
                       <InlineEditableText
                         as="span"
