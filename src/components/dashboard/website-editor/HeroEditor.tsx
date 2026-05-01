@@ -29,6 +29,7 @@ import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
 import { HeroAlignmentEditor } from './hero/HeroAlignmentEditor';
 import { HeroRotatorEditor } from './hero/HeroRotatorEditor';
+import { HeroSharedContentEditor } from './hero/HeroSharedContentEditor';
 
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
@@ -51,7 +52,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced';
+type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
@@ -63,6 +64,7 @@ const GLOBAL_LABELS: Record<GlobalView, string> = {
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
   advanced: 'Advanced',
+  shared_content: 'Shared Hero Content',
 };
 
 function viewStorageKey(orgId: string | undefined | null): string {
