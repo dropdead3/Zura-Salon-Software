@@ -24,6 +24,9 @@ import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
 import { HeroSlidesManager } from './HeroSlidesManager';
+import { HeroTextColorsEditor } from './HeroTextColorsEditor';
+import { EditorCard as _EditorCardForColors } from './EditorCard';
+import { Palette } from 'lucide-react';
 
 export function HeroEditor() {
   const __saveTelemetry = useSaveTelemetry('hero-editor');
