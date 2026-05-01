@@ -108,6 +108,12 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.overlay_mode ?? sectionMode;
   }, [slide, config.overlay_mode]);
 
+  const fit = useMemo<'cover' | 'contain'>(() => {
+    const sectionFit = config.background_fit ?? 'cover';
+    if (!slide) return sectionFit;
+    return slide.background_fit ?? sectionFit;
+  }, [slide, config.background_fit]);
+
   if (!slide) return null;
 
   const handleHoverEnter = () => config.pause_on_hover && setIsPaused(true);
@@ -144,7 +150,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             type={bgType}
             url={bgUrl}
             posterUrl={bgPoster}
-            fit={config.background_fit}
+            fit={fit}
             focalX={focalX}
             focalY={focalY}
             overlayMode={overlayMode}
