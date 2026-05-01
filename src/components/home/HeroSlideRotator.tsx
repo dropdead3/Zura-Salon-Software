@@ -227,7 +227,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                   toneClass={mutedTone}
                   editable={isPreview}
                   fieldPath={`slides.${activeIndex}.eyebrow`}
-                  className="mb-4"
+                  className={spacing.eyebrow}
                 />
 
                 <h1
