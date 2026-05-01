@@ -196,6 +196,7 @@ function SlideRow({
                           height: slide.media_height,
                           sizeBytes: slide.media_size_bytes,
                           format: slide.media_format,
+                          optimizedWithProfile: slide.media_optimized_with_profile,
                         }
                       : null
                   }
@@ -213,6 +214,9 @@ function SlideRow({
                       media_height: meta?.height ?? (url ? slide.media_height ?? null : null),
                       media_size_bytes: meta?.sizeBytes ?? (url ? slide.media_size_bytes ?? null : null),
                       media_format: meta?.format ?? (url ? slide.media_format ?? null : null),
+                      media_optimized_with_profile:
+                        meta?.optimizedWithProfile ??
+                        (url ? slide.media_optimized_with_profile ?? null : null),
                     });
                     if (wasNewImage) suggestFocal(url);
                   }}
