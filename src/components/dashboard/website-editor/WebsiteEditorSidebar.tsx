@@ -61,6 +61,7 @@ import {
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useEditorSidebarPrefs } from '@/hooks/useEditorSidebarPrefs';
 import { SectionNavItem } from './SectionNavItem';
+import { dispatchEditorSectionHover } from '@/lib/editorSectionHover';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { ContentNavItem } from './ContentNavItem';
 import { WebsiteEditorSearch } from './WebsiteEditorSearch';
