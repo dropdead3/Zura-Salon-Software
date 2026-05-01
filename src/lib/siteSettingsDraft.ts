@@ -129,6 +129,25 @@ export async function writeSiteSettingDraft(
  * - Parent window: dispatches a `site-settings-draft-write` CustomEvent
  *   that LivePreviewPanel forwards into the iframe via postMessage.
  * - Iframe context: posts up to parent (no-op if same window).
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ * EVENT OWNERSHIP CONTRACT — DO NOT VIOLATE
+ * ─────────────────────────────────────────────────────────────────────────
+ * This module is the **sole owner** of the `site-settings-draft-write`
+ * event. Every dispatch MUST originate from a real write path here
+ * (`writeSiteSettingDraft`, `publishSiteSettingsDrafts`, `discardSiteSettingsDrafts`)
+ * and MUST carry properly scoped `{orgId, key}` detail.
+ *
+ * Do NOT re-dispatch this event from `triggerPreviewRefresh()` or any other
+ * helper. Doing so produces empty-detail dispatches that fall into the
+ * iframe's broad invalidation branch (`['site-settings']`) and create a
+ * post-save refetch race that snaps editor forms back to defaults. See the
+ * regression test in `useHydratedFormState.test.tsx`
+ * ("survives a post-save broad-invalidation refetch race").
+ *
+ * If you need to nudge the preview without a real write (e.g. theme swap
+ * preview), call `triggerPreviewRefresh()` from `@/lib/preview-utils` —
+ * it dispatches `website-preview-refresh` only.
  */
 function broadcastDraftWrite(orgId: string, key: string): void {
   if (typeof window === 'undefined') return;

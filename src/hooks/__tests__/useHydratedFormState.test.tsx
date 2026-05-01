@@ -141,4 +141,52 @@ describe('useHydratedFormState', () => {
 
     expect(result.current.savedSnapshot).toBe(snapshotBefore);
   });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Regression: post-save broad-invalidation race
+  // ─────────────────────────────────────────────────────────────────────
+  // Reported: "Promotional popup reset to default after I edited it all
+  // and clicked Save." Root cause was a duplicate `site-settings-draft-write`
+  // dispatch with empty detail emitted by `triggerPreviewRefresh()`. That
+  // triggered a broad `['site-settings']` invalidation in the parent window,
+  // which raced the mutation's targeted refetch and momentarily delivered
+  // a `null` payload to this hook. If the hook treated `null` as a fresh
+  // hydration, the form would snap back to DEFAULTS.
+  //
+  // Contract this test enforces:
+  //   A `null` arrival AFTER first hydration must NEVER reset formData.
+  //   Silence is valid output; the operator's edits must survive.
+  it('survives a post-save broad-invalidation refetch race (null payload after hydration)', () => {
+    let settings: Settings | null = {
+      appearance: 'modal',
+      headline: 'Saved',
+      enabled: true,
+    };
+    const { result, rerender } = renderHook(() =>
+      useHydratedFormState(settings, DEFAULTS),
+    );
+    expect(result.current.formData.headline).toBe('Saved');
+
+    // Operator edits in flight.
+    act(() => {
+      result.current.setFormData((prev) => ({ ...prev, headline: 'Edited' }));
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    // Race: a broad invalidation triggers a refetch that briefly resolves
+    // to null (cache evicted, request in flight, edge function 0-row
+    // response). The hook must NOT re-hydrate from null.
+    settings = null;
+    rerender();
+
+    expect(result.current.formData.headline).toBe('Edited');
+    expect(result.current.formData).not.toEqual(DEFAULTS);
+    expect(result.current.hasHydrated).toBe(true);
+
+    // Settings come back. Operator's edit still wins.
+    settings = { appearance: 'modal', headline: 'Saved', enabled: true };
+    rerender();
+    expect(result.current.formData.headline).toBe('Edited');
+    expect(result.current.isDirty).toBe(true);
+  });
 });
