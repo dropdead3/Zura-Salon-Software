@@ -109,6 +109,7 @@ export function HeroEditor() {
         <HeroScrimEditor
           scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
           scrimStrength={localConfig.scrim_strength ?? 0.55}
+          bgType={localConfig.background_type}
           onChange={(patch) => {
             if (patch.scrim_style !== undefined) updateField('scrim_style', patch.scrim_style ?? undefined);
             if (patch.scrim_strength !== undefined) updateField('scrim_strength', patch.scrim_strength ?? undefined);
