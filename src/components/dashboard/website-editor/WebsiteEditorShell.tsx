@@ -1282,9 +1282,19 @@ function WebsiteEditorShellInner() {
       {/* ── Editor canvas: fixed left rail (list ↔ editor swap) + full-bleed preview ── */}
       <div className="flex-1 min-h-0 flex gap-3 overflow-hidden">
         {/* Fixed left rail — Square width is ~320–360px. Hidden on mobile (uses Sheet). */}
-        {showSidebar && !isMobile && (
-          <aside className="w-[380px] shrink-0 rounded-xl border border-border overflow-hidden">
-            {isEditorMode ? railEditorEl : railListEl}
+        {!isMobile && (
+          <aside
+            aria-hidden={!showSidebar}
+            className={cn(
+              'shrink-0 rounded-xl border border-border overflow-hidden transition-[width,opacity,margin] duration-150 ease-out',
+              showSidebar
+                ? 'w-[380px] opacity-100'
+                : 'w-0 opacity-0 border-transparent -mr-3 pointer-events-none',
+            )}
+          >
+            <div className="w-[380px] h-full">
+              {isEditorMode ? railEditorEl : railListEl}
+            </div>
           </aside>
         )}
 
@@ -1296,7 +1306,7 @@ function WebsiteEditorShellInner() {
               onClick={() => setShowSidebar(true)}
               title="Show sections (⌘\)"
               aria-label="Show sections"
-              className="group absolute top-3 left-3 bottom-3 z-20 w-8 rounded-lg border border-border bg-card/85 backdrop-blur-md shadow-sm hover:bg-accent hover:border-border/80 transition-colors flex flex-col items-center justify-center gap-2"
+              className="group absolute top-3 left-3 bottom-3 z-20 w-8 rounded-lg border border-border bg-card/85 backdrop-blur-md shadow-sm hover:bg-accent hover:border-border/80 transition-colors flex flex-col items-center justify-center gap-2 animate-in slide-in-from-left-2 fade-in duration-150"
             >
               <PanelLeftOpen className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               <span className="[writing-mode:vertical-rl] rotate-180 font-display text-[10px] tracking-[0.18em] uppercase text-muted-foreground group-hover:text-foreground transition-colors">
