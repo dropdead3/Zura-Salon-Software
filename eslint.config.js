@@ -280,9 +280,11 @@ export default tseslint.config(
   // ─────────────────────────────────────────────────────────────────────
   defineScopedDoctrine({
     files: [
+      // Scoped strictly to the website-editor tree — focal pickers are
+      // an editor concern, not a runtime/consumer concern. Broadening to
+      // src/components/home/** would shadow the hero canon block via
+      // flat-config replacement (verified by the meta-test).
       "src/components/dashboard/website-editor/**/*.{ts,tsx}",
-      "src/components/home/**/*.{ts,tsx}",
-      "src/components/public/**/*.{ts,tsx}",
       // Lint fixture lives outside the real editor tree; include it
       // explicitly so the meta-test (which uses `ignore: false`) sees
       // the rule applied. Top-level `ignores` keeps `npm run lint`
