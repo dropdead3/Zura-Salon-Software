@@ -11,6 +11,7 @@ import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
 import { HeroNotes } from "@/components/home/HeroNotes";
+import { HeroScrollIndicator } from "@/components/home/HeroScrollIndicator";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
 import { cn } from "@/lib/utils";
