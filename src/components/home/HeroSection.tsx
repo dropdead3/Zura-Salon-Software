@@ -293,6 +293,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 ...heroColors.headlineStyle,
               }}
             >
+              {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
               <motion.span 
                 className="whitespace-nowrap block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
@@ -302,6 +303,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               >
                 {headlineText}
               </motion.span>
+              {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
               <motion.span 
                 className="block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
