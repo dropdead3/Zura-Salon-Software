@@ -935,9 +935,15 @@ function PromoBody({
         {!compact && (
           <button
             onClick={onDecline}
-            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0"
+            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0 inline-flex items-center gap-1.5"
           >
-            {cfg.ctaDeclineLabel}
+            {valueAnchor && (
+              <>
+                <span className="font-display tracking-wide text-foreground/80">{valueAnchor}</span>
+                <span aria-hidden="true" className="text-muted-foreground/60">•</span>
+              </>
+            )}
+            <span>{cfg.ctaDeclineLabel}</span>
           </button>
         )}
         <button
@@ -958,9 +964,15 @@ function PromoBody({
         {compact && (
           <button
             onClick={onDecline}
-            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors py-1.5 mx-auto underline-offset-4 hover:underline"
+            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors py-1.5 mx-auto underline-offset-4 hover:underline inline-flex items-center justify-center gap-1.5"
           >
-            {cfg.ctaDeclineLabel}
+            {valueAnchor && (
+              <>
+                <span className="font-display tracking-wide text-foreground/80">{valueAnchor}</span>
+                <span aria-hidden="true" className="text-muted-foreground/60">•</span>
+              </>
+            )}
+            <span>{cfg.ctaDeclineLabel}</span>
           </button>
         )}
       </div>
