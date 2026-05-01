@@ -15,7 +15,7 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { UrlInput } from './inputs/UrlInput';
-import { FocalPointPicker } from './inputs/FocalPointPicker';
+
 import { EditorCard } from './EditorCard';
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
