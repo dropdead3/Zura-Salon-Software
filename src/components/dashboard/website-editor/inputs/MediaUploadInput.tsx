@@ -277,6 +277,7 @@ export function MediaUploadInput({
             format: uploadContentType,
             optimizedWithProfile: qualityProfile,
           },
+          analysisDataUrl,
         });
         toast.success(`Image uploaded${crunchNote}`);
       } else {
