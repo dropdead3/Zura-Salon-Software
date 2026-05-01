@@ -1,97 +1,45 @@
-# Consolidate Media Upload + Focal Point Picker
+# Honest Re-scope: One Real Win, Two Speculative Ideas
 
-## Problem
+When I scoped the codebase, my own enhancement suggestions from last turn turned out to be partially wrong. Calling that out before doing any work.
 
-Both the section background editor and per-slide background editor render the **same uploaded image twice** stacked vertically:
+## What I claimed vs. what's actually there
 
-1. `MediaUploadInput` shows the thumbnail with metadata + Replace/Remove
-2. `FocalPointPicker` shows the SAME image again with a draggable crosshair
+| Suggestion | Reality |
+|---|---|
+| "Apply pattern to `ImageUploadInput` — testimonials, gallery, blog hero have the same redundancy" | **False.** None of those surfaces pair upload with `FocalPointPicker` today. Gallery tiles, transformations, custom sections, and section-style backgrounds upload images without focal control at all. There's nothing redundant to consolidate. |
+| "Promote `focal` to a richer overlay slot (face boxes, rule-of-thirds)" | **Speculative.** No face-detection API is wired. The existing `useFocalPointSuggestion` hook already AI-seeds the crosshair on upload. No user signal that the crosshair is insufficient. |
+| Hidden actual win I missed | **`HeroSlidesManager.tsx:409`** still renders the old stacked `MediaUploadInput` + `<FocalPointPicker>` pattern for per-slide focal override — it's the *slide manager's* inline editor, distinct from the `HeroSlideEditor` we already fixed. Same operator complaint, same image rendered twice. |
 
-On a tall portrait hero photo (e.g. 1920×2880) this consumes nearly a full screen of editor space and reads as redundant — you can see the focal-point overlay perfectly well on the upload tile itself.
+## What I'm proposing
 
-## Approach
+### Ship now (real, scoped)
 
-Make the upload tile **focal-aware**. When `focal` props are provided and the asset is an image (or video with a poster), the existing thumbnail becomes the interactive focal-point surface — same drag handle, reset link, and helper copy as today's `FocalPointPicker`, just rendered inside the upload tile instead of as a separate card below it.
+**Fix the one remaining stacked-image instance in `HeroSlidesManager.tsx`.**
 
-The standalone `FocalPointPicker` stays exported for places that pass it a non-uploaded image, but the two hero editors stop rendering it.
+- Find the `<MediaUploadInput>` that pairs with the `<FocalPointPicker>` at line 409
+- Pass `focal={...}` with `enabled: focalOverridden && resolvedFit !== 'contain'`
+- Delete the standalone `<FocalPointPicker>` block and its surrounding `<ToggleInput>`-only wrapper if no longer needed (keep the toggle, drop the picker)
+- Drop the `FocalPointPicker` import from `HeroSlidesManager.tsx`
 
-```text
-BEFORE                              AFTER
-┌─────────────┐                     ┌─────────────┐
-│ Upload tile │  (thumbnail #1)     │ Upload tile │  ← drag crosshair lives
-│   [DRAFT]   │                     │   [DRAFT]   │    here, on the same image
-│  [1920×2880]│                     │  [1920×2880]│
-└─────────────┘                     │      ◯      │  ← focal handle overlay
-or paste URL [____]                 └─────────────┘
-                                    Reset to center  (1 line, only when off-default)
-[Override Focal Point ▢]            or paste URL [____]
-┌─────────────┐
-│ Focal pick  │  (thumbnail #2)
-│      ◯      │
-└─────────────┘
-Reset to center
-```
+After this, the only remaining `FocalPointPicker` consumer is the test fixture and the component file itself — safe to keep exported for future non-upload focal needs.
 
-## Scope
+### Defer (with explicit revisit triggers — Deferral Register)
 
-### New: `MediaUploadInput` gains an optional `focal` prop
-
-```ts
-focal?: {
-  x: number;
-  y: number;
-  onChange: (x: number, y: number) => void;
-  onReset: () => void;
-  /** When false, suppresses the overlay (e.g. fit=contain or override toggle off). */
-  enabled?: boolean;
-};
-```
-
-When `focal` is provided AND the tile is showing an image (or video poster), the tile renders:
-- Pointer-event surface mirroring `FocalPointPicker.handlePointerDown/Move/Up`
-- The same crosshair handle absolutely positioned at `({x}%, {y}%)`
-- `objectPosition: ${x}% ${y}%` on the existing `<img>` so the operator sees the live crop
-- `cursor-crosshair` on the tile when enabled
-- "Reset to center" link rendered above the tile (only when not at 50/50, matching today's UX)
-
-When `focal` is omitted (every other consumer of `MediaUploadInput`), behavior is unchanged.
-
-### Updated: `HeroBackgroundEditor` (section-level)
-
-- Remove the standalone `<FocalPointPicker>` block (the `!!background_url && fit === 'cover'` branch)
-- Pass `focal={...}` to `<MediaUploadInput>` with `enabled = !!background_url && background_fit === 'cover'`
-
-### Updated: `HeroSlideEditor` (per-slide)
-
-- Keep the "Override Focal Point" toggle (it has semantic meaning — without override, the slide inherits the section focal)
-- When the toggle is ON, pass `focal={...}` to `<MediaUploadInput>` instead of rendering a separate picker below
-- When OFF, omit `focal` so the tile is a plain upload preview
-- The "Override Fit" toggle and its Cover/Contain pills stay where they are (they're not redundant)
-
-### Tests
-
-Add a Vitest for `MediaUploadInput` covering:
-- `focal` prop renders crosshair handle at the correct percentages
-- `cursor-crosshair` only applied when `focal.enabled !== false`
-- `onChange` fires with clamped 0-100 percentages on pointer events
-- No focal overlay when `focal` prop is absent (back-compat)
+| Idea | Why defer | Revisit trigger |
+|---|---|---|
+| Per-tile focal on `ImageUploadInput` (gallery, testimonials, custom sections) | No operator complaint exists. Adding focal where there was none is a feature pitch, not a redundancy fix. Two divergent `ImageUploadInput` components would need consolidation first. | First operator request for "my gallery tile is cropping someone's face off" OR a unified `ImageUploadInput` refactor lands. |
+| Face-box / rule-of-thirds overlay slot | No face-detection wiring; the AI focal suggestion already covers the 80% case (auto-seed crosshair). Speculative API surface. | A face-detection edge function ships, OR operators report the AI seed is missing faces frequently enough to warrant a manual visual aid. |
 
 ## Files Touched
 
-- `src/components/dashboard/website-editor/inputs/MediaUploadInput.tsx` — extend props + render focal overlay inside the existing thumbnail block
-- `src/components/dashboard/website-editor/HeroBackgroundEditor.tsx` — drop standalone picker, pass `focal` prop
-- `src/components/dashboard/website-editor/hero/HeroSlideEditor.tsx` — drop standalone picker, pass `focal` prop gated on `focalOverridden`
-- `src/components/dashboard/website-editor/inputs/MediaUploadInput.test.tsx` (new) — focal overlay behavior
-
-`FocalPointPicker.tsx` is left in place (still exported) so any future consumer that needs a focal picker over a non-uploaded image isn't blocked.
+- `src/components/dashboard/website-editor/HeroSlidesManager.tsx` — wire `focal` on the `MediaUploadInput`, delete the standalone picker, drop the import.
 
 ## Out of Scope
 
-- Visual restyle of the upload tile (size, aspect ratio, badges) — keeps the existing 16:9-ish 128px-tall preview
-- Changes to the public site renderers
-- Changes to schema, hooks, or the `useFocalPointSuggestion` AI seeding flow
+- Any change to `ImageUploadInput` (either copy)
+- Any change to the existing tests
+- Any new overlay-slot API on `MediaUploadInput`
 
-## Risks
+## Risk
 
-- **Pointer events vs Replace/Remove hover overlay**: Today the tile has a hover overlay with Replace/Remove buttons. The pointer-down handler for focal must not swallow clicks on those buttons. Mitigation: render the focal pointer-surface on the `<img>` only (via `pointer-events-auto` + capture on the image element), and keep the hover overlay layered above with its own `pointer-events-auto`. Verified pattern: today's `FocalPointPicker` uses `setPointerCapture` on the target — easy to replicate.
-- **Video kind**: For videos the focal target is the poster image; the tile currently renders a `<video>` element, not an `<img>`. The focal overlay must render on the poster (an `<img>` we'll layer on top when `focal` is present and the asset is a video with a poster). Behavior matches today's `FocalPointPicker`, which already uses `posterUrl` for video sources.
+Low. Identical change to the one we just landed in `HeroSlideEditor.tsx`, against a sibling editor with the same prop shape. Existing `MediaUploadInput.test.tsx` covers the focal-overlay contract.
