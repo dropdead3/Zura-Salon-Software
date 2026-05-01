@@ -1,9 +1,6 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Settings2 } from 'lucide-react';
 import { EditorCard } from '../EditorCard';
 import { SliderInput } from '../inputs/SliderInput';
-import { ToggleInput } from '../inputs/ToggleInput';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 
 interface HeroAdvancedEditorProps {
@@ -12,9 +9,13 @@ interface HeroAdvancedEditorProps {
 }
 
 /**
- * Advanced sub-editor: animation timing + scroll indicator. Previously lived
- * inside a Collapsible at the bottom of HeroEditor — now a focused page
- * reached from the hub.
+ * Advanced sub-editor: animation timing only.
+ *
+ * Note: scroll-indicator controls used to live here but were promoted to
+ * the Content Alignment editor — operators reasonably expect "show scroll
+ * cue" to live next to other foreground content settings, not buried under
+ * a generic "Advanced" card. The discoverability gap surfaced when an
+ * operator toggled it on but couldn't find it on the page.
  */
 export function HeroAdvancedEditor({ config, onChange }: HeroAdvancedEditorProps) {
   return (
@@ -42,26 +43,7 @@ export function HeroAdvancedEditor({ config, onChange }: HeroAdvancedEditorProps
           description="How long each rotating word displays"
         />
       </div>
-
-      <div className="space-y-4 p-3 bg-muted/50 rounded-lg">
-        <h4 className="font-medium text-sm">Scroll Indicator</h4>
-        <ToggleInput
-          label="Show Scroll Indicator"
-          value={config.show_scroll_indicator}
-          onChange={(value) => onChange('show_scroll_indicator', value)}
-          description="Show the scroll arrow at the bottom"
-        />
-        {config.show_scroll_indicator && (
-          <div className="space-y-2">
-            <Label>Scroll Indicator Text</Label>
-            <Input
-              value={config.scroll_indicator_text}
-              onChange={(e) => onChange('scroll_indicator_text', e.target.value)}
-              placeholder="Scroll"
-            />
-          </div>
-        )}
-      </div>
     </EditorCard>
   );
 }
+
