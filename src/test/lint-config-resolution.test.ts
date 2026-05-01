@@ -5,7 +5,7 @@ import path from 'path';
 import {
   CONSOLIDATED_RESTRICTED_SYNTAX,
   PLATFORM_PRIMITIVE_PATHS,
-} from '../../eslint.config.js';
+} from '../../eslint.helpers.js';
 
 /**
  * Meta-test for `eslint.config.js` flat-config resolution.
@@ -85,18 +85,12 @@ async function getRestrictedImportPaths(filePath: string): Promise<string[]> {
     .filter(Boolean);
 }
 
-/**
- * Build a short, stable label for a selector entry. Prefers the first
- * 60 chars of the doctrine message (which is human-readable) and falls
- * back to a slice of the selector itself.
- */
-function labelFor(opt: { selector?: string; message?: string }): string {
-  const msg = opt.message ?? '';
-  // Pull the first sentence-ish fragment as the label.
-  const head = msg.split(/[.:—]/)[0]?.trim() ?? '';
-  if (head.length > 0 && head.length < 80) return head;
-  return (opt.selector ?? '').slice(0, 60);
-}
+// `labelFor` lives in src/test/lintLabel.ts so a dedicated unit test
+// (src/test/lintLabel.test.ts) can assert label-quality guarantees
+// against every entry in CONSOLIDATED_RESTRICTED_SYNTAX and
+// PLATFORM_PRIMITIVE_PATHS — catches regressions where a future
+// doctrine message produces an unreadable test name.
+import { labelFor } from './lintLabel';
 
 describe('eslint.config.js: flat-config resolution meta-test', () => {
   // ────────────────────────────────────────────────────────────────────
