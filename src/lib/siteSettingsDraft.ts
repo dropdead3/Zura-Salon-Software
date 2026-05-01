@@ -21,6 +21,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { emitAmbientTelemetry } from './editor-telemetry';
+import { dispatchOwnedEvent } from './eventOwnership';
 
 export interface SiteSettingRow {
   /** Live-published value. Public site reads this. */
@@ -154,10 +155,7 @@ function broadcastDraftWrite(orgId: string, key: string): void {
   if (typeof window === 'undefined') return;
   emitAmbientTelemetry('draft-write-broadcast', { orgId, key });
   try {
-    window.dispatchEvent(
-      // eslint-disable-next-line no-restricted-syntax -- Canonical owner of `site-settings-draft-write`; see mem://architecture/site-settings-event-ownership.md.
-      new CustomEvent('site-settings-draft-write', { detail: { orgId, key } }),
-    );
+    dispatchOwnedEvent('site-settings-draft-write', { orgId, key });
   } catch {
     /* SSR / non-DOM env */
   }
@@ -180,10 +178,7 @@ export async function publishSiteSettingsDrafts(orgId: string): Promise<number> 
   // every site-settings query for this org — values may have changed.
   if (typeof window !== 'undefined') {
     try {
-      window.dispatchEvent(
-        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
-        new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
-      );
+      dispatchOwnedEvent('site-settings-draft-write', { orgId, key: null });
     } catch { /* SSR */ }
   }
   return (data as number | null) ?? 0;
@@ -203,10 +198,7 @@ export async function discardSiteSettingsDrafts(orgId: string): Promise<number> 
   // reverted draft state without a full reload.
   if (typeof window !== 'undefined') {
     try {
-      window.dispatchEvent(
-        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
-        new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
-      );
+      dispatchOwnedEvent('site-settings-draft-write', { orgId, key: null });
     } catch { /* SSR */ }
   }
   return (data as number | null) ?? 0;
