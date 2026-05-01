@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, Layout } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
-import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
-import { isStructurallyEqual } from '@/lib/stableStringify';
+
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { EditorCard } from './EditorCard';
 import { HeroBackgroundEditor } from './HeroBackgroundEditor';
@@ -32,11 +32,9 @@ export function HeroEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
-  // Use stable (key-sorted) structural compare. Naive `JSON.stringify` would
-  // diff on key insertion order alone, leaving "Unsaved changes" stuck on
-  // forever after save. See `src/lib/stableStringify.ts`.
-  const isDirty = !isStructurallyEqual(localConfig, data);
-  useEditorDirtyState(isDirty);
+  // Canonical dirty-state hook (key-order-stable structural compare + UI wiring).
+  // See src/hooks/useDirtyState.ts for why JSON.stringify is forbidden here.
+  useDirtyState(localConfig, data);
 
   // Live-edit bridge: stream in-memory edits into the preview iframe so the
   // canvas reflects what's being typed RIGHT NOW, not just the last save.

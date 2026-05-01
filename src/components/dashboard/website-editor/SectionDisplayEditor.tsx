@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
-import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
-import { isStructurallyEqual } from '@/lib/stableStringify';
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -52,8 +52,8 @@ export function SectionDisplayEditor<T extends object>({
 }: SectionDisplayEditorProps<T>) {
   const __saveTelemetry = useSaveTelemetry(`section-display-editor:${title}`);
   const [localConfig, setLocalConfig] = useState<T>(data);
-  const isDirty = !isStructurallyEqual(localConfig, data);
-  useEditorDirtyState(isDirty);
+  // Canonical dirty-state hook. See src/hooks/useDirtyState.ts.
+  useDirtyState(localConfig, data);
 
   useEffect(() => {
     if (data && !isLoading) {

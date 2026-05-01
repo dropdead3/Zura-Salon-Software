@@ -63,6 +63,7 @@ async function getRestrictedSyntaxSelectors(filePath: string): Promise<string[]>
 const LOADER2_SELECTOR_FRAGMENT = "openingElement.name.name='Loader2'";
 const UNSAVED_CHANGES_SELECTOR_FRAGMENT = "openingElement.name.name='AlertDialogTitle'";
 const SITE_SETTINGS_SELECTOR_FRAGMENT = 'site-settings-draft-write';
+const DIRTY_STATE_SELECTOR_FRAGMENT = "callee.property.name='stringify'";
 
 describe('eslint.config.js: flat-config resolution meta-test', () => {
   it('keeps the Loader2 doctrine selector on a representative source file', async () => {
@@ -103,6 +104,14 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     expect(
       selectors.some((s) => s.includes(SITE_SETTINGS_SELECTOR_FRAGMENT)),
       'Site Settings rule should be active on src/lib/siteSettingsDraft.ts; the dispatch sites suppress it with inline eslint-disable comments.',
+    ).toBe(true);
+  });
+
+  it('keeps the Dirty-State Compare doctrine selector on a representative source file', async () => {
+    const selectors = await getRestrictedSyntaxSelectors('src/App.tsx');
+    expect(
+      selectors.some((s) => s.includes(DIRTY_STATE_SELECTOR_FRAGMENT)),
+      `Dirty-State Compare selector missing from resolved config for src/App.tsx.\nResolved selectors:\n${selectors.join('\n')}`,
     ).toBe(true);
   });
 });
