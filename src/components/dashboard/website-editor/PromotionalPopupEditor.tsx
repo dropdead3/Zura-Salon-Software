@@ -228,6 +228,20 @@ export function PromotionalPopupEditor() {
   const [savedSnapshot, setSavedSnapshot] = useState<PromotionalPopupSettings>(DEFAULT_PROMO_POPUP);
   const [autoSaving, setAutoSaving] = useState(false);
 
+  // Refs eliminate stale-closure races between the auto-save Enable toggle and
+  // the manual "Save to preview" button. Both save paths read the *current*
+  // form state from `formDataRef`, and `savingRef` serializes mutations so a
+  // late-arriving stale write can never overwrite a fresh one.
+  const formDataRef = useRef<PromotionalPopupSettings>(formData);
+  const savedSnapshotRef = useRef<PromotionalPopupSettings>(savedSnapshot);
+  const savingChainRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+  useEffect(() => {
+    savedSnapshotRef.current = savedSnapshot;
+  }, [savedSnapshot]);
+
   // Live count + 14-day velocity for the *saved* offer code. We track
   // savedSnapshot.offerCode (not formData) so the count reflects what's
   // actually in production, not in-flight edits — operators editing the code
