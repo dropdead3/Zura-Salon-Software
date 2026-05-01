@@ -1203,8 +1203,6 @@ function WebsiteEditorShellInner() {
               inline edits). Keyboard: ⌘Z / ⌘⇧Z. */}
           <UndoRedoControls />
 
-          <SaveStatusPill isDirty={isDirty} isSaving={isSaving} lastSavedAt={lastSavedAt} />
-
           {/* Site Design — global theme/typography/density panel */}
           <Button
             variant="outline"
