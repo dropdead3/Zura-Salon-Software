@@ -289,15 +289,18 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       <div className="flex items-center justify-between gap-2 p-3 border-b border-border bg-card">
         <div className="flex items-center gap-2 min-w-0">
           {isEditingLive ? (
-            <>
-              <span
-                className="text-sm font-medium shrink-0 text-warning"
-                title="Showing unsaved edits — Save Draft to persist"
-              >
-                Editing — unsaved
-              </span>
-              <div className="h-2 w-2 rounded-full bg-warning animate-pulse" />
-            </>
+            // Replaces the prior "Editing — unsaved" warning label. The same
+            // ghost pill that used to overlay the iframe now lives in the
+            // toolbar's top-left slot — single source of "unsaved → click
+            // Save" messaging, no duplicate signal floating over the canvas.
+            <div
+              className="inline-flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1.5 text-xs shadow-sm backdrop-blur-sm border border-primary/30 shrink-0"
+              title="Showing unsaved edits — click Save to refresh the preview"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-primary/80 animate-pulse" />
+              <span className="font-medium">Showing last saved version</span>
+              <span className="opacity-80 hidden sm:inline">— click Save to refresh</span>
+            </div>
           ) : (
             <>
               <span className="text-sm font-medium shrink-0">Draft Preview</span>
@@ -418,15 +421,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
             confusion actually happens (the canvas), not via an editor-strip
             label they may have missed. Pointer-events-none so it never
             blocks click-to-edit on sections beneath it. */}
-        {isEditingLive && previewUrl && paneSize.w > 0 && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3">
-            <div className="flex items-center gap-2 rounded-full bg-primary/15 text-primary px-3 py-1.5 text-xs shadow-lg backdrop-blur-sm border border-primary/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary/80 animate-pulse" />
-              <span className="font-medium">Showing last saved version</span>
-              <span className="opacity-80">— click Save to refresh</span>
-            </div>
-          </div>
-        )}
+        {/* Pill moved to toolbar top-left — no overlay duplicate here. */}
         {previewUrl ? (
           paneSize.w > 0 && (
             <div
