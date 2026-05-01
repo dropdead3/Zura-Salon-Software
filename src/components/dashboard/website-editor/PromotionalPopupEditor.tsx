@@ -557,7 +557,10 @@ export function PromotionalPopupEditor() {
   const handleResetSession = useCallback(() => {
     if (typeof window === 'undefined' || !orgId) return;
     try {
-      // Clear all per-org promo dismissal records + session sentinel
+      // Clear all per-org promo dismissal records + session sentinel so a
+      // real visitor would re-see the popup on next load. (Preview itself
+      // already bypasses frequency caps, but operators expect this button
+      // to also reset the underlying visitor-side state.)
       const prefix = `zura.promo.${orgId}.`;
       const toDelete: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
@@ -566,8 +569,20 @@ export function PromotionalPopupEditor() {
       }
       toDelete.forEach((k) => window.localStorage.removeItem(k));
       window.sessionStorage.removeItem('zura.promo.session');
-      triggerPreviewRefresh();
-      toast.success(`Cleared ${toDelete.length} dismissal record(s) — preview reloaded`);
+      // Re-run the FULL lifecycle in-place via the canonical reset event
+      // (sole owner: src/lib/promoPopupPreviewReset.ts). The popup re-opens
+      // with its slide-in animation, the countdown restarts at the
+      // operator-configured duration, and on countdown completion it
+      // soft-closes into the "See Offer" FAB — exactly mirroring what a
+      // real visitor would experience. Heavyweight `triggerPreviewRefresh()`
+      // (full iframe reload) is avoided so the operator never loses scroll
+      // position or mid-edit form state in adjacent editors.
+      dispatchPromoPopupPreviewReset({ reason: 'manual' });
+      toast.success(
+        toDelete.length > 0
+          ? `Cleared ${toDelete.length} dismissal record(s) — popup restarted`
+          : 'Popup session restarted',
+      );
     } catch (err) {
       toast.error('Could not reset session storage');
     }
