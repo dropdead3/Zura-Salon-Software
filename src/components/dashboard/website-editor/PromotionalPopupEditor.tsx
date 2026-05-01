@@ -36,6 +36,7 @@ import {
   type PromoPopupPreviewPhase,
   type PromoPopupPreviewStateDetail,
 } from '@/lib/promoPopupPreviewReset';
+import { coerceAutoMinimizeMs } from '@/lib/clampAutoMinimizeSeconds';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
@@ -546,10 +547,16 @@ export function PromotionalPopupEditor() {
 
   // Count of per-org dismissal records currently in localStorage. Surfaced
   // in the restart button's tooltip so operators understand the side-effect
-  // ("also clears N visitor dismissal records") before clicking. Recomputed
-  // when the lifecycle phase changes — that's the only moment the count can
-  // change between operator-driven restart clicks.
-  const dismissalRecordCount = useMemo(() => {
+  // ("also clears N visitor dismissal records") before clicking.
+  //
+  // Sourced from real signals — never the lifecycle phase, which only
+  // proxies for "operator just clicked restart" and silently goes stale
+  // when the editor mounts mid-session or another tab clears storage.
+  // Anchors:
+  //   - mount + orgId change → seed initial count
+  //   - cross-tab `storage` event → react when another tab clears records
+  //   - same-tab restart → recount inline (storage event is cross-tab only)
+  const countDismissalRecords = useCallback((): number => {
     if (typeof window === 'undefined' || !orgId) return 0;
     try {
       const prefix = `zura.promo.${orgId}.`;
@@ -562,8 +569,28 @@ export function PromotionalPopupEditor() {
     } catch {
       return 0;
     }
-    // popupPhase intentionally included — recompute when lifecycle shifts.
-  }, [orgId, popupPhase]);
+  }, [orgId]);
+
+  const [dismissalRecordCount, setDismissalRecordCount] = useState<number>(() =>
+    countDismissalRecords(),
+  );
+
+  useEffect(() => {
+    setDismissalRecordCount(countDismissalRecords());
+    if (typeof window === 'undefined' || !orgId) return;
+    const prefix = `zura.promo.${orgId}.`;
+    const onStorage = (e: StorageEvent) => {
+      // Cross-tab signal only. Same-tab `removeItem` does NOT fire `storage`
+      // (per spec) — that path is handled by `handleResetSession` below.
+      // Filter to org-scoped keys (or a full clear with key=null) so
+      // unrelated localStorage churn doesn't trigger a recount.
+      if (e.storageArea !== window.localStorage) return;
+      if (e.key !== null && !e.key.startsWith(prefix)) return;
+      setDismissalRecordCount(countDismissalRecords());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [orgId, countDismissalRecords]);
 
   // Single canonical restart action. Clears per-org dismissal records +
   // session sentinel, then dispatches the canonical preview-reset event so
@@ -581,6 +608,10 @@ export function PromotionalPopupEditor() {
       }
       toDelete.forEach((k) => window.localStorage.removeItem(k));
       window.sessionStorage.removeItem('zura.promo.session');
+      // Same-tab mutation — `storage` event won't fire for this tab, so
+      // recount inline to keep the tooltip accurate without waiting for
+      // a re-render trigger.
+      setDismissalRecordCount(countDismissalRecords());
       dispatchPromoPopupPreviewReset({ reason: 'manual' });
       toast.success(
         toDelete.length > 0
@@ -590,7 +621,8 @@ export function PromotionalPopupEditor() {
     } catch (err) {
       toast.error('Could not reset session storage');
     }
-  }, [orgId]);
+  }, [orgId, countDismissalRecords]);
+
 
   // Opens the live public site in a new tab with `?preview=true`, the trusted
   // editor-preview channel that bypasses frequency caps and forces an immediate
@@ -1264,13 +1296,12 @@ export function PromotionalPopupEditor() {
                 : Math.round(formData.autoMinimizeMs / 1000)
             }
             onChange={(e) => {
-              const raw = e.target.value;
-              if (raw === '') {
-                handleChange('autoMinimizeMs', null);
-                return;
-              }
-              const seconds = Math.max(5, Math.min(60, Number(raw)));
-              handleChange('autoMinimizeMs', seconds * 1000);
+              // Single canonical write path. Coercion handles empty
+              // string (= disabled), numeric strings, NaN, and the
+              // 5000–60000ms clamp — see clampAutoMinimizeSeconds.test.ts.
+              // DB now stores only canonical values; the renderer's
+              // defensive clamp becomes back-compat-only.
+              handleChange('autoMinimizeMs', coerceAutoMinimizeMs(e.target.value));
             }}
             placeholder="15"
           />
