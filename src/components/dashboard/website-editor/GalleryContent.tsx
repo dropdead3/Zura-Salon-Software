@@ -37,7 +37,10 @@ import {
   Loader2,
   Upload,
 } from 'lucide-react';
-import { ImageUploadInput } from '@/components/ui/image-upload-input';
+// Canonical path post November 2026 consolidation. The
+// `@/components/ui/image-upload-input` shim still re-exports this for
+// back-compat but new callsites should import from the inputs/ tree.
+import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { BulkImageUpload } from '@/components/ui/bulk-image-upload';
 import { SortableGalleryImage } from './gallery/SortableGalleryImage';
 import { SortableTransformation } from './gallery/SortableTransformation';
