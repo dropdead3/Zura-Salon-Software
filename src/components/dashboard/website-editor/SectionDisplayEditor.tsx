@@ -10,6 +10,7 @@ import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import { toast } from 'sonner';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
