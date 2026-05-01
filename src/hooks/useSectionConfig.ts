@@ -38,6 +38,9 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
       // Invalidate every cached mode for this key so the editor sees the
       // fresh draft AND any open preview iframe re-fetches on next focus.
       queryClient.invalidateQueries({ queryKey: ['site-settings', orgId, sectionId] });
+      // Refresh the per-key dirty-draft set so the DRAFT chip on editor
+      // inputs (see useDirtyDraftKey) flips on immediately after save.
+      queryClient.invalidateQueries({ queryKey: ['site-settings-dirty-drafts', orgId] });
     },
   });
 
