@@ -31,7 +31,10 @@ interface HeroSlideRotatorProps {
 }
 
 export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotatorProps) {
-  const slides = config.slides ?? [];
+  // Inactive slides (active === false) are excluded from the live rotator;
+  // they remain in `config.slides` so the editor can re-enable them.
+  // `undefined`/`null` is treated as active for legacy slides.
+  const slides = (config.slides ?? []).filter((s) => s.active !== false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [consultationOpen, setConsultationOpen] = useState(false);
