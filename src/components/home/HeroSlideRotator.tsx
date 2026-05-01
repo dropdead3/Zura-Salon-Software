@@ -18,6 +18,7 @@ import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
+import { HeroScrollIndicator } from './HeroScrollIndicator';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
@@ -330,6 +331,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           </button>
         </div>
       )}
+
+      {/* Operator-toggled scroll affordance — same component the fallback hero uses */}
+      <HeroScrollIndicator
+        show={config.show_scroll_indicator ?? true}
+        text={config.scroll_indicator_text}
+        onMedia={hasBackground}
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: window.innerHeight - 100, behavior: 'smooth' });
+          }
+        }}
+      />
 
       <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
     </section>
