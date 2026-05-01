@@ -21,6 +21,7 @@ import { useHeroConfig, type HeroConfig, type HeroSlide, DEFAULT_HERO } from '@/
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
