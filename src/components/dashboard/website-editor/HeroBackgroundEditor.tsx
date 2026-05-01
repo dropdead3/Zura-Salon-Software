@@ -85,6 +85,7 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
         value={config.background_url}
         posterValue={config.background_poster_url}
         kind={kind}
+        qualityProfile="hero"
         onChange={({ url, posterUrl, kind: k }) => {
           const wasNewImage = k === 'image' && url && url !== config.background_url;
           onChange({
