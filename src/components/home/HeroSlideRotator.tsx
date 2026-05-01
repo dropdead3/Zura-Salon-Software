@@ -211,6 +211,26 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
   const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
 
+  // Stable foreground min-height: when slides change alignment (left → right),
+  // the outgoing slide fades out at its anchor and the incoming slide fades
+  // in at the new anchor. Holding a measured min-height on the shell prevents
+  // the section from collapsing in the gap between exit and enter.
+  const slideContentRef = useRef<HTMLDivElement | null>(null);
+  const [shellMinHeight, setShellMinHeight] = useState<number>(0);
+  useEffect(() => {
+    const el = slideContentRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const h = Math.ceil(entry.contentRect.height);
+        // Only grow — never shrink mid-transition (would cause its own jump).
+        setShellMinHeight((prev) => (h > prev ? h : prev));
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [activeIndex]);
+
   return (
     <section
       data-theme={hasBackground ? 'dark' : 'light'}
