@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { EditorCard } from './EditorCard';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
+import { FocalPointPicker } from './inputs/FocalPointPicker';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 import {
