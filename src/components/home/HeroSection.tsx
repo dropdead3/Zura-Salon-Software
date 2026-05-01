@@ -359,6 +359,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <button
                     onClick={() => setConsultationOpen(true)}
+                    // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.primaryButtonClass,
@@ -376,6 +377,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 >
                   <Link
                     to="/booking"
+                    // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.secondaryButtonClass,
