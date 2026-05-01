@@ -274,11 +274,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   useEffect(() => {
     if (!open) return;
     if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
-    if (isPreview) return; // Show full bar but never tick down during QA.
     if (isHovered) return; // Pause while reader is engaged — resume from current.
     const interval = window.setInterval(() => {
       setSecondsLeft((s) => {
         if (s <= 1) {
+          // In editor preview, loop the countdown so operators can QA the
+          // hairline + last-3s pulse + numeric label without the popup
+          // collapsing mid-edit. Real visitors get the soft-close + FAB.
+          if (isPreview) return autoMinimizeSeconds;
           window.clearInterval(interval);
           handleSoftClose();
           return 0;
