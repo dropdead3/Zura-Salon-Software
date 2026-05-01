@@ -157,7 +157,7 @@ export function ImageWithFocalPointInput({
         <>
           {/* Header: focal-point label + default badge / reset */}
           <div className="flex items-center justify-between">
-            <Label className="text-xs inline-flex items-center gap-1.5">
+            <Label size="xs" className="inline-flex items-center gap-1.5">
               <Crosshair className="h-3.5 w-3.5" />
               Focal Point
               {isDefault && <DefaultBadge />}

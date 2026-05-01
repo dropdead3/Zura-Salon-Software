@@ -967,7 +967,7 @@ export function PromotionalPopupEditor() {
               <div className="mt-3 space-y-3">
                 {treatmentOptions.length > 0 ? (
                   <div>
-                    <Label className="text-xs">Treatment</Label>
+                    <Label size="xs">Treatment</Label>
                     <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
                       {treatmentOptions.map(({ value, label, hint }) => {
                         const active = activeTreatment === value;
@@ -996,7 +996,7 @@ export function PromotionalPopupEditor() {
                   </p>
                 )}
                 <div>
-                  <Label className="text-xs">Alt text</Label>
+                  <Label size="xs">Alt text</Label>
                   <Input
                     className="mt-1.5"
                     value={formData.imageAlt ?? ''}
