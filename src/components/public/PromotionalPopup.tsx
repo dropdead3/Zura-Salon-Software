@@ -714,6 +714,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
   return (
     <div
+      key={animationNonce}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500"
       onClick={(e) => {
         if (e.target === e.currentTarget) handleSoftClose();
