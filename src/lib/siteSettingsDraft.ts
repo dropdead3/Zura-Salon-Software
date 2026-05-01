@@ -203,8 +203,8 @@ export async function discardSiteSettingsDrafts(orgId: string): Promise<number> 
   // reverted draft state without a full reload.
   if (typeof window !== 'undefined') {
     try {
-      // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
       window.dispatchEvent(
+        // eslint-disable-next-line no-restricted-syntax -- Canonical owner; see doctrine.
         new CustomEvent('site-settings-draft-write', { detail: { orgId, key: null } }),
       );
     } catch { /* SSR */ }
