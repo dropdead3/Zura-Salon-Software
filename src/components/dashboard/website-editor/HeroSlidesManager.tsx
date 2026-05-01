@@ -257,25 +257,87 @@ function SlideRow({
             )}
           </div>
 
-          {/* Per-slide overlay override */}
+          {/* Per-slide overlay override (mode + strength share one toggle) */}
           <div className="space-y-2 pt-3 border-t border-border/30">
             <ToggleInput
-              label="Override Overlay Darkness"
-              value={slide.overlay_opacity !== null}
-              onChange={(v) => onUpdate(slide.id, { overlay_opacity: v ? 0.4 : null })}
-              description="Use a different overlay than the section default"
+              label="Override Overlay"
+              value={slide.overlay_opacity !== null || slide.overlay_mode != null}
+              onChange={(v) =>
+                onUpdate(slide.id, {
+                  overlay_opacity: v ? sectionOverlayOpacity : null,
+                  overlay_mode: v ? sectionOverlayMode : null,
+                })
+              }
+              description="Use a different overlay tint or strength than the section default"
             />
-            {slide.overlay_opacity !== null && (
-              <SliderInput
-                label="Slide Overlay"
-                value={slide.overlay_opacity}
-                onChange={(v) => onUpdate(slide.id, { overlay_opacity: v })}
-                min={0}
-                max={0.8}
-                step={0.05}
-              />
+            {(slide.overlay_opacity !== null || slide.overlay_mode != null) && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Slide Overlay Type</Label>
+                  <div className="flex gap-2">
+                    {([
+                      { id: 'darken', label: 'Darken', icon: Moon },
+                      { id: 'lighten', label: 'Lighten', icon: Sun },
+                    ] as const).map(({ id, label, icon: Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => onUpdate(slide.id, { overlay_mode: id })}
+                        className={cn(
+                          'flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] border transition-colors',
+                          (slide.overlay_mode ?? sectionOverlayMode) === id
+                            ? 'bg-foreground text-background border-foreground'
+                            : 'bg-background text-muted-foreground border-border hover:border-foreground/40',
+                        )}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <SliderInput
+                  label={(slide.overlay_mode ?? sectionOverlayMode) === 'lighten' ? 'Slide Overlay Lightness' : 'Slide Overlay Darkness'}
+                  value={slide.overlay_opacity ?? sectionOverlayOpacity}
+                  onChange={(v) => onUpdate(slide.id, { overlay_opacity: v })}
+                  min={0}
+                  max={0.8}
+                  step={0.05}
+                />
+              </>
             )}
           </div>
+
+          {/* Per-slide focal point override */}
+          {!!focalImageUrl && sectionBgFit !== 'contain' && (
+            <div className="space-y-2 pt-3 border-t border-border/30">
+              <ToggleInput
+                label="Override Focal Point"
+                value={focalOverridden}
+                onChange={(v) =>
+                  onUpdate(slide.id, {
+                    background_focal_x: v ? sectionFocalX : null,
+                    background_focal_y: v ? sectionFocalY : null,
+                  })
+                }
+                description="Anchor a different region of this slide's background"
+              />
+              {focalOverridden && (
+                <FocalPointPicker
+                  imageUrl={focalImageUrl}
+                  isVideo={resolvedBgType === 'video'}
+                  x={resolvedFocalX}
+                  y={resolvedFocalY}
+                  onChange={(nx, ny) =>
+                    onUpdate(slide.id, { background_focal_x: nx, background_focal_y: ny })
+                  }
+                  onReset={() =>
+                    onUpdate(slide.id, { background_focal_x: 50, background_focal_y: 50 })
+                  }
+                  label="Slide Focal Point"
+                />
+              )}
+            </div>
+          )}
 
           {/* Per-slide scrim style override — falls back to section-level
               when null. Critical for video slides whose luminance flickers. */}
