@@ -167,6 +167,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const mutedTone = heroColors.subheadlineClass || '';
   // Per-slide alignment overrides the section default; null/undefined inherits.
   const alignment = resolveHeroAlignment(slide.content_alignment ?? config.content_alignment);
+  // Container-aware spacing — see HeroSection for full rationale.
+  const { ref: contentWrapRef, width: contentWidth } = useContainerWidth<HTMLDivElement>();
+  const forceCompact = contentWidth !== null && contentWidth < COMPACT_FORCE_BREAKPOINT;
+  const spacing = resolveHeroSpacing(config.content_spacing, forceCompact);
 
   return (
     <section
