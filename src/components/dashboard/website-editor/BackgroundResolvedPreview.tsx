@@ -27,6 +27,8 @@ interface BackgroundResolvedPreviewProps {
   overlayOpacity: number;
   scrimStyle?: HeroScrimStyle;
   scrimStrength?: number;
+  /** When true, captions the preview as inherited (not a per-slide media). */
+  inherited?: boolean;
 }
 
 const SCRIM_LABEL: Record<HeroScrimStyle, string> = {
@@ -59,9 +61,19 @@ export function BackgroundResolvedPreview(props: BackgroundResolvedPreviewProps)
 
   return (
     <div className="space-y-2">
-      <Label className="text-xs">Resolved Preview</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs">Resolved Preview</Label>
+        {props.inherited && (
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            inherited from section
+          </span>
+        )}
+      </div>
       <div
-        className="relative w-full overflow-hidden rounded-lg border border-border bg-muted"
+        className={cn(
+          'relative w-full overflow-hidden rounded-lg border bg-muted',
+          props.inherited ? 'border-dashed border-border/60' : 'border-border',
+        )}
         style={{ aspectRatio: '16 / 9' }}
       >
         <HeroBackground

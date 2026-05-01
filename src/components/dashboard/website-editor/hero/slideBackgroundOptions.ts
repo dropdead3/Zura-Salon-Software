@@ -12,7 +12,7 @@ export type SlideBackgroundType = 'inherit' | 'image' | 'video';
 export const SLIDE_BG_TYPE_OPTIONS = ['inherit', 'image', 'video'] as const satisfies readonly SlideBackgroundType[];
 
 export const SLIDE_BG_TYPE_LABELS: Record<SlideBackgroundType, string> = {
-  inherit: 'None',
+  inherit: 'Inherit',
   image: 'Image',
   video: 'Video',
 };
