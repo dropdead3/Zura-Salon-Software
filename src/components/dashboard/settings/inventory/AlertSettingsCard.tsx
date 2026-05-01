@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useInventoryAlertSettings, useUpsertInventoryAlertSettings } from '@/hooks/useInventoryAlertSettings';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 export function AlertSettingsCard() {
   const { data: settings, isLoading } = useInventoryAlertSettings();
@@ -84,7 +85,7 @@ export function AlertSettingsCard() {
     auditFrequency !== (settings.audit_frequency ?? 'monthly') ||
     auditReminderEnabled !== (settings.audit_reminder_enabled ?? true) ||
     auditReminderDaysBefore !== (settings.audit_reminder_days_before ?? 3) ||
-    JSON.stringify(currentAuditRoles.sort()) !== JSON.stringify([...serverAuditRoles].sort())
+    !isStructurallyEqual(currentAuditRoles.sort(), [...serverAuditRoles].sort())
   ) : true;
 
   const handleSave = () => {

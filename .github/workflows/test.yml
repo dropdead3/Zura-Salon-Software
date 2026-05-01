@@ -1,5 +1,23 @@
 name: Test
 
+# CI gate for canon enforcement.
+#
+# Why both `test` and `lint` are here:
+#   - `bun run test` runs Vitest, which includes
+#     `src/test/lint-config-resolution.test.ts` — the meta-resolution test
+#     that asserts every doctrine selector survives flat-config replacement.
+#     This catches "lint canon looks enforced but is silently dropped"
+#     regressions BEFORE any actual lint output is produced.
+#
+#   - `bun run lint` runs `eslint .`, which exercises the
+#     `no-restricted-syntax` rule against real code. This catches
+#     violations of the doctrine itself (Loader2 outside buttons,
+#     ad-hoc unsaved-changes dialogs, brittle JSON.stringify dirty
+#     compares, foreign dispatches of `site-settings-draft-write`).
+#
+# Both must pass on every PR. If either is removed, the entire
+# canon-enforcement chain becomes silently advisory.
+
 on:
   push:
     branches: [main]
@@ -15,3 +33,6 @@ jobs:
           bun-version: latest
       - run: bun install --frozen-lockfile
       - run: bun run test
+      # Lint runs after tests so a green Vitest run still produces
+      # actionable output even when lint has unrelated noise.
+      - run: bun run lint

@@ -10,6 +10,7 @@ import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { usePTOBalances } from '@/hooks/usePTOBalances';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface Props {
   userId: string;
@@ -107,7 +108,7 @@ export function ScheduleTab({ userId }: Props) {
             locations.map(loc => {
               const current = edits[loc.id] || [];
               const original = schedules?.find(s => s.location_id === loc.id)?.work_days || [];
-              const dirty = JSON.stringify(current.sort()) !== JSON.stringify([...original].sort());
+              const dirty = !isStructurallyEqual(current.sort(), [...original].sort());
               return (
                 <div key={loc.id} className="p-3 rounded-lg border border-border/60">
                   <div className="flex items-center justify-between mb-2">

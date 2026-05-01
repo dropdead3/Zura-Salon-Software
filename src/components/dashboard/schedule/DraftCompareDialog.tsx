@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { DraftBooking } from '@/hooks/useDraftBookings';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 interface DraftCompareDialogProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface DraftCompareDialogProps {
 const WIZARD_STEPS = ['client', 'service', 'stylist', 'confirm'] as const;
 
 function fieldDiffers(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) !== JSON.stringify(b);
+  return !isStructurallyEqual(a, b);
 }
 
 function DiffCell({ label, valueA, valueB, renderValue }: {

@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { hslToHex, hexToHsl } from '@/lib/colorUtils';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 // ─── Theme presets ───
 const THEME_PRESETS: Record<string, { label: string; swatch: string; colors: WebsiteRetailThemeSettings['custom_colors'] }> = {
@@ -92,7 +93,7 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
     if (savedTheme) setLocal(savedTheme);
   }, [savedTheme]);
 
-  const hasChanges = savedTheme && JSON.stringify(local) !== JSON.stringify(savedTheme);
+  const hasChanges = savedTheme && !isStructurallyEqual(local, savedTheme);
 
   // Build preview URL with encoded theme
   const previewUrl = useMemo(() => {

@@ -67,6 +67,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 
 interface ProgramConfig {
@@ -308,7 +309,7 @@ export default function ProgramEditor() {
 
   // Track unsaved changes
   const hasUnsavedChanges = config && initialConfig ? 
-    JSON.stringify(config) !== JSON.stringify(initialConfig) : false;
+    !isStructurallyEqual(config, initialConfig) : false;
 
   const sensors = useSensors(
     useSensor(PointerSensor),

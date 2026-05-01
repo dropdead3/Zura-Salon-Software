@@ -21,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Infotainer } from '@/components/ui/Infotainer';
 import { PageExplainer } from '@/components/ui/PageExplainer';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 export function MultiLocationSection() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -115,7 +116,7 @@ export function MultiLocationSection() {
       key,
       locA: aSettings.find(s => s.setting_key === key),
       locB: bSettings.find(s => s.setting_key === key),
-      differs: JSON.stringify(aSettings.find(s => s.setting_key === key)?.setting_value) !== JSON.stringify(bSettings.find(s => s.setting_key === key)?.setting_value),
+      differs: !isStructurallyEqual(aSettings.find(s => s.setting_key === key)?.setting_value, bSettings.find(s => s.setting_key === key)?.setting_value),
     }));
   }, [compareLocA, compareLocB, allSettings]);
 

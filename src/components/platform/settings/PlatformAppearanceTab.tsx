@@ -21,6 +21,7 @@ import {
 import { PlatformButton } from '../ui/PlatformButton';
 import { PlatformThemeEditor } from './PlatformThemeEditor';
 import { PlatformLabel as Label } from '../ui/PlatformLabel';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
@@ -125,7 +126,7 @@ export function PlatformAppearanceTab() {
 
   useEffect(() => { setLocalBranding(branding); }, [branding]);
   useEffect(() => {
-    const isChanged = JSON.stringify(localBranding) !== JSON.stringify(branding);
+    const isChanged = !isStructurallyEqual(localBranding, branding);
     setHasChanges(isChanged);
   }, [localBranding, branding]);
 

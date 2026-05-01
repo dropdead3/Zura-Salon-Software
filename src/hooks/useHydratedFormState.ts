@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 /**
  * Editor form-state hydration that survives a refetch race.
@@ -78,7 +79,7 @@ export function useHydratedFormState<T>(
   }, [settings]);
 
   const isDirty =
-    JSON.stringify(formData) !== JSON.stringify(savedSnapshot);
+    !isStructurallyEqual(formData, savedSnapshot);
 
   return {
     formData,

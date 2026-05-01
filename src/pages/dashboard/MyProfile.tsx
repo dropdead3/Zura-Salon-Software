@@ -36,6 +36,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageCropModal } from '@/components/dashboard/ImageCropModal';
 import { Upload } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { isStructurallyEqual } from '@/lib/stableStringify';
 
 
 const DAYS_OF_WEEK = [
@@ -209,7 +210,7 @@ export default function MyProfile() {
   useEffect(() => {
     if (isReadOnly) return; // Don't track changes when impersonating
     
-    const isChanged = JSON.stringify(formData) !== JSON.stringify(initialFormData);
+    const isChanged = !isStructurallyEqual(formData, initialFormData);
     setHasUnsavedChanges(isChanged);
     
     if (isChanged && !showUnsavedToast) {
