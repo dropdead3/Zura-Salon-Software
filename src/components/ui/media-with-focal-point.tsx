@@ -1,23 +1,29 @@
 /**
- * ImageWithFocalPointInput — consolidated upload + focal-point editor.
+ * MediaWithFocalPoint — consolidated upload + focal-point editor primitive.
  *
  * Empty state: dashed dropzone (drag/drop, click to upload, paste URL).
  * Filled state: the uploaded image becomes the focal-point picker — click/drag
  * to anchor the most important region. Replace/Remove sit on hover overlay so
  * we don't render two stacked thumbnails (upload preview + focal picker).
  *
+ * Disabled focal mode (`focalDisabled`): when the surface that consumes the
+ * focal point has hidden the image (e.g. promo popup `corner-card` +
+ * `hidden-on-corner` treatment), tuning a focal point is meaningless. We dim
+ * the picker, suppress drag, and surface a tooltip explaining why. Replace /
+ * Remove still work — it's only the focal interaction that's locked.
+ *
  * Stored values:
  *   value (url), focalX (0..100), focalY (0..100)
  *
- * Use this anywhere a media field also wants per-surface focal control. The
- * standalone `FocalPointPicker` is still available when the image source is
- * managed elsewhere (e.g. theme-level hero media).
+ * The standalone `FocalPointPicker` is still used by the hero editors where
+ * upload (image OR video) and focal source (poster URL when video) are
+ * deliberately decoupled.
  */
 import { useCallback, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Upload, X, Loader2, Crosshair } from 'lucide-react';
+import { Upload, X, Loader2, Crosshair, Lock } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizeImage, autoCrunchImage, formatFileSize } from '@/lib/image-utils';
@@ -30,7 +36,7 @@ import { toast } from 'sonner';
 import { DefaultBadge } from '@/components/ui/default-badge';
 import { cn } from '@/lib/utils';
 
-interface ImageWithFocalPointInputProps {
+interface MediaWithFocalPointProps {
   value: string;
   onChange: (url: string) => void;
   focalX: number;
@@ -42,9 +48,17 @@ interface ImageWithFocalPointInputProps {
   placeholder?: string;
   /** Helper text shown below the picker when an image is set. */
   helper?: string;
+  /**
+   * When true, the focal-point picker is locked: dragging is suppressed, the
+   * reticle dims, and a tooltip explains why. Use when the consuming surface
+   * won't render the image (so focal tuning has no effect).
+   */
+  focalDisabled?: boolean;
+  /** Tooltip message shown when `focalDisabled` is true. */
+  focalDisabledReason?: string;
 }
 
-export function ImageWithFocalPointInput({
+export function MediaWithFocalPoint({
   value,
   onChange,
   focalX,
@@ -55,7 +69,9 @@ export function ImageWithFocalPointInput({
   pathPrefix = 'uploads',
   placeholder = 'https://...',
   helper = 'Click or drag on the image to anchor the most important area — it stays in view across modal, side-rail, and corner-card layouts.',
-}: ImageWithFocalPointInputProps) {
+  focalDisabled = false,
+  focalDisabledReason = "This surface doesn't render the image, so the focal point has no effect here.",
+}: MediaWithFocalPointProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
   const [isDragging, setIsDragging] = useState(false);
@@ -106,7 +122,7 @@ export function ImageWithFocalPointInput({
       toast.success(`Image uploaded${crunchNote}`);
     } catch (err) {
       const e = err as { message?: string; statusCode?: string | number };
-      console.error(`[ImageWithFocalPointInput] ${stage} failure:`, {
+      console.error(`[MediaWithFocalPoint] ${stage} failure:`, {
         stage, bucket, fileType: file.type, fileSize: file.size, error: e?.message ?? err,
       });
       if (stage === 'decode') {
@@ -157,12 +173,27 @@ export function ImageWithFocalPointInput({
         <>
           {/* Header: focal-point label + default badge / reset */}
           <div className="flex items-center justify-between">
-            <Label size="xs" className="inline-flex items-center gap-1.5">
+            <Label
+              size="xs"
+              className={cn(
+                'inline-flex items-center gap-1.5',
+                focalDisabled && 'text-muted-foreground/60',
+              )}
+            >
               <Crosshair className="h-3.5 w-3.5" />
               Focal Point
-              {isDefault && <DefaultBadge />}
+              {!focalDisabled && isDefault && <DefaultBadge />}
+              {focalDisabled && (
+                <span
+                  title={focalDisabledReason}
+                  className="inline-flex items-center gap-1 font-sans normal-case tracking-normal text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded-full border border-border/60"
+                >
+                  <Lock className="h-2.5 w-2.5" />
+                  Not used here
+                </span>
+              )}
             </Label>
-            {!isDefault && (
+            {!focalDisabled && !isDefault && (
               <button
                 type="button"
                 onClick={onFocalReset}
@@ -174,40 +205,61 @@ export function ImageWithFocalPointInput({
           </div>
 
           {/* Combined preview: image acts as the focal-point picker. Hover
-              overlay surfaces Replace/Remove. Reticle marks current anchor. */}
+              overlay surfaces Replace/Remove. Reticle marks current anchor.
+              When focalDisabled, drag is suppressed and the surface dims —
+              Replace/Remove still work via stopPropagation on their handlers. */}
           <div
             ref={pickerRef}
-            onPointerDown={(e) => {
+            onPointerDown={focalDisabled ? undefined : (e) => {
               draggingFocal.current = true;
               (e.target as Element).setPointerCapture?.(e.pointerId);
               updateFocalFromEvent(e.clientX, e.clientY);
             }}
-            onPointerMove={(e) => {
+            onPointerMove={focalDisabled ? undefined : (e) => {
               if (!draggingFocal.current) return;
               updateFocalFromEvent(e.clientX, e.clientY);
             }}
-            onPointerUp={(e) => {
+            onPointerUp={focalDisabled ? undefined : (e) => {
               draggingFocal.current = false;
               (e.target as Element).releasePointerCapture?.(e.pointerId);
             }}
             onPointerCancel={() => { draggingFocal.current = false; }}
-            className="relative w-full overflow-hidden rounded-lg border border-border bg-muted cursor-crosshair select-none touch-none group"
+            title={focalDisabled ? focalDisabledReason : undefined}
+            className={cn(
+              'relative w-full overflow-hidden rounded-lg border border-border bg-muted select-none touch-none group',
+              focalDisabled ? 'cursor-not-allowed' : 'cursor-crosshair',
+            )}
             style={{ aspectRatio: '16 / 9' }}
           >
             <img
               src={value}
               alt=""
               draggable={false}
-              className="absolute inset-0 h-full w-full object-cover pointer-events-none"
+              className={cn(
+                'absolute inset-0 h-full w-full object-cover pointer-events-none transition-opacity',
+                focalDisabled && 'opacity-40',
+              )}
               style={{ objectPosition: `${focalX}% ${focalY}%` }}
             />
-            {/* Reticle */}
+            {/* Reticle — dims when disabled to reinforce that it's inert. */}
             <div
-              className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.5)] pointer-events-none"
+              className={cn(
+                'absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.5)] pointer-events-none transition-opacity',
+                focalDisabled && 'opacity-40',
+              )}
               style={{ left: `${focalX}%`, top: `${focalY}%` }}
             >
               <div className="absolute left-1/2 top-1/2 w-1 h-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
             </div>
+            {/* Disabled overlay caption */}
+            {focalDisabled && (
+              <div className="absolute inset-x-0 bottom-0 px-3 py-2 bg-background/80 backdrop-blur-sm border-t border-border pointer-events-none">
+                <p className="font-sans text-[10px] text-muted-foreground inline-flex items-center gap-1.5">
+                  <Lock className="h-3 w-3" />
+                  {focalDisabledReason}
+                </p>
+              </div>
+            )}
             {/* Replace / Remove — hover overlay sits in the corner so it
                 doesn't compete with the focal reticle in the center. */}
             <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -232,7 +284,7 @@ export function ImageWithFocalPointInput({
             </div>
           </div>
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className={cn('text-[11px] text-muted-foreground', focalDisabled && 'opacity-60')}>
             {helper} ({focalX}%, {focalY}%)
           </p>
         </>
