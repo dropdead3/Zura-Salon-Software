@@ -248,13 +248,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   useEffect(() => {
     if (!isPreview) return;
     const onReset = () => {
+      // Full lifecycle reset: clear the one-shot trigger guard, dismiss
+      // any visible FAB, force-reset the countdown to its full duration
+      // (otherwise a prior cycle that completed leaves secondsLeft at 0
+      // and the next open auto-soft-closes immediately), and re-open.
       triggeredRef.current = false;
       setShowFab(false);
+      if (autoMinimizeSeconds !== null) {
+        setSecondsLeft(autoMinimizeSeconds);
+      }
       setOpen(true);
     };
     window.addEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
     return () => window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
-  }, [isPreview]);
+  }, [isPreview, autoMinimizeSeconds]);
 
   // Echo lifecycle phase to the editor (preview only) so the "Restart
   // popup preview" button can render a context-aware label without
