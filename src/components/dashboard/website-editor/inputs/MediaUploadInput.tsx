@@ -62,6 +62,14 @@ export interface MediaUploadChangePayload {
   kind: MediaKind;
   /** Present after a fresh upload; absent for pasted URLs / cleared values. */
   meta?: MediaUploadMeta;
+  /**
+   * High-fidelity JPEG `data:` URL captured from the **pre-crunch raw bitmap**
+   * (≤1600px long edge). Surfaced so AI consumers (focal-point detection,
+   * alt-text) can analyze the source pixels instead of the downsampled WebP
+   * we ship to Storage. Absent for non-image uploads, sources already
+   * smaller than the analysis target, or pasted URLs.
+   */
+  analysisDataUrl?: string;
 }
 
 interface MediaUploadInputProps {
@@ -176,9 +184,11 @@ export function MediaUploadInput({
     // the validator surface a real error.
     let workingFile = file;
     let crunchNote = '';
+    let analysisDataUrl: string | undefined;
     if (isImageInitial) {
       const crunched = await autoCrunchImage(file);
       workingFile = crunched.file;
+      analysisDataUrl = crunched.analysisDataUrl;
       if (crunched.didCrunch) {
         crunchNote = ` · compressed ${formatFileSize(crunched.originalSizeBytes)} → ${formatFileSize(crunched.finalSizeBytes)}`;
       }
@@ -267,6 +277,7 @@ export function MediaUploadInput({
             format: uploadContentType,
             optimizedWithProfile: qualityProfile,
           },
+          analysisDataUrl,
         });
         toast.success(`Image uploaded${crunchNote}`);
       } else {

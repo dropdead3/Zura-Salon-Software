@@ -172,7 +172,44 @@ export interface AutoCrunchResult {
   originalSizeBytes: number;
   finalSizeBytes: number;
   didCrunch: boolean;
+  /**
+   * A JPEG `data:` URL encoded directly from the **pre-crunch raw bitmap**
+   * at ANALYSIS_MAX_EDGE px on the long edge. Surfaced so AI consumers
+   * (focal-point detection, alt-text) can analyze the source pixels instead
+   * of the downsampled WebP we ship to Storage. Absent when:
+   *   - the source was already smaller than the crunched output (no benefit)
+   *   - encoding failed
+   *   - autoCrunch was skipped entirely
+   * Callers should fall back to the public URL when this is undefined.
+   */
+  analysisDataUrl?: string;
   skippedReason?: 'unsupported-format' | 'not-image' | 'within-budget' | 'error';
+}
+
+// Subject-detection sweet spot for vision LLMs — large enough for accurate
+// face/feature anchoring, small enough to inline as base64 without blowing
+// the edge function's request body.
+const ANALYSIS_MAX_EDGE = 1600;
+const ANALYSIS_QUALITY = 0.85;
+
+async function encodeBitmapToAnalysisDataUrl(bitmap: ImageBitmap): Promise<string | null> {
+  try {
+    const ratio = Math.min(1, ANALYSIS_MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * ratio));
+    const h = Math.max(1, Math.round(bitmap.height * ratio));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    // toDataURL is synchronous and avoids an extra blob→FileReader hop.
+    return canvas.toDataURL('image/jpeg', ANALYSIS_QUALITY);
+  } catch {
+    return null;
+  }
 }
 
 async function encodeBitmapToWebp(
@@ -225,6 +262,18 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
     return baseResult({ skippedReason: 'error' });
   }
 
+  // Capture an analysis-grade JPEG from the RAW bitmap *before* we crunch.
+  // For ≥3200px DSLR/phone shots this is materially sharper for face/subject
+  // detection than the post-crunch WebP we ship to Storage, since it skips
+  // the second downscale pass entirely. Only worth emitting when the source
+  // has more pixels than the analysis target — otherwise we're just round-
+  // tripping through a JPEG re-encode for nothing.
+  let analysisDataUrl: string | undefined;
+  if (Math.max(bitmap.width, bitmap.height) > ANALYSIS_MAX_EDGE) {
+    const dataUrl = await encodeBitmapToAnalysisDataUrl(bitmap);
+    if (dataUrl) analysisDataUrl = dataUrl;
+  }
+
   const needsCrunch =
     file.size > CRUNCH_TRIGGER_BYTES ||
     bitmap.width > CRUNCH_TRIGGER_DIMENSION ||
@@ -232,7 +281,7 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
 
   if (!needsCrunch) {
     bitmap.close();
-    return baseResult({ skippedReason: 'within-budget' });
+    return baseResult({ skippedReason: 'within-budget', analysisDataUrl });
   }
 
   try {
@@ -244,7 +293,7 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
     bitmap.close();
 
     if (!blob || blob.size === 0) {
-      return baseResult({ skippedReason: 'error' });
+      return baseResult({ skippedReason: 'error', analysisDataUrl });
     }
 
     const baseName = file.name.replace(/\.[^.]+$/, '') || 'image';
@@ -257,10 +306,11 @@ export async function autoCrunchImage(file: File): Promise<AutoCrunchResult> {
       originalSizeBytes: original,
       finalSizeBytes: crunched.size,
       didCrunch: true,
+      analysisDataUrl,
     };
   } catch {
     bitmap.close();
-    return baseResult({ skippedReason: 'error' });
+    return baseResult({ skippedReason: 'error', analysisDataUrl });
   }
 }
 
