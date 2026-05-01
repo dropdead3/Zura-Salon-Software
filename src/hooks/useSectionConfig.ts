@@ -740,6 +740,13 @@ export function useFooterCTAConfig() {
   return useSectionConfig<FooterCTAConfig>('section_footer_cta', DEFAULT_FOOTER_CTA);
 }
 
+export function useStickyFooterBarConfig() {
+  return useSectionConfig<StickyFooterBarConfig>(
+    'section_sticky_footer_bar',
+    DEFAULT_STICKY_FOOTER_BAR,
+  );
+}
+
 export function useLocationsSectionConfig() {
   return useSectionConfig<LocationsSectionConfig>('section_locations', DEFAULT_LOCATIONS_SECTION);
 }
