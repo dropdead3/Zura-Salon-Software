@@ -76,6 +76,45 @@ export default tseslint.config(
     },
   },
   {
+    // Site Settings Event Ownership canon.
+    // ──────────────────────────────────────────────────────────────────
+    // The `site-settings-draft-write` CustomEvent is the single signal
+    // that tells the LivePreviewPanel iframe to invalidate its
+    // site-settings query cache. It MUST carry properly scoped
+    // {orgId, key} detail — the May 2026 promo-popup snap-back regression
+    // was caused by an empty-detail dispatch from `triggerPreviewRefresh()`
+    // that triggered a broad invalidation race.
+    //
+    // Doctrine: `src/lib/siteSettingsDraft.ts` is the SOLE owner of this
+    // event. Every dispatch must originate from a real write path there
+    // (writeSiteSettingDraft, publishSiteSettingsDrafts, discardSiteSettingsDrafts).
+    //
+    // Override: if you have a legitimate reason to dispatch this event
+    // from a new write path, move it into siteSettingsDraft.ts and call
+    // it from there. Do NOT add `eslint-disable-next-line` — there is
+    // no valid call site outside that file.
+    //
+    // Pairs with: src/test/lint-rule-site-settings-event.test.ts
+    files: ["**/*.{ts,tsx}"],
+    ignores: [
+      "src/lib/siteSettingsDraft.ts",
+      "src/test/lint-fixtures/**",
+      // Vitest tests may legitimately simulate the event for unit coverage.
+      "src/**/__tests__/**",
+      "src/test/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          // Match: new CustomEvent('site-settings-draft-write', ...)
+          selector: "NewExpression[callee.name='CustomEvent'][arguments.0.type='Literal'][arguments.0.value='site-settings-draft-write']",
+          message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
+        },
+      ],
+    },
+  },
+  {
     // Platform-primitive isolation gate. Banning raw shadcn primitives in
     // the platform layer prevents org-theme tokens (--primary, --background,
     // --muted, etc.) from bleeding into platform admin surfaces. Every

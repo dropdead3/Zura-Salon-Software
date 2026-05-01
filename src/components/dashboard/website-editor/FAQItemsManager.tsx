@@ -32,6 +32,7 @@ import {
 } from '@/hooks/useFAQItems';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import {
   DndContext,
@@ -162,6 +163,7 @@ function SortableItem({ item, index, onUpdate, onRemove }: SortableItemProps) {
 }
 
 export function FAQItemsManager() {
+  const __saveTelemetry = useSaveTelemetry('faq-items-manager');
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id ?? null;
   const { data, isLoading } = useFAQItems();
@@ -312,7 +314,7 @@ export function FAQItemsManager() {
 
       toast.success('FAQ items saved');
       clearPreviewOverride('faq_items', orgId);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch (e) {
       toast.error('Failed to save FAQ items');
       console.error(e);

@@ -16,9 +16,11 @@ import { UrlInput } from './inputs/UrlInput';
 import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 
 export function NewClientEditor() {
+  const __saveTelemetry = useSaveTelemetry('new-client-editor');
   const { data, isLoading, isSaving, update } = useNewClientConfig();
   const [localConfig, setLocalConfig] = useState<NewClientConfig>(DEFAULT_NEW_CLIENT);
   const debouncedConfig = useDebounce(localConfig, 300);
@@ -37,7 +39,7 @@ export function NewClientEditor() {
       await update(localConfig);
       toast.success('New Client section saved');
       clearPreviewOverride('section_new_client', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

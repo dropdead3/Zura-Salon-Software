@@ -12,6 +12,8 @@
  *   full document re-render.
  */
 
+import { emitAmbientTelemetry } from './editor-telemetry';
+
 export interface PreviewRefreshDetail {
   /** Optional org scope — if provided, only that org's site-settings invalidate. */
   orgId?: string;
@@ -29,6 +31,7 @@ export function triggerPreviewRefresh(detail: PreviewRefreshDetail = {}) {
   // `writeSiteSettingDraft` in src/lib/siteSettingsDraft.ts — do NOT
   // duplicate it here with empty detail, that caused a broad invalidation
   // race that snapped editors back to defaults after save.
+  emitAmbientTelemetry('preview-refresh-requested', detail);
   window.dispatchEvent(new CustomEvent('website-preview-refresh', { detail }));
 }
 
@@ -36,5 +39,6 @@ export function triggerPreviewRefresh(detail: PreviewRefreshDetail = {}) {
  * Hard reload — fully remount the iframe. Use sparingly.
  */
 export function triggerPreviewHardReload() {
+  emitAmbientTelemetry('preview-hard-reload-requested');
   window.dispatchEvent(new CustomEvent('website-preview-hard-reload'));
 }

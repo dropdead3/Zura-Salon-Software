@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2, PanelBottom } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +80,7 @@ const SOCIAL_PLATFORMS = [
 ];
 
 export function FooterEditor() {
+  const __saveTelemetry = useSaveTelemetry('footer-editor');
   const queryClient = useQueryClient();
   const orgId = useSettingsOrgId();
   // Editor reads draft layer; public site reads live value.
@@ -123,7 +125,7 @@ export function FooterEditor() {
       await saveMutation.mutateAsync(config);
       setIsDirty(false);
       toast.success('Footer settings saved & published');
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save footer settings');
     }

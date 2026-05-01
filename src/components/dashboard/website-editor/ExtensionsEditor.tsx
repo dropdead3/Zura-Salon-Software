@@ -16,6 +16,7 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
 import { ExtensionReviewsChipsManager } from './ExtensionReviewsChipsManager';
@@ -27,6 +28,7 @@ const ICON_OPTIONS = [
 ];
 
 export function ExtensionsEditor() {
+  const __saveTelemetry = useSaveTelemetry('extensions-editor');
   const { data, isLoading, isSaving, update } = useExtensionsConfig();
   const [localConfig, setLocalConfig] = useState<ExtensionsConfig>(DEFAULT_EXTENSIONS);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -46,7 +48,7 @@ export function ExtensionsEditor() {
       await update(localConfig);
       toast.success('Extensions section saved');
       clearPreviewOverride('section_extensions', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

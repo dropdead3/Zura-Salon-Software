@@ -16,10 +16,12 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
 
 export function TestimonialsEditor() {
+  const __saveTelemetry = useSaveTelemetry('testimonials-editor');
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
   const [localConfig, setLocalConfig] = useState<TestimonialsConfig>(DEFAULT_TESTIMONIALS);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -39,7 +41,7 @@ export function TestimonialsEditor() {
       await update(localConfig);
       toast.success('Testimonials section saved');
       clearPreviewOverride('section_testimonials', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

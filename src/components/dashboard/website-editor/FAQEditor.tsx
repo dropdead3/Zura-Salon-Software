@@ -17,10 +17,12 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { FAQItemsManager } from './FAQItemsManager';
 
 export function FAQEditor() {
+  const __saveTelemetry = useSaveTelemetry('faq-editor');
   const { data, isLoading, isSaving, update } = useFAQConfig();
   const [localConfig, setLocalConfig] = useState<FAQConfig>(DEFAULT_FAQ);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -41,7 +43,7 @@ export function FAQEditor() {
       await update(localConfig);
       toast.success('FAQ section saved');
       clearPreviewOverride('section_faq', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }

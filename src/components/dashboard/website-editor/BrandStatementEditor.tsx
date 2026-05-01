@@ -14,6 +14,7 @@ import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
+import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,6 +100,7 @@ function SortableParagraph({ id, index, value, onChange, onRemove, canRemove }: 
 }
 
 export function BrandStatementEditor() {
+  const __saveTelemetry = useSaveTelemetry('brand-statement-editor');
   const { data, isLoading, isSaving, update } = useBrandStatementConfig();
   const [localConfig, setLocalConfig] = useState<BrandStatementConfig>(DEFAULT_BRAND_STATEMENT);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -123,7 +125,7 @@ export function BrandStatementEditor() {
       await update(localConfig);
       toast.success('Brand Statement saved');
       clearPreviewOverride('section_brand_statement', effectiveOrganization?.id ?? null);
-      triggerPreviewRefresh();
+      __saveTelemetry.event('save-success'); triggerPreviewRefresh(); __saveTelemetry.flush();
     } catch {
       toast.error('Failed to save');
     }
