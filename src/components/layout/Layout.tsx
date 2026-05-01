@@ -160,9 +160,13 @@ export function Layout({ children }: LayoutProps) {
 
   // Once the persisted theme catches up to the optimistic override, drop the
   // override so future setting changes flow through the normal hook path.
+  // Defer one frame so the optimistic class is held for at least one paint —
+  // prevents a perceptible flash on slow networks where the refetch lands
+  // before the iframe has had a chance to commit the new theme tokens.
   useEffect(() => {
     if (previewThemeOverride && previewThemeOverride === `theme-${websiteTheme}`) {
-      setPreviewThemeOverride(null);
+      const id = requestAnimationFrame(() => setPreviewThemeOverride(null));
+      return () => cancelAnimationFrame(id);
     }
   }, [previewThemeOverride, websiteTheme]);
 
