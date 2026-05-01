@@ -14,6 +14,9 @@ interface HeroBackgroundProps {
   url: string;
   posterUrl?: string;
   fit?: 'cover' | 'contain';
+  /** Focal point 0..100 (CSS object-position percentages). Defaults 50/50. */
+  focalX?: number;
+  focalY?: number;
   /**
    * 0..0.8 — back-compat strength. Used as `scrimStrength` fallback when
    * `scrimStrength` is not provided. Renders the same visual as `flat` style
@@ -24,6 +27,8 @@ interface HeroBackgroundProps {
   scrimStyle?: HeroScrimStyle;
   /** Scrim peak opacity (0..1). Defaults to overlayOpacity, then 0.55. */
   scrimStrength?: number;
+  /** Overlay tint: darken = black, lighten = white. Mutually exclusive. */
+  overlayMode?: 'darken' | 'lighten';
 }
 
 export function HeroBackground({
@@ -31,9 +36,12 @@ export function HeroBackground({
   url,
   posterUrl,
   fit = 'cover',
+  focalX = 50,
+  focalY = 50,
   overlayOpacity = 0.4,
   scrimStyle,
   scrimStrength,
+  overlayMode = 'darken',
 }: HeroBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -55,6 +63,9 @@ export function HeroBackground({
   const style: HeroScrimStyle = scrimStyle ?? 'flat';
   const strengthRaw = scrimStrength ?? overlayOpacity ?? 0.4;
   const strength = Math.max(0, Math.min(1, strengthRaw));
+  const fx = Math.max(0, Math.min(100, focalX));
+  const fy = Math.max(0, Math.min(100, focalY));
+  const objectPosition = `${fx}% ${fy}%`;
 
   return (
     // Extra bottom bleed helps when the site is rendered inside a scaled iframe
@@ -65,6 +76,7 @@ export function HeroBackground({
         <video
           ref={videoRef}
           className={`w-full h-full ${objectFit}`}
+          style={{ objectPosition }}
           autoPlay
           loop
           muted
@@ -79,6 +91,7 @@ export function HeroBackground({
           src={url}
           alt=""
           className={`w-full h-full ${objectFit}`}
+          style={{ objectPosition }}
           loading="eager"
           decoding="async"
         />
@@ -86,7 +99,7 @@ export function HeroBackground({
       {style !== 'none' && strength > 0 && (
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: buildScrimBackground(style, strength) }}
+          style={{ background: buildScrimBackground(style, strength, overlayMode) }}
         />
       )}
     </div>
@@ -95,10 +108,16 @@ export function HeroBackground({
 
 /**
  * Build the CSS `background` value for a scrim. Each style is tuned so that
- * `strength` represents the *peak* black opacity at the most opaque region,
- * letting operators dial intensity without changing shape.
+ * `strength` represents the *peak* tint opacity at the most opaque region,
+ * letting operators dial intensity without changing shape. `mode` selects
+ * the tint color: black for darken, white for lighten.
  */
-function buildScrimBackground(style: HeroScrimStyle, strength: number): string {
+function buildScrimBackground(
+  style: HeroScrimStyle,
+  strength: number,
+  mode: 'darken' | 'lighten' = 'darken',
+): string {
+  const rgb = mode === 'lighten' ? '255,255,255' : '0,0,0';
   const peak = strength.toFixed(3);
   // Mid-region intensity for smoother falloff (≈ 60% of peak).
   const mid = (strength * 0.6).toFixed(3);
@@ -107,19 +126,16 @@ function buildScrimBackground(style: HeroScrimStyle, strength: number): string {
 
   switch (style) {
     case 'flat':
-      return `rgba(0,0,0,${peak})`;
+      return `rgba(${rgb},${peak})`;
 
     case 'gradient-bottom':
-      // Darker at the bottom 60% (where most heroes anchor text), fades up.
-      return `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,${edge}) 35%, rgba(0,0,0,${mid}) 60%, rgba(0,0,0,${peak}) 100%)`;
+      return `linear-gradient(to bottom, rgba(${rgb},0) 0%, rgba(${rgb},${edge}) 35%, rgba(${rgb},${mid}) 60%, rgba(${rgb},${peak}) 100%)`;
 
     case 'gradient-radial':
-      // Darker toward the center where headlines typically render.
-      return `radial-gradient(ellipse at 50% 55%, rgba(0,0,0,${peak}) 0%, rgba(0,0,0,${mid}) 45%, rgba(0,0,0,${edge}) 75%, rgba(0,0,0,0) 100%)`;
+      return `radial-gradient(ellipse at 50% 55%, rgba(${rgb},${peak}) 0%, rgba(${rgb},${mid}) 45%, rgba(${rgb},${edge}) 75%, rgba(${rgb},0) 100%)`;
 
     case 'vignette':
-      // Darker at all edges, lighter in the middle (preserves subject focus).
-      return `radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,${mid}) 75%, rgba(0,0,0,${peak}) 100%)`;
+      return `radial-gradient(ellipse at center, rgba(${rgb},0) 40%, rgba(${rgb},${mid}) 75%, rgba(${rgb},${peak}) 100%)`;
 
     case 'none':
     default:
