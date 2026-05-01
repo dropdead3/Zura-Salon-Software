@@ -158,7 +158,10 @@ export function MediaUploadInput({
           .upload(fileName, blob, { contentType: 'image/webp', upsert: true });
         if (error) throw error;
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-        onChange({ url: urlData.publicUrl, posterUrl: '', kind: 'image' });
+        // Cache-bust the public URL so the iframe (and any <img>/preloader)
+        // can't serve a stale cached object under the same path on re-upload.
+        const bustedUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+        onChange({ url: bustedUrl, posterUrl: '', kind: 'image' });
         toast.success('Image uploaded');
       } else {
         // Video: upload original + capture+upload poster frame.
@@ -181,10 +184,10 @@ export function MediaUploadInput({
             .upload(posterName, posterBlob, { contentType: 'image/jpeg', upsert: true });
           if (!pErr) {
             const { data: pUrl } = supabase.storage.from(bucket).getPublicUrl(posterName);
-            posterUrl = pUrl.publicUrl;
+            posterUrl = `${pUrl.publicUrl}?t=${ts}`;
           }
         }
-        onChange({ url: vUrl.publicUrl, posterUrl, kind: 'video' });
+        onChange({ url: `${vUrl.publicUrl}?t=${ts}`, posterUrl, kind: 'video' });
         toast.success('Video uploaded');
       }
     } catch (err) {
