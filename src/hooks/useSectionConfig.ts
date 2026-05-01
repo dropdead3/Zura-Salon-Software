@@ -97,6 +97,11 @@ export interface HeroSlide {
   scrim_style?: HeroScrimStyle | null;
   /** Per-slide scrim strength override (0..1). null = inherit from section. */
   scrim_strength?: number | null;
+  /** Per-slide focal point override (0..100). null/undefined = inherit. */
+  background_focal_x?: number | null;
+  background_focal_y?: number | null;
+  /** Per-slide overlay mode override. null/undefined = inherit from section. */
+  overlay_mode?: 'darken' | 'lighten' | null;
   eyebrow: string;
   show_eyebrow: boolean;
   headline_text: string;
