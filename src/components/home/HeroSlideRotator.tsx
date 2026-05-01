@@ -42,7 +42,9 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     [config.rotating_words],
   );
   const showRotatingWords = !!config.show_rotating_words && rotatingWords.length > 0;
-  const wordInterval = Math.max(1500, config.word_rotation_interval ?? 5500);
+  // word_rotation_interval is stored in SECONDS (DB default 5.5, slider unit "s").
+  // Convert to ms for setInterval; floor at 1500ms to prevent strobe.
+  const wordInterval = Math.max(1500, (config.word_rotation_interval ?? 5.5) * 1000);
   const [wordIndex, setWordIndex] = useState(0);
   useEffect(() => {
     if (!showRotatingWords || isPreview || reduceMotion) return;
