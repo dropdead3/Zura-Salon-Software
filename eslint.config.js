@@ -16,7 +16,6 @@ import tseslint from "typescript-eslint";
 // — flat-config replacement semantics silently drop entries from the
 // consolidated arrays otherwise.
 import {
-  CONSOLIDATED_RESTRICTED_SYNTAX,
   defineScopedDoctrine,
   defineScopedImportDoctrine,
 } from "./eslint.helpers.js";
