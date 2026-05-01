@@ -1126,6 +1126,31 @@ export function PromotionalPopupEditor() {
           </Select>
         </Field>
         <Field
+          label="Auto-minimize after (seconds)"
+          hint="Popup collapses to the bottom 'See Offer' chip if the visitor doesn't engage. Range 5–60s. Leave blank to disable (popup stays open until closed)."
+        >
+          <Input
+            type="number"
+            min={5}
+            max={60}
+            value={
+              formData.autoMinimizeMs === null || formData.autoMinimizeMs === undefined
+                ? ''
+                : Math.round(formData.autoMinimizeMs / 1000)
+            }
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === '') {
+                handleChange('autoMinimizeMs', null);
+                return;
+              }
+              const seconds = Math.max(5, Math.min(60, Number(raw)));
+              handleChange('autoMinimizeMs', seconds * 1000);
+            }}
+            placeholder="15"
+          />
+        </Field>
+        <Field
           label="Accent color"
           hint="Drives the FAB and CTA accents. Match this to your brand's primary color."
         >
