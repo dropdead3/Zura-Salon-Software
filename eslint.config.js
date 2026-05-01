@@ -4,6 +4,72 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
+// ──────────────────────────────────────────────────────────────────────
+// Consolidated `no-restricted-syntax` doctrines — single source of truth.
+// ──────────────────────────────────────────────────────────────────────
+// Flat config REPLACES (does not merge) rule options when two blocks both
+// match a file. To safely scope a doctrine to a subset of files (e.g. hero,
+// platform, wizard) without dropping the global selectors, use
+// `defineScopedDoctrine({ files, ignores, extraSelectors })` below — it
+// imports CONSOLIDATED_RESTRICTED_SYNTAX and appends scope-specific entries.
+//
+// To add a new global selector: push to CONSOLIDATED_RESTRICTED_SYNTAX and
+// extend `src/test/lint-config-resolution.test.ts`. Do NOT spin up a new
+// config block with its own `no-restricted-syntax`.
+const CONSOLIDATED_RESTRICTED_SYNTAX = [
+  {
+    // Loader2 governance — see consolidated block doc below.
+    selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
+    message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
+  },
+  {
+    selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
+    message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
+  },
+  {
+    selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
+    message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
+  },
+  {
+    selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
+    message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
+  },
+  {
+    selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
+    message: "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
+  },
+];
+
+/**
+ * Build a flat-config block that scopes a doctrine to a subset of files
+ * WITHOUT dropping the global `CONSOLIDATED_RESTRICTED_SYNTAX` selectors.
+ *
+ * Usage:
+ *   defineScopedDoctrine({
+ *     files: ["src/components/home/Hero*.{ts,tsx}"],
+ *     ignores: [],                       // optional
+ *     extraSelectors: [{ selector, message }, ...],
+ *   })
+ *
+ * The helper concatenates `CONSOLIDATED_RESTRICTED_SYNTAX` with the
+ * scope-specific selectors so the resolved config keeps every doctrine
+ * active. Pair every new scope with an assertion in
+ * `src/test/lint-config-resolution.test.ts`.
+ */
+function defineScopedDoctrine({ files, ignores, extraSelectors = [] }) {
+  return {
+    files,
+    ...(ignores ? { ignores } : {}),
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        ...CONSOLIDATED_RESTRICTED_SYNTAX,
+        ...extraSelectors,
+      ],
+    },
+  };
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -49,167 +115,59 @@ export default tseslint.config(
     },
   },
   {
-    // Site Settings Event Ownership canon.
-    // ──────────────────────────────────────────────────────────────────
-    // The `site-settings-draft-write` CustomEvent is the single signal
-    // that tells the LivePreviewPanel iframe to invalidate its
-    // site-settings query cache. It MUST carry properly scoped
-    // {orgId, key} detail — the May 2026 promo-popup snap-back regression
-    // was caused by an empty-detail dispatch from `triggerPreviewRefresh()`
-    // that triggered a broad invalidation race.
+    // Site Settings Event Ownership canon — applies CONSOLIDATED_RESTRICTED_SYNTAX
+    // (defined at top of file) to most source files. The doctrines bundled
+    // in there are: Loader2 governance, UnsavedChangesDialog, Site Settings
+    // Event Ownership, Dirty-State Compare, and Hero Overlay Rename.
     //
-    // Doctrine: `src/lib/siteSettingsDraft.ts` is the SOLE owner of this
-    // event. Every dispatch must originate from a real write path there
-    // (writeSiteSettingDraft, publishSiteSettingsDrafts, discardSiteSettingsDrafts).
+    // FLAT-CONFIG REPLACEMENT WARNING:
+    //   ESLint flat config REPLACES (does not merge) `no-restricted-syntax`
+    //   options when two blocks both match a file. Any scope-specific
+    //   override (hero, platform, wizard) MUST go through the
+    //   `defineScopedDoctrine()` helper — it concatenates
+    //   CONSOLIDATED_RESTRICTED_SYNTAX with the scope's extra selectors so
+    //   nothing is silently dropped. The meta-test
+    //   `src/test/lint-config-resolution.test.ts` asserts every doctrine
+    //   selector survives in the resolved config for representative files.
     //
-    // Override: if you have a legitimate reason to dispatch this event
-    // from a new write path, move it into siteSettingsDraft.ts and call
-    // it from there. Do NOT add `eslint-disable-next-line` — there is
-    // no valid call site outside that file.
+    // Per-file ignore semantics (e.g. the Site Settings rule must not fire
+    // inside siteSettingsDraft.ts) are handled by `eslint-disable-next-line`
+    // overrides at the call site, not by splitting the rule across blocks.
     //
     // Pairs with: src/test/lint-rule-site-settings-event.test.ts
     files: ["**/*.{ts,tsx}"],
     ignores: [
-      // NOTE: do NOT ignore `src/lib/siteSettingsDraft.ts` here. The
+      // NOTE: do NOT ignore `src/lib/siteSettingsDraft.ts` here — the
       // owning module suppresses each dispatch with an inline
       // `eslint-disable-next-line no-restricted-syntax` comment instead.
-      // Excluding the file via `ignores` would also drop the consolidated
-      // Loader2 + UnsavedChanges selectors for that file (flat-config
-      // replacement semantics), losing coverage for unrelated doctrines.
-      //
-      // NOTE: do NOT ignore `src/test/lint-fixtures/**` here either. The
-      // top-level `ignores` already excludes the fixtures from `npm run
-      // lint`, and the smoke test uses ESLint's `ignore: false` option
-      // to deliberately bypass that exclusion. Re-listing the fixtures
-      // path here would silently drop this rule from the fixture's
-      // resolved config, making the test report 0 violations.
-      //
+      // NOTE: do NOT ignore `src/test/lint-fixtures/**` here — the
+      // smoke tests use ESLint's `ignore: false` option to bypass the
+      // top-level exclusion. Re-listing the fixtures path here would
+      // silently drop this rule from the fixture's resolved config.
       // Vitest tests may legitimately simulate the event for unit coverage.
       "src/**/__tests__/**",
       "src/test/**/*.test.{ts,tsx}",
     ],
     rules: {
-      // CONSOLIDATED `no-restricted-syntax` — single source of truth.
-      // ──────────────────────────────────────────────────────────────
-      // All `no-restricted-syntax` selectors live in THIS block, even
-      // ones whose doctrine is unrelated to site-settings event ownership.
-      //
-      // Why consolidated: flat-config replaces (does not merge) rule
-      // options when two blocks both match a file. Splitting selectors
-      // across blocks silently drops selectors on files matched by both,
-      // which is invisible without `eslint --print-config`. The meta-test
-      // `src/test/lint-config-resolution.test.ts` asserts every doctrine
-      // selector survives in the resolved config for representative files.
-      //
-      // To add a new selector: add a new object to the array below and
-      // a corresponding assertion in the meta-test. Do NOT spin up a new
-      // config block with its own `no-restricted-syntax` — that re-opens
-      // the shadowing footgun. The exception is per-file ignore semantics
-      // (e.g. the Site Settings rule must NOT fire inside siteSettingsDraft.ts);
-      // those are handled by `eslint-disable-next-line` overrides at the
-      // call site, not by splitting the rule across blocks.
-      "no-restricted-syntax": [
-        "error",
-        {
-          // Loader2 governance — ban Loader2 JSX outside button-like ancestors.
-          // Doctrine: <DashboardLoader /> for sections, <BootLuxeLoader /> for
-          // boot/Suspense gates, <Loader2 /> only inside <Button>, <button>,
-          // or any component whose name ends in `Button` / `IconButton`.
-          // Severity note: was 'warn' in the prior split-block layout; now
-          // promoted to 'error' as the consolidated array shares one severity.
-          // If the Wave 2 sweep hasn't fully cleared call sites yet, downgrade
-          // back to ['warn', ...] temporarily and re-run lint to inventory.
-          // Tracked in mem://architecture/visibility-contracts.md Deferral Register.
-          // Note: do NOT add `:not(:has(JSXElement))` — esquery's `:has()`
-          // walks the whole subtree and false-negatives self-closing Loader2.
-          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
-          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates. If this IS a button-internal spinner that the lint rule misclassified, add `// eslint-disable-next-line no-restricted-syntax` with a one-line reason.",
-        },
-        {
-          // UnsavedChangesDialog canon — ban ad-hoc "Unsaved changes" titles
-          // inside AlertDialogTitle. Use <UnsavedChangesDialog /> instead.
-          // Override: add `// eslint-disable-next-line no-restricted-syntax
-          // -- <reason>` for legitimate custom navigate-away dialogs.
-          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
-          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern. Pair with useUnsavedChangesGuard for the state machine.",
-        },
-        {
-          // Site Settings Event Ownership — `site-settings-draft-write` is
-          // owned exclusively by src/lib/siteSettingsDraft.ts. The owning
-          // module suppresses this selector with `// eslint-disable-next-line
-          // no-restricted-syntax` at each dispatch site. See doctrine in
-          // mem://architecture/site-settings-event-ownership.md and the
-          // smoke test src/test/lint-rule-site-settings-event.test.ts.
-          // esquery does not support `arguments.0.value` indexed-field
-          // syntax; use `:has()` with the literal value matcher instead.
-          selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
-          message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts. Do not dispatch it from helpers like triggerPreviewRefresh() — empty-detail dispatches caused the May 2026 promo-popup snap-back regression. If you need this event from a new write path, add the dispatch inside siteSettingsDraft.ts.",
-        },
-        {
-          // Dirty-State Compare Doctrine — ban
-          //   JSON.stringify(local) !== JSON.stringify(server)
-          // (and the `===` variant). JSON.stringify is key-order sensitive,
-          // so after a save round-trip the two strings differ even when the
-          // objects are semantically equal — leaving the "Unsaved changes"
-          // pill stuck on forever (May 2026 hero-editor regression).
-          //
-          // Use `useDirtyState(local, server)` from @/hooks/useDirtyState,
-          // or `isStructurallyEqual` from @/lib/stableStringify if you need
-          // the boolean outside an editor.
-          //
-          // Override: `// eslint-disable-next-line no-restricted-syntax
-          // -- <reason>` for the rare case where stringify equality with
-          // a known-stable producer is genuinely what you want (e.g.
-          // comparing already-canonicalized cache keys).
-          //
-          // Doctrine anchor: mem://architecture/site-settings-event-ownership.md
-          // Test: src/test/lint-rule-dirty-state.test.ts
-          selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
-          message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",
-        },
-        {
-          // Hero overlay rename canon — the legacy labels "Overlay Darkness"
-          // and "Background Scrim" mislead operators into thinking the two
-          // controls do the same thing (which is what hid the May 2026
-          // single-value-fusion regression). The current canon is:
-          //   "Image Wash"     → flat uniform tint (overlay_opacity)
-          //   "Text-area Scrim" → editorial gradient/vignette shape
-          // Banning the literal strings prevents a copy-only revert from
-          // sneaking the conflict back in.
-          //
-          // Override: `// eslint-disable-next-line no-restricted-syntax
-          // -- <reason>` only if you're authoring a deprecation notice or
-          // a migration changelog that must literally quote the old name.
-          selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
-          message: "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
-        },
-      ],
+      "no-restricted-syntax": ["error", ...CONSOLIDATED_RESTRICTED_SYNTAX],
     },
   },
-  {
-    // Hero Alignment Canon — hero-files-only override.
-    // ──────────────────────────────────────────────────────────────────
-    // The `items-(center|start|end)` ban is too noisy as a global rule
-    // (thousands of legitimate flex-layout call sites across the app).
-    // Scoping it to hero files via a dedicated block keeps the canon
-    // enforced at exactly the surfaces that consume `resolveHeroAlignment`.
-    //
-    // FLAT-CONFIG REPLACEMENT WARNING:
-    //   This block defines `no-restricted-syntax`. ESLint flat config
-    //   REPLACES (does not merge) rule options when two blocks both
-    //   match a file. To avoid silently dropping the consolidated block's
-    //   selectors on hero files, we re-include all 5 consolidated
-    //   selectors verbatim below and add the hero-specific 6th.
-    //
-    //   The meta-test `src/test/lint-config-resolution.test.ts` asserts
-    //   that ALL 6 selectors survive in the resolved config for a
-    //   representative hero file. If you add a new selector to the
-    //   consolidated block, you MUST also add it here AND extend the
-    //   meta-test, or hero files will silently lose coverage.
-    //
-    // Override: `// eslint-disable-next-line no-restricted-syntax
-    // -- <reason>` for the rare cross-axis-only `items-center` that
-    // genuinely doesn't relate to hero content alignment.
+  // ─────────────────────────────────────────────────────────────────────
+  // Hero Alignment Canon — hero-files-only override.
+  // Built via defineScopedDoctrine() so the consolidated 5 selectors stay
+  // in sync automatically and the hero-specific selectors append cleanly.
+  //
+  // Pairs with:
+  //   - src/test/lint-rule-hero-alignment.test.ts
+  //   - src/test/lint-rule-hero-notes-shared.test.ts
+  //   - src/components/home/HeroNotes.test.tsx
+  //
+  // Override: `// eslint-disable-next-line no-restricted-syntax
+  // -- <reason>` for the rare cross-axis-only `items-center` that
+  // genuinely doesn't relate to hero content alignment, OR inside
+  // HeroNotes.tsx itself (the canonical owner of the inline JSX).
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedDoctrine({
     files: [
       "src/components/home/Hero*.{ts,tsx}",
       "src/components/home/HeroSection.tsx",
@@ -217,50 +175,39 @@ export default tseslint.config(
       "src/components/home/HeroNotes.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
       // Lint fixtures live outside the real hero tree; include them
-      // explicitly so the smoke test (which uses `ignore: false`) sees
+      // explicitly so the smoke tests (which use `ignore: false`) see
       // the rule applied. Top-level `ignores` keeps `npm run lint`
       // from picking these up.
       "src/test/lint-fixtures/hero-alignment-*.tsx",
+      "src/test/lint-fixtures/hero-notes-*.tsx",
     ],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        // Re-included consolidated selectors (see eslint.config.js block above).
-        // If any of these drift from the consolidated source of truth, the
-        // canon is silently broken for hero files. Tracked via the meta-test.
-        {
-          selector: "JSXElement[openingElement.name.name='Loader2']:not(JSXElement[openingElement.name.name=/Button$/] JSXElement[openingElement.name.name='Loader2']):not(JSXElement[openingElement.name.name='button'] JSXElement[openingElement.name.name='Loader2'])",
-          message: "Loader2 is restricted to inline button spinners. Use <DashboardLoader /> for sections, <BootLuxeLoader /> for boot/Suspense gates.",
-        },
-        {
-          selector: "JSXElement[openingElement.name.name='AlertDialogTitle'] > JSXText[value=/^\\s*Unsaved changes\\s*$/i]",
-          message: "Use <UnsavedChangesDialog /> from @/components/ui/unsaved-changes-dialog instead of forking the navigate-away pattern.",
-        },
-        {
-          selector: "NewExpression[callee.name='CustomEvent']:has(Literal[value='site-settings-draft-write'])",
-          message: "The `site-settings-draft-write` event is owned exclusively by src/lib/siteSettingsDraft.ts.",
-        },
-        {
-          selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
-          message: "Brittle dirty-state check: JSON.stringify is key-order sensitive. Use `useDirtyState` or `isStructurallyEqual`.",
-        },
-        {
-          selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
-          message: "Use the canonical hero overlay labels: 'Image Wash' and 'Text-area Scrim'.",
-        },
+    extraSelectors: [
+      {
         // Hero-specific: ban hardcoded items-center|start|end inside cn()
         // calls that don't reference `alignment.*`. Routes horizontal
         // placement through resolveHeroAlignment.
+        selector: "CallExpression[callee.name='cn']:has(Literal[value=/(^| )items-(center|start|end)( |$)/]):not(:has(MemberExpression[object.name='alignment']))",
+        message: "Hero files must route horizontal placement through `alignment.notes` / `alignment.cta` / `alignment.ctaRow` / `alignment.headline` (from resolveHeroAlignment). Hardcoded `items-center|start|end` inside `cn()` was the root cause of the May 2026 hero-notes alignment regression — the literal silently overrode the operator's content_alignment choice.",
+      },
+      {
+        // Hero shared-component canon: ban inline <p> JSX rendering
+        // `consultation_note_line1` or `consultation_note_line2` outside
+        // of HeroNotes.tsx itself. Forces every new hero variant
+        // (announcement bar, seasonal hero, slide rotator, etc.) to
+        // import the shared component instead of re-typing the JSX —
+        // which is what allowed the alignment regression to ship past
+        // the editor preview test.
         //
-        // Pairs with: src/test/lint-rule-hero-alignment.test.ts and the
-        // Vitest at src/components/home/HeroNotes.test.tsx.
-        {
-          selector: "CallExpression[callee.name='cn']:has(Literal[value=/(^| )items-(center|start|end)( |$)/]):not(:has(MemberExpression[object.name='alignment']))",
-          message: "Hero files must route horizontal placement through `alignment.notes` / `alignment.cta` / `alignment.ctaRow` / `alignment.headline` (from resolveHeroAlignment). Hardcoded `items-center|start|end` inside `cn()` was the root cause of the May 2026 hero-notes alignment regression — the literal silently overrode the operator's content_alignment choice.",
-        },
-      ],
-    },
-  },
+        // Override: `// eslint-disable-next-line no-restricted-syntax
+        // -- <reason>` only inside HeroNotes.tsx itself (the canonical
+        // owner) — every other hero file should import it.
+        //
+        // Pairs with: src/test/lint-rule-hero-notes-shared.test.ts
+        selector: "JSXElement[openingElement.name.name='p']:has(MemberExpression[property.name=/^consultation_note_line[12]$/])",
+        message: "Inline `<p>{config.consultation_note_lineN}</p>` JSX is forbidden in hero files. Import and render <HeroNotes config={config} contentAlignment={...} /> from @/components/home/HeroNotes — it is the canonical owner of consultation-note rendering, alignment routing, and preview-vs-live parity. Inline siblings re-introduce the May 2026 alignment drift.",
+      },
+    ],
+  }),
   {
     // Platform-primitive isolation gate. Banning raw shadcn primitives in
     // the platform layer prevents org-theme tokens (--primary, --background,
