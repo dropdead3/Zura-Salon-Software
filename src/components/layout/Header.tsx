@@ -92,6 +92,7 @@ function menuItemToNavItem(item: MenuItem, index: number, orgPath: (p: string) =
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(true);
+  const [isHoverNearTop, setIsHoverNearTop] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isOverDark, setIsOverDark] = useState(false);
   const [isStaffMenuOpen, setIsStaffMenuOpen] = useState(false);
