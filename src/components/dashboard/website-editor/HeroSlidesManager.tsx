@@ -363,6 +363,24 @@ function SlideRow({
               compact
             />
           </div>
+
+          {/* Live preview of this slide's resolved background stack */}
+          {resolvedBgType !== 'none' && !!resolvedBgUrl && (
+            <div className="pt-3 border-t border-border/30">
+              <BackgroundResolvedPreview
+                type={resolvedBgType}
+                url={resolvedBgUrl}
+                posterUrl={resolvedBgPoster}
+                fit={sectionBgFit}
+                focalX={resolvedFocalX}
+                focalY={resolvedFocalY}
+                overlayMode={resolvedOverlayMode}
+                overlayOpacity={resolvedOverlayOpacity}
+                scrimStyle={resolvedScrimStyle}
+                scrimStrength={resolvedScrimStrength}
+              />
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </div>
