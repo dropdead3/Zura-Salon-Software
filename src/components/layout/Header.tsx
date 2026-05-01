@@ -310,8 +310,10 @@ export function Header() {
           : true;
         // Strengthen scrim over hero media so text stays legible on busy footage.
         const overMediaDark = !hasExplicitBg;
-        // Hide announcement bar on scroll-down past hero, slide back in on scroll-up.
-        const announcementHidden = isScrolled && !isScrollingUp && !isHoverNearTop;
+        // Hide announcement bar on scroll-down past hero, slide back in on scroll-up only.
+        // Hover-near-top intentionally does NOT reveal it — it's a promotional strip,
+        // not a navigation surface, so accidental top-edge hovers shouldn't pop it back.
+        const announcementHidden = isScrolled && !isScrollingUp;
         return (
           <div
             className={cn(
