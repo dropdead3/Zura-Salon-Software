@@ -29,7 +29,13 @@ import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
-import { dispatchPromoPopupPreviewReset } from '@/lib/promoPopupPreviewReset';
+import {
+  dispatchPromoPopupPreviewReset,
+  getLastPromoPopupPreviewPhase,
+  PROMO_POPUP_PREVIEW_STATE_EVENT,
+  type PromoPopupPreviewPhase,
+  type PromoPopupPreviewStateDetail,
+} from '@/lib/promoPopupPreviewReset';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
 import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
