@@ -70,6 +70,71 @@ function defineScopedDoctrine({ files, ignores, extraSelectors = [] }) {
   };
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Consolidated `no-restricted-imports` paths — single source of truth.
+// ──────────────────────────────────────────────────────────────────────
+// Mirrors CONSOLIDATED_RESTRICTED_SYNTAX. Today only Platform Primitive
+// Isolation populates this list — every entry is a raw shadcn primitive
+// that has a Platform* equivalent in src/components/platform/ui/.
+//
+// Why this exists even with one consumer: the same flat-config replacement
+// footgun that motivated CONSOLIDATED_RESTRICTED_SYNTAX applies to
+// `no-restricted-imports`. The moment a SECOND scoped block needs to
+// add `no-restricted-imports` paths (e.g. wizard-only API client ban,
+// dock-only Acaia SDK ban), the platform paths would be silently dropped
+// from any file matched by both blocks. Hoisting now removes that risk.
+//
+// To add a new globally-banned import: push to PLATFORM_PRIMITIVE_PATHS
+// (or define a new array if it's a different doctrine) and use
+// `defineScopedImportDoctrine()`.
+const PLATFORM_PRIMITIVE_PATHS = [
+  { name: "@/components/ui/checkbox",     message: "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer." },
+  { name: "@/components/ui/switch",       message: "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme." },
+  { name: "@/components/ui/alert-dialog", message: "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme." },
+  { name: "@/components/ui/dialog",       message: "Use PlatformDialogContent from @/components/platform/ui/PlatformDialog — raw dialog reads --background/--popover from the org theme." },
+  { name: "@/components/ui/label",        message: "Use PlatformLabel from @/components/platform/ui — raw label reads --foreground from the org theme." },
+  { name: "@/components/ui/textarea",     message: "Use PlatformTextarea from @/components/platform/ui — raw textarea reads --input/--border from the org theme." },
+  { name: "@/components/ui/select",       message: "Use Platform* select exports from @/components/platform/ui/PlatformSelect — raw select reads --popover/--primary from the org theme." },
+  { name: "@/components/ui/input",        message: "Use PlatformInput from @/components/platform/ui — raw input reads --input/--ring from the org theme." },
+  { name: "@/components/ui/button",       message: "Use PlatformButton from @/components/platform/ui — raw button reads --primary/--secondary from the org theme." },
+  { name: "@/components/ui/card",         message: "Use Platform* card exports from @/components/platform/ui/PlatformCard — raw card reads --card/--card-foreground from the org theme." },
+  { name: "@/components/ui/badge",        message: "Use PlatformBadge from @/components/platform/ui — raw badge reads --primary/--secondary from the org theme." },
+];
+
+/**
+ * Symmetric counterpart of `defineScopedDoctrine` for `no-restricted-imports`.
+ *
+ * Usage:
+ *   defineScopedImportDoctrine({
+ *     files: ["src/components/platform/**\/*.{ts,tsx}"],
+ *     basePaths: PLATFORM_PRIMITIVE_PATHS, // defaults to PLATFORM_PRIMITIVE_PATHS
+ *     extraPaths: [{ name, message }, ...], // appended scope-specific bans
+ *   })
+ *
+ * Closes the second half of the flat-config replacement surface (the
+ * first half being `no-restricted-syntax`). Even with a single consumer
+ * today, callers MUST go through this helper so future doctrines compose
+ * cleanly. Pair every new scope with an assertion in
+ * `src/test/lint-config-resolution.test.ts`.
+ */
+function defineScopedImportDoctrine({
+  files,
+  ignores,
+  basePaths = PLATFORM_PRIMITIVE_PATHS,
+  extraPaths = [],
+}) {
+  return {
+    files,
+    ...(ignores ? { ignores } : {}),
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { paths: [...basePaths, ...extraPaths] },
+      ],
+    },
+  };
+}
+
 export default tseslint.config(
   {
     ignores: [
@@ -208,45 +273,37 @@ export default tseslint.config(
       },
     ],
   }),
-  {
-    // Platform-primitive isolation gate. Banning raw shadcn primitives in
-    // the platform layer prevents org-theme tokens (--primary, --background,
-    // --muted, etc.) from bleeding into platform admin surfaces. Every
-    // primitive listed here has a Platform* equivalent in
-    // src/components/platform/ui/ that reads --platform-* tokens instead.
-    //
-    // Migration override (use sparingly, with a one-line reason):
-    //   // eslint-disable-next-line no-restricted-imports -- <reason>
-    //
-    // Primitives without Platform* wrappers yet (Progress, RadioGroup,
-    // Slider, Tabs, Skeleton, Toggle, Tooltip, Popover, DropdownMenu,
-    // Separator, Calendar) are tracked in mem://style/platform-primitive-
-    // isolation.md Deferral Register: create the wrapper, then add the
-    // path here in the same change.
+  // ─────────────────────────────────────────────────────────────────────
+  // Platform Primitive Isolation gate. Banning raw shadcn primitives in
+  // the platform layer prevents org-theme tokens (--primary, --background,
+  // --muted, etc.) from bleeding into platform admin surfaces. Every
+  // primitive in PLATFORM_PRIMITIVE_PATHS has a Platform* equivalent in
+  // src/components/platform/ui/ that reads --platform-* tokens instead.
+  //
+  // Built via defineScopedImportDoctrine() — even though it's the only
+  // consumer of `no-restricted-imports` today, going through the helper
+  // means a future second scoped import block (wizard-only API ban,
+  // dock-only SDK ban, etc.) cannot silently shadow these paths via
+  // flat-config replacement. Pair with src/test/lint-config-resolution.test.ts.
+  //
+  // Migration override (use sparingly, with a one-line reason):
+  //   // eslint-disable-next-line no-restricted-imports -- <reason>
+  //
+  // Primitives without Platform* wrappers yet (Progress, RadioGroup,
+  // Slider, Tabs, Skeleton, Toggle, Tooltip, Popover, DropdownMenu,
+  // Separator, Calendar) are tracked in mem://style/platform-primitive-
+  // isolation.md Deferral Register: create the wrapper, then add the
+  // path to PLATFORM_PRIMITIVE_PATHS in the same change.
+  //
+  // Note: lint fixtures are excluded at the top-level `ignores` so
+  // `npm run lint` skips them while explicit ESLint API calls in the
+  // smoke test (src/test/lint-rule-platform-primitives.test.ts) still
+  // see them and assert the rule fires.
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedImportDoctrine({
     files: [
       "src/components/platform/**/*.{ts,tsx}",
       "src/pages/dashboard/platform/**/*.{ts,tsx}",
     ],
-    // Note: lint fixtures are excluded at the top-level `ignores` so
-    // `npm run lint` skips them while explicit ESLint API calls in the
-    // smoke test (src/test/lint-rule-platform-primitives.test.ts) still
-    // see them and assert the rule fires.
-    rules: {
-      "no-restricted-imports": ["error", {
-        paths: [
-          { name: "@/components/ui/checkbox",     message: "Use PlatformCheckbox from @/components/platform/ui — raw checkbox reads --primary from the org theme and leaks tenant brand into the platform layer." },
-          { name: "@/components/ui/switch",       message: "Use PlatformSwitch from @/components/platform/ui — raw switch reads --primary/--muted from the org theme." },
-          { name: "@/components/ui/alert-dialog", message: "Use PlatformAlertDialog* exports from @/components/platform/ui/PlatformDialog — raw alert-dialog reads --background/--popover/--primary from the org theme." },
-          { name: "@/components/ui/dialog",       message: "Use PlatformDialogContent from @/components/platform/ui/PlatformDialog — raw dialog reads --background/--popover from the org theme." },
-          { name: "@/components/ui/label",        message: "Use PlatformLabel from @/components/platform/ui — raw label reads --foreground from the org theme." },
-          { name: "@/components/ui/textarea",     message: "Use PlatformTextarea from @/components/platform/ui — raw textarea reads --input/--border from the org theme." },
-          { name: "@/components/ui/select",       message: "Use Platform* select exports from @/components/platform/ui/PlatformSelect — raw select reads --popover/--primary from the org theme." },
-          { name: "@/components/ui/input",        message: "Use PlatformInput from @/components/platform/ui — raw input reads --input/--ring from the org theme." },
-          { name: "@/components/ui/button",       message: "Use PlatformButton from @/components/platform/ui — raw button reads --primary/--secondary from the org theme." },
-          { name: "@/components/ui/card",         message: "Use Platform* card exports from @/components/platform/ui/PlatformCard — raw card reads --card/--card-foreground from the org theme." },
-          { name: "@/components/ui/badge",        message: "Use PlatformBadge from @/components/platform/ui — raw badge reads --primary/--secondary from the org theme." },
-        ],
-      }],
-    },
-  },
+  }),
 );
