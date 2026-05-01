@@ -14,7 +14,9 @@
  * 'cream-lux' (the historical hardcode in `Layout.tsx`).
  */
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useSiteSettings, useUpdateSiteSetting } from '@/hooks/useSiteSettings';
+import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import type { ColorTheme } from '@/hooks/useColorTheme';
 
 const SETTING_KEY = 'website_active_color_theme';
@@ -35,11 +37,39 @@ export function useWebsiteColorTheme(): {
   };
 }
 
+/**
+ * Mutates the public-site theme.
+ *
+ * Performs an optimistic cache write across BOTH the draft and live cache
+ * keys (`['site-settings', orgId, SETTING_KEY, 'draft' | 'live']`) so every
+ * consumer of `useWebsiteColorTheme` (the picker tile ring, Layout's
+ * `themeClass`, the iframe via its own draft refetch) repaints in the same
+ * tick the operator clicks — instead of waiting for the network round-trip
+ * + react-query invalidation.
+ *
+ * Without this, the picker UI's `isActive` ring stays stuck on the previous
+ * theme until the refetch lands, which made re-clicking the same theme feel
+ * like a no-op (the May 2026 "won't go back to Cream Lux" report).
+ */
 export function useUpdateWebsiteColorTheme() {
+  const queryClient = useQueryClient();
+  const orgId = useSettingsOrgId();
   const update = useUpdateSiteSetting<WebsiteColorThemeSetting>();
   return {
-    mutateAsync: (theme: ColorTheme) =>
-      update.mutateAsync({ key: SETTING_KEY, value: { theme } }),
+    mutateAsync: (theme: ColorTheme) => {
+      // Optimistic write across both modes — readers in the editor (draft)
+      // and any incidental live readers see the new theme synchronously.
+      if (orgId) {
+        const value: WebsiteColorThemeSetting = { theme };
+        for (const mode of ['draft', 'live'] as const) {
+          queryClient.setQueryData(
+            ['site-settings', orgId, SETTING_KEY, mode],
+            value,
+          );
+        }
+      }
+      return update.mutateAsync({ key: SETTING_KEY, value: { theme } });
+    },
     isPending: update.isPending,
   };
 }

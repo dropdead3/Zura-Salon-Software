@@ -160,9 +160,13 @@ export function Layout({ children }: LayoutProps) {
 
   // Once the persisted theme catches up to the optimistic override, drop the
   // override so future setting changes flow through the normal hook path.
+  // Defer one frame so the optimistic class is held for at least one paint —
+  // prevents a perceptible flash on slow networks where the refetch lands
+  // before the iframe has had a chance to commit the new theme tokens.
   useEffect(() => {
     if (previewThemeOverride && previewThemeOverride === `theme-${websiteTheme}`) {
-      setPreviewThemeOverride(null);
+      const id = requestAnimationFrame(() => setPreviewThemeOverride(null));
+      return () => cancelAnimationFrame(id);
     }
   }, [previewThemeOverride, websiteTheme]);
 
@@ -206,7 +210,7 @@ export function Layout({ children }: LayoutProps) {
   // Parallax creates gaps/dark edges inside the viewport bento box.
   if (isEditorPreview) {
     return (
-      <div className={`min-h-screen flex flex-col relative ${themeClass} bg-background`} style={{ colorScheme: 'light' }}>
+      <div data-public-site className={`min-h-screen flex flex-col relative ${themeClass} bg-background`} style={{ colorScheme: 'light' }}>
         <DesignOverridesApplier />
         <Header />
         <main className="flex-1 bg-background">
@@ -222,7 +226,7 @@ export function Layout({ children }: LayoutProps) {
   // Editor preview in view mode OR public site: full layout with footer reveal
 
   return (
-    <div className={`min-h-screen flex flex-col relative ${themeClass} bg-secondary`} style={{ colorScheme: 'light' }}>
+    <div data-public-site className={`min-h-screen flex flex-col relative ${themeClass} bg-secondary`} style={{ colorScheme: 'light' }}>
       <DesignOverridesApplier />
       {/* Fixed footer that reveals as content scrolls */}
       <div 
