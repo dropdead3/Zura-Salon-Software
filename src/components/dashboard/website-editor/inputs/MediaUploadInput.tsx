@@ -270,7 +270,7 @@ export function MediaUploadInput({
     } finally {
       setIsUploading(false);
     }
-  }, [bucket, pathPrefix, onChange, imageOnly]);
+  }, [bucket, pathPrefix, onChange, imageOnly, qualityProfile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
