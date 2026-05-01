@@ -5,7 +5,7 @@ import path from 'path';
 import {
   CONSOLIDATED_RESTRICTED_SYNTAX,
   PLATFORM_PRIMITIVE_PATHS,
-} from '../../eslint.config.js';
+} from '../../eslint.helpers.js';
 
 /**
  * Meta-test for `eslint.config.js` flat-config resolution.
