@@ -104,7 +104,9 @@ function summarizeScrim(c: HeroConfig): string {
 function summarizeAlignment(c: HeroConfig): string {
   const align = c.content_alignment ?? 'center';
   const scroll = c.show_scroll_indicator ? 'scroll cue on' : 'scroll cue off';
-  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll}`;
+  const words = c.show_rotating_words ? 'words on' : 'words off';
+  const notes = c.show_consultation_notes ? 'notes on' : 'notes off';
+  return `${align[0].toUpperCase()}${align.slice(1)} aligned · ${scroll} · ${words} · ${notes}`;
 }
 
 function summarizeRotator(c: HeroConfig): string {

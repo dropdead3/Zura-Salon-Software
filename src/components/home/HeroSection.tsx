@@ -12,6 +12,7 @@ import { HeroBackground } from "@/components/home/HeroBackground";
 import { HeroSlideRotator } from "@/components/home/HeroSlideRotator";
 import { HeroNotes } from "@/components/home/HeroNotes";
 import { HeroScrollIndicator } from "@/components/home/HeroScrollIndicator";
+import { HeroRotatingWord } from "@/components/home/HeroRotatingWord";
 import { resolveHeroColors } from "@/lib/heroColors";
 import { resolveHeroAlignment } from "@/lib/heroAlignment";
 import { cn } from "@/lib/utils";
@@ -159,7 +160,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   fieldPath="headline_text"
                   placeholder="Headline"
                 />
-                <span className="block">{rotatingWords[currentWordIndex]}</span>
+                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} />
               </h1>
               {hasSubheadlineContent && (
                 <p
@@ -292,6 +293,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 ...heroColors.headlineStyle,
               }}
             >
+              {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
               <motion.span 
                 className="whitespace-nowrap block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
@@ -301,28 +303,15 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
               >
                 {headlineText}
               </motion.span>
+              {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
               <motion.span 
-                className="block overflow-hidden h-[1.15em]"
+                className="block"
                 initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 2.5 }}
                 style={{ x: bottomLineX, opacity: headlineScrollOpacity }}
               >
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={rotatingWords[currentWordIndex]}
-                    className="block"
-                    initial={{ y: "100%", opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: "-100%", opacity: 0 }}
-                    transition={{ 
-                      duration: 0.5, 
-                      ease: [0.22, 1, 0.36, 1] 
-                    }}
-                  >
-                    {rotatingWords[currentWordIndex]}
-                  </motion.span>
-                </AnimatePresence>
+                <HeroRotatingWord show={true} words={rotatingWords} index={currentWordIndex} />
               </motion.span>
             </motion.h1>
 

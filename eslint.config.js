@@ -121,6 +121,7 @@ export default tseslint.config(
       "src/components/home/HeroNotes.tsx",
       "src/components/home/HeroScrollIndicator.tsx",
       "src/components/home/HeroEyebrow.tsx",
+      "src/components/home/HeroRotatingWord.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
       // Lint fixtures live outside the real hero tree; include them
       // explicitly so the smoke tests (which use `ignore: false`) see
@@ -130,6 +131,7 @@ export default tseslint.config(
       "src/test/lint-fixtures/hero-notes-*.tsx",
       "src/test/lint-fixtures/hero-scroll-indicator-*.tsx",
       "src/test/lint-fixtures/hero-eyebrow-*.tsx",
+      "src/test/lint-fixtures/hero-rotating-word-*.tsx",
     ],
     extraSelectors: [
       {
@@ -197,6 +199,23 @@ export default tseslint.config(
         // Pairs with: src/test/lint-rule-hero-eyebrow-shared.test.ts
         selector: "JSXOpeningElement[name.name='Eyebrow']",
         message: "Inline `<Eyebrow>` JSX is forbidden in hero files. Import and render <HeroEyebrow show={...} text={...} editable={isPreview} fieldPath={...} /> from @/components/home/HeroEyebrow — it is the canonical owner of hero eyebrow rendering, editable/static branching, and preview-vs-live parity. Inline siblings re-introduce the divergence pattern that drove the May 2026 hero-notes regression.",
+      },
+      {
+        // Hero rotating-word parity canon: ban inline <motion.span> in hero
+        // files outside HeroRotatingWord.tsx itself. The rotating headline
+        // word disappeared TWICE during hero refactors because nothing
+        // forced the three render sites (HeroSection, HeroSlideRotator,
+        // HeroSectionPreview) through a shared component. This rule blocks
+        // hand-rolled motion.span at authoring time so a future hero
+        // variant cannot drop the affordance silently.
+        //
+        // Override: `// eslint-disable-next-line no-restricted-syntax
+        // -- <reason>` only inside HeroRotatingWord.tsx (the canonical
+        // owner). Every other hero file imports it.
+        //
+        // Pairs with: src/test/lint-rule-hero-rotating-word.test.ts
+        selector: "JSXOpeningElement[name.type='JSXMemberExpression'][name.object.name='motion'][name.property.name='span']",
+        message: "Inline `<motion.span>` JSX is forbidden in hero files. Import and render <HeroRotatingWord show={...} words={...} index={...} /> from @/components/home/HeroRotatingWord — it is the canonical owner of the rotating headline word and guarantees preview-vs-live parity. Hand-rolled rotating spans caused the rotating word to vanish during the May 2026 slide-rotator refactor.",
       },
     ],
   }),

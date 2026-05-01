@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ArrowRight } from 'lucide-react';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import { HeroNotes } from '@/components/home/HeroNotes';
+import { HeroRotatingWord } from '@/components/home/HeroRotatingWord';
 import type { HeroConfig } from '@/hooks/useSectionConfig';
 import { resolveHeroAlignment } from '@/lib/heroAlignment';
 import { cn } from '@/lib/utils';
@@ -29,7 +29,7 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
     setCurrentWordIndex(0);
   }, [config.rotating_words]);
 
-  const currentWord = config.rotating_words[currentWordIndex] || 'Salon';
+  const words = (config.rotating_words ?? []).filter((w) => w && w.trim() !== '');
 
   const alignment = resolveHeroAlignment(config.content_alignment);
 
@@ -46,20 +46,11 @@ export function HeroSectionPreview({ config }: HeroSectionPreviewProps) {
             {/* Main headline */}
             <h1 className={cn("font-display text-[clamp(2.25rem,8vw,5.5rem)] font-normal text-foreground leading-[0.95] flex flex-col", alignment.headline)}>
               <span className="whitespace-nowrap block">{config.headline_text}</span>
-              <span className="block overflow-hidden h-[1.15em]">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={currentWord}
-                    className="block"
-                    initial={{ y: "100%", opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: "-100%", opacity: 0 }}
-                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    {currentWord}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
+              <HeroRotatingWord
+                show={!!config.show_rotating_words}
+                words={words}
+                index={currentWordIndex}
+              />
             </h1>
 
             {/* Subheadline */}
