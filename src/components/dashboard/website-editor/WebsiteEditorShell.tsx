@@ -14,7 +14,7 @@ import {
   MousePointer2,
   PanelLeftOpen,
   PanelRightClose,
-  PanelRightOpen,
+  
   Plus,
   Redo2,
   RotateCcw,
@@ -1156,29 +1156,23 @@ function WebsiteEditorShellInner() {
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Exit Editor</span>
           </Button>
-          <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
+          {/* Mobile-only: opens the section sheet (no persistent rail on small screens). */}
           {isMobile && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full shrink-0"
-              onClick={() => setMobileSidebarOpen(true)}
-              title="Open sections"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
+            <>
+              <div className="hidden sm:block h-6 w-px bg-border/60 shrink-0" />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-full shrink-0"
+                onClick={() => setMobileSidebarOpen(true)}
+                title="Open sections"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            </>
           )}
-          {!isMobile && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 rounded-full shrink-0"
-              onClick={() => setShowSidebar((v) => !v)}
-              title={showSidebar ? 'Hide sections (⌘\\)' : 'Show sections (⌘\\)'}
-            >
-              {showSidebar ? <PanelRightOpen className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-            </Button>
-          )}
+          {/* Desktop collapse/expand control lives INSIDE the rail (header) and as a
+              re-expand stub on the preview's left edge — no orphaned toolbar button. */}
           {/* Breadcrumb: page › section. Hidden on small screens. */}
           <nav
             aria-label="Editor breadcrumb"
@@ -1297,15 +1291,18 @@ function WebsiteEditorShellInner() {
         {/* Full-bleed preview canvas */}
         <div className="flex-1 min-w-0 rounded-xl border border-border overflow-hidden relative">
           {!isMobile && !showSidebar && (
-            <Button
-              variant="outline"
-              size="icon"
+            <button
+              type="button"
               onClick={() => setShowSidebar(true)}
-              className="absolute top-3 left-3 z-20 h-8 w-8 rounded-full shadow-sm bg-card/90 backdrop-blur-md"
-              title="Show sections (⌘\\)"
+              title="Show sections (⌘\)"
+              aria-label="Show sections"
+              className="group absolute top-3 left-3 bottom-3 z-20 w-8 rounded-lg border border-border bg-card/85 backdrop-blur-md shadow-sm hover:bg-accent hover:border-border/80 transition-colors flex flex-col items-center justify-center gap-2"
             >
-              <PanelLeftOpen className="h-4 w-4" />
-            </Button>
+              <PanelLeftOpen className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <span className="[writing-mode:vertical-rl] rotate-180 font-display text-[10px] tracking-[0.18em] uppercase text-muted-foreground group-hover:text-foreground transition-colors">
+                Sections
+              </span>
+            </button>
           )}
           <LivePreviewPanel previewUrl={livePreviewUrl ?? undefined} activeSectionId={activePreviewSectionId} />
         </div>
