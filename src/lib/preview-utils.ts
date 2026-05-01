@@ -24,10 +24,12 @@ export interface PreviewRefreshDetail {
  * Safe to call on every keystroke / save across all 20+ website editors.
  */
 export function triggerPreviewRefresh(detail: PreviewRefreshDetail = {}) {
+  // Soft-refresh signal for the LivePreviewPanel. The actual draft-write
+  // notification (with proper {orgId, key} scoping) is dispatched by
+  // `writeSiteSettingDraft` in src/lib/siteSettingsDraft.ts — do NOT
+  // duplicate it here with empty detail, that caused a broad invalidation
+  // race that snapped editors back to defaults after save.
   window.dispatchEvent(new CustomEvent('website-preview-refresh', { detail }));
-  // Also broadcast as a draft-write so the LivePreviewPanel forwards a
-  // PREVIEW_REFRESH_DRAFT message into the iframe with the same scoping.
-  window.dispatchEvent(new CustomEvent('site-settings-draft-write', { detail }));
 }
 
 /**
