@@ -15,14 +15,14 @@
 // ─────────────────────────────────────────────────────────────────────
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import {
   CONSOLIDATED_RESTRICTED_SYNTAX,
   defineEventOwnershipSelector,
 } from "../../eslint.helpers.js";
 
 const helpersSource = readFileSync(
-  fileURLToPath(new URL("../../eslint.helpers.js", import.meta.url)),
+  path.resolve(process.cwd(), "eslint.helpers.js"),
   "utf8",
 );
 
