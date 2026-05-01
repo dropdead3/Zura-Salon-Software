@@ -37,7 +37,8 @@ export function HeroEditor() {
 
   // Canonical dirty-state hook (key-order-stable structural compare + UI wiring).
   // See src/hooks/useDirtyState.ts for why JSON.stringify is forbidden here.
-  useDirtyState(localConfig, data);
+  // The 'hero' debug label routes any sticky-dirty diagnostic to the console.
+  useDirtyState(localConfig, data, 'hero');
 
   // Live-edit bridge: stream in-memory edits into the preview iframe so the
   // canvas reflects what's being typed RIGHT NOW, not just the last save.

@@ -33,8 +33,16 @@ export function HeroBackgroundEditor({ config, onChange }: HeroBackgroundEditorP
   const overlayMode = config.overlay_mode ?? 'darken';
 
   // Auto-suggest focal point when a new image is uploaded. Manual drags
-  // always win — this only seeds the initial value.
+  // always win — this only seeds the initial value, so we ONLY apply the
+  // suggestion if the operator hasn't already moved the focal away from
+  // dead-center (50/50). Without this guard, the async AI response races
+  // ahead of the operator's Save click and silently re-dirties the editor
+  // ("I just saved — why does it still say unsaved?!").
   const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
+    const currentX = config.background_focal_x ?? 50;
+    const currentY = config.background_focal_y ?? 50;
+    const isAtDefault = currentX === 50 && currentY === 50;
+    if (!isAtDefault) return;
     onChange({ background_focal_x: x, background_focal_y: y });
   });
 
