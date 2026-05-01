@@ -133,6 +133,7 @@ export interface HeroSlide {
    * surface). `null` / absent = unknown legacy upload.
    */
   media_optimized_with_profile?: 'standard' | 'hero' | null;
+}
 
 export interface HeroConfig {
   headline_text: string;
