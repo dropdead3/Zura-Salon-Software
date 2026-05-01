@@ -327,7 +327,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ ...springTransition, delay: 3.6 }}
-                className={cn("mt-8 text-sm md:text-base font-sans font-light max-w-md mx-auto leading-relaxed", heroColors.subheadlineClass)}
+                className={cn("mt-8 text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
                 style={{ y: subheadlineY, ...heroColors.subheadlineStyle }}
               >
                 {subheadlineLine1}
