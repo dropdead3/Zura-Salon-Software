@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Input } from '@/components/ui/input';
