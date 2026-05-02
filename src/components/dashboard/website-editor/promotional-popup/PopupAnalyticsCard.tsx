@@ -317,12 +317,47 @@ export function PopupAnalyticsCard({
   windowDays = 30,
   organizationId,
   description,
+  schedule,
 }: PopupAnalyticsCardProps) {
   const code = (offerCode ?? '').trim();
+
+  // Per-rotation breakdown — selector value is "all" or a schedule entry id.
+  const [rotationId, setRotationId] = useState<string>('all');
+  const { data: library } = usePromoLibrary();
+  const savedById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of library?.saved ?? []) m.set(s.id, s.name);
+    return m;
+  }, [library?.saved]);
+
+  // Only show selector when there are at least two rotations to compare.
+  const rotationOptions = useMemo(() => {
+    const list = (schedule ?? []).filter(
+      (e) =>
+        Number.isFinite(Date.parse(e.startsAt)) &&
+        Number.isFinite(Date.parse(e.endsAt)) &&
+        Date.parse(e.endsAt) > Date.parse(e.startsAt),
+    );
+    return [...list].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  }, [schedule]);
+  const showRotationSelector = rotationOptions.length >= 2;
+
+  const activeRotation =
+    rotationId !== 'all'
+      ? rotationOptions.find((e) => e.id === rotationId) ?? null
+      : null;
+
   const { data, isLoading } = usePromotionalPopupFunnel({
     offerCode: code,
     windowDays,
     explicitOrgId: organizationId,
+    rotationWindow: activeRotation
+      ? {
+          id: activeRotation.id,
+          startsAt: activeRotation.startsAt,
+          endsAt: activeRotation.endsAt,
+        }
+      : null,
   });
 
   // Shared hover index — chart hover lights up tile, tile hover dims chart.
