@@ -66,6 +66,8 @@ function useSectionConfig<T>(sectionId: string, defaultValue: T) {
 export interface HeroTextColors {
   headline?: string;
   subheadline?: string;
+  eyebrow?: string;
+  notes?: string;
   primary_button_bg?: string;
   primary_button_fg?: string;
   primary_button_hover_bg?: string;
