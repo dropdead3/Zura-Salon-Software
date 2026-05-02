@@ -26,7 +26,7 @@ function formatPercent(value: number | null): string {
 
 interface FunnelStatProps {
   label: string;
-  value: string;
+  value: React.ReactNode;
   icon: React.ComponentType<{ className?: string }>;
   rate?: string | null;
   rateLabel?: string;
