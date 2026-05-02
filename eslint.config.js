@@ -117,12 +117,12 @@ export default tseslint.config(
   defineScopedDoctrine({
     files: [
       "src/components/home/Hero*.{ts,tsx}",
-      "src/components/home/HeroSection.tsx",
       "src/components/home/HeroSlideRotator.tsx",
       "src/components/home/HeroNotes.tsx",
       "src/components/home/HeroScrollIndicator.tsx",
       "src/components/home/HeroEyebrow.tsx",
       "src/components/home/HeroRotatingWord.tsx",
+      "src/components/home/HeroSectionRoot.tsx",
       "src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx",
       // Lint fixtures live outside the real hero tree; include them
       // explicitly so the smoke tests (which use `ignore: false`) see
