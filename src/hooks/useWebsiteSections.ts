@@ -20,15 +20,10 @@ export type CustomSectionType = typeof CUSTOM_SECTION_TYPES[number];
 
 export type SectionType = BuiltinSectionType | CustomSectionType;
 
-export interface StyleOverrides {
-  background_type: 'none' | 'color' | 'gradient' | 'image';
-  background_value: string;
-  padding_top: number;
-  padding_bottom: number;
-  max_width: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  text_color_override: string;
-  border_radius: number;
-}
+// Re-export the canonical schema from the renderer so editor + persistence
+// + render share one source of truth (extended May 2026 with video/overlay/
+// grain/vignette/blur + container frame fields).
+export type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 export interface SectionConfig {
   id: string;
