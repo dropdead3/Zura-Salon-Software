@@ -27,6 +27,14 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 const POPUP_SURFACE = 'promotional_popup';
 export const MIN_IMPRESSIONS_FOR_RATES = 100;
 
+export interface PromotionalPopupTrendPoint {
+  /** YYYY-MM-DD (UTC). */
+  date: string;
+  impressions: number;
+  ctaClicks: number;
+  redemptions: number;
+}
+
 export interface PromotionalPopupFunnel {
   impressions: number;
   ctaClicks: number; // 'accepted' responses
@@ -41,6 +49,49 @@ export interface PromotionalPopupFunnel {
   bookingRate: number | null;
   hasSufficientData: boolean;
   windowDays: number;
+  /** Earliest impression timestamp (any code, this org/surface). Drives the
+   *  "Since impression tracking went live" footnote. */
+  firstImpressionAt: string | null;
+  /** Earliest response timestamp for this code — used to detect the
+   *  pre-tracking asymmetry where responses pre-date impressions. */
+  firstResponseAt: string | null;
+  /** 14-day daily trend (oldest → newest). Always returned, even when
+   *  impressions are zero, so the chart can render an honest flat baseline. */
+  trend: PromotionalPopupTrendPoint[];
+}
+
+const TREND_WINDOW_DAYS = 14;
+
+function utcDateKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function buildTrendBuckets(
+  impressionDates: string[],
+  responseDates: string[],
+  redemptionDates: string[],
+): PromotionalPopupTrendPoint[] {
+  const buckets = new Map<string, PromotionalPopupTrendPoint>();
+  const today = new Date();
+  for (let i = TREND_WINDOW_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    buckets.set(key, { date: key, impressions: 0, ctaClicks: 0, redemptions: 0 });
+  }
+  for (const iso of impressionDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.impressions += 1;
+  }
+  for (const iso of responseDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.ctaClicks += 1;
+  }
+  for (const iso of redemptionDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.redemptions += 1;
+  }
+  return Array.from(buckets.values());
 }
 
 interface UsePromotionalPopupFunnelArgs {
@@ -72,6 +123,9 @@ export function usePromotionalPopupFunnel({
         bookingRate: null,
         hasSufficientData: false,
         windowDays,
+        firstImpressionAt: null,
+        firstResponseAt: null,
+        trend: buildTrendBuckets([], [], []),
       };
       if (!orgId) return empty;
 
@@ -79,24 +133,24 @@ export function usePromotionalPopupFunnel({
         Date.now() - windowDays * 86_400_000,
       ).toISOString();
 
-      // Run the three counts in parallel — three small head-only queries are
-      // cheaper than one fat join, and any single failure shouldn't crash the
-      // whole card.
       const [
         impressionsRes,
         responsesRes,
         redemptionsRes,
+        firstImpressionRes,
+        firstResponseRes,
       ] = await Promise.all([
         supabase
           .from('promo_offer_impressions')
-          .select('id', { count: 'exact', head: true })
+          .select('created_at')
           .eq('organization_id', orgId)
           .eq('offer_code', code)
           .eq('surface', POPUP_SURFACE)
-          .gte('created_at', windowStart),
+          .gte('created_at', windowStart)
+          .limit(20_000),
         supabase
           .from('promo_offer_responses')
-          .select('response')
+          .select('response, created_at')
           .eq('organization_id', orgId)
           .eq('offer_code', code)
           .eq('surface', POPUP_SURFACE)
@@ -104,22 +158,45 @@ export function usePromotionalPopupFunnel({
           .limit(10_000),
         supabase
           .from('promotion_redemptions')
-          .select('revenue_attributed')
+          .select('revenue_attributed, transaction_date')
           .eq('organization_id', orgId)
           .eq('promo_code_used', code)
           .eq('surface', POPUP_SURFACE)
           .gte('transaction_date', windowStart)
           .limit(10_000),
+        // Earliest impression for THIS org/surface (any code) — establishes
+        // when impression tracking actually started recording. Powers the
+        // "Since {date}" footnote and detects the pre-tracking asymmetry.
+        supabase
+          .from('promo_offer_impressions')
+          .select('created_at')
+          .eq('organization_id', orgId)
+          .eq('surface', POPUP_SURFACE)
+          .order('created_at', { ascending: true })
+          .limit(1),
+        supabase
+          .from('promo_offer_responses')
+          .select('created_at')
+          .eq('organization_id', orgId)
+          .eq('offer_code', code)
+          .eq('surface', POPUP_SURFACE)
+          .order('created_at', { ascending: true })
+          .limit(1),
       ]);
 
-      const impressions = impressionsRes.count ?? 0;
-      const responses = (responsesRes.data ?? []) as Array<{ response: string }>;
+      const impressionRows = (impressionsRes.data ?? []) as Array<{ created_at: string }>;
+      const impressions = impressionRows.length;
+      const responses = (responsesRes.data ?? []) as Array<{
+        response: string;
+        created_at: string;
+      }>;
       const ctaClicks = responses.filter((r) => r.response === 'accepted').length;
       const dismissals = responses.filter(
         (r) => r.response === 'declined' || r.response === 'soft',
       ).length;
       const redemptionRows = (redemptionsRes.data ?? []) as Array<{
         revenue_attributed: number | null;
+        transaction_date: string;
       }>;
       const redemptions = redemptionRows.length;
       const revenueAttributed = redemptionRows.reduce(
@@ -132,6 +209,19 @@ export function usePromotionalPopupFunnel({
       const redemptionRate = hasSufficientData ? redemptions / impressions : null;
       const bookingRate = ctaClicks > 0 ? redemptions / ctaClicks : null;
 
+      const trend = buildTrendBuckets(
+        impressionRows.map((r) => r.created_at),
+        responses.filter((r) => r.response === 'accepted').map((r) => r.created_at),
+        redemptionRows.map((r) => r.transaction_date),
+      );
+
+      const firstImpressionAt =
+        (firstImpressionRes.data?.[0] as { created_at: string } | undefined)
+          ?.created_at ?? null;
+      const firstResponseAt =
+        (firstResponseRes.data?.[0] as { created_at: string } | undefined)
+          ?.created_at ?? null;
+
       return {
         impressions,
         ctaClicks,
@@ -143,6 +233,9 @@ export function usePromotionalPopupFunnel({
         bookingRate,
         hasSufficientData,
         windowDays,
+        firstImpressionAt,
+        firstResponseAt,
+        trend,
       };
     },
     enabled: !!orgId,

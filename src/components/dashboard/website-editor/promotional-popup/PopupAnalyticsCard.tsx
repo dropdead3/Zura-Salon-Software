@@ -1,12 +1,141 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Eye, MousePointerClick, X, Gift, DollarSign, BarChart3 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/formatCurrency';
 import {
   usePromotionalPopupFunnel,
   MIN_IMPRESSIONS_FOR_RATES,
+  type PromotionalPopupTrendPoint,
 } from '@/hooks/usePromotionalPopupFunnel';
 import { tokens } from '@/lib/design-tokens';
+
+function formatTrackingFootnote(
+  firstImpressionAt: string | null,
+  firstResponseAt: string | null,
+): string | null {
+  if (!firstImpressionAt) {
+    return 'Impression tracking not yet recording — data populates after the first popup render.';
+  }
+  const since = new Date(firstImpressionAt).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  if (firstResponseAt && new Date(firstResponseAt) < new Date(firstImpressionAt)) {
+    return `Funnel rates reflect activity since ${since}, when impression tracking went live. Earlier CTA clicks exist in the response log but cannot be matched to an impression.`;
+  }
+  return `Since ${since}, when impression tracking went live.`;
+}
+
+interface TrendChartProps {
+  data: PromotionalPopupTrendPoint[];
+}
+
+function TrendChart({ data }: TrendChartProps) {
+  const total = data.reduce(
+    (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
+    0,
+  );
+  if (total === 0) return null;
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className={tokens.kpi.label}>14-Day Trend</span>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
+            Impressions
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary" />
+            CTA clicks
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-foreground" />
+            Redemptions
+          </span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={140}>
+        <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="popupImpressionsFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+            </linearGradient>
+            <linearGradient id="popupClicksFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+            </linearGradient>
+            <linearGradient id="popupRedemptionsFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity={0.45} />
+              <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity={0.05} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={(value: string) => value.slice(5)}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={false}
+            tickLine={false}
+            width={28}
+            allowDecimals={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: 'hsl(var(--popover))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 8,
+              fontSize: 12,
+            }}
+            labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+          />
+          <Area
+            type="monotone"
+            dataKey="impressions"
+            stroke="hsl(var(--primary))"
+            strokeOpacity={0.7}
+            strokeWidth={1.5}
+            fill="url(#popupImpressionsFill)"
+            name="Impressions"
+          />
+          <Area
+            type="monotone"
+            dataKey="ctaClicks"
+            stroke="hsl(var(--primary))"
+            strokeWidth={1.5}
+            fill="url(#popupClicksFill)"
+            name="CTA clicks"
+          />
+          <Area
+            type="monotone"
+            dataKey="redemptions"
+            stroke="hsl(var(--foreground))"
+            strokeWidth={1.5}
+            fill="url(#popupRedemptionsFill)"
+            name="Redemptions"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 
 interface PopupAnalyticsCardProps {
@@ -151,6 +280,8 @@ export function PopupAnalyticsCard({
               />
             </div>
 
+            <TrendChart data={data.trend} />
+
             {!data.hasSufficientData ? (
               <p className="text-xs text-muted-foreground">
                 Click-through and redemption rates appear after{' '}
@@ -161,6 +292,16 @@ export function PopupAnalyticsCard({
                 Until then, raw counts only.
               </p>
             ) : null}
+
+            {(() => {
+              const note = formatTrackingFootnote(
+                data.firstImpressionAt,
+                data.firstResponseAt,
+              );
+              return note ? (
+                <p className="text-[11px] text-muted-foreground/80 italic">{note}</p>
+              ) : null;
+            })()}
           </>
         )}
       </CardContent>
