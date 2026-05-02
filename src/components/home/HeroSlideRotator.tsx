@@ -549,7 +549,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         }}
       />
 
-      <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
+      {/* ConsultationFormDialog now lives inside HeroForeground (foreground concern). */}
     </section>
   );
 }
