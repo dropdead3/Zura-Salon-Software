@@ -50,3 +50,43 @@ describe('resolveHeroColors — auto-contrast tone fallback', () => {
     expect(r.notesStyle).toEqual({ color: '#00ff00' });
   });
 });
+
+describe('resolveHeroColors — auto-contrast hover text fallback', () => {
+  it('light hover-bg → auto white-text becomes black (primary)', () => {
+    const r = resolveHeroColors({ primary_button_hover_bg: '#ffffff' }, true);
+    expect(r.hasPrimaryHoverFg).toBe(true);
+    expect((r.primaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg']).toBe('#000000');
+  });
+
+  it('dark hover-bg → auto-fg becomes white (primary)', () => {
+    const r = resolveHeroColors({ primary_button_hover_bg: '#111111' }, true);
+    expect(r.hasPrimaryHoverFg).toBe(true);
+    expect((r.primaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg']).toBe('#ffffff');
+  });
+
+  it('no hover-bg → no auto-fg flag', () => {
+    const r = resolveHeroColors({}, true);
+    expect(r.hasPrimaryHoverFg).toBe(false);
+    expect(r.hasSecondaryHoverFg).toBe(false);
+  });
+
+  it('explicit secondary hover-fg wins over auto-derived', () => {
+    const r = resolveHeroColors(
+      { secondary_button_hover_bg: '#ffffff', secondary_button_hover_fg: '#ff0000' },
+      true,
+    );
+    expect(r.hasSecondaryHoverFg).toBe(true);
+    expect((r.secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg']).toBe('#ff0000');
+  });
+
+  it('light secondary hover-bg → auto-derives black text', () => {
+    const r = resolveHeroColors({ secondary_button_hover_bg: '#f5f5f5' }, true);
+    expect(r.hasSecondaryHoverFg).toBe(true);
+    expect((r.secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg']).toBe('#000000');
+  });
+
+  it('malformed hover-bg → no auto-fg', () => {
+    const r = resolveHeroColors({ primary_button_hover_bg: 'not-a-color' }, true);
+    expect(r.hasPrimaryHoverFg).toBe(false);
+  });
+});

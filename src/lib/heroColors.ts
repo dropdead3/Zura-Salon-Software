@@ -6,6 +6,28 @@
  */
 import type { HeroTextColors } from '@/hooks/useSectionConfig';
 
+/**
+ * Pick black or white for best contrast against a hex background. Uses the
+ * WCAG relative-luminance formula; threshold 0.5 gives stable AA-or-better
+ * pairings for the operator-set hover backgrounds (light hover-bg → black
+ * text, dark hover-bg → white text). Returns `null` for unparseable input
+ * so callers can fall through to their existing fallback.
+ */
+export function pickContrastColor(hex: string | undefined): '#000000' | '#ffffff' | null {
+  if (!hex) return null;
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  // Linearize per sRGB
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.5 ? '#000000' : '#ffffff';
+}
+
 export interface ResolvedHeroColors {
   /** Inline style for the headline element. */
   headlineStyle: React.CSSProperties;
@@ -34,10 +56,13 @@ export interface ResolvedHeroColors {
    *  Consumers must add the `hero-cta-hover` utility class when true so the
    *  CSS rule can override the inline `background-color`. */
   hasPrimaryHover: boolean;
+  /** True when the primary CTA has an explicit OR auto-derived hover text
+   *  color. Consumers must add `.hero-cta-hover-fg` when true. */
+  hasPrimaryHoverFg: boolean;
   hasSecondaryHover: boolean;
   /** True when an operator-set hover border color exists for the secondary CTA. */
   hasSecondaryHoverBorder: boolean;
-  /** True when an operator-set hover text color exists for the secondary CTA. */
+  /** True when an explicit OR auto-derived hover text color exists for the secondary CTA. */
   hasSecondaryHoverFg: boolean;
 }
 
@@ -89,9 +114,18 @@ export function resolveHeroColors(
   const primaryButtonStyle: React.CSSProperties = {};
   if (colors.primary_button_bg) primaryButtonStyle.backgroundColor = colors.primary_button_bg;
   if (colors.primary_button_fg) primaryButtonStyle.color = colors.primary_button_fg;
+  // Primary hover — if operator set hover-bg but no hover-fg, auto-pick
+  // black or white via WCAG luminance so light hover backgrounds don't
+  // strand the original (often white) text below AA contrast.
+  let primaryAutoHoverFg = false;
   if (colors.primary_button_hover_bg) {
     (primaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
       colors.primary_button_hover_bg;
+    const auto = pickContrastColor(colors.primary_button_hover_bg);
+    if (auto) {
+      (primaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] = auto;
+      primaryAutoHoverFg = true;
+    }
   }
 
   const primaryButtonClass =
@@ -113,9 +147,18 @@ export function resolveHeroColors(
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-border'] =
       colors.secondary_button_hover_border;
   }
+  // Operator-set hover-fg wins; otherwise auto-pick from hover-bg luminance
+  // so light hover backgrounds don't strand white outline text below AA.
+  let secondaryAutoHoverFg = false;
   if (colors.secondary_button_hover_fg) {
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] =
       colors.secondary_button_hover_fg;
+  } else if (colors.secondary_button_hover_bg) {
+    const auto = pickContrastColor(colors.secondary_button_hover_bg);
+    if (auto) {
+      (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] = auto;
+      secondaryAutoHoverFg = true;
+    }
   }
 
   const secondaryButtonClass =
@@ -139,8 +182,9 @@ export function resolveHeroColors(
     secondaryButtonStyle,
     secondaryButtonClass,
     hasPrimaryHover: !!colors.primary_button_hover_bg,
+    hasPrimaryHoverFg: primaryAutoHoverFg,
     hasSecondaryHover: !!colors.secondary_button_hover_bg,
     hasSecondaryHoverBorder: !!colors.secondary_button_hover_border,
-    hasSecondaryHoverFg: !!colors.secondary_button_hover_fg,
+    hasSecondaryHoverFg: !!colors.secondary_button_hover_fg || secondaryAutoHoverFg,
   };
 }
