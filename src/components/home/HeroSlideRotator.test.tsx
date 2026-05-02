@@ -15,8 +15,9 @@
  *     <Link>s.
  */
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { HeroSlideRotator } from './HeroSlideRotator';
 import { DEFAULT_HERO, type HeroConfig, type HeroSlide } from '@/hooks/useSectionConfig';
 
@@ -56,9 +57,11 @@ function makeSlide(overrides: Partial<HeroSlide> = {}): HeroSlide {
 
 function renderRotator(config: HeroConfig) {
   return render(
-    <MemoryRouter>
-      <HeroSlideRotator config={config} isPreview />
-    </MemoryRouter>,
+    <HelmetProvider>
+      <MemoryRouter>
+        <HeroSlideRotator config={config} isPreview />
+      </MemoryRouter>
+    </HelmetProvider>,
   );
 }
 
@@ -202,6 +205,48 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
     expect(container.textContent).toContain('Shared Headline');
     expect(container.textContent).not.toContain('Should Never Render');
   });
+
+  it('sources background media from the active rotating slide (not the master slide) in background_only mode', async () => {
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared Headline',
+      slides: [
+        makeSlide({
+          id: 's1',
+          background_type: 'image',
+          background_url: 'https://example.com/master.jpg',
+        }),
+        makeSlide({
+          id: 's2',
+          background_type: 'image',
+          background_url: 'https://example.com/bg-2.jpg',
+        }),
+        makeSlide({
+          id: 's3',
+          background_type: 'image',
+          background_url: 'https://example.com/bg-3.jpg',
+        }),
+      ],
+      rotator_mode: 'background_only',
+      auto_rotate: true,
+      slide_interval_ms: 2000,
+    };
+
+    const { container } = renderRotator(config);
+    const currentImage = () => container.querySelector('img');
+
+    expect(currentImage()?.getAttribute('src')).toBe('https://example.com/master.jpg');
+
+    await waitFor(
+      () => expect(currentImage()?.getAttribute('src')).toBe('https://example.com/bg-2.jpg'),
+      { timeout: 3000 },
+    );
+
+    await waitFor(
+      () => expect(currentImage()?.getAttribute('src')).toBe('https://example.com/bg-3.jpg'),
+      { timeout: 3000 },
+    );
+  }, 7000);
 
   it('relabels pagination as backgrounds in background_only mode', () => {
     const config: HeroConfig = {
