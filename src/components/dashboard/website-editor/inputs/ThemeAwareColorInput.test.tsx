@@ -36,6 +36,26 @@ vi.mock('@/hooks/useRecentColorPicks', () => ({
 vi.mock('@/hooks/useInUseSiteColors', () => ({
   useInUseSiteColors: () => [],
 }));
+// Mock the resolver so the test controls the website-theme hex deterministically.
+// Real resolution requires getComputedStyle -> RGB parsing which jsdom doesn't do.
+vi.mock('@/lib/themeTokenSwatches', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/themeTokenSwatches')>(
+    '@/lib/themeTokenSwatches',
+  );
+  return {
+    ...actual,
+    readThemeTokenSwatches: () => [
+      {
+        key: 'primary',
+        label: 'Primary',
+        hint: 'CTAs and accents',
+        cssVar: 'hsl(var(--primary))',
+        hex: '#837363', // cream-lux primary (warm taupe)
+      },
+    ],
+    subscribeToThemeChanges: () => () => {},
+  };
+});
 
 beforeEach(() => {
   // Simulate the dashboard environment: <html> carries `theme-zura`. This
