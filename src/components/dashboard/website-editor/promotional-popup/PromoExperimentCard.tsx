@@ -14,14 +14,25 @@
  *     card surfaces a banner when both are active so the operator understands
  *     why the experiment isn't currently running.
  *   - Materiality: per-arm CTR / redemption rate respects the same
- *     `MIN_IMPRESSIONS_FOR_RATES` gate as the global funnel card.
+ *     `MIN_IMPRESSIONS_FOR_RATES` gate as the global funnel card. The
+ *     significance badge uses a stricter `MIN_PER_ARM_IMPRESSIONS_FOR_SIGNIFICANCE`
+ *     gate before claiming a winner — Wald CI on a CTR delta is too noisy
+ *     under that. Honest silence beats false confidence.
  *   - Bucketing version: edits to the variant set bump `version` so visitor
  *     assignment re-shuffles. Renaming/weight-only edits also bump because
  *     re-entry could otherwise show the visitor an arm that no longer exists.
  *   - Currency: none on this surface.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { FlaskConical, Plus, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
+import {
+  FlaskConical,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Sparkles,
+  Trophy,
+  Crown,
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -34,6 +45,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -50,11 +77,16 @@ import {
   type PromoExperimentConfig,
   type PromoExperimentVariant,
 } from '@/hooks/usePromotionalPopup';
-import { pickActiveEntry } from '@/lib/promo-schedule';
+import { pickActiveEntry, applyScheduledSnapshot } from '@/lib/promo-schedule';
 import {
   usePromotionalPopupFunnel,
   MIN_IMPRESSIONS_FOR_RATES,
 } from '@/hooks/usePromotionalPopupFunnel';
+import {
+  ctrSignificance,
+  type SignificanceState,
+  type ArmStats,
+} from '@/lib/promo-stats';
 
 interface PromoExperimentCardProps {
   formData: PromotionalPopupSettings;
@@ -75,24 +107,46 @@ const DEFAULT_EXPERIMENT: PromoExperimentConfig = {
   variants: [],
 };
 
-/** Per-variant funnel row. Memoized so adding/removing variants doesn't
- *  re-fetch sibling rows. */
+/** Per-variant funnel row. Lifts its loaded stats up via `onStats` so the
+ *  parent can compute significance deltas across arms (control vs. each).
+ *  We don't refactor to `useQueries` because the variant set is small and
+ *  the child also owns its own loading state nicely. */
 function VariantFunnelRow({
   offerCode,
   variantKey,
   totalImpressions,
+  significance,
+  isControl,
+  onStats,
 }: {
   offerCode: string;
   variantKey: string;
+  totalImpressions: number;
+  significance: SignificanceState | null;
+  isControl: boolean;
   /** All-arm impressions in window — used to render a share % so the
    *  operator can sanity-check that traffic is splitting roughly to plan. */
-  totalImpressions: number;
+  onStats: (variantKey: string, stats: ArmStats | null) => void;
 }) {
   const { data } = usePromotionalPopupFunnel({ offerCode, variantKey });
+
+  // Hoist impressions/clicks up to the parent so it can compute deltas.
+  // Effect (not render) to avoid setState-in-render loops.
+  useEffect(() => {
+    if (!data) {
+      onStats(variantKey, null);
+      return;
+    }
+    onStats(variantKey, {
+      impressions: data.impressions,
+      ctaClicks: data.ctaClicks,
+    });
+  }, [data, variantKey, onStats]);
+
   if (!data) {
     return (
-      <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
-        <span>—</span><span>—</span><span>—</span><span>—</span>
+      <div className="grid grid-cols-5 gap-2 text-xs text-muted-foreground">
+        <span>—</span><span>—</span><span>—</span><span>—</span><span>—</span>
       </div>
     );
   }
@@ -104,13 +158,108 @@ function VariantFunnelRow({
     data.impressions >= MIN_IMPRESSIONS_FOR_RATES && data.ctr !== null
       ? `${(data.ctr * 100).toFixed(1)}%`
       : '—';
+
   return (
-    <div className="grid grid-cols-4 gap-2 text-xs">
-      <span className="font-mono">{data.impressions.toLocaleString()}</span>
-      <span className="font-mono text-muted-foreground">{share}</span>
-      <span className="font-mono">{data.ctaClicks.toLocaleString()}</span>
-      <span className="font-mono text-primary">{ctr}</span>
+    <div className="space-y-2">
+      <div className="grid grid-cols-5 gap-2 text-xs">
+        <span className="font-mono">{data.impressions.toLocaleString()}</span>
+        <span className="font-mono text-muted-foreground">{share}</span>
+        <span className="font-mono">{data.ctaClicks.toLocaleString()}</span>
+        <span className="font-mono">{data.redemptions.toLocaleString()}</span>
+        <span className="font-mono text-primary">{ctr}</span>
+      </div>
+      <SignificanceBadge state={significance} isControl={isControl} />
     </div>
+  );
+}
+
+/** Badge that translates the Wald CI state into operator-readable copy.
+ *  Honest silence: when below per-arm n threshold we tell them how many
+ *  more impressions they need rather than show a percentage they'll over-trust. */
+function SignificanceBadge({
+  state,
+  isControl,
+}: {
+  state: SignificanceState | null;
+  isControl: boolean;
+}) {
+  if (isControl) {
+    return (
+      <Badge variant="outline" className="text-[10px] border-border/60 text-muted-foreground">
+        Control
+      </Badge>
+    );
+  }
+  if (!state) return null;
+
+  if (state.kind === 'control') return null;
+
+  if (state.kind === 'insufficient') {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className="text-[10px] border-border/60 text-muted-foreground cursor-help">
+              Need {state.needed.toLocaleString()} more impressions
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="max-w-xs text-xs">
+              Both arms need at least 100 impressions before we can call a winner.
+              CTR deltas under that are too noisy to act on.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  if (state.kind === 'inconclusive') {
+    const sign = state.deltaPct >= 0 ? '+' : '';
+    return (
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className="text-[10px] border-border/60 text-muted-foreground cursor-help">
+              {sign}{state.deltaPct.toFixed(1)}pp · not significant
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="max-w-xs text-xs">
+              The 95% confidence interval on the CTR delta crosses zero — keep collecting.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  const isWin = state.kind === 'significant-up';
+  const sign = state.deltaPct >= 0 ? '+' : '';
+  const label = isWin ? 'Significant lift' : 'Significant drop';
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge
+            variant="outline"
+            className={cn(
+              'text-[10px] cursor-help',
+              isWin
+                ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                : 'border-destructive/40 text-destructive',
+            )}
+          >
+            {isWin ? <Trophy className="w-3 h-3 mr-1" /> : null}
+            {sign}{state.deltaPct.toFixed(1)}pp · {label}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p className="max-w-xs text-xs">
+            95% CI: {state.ciLowPct.toFixed(1)}pp to {state.ciHighPct.toFixed(1)}pp vs control.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -132,8 +281,25 @@ export function PromoExperimentCard({
 
   const [draftPromoId, setDraftPromoId] = useState<string>('');
   const [draftLabel, setDraftLabel] = useState<string>('');
+  const [armStats, setArmStats] = useState<Record<string, ArmStats | null>>({});
+  const [promoteCandidate, setPromoteCandidate] = useState<PromoExperimentVariant | null>(null);
 
-  // Reset draft when an Add succeeds — handled inside handleAdd directly.
+  // Stable callback so child VariantFunnelRow doesn't loop in its useEffect.
+  const handleArmStats = useMemo(
+    () => (variantKey: string, stats: ArmStats | null) => {
+      setArmStats((prev) => {
+        const existing = prev[variantKey];
+        if (
+          existing?.impressions === stats?.impressions &&
+          existing?.ctaClicks === stats?.ctaClicks
+        ) {
+          return prev;
+        }
+        return { ...prev, [variantKey]: stats };
+      });
+    },
+    [],
+  );
 
   const updateExperiment = (next: PromoExperimentConfig) => {
     setFormData({ ...formData, experiment: next });
@@ -178,13 +344,34 @@ export function PromoExperimentCard({
   };
 
   const handleLabel = (id: string, label: string) => {
-    // Label-only edits don't need to re-shuffle, but we keep the bump for
-    // simplicity — users editing copy mid-test are typically iterating, not
-    // measuring, and the alternative (label vs. structural edit detection)
-    // is a foot-gun.
     writeVariants(
       variants.map((v) => (v.id === id ? { ...v, label: label.slice(0, 40) } : v)),
     );
+  };
+
+  /**
+   * Promote-to-base: copies the winning variant's snapshot creative onto the
+   * wrapper config and disables the experiment in one edit. End-state matches
+   * "operator picked one and shipped it" — the schedule rotation contract is
+   * preserved, the offer code is preserved, telemetry continuity is preserved.
+   *
+   * We don't drop the experiment.variants[] — operator might want to re-enable
+   * later, or use them as a starting point for a follow-up test. Disabled +
+   * unchanged is the least surprising state.
+   */
+  const handlePromote = (variant: PromoExperimentVariant) => {
+    const snap = saved.find((s) => s.id === variant.savedPromoId)?.config ?? null;
+    if (!snap) {
+      toast.error('Snapshot is no longer in the library.');
+      return;
+    }
+    const promoted = applyScheduledSnapshot(formData, snap);
+    setFormData({
+      ...promoted,
+      experiment: { ...experiment, enabled: false },
+    });
+    setPromoteCandidate(null);
+    toast.success(`"${variant.label}" promoted to base — Save to publish.`);
   };
 
   const eligibleVariants = variants.filter(
@@ -208,6 +395,28 @@ export function PromoExperimentCard({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligibleVariants.length, experiment.enabled]);
+
+  // Control = first eligible variant (by author order). The "first added is
+  // the baseline" convention is unambiguous and matches how operators
+  // verbalize the test ("we're testing B against A"). Significance is then
+  // computed on each non-control vs. this control.
+  const controlVariantId = eligibleVariants[0]?.id ?? null;
+
+  const significanceByVariant = useMemo(() => {
+    const out: Record<string, SignificanceState | null> = {};
+    if (!controlVariantId) return out;
+    const control = armStats[controlVariantId];
+    if (!control) return out;
+    for (const v of eligibleVariants) {
+      const arm = armStats[v.id];
+      if (!arm) {
+        out[v.id] = null;
+        continue;
+      }
+      out[v.id] = ctrSignificance(arm, control, v.id === controlVariantId);
+    }
+    return out;
+  }, [armStats, eligibleVariants, controlVariantId]);
 
   return (
     <Card>
@@ -302,8 +511,19 @@ export function PromoExperimentCard({
                     totalWeight > 0 && (v.weight ?? 1) > 0
                       ? `${Math.round((Math.max(1, v.weight ?? 1) / totalWeight) * 100)}%`
                       : '—';
+                  const isControl = v.id === controlVariantId;
+                  const sig = significanceByVariant[v.id] ?? null;
+                  const isWinner = sig?.kind === 'significant-up';
                   return (
-                    <div key={v.id} className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
+                    <div
+                      key={v.id}
+                      className={cn(
+                        'space-y-2 rounded-lg border p-3 transition-colors',
+                        isWinner
+                          ? 'border-emerald-500/40 bg-emerald-500/5'
+                          : 'border-border/60 bg-muted/20',
+                      )}
+                    >
                       <div className="grid grid-cols-[1fr_120px_60px_auto] gap-2 items-center">
                         <Input
                           value={v.label}
@@ -342,17 +562,34 @@ export function PromoExperimentCard({
                       </div>
                       {offerCode ? (
                         <>
-                          <div className="grid grid-cols-4 gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          <div className="grid grid-cols-5 gap-2 px-1 text-[10px] uppercase tracking-wider text-muted-foreground">
                             <span>Impressions</span>
                             <span>Actual share</span>
                             <span>CTA clicks</span>
+                            <span>Bookings</span>
                             <span>CTR</span>
                           </div>
                           <VariantFunnelRow
                             offerCode={offerCode}
                             variantKey={v.id}
                             totalImpressions={totalImpressions}
+                            significance={sig}
+                            isControl={isControl}
+                            onStats={handleArmStats}
                           />
+                          {!isControl && snap ? (
+                            <div className="flex justify-end pt-1">
+                              <Button
+                                variant={isWinner ? 'default' : 'outline'}
+                                size="sm"
+                                className="h-7 text-[11px]"
+                                onClick={() => setPromoteCandidate(v)}
+                              >
+                                <Crown className="w-3 h-3 mr-1" />
+                                Promote to base
+                              </Button>
+                            </div>
+                          ) : null}
                         </>
                       ) : null}
                     </div>
@@ -411,13 +648,41 @@ export function PromoExperimentCard({
                 Visitors are bucketed deterministically — the same visitor sees the
                 same arm across reloads. Editing the variant set re-shuffles
                 everyone (bucket version <span className="font-mono">{experiment.version}</span>).
-                Redemption attribution is offer-code-level until variant tagging
-                propagates through the booking flow.
+                The first variant is the control; significance is computed against
+                it using a 95% Wald CI on the CTR delta.
               </p>
             )}
           </>
         )}
       </CardContent>
+
+      <AlertDialog
+        open={!!promoteCandidate}
+        onOpenChange={(open) => !open && setPromoteCandidate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Promote "{promoteCandidate?.label}" to base?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This copies the winning snapshot's creative (headline, body, CTA, image,
+              accent) onto your live wrapper and turns the experiment off. Your
+              targeting, offer code, and frequency stay exactly as they are.
+              Variants are kept in the list so you can re-enable or iterate later.
+              Remember to Save to publish.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => promoteCandidate && handlePromote(promoteCandidate)}
+            >
+              Promote to base
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
