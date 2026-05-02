@@ -500,6 +500,22 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           >
             <ChevronRight className="h-5 w-5" />
           </button>
+          {/* Editor preview affordance: when auto-rotate is suppressed for
+              multi_slide editing, operators otherwise see "is the rotator
+              broken?" The hint is gated to the exact suppression condition
+              so it never appears on the live site. */}
+          {suppressForPreview && !!config.auto_rotate && (
+            <span
+              data-testid="hero-rotator-paused-hint"
+              className={`ml-2 text-[10px] font-sans tracking-wide px-2 py-1 rounded-full ${
+                hasBackground
+                  ? 'bg-white/15 text-white/85 backdrop-blur-sm'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              Auto-rotate paused while editing — use ◀ ▶ to preview
+            </span>
+          )}
         </div>
       )}
 
