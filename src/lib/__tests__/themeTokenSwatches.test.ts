@@ -34,6 +34,8 @@ function hslToRgbString(h: number, s: number, l: number): string {
 }
 
 const originalGCS = window.getComputedStyle;
+const originalCreateElement = document.createElement.bind(document);
+const PENDING_HSL = '__pendingHslColor';
 
 beforeEach(() => {
   // Inject just the --primary CSS var per theme — enough to exercise the
@@ -46,20 +48,48 @@ beforeEach(() => {
   `;
   document.head.appendChild(style);
 
-  // Patch getComputedStyle to convert `hsl(h s% l%)` color strings (set by
-  // computedColorToHex on its sandbox div) into rgb() that jsdom returns
-  // verbatim. We only intercept the .color readback — CSS var lookups go
-  // through the original implementation.
+  // jsdom rejects modern-syntax `hsl(h s% l%)` outright (style.color stays
+  // empty), so the resolver's downstream getComputedStyle().color readback
+  // returns ''. We work around it in two parts:
+  //   (a) Override createElement to wrap the .style.color setter so any
+  //       "hsl(h s% l%)" assignment is captured into a private attribute
+  //       on the element.
+  //   (b) Patch getComputedStyle so that when its target has the captured
+  //       attribute, we synthesize the rgb() string the browser would
+  //       have produced. CSS var lookups still go through the real impl.
+  document.createElement = ((tag: string, opts?: ElementCreationOptions) => {
+    const el = originalCreateElement(tag, opts) as HTMLElement;
+    const styleObj = el.style;
+    const desc = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(styleObj),
+      'color',
+    );
+    Object.defineProperty(styleObj, 'color', {
+      configurable: true,
+      get() { return desc?.get?.call(this) ?? ''; },
+      set(v: string) {
+        const m = typeof v === 'string'
+          ? v.match(/^hsl\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s*\)$/i)
+          : null;
+        if (m) {
+          (el as unknown as Record<string, string>)[PENDING_HSL] = v;
+        }
+        desc?.set?.call(this, v);
+      },
+    });
+    return el;
+  }) as typeof document.createElement;
+
   window.getComputedStyle = function patched(this: unknown, ...args: Parameters<typeof originalGCS>) {
     const real = originalGCS.apply(this as Window, args);
-    const target = args[0] as Element;
+    const target = args[0] as HTMLElement;
     return new Proxy(real, {
       get(obj, prop, receiver) {
         if (prop === 'color') {
-          const inline = (target as HTMLElement).style?.color ?? '';
-          const m = inline.match(/^hsl\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s*\)$/i);
-          if (m) {
-            return hslToRgbString(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+          const captured = (target as unknown as Record<string, string>)[PENDING_HSL];
+          if (captured) {
+            const m = captured.match(/^hsl\(\s*(-?[\d.]+)\s+(-?[\d.]+)%\s+(-?[\d.]+)%\s*\)$/i);
+            if (m) return hslToRgbString(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
           }
         }
         return Reflect.get(obj, prop, receiver);
@@ -71,6 +101,7 @@ beforeEach(() => {
 afterEach(() => {
   document.getElementById(STYLE_ID)?.remove();
   window.getComputedStyle = originalGCS;
+  document.createElement = originalCreateElement;
   document.documentElement.className = '';
 });
 
