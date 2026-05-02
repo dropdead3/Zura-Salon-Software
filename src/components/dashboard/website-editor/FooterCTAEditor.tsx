@@ -17,6 +17,11 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
+import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
+import { FOOTER_CTA_COLOR_SLOTS } from '@/lib/sectionColorSlots';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 export function FooterCTAEditor() {
   const __saveTelemetry = useSaveTelemetry('footer-cta-editor');
@@ -76,6 +81,12 @@ export function FooterCTAEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow Text"
@@ -179,6 +190,21 @@ export function FooterCTAEditor() {
             description="Display location phone numbers below the CTA button"
           />
         </div>
+          </TabsContent>
+
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionTextColorsEditor
+              value={localConfig.text_colors}
+              onChange={(next) => updateField('text_colors', next)}
+              slots={FOOTER_CTA_COLOR_SLOTS}
+            />
+            <SectionStyleEditor
+              value={localConfig.style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId="footer-cta"
+            />
+          </TabsContent>
+        </Tabs>
       </EditorCard>
     </div>
   );
