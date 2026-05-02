@@ -193,7 +193,13 @@ export function WebsiteEditorSidebar({
   const { data: pagesConfig } = useWebsitePages();
   const updateSections = useUpdateWebsiteSections();
   const orgId = useSettingsOrgId();
-  const { isCollapsed: isGroupCollapsed, toggleGroup } = useEditorSidebarPrefs(orgId);
+  const {
+    isCollapsed: isGroupCollapsed,
+    toggleGroup,
+    collapseAll,
+    expandAll,
+    hasAnyCollapsed,
+  } = useEditorSidebarPrefs(orgId);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
   const [hiddenSectionsOpen, setHiddenSectionsOpen] = useState(false);
