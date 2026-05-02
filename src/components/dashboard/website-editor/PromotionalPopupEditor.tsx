@@ -821,8 +821,8 @@ export function PromotionalPopupEditor() {
         title="Goal & Auto-Suppression"
         icon={TargetIcon}
         summary={
-          formData.goal?.maxRedemptions
-            ? `Cap ${formData.goal.maxRedemptions} redemptions`
+          formData.goal?.capRedemptions
+            ? `Cap ${formData.goal.capRedemptions} redemptions`
             : 'No cap set'
         }
       >
