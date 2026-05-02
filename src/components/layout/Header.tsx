@@ -369,13 +369,17 @@ export function Header() {
                   // Glass treatment ONLY when no explicit bg_color is set.
                   // Setting a banner color replaces glass entirely with a solid fill.
                   !hasExplicitBg && "backdrop-blur-xl",
-                  // Default to dark scrim over hero media — same default-dark
-                  // assumption as the text contrast above. The light variant
-                  // (`bg-secondary/90`) only kicks in once theme detection
-                  // confirms a light section is behind the bar (post-scroll).
-                  !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-black/50"),
-                  // Subtle top-down gradient scrim improves readability over photographic backgrounds
-                  !hasExplicitBg && overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
+                  // True glass: a light tint over dark backdrops, a dark tint
+                  // over light backdrops. The previous `bg-black/70` default
+                  // collapsed to near-solid black whenever the bar sat over
+                  // any non-hero surface (page frame, scrolled content),
+                  // making "no color selected" look identical to "black
+                  // selected". Light/dark scrims keep the blur visible and
+                  // let whatever's behind the bar bleed through.
+                  !hasExplicitBg && (effectiveDark ? "bg-white/10" : "bg-black/5"),
+                  // Subtle top-down gradient scrim adds readability over
+                  // photographic hero backgrounds without going opaque.
+                  !hasExplicitBg && overMediaDark && "bg-gradient-to-b from-black/40 to-black/20",
                   "[&>*]:relative [&>*]:z-[1]",
                 )}
                 style={hasExplicitBg ? { backgroundColor: announcementSettings.bg_color } : undefined}
