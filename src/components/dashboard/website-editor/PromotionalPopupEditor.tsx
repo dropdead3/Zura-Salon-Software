@@ -81,6 +81,7 @@ import {
   AccentContrastWarning,
   type OverflowFinding,
 } from './promotional-popup/internals';
+import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
