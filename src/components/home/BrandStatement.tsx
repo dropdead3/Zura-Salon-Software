@@ -99,7 +99,7 @@ export function BrandStatement() {
     container_enabled: true,
     container_background_type: 'color',
     container_background_value: 'hsl(var(--foreground))',
-    container_padding: 80,
+    container_padding: 96,
     container_radius: 16,
     container_max_width: 'xl',
   };
