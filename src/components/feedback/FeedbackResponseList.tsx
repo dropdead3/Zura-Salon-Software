@@ -35,12 +35,25 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function FeedbackCard({ response }: { response: FeedbackResponse }) {
+function FeedbackCard({
+  response,
+  recoveryHref,
+}: {
+  response: FeedbackResponse;
+  recoveryHref?: string;
+}) {
   const { formatDate } = useFormatDate();
   const npsInfo = response.nps_score !== null ? getNPSLabel(response.nps_score) : null;
+  const isDetractor =
+    (response.overall_rating != null && response.overall_rating <= 3) ||
+    (response.nps_score != null && response.nps_score <= 6);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
+    <div
+      className={`border rounded-lg p-4 space-y-3 ${
+        isDetractor ? 'border-destructive/30 bg-destructive/5' : ''
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           {response.overall_rating && (
@@ -73,7 +86,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 text-xs">
+      <div className="flex flex-wrap items-center gap-3 text-xs">
         {response.service_quality && (
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">Service:</span>
@@ -91,6 +104,19 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
             <span className="text-muted-foreground">Cleanliness:</span>
             <span className="font-medium">{response.cleanliness}/5</span>
           </div>
+        )}
+        {isDetractor && recoveryHref && (
+          <Button
+            asChild
+            size={tokens.button.inline}
+            variant="destructive"
+            className="ml-auto gap-1.5"
+          >
+            <Link to={recoveryHref}>
+              <LifeBuoy className="h-3.5 w-3.5" />
+              Open recovery
+            </Link>
+          </Button>
         )}
       </div>
     </div>
