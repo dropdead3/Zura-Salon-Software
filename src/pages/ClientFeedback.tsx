@@ -218,8 +218,11 @@ export default function ClientFeedback() {
       }
     }
 
-    // Route to appropriate screen
-    if (passes && (thresholdSettings?.googleReviewUrl || thresholdSettings?.appleReviewUrl)) {
+    // Compliance rule: ALL clients see public review options regardless of rating.
+    // Recovery workflow runs in parallel for low scores (notify-low-score above + DB trigger creates recovery_tasks row).
+    const hasAnyPublicLink = !!(thresholdSettings?.googleReviewUrl || thresholdSettings?.appleReviewUrl
+      || thresholdSettings?.yelpReviewUrl || thresholdSettings?.facebookReviewUrl);
+    if (hasAnyPublicLink) {
       setSubmissionState('share');
     } else {
       setSubmissionState('thankyou');

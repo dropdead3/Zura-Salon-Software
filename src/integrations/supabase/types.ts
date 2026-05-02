@@ -12551,6 +12551,66 @@ export type Database = {
           },
         ]
       }
+      location_review_settings: {
+        Row: {
+          apple_review_url: string | null
+          created_at: string
+          custom_review_label: string | null
+          custom_review_url: string | null
+          default_platform_priority: string[]
+          facebook_review_url: string | null
+          google_review_url: string | null
+          id: string
+          location_id: string
+          organization_id: string
+          updated_at: string
+          yelp_review_url: string | null
+        }
+        Insert: {
+          apple_review_url?: string | null
+          created_at?: string
+          custom_review_label?: string | null
+          custom_review_url?: string | null
+          default_platform_priority?: string[]
+          facebook_review_url?: string | null
+          google_review_url?: string | null
+          id?: string
+          location_id: string
+          organization_id: string
+          updated_at?: string
+          yelp_review_url?: string | null
+        }
+        Update: {
+          apple_review_url?: string | null
+          created_at?: string
+          custom_review_label?: string | null
+          custom_review_url?: string | null
+          default_platform_priority?: string[]
+          facebook_review_url?: string | null
+          google_review_url?: string | null
+          id?: string
+          location_id?: string
+          organization_id?: string
+          updated_at?: string
+          yelp_review_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_review_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_review_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           address: string
@@ -21035,6 +21095,89 @@ export type Database = {
           },
         ]
       }
+      recovery_tasks: {
+        Row: {
+          appointment_id: string | null
+          assigned_to: string | null
+          client_id: string | null
+          created_at: string
+          feedback_response_id: string
+          id: string
+          location_id: string | null
+          organization_id: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          staff_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          feedback_response_id: string
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          assigned_to?: string | null
+          client_id?: string | null
+          created_at?: string
+          feedback_response_id?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          staff_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_tasks_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: true
+            referencedRelation: "client_feedback_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: true
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["response_id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruiting_pipeline_stages: {
         Row: {
           color: string
@@ -22561,6 +22704,47 @@ export type Database = {
           },
         ]
       }
+      review_compliance_log: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          feedback_response_id: string | null
+          id: string
+          organization_id: string
+          payload: Json
+          recovery_task_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          feedback_response_id?: string | null
+          id?: string
+          organization_id: string
+          payload?: Json
+          recovery_task_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          feedback_response_id?: string | null
+          id?: string
+          organization_id?: string
+          payload?: Json
+          recovery_task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_compliance_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_goals: {
         Row: {
           created_at: string
@@ -22598,6 +22782,68 @@ export type Database = {
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "performance_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_request_automation_rules: {
+        Row: {
+          channel: string
+          created_at: string
+          eligible_service_categories: string[] | null
+          excluded_service_categories: string[]
+          excluded_service_names: string[]
+          frequency_cap_days: number
+          id: string
+          is_active: boolean
+          location_ids: string[] | null
+          name: string
+          organization_id: string
+          send_delay_minutes: number
+          stylist_inclusion_mode: string
+          stylist_user_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          eligible_service_categories?: string[] | null
+          excluded_service_categories?: string[]
+          excluded_service_names?: string[]
+          frequency_cap_days?: number
+          id?: string
+          is_active?: boolean
+          location_ids?: string[] | null
+          name: string
+          organization_id: string
+          send_delay_minutes?: number
+          stylist_inclusion_mode?: string
+          stylist_user_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          eligible_service_categories?: string[] | null
+          excluded_service_categories?: string[]
+          excluded_service_names?: string[]
+          frequency_cap_days?: number
+          id?: string
+          is_active?: boolean
+          location_ids?: string[] | null
+          name?: string
+          organization_id?: string
+          send_delay_minutes?: number
+          stylist_inclusion_mode?: string
+          stylist_user_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_request_automation_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
