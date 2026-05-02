@@ -3,6 +3,9 @@ project_id = "vciqmwzgfjxtzagaxgnh"
 [functions.dispatch-review-requests]
 verify_jwt = false
 
+[functions.twilio-sms-inbound]
+verify_jwt = false
+
 [functions.send-review-request-manual]
 verify_jwt = true
 

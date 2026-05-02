@@ -21102,6 +21102,8 @@ export type Database = {
           client_id: string | null
           created_at: string
           feedback_response_id: string
+          first_contacted_at: string | null
+          first_contacted_by: string | null
           id: string
           location_id: string | null
           organization_id: string
@@ -21119,6 +21121,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           feedback_response_id: string
+          first_contacted_at?: string | null
+          first_contacted_by?: string | null
           id?: string
           location_id?: string | null
           organization_id: string
@@ -21136,6 +21140,8 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           feedback_response_id?: string
+          first_contacted_at?: string | null
+          first_contacted_by?: string | null
           id?: string
           location_id?: string | null
           organization_id?: string
@@ -22859,6 +22865,7 @@ export type Database = {
           enqueued_at: string
           id: string
           last_error: string | null
+          next_retry_at: string | null
           organization_id: string
           rule_id: string | null
           scheduled_for: string
@@ -22877,6 +22884,7 @@ export type Database = {
           enqueued_at?: string
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
           organization_id: string
           rule_id?: string | null
           scheduled_for: string
@@ -22895,6 +22903,7 @@ export type Database = {
           enqueued_at?: string
           id?: string
           last_error?: string | null
+          next_retry_at?: string | null
           organization_id?: string
           rule_id?: string | null
           scheduled_for?: string
@@ -26903,6 +26912,41 @@ export type Database = {
             foreignKeyName: "smart_mix_assist_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_opt_outs: {
+        Row: {
+          id: string
+          opted_out_at: string
+          organization_id: string
+          phone: string
+          raw_message: string | null
+          source: string
+        }
+        Insert: {
+          id?: string
+          opted_out_at?: string
+          organization_id: string
+          phone: string
+          raw_message?: string | null
+          source?: string
+        }
+        Update: {
+          id?: string
+          opted_out_at?: string
+          organization_id?: string
+          phone?: string
+          raw_message?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_opt_outs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },

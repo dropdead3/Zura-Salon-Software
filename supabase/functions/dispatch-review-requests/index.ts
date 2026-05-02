@@ -119,13 +119,16 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
 
 async function sendDue(supabase: any, summary: DispatchSummary) {
   const nowIso = new Date().toISOString();
+  // Pull due rows: scheduled, not sent, not skipped, attempts under cap (5),
+  // and either never retried or past their next_retry_at.
   const { data: due } = await supabase
     .from("review_request_dispatch_queue")
     .select("*")
     .lte("scheduled_for", nowIso)
     .is("sent_at", null)
     .is("skipped_at", null)
-    .lt("attempts", 3)
+    .lt("attempts", 5)
+    .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
     .limit(200);
   if (!due?.length) return;
 
@@ -137,6 +140,22 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
         await supabase.from("review_request_dispatch_queue").update({
           skipped_at: nowIso,
           skipped_reason: row.channel === "sms" ? "no_phone" : `channel_${row.channel}_unsupported`,
+        }).eq("id", row.id);
+        summary.skipped++;
+        continue;
+      }
+
+      // Opt-out gate — never re-contact a phone that replied STOP.
+      const { data: optOut } = await supabase
+        .from("sms_opt_outs")
+        .select("id")
+        .eq("organization_id", row.organization_id)
+        .eq("phone", phone)
+        .maybeSingle();
+      if (optOut) {
+        await supabase.from("review_request_dispatch_queue").update({
+          skipped_at: nowIso,
+          skipped_reason: "sms_opted_out",
         }).eq("id", row.id);
         summary.skipped++;
         continue;
@@ -222,16 +241,25 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
         });
         summary.sent++;
       } else {
+        const nextAttempts = (row.attempts ?? 0) + 1;
+        // Exponential backoff: 5min * 2^(attempts-1) — 5m, 10m, 20m, 40m, then park at 5.
+        const backoffMin = 5 * Math.pow(2, nextAttempts - 1);
+        const nextRetry = new Date(Date.now() + backoffMin * 60 * 1000).toISOString();
         await supabase.from("review_request_dispatch_queue").update({
-          attempts: row.attempts + 1,
+          attempts: nextAttempts,
           last_error: result.error ?? "unknown",
+          next_retry_at: nextAttempts >= 5 ? null : nextRetry,
         }).eq("id", row.id);
         summary.errors++;
       }
     } catch (e: any) {
+      const nextAttempts = (row.attempts ?? 0) + 1;
+      const backoffMin = 5 * Math.pow(2, nextAttempts - 1);
+      const nextRetry = new Date(Date.now() + backoffMin * 60 * 1000).toISOString();
       await supabase.from("review_request_dispatch_queue").update({
-        attempts: (row.attempts ?? 0) + 1,
+        attempts: nextAttempts,
         last_error: e?.message ?? String(e),
+        next_retry_at: nextAttempts >= 5 ? null : nextRetry,
       }).eq("id", row.id);
       summary.errors++;
     }

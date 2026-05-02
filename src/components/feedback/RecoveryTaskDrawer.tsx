@@ -10,6 +10,7 @@ import {
   RecoveryTaskWithFeedback, RecoveryStatus, STATUS_LABELS,
   useUpdateRecoveryTask,
 } from '@/hooks/useRecoveryTasks';
+import { SendReviewRequestButton } from './SendReviewRequestButton';
 import { format } from 'date-fns';
 
 interface Props {
@@ -103,6 +104,22 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
               Required when marking as resolved, refunded, or redo booked.
             </p>
           </div>
+
+          {task.appointment_id && (
+            <div className="space-y-2 rounded-xl border border-border/60 bg-card/40 p-4">
+              <Label>Follow-up</Label>
+              <p className="text-xs text-muted-foreground">
+                Send a fresh feedback link if you've resolved the issue and want to re-measure satisfaction.
+                Frequency cap and SMS opt-out are enforced automatically.
+              </p>
+              <SendReviewRequestButton
+                appointmentId={task.appointment_id}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-2 p-6 border-t border-border/40">
