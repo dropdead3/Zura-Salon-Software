@@ -119,6 +119,12 @@ interface UsePromotionalPopupFunnelArgs {
    *  is purely a temporal narrowing. `windowDays` is ignored when this is set.
    */
   rotationWindow?: { id: string; startsAt: string; endsAt: string } | null;
+  /** Optional A/B variant filter. When set, narrows impressions + responses
+   *  to rows tagged with this `variant_key`. Redemptions are NOT filtered
+   *  (variant attribution doesn't currently propagate through the booking →
+   *  checkout flow), so the redemption count stays at the offer-code level.
+   *  The card surfaces this asymmetry inline so operators don't misread it. */
+  variantKey?: string | null;
 }
 
 export function usePromotionalPopupFunnel({
@@ -126,6 +132,7 @@ export function usePromotionalPopupFunnel({
   windowDays = 30,
   explicitOrgId,
   rotationWindow,
+  variantKey,
 }: UsePromotionalPopupFunnelArgs) {
   const orgId = useSettingsOrgId(explicitOrgId);
   const code = (offerCode ?? '').trim();
@@ -139,6 +146,7 @@ export function usePromotionalPopupFunnel({
       rotationWindow?.id ?? null,
       rotationWindow?.startsAt ?? null,
       rotationWindow?.endsAt ?? null,
+      variantKey ?? null,
     ],
     queryFn: async () => {
       const empty: PromotionalPopupFunnel = {
