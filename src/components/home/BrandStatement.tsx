@@ -207,7 +207,7 @@ export function BrandStatement() {
                   key={i}
                   as="p"
                   multiline
-                  className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80"
+                  className={`text-base md:text-lg font-sans font-light leading-relaxed ${paragraphColorClass}`}
                   value={paragraph}
                   sectionKey="section_brand_statement"
                   fieldPath={`paragraphs.${i}`}
