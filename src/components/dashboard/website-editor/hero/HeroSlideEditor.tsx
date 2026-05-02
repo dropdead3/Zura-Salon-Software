@@ -32,6 +32,14 @@ interface HeroSlideEditorProps {
   onUpdate: (patch: Partial<HeroSlide>) => void;
   /** Section-level updater for global fields surfaced inline (e.g. rotating words). */
   onUpdateSection: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
+  /**
+   * Optional file to immediately upload into this slide's background slot
+   * on mount. Set when the user picked a file via the +Add background tile
+   * — the editor opens with the upload already in flight.
+   */
+  pendingInitialFile?: File | null;
+  /** Called after `pendingInitialFile` has been consumed by MediaUploadInput. */
+  onPendingInitialFileConsumed?: () => void;
 }
 
 /**
@@ -47,7 +55,7 @@ interface HeroSlideEditorProps {
  * are hidden — those fields are edited once at the section level via the
  * Shared Hero Content card on the hub.
  */
-export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_slide', onUpdate, onUpdateSection }: HeroSlideEditorProps) {
+export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_slide', onUpdate, onUpdateSection, pendingInitialFile = null, onPendingInitialFileConsumed }: HeroSlideEditorProps) {
   const [overridesOpen, setOverridesOpen] = useState(false);
   const backgroundOnly = rotatorMode === 'background_only';
 
