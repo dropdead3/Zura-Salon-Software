@@ -171,10 +171,10 @@ export function TestimonialSection() {
               initial={{ opacity: 0, y: 10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center gap-2 text-sm font-medium link-underline group"
+              className="inline-flex items-center gap-2 text-sm font-medium link-underline group whitespace-nowrap"
             >
-              {config.link_text || 'Leave a review'}
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              <span>{config.link_text || 'Leave a review'}</span>
+              <ArrowRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1" />
             </motion.a>
           )}
         </div>
