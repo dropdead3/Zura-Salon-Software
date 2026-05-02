@@ -278,6 +278,27 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
       onMouseEnter={handleHoverEnter}
       onMouseLeave={handleHoverLeave}
     >
+      {/*
+       * Cross-fade base layer.
+       *
+       * Both the outgoing and incoming background motion.divs animate opacity
+       * 1→0 and 0→1 simultaneously (mode="sync", 0.9s). At the midpoint each
+       * sits near ~0.5 opacity, exposing whatever is BEHIND the section. With
+       * no base layer that bleed-through is the page background (often light),
+       * which reads as a white flash between dark scrimmed slides.
+       *
+       * We park a static, opaque base layer behind the rotator that matches
+       * the scrim's intent: black for `darken` overlays (the common case for
+       * dark, legible hero copy), white for `lighten` overlays. The base sits
+       * BEHIND the cross-fading slides, so it only shows during the dip — the
+       * fully-loaded incoming slide hides it the rest of the time.
+       */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ backgroundColor: overlayMode === 'lighten' ? '#ffffff' : '#000000' }}
+      />
+
       {/* Background layer — cross-faded between slides */}
       <AnimatePresence mode="sync">
         <motion.div
