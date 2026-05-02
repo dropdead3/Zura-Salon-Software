@@ -268,10 +268,13 @@ function WebsiteEditorShellInner() {
 
   const persisted = useMemo(() => readPersisted(orgId), [orgId]);
 
-  // Initial editor tab: explicit `?editor=` deep-link wins; otherwise neutral
-  // default ('hero' for home page; non-home pages get auto-corrected to a
-  // valid page-scoped tab by the effect at lines ~343-351).
-  const initialEditorTab = searchParams.get('editor') ?? 'hero';
+  // Initial editor tab: explicit `?editor=` deep-link wins; otherwise land
+  // on the sidebar overview ('pages' = list mode per line ~1012). Defaulting
+  // to a sub-editor like 'hero' violated the Website Editor entry contract —
+  // re-entering or refreshing dropped the operator deep inside a section
+  // editor instead of the canonical hub overview. The canvas shows the
+  // "Pick a section to edit" empty state until the operator picks one.
+  const initialEditorTab = searchParams.get('editor') ?? 'pages';
   const [editorTab, setEditorTab] = useState<string>(initialEditorTab);
   // Always land on Home on entry — see PersistedState comment.
   const [selectedPageId, setSelectedPageId] = useState<string>('home');
