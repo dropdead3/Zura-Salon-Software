@@ -108,6 +108,53 @@ export function TestimonialsEditor() {
             <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
           </TabsList>
           <TabsContent value="content" className="space-y-6 mt-0">
+        {/* Review Source */}
+        <div className="space-y-2">
+          <Label className="text-sm">Review Source</Label>
+          <Select
+            value={localConfig.review_source ?? 'manual'}
+            onValueChange={(v) => updateField('review_source', v as NonNullable<TestimonialsConfig['review_source']>)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {REVIEW_SOURCE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {REVIEW_SOURCE_OPTIONS.find((o) => o.value === (localConfig.review_source ?? 'manual'))?.hint}
+          </p>
+          {(localConfig.review_source === 'zura' || localConfig.review_source === 'mixed') && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLibraryOpen(true)}
+              className="gap-1.5 mt-2"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Open Zura Review Library
+            </Button>
+          )}
+        </div>
+
+        {/* Layout */}
+        <div className="space-y-2">
+          <Label className="text-sm">Layout</Label>
+          <Select
+            value={localConfig.layout ?? 'carousel'}
+            onValueChange={(v) => updateField('layout', v as NonNullable<TestimonialsConfig['layout']>)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {LAYOUT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow"
