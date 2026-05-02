@@ -182,7 +182,11 @@ export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackRes
       <CardContent>
         <div className="space-y-3">
           {paginatedData.map((response) => (
-            <FeedbackCard key={response.id} response={response} />
+            <FeedbackCard
+              key={response.id}
+              response={response}
+              recoveryHref={dashPath(`/admin/feedback/recovery?response=${response.id}`)}
+            />
           ))}
         </div>
         <TablePagination
