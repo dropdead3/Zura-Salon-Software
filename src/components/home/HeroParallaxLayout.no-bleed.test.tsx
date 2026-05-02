@@ -1,21 +1,25 @@
 /**
  * Regression guard for the "rising panel bleeds into the hero at rest" bug.
  *
- * Before the structural fix: the rising panel used `-mt-8` to hide the
- * seam between hero and next section. That negative margin pulled the
- * panel UP over the hero at scroll position 0, exposing its rounded edge
- * over the hero before any scrolling — visible in the May 2026 screenshot
- * the user reported.
+ * History:
+ *   v1 — `-mt-8` negative margin pulled the panel UP over the hero at
+ *        scroll 0. Fixed by removing the negative margin and placing the
+ *        panel as a sibling AFTER a tall driver.
+ *   v2 (current) — to make hero exit + panel rise CONCURRENT (not
+ *        sequential), the panel now lives INSIDE the driver, anchored at
+ *        `absolute bottom-0`, translated down by
+ *        `(1 - --hero-parallax-progress) * 100vh`. At rest (progress=0)
+ *        that's translateY(100vh) — exactly one viewport below the fold,
+ *        same no-bleed guarantee, but now the same scroll progress that
+ *        fades the hero ALSO lifts the panel.
  *
- * After the fix: the rising panel sits at normal flow position, AFTER a
- * tall driver element. At rest, that puts the rising panel one driver-
- * height (>= 100vh) below the fold — fully out of sight.
- *
- * jsdom doesn't lay out, so we can't read pixel positions directly. We
- * lock the structural invariants that REPLACE the layout proof:
- *   - rising panel is a sibling AFTER the driver in DOM order
- *   - driver carries an explicit vh height >= 100
- *   - rising panel has no -mt-* class
+ * jsdom doesn't lay out, so we lock the structural invariants that
+ * prove no-bleed-at-rest WITHOUT depending on pixel measurements:
+ *   - driver carries an explicit vh height >= 100 (scroll runway exists)
+ *   - rising panel has no -mt-* class (the original bug)
+ *   - rising panel is absolutely positioned at bottom-0 of the driver
+ *   - rising panel's transform interpolates --hero-parallax-progress
+ *     (so progress=0 → translateY(100vh) → off-screen at rest)
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
@@ -34,24 +38,6 @@ beforeEach(() => {
 });
 
 describe('HeroParallaxLayout · no-bleed-at-rest', () => {
-  it('rising panel is a sibling AFTER the driver, never a descendant of it', () => {
-    render(
-      <HeroParallaxLayout
-        enabled
-        hero={<div>H</div>}
-        next={<div>N</div>}
-        rest={<div>R</div>}
-      />
-    );
-    const driver = document.querySelector('[data-hero-parallax="driver"]')!;
-    const rising = document.querySelector('[data-hero-parallax="rising"]')!;
-    expect(driver.contains(rising)).toBe(false);
-    // DOM order: driver must come BEFORE rising.
-    expect(
-      driver.compareDocumentPosition(rising) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-  });
-
   it('driver provides at least one viewport-height of scroll runway', () => {
     render(
       <HeroParallaxLayout
@@ -67,7 +53,7 @@ describe('HeroParallaxLayout · no-bleed-at-rest', () => {
     expect(parseInt(heightAttr, 10)).toBeGreaterThanOrEqual(100);
   });
 
-  it('rising panel uses no negative top margin (the original bug class)', () => {
+  it('rising panel uses no negative top margin (the original v1 bug class)', () => {
     render(
       <HeroParallaxLayout
         enabled
@@ -78,5 +64,27 @@ describe('HeroParallaxLayout · no-bleed-at-rest', () => {
     );
     const rising = document.querySelector('[data-hero-parallax="rising"]') as HTMLElement;
     expect(rising.className).not.toMatch(/(^|\s)-mt-/);
+  });
+
+  it('rising panel is anchored at bottom-0 inside the driver, off-screen at rest', () => {
+    render(
+      <HeroParallaxLayout
+        enabled
+        hero={<div>H</div>}
+        next={<div>N</div>}
+        rest={<div>R</div>}
+      />
+    );
+    const driver = document.querySelector('[data-hero-parallax="driver"]')!;
+    const rising = document.querySelector('[data-hero-parallax="rising"]') as HTMLElement;
+    // v2 contract: rising lives INSIDE the driver so it can translate up
+    // in lockstep with hero exit progress.
+    expect(driver.contains(rising)).toBe(true);
+    // Anchored at the bottom — at rest (progress=0) the translate pushes
+    // it 100vh further down, i.e. one viewport below the fold.
+    expect(rising.className).toMatch(/(^|\s)bottom-0(\s|$)/);
+    expect(rising.className).toMatch(/(^|\s)absolute(\s|$)/);
+    expect(rising.style.transform).toContain('--hero-parallax-progress');
+    expect(rising.style.transform).toContain('100vh');
   });
 });
