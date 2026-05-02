@@ -149,7 +149,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleSoftClose() {
     if (!isPreview) {
       writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
-      markSessionDismissed();
+      markSessionDismissed(orgId, code);
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft', variantKey });
     }
     lifecycle.beginExit('soft');
