@@ -624,6 +624,7 @@ export function ServicesContent() {
 
                                   <div className="space-y-3">
                                     <Label>Pricing by Level</Label>
+                                    {/* eslint-disable-next-line no-restricted-syntax -- uniform per-level price input grid; each cell is short (label + small price input) so multi-col reads cleanly. Doctrine: mem://style/container-aware-responsiveness. */}
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                       {levels.map((level) => (
                                         <div key={level.id} className="space-y-1">
