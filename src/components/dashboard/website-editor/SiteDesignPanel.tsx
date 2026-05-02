@@ -71,6 +71,10 @@ export interface DesignOverrides {
   // effect when the first section isn't a hero, when in editor edit-mode, or
   // when the visitor has prefers-reduced-motion set.
   hero_parallax_enabled: boolean;
+  /** Intensity for the hero parallax reveal. Only meaningful when the
+   *  toggle above is on. 'subtle' = sticky hero + rising panel only.
+   *  'cinematic' = hero also fades + scales as it's covered. */
+  hero_parallax_mode: 'subtle' | 'cinematic';
 }
 
 const DEFAULTS: DesignOverrides = {
@@ -85,6 +89,7 @@ const DEFAULTS: DesignOverrides = {
   hero_overlay_opacity: 40,
   section_tint_opacity: 0,
   hero_parallax_enabled: false,
+  hero_parallax_mode: 'subtle',
 };
 
 // Curated font stacks. Adding a stack is a one-line change.
