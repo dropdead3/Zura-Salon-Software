@@ -18,6 +18,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import {
   DndContext,
   closestCenter,
@@ -380,6 +382,14 @@ export function DrinksManager() {
         <p className="text-xs text-muted-foreground mt-4 pt-4 border-t border-border/40">
           <strong>Tip:</strong> Drag drinks to reorder them. Changes are saved when you click "Save Changes" above.
         </p>
+      </EditorCard>
+
+      <EditorCard title="Background &amp; Style" description="Background, container, and media for the Drink Menu section.">
+        <SectionStyleEditor
+          value={localConfig.style_overrides ?? {}}
+          onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+          sectionId="drink_menu"
+        />
       </EditorCard>
     </div>
   );

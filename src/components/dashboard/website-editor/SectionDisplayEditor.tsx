@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { EditorCard } from './EditorCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 interface FieldConfig {
   key: string;
@@ -38,6 +41,8 @@ interface SectionDisplayEditorProps<T extends object> {
   isSaving: boolean;
   update: (value: T) => Promise<void>;
   fields: FieldConfig[];
+  /** Optional sectionId for the Style tab. Omit to hide the Style tab. */
+  styleSectionId?: string;
 }
 
 export function SectionDisplayEditor<T extends object>({
@@ -49,6 +54,7 @@ export function SectionDisplayEditor<T extends object>({
   isSaving,
   update,
   fields,
+  styleSectionId,
 }: SectionDisplayEditorProps<T>) {
   const __saveTelemetry = useSaveTelemetry(`section-display-editor:${title}`);
   const [localConfig, setLocalConfig] = useState<T>(data);
@@ -81,8 +87,8 @@ export function SectionDisplayEditor<T extends object>({
     return <DashboardLoader className="h-64" size="xl" />;
   }
 
-  return (
-    <EditorCard title={title} icon={icon} description={description}>
+  const contentBody = (
+    <>
       {fields.map((field) => {
         const value = localConfig[field.key as keyof T];
 
@@ -154,6 +160,31 @@ export function SectionDisplayEditor<T extends object>({
             return null;
         }
       })}
+    </>
+  );
+
+  return (
+    <EditorCard title={title} icon={icon} description={description}>
+      {styleSectionId ? (
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
+            {contentBody}
+          </TabsContent>
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionStyleEditor
+              value={(localConfig as { style_overrides?: Partial<StyleOverrides> }).style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId={styleSectionId}
+            />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        contentBody
+      )}
     </EditorCard>
   );
 }

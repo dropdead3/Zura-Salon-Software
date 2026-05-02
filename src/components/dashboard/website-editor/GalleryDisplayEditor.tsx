@@ -26,6 +26,7 @@ export function GalleryDisplayEditor() {
       isSaving={isSaving}
       update={update}
       fields={FIELDS}
+      styleSectionId="gallery_display"
     />
   );
 }

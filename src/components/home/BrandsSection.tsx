@@ -2,6 +2,7 @@ import { useBrandsConfig } from '@/hooks/useSectionConfig';
 import { useLiveOverride } from '@/hooks/usePreviewBridge';
 import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { InlineEditableText } from './InlineEditableText';
+import { SectionStyleWrapper } from './SectionStyleWrapper';
 
 export function BrandsSection() {
   const { data: dbConfig, isLoading } = useBrandsConfig();
@@ -14,6 +15,7 @@ export function BrandsSection() {
   const brands = config.brands;
 
   return (
+    <SectionStyleWrapper styleOverrides={config.style_overrides}>
     <section data-theme="light" className="py-12 md:py-16 bg-background">
       <div className="container mx-auto" style={{ paddingLeft: 'calc(1.5rem + 6px)', paddingRight: 'calc(1.5rem + 6px)' }}>
         <div className="flex items-center">
@@ -92,5 +94,6 @@ export function BrandsSection() {
         </div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }

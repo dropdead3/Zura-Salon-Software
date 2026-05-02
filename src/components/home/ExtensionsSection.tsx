@@ -9,6 +9,7 @@ import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useExtensionsConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Star,
@@ -29,6 +30,7 @@ export function ExtensionsSection() {
   const { ref: scrollRef, opacity, y, blurFilter } = useScrollReveal();
 
   return (
+    <SectionStyleWrapper styleOverrides={config.style_overrides}>
     <Section className="bg-background overflow-hidden" theme="light">
       <motion.div 
         ref={scrollRef} 
@@ -285,5 +287,6 @@ export function ExtensionsSection() {
         </div>
       </motion.div>
     </Section>
+    </SectionStyleWrapper>
   );
 }

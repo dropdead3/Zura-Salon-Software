@@ -32,6 +32,7 @@ export function PopularServicesEditor() {
       isSaving={isSaving}
       update={update}
       fields={FIELDS}
+      styleSectionId="popular_services"
     />
   );
 }

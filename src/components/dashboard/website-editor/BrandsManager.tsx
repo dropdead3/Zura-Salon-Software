@@ -17,6 +17,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import {
   DndContext,
   closestCenter,
@@ -367,6 +369,14 @@ export function BrandsManager() {
             </SortableContext>
           </DndContext>
         )}
+      </EditorCard>
+
+      <EditorCard title="Background &amp; Style" description="Background, container, and media for the Brands section.">
+        <SectionStyleEditor
+          value={localConfig.style_overrides ?? {}}
+          onChange={(next: Partial<StyleOverrides>) => setLocalConfig({ ...localConfig, style_overrides: next })}
+          sectionId="brands"
+        />
       </EditorCard>
     </div>
   );

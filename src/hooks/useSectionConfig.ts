@@ -318,6 +318,10 @@ export interface NewClientConfig {
   show_headline: boolean;
   show_description: boolean;
   show_cta: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface ExtensionsFeature {
@@ -351,6 +355,10 @@ export interface ExtensionsConfig {
   show_description: boolean;
   show_features: boolean;
   show_primary_cta: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface FAQConfig {
@@ -389,6 +397,10 @@ export interface BrandsConfig {
   show_intro_text: boolean;
   // Visibility toggles
   show_logos: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface Drink {
@@ -409,6 +421,10 @@ export interface DrinkMenuConfig {
   // Visibility toggles
   show_eyebrow: boolean;
   show_drink_images: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface FooterCTAConfig {
@@ -463,6 +479,8 @@ export interface LocationsSectionConfig {
   card_cta_primary_text: string;
   card_cta_secondary_text: string;
   show_tap_hint: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 // Section Display Configs (for homepage section editors)
@@ -476,6 +494,8 @@ export interface ServicesPreviewConfig {
   show_eyebrow: boolean;
   show_title: boolean;
   show_description: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface PopularServicesConfig {
@@ -488,6 +508,8 @@ export interface PopularServicesConfig {
   show_eyebrow: boolean;
   show_title: boolean;
   show_description: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface GalleryDisplayConfig {
@@ -503,6 +525,8 @@ export interface GalleryDisplayConfig {
   show_title: boolean;
   show_description: boolean;
   show_cta: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface StylistsDisplayConfig {
@@ -515,6 +539,8 @@ export interface StylistsDisplayConfig {
   show_eyebrow: boolean;
   show_title: boolean;
   show_description: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface LocationsDisplayConfig {
@@ -527,6 +553,8 @@ export interface LocationsDisplayConfig {
   show_eyebrow: boolean;
   show_title: boolean;
   show_description: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface ExtensionReviewsConfig {
@@ -536,6 +564,8 @@ export interface ExtensionReviewsConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_categories: boolean;
+  text_colors?: SectionTextColors;
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 // ============================================

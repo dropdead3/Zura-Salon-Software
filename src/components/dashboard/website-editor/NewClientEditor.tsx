@@ -19,6 +19,9 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 export function NewClientEditor() {
   const __saveTelemetry = useSaveTelemetry('new-client-editor');
@@ -78,6 +81,12 @@ export function NewClientEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Headline */}
         <ToggleInput
           label="Show Headline"
@@ -171,6 +180,15 @@ export function NewClientEditor() {
             </>
           )}
         </div>
+          </TabsContent>
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionStyleEditor
+              value={localConfig.style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId="new_client"
+            />
+          </TabsContent>
+        </Tabs>
       </EditorCard>
     </div>
   );
