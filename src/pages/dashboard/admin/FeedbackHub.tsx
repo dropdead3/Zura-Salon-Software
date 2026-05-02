@@ -119,6 +119,11 @@ export default function FeedbackHub() {
                       <MessageSquareText className="h-4 w-4" /> Request Templates
                     </Link>
                   </Button>
+                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
+                    <Link to={dashPath('/admin/feedback/dispatch')}>
+                      <BarChart3 className="h-4 w-4" /> Dispatch Queue
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             </div>

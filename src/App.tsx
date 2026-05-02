@@ -438,6 +438,7 @@ function DashboardRoutes() {
       <Route path="admin/feedback/links" element={<ProtectedRoute requiredPermission="manage_settings"><LocationReviewLinks /></ProtectedRoute>} />
       <Route path="admin/feedback/automations" element={<ProtectedRoute requiredPermission="manage_settings"><ReviewAutomationRules /></ProtectedRoute>} />
       <Route path="admin/feedback/templates" element={<ProtectedRoute requiredPermission="manage_settings"><ReviewTemplates /></ProtectedRoute>} />
+      <Route path="admin/feedback/dispatch" element={<ProtectedRoute requiredPermission="manage_settings"><DispatchQueue /></ProtectedRoute>} />
       <Route path="admin/seo-workshop" element={<ProtectedRoute requiredPermission="view_team_overview"><SEOWorkshopHub /></ProtectedRoute>} />
       <Route path="admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
       <Route path="admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
