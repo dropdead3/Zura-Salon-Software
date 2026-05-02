@@ -3,6 +3,7 @@ import {
   pickActiveEntry,
   applyScheduledSnapshot,
   resolvePromotionalPopupForNow,
+  detectScheduleConflicts,
 } from './promo-schedule';
 import { DEFAULT_PROMO_POPUP } from '@/hooks/usePromotionalPopup';
 import type { SavedPromo } from '@/hooks/usePromoLibrary';
