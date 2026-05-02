@@ -16,6 +16,9 @@ import { BrandsSection } from '@/components/home/BrandsSection';
 import { DrinkMenuSection } from '@/components/home/DrinkMenuSection';
 import { CustomSectionRenderer } from '@/components/home/CustomSectionRenderer';
 import { SectionStyleWrapper } from '@/components/home/SectionStyleWrapper';
+import { HeroParallaxLayout } from '@/components/home/HeroParallaxLayout';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import type { DesignOverrides } from '@/components/dashboard/website-editor/SiteDesignPanel';
 import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type SectionConfig } from '@/hooks/useWebsiteSections';
 
 const FULL_BLEED_SECTIONS = new Set<string>(['hero', 'gallery', 'new_client', 'brand_statement', 'extensions']);
@@ -79,6 +82,14 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   const isEditorPreview = getIsEditorPreview();
   const isViewMode = getIsViewMode();
   const queryClient = useQueryClient();
+
+  // Read site-design overrides for the hero parallax effect. Only meaningful
+  // in non-edit-mode renders (the rearrangeable bento cards in edit-mode
+  // would break under sticky positioning, so we always disable there).
+  // Hero parallax also requires the first enabled section to be a `hero` —
+  // if the operator dragged the hero out of slot 0, parallax silently no-ops.
+  const { data: designOverrides } = useSiteSettings<DesignOverrides>('website_design_overrides');
+  const heroParallaxEnabled = !!designOverrides?.hero_parallax_enabled;
 
   const enabledSections = useMemo(() => {
     const base = isEditorPreview && !isViewMode
@@ -197,20 +208,39 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   // View mode inside editor: render exact public layout (no bento cards)
   // Also used for the public site (non-preview)
   if (!isEditorPreview || isViewMode) {
-    return (
-      <>
-        {enabledSections.map((section) => (
-          <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
-            <div id={`section-${section.id}`}>
-              {isBuiltinSection(section.type)
-                ? getBuiltinComponent(section.type, false)
-                : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-              }
-            </div>
-          </SectionStyleWrapper>
-        ))}
-      </>
+    const renderSection = (section: SectionConfig) => (
+      <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
+        <div id={`section-${section.id}`}>
+          {isBuiltinSection(section.type)
+            ? getBuiltinComponent(section.type, false)
+            : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+          }
+        </div>
+      </SectionStyleWrapper>
     );
+
+    // Hero parallax: only when toggle ON, slot 0 is a hero, and there's at
+    // least one section after it to rise. Position-aware (not type-aware) —
+    // whatever the operator drags into slot 1 inherits the rising-panel
+    // treatment automatically.
+    const canParallax =
+      heroParallaxEnabled &&
+      enabledSections.length >= 2 &&
+      enabledSections[0]?.type === 'hero';
+
+    if (canParallax) {
+      const [heroSection, nextSection, ...restSections] = enabledSections;
+      return (
+        <HeroParallaxLayout
+          enabled
+          hero={renderSection(heroSection)}
+          next={renderSection(nextSection)}
+          rest={<>{restSections.map(renderSection)}</>}
+        />
+      );
+    }
+
+    return <>{enabledSections.map(renderSection)}</>;
   }
 
   // Edit mode inside editor: floating bento cards

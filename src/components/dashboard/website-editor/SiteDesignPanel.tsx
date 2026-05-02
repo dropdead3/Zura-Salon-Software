@@ -19,6 +19,7 @@ import { ToastAction } from '@/components/ui/toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -65,6 +66,11 @@ export interface DesignOverrides {
   button_shape: ButtonShape;
   hero_overlay_opacity: number; // 0–100
   section_tint_opacity: number; // 0–10 (subtle alternating tint)
+  // Effects — opt-in scroll/motion treatments. Always-default-OFF so existing
+  // sites get zero behavior change. The renderer also short-circuits the
+  // effect when the first section isn't a hero, when in editor edit-mode, or
+  // when the visitor has prefers-reduced-motion set.
+  hero_parallax_enabled: boolean;
 }
 
 const DEFAULTS: DesignOverrides = {
@@ -78,6 +84,7 @@ const DEFAULTS: DesignOverrides = {
   button_shape: 'rounded',
   hero_overlay_opacity: 40,
   section_tint_opacity: 0,
+  hero_parallax_enabled: false,
 };
 
 // Curated font stacks. Adding a stack is a one-line change.
@@ -531,6 +538,30 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
                 max={10}
                 step={1}
                 onValueChange={([v]) => setField('section_tint_opacity', v)}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Effects — opt-in scroll/motion treatments. Each effect short-circuits
+            in editor edit-mode (would break the rearrangeable bento cards) and
+            when the visitor has prefers-reduced-motion set. */}
+        <section className="space-y-3">
+          <h4 className="font-display text-[11px] tracking-wider uppercase text-muted-foreground">
+            Effects
+          </h4>
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <Label className="text-xs text-foreground block">Hero parallax reveal</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  The section directly below the hero rises over the hero on scroll.
+                  Whatever section sits in slot 2 inherits the effect.
+                </p>
+              </div>
+              <Switch
+                checked={draft.hero_parallax_enabled}
+                onCheckedChange={(v) => setField('hero_parallax_enabled', v)}
               />
             </div>
           </div>
