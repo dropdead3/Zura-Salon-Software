@@ -59,11 +59,11 @@ const sharedProps = (h: ReturnType<typeof makeHandlers>) => ({
 });
 
 type ExtraProps = Record<string, unknown>;
-const cases: Array<[string, React.ComponentType<never>, ExtraProps]> = [
-  ['PromoModal', PromoModal as unknown as React.ComponentType<never>, {}],
-  ['PromoBanner', PromoBanner as unknown as React.ComponentType<never>, {}],
+const cases: Array<[string, React.ComponentType<any>, ExtraProps]> = [
+  ['PromoModal', PromoModal as unknown as React.ComponentType<any>, {}],
+  ['PromoBanner', PromoBanner as unknown as React.ComponentType<any>, {}],
   // CornerCard requires a fabPosition prop alongside the shared shape.
-  ['PromoCornerCard', PromoCornerCard as unknown as React.ComponentType<never>, { fabPosition: 'bottom-right' }],
+  ['PromoCornerCard', PromoCornerCard as unknown as React.ComponentType<any>, { fabPosition: 'bottom-right' }],
 ];
 
 describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
