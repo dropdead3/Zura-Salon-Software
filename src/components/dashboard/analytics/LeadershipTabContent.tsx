@@ -4,6 +4,7 @@ import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/Executive
 import { ExecutiveTrendChart } from '@/components/dashboard/analytics/ExecutiveTrendChart';
 import { WeeklyLeverSection } from '@/components/dashboard/analytics/WeeklyLeverSection';
 import { SEOInsightsCard } from '@/components/dashboard/seo-workshop/SEOInsightsCard';
+import { ServiceSatisfactionBriefCard } from '@/components/feedback/ServiceSatisfactionBriefCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Target, ChevronDown } from 'lucide-react';
@@ -62,6 +63,8 @@ export function LeadershipTabContent() {
       >
         <ExecutiveTrendChart />
       </PinnableCard>
+
+      <ServiceSatisfactionBriefCard />
 
       <VisibilityGate
         elementKey="seo_insights_leadership"
