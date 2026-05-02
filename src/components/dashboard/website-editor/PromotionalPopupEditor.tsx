@@ -6,6 +6,8 @@ import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
