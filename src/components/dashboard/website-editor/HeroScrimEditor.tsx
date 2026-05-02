@@ -119,23 +119,27 @@ export function HeroScrimEditor({
     onChange({ scrim_style: 'flat', scrim_strength: 0.3 });
   };
 
+  const showHeader = Boolean(title) || Boolean(description) || (allowInherit && !isInheriting);
+
   return (
     <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h4 className="text-sm font-medium">{title}</h4>
-          <p className="text-xs text-muted-foreground">{description}</p>
+      {showHeader && (
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            {title && <h4 className="text-sm font-medium">{title}</h4>}
+            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          </div>
+          {allowInherit && !isInheriting && (
+            <button
+              type="button"
+              onClick={reset}
+              className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Inherit
+            </button>
+          )}
         </div>
-        {allowInherit && !isInheriting && (
-          <button
-            type="button"
-            onClick={reset}
-            className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Inherit
-          </button>
-        )}
-      </div>
+      )}
 
       {showVideoScrimAdvisory && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-[11px]">
