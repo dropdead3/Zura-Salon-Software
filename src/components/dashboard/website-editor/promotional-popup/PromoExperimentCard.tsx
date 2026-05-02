@@ -555,8 +555,13 @@ export function PromoExperimentCard({
                       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>Planned share: <span className="text-foreground font-mono">{sharePct}</span></span>
                         {!snap ? (
-                          <Badge variant="outline" className="text-[10px] border-destructive/40 text-destructive">
-                            Snapshot deleted
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] border-destructive/50 bg-destructive/10 text-destructive"
+                            title="Referenced saved-promo no longer exists. This arm will be skipped (no impressions attributed) until you re-link it or remove the variant."
+                          >
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Missing creative
                           </Badge>
                         ) : null}
                       </div>
