@@ -426,6 +426,7 @@ export function usePromoLifecycle({
       /* ignore */
     }
 
+    let stopTimer: number | null = null;
     const t = window.setTimeout(() => {
       setPulseFab(true);
       try {
@@ -433,10 +434,14 @@ export function usePromoLifecycle({
       } catch {
         /* ignore */
       }
-      const stop = window.setTimeout(() => setPulseFab(false), 2400);
-      return () => window.clearTimeout(stop);
+      stopTimer = window.setTimeout(() => setPulseFab(false), 2400);
     }, 30_000);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      // Cancel the inner stop-pulse timeout too so an unmount mid-pulse
+      // doesn't leave a dangling timer touching state on a torn-down tree.
+      if (stopTimer !== null) window.clearTimeout(stopTimer);
+    };
   }, [showFab, open, isPreview, PULSE_SESSION_KEY]);
 
   // ── Editor-driven lifecycle reset (CustomEvent + iframe postMessage) ──
