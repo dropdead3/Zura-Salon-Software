@@ -6,6 +6,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useExtensionReviewsConfig, DEFAULT_EXTENSION_REVIEWS } from "@/hooks/useSectionConfig";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { InlineEditableText } from "./InlineEditableText";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 interface ReviewItem {
   id: string;
