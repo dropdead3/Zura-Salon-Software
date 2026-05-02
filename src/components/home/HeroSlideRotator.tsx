@@ -14,6 +14,7 @@ import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
+import { resolveScrim } from './heroScrim';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
