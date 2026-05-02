@@ -346,6 +346,19 @@ export function HeroEditor() {
     setView({ kind: 'slide', id: slide.id });
   }, []);
 
+  /**
+   * Background-Only mode: append a slide that's pre-configured as a rotating
+   * background contributor. Pre-sets `background_type: 'image'` so the new
+   * tile lands ready to upload, and stays on the hub view (no jump into the
+   * full slide editor — copy fields aren't relevant in this mode anyway).
+   */
+  const addBackgroundSlide = useCallback(() => {
+    const slide: HeroSlide = { ...makeEmptySlide(), background_type: 'image' };
+    setLocalConfig((prev) => ({ ...prev, slides: [...(prev.slides ?? []), slide] }));
+    // Open the slide editor so the user can immediately upload media.
+    setView({ kind: 'slide', id: slide.id });
+  }, []);
+
   const handleReset = () => {
     setLocalConfig(DEFAULT_HERO);
     toast.info('Reset to defaults — save to apply');
