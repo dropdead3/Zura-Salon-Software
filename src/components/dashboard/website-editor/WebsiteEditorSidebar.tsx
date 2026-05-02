@@ -40,6 +40,8 @@ import {
   LayoutTemplate,
   ChevronsRight,
   ChevronsLeft,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Layers,
   EyeOff,
   Eye,
@@ -193,7 +195,13 @@ export function WebsiteEditorSidebar({
   const { data: pagesConfig } = useWebsitePages();
   const updateSections = useUpdateWebsiteSections();
   const orgId = useSettingsOrgId();
-  const { isCollapsed: isGroupCollapsed, toggleGroup } = useEditorSidebarPrefs(orgId);
+  const {
+    isCollapsed: isGroupCollapsed,
+    toggleGroup,
+    collapseAll,
+    expandAll,
+    hasAnyCollapsed,
+  } = useEditorSidebarPrefs(orgId);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
   const [hiddenSectionsOpen, setHiddenSectionsOpen] = useState(false);
@@ -578,6 +586,45 @@ export function WebsiteEditorSidebar({
               The most-edited surface should be the easiest to reach.
              ───────────────────────────────────────────────────────── */}
           <SectionGroupHeader title={thisPageHeading} caption={thisPageCaption} />
+
+          {/* Bulk expand/collapse controls. Single toggle that reads the
+              current state — flips to "Expand all" the moment any group is
+              collapsed. Homepage-only because non-home pages render a flat
+              section list (no logical groups to collapse). The Custom
+              Sections group is included in the title set so it bulk-collapses
+              alongside the SECTION_GROUPS entries. */}
+          {isHomePage && (
+            <div className="flex items-center justify-end px-3 mb-1">
+              {hasAnyCollapsed ? (
+                <Button
+                  variant="ghost"
+                  size={tokens.button.inline}
+                  className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={expandAll}
+                  title="Expand all section groups"
+                >
+                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                  Expand all
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size={tokens.button.inline}
+                  className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    collapseAll([
+                      ...SECTION_GROUPS.map((g) => g.title),
+                      'Custom Sections',
+                    ])
+                  }
+                  title="Collapse all section groups"
+                >
+                  <ChevronsDownUp className="h-3 w-3 mr-1" />
+                  Collapse all
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Page-scoped actions for non-home pages, surfaced inline so
               the operator doesn't hunt for them. */}
