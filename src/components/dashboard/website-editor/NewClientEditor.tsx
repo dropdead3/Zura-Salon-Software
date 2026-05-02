@@ -47,6 +47,7 @@ export function NewClientEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_new_client');
 
   const updateField = <K extends keyof NewClientConfig>(field: K, value: NewClientConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
