@@ -381,7 +381,12 @@ export function PromoScheduleCard({
         ) : (
           <>
             {sortedSchedule.length > 0 ? (
-              <ScheduleCalendarStrip schedule={sortedSchedule} saved={saved} />
+              <ScheduleCalendarStrip
+                schedule={sortedSchedule}
+                saved={saved}
+                focusedRotationId={focusedRotationId}
+                onFocusRotation={handleFocusRotation}
+              />
             ) : null}
 
             {hasConflicts ? (
