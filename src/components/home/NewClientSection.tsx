@@ -192,6 +192,8 @@ export const NewClientSection = () => {
         </motion.div>
       </div>
     </section>
+      );
+    })()}
     </SectionStyleWrapper>
   );
 };
