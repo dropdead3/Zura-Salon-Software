@@ -65,10 +65,12 @@ import {
   forecastDaysToCap,
   suggestCapBump,
   summarizeGoalHistory,
+  summarizeCrossCodePattern,
 } from '@/lib/promo-goal-velocity';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 import {
   usePromoGoalHistory,
+  usePromoGoalHistoryOrgWide,
   useRecordGoalHit,
 } from '@/hooks/usePromoGoalHistory';
 
