@@ -19,6 +19,7 @@
  * If a variant ever drifts off the parity contract, this file fails
  * before the user-facing surface does.
  */
+import type React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { PromoModal } from './PromoModal';
