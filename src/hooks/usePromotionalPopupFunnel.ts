@@ -215,13 +215,15 @@ export function usePromotionalPopupFunnel({
           if (variantKey) q = q.eq('variant_key', variantKey);
           return q.limit(10_000);
         })(),
-        // Earliest impression for THIS org/surface (any code) — establishes
-        // when impression tracking actually started recording. Powers the
-        // "Since {date}" footnote and detects the pre-tracking asymmetry.
+        // Earliest impression for THIS org/surface/offer code — establishes
+        // when this offer's impression tracking actually started recording.
+        // Powers the "Since {date}" footnote. Filtering by `offer_code`
+        // prevents the footnote from quoting an unrelated popup's start date.
         supabase
           .from('promo_offer_impressions')
           .select('created_at')
           .eq('organization_id', orgId)
+          .eq('offer_code', code)
           .eq('surface', POPUP_SURFACE)
           .order('created_at', { ascending: true })
           .limit(1),

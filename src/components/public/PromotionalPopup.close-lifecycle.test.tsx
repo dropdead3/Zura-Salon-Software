@@ -14,7 +14,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PromotionalPopup } from './PromotionalPopup';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
 
 vi.mock('@/hooks/useIsEditorPreview', () => ({
   useIsEditorPreview: () => true,
@@ -67,11 +77,7 @@ describe('PromotionalPopup — close path waits for animationend', () => {
   });
 
   it('Esc key starts the close animation but keeps the popup mounted until animationend', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     const root = await screen.findByTestId('promo-popup-root');
     expect(root.getAttribute('data-popup-phase')).toBe('entering');
@@ -104,11 +110,7 @@ describe('PromotionalPopup — close path waits for animationend', () => {
   });
 
   it('ignores animationend bubbling up from a child element', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     const root = await screen.findByTestId('promo-popup-root');
 

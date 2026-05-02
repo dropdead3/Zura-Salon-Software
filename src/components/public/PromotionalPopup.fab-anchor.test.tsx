@@ -13,7 +13,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PromotionalPopup } from './PromotionalPopup';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
 
 vi.mock('@/hooks/useIsEditorPreview', () => ({
   useIsEditorPreview: () => true,
@@ -81,11 +91,7 @@ describe('PromotionalPopup FAB — positional stability vs hero alignment', () =
   });
 
   it('FAB stays at bottom-6 regardless of hero alignment changes', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
     await dismissPopupToFab();
 
     const fabButton = screen.getByLabelText(/Reopen offer/i);
@@ -110,11 +116,7 @@ describe('PromotionalPopup FAB — positional stability vs hero alignment', () =
   });
 
   it('FAB does NOT carry a transition-[bottom] class (no animated drift)', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
     await dismissPopupToFab();
 
     const wrapper = screen.getByLabelText(/Reopen offer/i).closest('div')!;

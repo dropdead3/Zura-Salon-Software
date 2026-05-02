@@ -18,8 +18,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PromotionalPopup } from './PromotionalPopup';
 import { PROMO_POPUP_PREVIEW_RESET_EVENT } from '@/lib/promoPopupPreviewReset';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
 
 // Editor preview short-circuits frequency caps + forces immediate trigger,
 // which is the path the operator's "Restart popup preview" button drives.
@@ -79,11 +89,7 @@ describe('PromotionalPopup — reset bumps the React key', () => {
   });
 
   it('changes data-animation-key after the canonical reset event', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     // Editor preview + immediate trigger → root mounts on first render.
     const initialRoot = await screen.findByTestId('promo-popup-root');
@@ -103,11 +109,7 @@ describe('PromotionalPopup — reset bumps the React key', () => {
   });
 
   it('also bumps the key when the iframe-bridge postMessage is received', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     const initialRoot = await screen.findByTestId('promo-popup-root');
     const initialKey = initialRoot.getAttribute('data-animation-key');
