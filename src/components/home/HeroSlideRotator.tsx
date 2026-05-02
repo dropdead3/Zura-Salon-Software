@@ -7,7 +7,8 @@
  * so operators can edit the active slide without it sliding away.
  */
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useHeroScrollAnimation } from '@/hooks/useHeroScrollAnimation';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
@@ -36,7 +37,63 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   // Inactive slides (active === false) are excluded from the live rotator;
   // they remain in `config.slides` so the editor can re-enable them.
   // `undefined`/`null` is treated as active for legacy slides.
-  const slides = (config.slides ?? []).filter((s) => s.active !== false);
+  //
+  // Empty-slides fallback: when the operator has not configured any slides,
+  // we synthesize a master slide from the section-level fields so the rotator
+  // can render. This is the path taken by tenants on the legacy single-slide
+  // hero — replaces the retired `HeroSection.tsx` static fallback.
+  const configuredSlides = (config.slides ?? []).filter((s) => s.active !== false);
+  const slides: HeroSlide[] = useMemo(() => {
+    if (configuredSlides.length > 0) return configuredSlides;
+    return [{
+      id: '__implicit_master__',
+      background_type: config.background_type === 'none' ? 'inherit' : config.background_type,
+      background_url: config.background_url ?? '',
+      background_poster_url: config.background_poster_url ?? '',
+      overlay_opacity: null,
+      scrim_style: null,
+      scrim_strength: null,
+      background_focal_x: null,
+      background_focal_y: null,
+      overlay_mode: null,
+      background_fit: null,
+      eyebrow: config.eyebrow ?? '',
+      show_eyebrow: !!config.show_eyebrow,
+      headline_text: config.headline_text ?? '',
+      subheadline_line1: config.show_subheadline ? (config.subheadline_line1 ?? '') : '',
+      subheadline_line2: config.show_subheadline ? (config.subheadline_line2 ?? '') : '',
+      cta_new_client: config.cta_new_client ?? '',
+      cta_new_client_url: config.cta_new_client_url ?? '',
+      cta_returning_client: config.cta_returning_client ?? '',
+      cta_returning_client_url: config.cta_returning_client_url ?? '/booking',
+      show_secondary_button: !!config.show_secondary_button,
+      text_colors: undefined,
+      media_width: null,
+      media_height: null,
+      media_size_bytes: null,
+      media_format: null,
+      media_optimized_with_profile: null,
+      content_alignment: null,
+      content_width: null,
+      active: true,
+    }];
+  }, [
+    configuredSlides,
+    config.background_type,
+    config.background_url,
+    config.background_poster_url,
+    config.eyebrow,
+    config.show_eyebrow,
+    config.headline_text,
+    config.show_subheadline,
+    config.subheadline_line1,
+    config.subheadline_line2,
+    config.cta_new_client,
+    config.cta_new_client_url,
+    config.cta_returning_client,
+    config.cta_returning_client_url,
+    config.show_secondary_button,
+  ]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [consultationOpen, setConsultationOpen] = useState(false);
@@ -281,20 +338,17 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
    */
   const sectionRef = useRef<HTMLElement>(null);
   const enableScrollFx = !isPreview && !reduceMotion;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end start'],
-  });
-  const sectionOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const headingBlur = useTransform(scrollYProgress, [0, 0.3], [0, 15]);
-  const headingBlurFilter = useTransform(headingBlur, (v) => `blur(${v}px)`);
-  const headlineScrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
-  const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
-  const headlineY = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const subheadlineY = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
-  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
-  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
+  const {
+    sectionOpacity,
+    headingBlurFilter,
+    headlineScrollOpacity,
+    taglineY,
+    headlineY,
+    subheadlineY,
+    ctaY,
+    topLineX,
+    bottomLineX,
+  } = useHeroScrollAnimation({ target: sectionRef, enabled: enableScrollFx });
 
   return (
     <section
@@ -506,6 +560,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                           setConsultationOpen(true);
                         }
                       }}
+                      // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                       className={cn(
                         "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                         heroColors.primaryButtonClass,
@@ -520,6 +575,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                     {slide.show_secondary_button && (
                       <Link
                         to={slide.cta_returning_client_url || '/booking'}
+                        // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
                         className={cn(
                           "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                           heroColors.secondaryButtonClass,

@@ -101,7 +101,7 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
   describe('CONSOLIDATED_RESTRICTED_SYNTAX selectors survive on representative files', () => {
     // Representative files that should resolve every consolidated selector.
     // - src/App.tsx: matched by the global block only.
-    // - src/components/home/HeroSection.tsx: also matched by the hero
+    // - src/components/home/HeroSlideRotator.tsx: also matched by the hero
     //   `defineScopedDoctrine` block (which appends — the meta-test asserts
     //   the helper concatenated correctly).
     // - src/components/platform/ui/PlatformButton.tsx: also matched by the
@@ -109,7 +109,7 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     //   shadow `no-restricted-syntax`, since they're separate rules).
     const REPRESENTATIVE_FILES = [
       'src/App.tsx',
-      'src/components/home/HeroSection.tsx',
+      'src/components/home/HeroSlideRotator.tsx',
     ];
 
     for (const filePath of REPRESENTATIVE_FILES) {
@@ -246,7 +246,7 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     // the helper's concatenation actually appended the hero-specific 6th
     // and 7th. Anchored on a member-access fragment unique to each.
     const selectors = await getRestrictedSyntaxSelectors(
-      'src/components/home/HeroSection.tsx',
+      'src/components/home/HeroSlideRotator.tsx',
     );
     expect(
       selectors.some((s) => s.includes("object.name='alignment'")),
