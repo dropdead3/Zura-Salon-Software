@@ -563,9 +563,9 @@ export function MediaUploadInput({
                       aria-hidden
                       className={cn(
                         'h-1.5 w-1.5 rounded-full',
-                        meta.width >= 2400
+                        meta.width >= 3200
                           ? 'bg-emerald-500'
-                          : meta.width >= 1200
+                          : meta.width >= 2000
                             ? 'bg-amber-500'
                             : 'bg-red-500',
                       )}
@@ -578,13 +578,13 @@ export function MediaUploadInput({
                     </span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
                   {kind === 'video' ? 'Video poster resolution. ' : ''}
-                  {meta.width >= 2400
-                    ? 'Sharp on retina hero displays (recommended ≥2400px).'
-                    : meta.width >= 1200
-                      ? 'Acceptable, but may soften on retina hero displays. Recommended ≥2400px.'
-                      : 'Too small for full-bleed hero — will appear pixelated. Recommended ≥2400px.'}
+                  {meta.width >= 3200
+                    ? 'Crisp on 4K and 5K retina displays (recommended ≥3200px).'
+                    : meta.width >= 2000
+                      ? 'Sharp on most laptops, but softens on 4K/5K retina displays. Recommended ≥3200px for full-bleed hero.'
+                      : 'Too small for full-bleed hero — will appear pixelated on retina displays. Recommended ≥3200px.'}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
