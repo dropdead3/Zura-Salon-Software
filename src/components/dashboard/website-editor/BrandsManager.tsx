@@ -358,7 +358,7 @@ export function BrandsManager() {
 
       <EditorCard
         title="Brand Logos"
-        description="Drag to reorder. Logos are optional - text will display in the marquee."
+        description="Drag to reorder. Logos are optional — Display Text alone keeps every brand cohesive in the marquee."
         headerActions={
           <Button onClick={handleAddBrand} variant="outline" size={tokens.button.card}>
             <Plus className="h-4 w-4 mr-2" />
@@ -366,6 +366,10 @@ export function BrandsManager() {
           </Button>
         }
       >
+        <div className="mb-4 rounded-lg border border-dashed border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Easiest path:</span>{' '}
+          leave logos empty and just fill <span className="font-medium text-foreground">Display Text</span>. A text-only marquee stays perfectly cohesive across every brand. Upload an SVG only when you want the actual logo mark.
+        </div>
         {localConfig.brands.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />
