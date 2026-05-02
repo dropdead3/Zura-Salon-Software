@@ -862,18 +862,18 @@ export function PopupAnalyticsCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {showSkeleton ? (
-          <div ref={funnelGridRef} className={cn('grid gap-2.5', gridColsClass)}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 rounded-lg border border-border/60 bg-muted/20 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
+        <div ref={funnelGridRef}>
+          {showSkeleton ? (
+            <div className={cn('grid gap-2.5', gridColsClass)}>
+              {Array.from({ length: tileMode.mergeOutcome ? 4 : 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-lg border border-border/60 bg-muted/20 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={cn('grid gap-2.5', gridColsClass)}>
               <FunnelStat
                 label="Impressions"
                 value={data.impressions.toLocaleString()}
@@ -906,37 +906,59 @@ export function PopupAnalyticsCard({
                 chartVisible={chartVisible}
                 onHover={setHoveredKey}
               />
-              <FunnelStat
-                label="Redemptions"
-                value={data.redemptions.toLocaleString()}
-                icon={Gift}
-                rate={formatPercent(data.redemptionRate)}
-                rateLabel="of impressions"
-                sparklinePoints={series.redemptions}
-                trendKey="redemptions"
-                highlighted={hoveredKey === 'redemptions'}
-                chartVisible={chartVisible}
-                onHover={setHoveredKey}
-              />
-              <FunnelStat
-                label="Revenue"
-                value={
-                  data.revenueAttributed > 0 ? (
-                    <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
-                  ) : (
-                    '—'
-                  )
-                }
-                icon={DollarSign}
-                rate={data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined}
-                rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
-                sparklinePoints={series.revenue}
-                trendKey="revenue"
-                highlighted={hoveredKey === 'revenue'}
-                chartVisible={chartVisible}
-                onHover={setHoveredKey}
-              />
+              {tileMode.mergeOutcome ? (
+                <OutcomeStat
+                  redemptions={data.redemptions}
+                  redemptionRate={formatPercent(data.redemptionRate)}
+                  revenue={data.revenueAttributed}
+                  bookingRate={
+                    data.bookingRate !== null ? formatPercent(data.bookingRate) : null
+                  }
+                  redemptionsSparkline={series.redemptions}
+                  revenueSparkline={series.revenue}
+                  highlighted={hoveredKey === 'redemptions' || hoveredKey === 'revenue'}
+                  chartVisible={chartVisible}
+                  onHover={setHoveredKey}
+                />
+              ) : (
+                <>
+                  <FunnelStat
+                    label="Redemptions"
+                    value={data.redemptions.toLocaleString()}
+                    icon={Gift}
+                    rate={formatPercent(data.redemptionRate)}
+                    rateLabel="of impressions"
+                    sparklinePoints={series.redemptions}
+                    trendKey="redemptions"
+                    highlighted={hoveredKey === 'redemptions'}
+                    chartVisible={chartVisible}
+                    onHover={setHoveredKey}
+                  />
+                  <FunnelStat
+                    label="Revenue"
+                    value={
+                      data.revenueAttributed > 0 ? (
+                        <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
+                      ) : (
+                        '—'
+                      )
+                    }
+                    icon={DollarSign}
+                    rate={
+                      data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined
+                    }
+                    rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
+                    sparklinePoints={series.revenue}
+                    trendKey="revenue"
+                    highlighted={hoveredKey === 'revenue'}
+                    chartVisible={chartVisible}
+                    onHover={setHoveredKey}
+                  />
+                </>
+              )}
             </div>
+          )}
+        </div>
 
             <TrendChart
               data={data.trend}
