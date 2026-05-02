@@ -11,6 +11,8 @@ import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSe
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { RecoverySLAWidget } from '@/components/feedback/RecoverySLAWidget';
 import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
+import { StylistReputationCard } from '@/components/feedback/StylistReputationCard';
+import { ServiceSatisfactionBriefCard } from '@/components/feedback/ServiceSatisfactionBriefCard';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
@@ -135,6 +137,11 @@ export default function FeedbackHub() {
               <ComplianceExportButton />
             </div>
             <ComplianceBanner />
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <ServiceSatisfactionBriefCard />
+              <StylistReputationCard />
+            </div>
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
