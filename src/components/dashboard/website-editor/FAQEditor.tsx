@@ -21,6 +21,11 @@ import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { FAQItemsManager } from './FAQItemsManager';
+import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
+import { FAQ_COLOR_SLOTS } from '@/lib/sectionColorSlots';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 export function FAQEditor() {
   const __saveTelemetry = useSaveTelemetry('faq-editor');
@@ -88,6 +93,12 @@ export function FAQEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Rotating Words */}
         <ToggleInput
           label="Show Rotating Words"
@@ -215,7 +226,21 @@ export function FAQEditor() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+          </TabsContent>
 
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionTextColorsEditor
+              value={localConfig.text_colors}
+              onChange={(next) => updateField('text_colors', next)}
+              slots={FAQ_COLOR_SLOTS}
+            />
+            <SectionStyleEditor
+              value={localConfig.style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId="faq"
+            />
+          </TabsContent>
+        </Tabs>
       </EditorCard>
 
       <FAQItemsManager />
