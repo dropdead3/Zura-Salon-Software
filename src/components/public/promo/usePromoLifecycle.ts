@@ -301,7 +301,7 @@ export function usePromoLifecycle({
   );
   const goalSuppressed = !isPreview && isGoalSuppressing(goalStatus);
 
-  const active = isPopupActiveResult && !goalSuppressed;
+  const active = isPopupActive(cfg, surface) && !goalSuppressed;
 
   // ── Trigger gate (immediate / delay / scroll / exit-intent) ──
   useEffect(() => {

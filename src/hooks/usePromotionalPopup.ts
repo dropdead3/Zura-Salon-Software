@@ -124,6 +124,13 @@ export interface PromotionalPopupSettings {
    *  Schedule rotation takes priority — experiments only run while no
    *  rotation window is active. Pure resolver in `@/lib/promo-experiment.ts`. */
   experiment?: PromoExperimentConfig;
+  /** Goal-based auto-suppression (PR 4). When set, the lifecycle hook
+   *  reads the live confirmed-redemption count for `offerCode` and
+   *  suppresses the popup for new visitors once the cap or deadline is
+   *  hit. Soft suppression — `enabled` and the rest of the config stay
+   *  as-is so operators can raise the cap to re-arm without losing
+   *  schedule / experiment state. Pure resolver in `@/lib/promo-goal.ts`. */
+  goal?: import('@/lib/promo-goal').PromoGoal;
 }
 
 export type { PromoExperimentConfig, PromoExperimentVariant } from '@/lib/promo-experiment';
