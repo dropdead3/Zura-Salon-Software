@@ -101,6 +101,16 @@ export function HeroScrimEditor({
   };
 
   const setStrength = (next: number) => {
+    // In slide context, dragging strength to 0 with a non-`none` style is
+    // meaningless (gradient with peak 0 = invisible) and the operator
+    // almost certainly meant "inherit from section" — not "explicitly
+    // suppress". Write `null/null` so the slide reverts to inheriting,
+    // matching what the resolver does at render time. Operators who want
+    // an explicit no-scrim choose the `none` style tile.
+    if (allowInherit && next === 0 && (scrimStyle ?? inheritedStyle) !== 'none') {
+      onChange({ scrim_style: null, scrim_strength: null });
+      return;
+    }
     onChange({
       scrim_style: scrimStyle ?? inheritedStyle,
       scrim_strength: next,

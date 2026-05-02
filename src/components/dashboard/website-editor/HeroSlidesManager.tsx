@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
+import { resolveScrim } from '@/components/home/heroScrim';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
@@ -128,8 +129,12 @@ function SlideRow({
   const resolvedFocalY = focalOverridden ? (slide.background_focal_y as number) : sectionFocalY;
   const resolvedOverlayMode: 'darken' | 'lighten' = slide.overlay_mode ?? sectionOverlayMode;
   const resolvedOverlayOpacity = slide.overlay_opacity ?? sectionOverlayOpacity;
-  const resolvedScrimStyle = slide.scrim_style ?? sectionScrimStyle ?? 'gradient-bottom';
-  const resolvedScrimStrength = slide.scrim_strength ?? sectionScrimStrength ?? 0.55;
+  const { style: resolvedScrimStyle, strength: resolvedScrimStrength } = resolveScrim({
+    slideStyle: slide.scrim_style,
+    slideStrength: slide.scrim_strength,
+    sectionStyle: sectionScrimStyle,
+    sectionStrength: sectionScrimStrength,
+  });
   const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
 
   // Auto-suggest focal point for newly uploaded slide images. Manual drags

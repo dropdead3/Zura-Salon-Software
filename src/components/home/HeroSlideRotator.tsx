@@ -14,6 +14,7 @@ import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
 import { HeroEyebrow } from '@/components/home/HeroEyebrow';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
+import { resolveScrim } from './heroScrim';
 import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
@@ -146,15 +147,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.overlay_opacity ?? config.overlay_opacity ?? 0.4;
   }, [slide, config.overlay_opacity]);
 
-  const scrimStyle = useMemo(() => {
-    if (!slide) return config.scrim_style ?? 'gradient-bottom';
-    return slide.scrim_style ?? config.scrim_style ?? 'gradient-bottom';
-  }, [slide, config.scrim_style]);
-
-  const scrimStrength = useMemo(() => {
-    if (!slide) return config.scrim_strength ?? 0.55;
-    return slide.scrim_strength ?? config.scrim_strength ?? 0.55;
-  }, [slide, config.scrim_strength]);
+  // Slide-level scrim resolution lives in `heroScrim.ts` so the live
+  // renderer + the editor previews stay in lockstep. The shared helper also
+  // heals legacy slides that wrote `scrim_strength: 0` (instead of `null`)
+  // to express "inherit", which silently shadowed the section setting.
+  const { style: scrimStyle, strength: scrimStrength } = useMemo(() => {
+    return resolveScrim({
+      slideStyle: slide?.scrim_style,
+      slideStrength: slide?.scrim_strength,
+      sectionStyle: config.scrim_style,
+      sectionStrength: config.scrim_strength,
+    });
+  }, [slide, config.scrim_style, config.scrim_strength]);
 
   // Background-only mode splits ownership:
   //   - `slide` (above) stays the foreground source, always anchored to the
