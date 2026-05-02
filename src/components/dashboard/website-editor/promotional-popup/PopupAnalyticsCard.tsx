@@ -311,10 +311,37 @@ export function PopupAnalyticsCard({
     explicitOrgId: organizationId,
   });
 
+  // Shared hover index — chart hover lights up tile, tile hover dims chart.
+  const [hoveredKey, setHoveredKey] = useState<TrendKey | null>(null);
+
   // Silence-is-valid: no code configured → render nothing.
   if (!code) return null;
 
   const showSkeleton = isLoading || !data;
+
+  // Pre-extract sparkline series so each tile gets a stable reference.
+  const series = useMemo(() => {
+    const trend = data?.trend ?? [];
+    return {
+      impressions: trend.map((p) => p.impressions),
+      ctaClicks: trend.map((p) => p.ctaClicks),
+      dismissals: trend.map((p) => p.dismissals),
+      redemptions: trend.map((p) => p.redemptions),
+      revenue: trend.map((p) => p.revenue),
+    };
+  }, [data?.trend]);
+
+  // Chart only renders when there's *some* signal; otherwise rely on tile sparklines.
+  const chartTotal =
+    (data?.trend ?? []).reduce(
+      (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
+      0,
+    ) ?? 0;
+  const chartVisible = chartTotal > 0;
+
+  const tooltipNote = data
+    ? formatTrackingFootnote(data.firstImpressionAt, data.firstResponseAt)
+    : null;
 
   return (
     <Card>
@@ -325,9 +352,17 @@ export function PopupAnalyticsCard({
               <BarChart3 className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <CardTitle className={tokens.card.title}>
-                Popup Performance
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className={tokens.card.title}>
+                  Popup Performance
+                </CardTitle>
+                {tooltipNote ? (
+                  <MetricInfoTooltip
+                    title="Tracking window"
+                    description={tooltipNote}
+                  />
+                ) : null}
+              </div>
               <CardDescription>
                 {description ??
                   `Conversion funnel for ${code} · last ${windowDays} days`}
@@ -353,6 +388,11 @@ export function PopupAnalyticsCard({
                 label="Impressions"
                 value={data.impressions.toLocaleString()}
                 icon={Eye}
+                sparklinePoints={series.impressions}
+                trendKey="impressions"
+                highlighted={hoveredKey === 'impressions'}
+                chartVisible={chartVisible}
+                onHover={setHoveredKey}
               />
               <FunnelStat
                 label="CTA Clicks"
@@ -360,11 +400,21 @@ export function PopupAnalyticsCard({
                 icon={MousePointerClick}
                 rate={formatPercent(data.ctr)}
                 rateLabel="click rate"
+                sparklinePoints={series.ctaClicks}
+                trendKey="ctaClicks"
+                highlighted={hoveredKey === 'ctaClicks'}
+                chartVisible={chartVisible}
+                onHover={setHoveredKey}
               />
               <FunnelStat
                 label="Dismissals"
                 value={data.dismissals.toLocaleString()}
                 icon={X}
+                sparklinePoints={series.dismissals}
+                trendKey="dismissals"
+                highlighted={hoveredKey === 'dismissals'}
+                chartVisible={chartVisible}
+                onHover={setHoveredKey}
               />
               <FunnelStat
                 label="Redemptions"
@@ -372,6 +422,11 @@ export function PopupAnalyticsCard({
                 icon={Gift}
                 rate={formatPercent(data.redemptionRate)}
                 rateLabel="of impressions"
+                sparklinePoints={series.redemptions}
+                trendKey="redemptions"
+                highlighted={hoveredKey === 'redemptions'}
+                chartVisible={chartVisible}
+                onHover={setHoveredKey}
               />
               <FunnelStat
                 label="Revenue"
@@ -385,10 +440,19 @@ export function PopupAnalyticsCard({
                 icon={DollarSign}
                 rate={data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined}
                 rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
+                sparklinePoints={series.revenue}
+                trendKey="revenue"
+                highlighted={hoveredKey === 'revenue'}
+                chartVisible={chartVisible}
+                onHover={setHoveredKey}
               />
             </div>
 
-            <TrendChart data={data.trend} />
+            <TrendChart
+              data={data.trend}
+              highlightedKey={hoveredKey}
+              onHoverKey={setHoveredKey}
+            />
 
             {!data.hasSufficientData ? (
               <p className="text-xs text-muted-foreground">
@@ -400,16 +464,6 @@ export function PopupAnalyticsCard({
                 Until then, raw counts only.
               </p>
             ) : null}
-
-            {(() => {
-              const note = formatTrackingFootnote(
-                data.firstImpressionAt,
-                data.firstResponseAt,
-              );
-              return note ? (
-                <p className="text-[11px] text-muted-foreground/80 italic">{note}</p>
-              ) : null;
-            })()}
           </>
         )}
       </CardContent>
