@@ -441,6 +441,16 @@ export function PromoScheduleCard({
                           <Badge variant="outline" className={cn('text-[10px]', meta.tone)}>
                             {meta.label}
                           </Badge>
+                          {!snap ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] border-destructive/50 bg-destructive/10 text-destructive"
+                              title="Referenced saved-promo no longer exists. This rotation will be skipped (no impressions attributed) until you re-link it or delete the entry."
+                            >
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Missing creative
+                            </Badge>
+                          ) : null}
                           {isConflicting ? (
                             <Badge
                               variant="outline"
