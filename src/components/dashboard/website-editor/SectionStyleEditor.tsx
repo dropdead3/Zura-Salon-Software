@@ -14,9 +14,22 @@ interface SectionStyleEditorProps {
   onChange: (overrides: Partial<StyleOverrides>) => void;
   /** Pass sectionId for image upload path context */
   sectionId?: string;
+  /**
+   * When true, the Container Frame switch defaults ON for sections whose
+   * live renderer always renders an inset card (e.g. Brand Statement). The
+   * operator can still toggle it OFF; the toggle then writes
+   * `container_enabled: false` so the persisted value wins over the live
+   * default.
+   */
+  containerDefaultEnabled?: boolean;
 }
 
-export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleEditorProps) {
+export function SectionStyleEditor({
+  value,
+  onChange,
+  sectionId,
+  containerDefaultEnabled = false,
+}: SectionStyleEditorProps) {
   const merged = { ...DEFAULT_STYLE_OVERRIDES, ...value };
 
   const update = (key: keyof StyleOverrides, val: unknown) => {
@@ -28,7 +41,13 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
     return v !== undefined && v !== '' && v !== 0 && v !== 'none' && v !== 'full';
   });
 
-  const containerEnabled = !!merged.container_enabled;
+  // If the operator hasn't explicitly set container_enabled, fall back to the
+  // section's live default (e.g. Brand Statement renders the dark card by
+  // default, so the editor should expose its controls without a toggle dance).
+  const containerEnabled =
+    value.container_enabled !== undefined
+      ? !!value.container_enabled
+      : containerDefaultEnabled;
 
   return (
     <div className="space-y-6 py-1">
