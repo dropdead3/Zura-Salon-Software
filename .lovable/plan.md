@@ -1,79 +1,153 @@
-# Fix Hero Parallax — Full-Screen Rest + Live Hero Animations
+## Goal
 
-## What's wrong today
+Wire the existing Reputation Engine (`client_feedback_responses`) into the Website Editor's Reviews section so operators can curate consent-approved 5-star reviews into their salon website — without manual copy/paste, while preserving the original review record, consent state, and full editorial control.
 
-Two regressions visible in the screenshot, both caused by the current `HeroParallaxLayout` structure:
+## What's already built (reuse, don't duplicate)
 
-1. **Rising panel bleeds into the hero at rest.** The cream rounded edge appears over the hero before any scrolling, because the rising panel uses `-mt-8` (negative margin) to hide the seam. That negative margin pulls the next section UP, exposing its rounded corner over the hero immediately.
-2. **Hero scroll animations stop working** (headline split, blur, parallax fade). The hero is wrapped in a `position: sticky; height: 100vh` container, which means the hero's own `<section>` element never moves relative to the viewport while sticky is engaged. Its `useScroll({ target: sectionRef })` consequently reads `scrollYProgress = 0` for the entire reveal — split/blur/parallax never fire.
+- **Source-of-truth table**: `client_feedback_responses` (rating 1-5, comments, NPS, client/staff/appointment FKs, `is_public`, `passed_review_gate`).
+- **Display table**: `website_testimonials` (org-scoped, surface = `'general' | 'extensions'`, RLS correct).
+- **Editor surface**: `TestimonialsEditor.tsx` + `ReviewsManager.tsx` (drag-orderable, preview-bridged, save-telemetry wired).
+- **Live render**: `TestimonialSection.tsx` (carousel) + `ExtensionReviewsSection.tsx`.
+- **Threshold settings**: `useReviewThreshold.ts` (already defines minimum rating, NPS, public follow-up).
 
-The user's intent is clear: hero is 100% full-screen at rest, hero animations run during scroll, and the next section parallaxes over the hero only as the user scrolls.
+## Gaps to close
 
-## Solution: tall scroll-driver pattern
+1. No bridge from `client_feedback_responses` → `website_testimonials`.
+2. No client-facing consent capture for website display.
+3. No display-name preference (first-only / first+initial / anonymous).
+4. No edited-for-display copy separate from the original.
+5. No featured/pinned/hidden states beyond binary `enabled`.
+6. No layout selector (carousel / grid / stacked / hero).
+7. No service/stylist/location filters in the curation UI.
+8. No source selector (manual / Zura reviews / mixed) on the section.
 
-Replace the current sticky-hero / negative-margin approach with the canonical "tall scroll driver" pattern used by every premium parallax site (Apple, Stripe, Linear).
+## Phase 1 — Schema (migration)
 
-```text
-┌─────────────────────────────────────┐
-│  [DRIVER]   height: 200vh           │
-│                                     │
-│   ┌─────────────────────────────┐   │
-│   │ [HERO]   sticky top:0       │   │  ← hero pins for 200vh of scroll
-│   │ height: 100vh, full-bleed   │   │     and runs its own animations
-│   │ — runs split/blur/parallax  │   │     against the driver's progress
-│   └─────────────────────────────┘   │
-└─────────────────────────────────────┘
-┌─────────────────────────────────────┐
-│  [RISING PANEL]                     │  ← starts at top: 200vh (no bleed
-│  rounded-t, shadow, bg-background   │     at rest), scrolls up over the
-│                                     │     hero naturally as user scrolls
-└─────────────────────────────────────┘
-┌─────────────────────────────────────┐
-│  [REST OF PAGE]                     │
-└─────────────────────────────────────┘
+**Extend `client_feedback_responses`** with consent + display preferences (additive, all nullable, defaults preserve current behavior):
+- `display_consent boolean default false` — explicit website-display consent
+- `display_consent_at timestamptz`
+- `display_name_preference text` — `'first_only' | 'first_initial' | 'anonymous' | null`
+- `display_status text default 'new'` — `'new' | 'eligible' | 'approved' | 'featured' | 'hidden' | 'unpublished' | 'needs_consent' | 'archived'`
+- `display_status_at timestamptz`, `display_status_by uuid`
+- Validation trigger (not CHECK) enforces enum values.
+
+**Extend `website_testimonials`** to link curated reviews back to source:
+- `source_response_id uuid references client_feedback_responses(id) on delete set null` (unique partial index where not null — one website row per source review)
+- `display_edited boolean default false` — set true when operator edits body
+- `original_body text` — snapshot of source comment at curation time (immutable copy)
+- `is_featured boolean default false`
+- `feature_scopes text[] default '{}'` — `'homepage' | 'service_pages' | 'stylist_pages'`
+- `service_id uuid`, `stylist_user_id uuid`, `location_id uuid` — denormalized filter facets (nullable; copied at curation)
+- `show_stylist boolean default true`, `show_service boolean default true`, `show_date boolean default true`, `show_rating boolean default true`
+- `display_name_override text` — operator-overridable presentation name
+
+**Extend `site_settings.section_testimonials`** value blob (no schema change; JSONB):
+- `review_source: 'manual' | 'zura' | 'mixed'` (default `'manual'` — preserves current behavior)
+- `layout: 'carousel' | 'grid' | 'stacked' | 'hero'`
+- `featured_review_id` (optional hero pick)
+
+RLS: existing org-scoped policies on both tables already cover the new columns.
+
+## Phase 2 — Eligibility view + hooks
+
+**Postgres view `eligible_website_reviews`** (security_invoker so RLS applies):
 ```
+client_feedback_responses
+  WHERE overall_rating = 5
+    AND comments IS NOT NULL AND length(trim(comments)) > 0
+    AND appointment_id IS NOT NULL
+    AND display_status NOT IN ('archived','unpublished')
+```
+Joined to `phorest_clients` (name), `appointments` (service, staff, location), `website_testimonials` (curated state via `source_response_id`).
 
-Three structural changes deliver both fixes:
+**New hooks** (`src/hooks/useEligibleReviews.ts`):
+- `useEligibleReviews(filters)` — paginated, with `staleTime: 30_000` per high-concurrency canon.
+- `useCurateReview()` — creates a `website_testimonials` row from a `client_feedback_responses` row, snapshots `original_body`, defaults `enabled=true`, `display_status='approved'`. Validates `display_consent=true` (or operator override flag with audit log).
+- `useUnpublishReview(testimonialId)` — sets `enabled=false` + source `display_status='unpublished'`.
+- `useFeatureReview()` — toggles `is_featured` + `feature_scopes`.
 
-- **Driver wraps the hero** at `height: 200vh` (one screen of full-bleed display + one screen of scroll runway for the animation). Hero is `sticky top:0 h-screen` inside the driver.
-- **Rising panel sits at normal flow position 200vh** — no negative margin. At scroll 0 the seam is below the fold, so the hero is genuinely full-screen at rest.
-- **Hero's `useScroll` target becomes the DRIVER**, not the hero `<section>`. The driver moves through the viewport as the user scrolls, so `scrollYProgress` advances 0 → 1 across the 200vh range, restoring the split/blur/parallax exactly as on flat sites.
+## Phase 3 — Review Library UI
 
-## File-by-file changes
+New file: `src/components/dashboard/website-editor/ZuraReviewLibrary.tsx`
+- Drawer mounted from `TestimonialsEditor` when `review_source !== 'manual'`.
+- Three tabs: **Eligible**, **Curated**, **Hidden**.
+- Filters: text search, service category, stylist, location, date range.
+- Row shows: stars, body excerpt (3-line clamp + "read more"), client display name (per current preference), service, stylist, location, appointment date, consent badge, status badge.
+- Actions per row: **Add to Website** (curate) · **Edit display** · **Feature** · **Hide** · **Unpublish**.
+- "Edit display" opens a side-by-side: original (read-only) vs. editable display copy. Saving sets `display_edited=true` and shows an "edited for display" indicator. Original remains untouched on `client_feedback_responses`.
+- Compliance reminder banner if `display_consent=false` — operator must check "I have written/recorded consent from this client" to proceed (writes audit log row).
+- Empty state: "No 5-star reviews yet — request feedback from recent clients" with CTA to feedback request flow.
 
-**`src/components/home/HeroParallaxLayout.tsx`** — rewrite the layout primitive:
-- Driver `<div>` at `min-h-[200vh] relative` — this is what generates the scroll runway.
-- Hero shell `<div>` inside the driver at `sticky top-0 h-screen overflow-hidden`. Children render here.
-- Expose the driver ref so the hero can subscribe to it (see below).
-- Rising panel sits AFTER the driver in flow with `rounded-t-[2rem] shadow-[...] bg-background` — no negative margin. The shadow + radius become visible naturally as the panel scrolls up.
-- Cinematic mode keeps its CSS-variable scroll driver but reads from the new driver ref.
+## Phase 4 — Section editor wiring
 
-**Hero scroll target rewiring — minimal-touch via context:**
-- Add `src/components/home/HeroParallaxScrollContext.tsx`: a tiny React context exposing the driver `RefObject<HTMLElement>` (or `null` when parallax is off).
-- `HeroParallaxLayout` provides the context with the driver ref.
-- `useHeroScrollAnimation` reads the context. When a parallax driver is present, it binds `useScroll({ target: parallaxDriverRef, offset: ['start start', 'end start'] })`. When absent (parallax off), it falls back to the existing `target: sectionRef` behavior. Hook order stays stable — `useScroll` is always called once.
-- This keeps every other consumer of the hero (preview, edit-mode bento, reduced-motion, all 3 Vitest specs we just shipped) working unchanged.
+`TestimonialsEditor.tsx`:
+- Add **Review Source** segmented control (manual / Zura / mixed) above the existing `ReviewsManager`.
+- Add **Layout** select (carousel / grid / stacked / hero).
+- When source = Zura/mixed: render `ZuraReviewLibrary` button + curated count chip; `ReviewsManager` filters to manual rows (no `source_response_id`).
+- Bulk pickers: "Select all approved", "Select featured only", "Select by service / stylist / location".
 
-**`src/components/home/PageSectionRenderer.tsx`** — no behavior change; still selects slot-1 as the rising panel and forwards `mode`. The structural fix lives entirely in `HeroParallaxLayout`.
+## Phase 5 — Live render
 
-## Tests
+`TestimonialSection.tsx`:
+- Branch on `layout` config (carousel exists; add grid, stacked, hero variants — pure subcomponents per Preview-Live Parity Pattern).
+- Apply per-row display flags (`show_stylist`, `show_service`, `show_date`, `show_rating`).
+- Resolve display name: prefer `display_name_override` → else compute from source `display_name_preference` + client name → fallback `'Anonymous'`.
+- Featured review hero variant uses `featured_review_id` when set.
 
-Update existing specs and add coverage for the two regressions:
+## Phase 6 — Consent capture (client side)
 
-- `HeroParallaxLayout.test.tsx`: assert the driver exists at `[data-hero-parallax="driver"]` with min-height ≥ 100vh, hero shell is `sticky` inside it, rising panel has NO negative margin (no `-mt-` class), and rest still wraps slot 2+. Disabled / reduced-motion specs unchanged.
-- New `HeroParallaxLayout.no-bleed.test.tsx`: at scroll 0, `[data-hero-parallax="rising"]` `getBoundingClientRect().top` is `>= window.innerHeight` (the rising panel is below the fold). Locks the bug we're fixing.
-- New `useHeroScrollAnimation.parallax-binding.test.ts`: when wrapped in `HeroParallaxScrollContext` with a driver ref, `useScroll` is called with that ref; without context, it falls back to `sectionRef`. Locks the animation-restoration fix.
+Existing public feedback form (`src/pages/ClientFeedback.tsx`):
+- Add **display consent checkbox** + **display name preference radio** (first only / first + initial / anonymous).
+- On submit, write `display_consent`, `display_consent_at`, `display_name_preference` to the response row.
+- If `overall_rating = 5 && comments && display_consent`, set `display_status='eligible'`; else `'new'` or `'needs_consent'`.
 
-Existing `HeroSlideRotator.scroll-fx.test.tsx` will be re-validated — it spies on `useScroll` calls and asserts the rotator binds it correctly. The context-aware change must not break that spec.
+## Phase 7 — Tests
 
-## Out of scope
+- `eligibleWebsiteReviews.test.ts` — view returns only 5-star + comment + completed appointment.
+- `useCurateReview.test.tsx` — blocks without consent unless override flag + audit row written.
+- `ZuraReviewLibrary.filters.test.tsx` — filter composition.
+- `TestimonialSection.layouts.test.tsx` — each layout renders with feature flags.
+- `displayNameResolution.test.ts` — preference + override fallback chain.
 
-- Editor edit-mode is unaffected (`PageSectionRenderer` already short-circuits parallax in edit-mode — bento cards don't get sticky positioning).
-- Cinematic-mode fade/scale math stays as-is; only the ref it reads from changes.
-- Reduced-motion behavior unchanged — silent no-op.
+## Out of scope (explicitly)
 
-## Risks & mitigation
+- Posting reviews to Google/Yelp/Apple/Facebook (separate public-review flow already exists in `useReviewThreshold`).
+- AI-generated review text or summaries (violates AI autonomy doctrine for editorial content).
+- Auto-publishing without operator approval (violates consent gate).
+- Editing the original `client_feedback_responses.comments` value.
 
-- **Risk:** doubling the hero's scroll runway (200vh) means users scroll one extra screen before reaching the rising panel. **Mitigation:** this is the intended UX — it gives the hero animation room to play out cinematically. Tunable via a single constant in the layout (`SCROLL_RUNWAY_VH`) if we want to ease it back to 150vh later.
-- **Risk:** the hero is a system-of-record component used by many tenants. **Mitigation:** the context fallback means tenants without parallax see ZERO change — `useHeroScrollAnimation` reads `null` from context and uses `sectionRef` exactly as today.
-- **Risk:** test fixture for `useHeroScrollAnimation` needs a Provider wrapper. **Mitigation:** ship a small `HeroParallaxScrollContext.Provider` test helper alongside the context.
+## Doctrine compliance
+
+- **Tenant isolation**: all new columns/queries scoped via existing `organization_id` RLS.
+- **Original review protection**: enforced at hook layer; UI surfaces "edited for display" indicator.
+- **Silence is valid output**: empty Zura library renders consent/request prompt, not fake placeholder reviews.
+- **Preview-Live Parity Pattern**: layout variants extracted as pure subcomponents shared by editor preview and live render.
+- **Container-aware**: layouts respond via existing spatial primitives, not viewport breakpoints.
+- **Typography canon**: Termina for headers, Aeonik for body, no `font-bold`.
+- **No autonomous publishing**: every state transition gated on operator action.
+
+## Files touched (estimate)
+
+**New** (~6):
+- `supabase/migrations/<ts>_website_review_publishing.sql`
+- `src/hooks/useEligibleReviews.ts`
+- `src/components/dashboard/website-editor/ZuraReviewLibrary.tsx`
+- `src/components/home/testimonials/TestimonialLayouts.tsx` (shared layouts)
+- `src/lib/reviewDisplayName.ts` (name resolution)
+- Tests (5)
+
+**Edited** (~5):
+- `src/components/dashboard/website-editor/TestimonialsEditor.tsx`
+- `src/components/dashboard/website-editor/ReviewsManager.tsx` (filter to manual rows)
+- `src/components/home/TestimonialSection.tsx`
+- `src/hooks/useTestimonials.ts` (curation helpers)
+- `src/pages/ClientFeedback.tsx` (consent capture)
+
+## Prompt feedback (per project knowledge)
+
+**What worked well**: You named the source system, the destination, the consent boundary, the doctrine line ("Zura is not reposting to third parties"), and gave a concrete state machine. That made scope unambiguous and let me skip clarifying questions.
+
+**Sharper next time**: 
+1. Lead with the **non-goals** (you got there at "Important:" — promote that to the top so the agent can't drift into a Google Review reposter).
+2. Specify which **persona** owns this surface (Salon Owner vs. Manager) — affects whether the library appears in the Website Editor only, or also in a standalone Reputation Hub.
+3. State whether **historical reviews** (pre-consent-feature) should be backfilled as `'needs_consent'` or left as `'new'` — this is the kind of decision that costs a follow-up loop if unstated.

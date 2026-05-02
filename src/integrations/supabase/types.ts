@@ -5849,6 +5849,12 @@ export type Database = {
           client_id: string | null
           comments: string | null
           created_at: string | null
+          display_consent: boolean
+          display_consent_at: string | null
+          display_name_preference: string | null
+          display_status: string
+          display_status_at: string | null
+          display_status_by: string | null
           expires_at: string | null
           external_review_clicked: string | null
           external_review_clicked_at: string | null
@@ -5874,6 +5880,12 @@ export type Database = {
           client_id?: string | null
           comments?: string | null
           created_at?: string | null
+          display_consent?: boolean
+          display_consent_at?: string | null
+          display_name_preference?: string | null
+          display_status?: string
+          display_status_at?: string | null
+          display_status_by?: string | null
           expires_at?: string | null
           external_review_clicked?: string | null
           external_review_clicked_at?: string | null
@@ -5899,6 +5911,12 @@ export type Database = {
           client_id?: string | null
           comments?: string | null
           created_at?: string | null
+          display_consent?: boolean
+          display_consent_at?: string | null
+          display_name_preference?: string | null
+          display_status?: string
+          display_status_at?: string | null
+          display_status_by?: string | null
           expires_at?: string | null
           external_review_clicked?: string | null
           external_review_clicked_at?: string | null
@@ -31050,6 +31068,81 @@ export type Database = {
           },
         ]
       }
+      website_review_audit_log: {
+        Row: {
+          action: string
+          consent_override: boolean
+          id: string
+          metadata: Json | null
+          organization_id: string
+          override_attestation: string | null
+          performed_at: string
+          performed_by: string | null
+          response_id: string | null
+          testimonial_id: string | null
+        }
+        Insert: {
+          action: string
+          consent_override?: boolean
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          override_attestation?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          response_id?: string | null
+          testimonial_id?: string | null
+        }
+        Update: {
+          action?: string
+          consent_override?: boolean
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          override_attestation?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          response_id?: string | null
+          testimonial_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_review_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_review_audit_log_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "client_feedback_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_review_audit_log_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["response_id"]
+          },
+          {
+            foreignKeyName: "website_review_audit_log_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["website_testimonial_id"]
+          },
+          {
+            foreignKeyName: "website_review_audit_log_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "website_testimonials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_section_content: {
         Row: {
           created_at: string
@@ -31168,12 +31261,25 @@ export type Database = {
           author: string
           body: string
           created_at: string
+          display_edited: boolean
+          display_name_override: string | null
           enabled: boolean
+          feature_scopes: string[]
           id: string
+          is_featured: boolean
+          location_id: string | null
           organization_id: string
+          original_body: string | null
           rating: number | null
+          service_id: string | null
+          show_date: boolean
+          show_rating: boolean
+          show_service: boolean
+          show_stylist: boolean
           sort_order: number
+          source_response_id: string | null
           source_url: string | null
+          stylist_user_id: string | null
           surface: string
           title: string | null
           updated_at: string
@@ -31182,12 +31288,25 @@ export type Database = {
           author: string
           body: string
           created_at?: string
+          display_edited?: boolean
+          display_name_override?: string | null
           enabled?: boolean
+          feature_scopes?: string[]
           id?: string
+          is_featured?: boolean
+          location_id?: string | null
           organization_id: string
+          original_body?: string | null
           rating?: number | null
+          service_id?: string | null
+          show_date?: boolean
+          show_rating?: boolean
+          show_service?: boolean
+          show_stylist?: boolean
           sort_order?: number
+          source_response_id?: string | null
           source_url?: string | null
+          stylist_user_id?: string | null
           surface?: string
           title?: string | null
           updated_at?: string
@@ -31196,12 +31315,25 @@ export type Database = {
           author?: string
           body?: string
           created_at?: string
+          display_edited?: boolean
+          display_name_override?: string | null
           enabled?: boolean
+          feature_scopes?: string[]
           id?: string
+          is_featured?: boolean
+          location_id?: string | null
           organization_id?: string
+          original_body?: string | null
           rating?: number | null
+          service_id?: string | null
+          show_date?: boolean
+          show_rating?: boolean
+          show_service?: boolean
+          show_stylist?: boolean
           sort_order?: number
+          source_response_id?: string | null
           source_url?: string | null
+          stylist_user_id?: string | null
           surface?: string
           title?: string | null
           updated_at?: string
@@ -31213,6 +31345,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_testimonials_source_response_id_fkey"
+            columns: ["source_response_id"]
+            isOneToOne: false
+            referencedRelation: "client_feedback_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_testimonials_source_response_id_fkey"
+            columns: ["source_response_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["response_id"]
           },
         ]
       }
@@ -31825,6 +31971,54 @@ export type Database = {
           },
           {
             foreignKeyName: "employee_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eligible_website_reviews: {
+        Row: {
+          appointment_id: string | null
+          client_first_name: string | null
+          client_id: string | null
+          client_last_name: string | null
+          comments: string | null
+          created_at: string | null
+          display_consent: boolean | null
+          display_name_preference: string | null
+          display_status: string | null
+          feature_scopes: string[] | null
+          is_featured: boolean | null
+          location_id: string | null
+          organization_id: string | null
+          overall_rating: number | null
+          published: boolean | null
+          responded_at: string | null
+          response_id: string | null
+          service_id: string | null
+          staff_user_id: string | null
+          stylist_user_id: string | null
+          website_testimonial_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_feedback_responses_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
