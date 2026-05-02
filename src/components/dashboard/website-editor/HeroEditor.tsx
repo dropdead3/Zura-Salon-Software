@@ -56,7 +56,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'wash' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
+type GlobalView = 'colors' | 'overlay' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
