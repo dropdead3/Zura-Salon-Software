@@ -101,7 +101,7 @@ export function BrandStatement() {
     container_background_value: 'hsl(var(--foreground))',
     container_padding: 80,
     container_radius: 16,
-    container_max_width: 'full',
+    container_max_width: 'xl',
   };
   const mergedOverrides = operatorCustomizedContainer
     ? { ...containerDefaults, ...savedOverrides }
