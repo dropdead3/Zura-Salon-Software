@@ -27,6 +27,14 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 const POPUP_SURFACE = 'promotional_popup';
 export const MIN_IMPRESSIONS_FOR_RATES = 100;
 
+export interface PromotionalPopupTrendPoint {
+  /** YYYY-MM-DD (UTC). */
+  date: string;
+  impressions: number;
+  ctaClicks: number;
+  redemptions: number;
+}
+
 export interface PromotionalPopupFunnel {
   impressions: number;
   ctaClicks: number; // 'accepted' responses
@@ -41,6 +49,49 @@ export interface PromotionalPopupFunnel {
   bookingRate: number | null;
   hasSufficientData: boolean;
   windowDays: number;
+  /** Earliest impression timestamp (any code, this org/surface). Drives the
+   *  "Since impression tracking went live" footnote. */
+  firstImpressionAt: string | null;
+  /** Earliest response timestamp for this code — used to detect the
+   *  pre-tracking asymmetry where responses pre-date impressions. */
+  firstResponseAt: string | null;
+  /** 14-day daily trend (oldest → newest). Always returned, even when
+   *  impressions are zero, so the chart can render an honest flat baseline. */
+  trend: PromotionalPopupTrendPoint[];
+}
+
+const TREND_WINDOW_DAYS = 14;
+
+function utcDateKey(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function buildTrendBuckets(
+  impressionDates: string[],
+  responseDates: string[],
+  redemptionDates: string[],
+): PromotionalPopupTrendPoint[] {
+  const buckets = new Map<string, PromotionalPopupTrendPoint>();
+  const today = new Date();
+  for (let i = TREND_WINDOW_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setUTCDate(d.getUTCDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    buckets.set(key, { date: key, impressions: 0, ctaClicks: 0, redemptions: 0 });
+  }
+  for (const iso of impressionDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.impressions += 1;
+  }
+  for (const iso of responseDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.ctaClicks += 1;
+  }
+  for (const iso of redemptionDates) {
+    const b = buckets.get(utcDateKey(iso));
+    if (b) b.redemptions += 1;
+  }
+  return Array.from(buckets.values());
 }
 
 interface UsePromotionalPopupFunnelArgs {
