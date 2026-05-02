@@ -246,6 +246,15 @@ export default function MarketingAnalytics() {
           />
         </div>
 
+        {/* Promotional popup funnel — impressions → CTA → redemptions →
+            attributed revenue. Renders null when no popup is active or no
+            offer code configured (silence is valid output). */}
+        {popupOfferCode ? (
+          <div className="mt-6">
+            <PopupAnalyticsCard offerCode={popupOfferCode} />
+          </div>
+        ) : null}
+
         {/* M2: SEO Content Tasks integration */}
         <VisibilityGate
           elementKey="seo_content_tasks_marketing"
