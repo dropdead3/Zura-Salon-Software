@@ -81,6 +81,7 @@ import {
   AccentContrastWarning,
   type OverflowFinding,
 } from './promotional-popup/internals';
+import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -582,6 +583,16 @@ export function PromotionalPopupEditor() {
           </p>
         </div>
       </div>
+
+      {/* Promotion Library — preset templates + saved snapshots. Mounted
+          high so operators discover "start from a template" before they
+          hand-author copy. Apply paths route through the card's internal
+          dirty-state guard so silent overwrites can't happen. */}
+      <PromoLibraryCard
+        formData={formData}
+        setFormData={setFormData}
+        isDirty={isDirty}
+      />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
