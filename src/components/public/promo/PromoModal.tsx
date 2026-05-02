@@ -112,10 +112,10 @@ export function PromoModal({
       data-animation-key={animationNonce}
       data-popup-phase={popupPhase}
       className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md',
+        'fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 dark:bg-foreground/60',
         isClosing
           ? exitClasses
-          : 'motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500',
+          : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300',
       )}
       onClick={(e) => {
         if (e.target === e.currentTarget) onSoftClose();
@@ -127,14 +127,13 @@ export function PromoModal({
         aria-modal="true"
         aria-labelledby="promo-popup-title"
         className={cn(
-          'relative w-full rounded-2xl border border-border/60 overflow-hidden',
-          'bg-gradient-to-b from-card/80 to-card/70 dark:from-card/55 dark:to-card/45',
-          'backdrop-blur-xl backdrop-saturate-150 dark:backdrop-blur-2xl dark:backdrop-saturate-[1.8]',
-          'motion-safe:animate-backdrop-blur-in-2xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out',
-          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.22),0_8px_16px_-4px_rgba(0,0,0,0.1),inset_0_1px_0_0_hsl(var(--background)/0.4)]',
-          // Top-edge refraction highlight — mimics light bending across glass
-          'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/25 dark:before:via-foreground/40 before:to-transparent before:z-10',
-          'after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:h-24 after:bg-gradient-to-b after:from-foreground/[0.06] dark:after:from-foreground/[0.10] after:to-transparent after:z-0',
+          // Solid surface — operators reported the prior glass treatment
+          // (translucent card + backdrop blur + refraction highlights) read
+          // as a rendering bug. Keep a dim scrim for focus, drop everything
+          // else: opaque bg-card, solid border, standard drop shadow.
+          'relative w-full rounded-2xl border border-border overflow-hidden bg-card',
+          'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-400 motion-safe:ease-out',
+          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.22),0_8px_16px_-4px_rgba(0,0,0,0.1)]',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
         onMouseEnter={() => setIsHovered(true)}
