@@ -134,6 +134,7 @@ export interface SavedPromoScheduleEntry {
    *  the base config in a way that's indistinguishable from "no schedule"). */
   startsAt: string;
   endsAt: string;
+}
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   enabled: false,
