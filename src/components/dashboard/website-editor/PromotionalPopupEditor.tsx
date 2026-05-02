@@ -8,6 +8,8 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { Link } from 'react-router-dom';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
+import { readThemeTokenSwatches, subscribeToThemeChanges } from '@/lib/themeTokenSwatches';
 import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -102,6 +104,40 @@ export function PromotionalPopupEditor() {
   const consultationPolicyEnabled =
     bookingConfig?.flow?.newClientPolicy === 'consultation-required';
   const { dashPath } = useOrgDashboardPath();
+
+  // ── Website-theme accent resolver ──
+  // The "House Default" preset must reflect the *website* theme primary, not
+  // the dashboard's `--primary` (which is the operator's dashboard theme — e.g.
+  // zura-purple). Mirrors the ThemeAwareColorInput Canon: resolve against the
+  // website theme class via a sandboxed element, repaint on theme-preview
+  // events so tile-clicks in Site Design update the swatch instantly.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const [previewThemeClass, setPreviewThemeClass] = useState<string | null>(null);
+  useEffect(() => {
+    const onThemePreview = (e: Event) => {
+      const next = (e as CustomEvent).detail?.themeClass;
+      if (typeof next === 'string' && next) setPreviewThemeClass(next);
+    };
+    window.addEventListener('editor-theme-preview', onThemePreview);
+    return () => window.removeEventListener('editor-theme-preview', onThemePreview);
+  }, []);
+  useEffect(() => {
+    if (previewThemeClass && previewThemeClass === `theme-${websiteTheme}`) {
+      setPreviewThemeClass(null);
+    }
+  }, [previewThemeClass, websiteTheme]);
+  const websiteThemeClass = previewThemeClass ?? `theme-${websiteTheme}`;
+  const [websitePrimaryHex, setWebsitePrimaryHex] = useState<string>(
+    () => readThemeTokenSwatches(websiteThemeClass).find((s) => s.key === 'primary')?.hex ?? '',
+  );
+  useEffect(() => {
+    const refresh = () => {
+      const hex = readThemeTokenSwatches(websiteThemeClass).find((s) => s.key === 'primary')?.hex ?? '';
+      setWebsitePrimaryHex(hex);
+    };
+    refresh();
+    return subscribeToThemeChanges(refresh);
+  }, [websiteThemeClass]);
 
   // Resolve the public booking URL once so the destination chip + lint can
   // render the exact URL a visitor will land on. Falls back to relative path
@@ -1392,7 +1428,12 @@ export function PromotionalPopupEditor() {
                 >
                   <span
                     className="h-3 w-3 rounded-full border border-border/60"
-                    style={{ backgroundColor: preset.swatch }}
+                    style={{
+                      backgroundColor:
+                        preset.key === 'house' && websitePrimaryHex
+                          ? websitePrimaryHex
+                          : preset.swatch,
+                    }}
                   />
                   <span className="font-sans text-[11px]">{preset.label}</span>
                 </button>
