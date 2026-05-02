@@ -960,6 +960,8 @@ export function PopupAnalyticsCard({
           )}
         </div>
 
+        {!showSkeleton ? (
+          <>
             <TrendChart
               data={data.trend}
               highlightedKey={hoveredKey}
@@ -986,7 +988,7 @@ export function PopupAnalyticsCard({
               </p>
             ) : null}
           </>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
