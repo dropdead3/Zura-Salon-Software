@@ -504,20 +504,20 @@ export function HeroEditor() {
               </div>
             ) : rotatorMode === 'background_only' ? (
               <>
-                {/* Master slide row — full editor access, not draggable */}
-                <SortableContextNoop>
-                  <SortableSlideRow
-                    slide={slides[0]}
-                    index={0}
-                    isFirst
-                    section={localConfig}
-                    rotatorMode={rotatorMode}
-                    variant="row"
-                    onClick={() => setView({ kind: 'slide', id: slides[0].id })}
-                    onDelete={() => deleteSlide(slides[0].id)}
-                    onToggleActive={(next) => updateSlide(slides[0].id, { active: next })}
-                  />
-                </SortableContextNoop>
+                {/* Master slide row — full editor access, not draggable.
+                    Rendered outside any DndContext so the drag handle is
+                    suppressed by `variant`'s isMaster branch in HeroSlideListCard. */}
+                <SortableSlideRow
+                  slide={slides[0]}
+                  index={0}
+                  isFirst
+                  section={localConfig}
+                  rotatorMode={rotatorMode}
+                  variant="row"
+                  onClick={() => setView({ kind: 'slide', id: slides[0].id })}
+                  onDelete={() => deleteSlide(slides[0].id)}
+                  onToggleActive={(next) => updateSlide(slides[0].id, { active: next })}
+                />
 
                 {/* Background gallery */}
                 <div className="pt-3">
