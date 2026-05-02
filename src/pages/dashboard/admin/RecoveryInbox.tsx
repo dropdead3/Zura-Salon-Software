@@ -9,6 +9,7 @@ import {
 } from '@/hooks/useRecoveryTasks';
 import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
+import { RecoverySLABadge } from '@/components/feedback/RecoverySLABadge';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, formatDistanceToNow } from 'date-fns';
