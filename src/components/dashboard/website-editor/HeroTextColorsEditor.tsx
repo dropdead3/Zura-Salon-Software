@@ -95,7 +95,7 @@ export function HeroTextColorsEditor({
       </div>
 
       <div className="space-y-3 pt-3 border-t border-border/40">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Secondary Button</p>
+        <SectionSubhead>Secondary Button</SectionSubhead>
         <ColorRow
           label="Border"
           value={colors.secondary_button_border}
