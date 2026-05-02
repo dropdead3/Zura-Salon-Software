@@ -92,7 +92,9 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   ]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [consultationOpen, setConsultationOpen] = useState(false);
+  // Note: `consultationOpen` lives inside HeroForeground — it's a foreground
+  // concern (CTA → dialog) and lifting it out would re-couple this shell to
+  // every CTA-button render concern.
   const reduceMotion = useReducedMotion();
 
   // Section-level rotating words — globals shared across all slides (per
