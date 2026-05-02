@@ -611,6 +611,7 @@ export function PromotionalPopupEditor() {
         schedule={formData.schedule}
         focusedRotationId={focusedRotationId}
         onFocusRotation={setFocusedRotationId}
+        goal={formData.goal ?? null}
       />
 
       {/* Scheduled Rotation — pre-stage saved snapshots to swap into the live
