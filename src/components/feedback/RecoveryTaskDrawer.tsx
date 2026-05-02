@@ -11,6 +11,7 @@ import {
   useUpdateRecoveryTask,
 } from '@/hooks/useRecoveryTasks';
 import { SendReviewRequestButton } from './SendReviewRequestButton';
+import { AIRecoveryDraftButton } from './AIRecoveryDraftButton';
 import { format } from 'date-fns';
 
 interface Props {
