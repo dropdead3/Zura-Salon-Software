@@ -87,6 +87,22 @@ export function useHeroScrollAnimation({
   const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
   const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
 
+  // Publish a single hero-exit-progress signal so downstream surfaces
+  // (sticky nav, scroll affordances, FAB reveal) can subscribe to ONE
+  // source of truth instead of binding their own `useScroll` /
+  // `window.scrollY` listeners. This is published unconditionally
+  // (regardless of `enabled`) — reduced-motion users still scroll, and
+  // sticky-nav reveal logic is not motion-driven.
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    publishHeroExitProgress(v);
+  });
+  useEffect(() => {
+    // Initial publish so consumers mounted AFTER the first scroll event
+    // get a value immediately (rather than waiting for the next frame).
+    publishHeroExitProgress(scrollYProgress.get());
+    return () => clearHeroExitProgress();
+  }, [scrollYProgress]);
+
   return {
     enabled,
     scrollYProgress,
