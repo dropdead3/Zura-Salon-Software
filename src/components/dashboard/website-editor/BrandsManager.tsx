@@ -277,6 +277,7 @@ export function BrandsManager() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_brands');
 
   if (isLoading) {
     return (
