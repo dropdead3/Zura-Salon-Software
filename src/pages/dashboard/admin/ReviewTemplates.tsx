@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
+import { ReviewResponseTemplateLibrary } from '@/components/feedback/ReviewResponseTemplateLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
