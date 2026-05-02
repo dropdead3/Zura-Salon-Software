@@ -700,6 +700,34 @@ export function PopupAnalyticsCard({
   // Shared hover index — chart hover lights up tile, tile hover dims chart.
   const [hoveredKey, setHoveredKey] = useState<TrendKey | null>(null);
 
+  // Container-aware tile layout (per the container-aware canon). The editor
+  // sidebar narrows the card without narrowing the page, so viewport-based
+  // breakpoints lie. We measure the funnel grid's actual wrapper instead.
+  //   ≥720px → 5 cols (full funnel)
+  //   ≥480px → 4 cols (Redemptions + Revenue still split)
+  //   ≥320px → 3 cols
+  //   ≥220px → 2 cols + Outcome merge (Redemptions + Revenue share denominator)
+  //   < 220px → 1 col
+  const { ref: funnelGridRef, width: funnelWidth } = useContainerWidth<HTMLDivElement>();
+  const tileMode: { cols: 1 | 2 | 3 | 4 | 5; mergeOutcome: boolean } = (() => {
+    if (funnelWidth === null) return { cols: 5, mergeOutcome: false };
+    if (funnelWidth >= 720) return { cols: 5, mergeOutcome: false };
+    if (funnelWidth >= 480) return { cols: 4, mergeOutcome: false };
+    if (funnelWidth >= 320) return { cols: 3, mergeOutcome: true };
+    if (funnelWidth >= 220) return { cols: 2, mergeOutcome: true };
+    return { cols: 1, mergeOutcome: true };
+  })();
+  const gridColsClass =
+    tileMode.cols === 5
+      ? 'grid-cols-5'
+      : tileMode.cols === 4
+        ? 'grid-cols-4'
+        : tileMode.cols === 3
+          ? 'grid-cols-3'
+          : tileMode.cols === 2
+            ? 'grid-cols-2'
+            : 'grid-cols-1';
+
   // Pre-extract sparkline series so each tile gets a stable reference.
   const series = useMemo(() => {
     const trend = data?.trend ?? [];
