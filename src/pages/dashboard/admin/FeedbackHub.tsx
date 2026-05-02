@@ -13,6 +13,9 @@ import { RecoverySLAWidget } from '@/components/feedback/RecoverySLAWidget';
 import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
 import { StylistReputationCard } from '@/components/feedback/StylistReputationCard';
 import { ServiceSatisfactionBriefCard } from '@/components/feedback/ServiceSatisfactionBriefCard';
+import { ParkedDispatchCard } from '@/components/feedback/ParkedDispatchCard';
+import { NegativeReviewHeatmap } from '@/components/feedback/NegativeReviewHeatmap';
+import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackSummary';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
@@ -138,10 +141,16 @@ export default function FeedbackHub() {
             </div>
             <ComplianceBanner />
 
+            <ParkedDispatchCard />
+
+            <AIWeeklyFeedbackSummary />
+
             <div className="grid gap-6 lg:grid-cols-2">
               <ServiceSatisfactionBriefCard />
               <StylistReputationCard />
             </div>
+
+            <NegativeReviewHeatmap />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
