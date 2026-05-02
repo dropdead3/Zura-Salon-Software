@@ -358,7 +358,38 @@ export function HeroEditor() {
     setLocalConfig((prev) => ({ ...prev, slides: [...(prev.slides ?? []), slide] }));
     // Open the slide editor so the user can immediately upload media.
     setView({ kind: 'slide', id: slide.id });
+    return slide.id;
   }, []);
+
+  /**
+   * Pending-upload bridge for the +Add background tile. When the user picks
+   * a file directly from the empty tile (one click instead of two), we:
+   *   1. create a new slide pre-typed as 'image',
+   *   2. stash the File against the new slide id, and
+   *   3. open the slide editor — which reads the pending file out of this
+   *      map and forwards it into MediaUploadInput's `pendingInitialFile`
+   *      prop so the upload pipeline runs automatically.
+   * The map entry is cleared once the upload pipeline reports it consumed
+   * the file, regardless of success/failure (toast-driven feedback covers
+   * the failure case).
+   */
+  const [pendingUploads, setPendingUploads] = useState<Record<string, File>>({});
+  const stagePendingUpload = useCallback((slideId: string, file: File) => {
+    setPendingUploads((prev) => ({ ...prev, [slideId]: file }));
+  }, []);
+  const clearPendingUpload = useCallback((slideId: string) => {
+    setPendingUploads((prev) => {
+      if (!(slideId in prev)) return prev;
+      const next = { ...prev };
+      delete next[slideId];
+      return next;
+    });
+  }, []);
+
+  const addBackgroundFromFile = useCallback((file: File) => {
+    const id = addBackgroundSlide();
+    stagePendingUpload(id, file);
+  }, [addBackgroundSlide, stagePendingUpload]);
 
   const handleReset = () => {
     setLocalConfig(DEFAULT_HERO);
