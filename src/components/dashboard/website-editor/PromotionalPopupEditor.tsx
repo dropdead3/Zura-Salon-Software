@@ -84,6 +84,7 @@ import {
 import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
 import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 import { PromoScheduleCard } from './promotional-popup/PromoScheduleCard';
+import { PromoExperimentCard } from './promotional-popup/PromoExperimentCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -622,6 +623,11 @@ export function PromotionalPopupEditor() {
         focusedRotationId={focusedRotationId}
         onFocusRotation={setFocusedRotationId}
       />
+
+      {/* A/B Experiment — split traffic across saved snapshots. Schedule
+          rotation takes priority (resolver enforces); this card surfaces a
+          banner when overridden so the operator understands precedence. */}
+      <PromoExperimentCard formData={formData} setFormData={setFormData} />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent

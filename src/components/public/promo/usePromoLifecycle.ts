@@ -106,6 +106,9 @@ export async function recordImpression(args: {
   organizationId: string | undefined | null;
   offerCode: string;
   surface: PopupSurface;
+  /** Active A/B variant id (null when not in an experiment). Stamped onto
+   *  the impression so the editor can break the funnel down per arm. */
+  variantKey?: string | null;
 }) {
   if (!args.organizationId) return;
   try {
@@ -116,6 +119,7 @@ export async function recordImpression(args: {
       p_session_id: getOrCreateSessionId(),
       p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+      p_variant_key: args.variantKey ?? null,
     });
   } catch (err) {
     // Non-fatal: missing impression rows simply mean a slightly under-counted
@@ -129,6 +133,8 @@ export async function recordResponse(args: {
   offerCode: string;
   surface: PopupSurface;
   response: 'accepted' | 'declined' | 'soft';
+  /** Active A/B variant id (null when not in an experiment). */
+  variantKey?: string | null;
 }) {
   if (!args.organizationId) return;
   try {
@@ -140,6 +146,7 @@ export async function recordResponse(args: {
       p_session_id: getOrCreateSessionId(),
       p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
       p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+      p_variant_key: args.variantKey ?? null,
     });
   } catch (err) {
     // Non-fatal: localStorage already records the dismissal client-side.

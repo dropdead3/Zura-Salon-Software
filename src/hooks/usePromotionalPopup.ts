@@ -4,6 +4,7 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsEditorPreview } from './useIsEditorPreview';
 import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
+import type { PromoExperimentConfig } from '@/lib/promo-experiment';
 
 export type PopupAppearance = 'modal' | 'banner' | 'corner-card';
 export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
@@ -118,7 +119,14 @@ export interface PromotionalPopupSettings {
    *  wrapper). Empty / undefined = base config always wins. Pure resolver
    *  in `@/lib/promo-schedule.ts`. */
   schedule?: SavedPromoScheduleEntry[];
+  /** A/B experiment config. When `enabled`, each visitor is deterministically
+   *  bucketed into one variant whose saved snapshot supplies the creative.
+   *  Schedule rotation takes priority — experiments only run while no
+   *  rotation window is active. Pure resolver in `@/lib/promo-experiment.ts`. */
+  experiment?: PromoExperimentConfig;
 }
+
+export type { PromoExperimentConfig, PromoExperimentVariant } from '@/lib/promo-experiment';
 
 /** One queued rotation entry. References a `SavedPromo.id` from the library. */
 export interface SavedPromoScheduleEntry {
