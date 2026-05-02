@@ -140,27 +140,29 @@ export function AnnouncementBarContent() {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">Banner Color</h3>
           <div className="flex flex-wrap gap-3">
-            {BANNER_COLOR_PRESETS.map((preset) => {
-              const isSelected = (formData.bg_color || '') === preset.value;
-              const isPresetDark = isDarkColor(preset.value || 'hsl(40, 20%, 92%)');
-              return (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => handleChange('bg_color', preset.value)}
-                  className={cn(
-                    "relative w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110",
-                    isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
-                  )}
-                  style={{ backgroundColor: preset.color }}
-                  title={preset.label}
-                >
-                  {isSelected && (
-                    <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
-                  )}
-                </button>
-              );
-            })}
+            {themeSwatches
+              .filter((s) => s.hex)
+              .map((swatch) => {
+                const isSelected = normalizedActive === normalizeHex(swatch.hex);
+                const isPresetDark = isDarkHex(swatch.hex);
+                return (
+                  <button
+                    key={swatch.key}
+                    type="button"
+                    onClick={() => handleChange('bg_color', swatch.hex)}
+                    className={cn(
+                      "relative w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110",
+                      isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
+                    )}
+                    style={{ backgroundColor: swatch.hex }}
+                    title={`${swatch.label} · ${swatch.hex}`}
+                  >
+                    {isSelected && (
+                      <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
+                    )}
+                  </button>
+                );
+              })}
           </div>
           <div className="space-y-2">
             <Label className="text-sm">Custom color</Label>
