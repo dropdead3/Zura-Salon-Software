@@ -58,7 +58,11 @@ export function PromoCornerCard({
       aria-modal="false"
       aria-labelledby="promo-popup-title"
       className={cn(
-        'fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
+        'fixed bottom-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
+        // Mirror the operator-chosen FAB anchor so the dismissed-then-reopened
+        // card returns to the same corner the FAB lived in (and so a fresh
+        // open lands on the side the operator configured — not always right).
+        fabPosition === 'bottom-left' ? 'left-6' : 'right-6',
         isClosing ? exitClasses : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-16',
       )}
       style={!isClosing ? {
