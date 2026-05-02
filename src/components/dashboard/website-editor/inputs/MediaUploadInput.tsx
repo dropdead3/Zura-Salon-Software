@@ -268,11 +268,11 @@ export function MediaUploadInput({
       }
       stage = 'decode';
       if (isImage) {
-        // Hero/slide profile uploads the autoCrunch output (3200px @ q0.9 WebP)
+        // Hero/slide profile uploads the autoCrunch output (5120px @ q0.9 WebP)
         // directly. The standard re-encode at 1920×1200 @ q0.85 is what made
         // full-bleed sliders look pixelated on retina — a 1920px source has
-        // to upscale to ~2880 device px on a 2x display. Skipping it for hero
-        // preserves real pixels with minimal file-size cost.
+        // to upscale to ~2880 device px on a 2x display, and ~5120 on a 5K
+        // iMac. Skipping it for hero preserves real pixels through 5K.
         let uploadBlob: Blob = workingFile;
         let uploadContentType = workingFile.type || 'image/webp';
         let uploadExt = 'webp';
@@ -563,9 +563,9 @@ export function MediaUploadInput({
                       aria-hidden
                       className={cn(
                         'h-1.5 w-1.5 rounded-full',
-                        meta.width >= 2400
+                        meta.width >= 3200
                           ? 'bg-emerald-500'
-                          : meta.width >= 1200
+                          : meta.width >= 2000
                             ? 'bg-amber-500'
                             : 'bg-red-500',
                       )}
@@ -578,13 +578,13 @@ export function MediaUploadInput({
                     </span>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-[240px] text-xs">
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
                   {kind === 'video' ? 'Video poster resolution. ' : ''}
-                  {meta.width >= 2400
-                    ? 'Sharp on retina hero displays (recommended ≥2400px).'
-                    : meta.width >= 1200
-                      ? 'Acceptable, but may soften on retina hero displays. Recommended ≥2400px.'
-                      : 'Too small for full-bleed hero — will appear pixelated. Recommended ≥2400px.'}
+                  {meta.width >= 3200
+                    ? 'Crisp on 4K and 5K retina displays (recommended ≥3200px).'
+                    : meta.width >= 2000
+                      ? 'Sharp on most laptops, but softens on 4K/5K retina displays. Recommended ≥3200px for full-bleed hero.'
+                      : 'Too small for full-bleed hero — will appear pixelated on retina displays. Recommended ≥3200px.'}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -614,8 +614,8 @@ export function MediaUploadInput({
                 <TooltipContent side="top" className="max-w-[260px] text-xs">
                   This asset was uploaded before the hero quality profile
                   existed. Re-uploading captures the original at full
-                  resolution (≤3200px, near-lossless WebP) instead of the
-                  smaller standard variant.
+                  resolution (≤5120px, near-lossless WebP) instead of the
+                  smaller standard variant — required for crisp 4K/5K retina.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

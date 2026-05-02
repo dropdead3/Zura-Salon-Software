@@ -153,11 +153,14 @@ export function formatFileSize(bytes: number): string {
 
 const CRUNCH_TRIGGER_BYTES = 8 * 1024 * 1024; // 8MB
 const CRUNCH_TRIGGER_DIMENSION = 5000;
-// Hero/slide art is rendered full-bleed at retina densities (a 1440px CSS
-// hero on a 2x display = 2880 device px). Cap the long edge at 3200 so we
-// retain real pixels instead of upscaling a downsampled WebP — earlier
-// 2400px cap was the root cause of "pixelated slider images" reports.
-const CRUNCH_PASS1_MAX_EDGE = 3200;
+// Hero/slide art is rendered full-bleed at retina densities. A 27" 5K iMac
+// is 5120 device px wide; a 14"/16" MacBook at DPR 2 is 3024–3456. Cap the
+// long edge at 5120 so we retain real pixels through 5K instead of upscaling
+// a downsampled WebP. The public srcSet (`HERO_SRCSET_WIDTHS`) extends to
+// 5120 to match — keep these two constants in lockstep. Earlier 3200 cap
+// soft-blurred 4K+ retina screens; earlier 2400 cap was the original
+// "pixelated slider images" regression.
+const CRUNCH_PASS1_MAX_EDGE = 5120;
 const CRUNCH_PASS1_QUALITY = 0.9;
 const CRUNCH_PASS2_QUALITY = 0.82;
 const CRUNCH_PASS2_THRESHOLD_BYTES = 3 * 1024 * 1024; // 3MB
@@ -381,8 +384,16 @@ export function buildSupabaseSrcSet(
   return useful.map((w) => `${withSupabaseImageWidth(url, w)} ${w}w`).join(', ');
 }
 
-/** Default width ladder for full-bleed hero/slider art. */
-export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200];
+/**
+ * Default width ladder for full-bleed hero/slider art.
+ *
+ * Covers retina up through 5K (5120px) — a 27" 5K iMac is 5120 device px wide,
+ * a 32" 4K display at DPR 2 is 7680, but we cap at 5120 as the practical
+ * ceiling for hero photography. The ladder is filtered against the source's
+ * natural width at runtime so we never request a variant larger than the
+ * uploaded master (Storage would just upscale and waste a request).
+ */
+export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200, 3840, 5120];
 
 // ---------------------------------------------------------------------------
 // Image dimension probe (post-upload metadata capture)
