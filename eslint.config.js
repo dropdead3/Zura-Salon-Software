@@ -399,4 +399,38 @@ export default tseslint.config(
       },
     ],
   }),
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Container-Aware Responsiveness — bans viewport-driven 2-column grids
+  // inside the website-editor tree. The editor sidebar is a NARROW
+  // container regardless of viewport width; `sm:` (640px) snaps to
+  // 2 columns and crowds paired fields. Use container queries
+  // (@container md:grid-cols-2) or stack vertically instead.
+  //
+  // Trap history (May 2026): the promo popup editor shipped 3
+  // `sm:grid-cols-2` rows that crushed labels in the sidebar; fixed by
+  // stacking, this doctrine prevents the next contributor from
+  // reintroducing the pattern.
+  //
+  // Backed by:
+  //   - mem://style/container-aware-responsiveness
+  //   - src/test/lint-fixtures/website-editor-viewport-grid-banned.tsx
+  //   - src/test/lint-config-resolution.test.ts
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedDoctrine({
+    files: [
+      "src/components/dashboard/website-editor/**/*.{ts,tsx}",
+      "src/test/lint-fixtures/website-editor-viewport-grid-banned.tsx",
+    ],
+    extraSelectors: [
+      {
+        selector: "Literal[value=/\\bsm:grid-cols-2\\b/]",
+        message: "Viewport-driven 2-column grids (`sm:grid-cols-2`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) crowds paired fields. Stack vertically (`grid grid-cols-1 gap-3`) or use a container query (`@container md:grid-cols-2`). Doctrine: mem://style/container-aware-responsiveness.",
+      },
+      {
+        selector: "TemplateElement[value.raw=/\\bsm:grid-cols-2\\b/]",
+        message: "Viewport-driven 2-column grids (`sm:grid-cols-2`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) crowds paired fields. Stack vertically (`grid grid-cols-1 gap-3`) or use a container query (`@container md:grid-cols-2`). Doctrine: mem://style/container-aware-responsiveness.",
+      },
+    ],
+  }),
 );

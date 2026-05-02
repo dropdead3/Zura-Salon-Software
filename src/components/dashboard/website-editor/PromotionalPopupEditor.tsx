@@ -526,7 +526,11 @@ export function PromotionalPopupEditor() {
         if (k && k.startsWith(sessionPrefix)) sessionToDelete.push(k);
       }
       sessionToDelete.forEach((k) => window.sessionStorage.removeItem(k));
-      // Pulse-hint sentinel is also session-scoped per org+code now.
+      // Pulse-hint sentinel is session-scoped per org + offerCode (see
+      // PULSE_SESSION_KEY in usePromoLifecycle.ts → `zura.promo.fab-pulsed.${orgId}.${code}`).
+      // The trailing-dot prefix below intentionally stops at the org boundary
+      // so a single restart clears every code's pulse for this org — matches
+      // the dismissal sweep above.
       const pulsePrefix = `zura.promo.fab-pulsed.${orgId}.`;
       const pulseToDelete: string[] = [];
       for (let i = 0; i < window.sessionStorage.length; i++) {

@@ -350,4 +350,19 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       `ThemeAwareColorInput native-input ban should NOT apply to the owner file.\nResolved selectors:\n${selectors.join('\n')}`,
     ).toBe(true);
   });
+
+  it('keeps the Container-Aware viewport-grid ban on the banned fixture', async () => {
+    // Codifies the May 2026 promo-popup-editor finding (B7): three
+    // `sm:grid-cols-2` rows crushed paired fields in the narrow editor
+    // sidebar. If this assertion fails, a future PR can re-introduce
+    // viewport-driven 2-column grids anywhere under
+    // `src/components/dashboard/website-editor/**`.
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/website-editor-viewport-grid-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes('sm:grid-cols-2')),
+      `Container-Aware viewport-grid selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
 });
