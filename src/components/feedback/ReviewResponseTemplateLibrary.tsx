@@ -131,7 +131,7 @@ export function ReviewResponseTemplateLibrary() {
             grouped[bucket].length === 0 ? null : (
               <div key={bucket} className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className={tokens.label}>
+                  <span className={tokens.label.tiny}>
                     {APPLIES_OPTIONS.find((o) => o.value === bucket)?.label}
                   </span>
                   <span className="text-xs text-muted-foreground">{grouped[bucket].length}</span>

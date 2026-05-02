@@ -9,7 +9,7 @@ function DriftPill({ label, delta, unit }: { label: string; delta: number | null
   if (delta === null) {
     return (
       <div className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-        <div className={cn(tokens.label, 'text-muted-foreground')}>{label}</div>
+        <div className={cn(tokens.label.tiny, 'text-muted-foreground')}>{label}</div>
         <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
           <Minus className="h-3.5 w-3.5" /> Not enough data
         </div>
@@ -28,7 +28,7 @@ function DriftPill({ label, delta, unit }: { label: string; delta: number | null
 
   return (
     <div className="rounded-lg border border-border/60 bg-card px-3 py-2">
-      <div className={cn(tokens.label, 'text-muted-foreground')}>{label}</div>
+      <div className={cn(tokens.label.tiny, 'text-muted-foreground')}>{label}</div>
       <div className={cn('mt-1 flex items-center gap-1.5 text-sm font-medium', tone)}>
         <Icon className="h-3.5 w-3.5" />
         {delta > 0 ? '+' : ''}{delta.toFixed(2)} {unit}
@@ -75,7 +75,7 @@ export function FeedbackTrendDriftCard() {
             <div className="grid gap-3 sm:grid-cols-3">
               {data.windows.map((w) => (
                 <div key={w.window} className="rounded-lg border border-border/60 bg-card px-3 py-3">
-                  <div className={cn(tokens.label, 'text-muted-foreground')}>Last {w.window}d</div>
+                  <div className={cn(tokens.label.tiny, 'text-muted-foreground')}>Last {w.window}d</div>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="text-xl font-medium">
                       {w.avgRating !== null ? w.avgRating.toFixed(2) : '—'}
