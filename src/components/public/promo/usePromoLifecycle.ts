@@ -352,7 +352,12 @@ export function usePromoLifecycle({
 
     if (!isPreview) {
       const dismissal = readDismissal(orgId, code);
-      if (shouldRespectDismissal(cfg, dismissal)) return;
+      if (shouldRespectDismissal(cfg, dismissal, orgId, code)) return;
+
+      // Audience targeting: `new-visitors-only` suppresses for any visitor we've
+      // previously seen on this org. Editor preview bypasses so operators can
+      // QA both audiences from the same browser session.
+      if (cfg.audience === 'new-visitors-only' && isReturningVisitor(orgId)) return;
     }
 
     let cleanup: (() => void) | undefined;
@@ -398,6 +403,15 @@ export function usePromoLifecycle({
 
     return cleanup;
   }, [active, cfg, code, orgId, promoQueryParam, isPreview, onBookingSurface]);
+
+  // ── Mark visitor as "seen" once the popup actually opens ──
+  // Done on open (not on mount) so we only count visitors who saw the surface.
+  // Production-only — preview shouldn't pollute the visitor history.
+  useEffect(() => {
+    if (isPreview) return;
+    if (!open) return;
+    markVisitorSeen(orgId);
+  }, [isPreview, open, orgId]);
 
   // ── One-time FAB pulse hint ──
   const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed`;
