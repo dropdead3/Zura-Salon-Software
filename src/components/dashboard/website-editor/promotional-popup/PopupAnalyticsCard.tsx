@@ -106,9 +106,13 @@ interface TrendChartProps {
   data: PromotionalPopupTrendPoint[];
   highlightedKey: TrendKey | null;
   onHoverKey: (key: TrendKey | null) => void;
+  /** Optional cap-hit ETA marker — vertical reference line projected forward
+   *  from today's date by N days. When set, the chart's X-axis extends past
+   *  the historical 14-day window so the marker has somewhere to render. */
+  capHitEta?: { daysFromToday: number; label: string } | null;
 }
 
-function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
+function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartProps) {
   const total = data.reduce(
     (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
     0,
