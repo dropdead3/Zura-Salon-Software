@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, GripVertical, ChevronDown, ChevronRight, Layers, Settings2, Sun, Moon, Sparkles } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
+import { resolveScrim } from '@/components/home/heroScrim';
 import { MediaUploadInput } from './inputs/MediaUploadInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
