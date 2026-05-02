@@ -200,14 +200,14 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass)}
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass, heroColors.hasPrimaryHover && "hero-cta-hover")}
                     style={heroColors.primaryButtonStyle}
                   >
                     I am a new client
                   </button>
                   <Link
                     to="/booking"
-                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass)}
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass, heroColors.hasSecondaryHover && "hero-cta-hover")}
                     style={heroColors.secondaryButtonStyle}
                   >
                     I am a returning client
@@ -371,6 +371,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full hover:shadow-xl transition-all duration-300 text-center active:scale-[0.98] inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.primaryButtonClass,
+                      heroColors.hasPrimaryHover && "hero-cta-hover",
                     )}
                     style={heroColors.primaryButtonStyle}
                   >
@@ -389,6 +390,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                     className={cn(
                       "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 text-center relative overflow-hidden inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                       heroColors.secondaryButtonClass,
+                      heroColors.hasSecondaryHover && "hero-cta-hover",
                     )}
                     style={heroColors.secondaryButtonStyle}
                   >
