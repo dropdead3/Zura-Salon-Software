@@ -205,15 +205,24 @@ function ScheduleCalendarStrip({
             ? `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${labelFor(owner.id)}`
             : `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · base config`;
           return (
-            <div
+            <button
               key={i}
+              type="button"
               title={tip}
+              onClick={() => {
+                if (!owner) return;
+                onFocusRotation(focusedRotationId === owner.id ? null : owner.id);
+              }}
+              disabled={!owner}
               className={cn(
-                'h-6 rounded-sm border transition-colors',
-                owner ? 'border-transparent' : 'border-border/40 bg-muted/40',
+                'h-6 rounded-sm border transition-all',
+                owner ? 'border-transparent cursor-pointer hover:scale-110' : 'border-border/40 bg-muted/40 cursor-default',
                 isToday && 'ring-1 ring-primary/60',
+                owner && focusedRotationId === owner.id && 'ring-2 ring-primary scale-110',
+                owner && focusedRotationId && focusedRotationId !== owner.id && 'opacity-40',
               )}
               style={owner ? { background: colorFor(owner.id) } : undefined}
+              aria-label={tip}
             />
           );
         })}
