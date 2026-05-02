@@ -525,7 +525,80 @@ function FunnelStat({
 }
 
 /**
- * Popup conversion funnel card. Joins impressions → CTA clicks → redemptions
+ * Compressed "Outcome" tile that merges Redemptions + Revenue under a single
+ * shared denominator (impressions). Surfaces only at narrow container widths
+ * (<280px) where 5 individual funnel tiles would crush below legibility.
+ *
+ * Hover still drives the trend chart — defaults to highlighting "redemptions"
+ * since that's the volumetric anchor; revenue is the monetized trailing metric.
+ */
+function OutcomeStat({
+  redemptions,
+  redemptionRate,
+  revenue,
+  bookingRate,
+  redemptionsSparkline,
+  revenueSparkline,
+  highlighted,
+  chartVisible,
+  onHover,
+}: {
+  redemptions: number;
+  redemptionRate: string | null;
+  revenue: number;
+  bookingRate: string | null;
+  redemptionsSparkline: number[];
+  revenueSparkline: number[];
+  highlighted: boolean;
+  chartVisible: boolean;
+  onHover: (k: TrendKey | null) => void;
+}) {
+  return (
+    <div
+      onMouseEnter={() => onHover('redemptions')}
+      onMouseLeave={() => onHover(null)}
+      className={cn(
+        'flex flex-col gap-2 px-3 py-2.5 rounded-lg border bg-muted/30 transition-colors min-w-0',
+        highlighted
+          ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
+          : 'border-border/60',
+      )}
+    >
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <Gift className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className={cn(tokens.kpi.label, 'truncate')}>Outcome</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 min-w-0">
+        <div className="min-w-0">
+          <div className={cn(tokens.kpi.value, 'truncate text-base')}>
+            {redemptions.toLocaleString()}
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            redemptions{redemptionRate ? ` · ${redemptionRate}` : ''}
+          </div>
+        </div>
+        <div className="min-w-0 border-l border-border/60 pl-2">
+          <div className={cn(tokens.kpi.value, 'truncate text-base')}>
+            {revenue > 0 ? (
+              <BlurredAmount>{formatCurrency(revenue)}</BlurredAmount>
+            ) : (
+              '—'
+            )}
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            revenue{bookingRate ? ` · ${bookingRate}` : ''}
+          </div>
+        </div>
+      </div>
+      {!chartVisible ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Sparkline points={redemptionsSparkline} highlighted={highlighted} />
+          <Sparkline points={revenueSparkline} highlighted={highlighted} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
  * → attributed revenue for a single promotional popup offer code.
  *
  * Honest empty state: when there is no offer code or no impressions yet, the
