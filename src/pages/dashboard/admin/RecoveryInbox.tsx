@@ -26,6 +26,23 @@ export default function RecoveryInbox() {
   const { dashPath } = useOrgDashboardPath();
   const { data: tasks, isLoading } = useRecoveryTasks();
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
+  useEffect(() => {
+    const responseId = searchParams.get('response');
+    if (!responseId || !tasks?.length || selected) return;
+    const match = tasks.find(t => t.feedback_response_id === responseId);
+    if (match) setSelected(match);
+  }, [searchParams, tasks, selected]);
+
+  const handleClose = () => {
+    setSelected(null);
+    if (searchParams.get('response')) {
+      searchParams.delete('response');
+      setSearchParams(searchParams, { replace: true });
+    }
+  };
 
   const grouped = useMemo(() => {
     const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
