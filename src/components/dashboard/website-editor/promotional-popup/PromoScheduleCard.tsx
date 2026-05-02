@@ -19,7 +19,7 @@
  *   - Currency / financial values: none on this surface.
  */
 import { useMemo, useState } from 'react';
-import { Calendar, Trash2, Plus, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, Trash2, Plus, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,7 @@ import {
   type PromotionalPopupSettings,
   type SavedPromoScheduleEntry,
 } from '@/hooks/usePromotionalPopup';
-import { pickActiveEntry } from '@/lib/promo-schedule';
+import { pickActiveEntry, detectScheduleConflicts } from '@/lib/promo-schedule';
 
 interface PromoScheduleCardProps {
   formData: PromotionalPopupSettings;
