@@ -28,7 +28,7 @@ export function useRecoverySLA() {
         .limit(500);
       if (error) throw error;
 
-      const rows = (data ?? []) as Array<{
+      const rows = ((data ?? []) as unknown) as Array<{
         status: string;
         created_at: string;
         first_contacted_at: string | null;
