@@ -127,6 +127,10 @@ export function resolvePromotionalPopupForVisitor(args: {
       // WITHOUT attributing impressions to the orphaned schedule entry —
       // doing so would surface phantom rotation analytics for a creative
       // the visitor never actually saw.
+      warnOrphanOnce(
+        'promo-orphan-rotation-fallback',
+        `[promo-orphan-rotation-fallback] Schedule entry "${activeEntry.id}" references missing saved-promo "${activeEntry.savedPromoId}". Falling back to base creative; attribution dropped.`,
+      );
     } else {
       return {
         resolved: applyScheduledSnapshot(cfg, snap),
@@ -152,6 +156,10 @@ export function resolvePromotionalPopupForVisitor(args: {
       };
     }
     // Orphaned variant arm — fall through to base, drop attribution.
+    warnOrphanOnce(
+      'promo-orphan-experiment-fallback',
+      `[promo-orphan-experiment-fallback] Experiment variant "${variant.id}" references missing saved-promo "${variant.savedPromoId}". Falling back to base creative; attribution dropped.`,
+    );
   }
 
   // 3. Base wrapper.
