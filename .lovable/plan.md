@@ -1,77 +1,60 @@
-## Diagnosis: what "behavior is unchanged" actually means
+## Diagnosis
 
-The user toggles Rotator Mode → Background-Only and the live hero in the preview iframe **looks and feels identical** to Multi-Slide. The code path that should differ (`HeroSlideRotator.tsx`) does branch on `rotator_mode`, but three concrete bugs make the differentiation invisible to the operator:
+The "See Offer" FAB shifts vertically based on the active hero's content alignment. The mechanism:
 
-### Bug 1 — Shared content is empty on first switch (the headache the user is feeling)
+1. `HeroSlideRotator` and `HeroSection` publish the active slide's `content_alignment` to `<html data-hero-alignment="left|center|right">` via `publishHeroAlignment()` (`src/lib/heroAlignmentSignal.ts`).
+2. `PromotionalPopup` subscribes to that attribute (lines 149–153, 520–528) and, when the hero alignment matches the FAB's corner (`right` hero + `bottom-right` FAB, or `left` hero + `bottom-left` FAB), bumps the FAB from `bottom-6` to `bottom-24` — about 72px of vertical drift.
+3. Result: as slides rotate or as the operator changes per-slide alignment, the FAB jumps up and down. In your two screenshots, slide 1 (right-aligned) crowds the FAB → FAB lifts; slide 2 (left-aligned) doesn't crowd → FAB drops back down. Looks like a bug; reads as instability.
 
-When a salon has only ever used Multi-Slide mode, all the headline/subheadline/CTA copy lives **per-slide** at `slides[N].headline_text`. The section-level fields `config.headline_text`, `config.cta_new_client`, etc. are empty (the migration in `migrateLegacyToFirstSlide` runs only when there are zero slides, never when slides already exist).
+## What's wrong with the current behavior
 
-When the user flips to Background-Only, `HeroSlideRotator` (lines 95–125) overwrites the active slide's foreground with **section-level fields that are empty strings**. Result: the headline, subheadline and buttons either go blank or fall through to placeholders. The operator reads this as "switching modes broke my hero" and toggles back — and from a quick glance the live preview looks the same because Drop Dead's master headline is still partially populated at the section level from older config.
-
-### Bug 2 — The mode change is too subtle on the live site
-
-In Background-Only mode the foreground IS held stable (`key='fg-shared'` keeps AnimatePresence from re-mounting it across `activeIndex` changes), but the ONLY visible behavior difference is "the headline doesn't crossfade." With matching headlines copied across slides the user can't see that the foreground stopped re-animating — it just looks like a normal rotator.
-
-We need a clearer, more honest visual signal that BG-only is doing something distinct: the pagination/arrow strip needs to relabel as **Backgrounds** (not Slides), the dots should reflect background count, and aria labels need to follow.
-
-### Bug 3 — Master slide's own background is silently part of the rotation
-
-The data model treats `slides[0]` as both "master copy owner" AND "BG 1." In the editor the gallery shows BG 2, BG 3… (the slice from index 1), but the live rotator iterates the full array. When the user picks just one rotating background (BG 2), they see master's BG and BG 2 alternating — which is correct, but the editor never shows them BG 1 as a tile, so they don't realize their master image is also rotating. This isn't a bug per se, but it's the third reason BG-only feels "the same as Multi-Slide" — both modes rotate the same set of background sources.
-
----
+- A FAB is a **global, persistent affordance** anchored to a viewport corner. Its job is to sit above content (`z-50` already handles that), not to dodge section-level layout changes.
+- The "stay out of the way" instinct is misapplied: the FAB and the hero CTA buttons live in different visual layers. The hero CTAs are inside the section; the FAB is overlaid above. They can coexist at the same baseline because the FAB is on a higher z-plane.
+- Operators read positional drift as broken, not as polish (you just did).
+- Doctrine fit: this is the same pattern as the Visibility Contracts core rule — silence/stability is a stronger signal than reactive nudging.
 
 ## Plan
 
-### 1. Seed shared content from the master slide on first switch (HeroEditor.tsx)
+### 1. Decouple the FAB from hero alignment (`src/components/public/PromotionalPopup.tsx`)
 
-When the user flips `rotator_mode` to `background_only`, lift the master slide's copy fields up to section-level **only if the section-level fields are empty**. Idempotent: a second toggle never overwrites operator edits. This closes Bug 1 — the operator sees their existing headline immediately, and the Shared Hero Content card is pre-populated.
+- Remove `heroAlignment` state + `subscribeHeroAlignment` subscription (lines 149–153).
+- Remove the `fabCrowded` derivation and the conditional `bottom-24` class (lines 520–522, 527).
+- FAB sits at `bottom-6` full-time, mirrored left/right by `fabPos`.
+- Drop the now-unused `subscribeHeroAlignment` and `HeroAlignmentSignal` imports (line 25).
+- Remove the now-dead `transition-[bottom] duration-300 ease-out` class from the FAB wrapper (line 526) since `bottom` no longer changes.
 
-```text
-multi_slide → background_only (one-time per field):
-  config.headline_text          ←  config.headline_text       || slides[0].headline_text
-  config.subheadline_line1      ←  config.subheadline_line1   || slides[0].subheadline_line1
-  config.subheadline_line2      ←  config.subheadline_line2   || slides[0].subheadline_line2
-  config.eyebrow                ←  config.eyebrow             || slides[0].eyebrow
-  config.show_eyebrow           ←  config.show_eyebrow        ?? slides[0].show_eyebrow
-  config.cta_new_client(_url)   ←  per the same rule
-  config.cta_returning_client…  ←  per the same rule
-  config.show_secondary_button  ←  ?? slides[0].show_secondary_button
-```
+### 2. Keep the alignment signal infrastructure intact
 
-Implementation: wrap the current `updateField('rotator_mode', ...)` call site in a small handler that runs the seed logic before the state update. Per-slide copy is intentionally preserved so toggling back to Multi-Slide restores everything.
+`src/lib/heroAlignmentSignal.ts`, `publishHeroAlignment()` calls in `HeroSlideRotator` and `HeroSection`, and the `<html data-hero-alignment>` attribute stay. Reasons:
+- Cheap to keep (single root attribute, no perf cost).
+- Future consumers may legitimately need section-aware placement (e.g. a chat widget that genuinely overlaps the hero CTA hit-target on mobile).
+- Removing the publishers would be a wider-blast-radius edit than the bug warrants.
 
-### 2. Harden the foreground decoupling (HeroSlideRotator.tsx)
+Add a one-line note to `heroAlignmentSignal.ts` clarifying that the FAB intentionally does NOT consume this signal — prevents the next contributor from re-wiring it.
 
-Two small fixes that make BG-only behavior unambiguous:
+### 3. Regression guard (`src/components/public/PromotionalPopup.test.tsx` if it exists, else add one)
 
-**a. Foreground source short-circuit.** In BG-only mode the `slide` derivation currently still spreads `rawSlide` then overrides foreground fields. If a non-master slide's `text_colors` override exists, it'll bleed into the shared foreground. Replace with: in BG-only mode, the foreground always reads from the master slide (`slides[0]`) merged with section overrides — never from `slides[activeIndex]`. The active slide is consulted ONLY for background fields (url/poster/type/focal/fit/overlay/scrim/media_width).
+Single test: render `<PromotionalPopup>` in FAB state, mutate `<html data-hero-alignment>` between `left` / `right` / `center`, assert the FAB's class list does NOT change (specifically `bottom-6` stays, `bottom-24` never appears). Locks the decoupling so it can't quietly regress.
 
-**b. Suppress the foreground re-mount even more aggressively.** Today `key='fg-shared'` is correct, but the surrounding `<AnimatePresence mode="wait" initial={false}>` still wraps it. Mode-aware: in BG-only render the foreground OUTSIDE AnimatePresence entirely so framer-motion can never trigger an exit/enter on it. This makes the difference between modes visually obvious — backgrounds crossfade behind a stationary foreground.
+### 4. Memory entry
 
-### 3. Relabel pagination as Backgrounds in BG-only mode (HeroSlideRotator.tsx)
-
-In the bottom-left pagination strip:
-- aria-label "Previous slide" → "Previous background" (BG-only)
-- aria-label "Go to slide N" → "Go to background N"
-- aria-label "Next slide" → "Next background"
-- Visible dot count is unchanged (still one per slide), but the meaning is now consistent with the editor's "Rotating Backgrounds" terminology.
-
-This is the visible signal that the rotator now thinks in backgrounds, not slides. No layout change.
-
-### 4. Add a regression test (HeroSlideRotator.test.tsx)
-
-Extend the existing test file with two cases:
-- BG-only mode: foreground text remains stable across `activeIndex` changes (assert headline `data-testid` does not unmount/remount across simulated rotation).
-- BG-only mode with empty section-level headline: foreground falls back to master slide copy (validates that the seed step in HeroEditor is the only seed point, and the rotator itself doesn't silently fill from slide 0 when section is empty — it should render whatever section has).
+Add a short core rule: **"Global FABs and persistent overlays must not reposition based on section-level layout state. Anchor + z-layer is the contract; positional drift reads as broken."** Stops this pattern from re-emerging on the next FAB (chat widget, AI assistant button, etc.).
 
 ### Files touched
 
-- `src/components/dashboard/website-editor/HeroEditor.tsx` — wrap rotator_mode change with seed logic
-- `src/components/home/HeroSlideRotator.tsx` — foreground source short-circuit + AnimatePresence skip + pagination labels
-- `src/components/home/HeroSlideRotator.test.tsx` — two new cases
+- `src/components/public/PromotionalPopup.tsx` — strip alignment subscription + conditional `bottom-24`
+- `src/lib/heroAlignmentSignal.ts` — add note that FAB intentionally does not consume
+- `src/components/public/PromotionalPopup.test.tsx` — new (or extended) regression test
+- `mem://index.md` + `mem://style/global-overlay-stability.md` — new core rule + supporting memory
 
 ### Out of scope
 
-- Renaming the data model (`slides` → `backgrounds`) — back-compat work for what is essentially terminology. Can be done later as a doctrine task.
-- Hiding BG 1 from the gallery (master's own background) — would require splitting master's BG out as a section-level field. Larger change; address only if the user reports it after these fixes ship.
-- Deferral Register entry for the rename: revisit when a third mode arrives or when the gallery starts showing master's BG as a tile.
+- Removing `publishHeroAlignment()` / the publishers in HeroSlideRotator + HeroSection. Kept for future use; removal would be a separate cleanup if no consumer materializes within ~3 months (Deferral Register revisit trigger).
+- Mobile-specific FAB placement (e.g. dodging the iOS home indicator). Separate concern.
+
+### Acceptance criteria
+
+- FAB stays at `bottom-6` regardless of which slide is active or what `content_alignment` the operator picks.
+- Switching slides in the live preview never moves the FAB vertically.
+- The `<html data-hero-alignment>` attribute still updates (other consumers preserved).
+- Regression test passes; memory rule documented.
