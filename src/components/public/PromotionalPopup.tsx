@@ -1,31 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Gift, X, ChevronRight } from 'lucide-react';
 import {
-  isPopupActive,
   usePromotionalPopup,
   type PopupSurface,
-  type PromotionalPopupSettings,
 } from '@/hooks/usePromotionalPopup';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
-import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
-import { getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { readableForegroundFor } from '@/lib/color-contrast';
-import {
-  PROMO_POPUP_PREVIEW_RESET_EVENT,
-  dispatchPromoPopupPreviewState,
-} from '@/lib/promoPopupPreviewReset';
-import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
-import { useReplayableMount } from '@/hooks/useReplayableMount';
-import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
 // NOTE: heroAlignmentSignal is intentionally NOT consumed here. The FAB is a
 // global anchored affordance — it must not reposition based on section-level
 // layout state (operators read positional drift as a bug). See
-// `mem://style/global-overlay-stability` and the comment in heroAlignmentSignal.ts.
+// `mem://style/global-overlay-stability` and the FAB anchor regression test.
+import { PromoModal } from './promo/PromoModal';
+import { PromoBanner } from './promo/PromoBanner';
+import { PromoCornerCard } from './promo/PromoCornerCard';
+import { PromoFab } from './promo/PromoFab';
+import {
+  usePromoLifecycle,
+  recordResponse,
+  writeDismissal,
+  markSessionDismissed,
+} from './promo/usePromoLifecycle';
 
 interface Props {
   /**
@@ -36,433 +32,68 @@ interface Props {
   surface?: PopupSurface;
 }
 
-type DismissalRecord = {
-  lastShownAt: number;
-  response: 'accepted' | 'declined' | 'soft';
-};
-
-const STORAGE_PREFIX = 'zura.promo';
-
-function storageKey(orgId: string, code: string) {
-  return `${STORAGE_PREFIX}.${orgId}.${code || 'default'}`;
-}
-
-function readDismissal(orgId: string | undefined, code: string): DismissalRecord | null {
-  if (!orgId || typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(storageKey(orgId, code));
-    return raw ? (JSON.parse(raw) as DismissalRecord) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeDismissal(orgId: string | undefined, code: string, record: DismissalRecord) {
-  if (!orgId || typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(storageKey(orgId, code), JSON.stringify(record));
-  } catch {
-    // ignore quota errors — popup will simply re-show next visit
-  }
-}
-
-function shouldRespectDismissal(
-  cfg: PromotionalPopupSettings,
-  record: DismissalRecord | null,
-): boolean {
-  if (!record) return false;
-  // Once a visitor accepts or declines, never re-prompt under 'once'.
-  if (cfg.frequency === 'once') return true;
-  if (cfg.frequency === 'always') return false;
-  if (cfg.frequency === 'once-per-session') {
-    // Session-scoped: dismissed records survive for the active session only.
-    // We piggy-back on sessionStorage as a session sentinel.
-    if (typeof window === 'undefined') return false;
-    return window.sessionStorage.getItem(`${STORAGE_PREFIX}.session`) === 'dismissed';
-  }
-  if (cfg.frequency === 'daily') {
-    return Date.now() - record.lastShownAt < 24 * 60 * 60 * 1000;
-  }
-  return false;
-}
-
-function markSessionDismissed() {
-  if (typeof window === 'undefined') return;
-  try {
-    window.sessionStorage.setItem(`${STORAGE_PREFIX}.session`, 'dismissed');
-  } catch {
-    // ignore
-  }
-}
-
-function getOrCreateSessionId(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    const key = `${STORAGE_PREFIX}.sid`;
-    let sid = window.sessionStorage.getItem(key);
-    if (!sid) {
-      sid = (crypto as any)?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      window.sessionStorage.setItem(key, sid);
-    }
-    return sid;
-  } catch {
-    return '';
-  }
-}
-
-async function recordResponse(args: {
-  organizationId: string | undefined | null;
-  offerCode: string;
-  surface: PopupSurface;
-  response: 'accepted' | 'declined' | 'soft';
-}) {
-  if (!args.organizationId) return;
-  try {
-    await supabase.rpc('record_promo_response', {
-      p_organization_id: args.organizationId,
-      p_offer_code: args.offerCode || '',
-      p_surface: args.surface,
-      p_response: args.response,
-      p_session_id: getOrCreateSessionId(),
-      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
-      p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
-    });
-  } catch (err) {
-    // Non-fatal: localStorage already records the dismissal client-side.
-    console.warn('[promo] failed to record response', err);
-  }
-}
-
+/**
+ * Promotional popup orchestrator. Slim shell that:
+ *
+ *   1. Fetches the org's popup config (`usePromotionalPopup`).
+ *   2. Drives the lifecycle state machine via `usePromoLifecycle`.
+ *   3. Wires accept/decline/soft-close handlers (which need router + orgId
+ *      + preview-aware navigation).
+ *   4. Renders ONE of three pure variant components (`PromoModal`,
+ *      `PromoBanner`, `PromoCornerCard`) plus the dismissal `PromoFab`.
+ *
+ * All variant rendering is pure — props in, JSX out. The lifecycle hook is
+ * the single source of truth for trigger gating, dismissal storage,
+ * auto-minimize, preview-reset events, and FAB pulse hints.
+ */
 export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const orgId = useSettingsOrgId();
   const orgPath = useOrgPath();
   const navigate = useNavigate();
-  const location = useLocation();
   const { data: cfg } = usePromotionalPopup();
-  // Editor-preview QA mode: bypass frequency caps + force immediate trigger
-  // so operators can faithfully QA enable/disable + content. Real visitor
-  // suppression rules (sessionStorage caps, analytics writes) are skipped.
   const isPreview = useIsEditorPreview();
 
-  const [open, setOpen] = useState(false);
-  const [showFab, setShowFab] = useState(false);
-  const [pulseFab, setPulseFab] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(15);
-  const [isHovered, setIsHovered] = useState(false);
-  // FAB position is fixed at bottom-6 full-time. Previously coupled to hero
-  // alignment via subscribeHeroAlignment — removed because positional drift
-  // on slide change reads as broken. Z-layering (z-50) is the correct
-  // separation between FAB and hero content, not viewport repositioning.
-  // Three-phase visual lifecycle for the popup root (entering → visible →
-  // closing). The `closing` phase keeps the popup mounted so its CSS exit
-  // animation plays before unmount; `onAnimationEnd` then flips `open` and
-  // surfaces the FAB. Without this the popup hard-cuts to the FAB and the
-  // lifecycle preview reads as broken to operators. See `usePresenceLifecycle`.
-  const popupLifecycle = usePresenceLifecycle<'soft' | 'decline' | 'accept'>({
-    onExit: (reason) => {
-      setOpen(false);
-      // Accept = offer claimed → no FAB re-prompt. Soft + decline both
-      // surface the FAB so the visitor can re-open during the session.
-      setShowFab(reason !== 'accept');
-    },
-  });
-  const popupPhase = popupLifecycle.phase;
-  // Editor-driven reset replays the CSS slide-in by bumping the React `key`
-  // on each variant's root. Tailwind's `animate-in slide-in-from-*` only
-  // fires on first paint, so without a fresh mount the popup snaps into
-  // place instead of sliding up. See `useReplayableMount` for the canonical
-  // pattern and rationale.
-  const { key: animationNonce, replay: replayPopupMount } = useReplayableMount();
-  const triggeredRef = useRef(false);
+  const lifecycle = usePromoLifecycle({ cfg, surface, orgId, isPreview });
 
-  // Auto-suppress the entire offer prompt on the booking surface — if the
-  // visitor reached booking organically (or via the accept handler), don't
-  // double-ask. Detection is path-based so it survives slug variations.
-  const onBookingSurface = useMemo(() => {
-    return /\/booking(\/|$|\?)/i.test(location.pathname);
-  }, [location.pathname]);
-
-  // Hide popup completely when accept lands on the booking surface with the
-  // matching promo code already attached. Avoids re-prompting after acceptance.
-  const promoQueryParam = useMemo(() => {
-    const sp = new URLSearchParams(location.search);
-    return sp.get('promo');
-  }, [location.search]);
-
-  const active = isPopupActive(cfg, surface);
-  const code = cfg?.offerCode?.trim() ?? '';
-
-  useEffect(() => {
-    if (!active || !cfg) return;
-    if (triggeredRef.current) return;
-    if (promoQueryParam && promoQueryParam === code) return;
-    // Booking surface = visitor is already in the funnel; don't double-ask.
-    if (onBookingSurface && !isPreview) return;
-
-    // In editor preview, bypass dismissal so reloads always re-show the popup.
-    if (!isPreview) {
-      const dismissal = readDismissal(orgId, code);
-      if (shouldRespectDismissal(cfg, dismissal)) return;
-    }
-
-    let cleanup: (() => void) | undefined;
-
-    const fire = () => {
-      if (triggeredRef.current) return;
-      triggeredRef.current = true;
-      popupLifecycle.reset();
-      setOpen(true);
-    };
-
-    // In editor preview, force immediate trigger — delay/scroll/exit-intent
-    // are unreliable inside a scaled iframe and would make QA feel broken.
-    const effectiveTrigger = isPreview ? 'immediate' : cfg.trigger;
-
-    switch (effectiveTrigger) {
-      case 'immediate':
-        fire();
-        break;
-      case 'delay': {
-        const t = window.setTimeout(fire, cfg.triggerValueMs ?? 10000);
-        cleanup = () => window.clearTimeout(t);
-        break;
-      }
-      case 'scroll': {
-        const threshold = cfg.triggerValueMs ?? 600; // px scrolled
-        const onScroll = () => {
-          if (window.scrollY >= threshold) fire();
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        cleanup = () => window.removeEventListener('scroll', onScroll);
-        break;
-      }
-      case 'exit-intent': {
-        const onLeave = (e: MouseEvent) => {
-          if (e.clientY <= 0) fire();
-        };
-        document.addEventListener('mouseout', onLeave);
-        cleanup = () => document.removeEventListener('mouseout', onLeave);
-        break;
-      }
-    }
-
-    return cleanup;
-  }, [active, cfg, code, orgId, promoQueryParam, isPreview, onBookingSurface]);
-
-  // One-time pulse hint: 30s after the FAB appears, gently pulse it once so
-  // the visitor remembers the offer is still available. Session-scoped — we
-  // never pulse twice in the same browsing session.
-  const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed`;
-  useEffect(() => {
-    if (!showFab || open || isPreview) return;
-    if (typeof window === 'undefined') return;
-    try {
-      if (window.sessionStorage.getItem(PULSE_SESSION_KEY) === '1') return;
-    } catch { /* ignore */ }
-
-    const t = window.setTimeout(() => {
-      setPulseFab(true);
-      try { window.sessionStorage.setItem(PULSE_SESSION_KEY, '1'); } catch { /* ignore */ }
-      // Pulse runs for ~2.4s (3 cycles of 800ms), then we stop the animation
-      // class so the FAB doesn't keep drawing attention indefinitely.
-      const stop = window.setTimeout(() => setPulseFab(false), 2400);
-      return () => window.clearTimeout(stop);
-    }, 30_000);
-    return () => window.clearTimeout(t);
-  }, [showFab, open, isPreview, PULSE_SESSION_KEY]);
-
-  // Editor-driven lifecycle reset. Operators hit "Restart popup preview"
-  // in the editor; that dispatches the canonical event (sole owner:
-  // `src/lib/promoPopupPreviewReset.ts`) and we re-run the open →
-  // countdown → FAB lifecycle without a full iframe reload. Only listens
-  // in preview mode so production visitors can't trigger this from the
-  // console.
-  //
-  // Iframe boundary: when this component mounts inside the website-editor
-  // preview iframe, the parent-window CustomEvent never reaches us — the
-  // editor's `LivePreviewPanel` bridges it across as a `postMessage`
-  // (`PREVIEW_PROMO_POPUP_RESET`). We listen on BOTH channels: the
-  // CustomEvent for same-window mounts (e.g. ?preview=true in a top-level
-  // tab via "Open full preview"), and the message for the iframe path.
-  useEffect(() => {
-    if (!isPreview) return;
-    const runReset = () => {
-      // Full lifecycle reset: clear the one-shot trigger guard, dismiss
-      // any visible FAB, force-reset the countdown to its full duration
-      // (otherwise a prior cycle that completed leaves secondsLeft at 0
-      // and the next open auto-soft-closes immediately), and re-open.
-      triggeredRef.current = false;
-      setShowFab(false);
-      popupLifecycle.reset();
-      // Replay the mount BEFORE flipping `open` so React schedules a fresh
-      // mount of the popup root in the same render pass — that's what
-      // replays `animate-in slide-in-from-*`. Without this, an already-open
-      // popup just stays in place when the operator clicks restart and the
-      // slide-up never plays.
-      replayPopupMount();
-      // Re-derive the operator-configured duration via the canonical helper
-      // (kept inline so this effect doesn't depend on autoMinimizeSeconds,
-      // which is declared further down). Helper covers null-disable, the
-      // 5–60s clamp, and the 15s default — see clampAutoMinimizeSeconds.test.ts.
-      const seconds = clampAutoMinimizeSeconds(cfg?.autoMinimizeMs);
-      if (seconds !== null) {
-        setSecondsLeft(seconds);
-      }
-      setOpen(true);
-    };
-    const onReset = () => runReset();
-    const onMessage = (e: MessageEvent) => {
-      const data = e.data;
-      if (!data || typeof data !== 'object') return;
-      if (data.type !== 'PREVIEW_PROMO_POPUP_RESET') return;
-      runReset();
-    };
-    window.addEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
-    window.addEventListener('message', onMessage);
-    return () => {
-      window.removeEventListener(PROMO_POPUP_PREVIEW_RESET_EVENT, onReset);
-      window.removeEventListener('message', onMessage);
-    };
-  }, [isPreview, cfg?.autoMinimizeMs]);
-
-  // Echo lifecycle phase to the editor (preview only) so the "Restart
-  // popup preview" button can render a context-aware label without
-  // duplicating this state machine. Sole dispatcher of the
-  // `promo-popup-preview-state` event — see src/lib/promoPopupPreviewReset.ts
-  // for ownership canon. Production visitors never dispatch (no listener
-  // exists outside the editor anyway, but gating keeps it tidy).
-  //
-  // Iframe boundary: when mounted inside the editor's preview iframe, the
-  // parent-window listener can't see our CustomEvent. Also post the phase
-  // out to `window.parent` via postMessage; LivePreviewPanel re-broadcasts
-  // it as the canonical CustomEvent on the parent side so the button
-  // label memo + `getLastPromoPopupPreviewPhase()` cache stay in sync
-  // without either side knowing about the boundary.
-  useEffect(() => {
-    if (!isPreview) return;
-    const phase = open ? 'open' : showFab ? 'fab' : 'idle';
-    dispatchPromoPopupPreviewState(phase);
-    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-      try {
-        window.parent.postMessage({ type: 'PREVIEW_PROMO_POPUP_STATE', phase }, '*');
-      } catch {
-        // Cross-origin parent — best-effort only; same-origin is the
-        // canonical case (preview iframe shares the app origin).
-      }
-    }
-  }, [isPreview, open, showFab]);
-
-  // Esc key closes (counts as soft dismiss — operator told us silence is valid).
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleSoftClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // Auto-minimize after N seconds of no interaction with a visible countdown.
-  // Visitors who don't engage get their reading flow back; the offer collapses
-  // into the FAB so it remains one tap away rather than disappearing entirely.
-  // Skipped in editor preview so operators QA'ing copy aren't fighting a timer.
-  // Paused while the cursor is over the popup — active readers shouldn't be
-  // interrupted mid-sentence. Disabled entirely when operator sets
-  // `autoMinimizeMs` to null.
-  //
-  // Operator override: clamp to 5–60s window. Defaults to 15s.
-  const autoMinimizeMs = cfg?.autoMinimizeMs;
-  const autoMinimizeSeconds = useMemo(
-    () => clampAutoMinimizeSeconds(autoMinimizeMs),
-    [autoMinimizeMs],
-  );
-
-  // Reset countdown whenever the popup opens (or the operator changes the
-  // configured duration). Separated from the tick effect so hover-pause
-  // doesn't restart the timer at full each time the cursor enters/leaves.
-  useEffect(() => {
-    if (!open) return;
-    if (autoMinimizeSeconds === null) return;
-    setSecondsLeft(autoMinimizeSeconds);
-  }, [open, autoMinimizeSeconds]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (autoMinimizeSeconds === null) return; // operator disabled auto-minimize
-    if (isHovered) return; // Pause while reader is engaged — resume from current.
-    const interval = window.setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          // Let preview run the FULL lifecycle — countdown completes,
-          // popup soft-closes, FAB takes over. Operators told us the
-          // earlier "loop forever" behavior masked the real visitor flow
-          // and made the FAB un-QA-able. To re-run the lifecycle, hit
-          // "Preview popup now" in the editor (forces an iframe reload).
-          window.clearInterval(interval);
-          handleSoftClose();
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => window.clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPreview, isHovered, autoMinimizeSeconds]);
-
-  // If the popup is disabled or config missing, render nothing at all.
-  if (!active || !cfg) return null;
-  // Auto-suppress on /booking — the visitor is in the funnel; the offer code
-  // is already being honored via the URL param when relevant.
-  if (onBookingSurface && !isPreview) return null;
+  // Disabled / no config → render nothing at all.
+  if (!lifecycle.active || !cfg) return null;
+  // Auto-suppress on /booking — the visitor is in the funnel already.
+  if (lifecycle.onBookingSurface && !isPreview) return null;
 
   const accent = cfg.accentColor || 'hsl(var(--primary))';
-  // Pick a readable text color for content sitting *on* the accent (FAB,
-  // CTA buttons, banner). When the accent is a CSS-var ref like
-  // `hsl(var(--primary))` we can't parse it client-side, so we fall back
-  // to the theme's `--primary-foreground` which is paired in CSS.
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
-
-  // Begin the visual close animation. The popup root stays mounted until
-  // its `animationend` fires, at which point `usePresenceLifecycle`'s
-  // `onExit` flips `open=false` and (for soft/decline) surfaces the FAB.
-  // Side effects (dismissal writes, analytics, navigation) fire
-  // IMMEDIATELY — only the visual unmount waits for the animation. This
-  // is what gives operators the "popup animates closed into the FAB"
-  // lifecycle they expect.
-  const beginClose = popupLifecycle.beginExit;
+  const code = lifecycle.code;
 
   function handleAccept() {
-    const destination = cfg.acceptDestination ?? 'booking';
+    const destination = cfg!.acceptDestination ?? 'booking';
 
     // Editor preview: never navigate the iframe — the operator is QA'ing.
-    // Surface a toast that describes the simulated downstream action so the
-    // popup doesn't read as broken (the original "click does nothing" bug).
+    // Surface a toast describing the simulated downstream action.
     if (isPreview) {
       const codeLabel = code ? `code ${code}` : 'no offer code';
       const simulated =
         destination === 'consultation'
           ? `Visitor would be sent to consultation booking with ${codeLabel}.`
           : destination === 'custom-url'
-            ? cfg.customUrl
-              ? `Visitor would be sent to ${cfg.customUrl}.`
-              : `Visitor would see your custom instructions${cfg.customUrlInstructions ? `: "${cfg.customUrlInstructions}"` : '.'}`
+            ? cfg!.customUrl
+              ? `Visitor would be sent to ${cfg!.customUrl}.`
+              : `Visitor would see your custom instructions${cfg!.customUrlInstructions ? `: "${cfg!.customUrlInstructions}"` : '.'}`
             : `Visitor would be sent to /booking with ${codeLabel}.`;
       toast.success('Claim Offer (preview)', { description: simulated });
-      beginClose('accept');
+      lifecycle.beginExit('accept');
       return;
     }
 
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
     void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
-    beginClose('accept');
+    lifecycle.beginExit('accept');
 
-    // Custom URL: open externally in a new tab. tel:/mailto: URLs trigger
-    // the device handler. Operator-supplied — we only sanity-check the prefix.
-    if (destination === 'custom-url' && cfg.customUrl) {
-      const url = cfg.customUrl.trim();
+    // Custom URL: open externally in a new tab. tel:/mailto: trigger the
+    // device handler. Operator-supplied — only sanity-check the prefix.
+    if (destination === 'custom-url' && cfg!.customUrl) {
+      const url = cfg!.customUrl.trim();
       const safe = /^(https?:|tel:|mailto:)/i.test(url);
       if (safe) {
         window.open(url, '_blank', 'noopener,noreferrer');
@@ -485,594 +116,65 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
     }
-    // Animated close → FAB. Real-visitor side effects (dismissal write,
-    // analytics) stay gated above.
-    beginClose('decline');
+    lifecycle.beginExit('decline');
   }
 
   function handleSoftClose() {
     if (!isPreview) {
-      // Soft dismiss respects the frequency cap but isn't a recorded decline.
       writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
       markSessionDismissed();
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
     }
-    beginClose('soft');
+    lifecycle.beginExit('soft');
   }
 
-
-  function handleFabOpen() {
-    setShowFab(false);
-    popupLifecycle.reset();
-    replayPopupMount();
-    setOpen(true);
-  }
-
-  function handleFabDismiss(e: React.MouseEvent) {
-    e.stopPropagation();
-    setShowFab(false);
-  }
-
-  // FAB element rendered after dismissal. Reuses the offer's accent color and
-  // headline so the visitor can re-open the offer at any time during the
-  // session. Position is fixed: bottom-6 + the configured horizontal corner.
-  // The FAB intentionally does NOT shift based on hero alignment — see the
-  // note above and `mem://style/global-overlay-stability`.
-  const fab = showFab && !open ? (
-    <div
-      className={cn(
-        'fixed bottom-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
-        fabPos === 'bottom-left' ? 'left-6 flex-row-reverse' : 'right-6',
-      )}
-    >
-      <button
-        type="button"
-        onClick={handleFabOpen}
-        aria-label={`Reopen offer: ${cfg.headline}`}
-        className={cn(
-          'group flex items-center gap-2 rounded-full pl-3 pr-4 sm:pr-5 h-12 shadow-2xl text-primary-foreground hover:scale-[1.03] transition-transform',
-          // Session-scoped one-time pulse hint (~3 cycles, then auto-stops).
-          pulseFab && 'motion-safe:animate-[promoFabPulse_800ms_ease-in-out_3]',
-        )}
-        style={{ backgroundColor: accent, color: accentFg }}
-      >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15">
-          <Gift className="h-4 w-4" />
-        </span>
-        <span className="hidden sm:inline font-display uppercase tracking-wider text-xs">
-          See Offer
-        </span>
-        <ChevronRight className="hidden sm:inline h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
-      </button>
-      <button
-        type="button"
-        aria-label="Dismiss offer reminder"
-        onClick={handleFabDismiss}
-        className={cn(
-          'hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors',
-          fabPos === 'bottom-left' ? 'mr-2' : 'ml-2',
-        )}
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
-    </div>
+  // FAB rendered after dismissal (soft / decline). Suppressed when the
+  // popup is open or the visitor accepted.
+  const fab = lifecycle.showFab && !lifecycle.open ? (
+    <PromoFab
+      headline={cfg.headline}
+      position={fabPos}
+      accent={accent}
+      accentFg={accentFg}
+      pulsing={lifecycle.pulseFab}
+      onOpen={lifecycle.reopenFromFab}
+      onDismiss={(e) => {
+        e.stopPropagation();
+        lifecycle.dismissFab();
+      }}
+    />
   ) : null;
 
-  if (!open) return fab;
+  if (!lifecycle.open) return fab;
 
-  const isClosing = popupLifecycle.isClosing;
-  // Per-variant exit animation classes. Each variant exits in the
-  // direction the FAB lives (corner-card → bottom-right corner; banner →
-  // top edge; modal → fade + scale toward FAB). Tailwind/animate utilities
-  // ship via tailwindcss-animate.
-  const cornerExitClasses = fabPos === 'bottom-left'
-    ? 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-left-4 duration-300'
-    : 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-right-4 duration-300';
-  const bannerExitClasses = 'animate-out fade-out slide-out-to-top-2 duration-300';
-  const modalExitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
+  // Countdown packet shared by every variant root. `null` when operator
+  // disabled auto-minimize.
+  const countdown =
+    lifecycle.autoMinimizeSeconds !== null
+      ? { secondsLeft: lifecycle.secondsLeft, totalSeconds: lifecycle.autoMinimizeSeconds }
+      : null;
 
-  // Shared `onAnimationEnd` handler from `usePresenceLifecycle`. The hook
-  // gates on `phase === 'closing'` AND `target === currentTarget`, so
-  // entering animations and bubbling child animations (e.g. the countdown
-  // bar) cannot prematurely unmount the popup.
-  const handleRootAnimationEnd = popupLifecycle.onAnimationEnd;
+  const sharedVariantProps = {
+    cfg,
+    accent,
+    accentFg,
+    animationNonce: lifecycle.animationNonce,
+    popupPhase: lifecycle.popupPhase,
+    isClosing: lifecycle.isClosing,
+    isHovered: lifecycle.isHovered,
+    setIsHovered: lifecycle.setIsHovered,
+    onAccept: handleAccept,
+    onDecline: handleDecline,
+    onSoftClose: handleSoftClose,
+    onAnimationEnd: lifecycle.onAnimationEnd,
+    countdown,
+  };
 
-  // ── Variant: corner-card (bottom-right toast-like) ──
   if (cfg.appearance === 'corner-card') {
-    // Corner-card is the densest surface — operators can hide the image here
-    // via `hidden-on-corner` so it doesn't crush headline + body. `side`
-    // collapses to `top` (no room for a left rail at 360px).
-    const cornerImageMode: 'top' | 'none' =
-      !cfg.imageUrl || cfg.imageTreatment === 'hidden-on-corner' ? 'none' : 'top';
-    return (
-      <div
-        key={animationNonce}
-        data-testid="promo-popup-root"
-        data-animation-key={animationNonce}
-        data-popup-phase={popupPhase}
-        role="dialog"
-        aria-modal="false"
-        aria-labelledby="promo-popup-title"
-        className={cn(
-          'fixed bottom-6 right-6 z-50 w-[min(92vw,360px)] rounded-2xl bg-card border border-border shadow-2xl p-5 overflow-hidden',
-          isClosing ? cornerExitClasses : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-16',
-        )}
-        style={!isClosing ? {
-          animationDuration: '900ms',
-          animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          animationFillMode: 'both',
-        } : undefined}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onAnimationEnd={handleRootAnimationEnd}
-      >
-        {/* Close (X) — soft-dismisses the popup. Sits absolute so it doesn't
-            shift PromoBody's eyebrow/headline alignment. */}
-        <button
-          type="button"
-          onClick={handleSoftClose}
-          aria-label="Close promotional offer"
-          className="absolute top-3 right-3 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <PromoBody cfg={cfg} accent={accent} imageMode={cornerImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} compact />
-        {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
-        )}
-      </div>
-    );
+    return <PromoCornerCard {...sharedVariantProps} fabPosition={fabPos} />;
   }
-
-  // ── Variant: banner / top drawer (top of viewport, full-width) ──
-  // Desktop keeps the slim single-row banner. Mobile reshapes into a taller
-  // top drawer where eyebrow / headline / body / CTAs stack vertically and
-  // wrap fully — no truncation, no X colliding with the headline.
   if (cfg.appearance === 'banner') {
-    const EyebrowIconCmp = cfg.eyebrow ? getEyebrowIcon(cfg.eyebrowIcon) : null;
-    return (
-      <div
-        key={animationNonce}
-        data-testid="promo-popup-root"
-        data-animation-key={animationNonce}
-        data-popup-phase={popupPhase}
-        role="dialog"
-        aria-labelledby="promo-popup-title"
-        className={cn(
-          'fixed top-0 inset-x-0 z-50 bg-card border-b border-border shadow-md overflow-hidden',
-          isClosing ? bannerExitClasses : 'motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-top-12',
-        )}
-        style={{
-          borderBottomColor: accent,
-          borderBottomWidth: 2,
-          ...(!isClosing ? {
-            animationDuration: '900ms',
-            animationTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-            animationFillMode: 'both',
-          } : {}),
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onAnimationEnd={handleRootAnimationEnd}
-      >
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-3 pb-6 sm:pb-3">
-          {/* Mobile-only close row keeps the X out of the headline's lane. */}
-          <div className="flex sm:hidden justify-end -mt-1 -mr-1 mb-1">
-            <button
-              onClick={handleSoftClose}
-              aria-label="Dismiss"
-              className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-foreground/5 transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              {cfg.eyebrow && (
-                <p
-                  className="font-display uppercase tracking-[0.18em] text-[10px] sm:text-[11px] mb-1 sm:mb-0.5 inline-flex items-center gap-1.5"
-                  style={{ color: accent }}
-                >
-                  {EyebrowIconCmp && (
-                    <EyebrowIconCmp className="h-3 w-3 shrink-0" aria-hidden="true" />
-                  )}
-                  <span className="sm:truncate">{cfg.eyebrow}</span>
-                </p>
-              )}
-              <p
-                id="promo-popup-title"
-                className="font-display uppercase tracking-wide text-base sm:text-base text-foreground leading-snug sm:truncate"
-              >
-                {cfg.headline}
-              </p>
-              {cfg.body && (
-                <p className="font-sans text-sm sm:text-sm text-muted-foreground leading-relaxed mt-1 sm:mt-0 sm:truncate">
-                  {cfg.body}
-                </p>
-              )}
-            </div>
-
-            {/* CTA cluster: stretches to full width on mobile, inline on desktop. */}
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-              <button
-                onClick={handleAccept}
-                className="font-display uppercase tracking-wider text-xs px-4 py-2.5 sm:py-2 rounded-full text-primary-foreground flex-1 sm:flex-none"
-                style={{ backgroundColor: accent, color: accentFg }}
-              >
-                {cfg.ctaAcceptLabel}
-              </button>
-              <button
-                onClick={handleDecline}
-                className="font-sans text-xs text-muted-foreground hover:text-foreground px-3 py-2 shrink-0"
-                aria-label={cfg.ctaDeclineLabel}
-              >
-                {cfg.ctaDeclineLabel}
-              </button>
-              {/* Desktop close — mobile uses the dedicated row above. */}
-              <button
-                onClick={handleSoftClose}
-                aria-label="Dismiss"
-                className="hidden sm:inline-flex text-muted-foreground hover:text-foreground p-1"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-        {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
-        )}
-      </div>
-    );
+    return <PromoBanner {...sharedVariantProps} />;
   }
-
-  // ── Variant: modal (default) ──
-  // Image modes:
-  //   - none: no image to render
-  //   - top:  full-width strip above the headline (default `cover` behavior)
-  //   - side: left rail (modal widens to max-w-2xl + grid layout)
-  const modalImageMode: 'top' | 'side' | 'none' = !cfg.imageUrl
-    ? 'none'
-    : cfg.imageTreatment === 'side'
-      ? 'side'
-      : 'top';
-  const modalWide = modalImageMode === 'side';
-  // Editorial header band: subtle accent wash behind the eyebrow + close.
-  // Provides depth without overpowering the operator's brand color.
-  const headerValueAnchor = cfg.valueAnchor?.trim();
-  const HeaderBand = (
-    <div
-      className="relative flex items-center justify-between gap-3 px-6 sm:px-8 py-4 border-b"
-      style={{
-        backgroundColor: `color-mix(in srgb, ${accent} 6%, transparent)`,
-        borderBottomColor: `color-mix(in srgb, ${accent} 20%, transparent)`,
-      }}
-    >
-      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-        {cfg.eyebrow && (() => {
-          const Icon = getEyebrowIcon(cfg.eyebrowIcon);
-          return (
-            <>
-              {Icon && (
-                <span
-                  className="flex h-7 w-7 items-center justify-center rounded-md shrink-0"
-                  style={{ backgroundColor: `color-mix(in srgb, ${accent} 14%, transparent)`, color: accent }}
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
-              )}
-              <p
-                className="font-display uppercase tracking-[0.2em] text-[11px] truncate"
-                style={{ color: accent }}
-              >
-                {cfg.eyebrow}
-              </p>
-            </>
-          );
-        })()}
-        {headerValueAnchor && (
-          <span
-            className="hidden sm:inline-flex items-center font-display uppercase tracking-[0.16em] text-[10px] px-2.5 h-5 rounded-full shrink-0"
-            style={{ backgroundColor: accent, color: accentFg }}
-          >
-            {headerValueAnchor}
-          </span>
-        )}
-      </div>
-      <button
-        onClick={handleSoftClose}
-        aria-label="Close"
-        className="shrink-0 text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-foreground/5 transition-colors"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
-  );
-
-  return (
-    <div
-      key={animationNonce}
-      data-testid="promo-popup-root"
-      data-animation-key={animationNonce}
-      data-popup-phase={popupPhase}
-      className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/30 dark:bg-foreground/50 backdrop-blur-sm dark:backdrop-blur-md',
-        isClosing
-          ? modalExitClasses
-          : 'motion-safe:animate-backdrop-blur-in-md motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500',
-      )}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleSoftClose();
-      }}
-      onAnimationEnd={handleRootAnimationEnd}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="promo-popup-title"
-        className={cn(
-          'relative w-full rounded-2xl border border-border/60 overflow-hidden',
-          'bg-gradient-to-b from-card/80 to-card/70 dark:from-card/55 dark:to-card/45',
-          'backdrop-blur-xl backdrop-saturate-150 dark:backdrop-blur-2xl dark:backdrop-saturate-[1.8]',
-          'motion-safe:animate-backdrop-blur-in-2xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:slide-in-from-bottom-2 motion-safe:duration-500 motion-safe:ease-out',
-          'shadow-[0_24px_48px_-12px_rgba(0,0,0,0.22),0_8px_16px_-4px_rgba(0,0,0,0.1),inset_0_1px_0_0_hsl(var(--background)/0.4)]',
-          // Top-edge refraction highlight — mimics light bending across glass
-          'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-foreground/25 dark:before:via-foreground/40 before:to-transparent before:z-10',
-          'after:pointer-events-none after:absolute after:inset-x-0 after:top-0 after:h-24 after:bg-gradient-to-b after:from-foreground/[0.06] dark:after:from-foreground/[0.10] after:to-transparent after:z-0',
-          modalWide ? 'max-w-2xl' : 'max-w-md',
-        )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {modalWide ? (
-          <div className="grid grid-cols-[200px_1fr]">
-            <div className="bg-muted">
-              <img
-                src={cfg.imageUrl}
-                alt={cfg.imageAlt ?? ''}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: `${cfg.imageFocalX ?? 50}% ${cfg.imageFocalY ?? 50}%` }}
-              />
-            </div>
-            <div className="flex flex-col">
-              {HeaderBand}
-              <div className="p-6 sm:p-8">
-                <PromoBody cfg={cfg} accent={accent} imageMode="none" onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            {HeaderBand}
-            <div className="p-6 sm:p-8">
-              <PromoBody cfg={cfg} accent={accent} imageMode={modalImageMode} onAccept={handleAccept} onDecline={handleDecline} onClose={handleSoftClose} hideEyebrow />
-            </div>
-          </>
-        )}
-        {autoMinimizeSeconds !== null && (
-          <CountdownBar secondsLeft={secondsLeft} totalSeconds={autoMinimizeSeconds} accent={accent} paused={isHovered} />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function PromoBody({
-  cfg,
-  accent,
-  onAccept,
-  onDecline,
-  compact = false,
-  imageMode = 'top',
-  hideEyebrow = false,
-}: {
-  cfg: PromotionalPopupSettings;
-  accent: string;
-  onAccept: () => void;
-  onDecline: () => void;
-  onClose: () => void;
-  compact?: boolean;
-  /** How (or whether) to render the image inline. `side` is handled by the
-   *  parent layout (modal grid) and renders nothing here. */
-  imageMode?: 'top' | 'side' | 'none';
-  /** Modal variant renders the eyebrow inside the editorial header band, so
-   *  the body should suppress its own eyebrow row to avoid duplication. */
-  hideEyebrow?: boolean;
-}) {
-  const renderTopImage = imageMode === 'top' && cfg.imageUrl;
-  // Mirror the parent's contrast pick so the CTA stays legible regardless
-  // of the operator's accent. Re-derive (cheap) instead of threading a prop.
-  const accentFg = readableForegroundFor(cfg.accentColor);
-  const valueAnchor = cfg.valueAnchor?.trim();
-  return (
-    <>
-      {renderTopImage && (
-        <div
-          className={cn(
-            'mb-4 overflow-hidden rounded-xl bg-muted',
-            compact ? 'h-24' : 'h-32 sm:h-40',
-          )}
-        >
-          <img
-            src={cfg.imageUrl}
-            alt={cfg.imageAlt ?? ''}
-            className="w-full h-full object-cover"
-            style={{ objectPosition: `${cfg.imageFocalX ?? 50}% ${cfg.imageFocalY ?? 50}%` }}
-          />
-        </div>
-      )}
-      {!hideEyebrow && cfg.eyebrow && (() => {
-        const Icon = getEyebrowIcon(cfg.eyebrowIcon);
-        return (
-          <p
-            className={cn(
-              'font-display uppercase tracking-[0.2em] mb-2 inline-flex items-center gap-1.5',
-              compact ? 'text-[10px]' : 'text-[11px] sm:text-xs',
-            )}
-            style={{ color: accent }}
-          >
-            {Icon && <Icon className={cn('shrink-0', compact ? 'h-3 w-3' : 'h-3.5 w-3.5')} aria-hidden="true" />}
-            <span>{cfg.eyebrow}</span>
-          </p>
-        );
-      })()}
-      <h2
-        id="promo-popup-title"
-        className={cn(
-          'font-display uppercase tracking-wide text-foreground mb-3',
-          compact ? 'text-base' : 'text-xl sm:text-2xl leading-[1.15]',
-        )}
-      >
-        {cfg.headline}
-      </h2>
-      {valueAnchor && !compact && !hideEyebrow && (
-        <div className="mb-4">
-          <span
-            className="inline-flex items-center font-display uppercase tracking-[0.18em] text-[10px] px-3 h-6 rounded-full"
-            style={{ backgroundColor: accent, color: accentFg }}
-          >
-            {valueAnchor}
-          </span>
-        </div>
-      )}
-      {cfg.body && (
-        <p
-          className={cn(
-            'font-sans text-muted-foreground mb-5',
-            compact ? 'text-sm' : 'text-sm sm:text-base leading-relaxed',
-          )}
-        >
-          {cfg.body}
-        </p>
-      )}
-      {/*
-        Compact (corner-card) stacks the CTAs vertically: full-width Claim
-        Offer on top, centered "No thanks" beneath. Cleaner read at 360px
-        wide than the side-by-side row, which crowded the decline link
-        against the accent button. Full-size modal keeps the inline row.
-      */}
-      <div className={cn(
-        'mb-3',
-        compact
-          ? 'flex flex-col items-stretch gap-2'
-          : 'flex flex-row items-center gap-4',
-      )}>
-        {!compact && (
-          <button
-            onClick={onDecline}
-            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-2 underline-offset-4 hover:underline shrink-0 inline-flex items-center gap-1.5"
-          >
-            {valueAnchor && (
-              <>
-                <span className="font-display tracking-wide text-foreground/80">{valueAnchor}</span>
-                <span aria-hidden="true" className="text-muted-foreground/60">•</span>
-              </>
-            )}
-            <span>{cfg.ctaDeclineLabel}</span>
-          </button>
-        )}
-        <button
-          onClick={onAccept}
-          className={cn(
-            'group inline-flex items-center justify-center gap-2 font-display uppercase tracking-wider px-6 rounded-full transition-all hover:opacity-95 hover:-translate-y-px',
-            compact ? 'w-full text-xs h-11' : 'flex-1 text-xs sm:text-sm h-12',
-          )}
-          style={{
-            backgroundColor: accent,
-            color: accentFg,
-            boxShadow: `0 10px 28px -10px ${accent}, 0 2px 6px -2px rgba(0,0,0,0.12)`,
-          }}
-        >
-          <span>{cfg.ctaAcceptLabel}</span>
-          <ChevronRight className="h-4 w-4 opacity-90 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-        </button>
-        {compact && (
-          <button
-            onClick={onDecline}
-            className="font-sans text-sm text-muted-foreground hover:text-foreground transition-colors py-1.5 mx-auto underline-offset-4 hover:underline inline-flex items-center justify-center gap-1.5"
-          >
-            {valueAnchor && (
-              <>
-                <span className="font-display tracking-wide text-foreground/80">{valueAnchor}</span>
-                <span aria-hidden="true" className="text-muted-foreground/60">•</span>
-              </>
-            )}
-            <span>{cfg.ctaDeclineLabel}</span>
-          </button>
-        )}
-      </div>
-      {cfg.acceptDestination === 'custom-url' && cfg.customUrlInstructions && (
-        <p
-          className="font-sans text-xs text-foreground/80 leading-relaxed mb-2 px-3 py-2 rounded-lg border border-border/60 bg-muted/40"
-          style={{ borderLeft: `3px solid ${accent}` }}
-        >
-          {cfg.customUrlInstructions}
-        </p>
-      )}
-      {cfg.disclaimer && (
-        <p className="font-sans text-[11px] text-muted-foreground/80 leading-relaxed pt-4 mt-4 border-t border-border/40">
-          {cfg.disclaimer}
-        </p>
-      )}
-    </>
-  );
-}
-
-/**
- * Thin progress hairline + numeric label that depletes over the auto-minimize
- * window. Telegraphs the collapse-to-FAB behavior so the offer never appears
- * to "vanish" without warning.
- *
- * - `paused` freezes the fill animation and softens the label so visitors
- *   reading the offer (cursor over popup) can tell the timer is on hold.
- * - Under 3s remaining, the bar pulses subtly + the label switches to the
- *   warning token so the imminent collapse is felt, not just seen.
- * - The numeric label sits inside the bar's right edge so it follows the
- *   card's rounded corners cleanly instead of floating above them.
- */
-function CountdownBar({
-  secondsLeft,
-  totalSeconds,
-  accent,
-  paused = false,
-}: {
-  secondsLeft: number;
-  totalSeconds: number;
-  accent: string;
-  paused?: boolean;
-}) {
-  const pct = Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100));
-  const urgent = !paused && secondsLeft <= 3 && secondsLeft > 0;
-  return (
-    <div
-      className="absolute bottom-0 inset-x-0 pointer-events-none"
-      aria-hidden="true"
-    >
-      <div className="relative h-5 w-full overflow-hidden rounded-bl-2xl rounded-br-2xl">
-        <div className="absolute inset-x-0 bottom-0 h-1 bg-foreground/5">
-          <div
-            className={cn(
-              'h-full transition-[width] ease-linear',
-              paused ? 'duration-200 opacity-50' : 'duration-1000',
-              urgent && 'motion-safe:animate-pulse',
-            )}
-            style={{ width: `${pct}%`, backgroundColor: accent }}
-          />
-        </div>
-        <span
-          className={cn(
-            'absolute right-3 bottom-1.5 font-display uppercase tracking-wider text-[9px] tabular-nums transition-colors',
-            paused
-              ? 'text-muted-foreground/40'
-              : urgent
-                ? 'text-warning motion-safe:animate-pulse'
-                : 'text-muted-foreground/70',
-          )}
-        >
-          {paused ? 'paused' : `${secondsLeft}s`}
-        </span>
-      </div>
-    </div>
-  );
+  return <PromoModal {...sharedVariantProps} />;
 }
