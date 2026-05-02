@@ -20,6 +20,8 @@ import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
 import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
 import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
 import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
+import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
+import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
@@ -142,7 +144,11 @@ export default function FeedbackHub() {
               <StylistReputationCard />
             </div>
 
+            <FeedbackTrendDriftCard />
+
             <NegativeReviewHeatmap />
+
+            <CoachingLoopCard />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>

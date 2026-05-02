@@ -22932,6 +22932,56 @@ export type Database = {
           },
         ]
       }
+      review_response_templates: {
+        Row: {
+          applies_to: string
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          tone: string
+          updated_at: string
+          use_count: number
+        }
+        Insert: {
+          applies_to?: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          tone?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Update: {
+          applies_to?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          tone?: string
+          updated_at?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_response_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reward_redemptions: {
         Row: {
           created_at: string | null
@@ -27974,6 +28024,70 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stylist_commission_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_feedback_coaching_notes: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          category: string
+          created_at: string
+          created_by: string
+          feedback_response_id: string | null
+          id: string
+          note_text: string
+          organization_id: string
+          stylist_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: string
+          created_at?: string
+          created_by: string
+          feedback_response_id?: string | null
+          id?: string
+          note_text: string
+          organization_id: string
+          stylist_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string
+          feedback_response_id?: string | null
+          id?: string
+          note_text?: string
+          organization_id?: string
+          stylist_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_feedback_coaching_notes_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: false
+            referencedRelation: "client_feedback_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stylist_feedback_coaching_notes_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: false
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["response_id"]
+          },
+          {
+            foreignKeyName: "stylist_feedback_coaching_notes_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
