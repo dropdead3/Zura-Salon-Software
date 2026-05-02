@@ -569,6 +569,42 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
                 onCheckedChange={(v) => setField('hero_parallax_enabled', v)}
               />
             </div>
+
+            {/* Mode selector — only meaningful when the parallax toggle is on.
+                Disabled (not hidden) so operators can preview the choices. */}
+            <div className={cn(
+              'space-y-2 transition-opacity',
+              !draft.hero_parallax_enabled && 'opacity-50 pointer-events-none'
+            )}>
+              <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">
+                Intensity
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['subtle', 'cinematic'] as const).map((m) => {
+                  const active = draft.hero_parallax_mode === m;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setField('hero_parallax_mode', m)}
+                      className={cn(
+                        'rounded-lg border px-3 py-2 text-left transition-colors',
+                        active
+                          ? 'border-primary/60 bg-primary/5'
+                          : 'border-border/60 hover:border-border'
+                      )}
+                    >
+                      <div className="text-xs text-foreground capitalize">{m}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {m === 'subtle'
+                          ? 'Sticky hero + rising panel'
+                          : 'Hero also fades + scales'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
       </div>

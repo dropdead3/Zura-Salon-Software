@@ -90,6 +90,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   // if the operator dragged the hero out of slot 0, parallax silently no-ops.
   const { data: designOverrides } = useSiteSettings<DesignOverrides>('website_design_overrides');
   const heroParallaxEnabled = !!designOverrides?.hero_parallax_enabled;
+  const heroParallaxMode = designOverrides?.hero_parallax_mode === 'cinematic' ? 'cinematic' : 'subtle';
 
   const enabledSections = useMemo(() => {
     const base = isEditorPreview && !isViewMode
@@ -233,6 +234,7 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
       return (
         <HeroParallaxLayout
           enabled
+          mode={heroParallaxMode}
           hero={renderSection(heroSection)}
           next={renderSection(nextSection)}
           rest={<>{restSections.map(renderSection)}</>}
