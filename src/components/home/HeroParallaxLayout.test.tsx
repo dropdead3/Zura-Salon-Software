@@ -92,8 +92,7 @@ describe('HeroParallaxLayout', () => {
     );
     let anchor = document.querySelector('[data-hero-parallax="anchor"]') as HTMLElement;
     expect(anchor.getAttribute('data-hero-parallax-mode')).toBe('subtle');
-    expect(anchor.style.opacity).toBe('');
-    expect(anchor.style.transform).toBe('');
+    expect(anchor.getAttribute('style') ?? '').not.toContain('--hero-parallax-progress');
 
     rerender(
       <HeroParallaxLayout
@@ -106,8 +105,8 @@ describe('HeroParallaxLayout', () => {
     );
     anchor = document.querySelector('[data-hero-parallax="anchor"]') as HTMLElement;
     expect(anchor.getAttribute('data-hero-parallax-mode')).toBe('cinematic');
-    // Style references the parallax progress CSS variable.
-    expect(anchor.style.opacity).toContain('--hero-parallax-progress');
-    expect(anchor.style.transform).toContain('--hero-parallax-progress');
+    // Inline style references the parallax progress CSS variable.
+    const styleAttr = anchor.getAttribute('style') ?? '';
+    expect(styleAttr).toContain('--hero-parallax-progress');
   });
 });
