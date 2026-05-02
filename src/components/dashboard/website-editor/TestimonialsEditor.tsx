@@ -46,6 +46,7 @@ export function TestimonialsEditor() {
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
   const [localConfig, setLocalConfig] = useState<TestimonialsConfig>(DEFAULT_TESTIMONIALS);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
   const { effectiveOrganization } = useOrganizationContext();
