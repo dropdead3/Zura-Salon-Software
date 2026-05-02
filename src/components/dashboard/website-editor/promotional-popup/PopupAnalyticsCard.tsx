@@ -164,11 +164,11 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
 
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <span className={tokens.kpi.label}>
           14-Day Trend{capHitEta ? ' · projection' : ''}
         </span>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
             Impressions
