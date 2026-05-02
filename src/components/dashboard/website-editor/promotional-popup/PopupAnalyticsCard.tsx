@@ -94,14 +94,19 @@ function Sparkline({
 
 interface TrendChartProps {
   data: PromotionalPopupTrendPoint[];
+  highlightedKey: TrendKey | null;
+  onHoverKey: (key: TrendKey | null) => void;
 }
 
-function TrendChart({ data }: TrendChartProps) {
+function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
   const total = data.reduce(
     (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
     0,
   );
   if (total === 0) return null;
+
+  const dim = (key: TrendKey) =>
+    highlightedKey && highlightedKey !== key ? 0.25 : 1;
 
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
@@ -123,7 +128,19 @@ function TrendChart({ data }: TrendChartProps) {
         </div>
       </div>
       <ResponsiveContainer width="100%" height={140}>
-        <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+        <AreaChart
+          data={data}
+          margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+          onMouseMove={(state) => {
+            // Recharts forwards `tooltipPayload[0].dataKey` on hover; map back
+            // to our shared TrendKey so the tile lights up in sync.
+            const key = (state?.activePayload?.[0]?.dataKey ?? null) as TrendKey | null;
+            if (key && ['impressions', 'ctaClicks', 'redemptions'].includes(key)) {
+              onHoverKey(key);
+            }
+          }}
+          onMouseLeave={() => onHoverKey(null)}
+        >
           <defs>
             <linearGradient id="popupImpressionsFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
@@ -166,7 +183,8 @@ function TrendChart({ data }: TrendChartProps) {
             type="monotone"
             dataKey="impressions"
             stroke="hsl(var(--primary))"
-            strokeOpacity={0.7}
+            strokeOpacity={0.7 * dim('impressions')}
+            fillOpacity={dim('impressions')}
             strokeWidth={1.5}
             fill="url(#popupImpressionsFill)"
             name="Impressions"
@@ -175,6 +193,8 @@ function TrendChart({ data }: TrendChartProps) {
             type="monotone"
             dataKey="ctaClicks"
             stroke="hsl(var(--primary))"
+            strokeOpacity={dim('ctaClicks')}
+            fillOpacity={dim('ctaClicks')}
             strokeWidth={1.5}
             fill="url(#popupClicksFill)"
             name="CTA clicks"
@@ -183,6 +203,8 @@ function TrendChart({ data }: TrendChartProps) {
             type="monotone"
             dataKey="redemptions"
             stroke="hsl(var(--foreground))"
+            strokeOpacity={dim('redemptions')}
+            fillOpacity={dim('redemptions')}
             strokeWidth={1.5}
             fill="url(#popupRedemptionsFill)"
             name="Redemptions"
@@ -192,7 +214,6 @@ function TrendChart({ data }: TrendChartProps) {
     </div>
   );
 }
-
 
 interface PopupAnalyticsCardProps {
   offerCode: string | null | undefined;
@@ -215,11 +236,39 @@ interface FunnelStatProps {
   icon: React.ComponentType<{ className?: string }>;
   rate?: string | null;
   rateLabel?: string;
+  /** Trend points for the sparkline fallback (always rendered when chart is hidden). */
+  sparklinePoints: number[];
+  /** Whether the chart is hovering this metric (cross-highlight). */
+  highlighted: boolean;
+  /** Whether the area chart is currently shown (true → suppress sparkline noise). */
+  chartVisible: boolean;
+  trendKey: TrendKey;
+  onHover: (key: TrendKey | null) => void;
 }
 
-function FunnelStat({ label, value, icon: Icon, rate, rateLabel }: FunnelStatProps) {
+function FunnelStat({
+  label,
+  value,
+  icon: Icon,
+  rate,
+  rateLabel,
+  sparklinePoints,
+  highlighted,
+  chartVisible,
+  trendKey,
+  onHover,
+}: FunnelStatProps) {
   return (
-    <div className="flex flex-col gap-1.5 px-4 py-3 rounded-lg border border-border/60 bg-muted/30">
+    <div
+      onMouseEnter={() => onHover(trendKey)}
+      onMouseLeave={() => onHover(null)}
+      className={cn(
+        'flex flex-col gap-1.5 px-4 py-3 rounded-lg border bg-muted/30 transition-colors',
+        highlighted
+          ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
+          : 'border-border/60',
+      )}
+    >
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         <span className={tokens.kpi.label}>{label}</span>
@@ -230,6 +279,9 @@ function FunnelStat({ label, value, icon: Icon, rate, rateLabel }: FunnelStatPro
           {rate ?? '—'}
           {rateLabel ? <span className="ml-1">{rateLabel}</span> : null}
         </div>
+      ) : null}
+      {!chartVisible ? (
+        <Sparkline points={sparklinePoints} highlighted={highlighted} />
       ) : null}
     </div>
   );
