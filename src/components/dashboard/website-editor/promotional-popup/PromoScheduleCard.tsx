@@ -458,7 +458,10 @@ export function PromoScheduleCard({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemove(entry.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(entry.id);
+                        }}
                         aria-label="Remove rotation"
                       >
                         <Trash2 className="w-4 h-4" />
