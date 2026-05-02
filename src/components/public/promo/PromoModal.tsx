@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
-import type { PromotionalPopupSettings } from '@/hooks/usePromotionalPopup';
+import { type PromotionalPopupSettings, resolveImageRender } from '@/hooks/usePromotionalPopup';
 import { PromoBody } from './PromoBody';
 import { PromoCountdownBar } from './PromoCountdownBar';
 
