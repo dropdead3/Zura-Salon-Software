@@ -16,7 +16,10 @@ export function BrandsSection() {
 
   return (
     <SectionStyleWrapper styleOverrides={config.style_overrides}>
-    <section data-theme="light" className="py-12 md:py-16 bg-background">
+    {/* No bg-* class on the inner <section>: SectionStyleWrapper owns the
+        background paint so per-section color overrides take effect. Falls
+        through to the page background when no override is set. */}
+    <section data-theme="light" className="py-12 md:py-16">
       <div className="container mx-auto" style={{ paddingLeft: 'calc(1.5rem + 6px)', paddingRight: 'calc(1.5rem + 6px)' }}>
         <div className="flex items-center">
           {/* Left side text with divider */}
