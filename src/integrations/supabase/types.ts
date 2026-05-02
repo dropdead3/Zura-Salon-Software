@@ -20115,6 +20115,50 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_goal_runs: {
+        Row: {
+          cap: number
+          created_at: string
+          days_taken: number | null
+          hit_at: string
+          id: string
+          offer_code: string
+          organization_id: string
+          redemptions_at_hit: number
+          started_at: string | null
+        }
+        Insert: {
+          cap: number
+          created_at?: string
+          days_taken?: number | null
+          hit_at?: string
+          id?: string
+          offer_code: string
+          organization_id: string
+          redemptions_at_hit: number
+          started_at?: string | null
+        }
+        Update: {
+          cap?: number
+          created_at?: string
+          days_taken?: number | null
+          hit_at?: string
+          id?: string
+          offer_code?: string
+          organization_id?: string
+          redemptions_at_hit?: number
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_goal_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promo_offer_impressions: {
         Row: {
           created_at: string
