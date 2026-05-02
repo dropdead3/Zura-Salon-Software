@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Megaphone, Loader2, RotateCcw, Gift, X, ExternalLink, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Sparkline } from '@/components/ui/Sparkline';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
@@ -562,11 +563,7 @@ export function PromotionalPopupEditor() {
   }, [fullPreviewUrl]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <DashboardLoader caption="Loading promotional popup…" />;
   }
 
   return (
@@ -976,7 +973,7 @@ export function PromotionalPopupEditor() {
                         Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
                       </p>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3">
                         <div>
                           <div className="flex items-center gap-1.5">
                             <Label size="xs">Modal layout</Label>
@@ -1274,7 +1271,7 @@ export function PromotionalPopupEditor() {
             </div>
           )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Accept button label">
             <Input
               value={formData.ctaAcceptLabel}
@@ -1527,7 +1524,7 @@ export function PromotionalPopupEditor() {
 
       {/* Schedule */}
       <Section title="Schedule (optional)">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Starts at" hint="Leave blank for immediate.">
             <Input
               type="datetime-local"
