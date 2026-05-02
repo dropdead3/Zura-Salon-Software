@@ -236,7 +236,12 @@ function ScheduleCalendarStrip({
   );
 }
 
-export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardProps) {
+export function PromoScheduleCard({
+  formData,
+  setFormData,
+  focusedRotationId = null,
+  onFocusRotation,
+}: PromoScheduleCardProps) {
   const { data: library } = usePromoLibrary();
   const saved = library?.saved ?? [];
 
@@ -248,6 +253,21 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
   const [draftPromoId, setDraftPromoId] = useState<string>('');
   const [draftStart, setDraftStart] = useState<string>('');
   const [draftEnd, setDraftEnd] = useState<string>('');
+  const [confirmOverlap, setConfirmOverlap] = useState(false);
+  const rowRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+
+  const handleFocusRotation = (id: string | null) => {
+    onFocusRotation?.(id);
+  };
+
+  // Scroll focused row into view when focus changes (from calendar click).
+  useEffect(() => {
+    if (!focusedRotationId) return;
+    const el = rowRefs.current.get(focusedRotationId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [focusedRotationId]);
 
   const sortedSchedule = useMemo(
     () =>
