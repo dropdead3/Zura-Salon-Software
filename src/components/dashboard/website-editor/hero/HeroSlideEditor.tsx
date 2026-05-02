@@ -79,6 +79,26 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
 
   return (
     <div className="space-y-4">
+      {/* Inert-field banner — non-master slides in background_only mode have
+          no live copy fields. The Copy/Buttons cards are gated below, but a
+          deep-link (?slide=N) lands the user here with no explanation; this
+          banner closes that loop and points them at the right surface. */}
+      {backgroundOnly && index > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-[12px] text-foreground/90 font-sans flex items-start gap-3">
+          <div className="h-5 w-5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 inline-flex items-center justify-center flex-shrink-0 font-display text-[10px] tracking-wider">
+            i
+          </div>
+          <div className="space-y-0.5">
+            <div className="font-medium">Background-Only mode · this slide contributes its background only</div>
+            <div className="text-muted-foreground text-[11px] leading-relaxed">
+              Headline, subheadline & buttons are shared across every slide and edited under{' '}
+              <span className="text-foreground">Shared Hero Content</span> on the hub. Switch the
+              rotator to <span className="text-foreground">Multi-Slide</span> if you want this
+              slide to carry its own copy.
+            </div>
+          </div>
+        </div>
+      )}
       {/* Background media */}
       <EditorCard title={`Slide ${index + 1} · Background`} icon={ImageIcon}>
         <p className="text-xs text-muted-foreground -mt-1">
