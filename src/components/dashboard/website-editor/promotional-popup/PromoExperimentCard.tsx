@@ -609,7 +609,7 @@ export function PromoExperimentCard({
 
             {/* Add row */}
             <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">{/* sidebar-narrow: stack vertically */}
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Saved promo</Label>
                   <Select value={draftPromoId} onValueChange={setDraftPromoId}>

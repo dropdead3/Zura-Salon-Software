@@ -424,12 +424,20 @@ export default tseslint.config(
     ],
     extraSelectors: [
       {
-        selector: "Literal[value=/\\bsm:grid-cols-2\\b/]",
-        message: "Viewport-driven 2-column grids (`sm:grid-cols-2`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) crowds paired fields. Stack vertically (`grid grid-cols-1 gap-3`) or use a container query (`@container md:grid-cols-2`). Doctrine: mem://style/container-aware-responsiveness.",
+        // Banned: `sm:grid-cols-{2..9}` and `md:grid-cols-{2..9}`. Both
+        // breakpoints (640px / 768px) trigger off the VIEWPORT, not the
+        // editor sidebar — which stays narrow even on a 27" monitor. The
+        // result is multi-column grids crushed into the sidebar
+        // (May 2026: PopupAnalyticsCard funnel tiles rendered as 5×80px
+        // single-character columns; promo editor field rows crowded at
+        // 2-up). `lg:` (1024px) is allowed because at that viewport the
+        // sidebar is itself wide enough to host real columns.
+        selector: "Literal[value=/\\b(sm|md):grid-cols-[2-9]\\b/]",
+        message: "Viewport-driven multi-column grids (`sm:grid-cols-N` / `md:grid-cols-N`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) and `md:` (768px) crush paired fields and analytics tiles. Stack vertically (`grid grid-cols-1 gap-3`) or use container-width measurement (`useContainerWidth` + a ladder, see PopupAnalyticsCard.tsx). Doctrine: mem://style/container-aware-responsiveness.",
       },
       {
-        selector: "TemplateElement[value.raw=/\\bsm:grid-cols-2\\b/]",
-        message: "Viewport-driven 2-column grids (`sm:grid-cols-2`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) crowds paired fields. Stack vertically (`grid grid-cols-1 gap-3`) or use a container query (`@container md:grid-cols-2`). Doctrine: mem://style/container-aware-responsiveness.",
+        selector: "TemplateElement[value.raw=/\\b(sm|md):grid-cols-[2-9]\\b/]",
+        message: "Viewport-driven multi-column grids (`sm:grid-cols-N` / `md:grid-cols-N`) are banned inside the website-editor tree — the sidebar is a narrow container at every viewport, so `sm:` (640px) and `md:` (768px) crush paired fields and analytics tiles. Stack vertically (`grid grid-cols-1 gap-3`) or use container-width measurement (`useContainerWidth` + a ladder, see PopupAnalyticsCard.tsx). Doctrine: mem://style/container-aware-responsiveness.",
       },
     ],
   }),

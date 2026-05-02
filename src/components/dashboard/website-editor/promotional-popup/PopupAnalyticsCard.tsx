@@ -703,18 +703,25 @@ export function PopupAnalyticsCard({
   // Container-aware tile layout (per the container-aware canon). The editor
   // sidebar narrows the card without narrowing the page, so viewport-based
   // breakpoints lie. We measure the funnel grid's actual wrapper instead.
-  //   ≥720px → 5 cols (full funnel)
-  //   ≥480px → 4 cols (Redemptions + Revenue still split)
-  //   ≥320px → 3 cols
-  //   ≥220px → 2 cols + Outcome merge (Redemptions + Revenue share denominator)
-  //   < 220px → 1 col
+  //
+  // Minimum readable tile width is ~120px (icon + 2-digit value + sparkline).
+  // Below that, tiles become single-character columns ("0 / 0 / 0 / 0 / —")
+  // that read as broken instead of empty — which is exactly what operators
+  // flagged in the editor sidebar. Ladder is sized so every tile is
+  // readable at its assigned column count, falling all the way to 1-col
+  // (vertical stack) before the funnel becomes ambiguous.
+  //   ≥720px → 5 cols (full funnel, ~140px per tile)
+  //   ≥560px → 4 cols (~135px per tile)
+  //   ≥420px → 3 cols (~135px per tile, Outcome merged)
+  //   ≥300px → 2 cols (~140px per tile, Outcome merged)
+  //   < 300px → 1 col (vertical stack — the editor sidebar default)
   const { ref: funnelGridRef, width: funnelWidth } = useContainerWidth<HTMLDivElement>();
   const tileMode: { cols: 1 | 2 | 3 | 4 | 5; mergeOutcome: boolean } = (() => {
-    if (funnelWidth === null) return { cols: 5, mergeOutcome: false };
+    if (funnelWidth === null) return { cols: 1, mergeOutcome: true };
     if (funnelWidth >= 720) return { cols: 5, mergeOutcome: false };
-    if (funnelWidth >= 480) return { cols: 4, mergeOutcome: false };
-    if (funnelWidth >= 320) return { cols: 3, mergeOutcome: true };
-    if (funnelWidth >= 220) return { cols: 2, mergeOutcome: true };
+    if (funnelWidth >= 560) return { cols: 4, mergeOutcome: false };
+    if (funnelWidth >= 420) return { cols: 3, mergeOutcome: true };
+    if (funnelWidth >= 300) return { cols: 2, mergeOutcome: true };
     return { cols: 1, mergeOutcome: true };
   })();
   const gridColsClass =

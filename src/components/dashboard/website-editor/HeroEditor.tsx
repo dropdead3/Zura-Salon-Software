@@ -605,6 +605,7 @@ export function HeroEditor() {
                   </div>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                     <SortableContext items={slides.slice(1).map((s) => s.id)} strategy={rectSortingStrategy}>
+                      {/* eslint-disable-next-line no-restricted-syntax -- uniform slide-thumb grid; tiles are square+tiny so a 2/3-col layout reads cleanly even in the sidebar (≠ paired-field crush). Doctrine: mem://style/container-aware-responsiveness. */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {slides.slice(1).map((s, i) => (
                           <SortableSlideRow
