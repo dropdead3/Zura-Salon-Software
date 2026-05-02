@@ -64,8 +64,7 @@ type HeroView =
 
 const GLOBAL_LABELS: Record<GlobalView, string> = {
   colors: 'Text & Buttons Color',
-  wash: 'Image Wash',
-  scrim: 'Text-area Scrim',
+  overlay: 'Image Overlay',
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
   advanced: 'Advanced',
