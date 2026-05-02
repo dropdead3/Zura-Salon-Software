@@ -65,6 +65,11 @@ export interface DesignOverrides {
   button_shape: ButtonShape;
   hero_overlay_opacity: number; // 0–100
   section_tint_opacity: number; // 0–10 (subtle alternating tint)
+  // Effects — opt-in scroll/motion treatments. Always-default-OFF so existing
+  // sites get zero behavior change. The renderer also short-circuits the
+  // effect when the first section isn't a hero, when in editor edit-mode, or
+  // when the visitor has prefers-reduced-motion set.
+  hero_parallax_enabled: boolean;
 }
 
 const DEFAULTS: DesignOverrides = {
@@ -78,6 +83,7 @@ const DEFAULTS: DesignOverrides = {
   button_shape: 'rounded',
   hero_overlay_opacity: 40,
   section_tint_opacity: 0,
+  hero_parallax_enabled: false,
 };
 
 // Curated font stacks. Adding a stack is a one-line change.
