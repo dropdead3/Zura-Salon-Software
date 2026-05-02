@@ -13,12 +13,21 @@ export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
 export type FabPosition = 'bottom-right' | 'bottom-left';
 /** Curated companion glyph for the eyebrow tag. `none` hides the icon. */
 export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles' | 'scissors';
-/** Per-layout image treatment.
- *  - `cover`: full-width image strip above the headline (default).
+/** @deprecated Cross-surface image treatment — kept as legacy fallback only.
+ *  Replaced by the per-surface pair `modalImageLayout` + `cornerCardImage`,
+ *  which avoid phantom-equivalent options (e.g. on the modal, both `cover`
+ *  and `hidden-on-corner` rendered identically — only the corner card differed).
+ *  Existing rows still set `imageTreatment` and the resolver below maps it.
+ *  - `cover`: full-width image strip above the headline.
  *  - `side`: image rendered as a left rail on modal (ignored on corner-card).
- *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card,
- *    where vertical room is the tightest. */
+ *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card. */
 export type ImageTreatment = 'cover' | 'side' | 'hidden-on-corner';
+/** Modal-only layout for the image. `cover` = full-width strip above the headline.
+ *  `side` = left rail. */
+export type ModalImageLayout = 'cover' | 'side';
+/** Corner-card image visibility. `show` = top strip; `hide` = no image (the corner
+ *  card is the smallest surface, and many operators want it text-only). */
+export type CornerCardImage = 'show' | 'hide';
 /** Where the Claim Offer CTA sends the visitor.
  *  - `booking`: deep-links into the public booking surface with the promo code attached.
  *  - `consultation`: same as booking but flips on `?consultation=true` so the booking
@@ -47,8 +56,16 @@ export interface PromotionalPopupSettings {
    *  decorative (`alt=""`). Operators should set this for booking-page SEO and
    *  screen-reader users. */
   imageAlt?: string;
-  /** How the image renders per layout. Defaults to `cover`. */
+  /** @deprecated Use `modalImageLayout` + `cornerCardImage` instead. Kept for
+   *  back-compat reads of existing rows. The resolver `resolveImageRender`
+   *  maps this onto the new per-surface fields when they are absent. */
   imageTreatment?: ImageTreatment;
+  /** Modal layout for the image (cover strip vs left rail). Optional; falls
+   *  back to mapping the legacy `imageTreatment`. */
+  modalImageLayout?: ModalImageLayout;
+  /** Corner-card image visibility. Optional; falls back to mapping the legacy
+   *  `imageTreatment`. */
+  cornerCardImage?: CornerCardImage;
   /** Focal point as percentages 0..100 — drives CSS `object-position` on
    *  every image render site (modal side rail, modal top strip, corner-card
    *  top strip). Defaults to 50/50 (center). */
@@ -115,7 +132,8 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   startsAt: null,
   endsAt: null,
   frequency: 'once-per-session',
-  imageTreatment: 'cover',
+  modalImageLayout: 'cover',
+  cornerCardImage: 'show',
   imageFocalX: 50,
   imageFocalY: 50,
   fabPosition: 'bottom-right',
@@ -125,6 +143,40 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   autoMinimizeMs: 15000,
   valueAnchor: '$45 value',
 };
+
+/**
+ * Pure resolver for "what should the popup render for the image, per surface".
+ *
+ * Two-tier read:
+ *   1. New per-surface fields win when present (`modalImageLayout`,
+ *      `cornerCardImage`).
+ *   2. Otherwise, map the legacy `imageTreatment` onto the per-surface fields:
+ *        - `'cover'`            → modal=cover, corner=show
+ *        - `'side'`             → modal=side,  corner=show
+ *        - `'hidden-on-corner'` → modal=cover, corner=hide
+ *      (The legacy `'hidden-on-corner'` value never controlled the modal —
+ *       it always rendered as a top strip there. This is the migration shim;
+ *       once an editor save writes the new fields, the legacy value is ignored.)
+ *
+ * `imageUrl` is the master kill switch: no URL → no image anywhere, regardless
+ * of layout choice.
+ */
+export function resolveImageRender(
+  cfg: Pick<PromotionalPopupSettings, 'imageUrl' | 'imageTreatment' | 'modalImageLayout' | 'cornerCardImage'>,
+): { modal: 'cover' | 'side' | 'none'; cornerCard: 'top' | 'none' } {
+  if (!cfg.imageUrl) return { modal: 'none', cornerCard: 'none' };
+
+  const legacy = cfg.imageTreatment;
+  const modal: 'cover' | 'side' =
+    cfg.modalImageLayout
+      ?? (legacy === 'side' ? 'side' : 'cover');
+  const cornerCard: 'top' | 'none' =
+    cfg.cornerCardImage
+      ? (cfg.cornerCardImage === 'show' ? 'top' : 'none')
+      : (legacy === 'hidden-on-corner' ? 'none' : 'top');
+
+  return { modal, cornerCard };
+}
 
 const SETTING_KEY = 'promotional_popup';
 

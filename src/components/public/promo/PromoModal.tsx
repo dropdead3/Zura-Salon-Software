@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getEyebrowIcon } from '@/lib/eyebrow-icons';
-import type { PromotionalPopupSettings } from '@/hooks/usePromotionalPopup';
+import { type PromotionalPopupSettings, resolveImageRender } from '@/hooks/usePromotionalPopup';
 import { PromoBody } from './PromoBody';
 import { PromoCountdownBar } from './PromoCountdownBar';
 
@@ -44,11 +44,13 @@ export function PromoModal({
   onAnimationEnd: (e: React.AnimationEvent<HTMLElement>) => void;
   countdown: { secondsLeft: number; totalSeconds: number } | null;
 }) {
-  const imageMode: 'top' | 'side' | 'none' = !cfg.imageUrl
-    ? 'none'
-    : cfg.imageTreatment === 'side'
-      ? 'side'
-      : 'top';
+  // Resolver maps new per-surface fields (with legacy `imageTreatment` fallback)
+  // to the modal's three-way render mode. See `resolveImageRender` jsdoc for the
+  // full mapping table — including why legacy `'hidden-on-corner'` renders as
+  // `'cover'` on the modal (it never controlled the modal in the first place).
+  const modalImage = resolveImageRender(cfg).modal;
+  const imageMode: 'top' | 'side' | 'none' =
+    modalImage === 'none' ? 'none' : modalImage === 'side' ? 'side' : 'top';
   const wide = imageMode === 'side';
   const exitClasses = 'animate-out fade-out-0 zoom-out-95 duration-300';
 

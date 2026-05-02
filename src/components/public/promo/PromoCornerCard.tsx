@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PromotionalPopupSettings, FabPosition } from '@/hooks/usePromotionalPopup';
+import { type PromotionalPopupSettings, type FabPosition, resolveImageRender } from '@/hooks/usePromotionalPopup';
 import { PromoBody } from './PromoBody';
 import { PromoCountdownBar } from './PromoCountdownBar';
 
@@ -44,8 +44,10 @@ export function PromoCornerCard({
   const exitClasses = fabPosition === 'bottom-left'
     ? 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-left-4 duration-300'
     : 'animate-out fade-out slide-out-to-bottom-4 slide-out-to-right-4 duration-300';
-  const imageMode: 'top' | 'none' =
-    !cfg.imageUrl || cfg.imageTreatment === 'hidden-on-corner' ? 'none' : 'top';
+  // Resolver maps new `cornerCardImage` field (with legacy `imageTreatment`
+  // fallback) to top-strip vs none. The corner card never had a "side" mode —
+  // 360px is too narrow for a left rail.
+  const imageMode: 'top' | 'none' = resolveImageRender(cfg).cornerCard;
   return (
     <div
       key={animationNonce}
