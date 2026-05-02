@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
       client,
       signed_form_template_ids, // Wave 7: optional list of form templates the client signed inline at confirm
       promo_code, // Promotional popup code attached via ?promo= deep-link. Persisted on the appointment + recorded as a redemption when it matches the org's active popup code.
+      variant_key, // A/B variant id attached via ?v= deep-link. Stamped on the redemption row so the experiment card can attribute bookings per-arm.
     } = body;
 
     if (!organization_id || typeof organization_id !== "string") {
@@ -372,6 +373,14 @@ Deno.serve(async (req) => {
               // same table. See `mem://architecture/visibility-contracts.md` —
               // attribution silence is honest; conflating channels is not.
               surface: 'promotional_popup',
+              // Variant attribution. Null for non-experiment traffic (the vast
+              // majority of redemptions). Trusted from the URL — there's no
+              // validation we could meaningfully do here (the variant id is
+              // operator-defined, not a known enum), and worst case is a
+              // harmless mis-attribution within the same org's own funnel.
+              variant_key: typeof variant_key === 'string' && variant_key.trim()
+                ? variant_key.trim()
+                : null,
             });
           if (redempErr) {
             // Don't fail the booking — attribution is best-effort. Operators

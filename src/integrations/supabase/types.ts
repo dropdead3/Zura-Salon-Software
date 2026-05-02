@@ -20217,6 +20217,7 @@ export type Database = {
           transaction_date: string | null
           transaction_id: string | null
           variant_id: string | null
+          variant_key: string | null
           voucher_id: string | null
         }
         Insert: {
@@ -20237,6 +20238,7 @@ export type Database = {
           transaction_date?: string | null
           transaction_id?: string | null
           variant_id?: string | null
+          variant_key?: string | null
           voucher_id?: string | null
         }
         Update: {
@@ -20257,6 +20259,7 @@ export type Database = {
           transaction_date?: string | null
           transaction_id?: string | null
           variant_id?: string | null
+          variant_key?: string | null
           voucher_id?: string | null
         }
         Relationships: [

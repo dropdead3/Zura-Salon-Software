@@ -119,11 +119,12 @@ interface UsePromotionalPopupFunnelArgs {
    *  is purely a temporal narrowing. `windowDays` is ignored when this is set.
    */
   rotationWindow?: { id: string; startsAt: string; endsAt: string } | null;
-  /** Optional A/B variant filter. When set, narrows impressions + responses
-   *  to rows tagged with this `variant_key`. Redemptions are NOT filtered
-   *  (variant attribution doesn't currently propagate through the booking →
-   *  checkout flow), so the redemption count stays at the offer-code level.
-   *  The card surfaces this asymmetry inline so operators don't misread it. */
+  /** Optional A/B variant filter. When set, narrows impressions, responses,
+   *  AND redemptions to rows tagged with this `variant_key`. Variant tagging
+   *  now propagates through the booking flow (popup `?v=` → HostedBookingPage
+   *  → create-public-booking → promotion_redemptions.variant_key), so per-arm
+   *  funnel close is end-to-end. Pre-existing redemptions are untagged and
+   *  will not appear under any specific arm filter. */
   variantKey?: string | null;
 }
 
@@ -211,6 +212,7 @@ export function usePromotionalPopupFunnel({
             .eq('surface', POPUP_SURFACE)
             .gte('transaction_date', windowStart);
           if (windowEnd) q = q.lte('transaction_date', windowEnd);
+          if (variantKey) q = q.eq('variant_key', variantKey);
           return q.limit(10_000);
         })(),
         // Earliest impression for THIS org/surface (any code) — establishes
