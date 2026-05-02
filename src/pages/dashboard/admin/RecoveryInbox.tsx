@@ -96,6 +96,12 @@ export default function RecoveryInbox() {
                           </Badge>
                         )}
                       </div>
+                      <RecoverySLABadge
+                        status={t.status}
+                        createdAt={t.created_at}
+                        firstContactedAt={(t as any).first_contacted_at ?? null}
+                        resolvedAt={t.resolved_at}
+                      />
                       {t.feedback?.comments && (
                         <p className="text-xs text-muted-foreground line-clamp-2">"{t.feedback.comments}"</p>
                       )}
