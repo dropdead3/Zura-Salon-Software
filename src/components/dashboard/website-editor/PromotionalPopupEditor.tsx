@@ -595,6 +595,12 @@ export function PromotionalPopupEditor() {
         isDirty={isDirty}
       />
 
+      {/* Top-of-funnel analytics — impressions → CTA → redemptions → revenue.
+          Renders null until an offer code exists (silence is valid output).
+          Materiality threshold gates rate metrics so a 1/1 = 100% CTR doesn't
+          ship a misleading signal. */}
+      <PopupAnalyticsCard offerCode={savedSnapshot.offerCode} />
+
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
           when no code is configured (silence is valid output) and shows "0"
