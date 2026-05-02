@@ -4,6 +4,7 @@ import { useDrinkMenuConfig, type Drink } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { InlineEditableText } from "./InlineEditableText";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 interface DrinkCardProps {
   drink: Drink;
