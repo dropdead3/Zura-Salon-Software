@@ -111,6 +111,8 @@ export default function ReviewTemplates() {
             </div>
           </CardContent>
         </Card>
+
+        <ReviewResponseTemplateLibrary />
       </div>
     </DashboardLayout>
   );
