@@ -316,21 +316,17 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             className={cn(alignment.shellWrapper, 'relative w-full')}
             style={shellMinHeight > 0 ? { minHeight: shellMinHeight } : undefined}
           >
-            {/* Foreground: in background_only mode we render OUTSIDE
-                AnimatePresence entirely so framer-motion can never trigger an
-                exit/enter on the shared content. The bare wrapper keeps the
-                same DOM shape (ref + classes) for layout measurement. */}
-            {rotatorMode === 'background_only' ? (
-              <div
-                data-hero-foreground="shared"
-                ref={slideContentRef}
-                className={cn('w-full', alignment.innerWrapper)}
-              >
-            ) : null}
-            {rotatorMode !== 'background_only' && (
-              <AnimatePresence mode="wait" initial={false}>
+            {/* Foreground.
+                In background_only mode the key is stable (`fg-shared`) across
+                activeIndex changes, so AnimatePresence never triggers an
+                exit/enter — the foreground stays mounted while only the
+                background layer above cross-fades. In multi_slide mode the
+                key changes per slide, producing the standard sequential
+                hand-off. */}
+            <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={`fg-${activeIndex}`}
+                key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
+                data-hero-foreground={rotatorMode === 'background_only' ? 'shared' : 'per-slide'}
                 ref={slideContentRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
