@@ -36,6 +36,7 @@ interface PromoPopupShape extends Record<string, unknown> {
 
 interface AnnouncementBarShape extends Record<string, unknown> {
   bg_color?: string;
+  highlight_color?: string;
 }
 
 interface HeroSectionShape extends Record<string, unknown> {
