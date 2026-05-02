@@ -29,17 +29,30 @@ interface HeroNotesProps {
   line2: string;
   /** Optional className appended to the container (e.g. for motion wrappers). */
   className?: string;
+  /** Tone class for muted text when no inline color override is set. */
+  toneClass?: string;
+  /** Inline style (operator-set color). Takes precedence over toneClass. */
+  style?: React.CSSProperties;
 }
 
-export function HeroNotes({ alignment, line1, line2, className }: HeroNotesProps) {
+export function HeroNotes({
+  alignment,
+  line1,
+  line2,
+  className,
+  toneClass = 'text-muted-foreground',
+  style,
+}: HeroNotesProps) {
   return (
     <div
       data-hero-notes=""
       className={cn(
-        'flex flex-col gap-1 text-xs md:text-sm text-muted-foreground font-sans',
+        'flex flex-col gap-1 text-xs md:text-sm font-sans',
+        toneClass,
         alignment.notes,
         className,
       )}
+      style={style}
     >
       <p>{line1}</p>
       <p>{line2}</p>
