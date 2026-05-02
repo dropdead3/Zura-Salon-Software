@@ -90,12 +90,16 @@ function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * Cinematic-mode scroll driver. Writes `--hero-parallax-progress` (0→1)
- * on the driver element so CSS can interpolate opacity/scale on the
- * sticky hero shell without React re-renders. One listener,
+ * Scroll driver. Writes `--hero-parallax-progress` (0→1) on the driver
+ * element so CSS can interpolate transforms (rising panel translateY,
+ * cinematic hero opacity/scale) without React re-renders. One listener,
  * rAF-throttled, auto-detached on unmount.
+ *
+ * Runs whenever parallax is `active` (not just cinematic) — the rising
+ * panel needs the same progress signal in subtle mode to translate up
+ * over the hero in lockstep with the hero's exit animations.
  */
-function useCinematicScrollDriver(
+function useParallaxScrollDriver(
   driverRef: React.RefObject<HTMLDivElement>,
   active: boolean,
 ) {
@@ -145,7 +149,10 @@ export function HeroParallaxLayout({
   // Driver ref must be created unconditionally to keep hook order stable
   // when the operator flips the toggle while the page is mounted.
   const driverRef = useRef<HTMLDivElement>(null);
-  useCinematicScrollDriver(driverRef, cinematic);
+  // Driver runs whenever parallax is active so the rising panel can
+  // translate up in lockstep with the hero's exit animations (concurrent,
+  // not sequential). Cinematic mode reads the same variable for fade/scale.
+  useParallaxScrollDriver(driverRef, active);
 
   if (!active) {
     // Silent no-op — render the three slots in normal flow. Provider
@@ -195,24 +202,38 @@ export function HeroParallaxLayout({
         >
           {hero}
         </div>
-      </div>
 
-      {/* Rising panel — sits in normal flow IMMEDIATELY after the driver,
-          which means at scroll 0 it sits one driver-height below the
-          fold (out of sight). As the user scrolls and the driver exits,
-          this panel scrolls up over the still-pinned hero, the rounded
-          top + soft shadow drawing the reveal edge. NO negative margin
-          is used here — that was the cause of the "bleed at rest" bug. */}
-      <div
-        className={cn(
-          'relative z-10',
-          'rounded-t-[2rem] overflow-hidden',
-          'shadow-[0_-24px_48px_-24px_rgba(0,0,0,0.35)]',
-          'bg-background',
-        )}
-        data-hero-parallax="rising"
-      >
-        {next}
+        {/* Rising panel — absolutely positioned at the BOTTOM of the
+            driver so at scroll 0 it sits exactly one viewport-height
+            below the fold (translateY(100vh) from its anchor point).
+            As the user scrolls, we translate it UP in lockstep with the
+            hero's exit animations: by the time the hero has fully faded
+            (scrollYProgress ≈ 0.5 → progress ≈ 0.5), the panel has
+            traveled half the viewport and is covering the lower half of
+            the hero. This makes the two motions concurrent rather than
+            sequential.
+
+            We translate from 100vh → 0 across the FULL runway so the
+            panel is fully docked at progress = 1 (driver fully exited).
+            That keeps the panel attached to its natural document-flow
+            position once scrolling continues into the rest of the page. */}
+        <div
+          className={cn(
+            'absolute left-0 right-0 bottom-0',
+            'rounded-t-[2rem] overflow-hidden',
+            'shadow-[0_-24px_48px_-24px_rgba(0,0,0,0.35)]',
+            'bg-background',
+            'z-10',
+          )}
+          style={{
+            transform:
+              'translateY(calc((1 - var(--hero-parallax-progress, 0)) * 100vh))',
+            willChange: 'transform',
+          }}
+          data-hero-parallax="rising"
+        >
+          {next}
+        </div>
       </div>
 
       {/* Rest of the page — flows normally below the rising panel. */}
