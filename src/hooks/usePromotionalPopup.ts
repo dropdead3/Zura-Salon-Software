@@ -56,8 +56,16 @@ export interface PromotionalPopupSettings {
    *  decorative (`alt=""`). Operators should set this for booking-page SEO and
    *  screen-reader users. */
   imageAlt?: string;
-  /** How the image renders per layout. Defaults to `cover`. */
+  /** @deprecated Use `modalImageLayout` + `cornerCardImage` instead. Kept for
+   *  back-compat reads of existing rows. The resolver `resolveImageRender`
+   *  maps this onto the new per-surface fields when they are absent. */
   imageTreatment?: ImageTreatment;
+  /** Modal layout for the image (cover strip vs left rail). Optional; falls
+   *  back to mapping the legacy `imageTreatment`. */
+  modalImageLayout?: ModalImageLayout;
+  /** Corner-card image visibility. Optional; falls back to mapping the legacy
+   *  `imageTreatment`. */
+  cornerCardImage?: CornerCardImage;
   /** Focal point as percentages 0..100 — drives CSS `object-position` on
    *  every image render site (modal side rail, modal top strip, corner-card
    *  top strip). Defaults to 50/50 (center). */
