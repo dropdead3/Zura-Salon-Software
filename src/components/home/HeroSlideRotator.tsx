@@ -7,7 +7,7 @@
  * so operators can edit the active slide without it sliding away.
  */
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform, type MotionValue } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
