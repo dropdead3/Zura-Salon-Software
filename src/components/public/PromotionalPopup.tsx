@@ -63,20 +63,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // Creative comes from `cfg` (resolved, includes scheduled overrides).
   const lifecycle = usePromoLifecycle({ cfg: wrapper, surface, orgId, isPreview });
 
-  // Disabled / no config → render nothing at all.
-  if (!lifecycle.active || !cfg) return null;
-  // Auto-suppress on /booking — the visitor is in the funnel already.
-  if (lifecycle.onBookingSurface && !isPreview) return null;
-
-  const accent = cfg.accentColor || 'hsl(var(--primary))';
-  const accentFg = readableForegroundFor(cfg.accentColor);
-  const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
   const code = lifecycle.code;
 
   // Record one impression per session for this (org, code, surface). DB-level
   // partial unique index dedups; this guard just avoids the wasted round-trip
   // on re-renders / FAB reopen within the same mount. Preview suppressed —
   // operator QA shouldn't pollute production funnel data.
+  // CRITICAL: hooks must run unconditionally — keep above any early returns.
+  // Internal guards handle the "no config / inactive / booking surface" cases.
   const impressionRecordedRef = useRef(false);
   useEffect(() => {
     if (isPreview) return;
@@ -85,6 +79,15 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     impressionRecordedRef.current = true;
     void recordImpression({ organizationId: orgId, offerCode: code, surface, variantKey });
   }, [isPreview, orgId, lifecycle.open, code, surface, variantKey]);
+
+  // Disabled / no config → render nothing at all.
+  if (!lifecycle.active || !cfg) return null;
+  // Auto-suppress on /booking — the visitor is in the funnel already.
+  if (lifecycle.onBookingSurface && !isPreview) return null;
+
+  const accent = cfg.accentColor || 'hsl(var(--primary))';
+  const accentFg = readableForegroundFor(cfg.accentColor);
+  const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
 
   function handleAccept() {
