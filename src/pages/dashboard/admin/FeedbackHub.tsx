@@ -16,6 +16,7 @@ import { ServiceSatisfactionBriefCard } from '@/components/feedback/ServiceSatis
 import { ParkedDispatchCard } from '@/components/feedback/ParkedDispatchCard';
 import { NegativeReviewHeatmap } from '@/components/feedback/NegativeReviewHeatmap';
 import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackSummary';
+import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
@@ -142,6 +143,8 @@ export default function FeedbackHub() {
             <ComplianceBanner />
 
             <ParkedDispatchCard />
+
+            <RecoveryOutcomeCard />
 
             <AIWeeklyFeedbackSummary />
 

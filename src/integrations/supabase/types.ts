@@ -32748,6 +32748,54 @@ export type Database = {
         }
         Relationships: []
       }
+      v_recovery_outcomes: {
+        Row: {
+          client_id: string | null
+          days_to_rebook: number | null
+          feedback_response_id: string | null
+          first_rebook_at: string | null
+          location_id: string | null
+          organization_id: string | null
+          rebook_count: number | null
+          rebooked: boolean | null
+          recovery_task_id: string | null
+          resolved_at: string | null
+          revenue_saved: number | null
+          staff_user_id: string | null
+          status: string | null
+          task_created_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recovery_tasks_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: true
+            referencedRelation: "client_feedback_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_feedback_response_id_fkey"
+            columns: ["feedback_response_id"]
+            isOneToOne: true
+            referencedRelation: "eligible_website_reviews"
+            referencedColumns: ["response_id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recovery_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       accept_price_recommendation: {
