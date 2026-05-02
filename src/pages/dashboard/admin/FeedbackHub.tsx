@@ -8,6 +8,7 @@ import { tokens } from '@/lib/design-tokens';
 import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
 import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
@@ -94,17 +95,30 @@ export default function FeedbackHub() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Star className="h-4 w-4 text-amber-500" />
-                    Quick Actions
+                    Reputation Engine
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Send className="h-4 w-4" />
-                    Send Survey Request
+                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
+                    <Link to={dashPath('/admin/feedback/recovery')}>
+                      <Send className="h-4 w-4" /> Recovery Inbox
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
+                    <Link to={dashPath('/admin/feedback/links')}>
+                      <Star className="h-4 w-4" /> Location Review Links
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
+                    <Link to={dashPath('/admin/feedback/automations')}>
+                      <Settings className="h-4 w-4" /> Automation Rules
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
             </div>
+
+            <ComplianceBanner />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
