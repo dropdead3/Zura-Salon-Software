@@ -414,7 +414,9 @@ export function usePromoLifecycle({
   }, [isPreview, open, orgId]);
 
   // ── One-time FAB pulse hint ──
-  const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed`;
+  // Scoped per org+code so one popup's pulse doesn't suppress hints for every
+  // other variant in the same session (matches the dismissal/session canon).
+  const PULSE_SESSION_KEY = `${STORAGE_PREFIX}.fab-pulsed.${orgId ?? 'anon'}.${code || 'default'}`;
   useEffect(() => {
     if (!showFab || open || isPreview) return;
     if (typeof window === 'undefined') return;
