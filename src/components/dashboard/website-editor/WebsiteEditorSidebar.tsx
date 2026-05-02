@@ -40,6 +40,8 @@ import {
   LayoutTemplate,
   ChevronsRight,
   ChevronsLeft,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Layers,
   EyeOff,
   Eye,
