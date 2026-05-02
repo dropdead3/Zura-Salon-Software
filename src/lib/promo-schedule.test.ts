@@ -94,3 +94,31 @@ describe('resolvePromotionalPopupForNow', () => {
     expect(out?.headline).toBe('BASE');
   });
 });
+
+describe('detectScheduleConflicts', () => {
+  it('returns empty set for 0 or 1 entries', () => {
+    expect(detectScheduleConflicts(undefined).size).toBe(0);
+    expect(detectScheduleConflicts([]).size).toBe(0);
+    expect(detectScheduleConflicts([entry('a', '2026-01-01T00:00:00Z', '2026-02-01T00:00:00Z')]).size).toBe(0);
+  });
+
+  it('flags both entries when windows overlap', () => {
+    const a = entry('a', '2026-06-01T00:00:00Z', '2026-06-15T00:00:00Z');
+    const b = entry('b', '2026-06-10T00:00:00Z', '2026-06-20T00:00:00Z');
+    const out = detectScheduleConflicts([a, b]);
+    expect(out.has('a')).toBe(true);
+    expect(out.has('b')).toBe(true);
+  });
+
+  it('does not flag back-to-back (touching) windows', () => {
+    const a = entry('a', '2026-06-01T00:00:00Z', '2026-06-10T00:00:00Z');
+    const b = entry('b', '2026-06-10T00:00:00Z', '2026-06-20T00:00:00Z');
+    expect(detectScheduleConflicts([a, b]).size).toBe(0);
+  });
+
+  it('ignores invalid windows', () => {
+    const a = entry('a', '2026-06-01T00:00:00Z', '2026-06-15T00:00:00Z');
+    const b = entry('b', 'not-a-date', 'also-not');
+    expect(detectScheduleConflicts([a, b]).size).toBe(0);
+  });
+});
