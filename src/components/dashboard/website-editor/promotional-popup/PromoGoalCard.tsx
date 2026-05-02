@@ -138,6 +138,23 @@ export function PromoGoalCard({ formData, setFormData }: PromoGoalCardProps) {
   const historyNudge = useMemo(() => summarizeGoalHistory(history), [history]);
   const recordGoalHit = useRecordGoalHit();
 
+  // ── Cross-code pattern nudge (org-wide) ──
+  // Pulls the full org goal-run log and surfaces the single most material
+  // bucket comparison (e.g. "free-* hits cap 3× faster than discount-*").
+  // Silent until 2+ buckets each have ≥3 runs and the speed ratio is ≥2×.
+  const { data: orgHistory = [] } = usePromoGoalHistoryOrgWide();
+  const crossCodeNudge = useMemo(
+    () => summarizeCrossCodePattern(orgHistory),
+    [orgHistory],
+  );
+  // Suppress when this code IS the fast bucket — the operator already knows
+  // the fast pattern works; the comparative insight is for *next* time they
+  // author a slow-bucket promo. Keep visible when this code is the slow
+  // bucket OR an unrelated bucket — that's when the nudge changes a decision.
+  const showCrossCodeNudge =
+    crossCodeNudge.kind === 'cross-code' &&
+    bucketKeyFromOfferCode(offerCode) !== crossCodeNudge.fastBucket;
+
   // ── One-shot write when cap-hit is observed for the first time ──
   // Guards against a re-render storm logging the same hit repeatedly.
   // We key the write to `(offerCode, cap, startedAt)` so raising the cap
