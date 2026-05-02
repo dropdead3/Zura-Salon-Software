@@ -14,24 +14,17 @@ import { Megaphone, ExternalLink, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditorCard } from './EditorCard';
 import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
+import {
+  readThemeTokenSwatches,
+  subscribeToThemeChanges,
+  normalizeHex,
+  type ThemeTokenSwatch,
+} from '@/lib/themeTokenSwatches';
+import { useWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
+import { pickReadableForeground } from '@/lib/color-contrast';
 
-const BANNER_COLOR_PRESETS = [
-  { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
-  { label: 'Warm Sand', value: 'hsl(40, 25%, 90%)', color: 'hsl(40, 25%, 90%)' },
-  { label: 'Soft Cream', value: 'hsl(40, 30%, 95%)', color: 'hsl(40, 30%, 95%)' },
-  { label: 'Stone', value: 'hsl(30, 10%, 85%)', color: 'hsl(30, 10%, 85%)' },
-  { label: 'Charcoal', value: 'hsl(0, 0%, 15%)', color: 'hsl(0, 0%, 15%)' },
-  { label: 'Midnight', value: 'hsl(0, 0%, 8%)', color: 'hsl(0, 0%, 8%)' },
-  { label: 'Blush', value: 'hsl(350, 20%, 93%)', color: 'hsl(350, 20%, 93%)' },
-  { label: 'Sage', value: 'hsl(145, 18%, 92%)', color: 'hsl(145, 18%, 92%)' },
-  { label: 'Slate Blue', value: 'hsl(210, 20%, 93%)', color: 'hsl(210, 20%, 93%)' },
-];
-
-function isDarkColor(color: string): boolean {
-  if (!color) return false;
-  const match = color.match(/hsl\((\d+),?\s*(\d+)%?,?\s*(\d+)%?\)/);
-  if (!match) return false;
-  return parseInt(match[3]) < 40;
+function isDarkHex(hex: string): boolean {
+  return pickReadableForeground(hex) === 'light';
 }
 
 export function AnnouncementBarContent() {
@@ -79,6 +72,36 @@ export function AnnouncementBarContent() {
   // Compare against the persisted settings, not the local default object.
   useDirtyState(formData, settings, 'announcement_bar');
 
+  // Seed banner color presets from the active website theme palette so the
+  // chips always reflect the operator's chosen site theme (not a fixed list).
+  // Mirrors ThemeAwareColorInput's resolution scope + preview-event repaint.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const [previewThemeClass, setPreviewThemeClass] = useState<string | null>(null);
+  useEffect(() => {
+    const onThemePreview = (e: Event) => {
+      const next = (e as CustomEvent).detail?.themeClass;
+      if (typeof next === 'string' && next) setPreviewThemeClass(next);
+    };
+    window.addEventListener('editor-theme-preview', onThemePreview);
+    return () => window.removeEventListener('editor-theme-preview', onThemePreview);
+  }, []);
+  useEffect(() => {
+    if (previewThemeClass && previewThemeClass === `theme-${websiteTheme}`) {
+      setPreviewThemeClass(null);
+    }
+  }, [previewThemeClass, websiteTheme]);
+  const websiteThemeClass = previewThemeClass ?? `theme-${websiteTheme}`;
+
+  const [themeSwatches, setThemeSwatches] = useState<ThemeTokenSwatch[]>(
+    () => readThemeTokenSwatches(websiteThemeClass),
+  );
+  useEffect(() => {
+    setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    return subscribeToThemeChanges(() => {
+      setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    });
+  }, [websiteThemeClass]);
+
   const handleChange = (field: keyof AnnouncementBarSettings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -91,7 +114,8 @@ export function AnnouncementBarContent() {
     );
   }
 
-  const isDark = isDarkColor(formData.bg_color || '');
+  const normalizedActive = normalizeHex(formData.bg_color || '');
+
 
   return (
     <EditorCard title="Announcement Bar" icon={Megaphone} description="Customize the promotional banner displayed above the header on the public website">
@@ -116,27 +140,29 @@ export function AnnouncementBarContent() {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wider">Banner Color</h3>
           <div className="flex flex-wrap gap-3">
-            {BANNER_COLOR_PRESETS.map((preset) => {
-              const isSelected = (formData.bg_color || '') === preset.value;
-              const isPresetDark = isDarkColor(preset.value || 'hsl(40, 20%, 92%)');
-              return (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => handleChange('bg_color', preset.value)}
-                  className={cn(
-                    "relative w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110",
-                    isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
-                  )}
-                  style={{ backgroundColor: preset.color }}
-                  title={preset.label}
-                >
-                  {isSelected && (
-                    <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
-                  )}
-                </button>
-              );
-            })}
+            {themeSwatches
+              .filter((s) => s.hex)
+              .map((swatch) => {
+                const isSelected = normalizedActive === normalizeHex(swatch.hex);
+                const isPresetDark = isDarkHex(swatch.hex);
+                return (
+                  <button
+                    key={swatch.key}
+                    type="button"
+                    onClick={() => handleChange('bg_color', swatch.hex)}
+                    className={cn(
+                      "relative w-8 h-8 rounded-lg border-2 transition-all duration-200 hover:scale-110",
+                      isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
+                    )}
+                    style={{ backgroundColor: swatch.hex }}
+                    title={`${swatch.label} · ${swatch.hex}`}
+                  >
+                    {isSelected && (
+                      <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
+                    )}
+                  </button>
+                );
+              })}
           </div>
           <div className="space-y-2">
             <Label className="text-sm">Custom color</Label>
