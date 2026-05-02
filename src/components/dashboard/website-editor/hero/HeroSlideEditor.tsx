@@ -77,8 +77,12 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
   const sectionOverlayOpacity = section.overlay_opacity ?? 0.4;
   const resolvedOverlayMode: 'darken' | 'lighten' = slide.overlay_mode ?? sectionOverlayMode;
   const resolvedOverlayOpacity = slide.overlay_opacity ?? sectionOverlayOpacity;
-  const resolvedScrimStyle = slide.scrim_style ?? section.scrim_style ?? 'gradient-bottom';
-  const resolvedScrimStrength = slide.scrim_strength ?? section.scrim_strength ?? 0.55;
+  const { style: resolvedScrimStyle, strength: resolvedScrimStrength } = resolveScrim({
+    slideStyle: slide.scrim_style,
+    slideStrength: slide.scrim_strength,
+    sectionStyle: section.scrim_style,
+    sectionStrength: section.scrim_strength,
+  });
   const focalImageUrl = resolvedBgType === 'video' ? resolvedBgPoster : resolvedBgUrl;
 
   const { suggest: suggestFocal, pending: focalPending } = useFocalPointSuggestion(({ x, y }) => {
