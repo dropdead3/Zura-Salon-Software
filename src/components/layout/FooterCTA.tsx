@@ -8,6 +8,7 @@ import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useFooterCTAConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 
 export function FooterCTA() {
   const isPreview = useIsEditorPreview();
@@ -51,6 +52,7 @@ export function FooterCTA() {
   const ctaFilter = useTransform(ctaBlur, (v) => `blur(${v}px)`);
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section 
       id="section-footer_cta"
       ref={sectionRef}
@@ -186,5 +188,6 @@ export function FooterCTA() {
         </motion.div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }
