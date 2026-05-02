@@ -296,11 +296,6 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
   const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
 
-  // When effects are disabled (preview/reduced-motion), fall back to undefined
-  // so the elements render as plain static nodes — no MotionValue subscriptions.
-  const fx = (mv: MotionValue<number> | MotionValue<string>) => (enableScrollFx ? mv : undefined);
-
-
   return (
     <section
       ref={sectionRef}
