@@ -84,9 +84,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Frequency cap (default 90d) unless force=true
+    // Opt-out gate (cannot be overridden — TCPA / platform doctrine)
+    const { data: optOut } = await supabase
+      .from("sms_opt_outs")
+      .select("id")
+      .eq("organization_id", appt.organization_id)
+      .eq("phone", appt.client_phone)
+      .maybeSingle();
+    if (optOut) {
+      return new Response(JSON.stringify({ error: "sms_opted_out" }), {
+        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve frequency cap from the org's active automation rule (fallback 90d).
+    let capDays = 90;
+    const { data: rule } = await supabase
+      .from("review_request_automation_rules")
+      .select("frequency_cap_days")
+      .eq("organization_id", appt.organization_id)
+      .eq("is_active", true)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (rule?.frequency_cap_days) capDays = rule.frequency_cap_days;
+
+    // Frequency cap unless force=true
     if (!body.force && appt.client_id) {
-      const cutoff = new Date(Date.now() - 90 * 86400 * 1000).toISOString();
+      const cutoff = new Date(Date.now() - capDays * 86400 * 1000).toISOString();
       const { count } = await supabase
         .from("review_request_dispatch_queue")
         .select("id", { head: true, count: "exact" })
@@ -95,7 +120,7 @@ Deno.serve(async (req) => {
         .not("sent_at", "is", null)
         .gte("sent_at", cutoff);
       if ((count ?? 0) > 0) {
-        return new Response(JSON.stringify({ error: "frequency_cap_hit", hint: "pass force:true to override" }), {
+        return new Response(JSON.stringify({ error: "frequency_cap_hit", cap_days: capDays, hint: "pass force:true to override" }), {
           status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
