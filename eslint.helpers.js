@@ -167,6 +167,35 @@ export const PLATFORM_PRIMITIVE_PATHS = [
   { name: "@/components/ui/badge",        message: "Use PlatformBadge from @/components/platform/ui — raw badge reads --primary/--secondary from the org theme." },
 ];
 
+// ──────────────────────────────────────────────────────────────────────
+// Global Overlay Stability — banned imports for floating overlays.
+// ──────────────────────────────────────────────────────────────────────
+// Codifies `mem://style/global-overlay-stability`: global FABs / popups /
+// overlays / widgets must NOT subscribe to section-level layout state
+// (e.g. hero alignment) to reposition themselves. Anchor + z-layer is
+// the contract; positional drift on slide change reads as a bug.
+//
+// Scoped to file-name patterns matching *Fab*, *Popup*, *Overlay*,
+// *Widget* under src/components/** (see the matching block in
+// eslint.config.js). The whole `@/lib/heroAlignmentSignal` module is
+// banned in those files so neither subscribe nor read can be wired up.
+//
+// Override (one line, with a reason): if a future overlay genuinely
+// needs alignment-aware positioning, prefer extending the publishers'
+// contract OR routing through a section-aware wrapper inside the hero
+// subtree — do NOT subscribe from a global FAB.
+//   // eslint-disable-next-line no-restricted-imports -- <reason>
+//
+// Pairs with:
+//   - src/test/lint-fixtures/hero-alignment-signal-overlay-banned.tsx
+//   - src/test/lint-config-resolution.test.ts (resolution assertion)
+export const HERO_ALIGNMENT_OVERLAY_PATHS = [
+  {
+    name: "@/lib/heroAlignmentSignal",
+    message: "Global FABs / popups / overlays / widgets must NOT subscribe to or read hero alignment to reposition themselves. The PromotionalPopup FAB regression (Nov 2026) shifted from bottom-6 to bottom-24 on slide change and was perceived as positional drift / a bug. Anchor + z-layer is the contract — see mem://style/global-overlay-stability. If you genuinely need alignment-aware behavior, route it through a hero-subtree wrapper, not a global overlay.",
+  },
+];
+
 /**
  * Symmetric counterpart of `defineScopedDoctrine` for `no-restricted-imports`.
  *
