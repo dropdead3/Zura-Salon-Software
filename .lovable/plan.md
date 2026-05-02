@@ -1,204 +1,117 @@
-# Promotional Popup + Editor — Next-Round Improvements
+## Promotion Library — Preset Catalog + Saved Promotions
 
-You picked all four directions plus copywriting intelligence. That's correct in priority but **wrong as a single PR** — the foreground `PromotionalPopup.tsx` is 1078 lines and the editor is 1814 lines, and dropping A/B variants on top of both surfaces simultaneously is exactly how the May 2026 hero-notes regression happened. So the plan sequences them into 4 waves, smallest blast-radius first, each shippable independently.
+Adds a "Promotion Library" layer above the Promotional Popup editor. Operators pick from curated **presets** (industry-tested offer archetypes) to start fast, and persist their own **saved promotions** (named snapshots of the popup config) they can reload, duplicate, or schedule on rotation.
 
-## Blast-radius / wave map
-
-```text
-Wave   Scope                                   Lines touched   New surfaces  Risk
-─────────────────────────────────────────────────────────────────────────────────
-1      Refactor: split popup + editor          ~1500 moved     0             Low (pure code)
-2      Editor IA cleanup + copy intelligence   ~250 net        1 sub-tab nav Med
-3      Smarter performance panel               ~150 net        1 RPC         Med (read-only)
-4      A/B variant testing                     ~400 net        1 schema col  High (data model)
-```
-
-Each wave is a separate PR. Approve this plan to ship Wave 1; we'll re-plan Wave 2 against the refactored shape so the IA work targets clean components instead of a 1814-line file.
+The popup itself stays exactly as-is — this layer only writes into the existing `PromotionalPopupSettings` shape via the editor's current save path. Zero migration of existing live popups.
 
 ---
 
-## Wave 1 — Refactor (foundation, no operator-visible behavior change)
+### 1. Curated preset catalog (read-only, in-code)
 
-**Goal:** make the next three waves cheap and safe by killing the two megafiles.
+A new `src/lib/promo-presets.ts` ships ~8 archetypes. Each preset is a partial `PromotionalPopupSettings` covering the content + offer slots only (eyebrow, headline, body, CTA labels, disclaimer, value anchor, offerCode placeholder, eyebrowIcon). Behavior/targeting/style fields are NOT touched — those stay at whatever the operator has set, so applying a preset never silently changes appearance, schedule, or audience.
 
-### Public popup (`src/components/public/PromotionalPopup.tsx`, 1078 lines)
+Initial preset set (operator-tested archetypes, not industry-specific to hair):
 
-Extract into `src/components/public/promo/`:
+| Key | Label | Use case |
+|---|---|---|
+| `new-client-discount` | New Client Welcome | First-visit % off |
+| `complimentary-addon` | Complimentary Add-On | Free service with paid booking (current default) |
+| `referral-bonus` | Referral Reward | Bring-a-friend credit |
+| `birthday-month` | Birthday Month Gift | Birthday-month perk |
+| `weekday-fill` | Midweek Fill | Tue/Wed/Thu utilization booster |
+| `holiday-gift-card` | Gift Card Promo | Seasonal gift-card lift |
+| `winback-lapsed` | We Miss You | Lapsed-client reactivation |
+| `flash-24h` | 24-Hour Flash | Urgency-driven short window |
 
-- `PromotionalPopup.tsx` (~150 lines) — orchestrator: data fetch, lifecycle hook, trigger logic, branches to one of three variants
-- `PromoModal.tsx` — modal variant + HeaderBand + side-rail layout
-- `PromoBanner.tsx` — top banner variant
-- `PromoCornerCard.tsx` — corner card variant
-- `PromoFab.tsx` — re-entry FAB (already conceptually distinct)
-- `PromoBody.tsx` — already exists internally; promote to its own file (the shared headline/body/CTA renderer)
-- `PromoCountdownBar.tsx` — already exists internally; promote
-- `usePromoLifecycle.ts` — extract the 200 lines of trigger/dismissal/auto-minimize/preview-reset state into one hook the orchestrator wires to its variants
+Each preset includes a one-line `rationale` (when to use it) and a `category` tag (`acquisition` / `retention` / `utilization` / `seasonal`) for filtering.
 
-This mirrors the **HeroForeground / HeroSlideRotator** parity pattern your canon already enforces and the `mem://architecture/preview-live-parity-pattern` doctrine. Each variant becomes a pure render component (props in, JSX out), which is what makes the future A/B work in Wave 4 trivial — the variant's rendering surface is one prop swap, not a 1078-line scroll.
+### 2. Saved promotions (per-org, persisted)
 
-### Editor (`src/components/dashboard/website-editor/PromotionalPopupEditor.tsx`, 1814 lines)
-
-Extract sub-editors under `src/components/dashboard/website-editor/promo/`:
-
-- `PromotionalPopupEditor.tsx` (~300 lines) — orchestrator: data fetch, dirty/save plumbing, sub-tab routing
-- `PromoContentEditor.tsx` — eyebrow / headline / body / disclaimer + CharCounter + image
-- `PromoOfferEditor.tsx` — offer code, CTA labels, destination chooser, custom URL config
-- `PromoBehaviorEditor.tsx` — appearance, trigger, frequency, auto-minimize, FAB position
-- `PromoTargetingEditor.tsx` — `showOn`, audience, schedule
-- `PromoPerformancePanel.tsx` — redemptions card (already structurally distinct)
-- `PromoPreviewSwatch.tsx` — both FAB + appearance swatches consolidated
-
-Helpers (`Section`, `Field`, `CharCounter`, `appearanceLabel`, `toLocalInput`, `fromLocalInput`, `normalizeHex`, `AccentContrastWarning`) move to `src/components/dashboard/website-editor/promo/internals/`.
-
-### Guardrails
-
-- Add a smoke test per public variant (`PromoModal.test.tsx`, `PromoBanner.test.tsx`, `PromoCornerCard.test.tsx`) rendering each in isolation with mock props — the same isolation-test pattern HeroForeground got
-- Extend `dead-export-home.test.ts` (or sister) to scan `src/components/public/promo/**` and `src/components/dashboard/website-editor/promo/**` so legacy variants can't drift
-- All existing tests (`PromotionalPopup.fab-anchor.test.tsx`, `.close-lifecycle.test.tsx`, `.reset-replay.test.tsx`, `lint-rule-promo-popup-events.test.ts`) must pass without modification — that's the parity proof
-
-**No operator-visible behavior change in this wave.** Same DB shape, same site_settings key, same events.
-
----
-
-## Wave 2 — Editor IA cleanup + copy intelligence (your specific pain point)
-
-After Wave 1, the editor is already split into 5 sub-editors. Wave 2 wires them up properly and adds the copy intelligence layer.
-
-### IA: sub-tab navigation
-
-Replace the single 5-section vertical scroll with a **left-rail sub-tab nav** matching the HeroEditor shape:
-
-```text
-┌──────────────────┬──────────────────────────────────┐
-│ Content       •  │  [Active editor pane]            │
-│ Offer & CTA      │                                  │
-│ Behavior         │  Live preview swatch always      │
-│ Where it shows   │  visible top-right               │
-│ Schedule         │                                  │
-│ ─────────────    │                                  │
-│ Performance      │                                  │
-└──────────────────┴──────────────────────────────────┘
-```
-
-Wired through the canonical `useEditorSubViewState<'content'|'offer'|'behavior'|'targeting'|'schedule'|'performance'>('content')` hook (per `mem://` Website Editor entry contract — defaults to Content on every entry, never persists to localStorage).
-
-Each sub-tab shows a **dirty dot** (•) when its sub-section has unsaved changes, drawing the operator's eye to where they edited. The Save button stays in the orchestrator header so a single save persists the whole config (no per-section saves — the data model is one row).
-
-### Copy intelligence (the eyebrow-urgency pattern, generalized)
-
-The current editor has `EyebrowUrgencySuggestion` (when `endsAt` is within 72h, suggest urgency-tied eyebrow copy). Generalize this pattern into three sibling suggestion chips:
-
-1. **Eyebrow suggestions** — already exists; extend with: time-of-year ("Spring refresh"), low-redemption nudge ("First 10 only" when `redemptionCount < 5` after 7 days), seasonal hooks. Pure deterministic — no AI call.
-
-2. **Body copy templates** — keyed off `acceptDestination`:
-   - `booking` → "Book your [service] this [period] and save [amount]."
-   - `consultation` → "Tell us what you're after — we'll design the look together. Free 20-min consult."
-   - `custom-url` → "[Action verb] to [outcome]. [Instructions hint]."
-   
-   Operator clicks → fills the field; manual edits preserved (same KNOWN_DEFAULT_LABELS pattern as the Accept CTA auto-rewrite).
-
-3. **Value-anchor suggestions** — derive from offer code if numeric ("$45 OFF" → suggest `valueAnchor: '$45 value'`). Or from headline pattern matching (`/free .+/i` → suggest `'Free with purchase'`).
-
-All three are **deterministic**, surfaced as a "Suggestions" subhead under the editor, dismissible via the existing `useDismissedSuggestion` infrastructure, and never auto-edit (operator owns final copy — per doctrine, AI cannot determine business eligibility).
-
-If you later want LLM-generated suggestions, that's a Wave 2.5 add-on through Lovable AI (deterministic chips ship first; LLM augments). Marked as deferred until operator demand surfaces.
-
----
-
-## Wave 3 — Smarter performance panel (read-only analytics)
-
-Today: count + 14d sparkline + revenue-attributed.
-
-Add (all backed by an `record_promo_response` RPC the public popup already writes to):
-
-- **Conversion rate**: `accepted ÷ (accepted + declined + soft)` over the last 30d, with a delta chip vs prior 30d
-- **Response split donut**: accepted / declined / soft-closed — tells operators whether the offer is being rejected (bad copy) or ignored (bad timing)
-- **Per-surface drop-off**: when `showOn` includes multiple surfaces, show acceptance rate per surface so operators learn that booking-page popups convert 4× home-page popups
-- **"This campaign vs last 30d" delta**: one chip near the headline of the panel: `↑ 32% vs last 30d` — the executive-brief tone
-
-### New RPC: `get_promo_performance_breakdown(p_organization_id, p_offer_code, p_window_days)`
-
-Returns:
-```json
-{ "accepted": 42, "declined": 18, "soft": 110, "by_surface": {"home": {...}, "booking": {...}}, "previous_window": {...} }
-```
-
-Pure read on `promo_responses` (already exists, RLS-scoped). No new write paths. New hook `usePromotionalPopupPerformance(offerCode)` mirrors the existing redemptions hook.
-
-Materiality gate (per Visibility Contracts canon): if `accepted + declined + soft < 20`, the donut + delta render `<ConfigurationStubCard />` with copy "Need 20+ visitor responses before this is meaningful." Silence is valid — never show a 50/50 donut from 4 events.
-
----
-
-## Wave 4 — A/B variant testing (highest blast radius — own PR)
-
-After waves 1-3, this becomes a localized change because the popup is already split into pure variants and the analytics panel can already segment.
-
-### Data model
-
-Extend `PromotionalPopupSettings` with optional variant B:
+A new `site_settings` row keyed `promotional_popup_library` stores an array of saved promo snapshots scoped to the org. Reusing `site_settings` (vs a new table) keeps it inside the existing draft/publish + RLS posture and avoids another migration surface for a low-write, low-cardinality feature.
 
 ```ts
-interface PromotionalPopupSettings {
-  // ... existing fields, treated as Variant A
-  variantB?: {
-    enabled: boolean;
-    headline: string;
-    body: string;
-    eyebrow?: string;
-    ctaAcceptLabel: string;
-    accentColor?: string;
-    accentPresetKey?: string | null;
-    valueAnchor?: string;
-  } | null;
-  abTestStartedAt?: string | null;  // when split was activated; resets stats
-}
+type SavedPromo = {
+  id: string;            // uuid
+  name: string;          // operator label, e.g. "Spring Color Promo"
+  notes?: string;        // optional context
+  createdAt: string;     // ISO
+  updatedAt: string;
+  config: PromotionalPopupSettings; // full snapshot (excluding `enabled`)
+  lastAppliedAt?: string;
+};
+
+type PromoLibrary = { saved: SavedPromo[] };
 ```
 
-No DB schema migration needed — site_settings stores JSON. The existing `writeSiteSettingDraft` read-then-update pattern handles this transparently.
+Cap: 25 saved promos per org (silent enforcement at save time — operator cannot accidentally bloat the row).
 
-### Split logic
+New hook `usePromoLibrary()` mirrors the `usePromotionalPopup` pattern: `fetchSiteSetting` / `writeSiteSettingDraft` against the `promotional_popup_library` key. Library writes go through draft → publish like every other site setting.
 
-Deterministic per-visitor: hash `getOrCreateSessionId() + offerCode → 0..1`, ≥0.5 = B. Visitor sees the same variant the entire session. Stamped on every `record_promo_response` call as `variant: 'A' | 'B'`.
+### 3. Editor UI: a "Library" surface above the existing form
 
-### Analytics
-
-Wave 3's `get_promo_performance_breakdown` extends to optionally group by `variant`. Editor's Performance panel renders a head-to-head card:
+Adds a single new `<EditorCard>` at the **top** of `PromotionalPopupEditor.tsx` titled "Promotion Library". Two stacked rows:
 
 ```text
-┌─────────────────────┬─────────────────────┐
-│ Variant A           │ Variant B           │
-│ "Free Haircut..."   │ "Save $45 today..." │
-│                     │                     │
-│ Conv: 12.4%         │ Conv: 18.1%  ↑      │
-│ Sample: 412         │ Sample: 398         │
-│                     │                     │
-│ Stat sig: 94%       │ ✓ Recommended       │
-└─────────────────────┴─────────────────────┘
-        [Promote B and end test]
+┌─ Promotion Library ─────────────────────────────────────┐
+│  Start from a template                                  │
+│  [▼ Choose a preset…]   8 archetypes · category-filtered│
+│                                                         │
+│  Your saved promotions  (3 / 25)                        │
+│  ▸ Spring Color Promo      Apply · Rename · Duplicate · │
+│    Last used Mar 14                       Delete        │
+│  ▸ Winter Gift Card        Apply · …                    │
+│                                                         │
+│  [Save current as promotion…]                           │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Statistical significance via two-proportion z-test in pure JS (~30 lines). Below 90% confidence, no recommendation chip — silence is valid.
+Behaviors:
 
-### Editor UI
+- **Apply preset** / **Apply saved**: merges the preset/snapshot's content+offer fields into `formData` (preserves operator's `enabled`, `appearance`, `trigger`, `showOn`, `audience`, schedule, accent). Marks the form dirty so the existing Save flow + parity contract handles the rest. Toast: "Loaded 'Spring Color Promo' — review and Save to apply."
+- **Save current as promotion**: opens a small inline name field. Snapshots the current `formData` minus `enabled` (so reloading later doesn't auto-publish). Stamps `createdAt` / `updatedAt`. Confirms via toast.
+- **Rename / Duplicate / Delete**: inline row actions. Delete uses the canonical `<UnsavedChangesDialog />` pattern variant for destructive confirm (or a simple `AlertDialog` — pick whichever the editor tree already uses; one inline ask if ambiguous).
+- **Apply confirmation when dirty**: if `isDirty` is true, route through the existing unsaved-changes guard before swapping the form (prevents silent loss of in-progress edits).
 
-Sub-tab "A/B Test" (visible only when `variantB.enabled === true`) lets operators author the B copy alongside A; toggle to enable/disable; "Promote B and end test" button writes B's content into A's fields and clears B.
+### 4. Doctrine compliance
 
-### Guardrails
+- **Preview-Live Parity**: this surface only reads/writes via the editor's existing state — no new public-side render path, so no parity contract impact.
+- **Brand Abstraction**: preset copy uses neutral language ("Welcome offer", not stylist-specific verbiage). No hardcoded tenant references.
+- **Site Settings Persistence**: library writes go through `writeSiteSettingDraft` (read-then-update/insert pattern, project canon).
+- **Visibility Contracts**: empty saved-list renders the "no saved promotions yet" empty state with `tokens.empty.*` (silence is valid here only when zero — when ≥1 exists, list always renders).
+- **Stylist Privacy Contract**: editor lives under admin website-hub, already gated.
+- **Container-Aware**: library card uses `<EditorCard>` + existing `Section`/`Field` primitives — inherits compression behavior.
+- **Typography**: `font-display` for the card title (Termina), `font-sans` for preset labels (Aeonik, never uppercase).
 
-- Test starts fresh: `abTestStartedAt` stamped → any prior responses are excluded from the comparison (only post-stamp data counts)
-- Default off — must opt in; no surprise splits
-- A-only orgs see zero new UI; the entire A/B layer is gated on `variantB != null`
+### 5. Tests (locks the contract)
 
----
+- `promo-presets.test.ts` — every preset deserializes into a valid partial `PromotionalPopupSettings`; no preset includes `enabled` (would auto-publish on apply); no preset includes `appearance` / `showOn` / schedule (would silently change targeting).
+- `usePromoLibrary.test.ts` — 25-cap enforcement; rename uniqueness allowed (no constraint, names can repeat); apply merges content+offer fields only.
+- `PromotionalPopupEditor.library.test.tsx` — applying a preset/saved promo marks form dirty; applying while dirty triggers the unsaved-changes guard; "Save current as promotion" snapshots without `enabled`.
 
-## What you get to approve right now
+### 6. Files
 
-This plan describes the full arc, but **only Wave 1 ships when you approve.** It's the pure code-health refactor with zero operator-visible change, and it makes the next three waves dramatically safer to scope.
+**Created**
+- `src/lib/promo-presets.ts` — the 8 archetypes + category metadata
+- `src/lib/promo-presets.test.ts`
+- `src/hooks/usePromoLibrary.ts` — fetch/save/delete/apply hook
+- `src/hooks/usePromoLibrary.test.ts`
+- `src/components/dashboard/website-editor/promotional-popup/PromoLibraryCard.tsx` — the new EditorCard
+- `src/components/dashboard/website-editor/PromotionalPopupEditor.library.test.tsx`
 
-After Wave 1 lands, I'll re-plan Wave 2 against the new file shape (the IA proposal will be much more concrete once we're targeting `PromoContentEditor.tsx` instead of "lines 827–1037 of the megafile"). You can also re-prioritize at any seam — e.g. skip A/B if Wave 3's data shows the current popup is already converting well.
+**Edited**
+- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` — mount `<PromoLibraryCard formData={formData} setFormData={setFormData} isDirty={isDirty} />` at the top of the form
 
-## Out of scope for all four waves
+**No DB migration** — `promotional_popup_library` is a new `site_settings.id`, and the existing RLS policies on `site_settings` already cover org-scoped reads/writes.
 
-- Mobile-first audit (you didn't pick it; if it's a real issue, flag specific surfaces and we'll fold it into Wave 1's per-variant smoke tests)
-- Multi-popup support (one offer per org stays the contract)
-- Push to Lovable AI for copy generation — Wave 2 stays deterministic; LLM augmentation is deferred until operator demand
+### 7. Out of scope (explicit deferrals)
+
+- **Scheduled rotation** ("auto-swap promo X on April 1"): deferred. Listed as Wave 3. Operators today manually Apply + Save.
+- **Cross-org template marketplace** ("share with my other locations"): deferred until multi-location promo governance is real.
+- **AI-generated presets**: explicitly NOT in scope — violates the "AI cannot determine business eligibility/priorities" doctrine. Presets are curated and static.
+- **Performance ranking on saved promos** ("which one converted best"): the existing `usePromotionalPopupRedemptions` is per-`offerCode`, not per-snapshot. Could be added in Wave 3 by stamping a `libraryEntryId` onto redemption records.
+
+### 8. Open questions for confirmation
+
+1. **Preset list** — is the 8-archetype starter set above the right spread, or do you want me to lean acquisition-heavy / utilization-heavy for hair-salon operators specifically?
+2. **Apply behavior on `enabled`** — confirm: applying a preset/saved promo should leave `enabled` untouched (operator must manually flip the popup live), never auto-enable. This is the safe default and what I've planned.
+3. **Saved promo cap** — 25 feels right for low-cardinality; raise/lower?
