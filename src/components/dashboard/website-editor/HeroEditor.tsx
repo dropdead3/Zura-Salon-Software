@@ -34,6 +34,7 @@ import { HeroSharedContentEditor } from './hero/HeroSharedContentEditor';
 
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
+import { useEditorSubViewState } from './useEditorSubViewState';
 
 import {
   DndContext,
