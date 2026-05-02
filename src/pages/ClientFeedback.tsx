@@ -9,6 +9,7 @@ import { Star, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
 import { useFeedbackByToken, useSubmitFeedback } from '@/hooks/useFeedbackSurveys';
 import { useReviewThresholdSettings, checkPassesReviewGate, checkBelowFollowUpThreshold } from '@/hooks/useReviewThreshold';
 import { ReviewShareScreen } from '@/components/feedback/ReviewShareScreen';
+import { useResolvedReviewLinks } from '@/hooks/useResolvedReviewLinks';
 import { ReviewThankYouScreen } from '@/components/feedback/ReviewThankYouScreen';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -95,6 +96,10 @@ export default function ClientFeedback() {
   
   const { data: feedback, isLoading, error } = useFeedbackByToken(token || undefined);
   const { data: thresholdSettings } = useReviewThresholdSettings();
+  const { data: resolvedLinks } = useResolvedReviewLinks(
+    (feedback as any)?.organization_id,
+    (feedback as any)?.location_id,
+  );
   const submitFeedback = useSubmitFeedback();
 
   const [npsScore, setNpsScore] = useState<number | null>(null);
@@ -149,9 +154,18 @@ export default function ClientFeedback() {
 
   // Show share screen for happy customers
   if (submissionState === 'share' && thresholdSettings) {
+    // Per-location precedence: location_review_settings → org-level threshold settings → empty.
+    // Operator-curated per-location URLs win when present; otherwise org defaults are used.
+    const mergedSettings = {
+      ...thresholdSettings,
+      googleReviewUrl: resolvedLinks?.google || thresholdSettings.googleReviewUrl,
+      appleReviewUrl: resolvedLinks?.apple || thresholdSettings.appleReviewUrl,
+      yelpReviewUrl: resolvedLinks?.yelp || thresholdSettings.yelpReviewUrl,
+      facebookReviewUrl: resolvedLinks?.facebook || thresholdSettings.facebookReviewUrl,
+    };
     return (
       <ReviewShareScreen
-        settings={thresholdSettings}
+        settings={mergedSettings}
         comments={comments}
         feedbackToken={token}
         onSkip={() => setSubmissionState('thankyou')}
