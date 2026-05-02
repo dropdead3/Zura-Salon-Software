@@ -32,6 +32,7 @@ import { usePromoLibrary } from '@/hooks/usePromoLibrary';
 import type { SavedPromoScheduleEntry, PromoGoal } from '@/hooks/usePromotionalPopup';
 import { forecastDaysToCap } from '@/lib/promo-goal-velocity';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
+import { useContainerWidth } from '@/hooks/useContainerWidth';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
@@ -524,6 +525,82 @@ function FunnelStat({
 }
 
 /**
+ * Compressed "Outcome" tile that merges Redemptions + Revenue under a single
+ * shared denominator (impressions). Surfaces only at narrow container widths
+ * (<280px) where 5 individual funnel tiles would crush below legibility.
+ *
+ * Hover still drives the trend chart — defaults to highlighting "redemptions"
+ * since that's the volumetric anchor; revenue is the monetized trailing metric.
+ */
+function OutcomeStat({
+  redemptions,
+  redemptionRate,
+  revenue,
+  bookingRate,
+  redemptionsSparkline,
+  revenueSparkline,
+  highlighted,
+  chartVisible,
+  onHover,
+}: {
+  redemptions: number;
+  redemptionRate: string | null;
+  revenue: number;
+  bookingRate: string | null;
+  redemptionsSparkline: number[];
+  revenueSparkline: number[];
+  highlighted: boolean;
+  chartVisible: boolean;
+  onHover: (k: TrendKey | null) => void;
+}) {
+  return (
+    <div
+      onMouseEnter={() => onHover('redemptions')}
+      onMouseLeave={() => onHover(null)}
+      className={cn(
+        'flex flex-col gap-2 px-3 py-2.5 rounded-lg border bg-muted/30 transition-colors min-w-0',
+        highlighted
+          ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
+          : 'border-border/60',
+      )}
+    >
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <Gift className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className={cn(tokens.kpi.label, 'truncate')}>Outcome</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 min-w-0">
+        <div className="min-w-0">
+          <div className={cn(tokens.kpi.value, 'truncate text-base')}>
+            {redemptions.toLocaleString()}
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            redemptions{redemptionRate ? ` · ${redemptionRate}` : ''}
+          </div>
+        </div>
+        <div className="min-w-0 border-l border-border/60 pl-2">
+          <div className={cn(tokens.kpi.value, 'truncate text-base')}>
+            {revenue > 0 ? (
+              <BlurredAmount>{formatCurrency(revenue)}</BlurredAmount>
+            ) : (
+              '—'
+            )}
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            revenue{bookingRate ? ` · ${bookingRate}` : ''}
+          </div>
+        </div>
+      </div>
+      {!chartVisible ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Sparkline points={redemptionsSparkline} highlighted={highlighted} />
+          <Sparkline points={revenueSparkline} highlighted={highlighted} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * Popup conversion funnel card. Joins impressions → CTA clicks → redemptions
  * → attributed revenue for a single promotional popup offer code.
  *
@@ -622,6 +699,34 @@ export function PopupAnalyticsCard({
 
   // Shared hover index — chart hover lights up tile, tile hover dims chart.
   const [hoveredKey, setHoveredKey] = useState<TrendKey | null>(null);
+
+  // Container-aware tile layout (per the container-aware canon). The editor
+  // sidebar narrows the card without narrowing the page, so viewport-based
+  // breakpoints lie. We measure the funnel grid's actual wrapper instead.
+  //   ≥720px → 5 cols (full funnel)
+  //   ≥480px → 4 cols (Redemptions + Revenue still split)
+  //   ≥320px → 3 cols
+  //   ≥220px → 2 cols + Outcome merge (Redemptions + Revenue share denominator)
+  //   < 220px → 1 col
+  const { ref: funnelGridRef, width: funnelWidth } = useContainerWidth<HTMLDivElement>();
+  const tileMode: { cols: 1 | 2 | 3 | 4 | 5; mergeOutcome: boolean } = (() => {
+    if (funnelWidth === null) return { cols: 5, mergeOutcome: false };
+    if (funnelWidth >= 720) return { cols: 5, mergeOutcome: false };
+    if (funnelWidth >= 480) return { cols: 4, mergeOutcome: false };
+    if (funnelWidth >= 320) return { cols: 3, mergeOutcome: true };
+    if (funnelWidth >= 220) return { cols: 2, mergeOutcome: true };
+    return { cols: 1, mergeOutcome: true };
+  })();
+  const gridColsClass =
+    tileMode.cols === 5
+      ? 'grid-cols-5'
+      : tileMode.cols === 4
+        ? 'grid-cols-4'
+        : tileMode.cols === 3
+          ? 'grid-cols-3'
+          : tileMode.cols === 2
+            ? 'grid-cols-2'
+            : 'grid-cols-1';
 
   // Pre-extract sparkline series so each tile gets a stable reference.
   const series = useMemo(() => {
@@ -757,18 +862,18 @@ export function PopupAnalyticsCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {showSkeleton ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 rounded-lg border border-border/60 bg-muted/20 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
+        <div ref={funnelGridRef}>
+          {showSkeleton ? (
+            <div className={cn('grid gap-2.5', gridColsClass)}>
+              {Array.from({ length: tileMode.mergeOutcome ? 4 : 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-lg border border-border/60 bg-muted/20 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className={cn('grid gap-2.5', gridColsClass)}>
               <FunnelStat
                 label="Impressions"
                 value={data.impressions.toLocaleString()}
@@ -801,38 +906,62 @@ export function PopupAnalyticsCard({
                 chartVisible={chartVisible}
                 onHover={setHoveredKey}
               />
-              <FunnelStat
-                label="Redemptions"
-                value={data.redemptions.toLocaleString()}
-                icon={Gift}
-                rate={formatPercent(data.redemptionRate)}
-                rateLabel="of impressions"
-                sparklinePoints={series.redemptions}
-                trendKey="redemptions"
-                highlighted={hoveredKey === 'redemptions'}
-                chartVisible={chartVisible}
-                onHover={setHoveredKey}
-              />
-              <FunnelStat
-                label="Revenue"
-                value={
-                  data.revenueAttributed > 0 ? (
-                    <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
-                  ) : (
-                    '—'
-                  )
-                }
-                icon={DollarSign}
-                rate={data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined}
-                rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
-                sparklinePoints={series.revenue}
-                trendKey="revenue"
-                highlighted={hoveredKey === 'revenue'}
-                chartVisible={chartVisible}
-                onHover={setHoveredKey}
-              />
+              {tileMode.mergeOutcome ? (
+                <OutcomeStat
+                  redemptions={data.redemptions}
+                  redemptionRate={formatPercent(data.redemptionRate)}
+                  revenue={data.revenueAttributed}
+                  bookingRate={
+                    data.bookingRate !== null ? formatPercent(data.bookingRate) : null
+                  }
+                  redemptionsSparkline={series.redemptions}
+                  revenueSparkline={series.revenue}
+                  highlighted={hoveredKey === 'redemptions' || hoveredKey === 'revenue'}
+                  chartVisible={chartVisible}
+                  onHover={setHoveredKey}
+                />
+              ) : (
+                <>
+                  <FunnelStat
+                    label="Redemptions"
+                    value={data.redemptions.toLocaleString()}
+                    icon={Gift}
+                    rate={formatPercent(data.redemptionRate)}
+                    rateLabel="of impressions"
+                    sparklinePoints={series.redemptions}
+                    trendKey="redemptions"
+                    highlighted={hoveredKey === 'redemptions'}
+                    chartVisible={chartVisible}
+                    onHover={setHoveredKey}
+                  />
+                  <FunnelStat
+                    label="Revenue"
+                    value={
+                      data.revenueAttributed > 0 ? (
+                        <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
+                      ) : (
+                        '—'
+                      )
+                    }
+                    icon={DollarSign}
+                    rate={
+                      data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined
+                    }
+                    rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
+                    sparklinePoints={series.revenue}
+                    trendKey="revenue"
+                    highlighted={hoveredKey === 'revenue'}
+                    chartVisible={chartVisible}
+                    onHover={setHoveredKey}
+                  />
+                </>
+              )}
             </div>
+          )}
+        </div>
 
+        {!showSkeleton ? (
+          <>
             <TrendChart
               data={data.trend}
               highlightedKey={hoveredKey}
@@ -859,7 +988,7 @@ export function PopupAnalyticsCard({
               </p>
             ) : null}
           </>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
