@@ -149,11 +149,10 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const [pulseFab, setPulseFab] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [isHovered, setIsHovered] = useState(false);
-  // Track the active hero alignment (published via <html data-hero-alignment>)
-  // so the FAB can shift up out of the way when a right-aligned hero would
-  // crowd the bottom-right anchor (and vice versa for bottom-left).
-  const [heroAlignment, setHeroAlignment] = useState<HeroAlignmentSignal | null>(null);
-  useEffect(() => subscribeHeroAlignment(setHeroAlignment), []);
+  // FAB position is fixed at bottom-6 full-time. Previously coupled to hero
+  // alignment via subscribeHeroAlignment — removed because positional drift
+  // on slide change reads as broken. Z-layering (z-50) is the correct
+  // separation between FAB and hero content, not viewport repositioning.
   // Three-phase visual lifecycle for the popup root (entering → visible →
   // closing). The `closing` phase keeps the popup mounted so its CSS exit
   // animation plays before unmount; `onAnimationEnd` then flips `open` and
