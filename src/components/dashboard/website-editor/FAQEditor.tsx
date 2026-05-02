@@ -51,6 +51,7 @@ export function FAQEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_faq');
 
   const updateField = <K extends keyof FAQConfig>(field: K, value: FAQConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
