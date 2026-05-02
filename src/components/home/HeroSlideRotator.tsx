@@ -10,13 +10,11 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useHeroScrollAnimation } from '@/hooks/useHeroScrollAnimation';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
-import { HeroEyebrow } from '@/components/home/HeroEyebrow';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
+import { HeroForeground } from './HeroForeground';
 import { resolveScrim } from './heroScrim';
-import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
 import { publishHeroAlignment, clearHeroAlignment } from '@/lib/heroAlignmentSignal';
@@ -25,8 +23,6 @@ import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
 import { HERO_OVERLAY_ANCHORS } from './heroOverlayAnchors';
-import { HeroNotes } from './HeroNotes';
-import { HeroRotatingWord } from './HeroRotatingWord';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
