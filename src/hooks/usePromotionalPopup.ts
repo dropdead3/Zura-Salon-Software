@@ -125,7 +125,6 @@ export interface PromotionalPopupSettings {
   experiment?: PromoExperimentConfig;
 }
 
-import type { PromoExperimentConfig } from '@/lib/promo-experiment';
 export type { PromoExperimentConfig, PromoExperimentVariant } from '@/lib/promo-experiment';
 
 /** One queued rotation entry. References a `SavedPromo.id` from the library. */
