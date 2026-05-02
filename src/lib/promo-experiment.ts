@@ -127,6 +127,10 @@ export function resolvePromotionalPopupForVisitor(args: {
       // WITHOUT attributing impressions to the orphaned schedule entry —
       // doing so would surface phantom rotation analytics for a creative
       // the visitor never actually saw.
+      warnOrphanOnce(
+        'promo-orphan-rotation-fallback',
+        `[promo-orphan-rotation-fallback] Schedule entry "${activeEntry.id}" references missing saved-promo "${activeEntry.savedPromoId}". Falling back to base creative; attribution dropped.`,
+      );
     } else {
       return {
         resolved: applyScheduledSnapshot(cfg, snap),
@@ -152,6 +156,10 @@ export function resolvePromotionalPopupForVisitor(args: {
       };
     }
     // Orphaned variant arm — fall through to base, drop attribution.
+    warnOrphanOnce(
+      'promo-orphan-experiment-fallback',
+      `[promo-orphan-experiment-fallback] Experiment variant "${variant.id}" references missing saved-promo "${variant.savedPromoId}". Falling back to base creative; attribution dropped.`,
+    );
   }
 
   // 3. Base wrapper.
@@ -167,4 +175,24 @@ function applySnapshotCreative(
   snapshot: SavedPromoConfig | null,
 ): PromotionalPopupSettings {
   return applyScheduledSnapshot(base, snapshot);
+}
+
+/** Dev-only one-shot console warning, keyed by taxonomy slug + message body so
+ *  repeat fires within the same browser session collapse to a single line.
+ *  Silent in production builds — operators see the orphan via the editor chip
+ *  (red "Missing creative" badge); this channel is for QA/contributor signal
+ *  only. Slug taxonomy is kebab-case to match the dev-suppression-log convention. */
+const warnedKeys = new Set<string>();
+function warnOrphanOnce(slug: string, message: string): void {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') return;
+  const key = `${slug}::${message}`;
+  if (warnedKeys.has(key)) return;
+  warnedKeys.add(key);
+  // eslint-disable-next-line no-console
+  console.warn(message);
+}
+
+/** @internal — test-only reset so suite ordering doesn't suppress assertions. */
+export function __resetOrphanWarnings(): void {
+  warnedKeys.clear();
 }

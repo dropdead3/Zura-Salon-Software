@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
   hashBucket,
   pickVariant,
   resolvePromotionalPopupForVisitor,
+  __resetOrphanWarnings,
   type PromoExperimentConfig,
 } from './promo-experiment';
 import type { PromotionalPopupSettings } from '@/hooks/usePromotionalPopup';
@@ -142,5 +143,81 @@ describe('resolvePromotionalPopupForVisitor', () => {
     expect(r.resolved?.headline).toBe('ARM A');
     expect(r.scheduleEntryId).toBe('sched-1');
     expect(r.variantKey).toBeNull();
+  });
+});
+
+describe('resolvePromotionalPopupForVisitor — orphaned references (B3)', () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    __resetOrphanWarnings();
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  it('drops scheduleEntryId when the schedule entry references a missing saved-promo', () => {
+    const now = new Date('2026-05-02T12:00:00Z');
+    const cfg: PromotionalPopupSettings = {
+      ...baseCfg,
+      schedule: [{
+        id: 'sched-orphan',
+        savedPromoId: 'snap-deleted',
+        startsAt: '2026-05-01T00:00:00Z',
+        endsAt: '2026-05-03T00:00:00Z',
+      }],
+    } as never;
+    const r = resolvePromotionalPopupForVisitor({
+      cfg, library, bucketingKey: 'sess', now,
+    });
+    // Falls back to base creative…
+    expect(r.resolved?.headline).toBe('BASE');
+    // …with NO attribution to the orphaned rotation arm.
+    expect(r.scheduleEntryId).toBeNull();
+    expect(r.variantKey).toBeNull();
+    // And emits the kebab-case dev warning so QA spots it.
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('promo-orphan-rotation-fallback'),
+    );
+  });
+
+  it('drops variantKey when the experiment variant references a missing saved-promo', () => {
+    const orphanExp: PromoExperimentConfig = {
+      enabled: true,
+      version: 1,
+      variants: [
+        { id: 'only', label: 'Only', savedPromoId: 'snap-deleted', weight: 1 },
+      ],
+    };
+    const r = resolvePromotionalPopupForVisitor({
+      cfg: baseCfg, library, experiment: orphanExp, bucketingKey: 'sess',
+    });
+    expect(r.resolved?.headline).toBe('BASE');
+    expect(r.variantKey).toBeNull();
+    expect(r.variantLabel).toBeNull();
+    expect(r.scheduleEntryId).toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('promo-orphan-experiment-fallback'),
+    );
+  });
+
+  it('warns only once per orphan key within a session', () => {
+    const orphanExp: PromoExperimentConfig = {
+      enabled: true,
+      version: 1,
+      variants: [
+        { id: 'only', label: 'Only', savedPromoId: 'snap-deleted', weight: 1 },
+      ],
+    };
+    for (let i = 0; i < 5; i++) {
+      resolvePromotionalPopupForVisitor({
+        cfg: baseCfg, library, experiment: orphanExp, bucketingKey: 'sess',
+      });
+    }
+    const orphanWarns = warnSpy.mock.calls.filter((c) =>
+      String(c[0] ?? '').includes('promo-orphan-experiment-fallback'),
+    );
+    expect(orphanWarns).toHaveLength(1);
   });
 });
