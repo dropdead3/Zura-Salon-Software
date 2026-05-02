@@ -203,5 +203,6 @@ export function GallerySection() {
         </div>
       </motion.div>
     </Section>
+    </SectionStyleWrapper>
   );
 }
