@@ -9,6 +9,8 @@ import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
 import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
+import { RecoverySLAWidget } from '@/components/feedback/RecoverySLAWidget';
+import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
@@ -74,8 +76,9 @@ export default function FeedbackHub() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <NPSScoreCard organizationId={organizationId} />
+              <RecoverySLAWidget />
               
               <Card>
                 <CardHeader className="pb-2">
@@ -128,6 +131,9 @@ export default function FeedbackHub() {
               </Card>
             </div>
 
+            <div className="flex justify-end">
+              <ComplianceExportButton />
+            </div>
             <ComplianceBanner />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
