@@ -153,16 +153,16 @@ function SortableReview({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group rounded-xl border border-border/40 bg-card/60 transition-all overflow-hidden',
+        'group rounded-2xl border border-border/40 bg-card/60 transition-all overflow-hidden',
         isDragging && 'opacity-50 shadow-lg ring-2 ring-primary',
         !item.enabled && 'opacity-60',
-        expanded && 'border-border/70 bg-card/80',
+        expanded && 'border-border/70 bg-card/80 shadow-sm',
       )}
     >
       {/* Summary row (always visible) */}
-      <div className="flex items-center gap-2 p-3">
+      <div className="flex items-start gap-3 p-4 sm:p-5">
         <button
-          className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-foreground transition-colors p-1 -ml-1"
+          className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-foreground transition-colors p-1.5 -ml-1.5 mt-0.5"
           {...attributes}
           {...listeners}
           aria-label="Reorder"
@@ -171,72 +171,82 @@ function SortableReview({
           <GripVertical className="h-4 w-4" />
         </button>
 
+        {/* Avatar bubble */}
+        <div className="shrink-0 w-10 h-10 rounded-full bg-muted flex items-center justify-center mt-0.5">
+          <span className="font-sans text-sm text-muted-foreground">
+            {initialsOf(item.author)}
+          </span>
+        </div>
+
+        {/* Identity + snippet — full flexible column */}
         <button
           type="button"
           onClick={() => onToggleExpand(item.id)}
-          className="flex-1 flex items-center gap-3 min-w-0 text-left"
+          className="flex-1 min-w-0 text-left py-0.5"
           aria-expanded={expanded}
         >
-          {/* Avatar bubble */}
-          <div className="shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center">
-            <span className="font-sans text-xs text-muted-foreground">
-              {initialsOf(item.author)}
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="font-sans text-sm text-foreground truncate flex-1 min-w-0">
+              {displayAuthor}
             </span>
+            <StarRow rating={item.rating} />
           </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-sans text-sm text-foreground truncate">
-                {displayAuthor}
-              </span>
-              <StarRow rating={item.rating} />
-            </div>
-            <p className="font-sans text-xs text-muted-foreground truncate mt-0.5">
-              {previewBody ? `"${previewBody}"` : <em className="text-muted-foreground/60">No review text yet</em>}
-            </p>
-          </div>
-
-          <ChevronDown
-            className={cn(
-              'h-4 w-4 text-muted-foreground shrink-0 transition-transform',
-              expanded && 'rotate-180',
+          <p className="font-sans text-xs text-muted-foreground truncate mt-1.5">
+            {previewBody ? (
+              `"${previewBody}"`
+            ) : (
+              <em className="text-muted-foreground/60 not-italic">No review text yet</em>
             )}
-          />
+          </p>
         </button>
 
-        {/* Visibility toggle (compact, icon-style) */}
-        <button
-          type="button"
-          onClick={() => onUpdate(item.id, { enabled: !item.enabled })}
-          className={cn(
-            'shrink-0 p-2 rounded-lg transition-colors',
-            item.enabled
-              ? 'text-foreground hover:bg-muted'
-              : 'text-muted-foreground/60 hover:bg-muted',
-          )}
-          aria-label={item.enabled ? 'Hide review' : 'Show review'}
-          title={item.enabled ? 'Visible on site' : 'Hidden from site'}
-        >
-          {item.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </button>
+        {/* Right-side controls — clearly separated */}
+        <div className="flex items-center gap-1 shrink-0 -mr-1">
+          <button
+            type="button"
+            onClick={() => onUpdate(item.id, { enabled: !item.enabled })}
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              item.enabled
+                ? 'text-foreground hover:bg-muted'
+                : 'text-muted-foreground/60 hover:bg-muted',
+            )}
+            aria-label={item.enabled ? 'Hide review' : 'Show review'}
+            title={item.enabled ? 'Visible on site' : 'Hidden from site'}
+          >
+            {item.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </button>
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => onRemove(item.id)}
-          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
-          aria-label="Remove review"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+          <button
+            type="button"
+            onClick={() => onToggleExpand(item.id)}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+          >
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 transition-transform',
+                expanded && 'rotate-180',
+              )}
+            />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onRemove(item.id)}
+            className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            aria-label="Remove review"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Expanded form */}
+      {/* Expanded form — single column for breathing room */}
       {expanded && (
-        <div className="px-4 pb-4 pt-1 space-y-4 border-t border-border/30">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3">
-            <div className="space-y-1.5">
+        <div className="px-5 pb-6 pt-2 sm:px-6 space-y-5 border-t border-border/30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-5">
+            <div className="space-y-2">
               <Label className="text-xs font-sans text-muted-foreground">Author</Label>
               <Input
                 value={item.author}
@@ -244,7 +254,7 @@ function SortableReview({
                 placeholder="Jane D."
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label className="text-xs font-sans text-muted-foreground">Headline</Label>
               <Input
                 value={item.title}
@@ -254,40 +264,49 @@ function SortableReview({
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-xs font-sans text-muted-foreground">Review</Label>
             <Textarea
               value={item.body}
               onChange={(e) => onUpdate(item.id, { body: e.target.value })}
               placeholder="What did they say about your salon?"
-              rows={4}
+              rows={5}
               className="resize-y"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-sans text-muted-foreground">Rating</Label>
-              <div className="h-10 flex items-center">
-                <StarRow rating={item.rating} onChange={(n) => onUpdate(item.id, { rating: n })} size="md" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-sans text-muted-foreground">
-                Source URL <span className="text-muted-foreground/60">(optional)</span>
-              </Label>
-              <Input
-                value={item.source_url ?? ''}
-                onChange={(e) =>
-                  onUpdate(item.id, { source_url: e.target.value || null })
-                }
-                placeholder="https://g.page/..."
+          <div className="space-y-2">
+            <Label className="text-xs font-sans text-muted-foreground">Rating</Label>
+            <div className="flex items-center gap-3 pt-1">
+              <StarRow
+                rating={item.rating}
+                onChange={(n) => onUpdate(item.id, { rating: n })}
+                size="md"
               />
+              <span className="font-sans text-xs text-muted-foreground">
+                {item.rating} of 5
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border/30">
-            <div className="flex items-center gap-2">
+          <div className="space-y-2">
+            <Label className="text-xs font-sans text-muted-foreground">
+              Source URL <span className="text-muted-foreground/60">(optional)</span>
+            </Label>
+            <Input
+              value={item.source_url ?? ''}
+              onChange={(e) =>
+                onUpdate(item.id, { source_url: e.target.value || null })
+              }
+              placeholder="https://g.page/..."
+            />
+            <p className="font-sans text-xs text-muted-foreground/70">
+              Link visitors to the original review on Google, Yelp, or Instagram.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 pt-4 mt-2 border-t border-border/30">
+            <div className="flex items-center gap-3">
               <Switch
                 checked={item.enabled}
                 onCheckedChange={(v) => onUpdate(item.id, { enabled: v })}
@@ -295,7 +314,7 @@ function SortableReview({
               />
               <Label
                 htmlFor={`visible-${item.id}`}
-                className="text-xs font-sans text-muted-foreground cursor-pointer"
+                className="text-sm font-sans text-foreground cursor-pointer"
               >
                 {item.enabled ? 'Visible on site' : 'Hidden from site'}
               </Label>
@@ -595,7 +614,7 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {items.map((item, idx) => (
                 <SortableReview
                   key={item.id}
