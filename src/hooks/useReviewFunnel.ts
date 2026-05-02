@@ -39,7 +39,7 @@ export function useReviewFunnel(daysBack = 30) {
         .limit(5000);
       if (error) throw error;
 
-      const rows = (data ?? []) as Array<{
+      const rows = ((data ?? []) as unknown) as Array<{
         responded_at: string | null;
         nps_score: number | null;
         external_review_clicked: string | null;
