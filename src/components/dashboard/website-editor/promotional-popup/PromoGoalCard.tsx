@@ -21,7 +21,7 @@
  *     goal-tracked because we have no rows to count.
  *   - No currency on this surface; no `BlurredAmount` wrap needed.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { Target, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 import {
   Card,
