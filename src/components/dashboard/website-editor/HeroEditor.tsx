@@ -10,6 +10,7 @@ import {
   Settings2,
   AlignJustify,
   Plus,
+  Droplet,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
@@ -25,6 +26,7 @@ import { cn } from '@/lib/utils';
 
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
+import { HeroWashEditor } from './HeroWashEditor';
 import { EditorCard } from './EditorCard';
 import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
@@ -55,7 +57,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
+type GlobalView = 'colors' | 'wash' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
@@ -63,6 +65,7 @@ type HeroView =
 
 const GLOBAL_LABELS: Record<GlobalView, string> = {
   colors: 'Text & Buttons Color',
+  wash: 'Image Wash',
   scrim: 'Text-area Scrim',
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
@@ -87,6 +90,13 @@ function summarizeColors(c: HeroConfig): string {
   const t = c.text_colors ?? {};
   const overrides = Object.values(t).filter(Boolean).length;
   return overrides === 0 ? 'Auto-contrast' : `${overrides} color${overrides === 1 ? '' : 's'} customized`;
+}
+
+function summarizeWash(c: HeroConfig): string {
+  const mode = c.overlay_mode ?? 'darken';
+  const strength = Math.round((c.overlay_opacity ?? 0.4) * 100);
+  if (strength === 0) return 'No wash';
+  return `${mode === 'lighten' ? 'Lighten' : 'Darken'} · ${strength}%`;
 }
 
 function summarizeScrim(c: HeroConfig): string {
@@ -447,6 +457,7 @@ export function HeroEditor() {
       cards.push(
         { id: 'alignment', title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
         { id: 'colors', title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
+        { id: 'wash', title: 'Image Wash', icon: Droplet, summary: summarizeWash(localConfig) },
         { id: 'scrim', title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
         { id: 'rotator', title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
         { id: 'advanced', title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
@@ -757,6 +768,24 @@ export function HeroEditor() {
           <HeroTextColorsEditor
             value={localConfig.text_colors}
             onChange={(next) => updateField('text_colors', next)}
+          />
+        </EditorCard>
+      )}
+
+      {view.kind === 'global' && view.id === 'wash' && (
+        <EditorCard title="Image Wash" icon={Droplet}>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Flat uniform tint over the entire hero image — the section default
+            inherited by every slide unless that slide overrides it. Pair with
+            the Text-area Scrim for editorial gradients on top.
+          </p>
+          <HeroWashEditor
+            overlayMode={localConfig.overlay_mode ?? 'darken'}
+            overlayOpacity={localConfig.overlay_opacity ?? 0.4}
+            onChange={(patch) => {
+              if (patch.overlay_mode !== undefined) updateField('overlay_mode', patch.overlay_mode);
+              if (patch.overlay_opacity !== undefined) updateField('overlay_opacity', patch.overlay_opacity);
+            }}
           />
         </EditorCard>
       )}
