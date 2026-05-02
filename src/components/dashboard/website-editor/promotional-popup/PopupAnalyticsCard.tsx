@@ -314,11 +314,6 @@ export function PopupAnalyticsCard({
   // Shared hover index — chart hover lights up tile, tile hover dims chart.
   const [hoveredKey, setHoveredKey] = useState<TrendKey | null>(null);
 
-  // Silence-is-valid: no code configured → render nothing.
-  if (!code) return null;
-
-  const showSkeleton = isLoading || !data;
-
   // Pre-extract sparkline series so each tile gets a stable reference.
   const series = useMemo(() => {
     const trend = data?.trend ?? [];
@@ -331,12 +326,16 @@ export function PopupAnalyticsCard({
     };
   }, [data?.trend]);
 
+  // Silence-is-valid: no code configured → render nothing.
+  if (!code) return null;
+
+  const showSkeleton = isLoading || !data;
+
   // Chart only renders when there's *some* signal; otherwise rely on tile sparklines.
-  const chartTotal =
-    (data?.trend ?? []).reduce(
-      (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
-      0,
-    ) ?? 0;
+  const chartTotal = (data?.trend ?? []).reduce(
+    (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
+    0,
+  );
   const chartVisible = chartTotal > 0;
 
   const tooltipNote = data
