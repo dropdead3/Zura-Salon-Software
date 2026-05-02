@@ -1089,6 +1089,16 @@ export function PromotionalPopupEditor() {
                       <p className="font-sans text-xs text-muted-foreground mt-0.5 leading-relaxed">
                         {opt.disabled && opt.disabledReason ? opt.disabledReason : opt.description}
                       </p>
+                      {opt.disabled && opt.value === 'consultation' ? (
+                        <Link
+                          to={dashPath('/admin/booking-surface')}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1.5 inline-flex items-center gap-1 font-sans text-[11px] text-primary hover:underline underline-offset-2"
+                        >
+                          Open Booking Surface settings
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 </button>
