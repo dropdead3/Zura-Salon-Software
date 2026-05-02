@@ -6,6 +6,8 @@ import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { Link } from 'react-router-dom';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { EYEBROW_ICON_OPTIONS, getEyebrowIcon } from '@/lib/eyebrow-icons';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,6 +101,7 @@ export function PromotionalPopupEditor() {
   const { data: bookingConfig } = useBookingSurfaceConfig();
   const consultationPolicyEnabled =
     bookingConfig?.flow?.newClientPolicy === 'consultation-required';
+  const { dashPath } = useOrgDashboardPath();
 
   // Resolve the public booking URL once so the destination chip + lint can
   // render the exact URL a visitor will land on. Falls back to relative path
@@ -1087,6 +1090,16 @@ export function PromotionalPopupEditor() {
                       <p className="font-sans text-xs text-muted-foreground mt-0.5 leading-relaxed">
                         {opt.disabled && opt.disabledReason ? opt.disabledReason : opt.description}
                       </p>
+                      {opt.disabled && opt.value === 'consultation' ? (
+                        <Link
+                          to={dashPath('/admin/booking-surface')}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1.5 inline-flex items-center gap-1 font-sans text-[11px] text-primary hover:underline underline-offset-2"
+                        >
+                          Open Booking Surface settings
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
                 </button>
