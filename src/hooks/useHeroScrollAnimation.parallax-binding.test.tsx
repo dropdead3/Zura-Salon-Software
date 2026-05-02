@@ -34,7 +34,7 @@ vi.mock('framer-motion', async () => {
 
 // Imports must come AFTER the mock declaration.
 import { useHeroScrollAnimation } from '@/hooks/useHeroScrollAnimation';
-import { HeroParallaxScrollProvider } from './HeroParallaxScrollContext';
+import { HeroParallaxScrollProvider } from '@/components/home/HeroParallaxScrollContext';
 
 function HeroProbe({ id }: { id: string }) {
   const sectionRef = useRef<HTMLElement>(null);
