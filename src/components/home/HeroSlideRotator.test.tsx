@@ -219,4 +219,65 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
     expect(container.querySelector('[aria-label="Go to background 1"]')).toBeTruthy();
     expect(container.querySelector('[aria-label="Previous slide"]')).toBeNull();
   });
+
+  it('auto-rotates the BACKGROUND in editor preview when rotator_mode is background_only (advances index past 0)', async () => {
+    // Regression: May 2026 bug — operators uploaded multiple rotating
+    // backgrounds, switched to Background-Only mode, and saw the preview
+    // never advance ("the rotator is broken"). Root cause: auto-rotate was
+    // unconditionally suppressed in `isPreview` mode. The suppression is
+    // correct for multi_slide (each slide owns editable text — rotation
+    // would yank the active edit target), but wrong for background_only
+    // because the foreground is shared/static.
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared',
+      slides: [
+        // background_type: 'inherit' (the makeSlide default) avoids
+        // HeroBackground's <Helmet> preload — would need HelmetProvider
+        // wrapping otherwise. The auto-rotate behavior under test doesn't
+        // depend on whether the background is rendered as an <img>.
+        makeSlide({ id: 's1' }),
+        makeSlide({ id: 's2' }),
+        makeSlide({ id: 's3' }),
+      ],
+      rotator_mode: 'background_only',
+      auto_rotate: true,
+      // Floor-clamped to 2000ms by the rotator (Math.max(2000, ...)).
+      slide_interval_ms: 2000,
+    };
+    const { container } = renderRotator(config);
+
+    // Active dot is the wide pill (w-8). Initially on background 1.
+    const activeDot = () =>
+      container.querySelector('[aria-label^="Go to background"].w-8');
+    expect(activeDot()?.getAttribute('aria-label')).toBe('Go to background 1');
+
+    // Advance past one rotation interval. Auto-rotate should fire.
+    await new Promise((r) => setTimeout(r, 2200));
+    expect(activeDot()?.getAttribute('aria-label')).toBe('Go to background 2');
+  }, 5000);
+
+  it('does NOT auto-rotate in editor preview when rotator_mode is multi_slide (suppression preserved)', async () => {
+    // The other half of the contract: suppressing auto-rotate in preview
+    // for multi_slide mode is the correct behavior — operators editing
+    // per-slide copy must not have the slide rotate out from under their
+    // cursor. This guards the doctrinal split the bug fix introduced.
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared',
+      slides: [
+        makeSlide({ id: 's1' }),
+        makeSlide({ id: 's2' }),
+      ],
+      // multi_slide is the default
+      auto_rotate: true,
+      slide_interval_ms: 2000,
+    };
+    const { container } = renderRotator(config);
+    const activeDot = () =>
+      container.querySelector('[aria-label^="Go to slide"].w-8');
+    expect(activeDot()?.getAttribute('aria-label')).toBe('Go to slide 1');
+    await new Promise((r) => setTimeout(r, 2200));
+    expect(activeDot()?.getAttribute('aria-label')).toBe('Go to slide 1');
+  }, 5000);
 });

@@ -72,7 +72,16 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   }, [slides.length, activeIndex]);
 
   const interval = Math.max(2000, config.slide_interval_ms ?? 6000);
-  const autoRotate = !!config.auto_rotate && slides.length > 1 && !isPreview && !reduceMotion;
+  // Auto-rotate is suppressed in editor preview ONLY for multi_slide mode,
+  // where each slide owns its own editable copy and rotation under the
+  // operator's cursor would yank the active edit target away. In
+  // background_only mode the foreground is shared/static across all slides,
+  // so rotating the BACKGROUND in preview is safe — and necessary, because
+  // otherwise operators uploading multiple rotating backgrounds see the
+  // first one and conclude "the rotator is broken." (May 2026 bug report.)
+  const rotatorModeForAutoRotate = config.rotator_mode ?? 'multi_slide';
+  const suppressForPreview = isPreview && rotatorModeForAutoRotate !== 'background_only';
+  const autoRotate = !!config.auto_rotate && slides.length > 1 && !suppressForPreview && !reduceMotion;
 
   useEffect(() => {
     if (!autoRotate || isPaused) return;
