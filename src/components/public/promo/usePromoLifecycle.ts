@@ -50,16 +50,26 @@ export function writeDismissal(orgId: string | undefined, code: string, record: 
   }
 }
 
+function sessionDismissKey(orgId: string, code: string) {
+  return `${STORAGE_PREFIX}.session.${orgId}.${code || 'default'}`;
+}
+
 export function shouldRespectDismissal(
   cfg: PromotionalPopupSettings,
   record: DismissalRecord | null,
+  orgId?: string,
+  code?: string,
 ): boolean {
   if (!record) return false;
   if (cfg.frequency === 'once') return true;
   if (cfg.frequency === 'always') return false;
   if (cfg.frequency === 'once-per-session') {
     if (typeof window === 'undefined') return false;
-    return window.sessionStorage.getItem(`${STORAGE_PREFIX}.session`) === 'dismissed';
+    if (!orgId) return false;
+    // Bug fix: per-(org, code) session scope. The previous global key
+    // `${STORAGE_PREFIX}.session` caused dismissing one popup to suppress
+    // every other variant for the rest of the session.
+    return window.sessionStorage.getItem(sessionDismissKey(orgId, code ?? '')) === 'dismissed';
   }
   if (cfg.frequency === 'daily') {
     return Date.now() - record.lastShownAt < 24 * 60 * 60 * 1000;
@@ -67,10 +77,40 @@ export function shouldRespectDismissal(
   return false;
 }
 
-export function markSessionDismissed() {
+export function markSessionDismissed(orgId?: string, code?: string) {
   if (typeof window === 'undefined') return;
+  if (!orgId) return;
   try {
-    window.sessionStorage.setItem(`${STORAGE_PREFIX}.session`, 'dismissed');
+    window.sessionStorage.setItem(sessionDismissKey(orgId, code ?? ''), 'dismissed');
+  } catch {
+    // ignore
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Visitor history — supports `audience: 'new-visitors-only'` targeting.
+// A visitor is "known" once we've persisted their first visit to localStorage
+// for this org. Suppression is per-org so a returning visitor to one tenant
+// doesn't suppress popups on a sibling tenant.
+// ─────────────────────────────────────────────────────────────────────────
+
+function visitorKey(orgId: string) {
+  return `${STORAGE_PREFIX}.visitor.${orgId}`;
+}
+
+export function isReturningVisitor(orgId: string | undefined): boolean {
+  if (!orgId || typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(visitorKey(orgId)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markVisitorSeen(orgId: string | undefined) {
+  if (!orgId || typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(visitorKey(orgId), '1');
   } catch {
     // ignore
   }
