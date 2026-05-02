@@ -89,15 +89,20 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
   const rawSlide: HeroSlide | undefined = slides[activeIndex];
 
-  // Background-only mode: slides own only their backgrounds; foreground copy +
-  // CTAs come from the section-level fields. Per-slide copy is preserved on
-  // disk so toggling back to multi-slide restores it.
+  // Background-only mode: the FOREGROUND (eyebrow/headline/subheadline/CTAs/
+  // text colors) is owned exclusively by the master slide (slides[0]) merged
+  // with section-level shared fields. The active slide is consulted ONLY for
+  // background fields (handled below in the bgType/bgUrl/etc. derivations).
+  // This guarantees that rotating to a non-master background never bleeds
+  // that slide's per-slide copy or text-color override into the shared
+  // foreground.
   const rotatorMode = config.rotator_mode ?? 'multi_slide';
+  const masterSlide = slides[0];
   const slide: HeroSlide | undefined = useMemo(() => {
-    if (!rawSlide) return rawSlide;
     if (rotatorMode !== 'background_only') return rawSlide;
+    if (!masterSlide) return rawSlide;
     return {
-      ...rawSlide,
+      ...masterSlide,
       eyebrow: config.eyebrow ?? '',
       show_eyebrow: !!config.show_eyebrow,
       headline_text: config.headline_text ?? '',
@@ -111,6 +116,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     };
   }, [
     rawSlide,
+    masterSlide,
     rotatorMode,
     config.eyebrow,
     config.show_eyebrow,
@@ -310,9 +316,17 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             className={cn(alignment.shellWrapper, 'relative w-full')}
             style={shellMinHeight > 0 ? { minHeight: shellMinHeight } : undefined}
           >
+            {/* Foreground.
+                In background_only mode the key is stable (`fg-shared`) across
+                activeIndex changes, so AnimatePresence never triggers an
+                exit/enter — the foreground stays mounted while only the
+                background layer above cross-fades. In multi_slide mode the
+                key changes per slide, producing the standard sequential
+                hand-off. */}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
+                data-hero-foreground={rotatorMode === 'background_only' ? 'shared' : 'per-slide'}
                 ref={slideContentRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -436,12 +450,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         </div>
       </div>
 
-      {/* Pagination + arrows */}
+      {/* Pagination + arrows.
+          In background_only mode the rotator iterates BACKGROUNDS, not slides:
+          the foreground is shared and never changes. Aria labels reflect that
+          so screen readers + the editor's mental model stay aligned. */}
       {slides.length > 1 && (
-        <div className={`${HERO_OVERLAY_ANCHORS.bottomLeft} flex items-center gap-6`}>
+        <div
+          className={`${HERO_OVERLAY_ANCHORS.bottomLeft} flex items-center gap-6`}
+          data-rotator-mode={rotatorMode}
+        >
           <button
             onClick={() => goTo(activeIndex - 1)}
-            aria-label="Previous slide"
+            aria-label={rotatorMode === 'background_only' ? 'Previous background' : 'Previous slide'}
             className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -451,7 +471,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
               <button
                 key={i}
                 onClick={() => goTo(i)}
-                aria-label={`Go to slide ${i + 1}`}
+                aria-label={
+                  rotatorMode === 'background_only'
+                    ? `Go to background ${i + 1}`
+                    : `Go to slide ${i + 1}`
+                }
                 className={`h-1 transition-all duration-500 ${
                   i === activeIndex
                     ? `w-8 ${hasBackground ? 'bg-white' : 'bg-foreground'}`
@@ -462,7 +486,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           </div>
           <button
             onClick={() => goTo(activeIndex + 1)}
-            aria-label="Next slide"
+            aria-label={rotatorMode === 'background_only' ? 'Next background' : 'Next slide'}
             className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <ChevronRight className="h-5 w-5" />
