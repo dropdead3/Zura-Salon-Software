@@ -90,17 +90,19 @@ function summarizeColors(c: HeroConfig): string {
   return overrides === 0 ? 'Auto-contrast' : `${overrides} color${overrides === 1 ? '' : 's'} customized`;
 }
 
-function summarizeWash(c: HeroConfig): string {
-  const mode = c.overlay_mode ?? 'darken';
-  const strength = Math.round((c.overlay_opacity ?? 0.4) * 100);
-  if (strength === 0) return 'No wash';
-  return `${mode === 'lighten' ? 'Lighten' : 'Darken'} · ${strength}%`;
-}
+function summarizeOverlay(c: HeroConfig): string {
+  const washStrength = Math.round((c.overlay_opacity ?? 0.4) * 100);
+  const washMode = c.overlay_mode ?? 'darken';
+  const scrimStrength = Math.round((c.scrim_strength ?? 0.55) * 100);
+  const scrimStyle = (c.scrim_style ?? 'gradient-bottom').replace(/-/g, ' ');
 
-function summarizeScrim(c: HeroConfig): string {
-  const style = c.scrim_style ?? 'gradient-bottom';
-  const strength = Math.round((c.scrim_strength ?? 0.55) * 100);
-  return `${style.replace(/-/g, ' ')} · ${strength}%`;
+  const washPart = washStrength === 0
+    ? 'No wash'
+    : `${washMode === 'lighten' ? 'Lighten' : 'Darken'} ${washStrength}%`;
+  const scrimPart = scrimStyle === 'none'
+    ? 'no scrim'
+    : `${scrimStyle} ${scrimStrength}%`;
+  return `${washPart} · ${scrimPart}`;
 }
 
 function summarizeAlignment(c: HeroConfig): string {
