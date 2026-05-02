@@ -75,6 +75,9 @@ export function AnnouncementBarContent() {
   }, [formData, updateSettings, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  // Broadcast dirty state so the Website Editor Save bar activates.
+  // Compare against the persisted settings, not the local default object.
+  useDirtyState(formData, settings, 'announcement_bar');
 
   const handleChange = (field: keyof AnnouncementBarSettings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
