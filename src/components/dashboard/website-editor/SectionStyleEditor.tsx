@@ -90,7 +90,6 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         onChange={(next) => update('text_color_override', next ?? '')}
         placeholder="Leave empty to inherit"
       />
-      </div>
 
       {/* Padding */}
       <div className="grid grid-cols-2 gap-4">
