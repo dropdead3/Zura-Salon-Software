@@ -285,6 +285,7 @@ export function LocationsSection() {
   const headerY = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [40, 0, 0, -40]);
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section 
       ref={sectionRef}
       data-theme="light"
