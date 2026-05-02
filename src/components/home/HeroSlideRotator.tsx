@@ -7,7 +7,8 @@
  * so operators can edit the active slide without it sliding away.
  */
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useHeroScrollAnimation } from '@/hooks/useHeroScrollAnimation';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
@@ -281,20 +282,17 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
    */
   const sectionRef = useRef<HTMLElement>(null);
   const enableScrollFx = !isPreview && !reduceMotion;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end start'],
-  });
-  const sectionOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const headingBlur = useTransform(scrollYProgress, [0, 0.3], [0, 15]);
-  const headingBlurFilter = useTransform(headingBlur, (v) => `blur(${v}px)`);
-  const headlineScrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
-  const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
-  const headlineY = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const subheadlineY = useTransform(scrollYProgress, [0, 1], [0, -150]);
-  const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
-  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
-  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
+  const {
+    sectionOpacity,
+    headingBlurFilter,
+    headlineScrollOpacity,
+    taglineY,
+    headlineY,
+    subheadlineY,
+    ctaY,
+    topLineX,
+    bottomLineX,
+  } = useHeroScrollAnimation({ target: sectionRef, enabled: enableScrollFx });
 
   return (
     <section
