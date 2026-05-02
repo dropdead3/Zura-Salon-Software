@@ -455,6 +455,10 @@ interface PopupAnalyticsCardProps {
    *  this card also calls `onFocusRotation`. */
   focusedRotationId?: string | null;
   onFocusRotation?: (id: string | null) => void;
+  /** Optional active goal — when present AND a cap is set AND velocity exists,
+   *  the trend chart overlays a vertical "Cap-hit ETA" reference line. Closes
+   *  the loop visually so operators see suppression coming, not just after. */
+  goal?: PromoGoal | null;
 }
 
 function formatPercent(value: number | null): string {
@@ -538,6 +542,7 @@ export function PopupAnalyticsCard({
   schedule,
   focusedRotationId = null,
   onFocusRotation,
+  goal = null,
 }: PopupAnalyticsCardProps) {
   const code = (offerCode ?? '').trim();
 
