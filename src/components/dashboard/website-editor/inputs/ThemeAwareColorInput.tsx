@@ -50,6 +50,8 @@ import {
 } from '@/lib/themeTokenSwatches';
 import { useInUseSiteColors } from '@/hooks/useInUseSiteColors';
 import { useRecentColorPicks } from '@/hooks/useRecentColorPicks';
+import { useWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
+import { colorThemes } from '@/hooks/useColorTheme';
 
 /**
  * Optional macro descriptor passed in by parent editors that have related
@@ -111,17 +113,52 @@ export function ThemeAwareColorInput({
   const display = (value ?? '').trim();
   const normalizedActive = normalizeHex(display);
 
-  // Theme tokens are read off <html> imperatively; subscribe to attribute
-  // changes so swapping the website theme repaints the chip row.
+  // Resolve theme tokens against the WEBSITE theme (cream-lux by default),
+  // not the dashboard's <html> theme (e.g. theme-zura). The editor lives in
+  // the dashboard but the swatches must represent the public site's palette
+  // — that's the whole point of the picker. We pass the explicit class to
+  // readThemeTokenSwatches so it scopes resolution to a sandbox element.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  // `previewThemeClass` mirrors the iframe's instant-swap channel
+  // (`editor-theme-preview` from SiteDesignPanel). When the operator picks a
+  // new site theme tile, the iframe repaints synchronously via that event;
+  // the picker chips repaint in the same tick instead of waiting for the
+  // site_settings refetch — keeps the cohesion source visually consistent
+  // with what the canvas now shows.
+  const [previewThemeClass, setPreviewThemeClass] = useState<string | null>(null);
+  useEffect(() => {
+    const onThemePreview = (e: Event) => {
+      const next = (e as CustomEvent).detail?.themeClass;
+      if (typeof next === 'string' && next) setPreviewThemeClass(next);
+    };
+    window.addEventListener('editor-theme-preview', onThemePreview);
+    return () => window.removeEventListener('editor-theme-preview', onThemePreview);
+  }, []);
+  // Once the persisted website theme catches up to the previewed class,
+  // drop the override so the persisted value is the single source of truth.
+  useEffect(() => {
+    if (previewThemeClass && previewThemeClass === `theme-${websiteTheme}`) {
+      setPreviewThemeClass(null);
+    }
+  }, [previewThemeClass, websiteTheme]);
+
+  const websiteThemeClass = previewThemeClass ?? `theme-${websiteTheme}`;
+  const websiteThemeName = useMemo(
+    () => colorThemes.find((t) => `theme-${t.id}` === websiteThemeClass)?.name ?? websiteTheme,
+    [websiteThemeClass, websiteTheme],
+  );
+
   const [themeSwatches, setThemeSwatches] = useState<ThemeTokenSwatch[]>(
-    () => readThemeTokenSwatches(),
+    () => readThemeTokenSwatches(websiteThemeClass),
   );
   useEffect(() => {
-    setThemeSwatches(readThemeTokenSwatches());
+    setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    // Still observe <html> as a belt-and-suspenders for theme stylesheets
+    // hot-reloading (e.g. Vite HMR on index.css edits).
     return subscribeToThemeChanges(() => {
-      setThemeSwatches(readThemeTokenSwatches());
+      setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
     });
-  }, []);
+  }, [websiteThemeClass]);
 
   const inUseSwatches = useInUseSiteColors();
 
@@ -270,8 +307,11 @@ export function ThemeAwareColorInput({
           >
             {/* Theme swatches */}
             <div className="space-y-1.5">
-              <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
-                Theme
+              <span
+                className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block"
+                title={`Theme: ${websiteThemeName}${previewThemeClass ? ' (previewing)' : ''}`}
+              >
+                Theme · {websiteThemeName}
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
                 {themeSwatches.map((s) => {
