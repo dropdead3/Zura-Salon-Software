@@ -3,13 +3,18 @@
  *
  * The hero (rotating slides + static hero) publishes its currently active
  * `content_alignment` to `<html data-hero-alignment="left|center|right">`.
- * Global overlays (e.g. the PromotionalPopup FAB anchored to the bottom-right
- * corner) read this signal to nudge themselves out of the way when the hero's
- * active alignment would crowd them — without taking on a coupling to the
- * hero component tree.
+ * Other layers MAY observe this signal to make section-aware decisions
+ * without coupling to the hero component tree.
+ *
+ * NON-CONSUMERS (intentional):
+ *   - PromotionalPopup FAB ("See Offer"). The FAB is a global anchored
+ *     affordance and must NOT reposition based on section-level layout.
+ *     Operators read positional drift on slide change as a bug. Z-layering
+ *     (z-50) is the correct separation between FAB and hero, not viewport
+ *     repositioning. See `mem://style/global-overlay-stability`.
  *
  * Why a DOM attribute and not a context/store?
- *   - The FAB lives in the global Layout, OUTSIDE the hero subtree.
+ *   - Any future consumer is likely to live OUTSIDE the hero subtree.
  *   - The hero is mounted in the public-site route only; a context would
  *     leak hero-specific concerns into Layout.
  *   - A single root attribute is observable via MutationObserver at zero
