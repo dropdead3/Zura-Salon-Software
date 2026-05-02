@@ -7,7 +7,7 @@ import {
   MIN_IMPRESSIONS_FOR_RATES,
 } from '@/hooks/usePromotionalPopupFunnel';
 import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
+
 
 interface PopupAnalyticsCardProps {
   offerCode: string | null | undefined;
