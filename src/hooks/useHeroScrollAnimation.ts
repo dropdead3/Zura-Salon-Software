@@ -19,8 +19,12 @@
  * Tuning constants live ONLY in this file. Do not duplicate the magic ranges
  * downstream — extend the hook instead.
  */
-import { useScroll, useTransform, type MotionValue } from 'framer-motion';
-import type { RefObject } from 'react';
+import { useScroll, useTransform, useMotionValueEvent, type MotionValue } from 'framer-motion';
+import { useEffect, type RefObject } from 'react';
+import {
+  publishHeroExitProgress,
+  clearHeroExitProgress,
+} from '@/lib/heroExitProgressSignal';
 
 interface UseHeroScrollAnimationOptions {
   /** The hero `<section>` ref. Scroll progress is tracked relative to this element. */
@@ -82,6 +86,22 @@ export function useHeroScrollAnimation({
   // Headline split: top line drifts left, bottom (rotating word) drifts right.
   const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
   const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
+
+  // Publish a single hero-exit-progress signal so downstream surfaces
+  // (sticky nav, scroll affordances, FAB reveal) can subscribe to ONE
+  // source of truth instead of binding their own `useScroll` /
+  // `window.scrollY` listeners. This is published unconditionally
+  // (regardless of `enabled`) — reduced-motion users still scroll, and
+  // sticky-nav reveal logic is not motion-driven.
+  useMotionValueEvent(scrollYProgress, 'change', (v) => {
+    publishHeroExitProgress(v);
+  });
+  useEffect(() => {
+    // Initial publish so consumers mounted AFTER the first scroll event
+    // get a value immediately (rather than waiting for the next frame).
+    publishHeroExitProgress(scrollYProgress.get());
+    return () => clearHeroExitProgress();
+  }, [scrollYProgress]);
 
   return {
     enabled,

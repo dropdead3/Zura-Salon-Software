@@ -10,13 +10,11 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useHeroScrollAnimation } from '@/hooks/useHeroScrollAnimation';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ConsultationFormDialog } from '@/components/ConsultationFormDialog';
-import { HeroEyebrow } from '@/components/home/HeroEyebrow';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import { HeroBackground } from './HeroBackground';
+import { HeroForeground } from './HeroForeground';
 import { resolveScrim } from './heroScrim';
-import { InlineEditableText } from './InlineEditableText';
 import { mergeHeroColors, resolveHeroColors } from '@/lib/heroColors';
 import { resolveHeroAlignmentWithWidth } from '@/lib/heroAlignment';
 import { publishHeroAlignment, clearHeroAlignment } from '@/lib/heroAlignmentSignal';
@@ -25,8 +23,6 @@ import { useContainerWidth } from '@/hooks/useContainerWidth';
 import { cn } from '@/lib/utils';
 import { HeroScrollIndicator } from './HeroScrollIndicator';
 import { HERO_OVERLAY_ANCHORS } from './heroOverlayAnchors';
-import { HeroNotes } from './HeroNotes';
-import { HeroRotatingWord } from './HeroRotatingWord';
 
 interface HeroSlideRotatorProps {
   config: HeroConfig;
@@ -96,7 +92,9 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   ]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [consultationOpen, setConsultationOpen] = useState(false);
+  // Note: `consultationOpen` lives inside HeroForeground — it's a foreground
+  // concern (CTA → dialog) and lifting it out would re-couple this shell to
+  // every CTA-button render concern.
   const reduceMotion = useReducedMotion();
 
   // Section-level rotating words — globals shared across all slides (per
@@ -448,160 +446,33 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 background layer above cross-fades. In multi_slide mode the
                 key changes per slide, producing the standard sequential
                 hand-off. */}
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
-                data-hero-foreground={rotatorMode === 'background_only' ? 'shared' : 'per-slide'}
-                ref={slideContentRef}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                className={cn('w-full', alignment.innerWrapper)}
-              >
-                <motion.div style={enableScrollFx ? { y: taglineY } : undefined}>
-                  <HeroEyebrow
-                    show={!!slide.show_eyebrow}
-                    text={slide.eyebrow}
-                    toneClass={heroColors.eyebrowToneClass || mutedTone}
-                    style={heroColors.eyebrowStyle}
-                    editable={isPreview}
-                    fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
-                    className={spacing.eyebrow}
-                  />
-                </motion.div>
-
-                <motion.h1
-                  className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
-                  style={{
-                    fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))',
-                    ...heroColors.headlineStyle,
-                    ...(enableScrollFx ? { y: headlineY, filter: headingBlurFilter } : {}),
-                  }}
-                >
-                  {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
-                  <motion.span
-                    className="whitespace-nowrap block"
-                    style={enableScrollFx ? { x: topLineX, opacity: headlineScrollOpacity } : undefined}
-                  >
-                    {isPreview ? (
-                      <InlineEditableText
-                        as="span"
-                        className="whitespace-nowrap block"
-                        value={slide.headline_text}
-                        sectionKey="section_hero"
-                        fieldPath={rotatorMode === 'background_only' ? 'headline_text' : `slides.${activeIndex}.headline_text`}
-                        placeholder="Headline"
-                      />
-                    ) : (
-                      slide.headline_text
-                    )}
-                  </motion.span>
-                  {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
-                  <motion.span
-                    className="block"
-                    style={enableScrollFx ? { x: bottomLineX, opacity: headlineScrollOpacity } : undefined}
-                  >
-                    <HeroRotatingWord
-                      show={showRotatingWords}
-                      words={rotatingWords}
-                      index={wordIndex}
-                      isOverDark={hasBackground}
-                      colorOverride={!!heroColors.headlineStyle.color}
-                    />
-                  </motion.span>
-                </motion.h1>
-
-                {(slide.subheadline_line1 || slide.subheadline_line2) && (
-                  <motion.p
-                    className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
-                    style={{ ...heroColors.subheadlineStyle, ...(enableScrollFx ? { y: subheadlineY } : {}) }}
-                  >
-                    {isPreview ? (
-                      <InlineEditableText
-                        as="span"
-                        value={slide.subheadline_line1}
-                        sectionKey="section_hero"
-                        fieldPath={rotatorMode === 'background_only' ? 'subheadline_line1' : `slides.${activeIndex}.subheadline_line1`}
-                        placeholder="Subheadline line 1"
-                      />
-                    ) : (
-                      slide.subheadline_line1
-                    )}
-                    {slide.subheadline_line2 && (
-                      <>
-                        <br />
-                        {isPreview ? (
-                          <InlineEditableText
-                            as="span"
-                            value={slide.subheadline_line2}
-                            sectionKey="section_hero"
-                            fieldPath={rotatorMode === 'background_only' ? 'subheadline_line2' : `slides.${activeIndex}.subheadline_line2`}
-                            placeholder="Subheadline line 2"
-                          />
-                        ) : (
-                          slide.subheadline_line2
-                        )}
-                      </>
-                    )}
-                  </motion.p>
-                )}
-
-                <motion.div
-                  className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}
-                  style={enableScrollFx ? { y: ctaY } : undefined}
-                >
-                  <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
-                    <button
-                      onClick={() => {
-                        if (slide.cta_new_client_url) {
-                          window.location.href = slide.cta_new_client_url;
-                        } else {
-                          setConsultationOpen(true);
-                        }
-                      }}
-                      // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
-                      className={cn(
-                        "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
-                        heroColors.primaryButtonClass,
-                        heroColors.hasPrimaryHover && "hero-cta-hover",
-                        heroColors.hasPrimaryHoverFg && "hero-cta-hover-fg",
-                      )}
-                      style={heroColors.primaryButtonStyle}
-                    >
-                      <span className="relative z-10">{slide.cta_new_client || 'Get Started'}</span>
-                      <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                    </button>
-                    {slide.show_secondary_button && (
-                      <Link
-                        to={slide.cta_returning_client_url || '/booking'}
-                        // eslint-disable-next-line no-restricted-syntax -- inline-flex items-center is button-internal icon+text cross-axis centering, not hero content alignment
-                        className={cn(
-                          "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
-                          heroColors.secondaryButtonClass,
-                          heroColors.hasSecondaryHover && "hero-cta-hover",
-                          heroColors.hasSecondaryHoverBorder && "hero-cta-hover-border",
-                          heroColors.hasSecondaryHoverFg && "hero-cta-hover-fg",
-                        )}
-                        style={heroColors.secondaryButtonStyle}
-                      >
-                        <span className="relative z-10">{slide.cta_returning_client || 'Learn More'}</span>
-                        <ArrowRight className="w-0 h-4 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all duration-300" />
-                      </Link>
-                    )}
-                  </div>
-                  {config.show_consultation_notes && (config.consultation_note_line1 || config.consultation_note_line2) && (
-                    <HeroNotes
-                      alignment={alignment}
-                      line1={config.consultation_note_line1 ?? ''}
-                      line2={config.consultation_note_line2 ?? ''}
-                      toneClass={heroColors.notesToneClass}
-                      style={heroColors.notesStyle}
-                    />
-                  )}
-                </motion.div>
-              </motion.div>
-            </AnimatePresence>
+            <HeroForeground
+              slide={slide}
+              config={config}
+              activeIndex={activeIndex}
+              rotatorMode={rotatorMode}
+              isPreview={isPreview}
+              hasBackground={hasBackground}
+              heroColors={heroColors}
+              mutedTone={mutedTone}
+              alignment={alignment}
+              spacing={spacing}
+              rotatingWords={rotatingWords}
+              showRotatingWords={showRotatingWords}
+              wordIndex={wordIndex}
+              scrollFx={{
+                enabled: enableScrollFx,
+                taglineY,
+                headlineY,
+                subheadlineY,
+                ctaY,
+                topLineX,
+                bottomLineX,
+                headingBlurFilter,
+                headlineScrollOpacity,
+              }}
+              contentRef={slideContentRef}
+            />
           </div>
         </div>
       </motion.div>
@@ -678,7 +549,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         }}
       />
 
-      <ConsultationFormDialog open={consultationOpen} onOpenChange={setConsultationOpen} />
+      {/* ConsultationFormDialog now lives inside HeroForeground (foreground concern). */}
     </section>
   );
 }
