@@ -21,8 +21,6 @@ import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip
 import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
 import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
-import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
