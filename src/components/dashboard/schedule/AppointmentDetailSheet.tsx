@@ -115,6 +115,7 @@ import { useSpatialState } from '@/lib/responsive/useSpatialState';
 import { PaymentLinkStatusBadge } from '@/components/dashboard/appointments/PaymentLinkStatusBadge';
 import { PaymentLinkStatusCard } from '@/components/dashboard/appointments/PaymentLinkStatusCard';
 import { SendToPayButton } from '@/components/dashboard/appointments/SendToPayButton';
+import { SendReviewRequestButton } from '@/components/feedback/SendReviewRequestButton';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
 import { ColorBarUpsellInline } from '@/components/color-bar/ColorBarUpsellInline';
 
@@ -2957,6 +2958,15 @@ export function AppointmentDetailSheet({
                           afterpaySurchargeEnabled={orgSurchargeEnabled}
                           afterpaySurchargeRate={orgSurchargeRate}
                           onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
+                        />
+                      )}
+                      {status === 'completed' && appointment.id && (
+                        <SendReviewRequestButton
+                          appointmentId={appointment.id}
+                          variant="outline"
+                          size={tokens.button.card}
+                          className="gap-1.5"
+                          label="Review Request"
                         />
                       )}
                       {overflowActions.length > 0 && (
