@@ -12,6 +12,9 @@ verify_jwt = true
 [functions.ai-recovery-draft]
 verify_jwt = true
 
+[functions.ai-feedback-weekly-summary]
+verify_jwt = true
+
 [functions.send-daily-reminders]
 verify_jwt = false
 
