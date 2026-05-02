@@ -140,7 +140,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   function handleDecline() {
     if (!isPreview) {
       writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
-      markSessionDismissed();
+      markSessionDismissed(orgId, code);
       void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined', variantKey });
     }
     lifecycle.beginExit('decline');
