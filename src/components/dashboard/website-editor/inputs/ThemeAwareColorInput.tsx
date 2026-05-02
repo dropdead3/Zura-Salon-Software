@@ -50,6 +50,7 @@ import {
 } from '@/lib/themeTokenSwatches';
 import { useInUseSiteColors } from '@/hooks/useInUseSiteColors';
 import { useRecentColorPicks } from '@/hooks/useRecentColorPicks';
+import { useWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
 
 /**
  * Optional macro descriptor passed in by parent editors that have related
@@ -111,17 +112,24 @@ export function ThemeAwareColorInput({
   const display = (value ?? '').trim();
   const normalizedActive = normalizeHex(display);
 
-  // Theme tokens are read off <html> imperatively; subscribe to attribute
-  // changes so swapping the website theme repaints the chip row.
+  // Resolve theme tokens against the WEBSITE theme (cream-lux by default),
+  // not the dashboard's <html> theme (e.g. theme-zura). The editor lives in
+  // the dashboard but the swatches must represent the public site's palette
+  // — that's the whole point of the picker. We pass the explicit class to
+  // readThemeTokenSwatches so it scopes resolution to a sandbox element.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const websiteThemeClass = `theme-${websiteTheme}`;
   const [themeSwatches, setThemeSwatches] = useState<ThemeTokenSwatch[]>(
-    () => readThemeTokenSwatches(),
+    () => readThemeTokenSwatches(websiteThemeClass),
   );
   useEffect(() => {
-    setThemeSwatches(readThemeTokenSwatches());
+    setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    // Still observe <html> as a belt-and-suspenders for theme stylesheets
+    // hot-reloading (e.g. Vite HMR on index.css edits).
     return subscribeToThemeChanges(() => {
-      setThemeSwatches(readThemeTokenSwatches());
+      setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
     });
-  }, []);
+  }, [websiteThemeClass]);
 
   const inUseSwatches = useInUseSiteColors();
 
