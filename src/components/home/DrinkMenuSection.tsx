@@ -161,6 +161,7 @@ export function DrinkMenuSection() {
   }
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section 
       ref={sectionRef} 
       data-theme="light" 
