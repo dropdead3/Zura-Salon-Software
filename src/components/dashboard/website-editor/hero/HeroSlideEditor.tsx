@@ -581,27 +581,71 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
             )}
           </EditorCard>
 
-          {/* Scrim override */}
+          {/* Scrim override — gated by an explicit toggle so the slide
+              starts inheriting from the section by default. Flipping the
+              toggle on seeds the slide with the section's current values
+              so the controls have something to drive; flipping it off
+              clears the override (writes null/null) so the slide reverts
+              to inheriting. Same UX pattern as "Override Overlay" above. */}
           <EditorCard title="Scrim Override" icon={Moon}>
-            <HeroScrimEditor
-              scrimStyle={slide.scrim_style ?? null}
-              scrimStrength={slide.scrim_strength ?? null}
-              inheritedStyle={section.scrim_style ?? 'gradient-bottom'}
-              inheritedStrength={section.scrim_strength ?? 0.55}
-              allowInherit
-              onChange={(patch) => onUpdate(patch as Partial<HeroSlide>)}
-              title="Slide Scrim"
-              description="Override the section scrim for this slide. Useful when one video flashes brighter than others."
-            />
+            {(() => {
+              const scrimOverrideActive =
+                slide.scrim_style != null || slide.scrim_strength != null;
+              return (
+                <>
+                  <ToggleInput
+                    label="Override Scrim"
+                    value={scrimOverrideActive}
+                    onChange={(v) =>
+                      onUpdate({
+                        scrim_style: v ? (section.scrim_style ?? 'gradient-bottom') : null,
+                        scrim_strength: v ? (section.scrim_strength ?? 0.55) : null,
+                      })
+                    }
+                    description="Use a different scrim style or strength than the section default. Useful when one video flashes brighter than others."
+                  />
+                  {scrimOverrideActive && (
+                    <HeroScrimEditor
+                      scrimStyle={slide.scrim_style ?? null}
+                      scrimStrength={slide.scrim_strength ?? null}
+                      inheritedStyle={section.scrim_style ?? 'gradient-bottom'}
+                      inheritedStrength={section.scrim_strength ?? 0.55}
+                      allowInherit
+                      onChange={(patch) => onUpdate(patch as Partial<HeroSlide>)}
+                    />
+                  )}
+                </>
+              );
+            })()}
           </EditorCard>
 
-          {/* Text color override */}
+          {/* Text color override — gated by an explicit toggle. Off = empty
+              text_colors object (inherit everything from section). On =
+              reveal the per-field color picker. */}
           <EditorCard title="Text Color Override" icon={Moon}>
-            <HeroTextColorsEditor
-              value={slide.text_colors}
-              onChange={(next) => onUpdate({ text_colors: next })}
-              compact
-            />
+            {(() => {
+              const textColors = slide.text_colors ?? {};
+              const textOverrideActive = Object.values(textColors).some(
+                (v) => v != null && v !== '',
+              );
+              return (
+                <>
+                  <ToggleInput
+                    label="Override Text Colors"
+                    value={textOverrideActive}
+                    onChange={(v) => onUpdate({ text_colors: v ? { ...textColors } : {} })}
+                    description="Use different text and button colors for this slide than the section default."
+                  />
+                  {textOverrideActive && (
+                    <HeroTextColorsEditor
+                      value={slide.text_colors}
+                      onChange={(next) => onUpdate({ text_colors: next })}
+                      compact
+                    />
+                  )}
+                </>
+              );
+            })()}
           </EditorCard>
         </CollapsibleContent>
       </Collapsible>

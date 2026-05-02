@@ -428,31 +428,69 @@ function SlideRow({
             </div>
           )}
 
-          {/* Per-slide scrim style override — falls back to section-level
-              when null. Critical for video slides whose luminance flickers. */}
-          <div className="space-y-2 pt-3 border-t border-border/30">
-            <HeroScrimEditor
-              scrimStyle={slide.scrim_style ?? null}
-              scrimStrength={slide.scrim_strength ?? null}
-              inheritedStyle={sectionScrimStyle ?? 'gradient-bottom'}
-              inheritedStrength={sectionScrimStrength ?? 0.55}
-              allowInherit
-              onChange={(patch) => onUpdate(slide.id, patch as Partial<HeroSlide>)}
-              title="Slide Scrim"
-              description="Override the section scrim for this slide. Useful when one video flashes brighter than others."
-            />
-          </div>
+          {/* Per-slide scrim style override — gated by an explicit toggle
+              so the slide starts inheriting from the section by default
+              (matches the "Override Overlay" pattern above). Off = null/null
+              (inherit). On = seed with the section's current values so the
+              controls have something to drive. */}
+          {(() => {
+            const scrimOverrideActive =
+              slide.scrim_style != null || slide.scrim_strength != null;
+            return (
+              <div className="space-y-2 pt-3 border-t border-border/30">
+                <ToggleInput
+                  label="Override Scrim"
+                  value={scrimOverrideActive}
+                  onChange={(v) =>
+                    onUpdate(slide.id, {
+                      scrim_style: v ? (sectionScrimStyle ?? 'gradient-bottom') : null,
+                      scrim_strength: v ? (sectionScrimStrength ?? 0.55) : null,
+                    })
+                  }
+                  description="Use a different scrim style or strength than the section default. Useful when one video flashes brighter than others."
+                />
+                {scrimOverrideActive && (
+                  <HeroScrimEditor
+                    scrimStyle={slide.scrim_style ?? null}
+                    scrimStrength={slide.scrim_strength ?? null}
+                    inheritedStyle={sectionScrimStyle ?? 'gradient-bottom'}
+                    inheritedStrength={sectionScrimStrength ?? 0.55}
+                    allowInherit
+                    onChange={(patch) => onUpdate(slide.id, patch as Partial<HeroSlide>)}
+                  />
+                )}
+              </div>
+            );
+          })()}
 
-          {/* Per-slide text/button color overrides — empty fields inherit
-              from the section-level Text & Buttons panel. */}
-          <div className="space-y-2 pt-3 border-t border-border/30">
-            <HeroTextColorsEditor
-              value={slide.text_colors}
-              onChange={(next) => onUpdate(slide.id, { text_colors: next })}
-              compact
-            />
-          </div>
-
+          {/* Per-slide text/button color overrides — gated by an explicit
+              toggle. Off = empty text_colors object (inherit everything
+              from the section-level Text & Buttons panel). */}
+          {(() => {
+            const textColors = slide.text_colors ?? {};
+            const textOverrideActive = Object.values(textColors).some(
+              (v) => v != null && v !== '',
+            );
+            return (
+              <div className="space-y-2 pt-3 border-t border-border/30">
+                <ToggleInput
+                  label="Override Text Colors"
+                  value={textOverrideActive}
+                  onChange={(v) =>
+                    onUpdate(slide.id, { text_colors: v ? { ...textColors } : {} })
+                  }
+                  description="Use different text and button colors for this slide than the section default."
+                />
+                {textOverrideActive && (
+                  <HeroTextColorsEditor
+                    value={slide.text_colors}
+                    onChange={(next) => onUpdate(slide.id, { text_colors: next })}
+                    compact
+                  />
+                )}
+              </div>
+            );
+          })()}
           {/* Live preview of this slide's resolved background stack */}
           {resolvedBgType !== 'none' && !!resolvedBgUrl && (
             <div className="pt-3 border-t border-border/30">
