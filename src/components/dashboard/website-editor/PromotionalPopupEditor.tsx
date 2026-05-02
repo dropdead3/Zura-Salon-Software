@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Megaphone, Loader2, RotateCcw, Gift, X, ExternalLink, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Sparkline } from '@/components/ui/Sparkline';
+import { DashboardLoader } from '@/components/dashboard/DashboardLoader';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
