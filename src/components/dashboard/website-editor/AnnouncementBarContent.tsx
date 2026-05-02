@@ -46,6 +46,7 @@ export function AnnouncementBarContent() {
     cta_url: '',
     open_in_new_tab: true,
     bg_color: '',
+    highlight_color: '',
   });
 
   useEffect(() => {
