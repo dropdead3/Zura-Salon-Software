@@ -36,6 +36,7 @@ interface PromoPopupShape extends Record<string, unknown> {
 
 interface AnnouncementBarShape extends Record<string, unknown> {
   bg_color?: string;
+  highlight_color?: string;
 }
 
 interface HeroSectionShape extends Record<string, unknown> {
@@ -64,6 +65,9 @@ export function useInUseSiteColors(): InUseColorSwatch[] {
     }
     if (announcement?.bg_color) {
       raw.push({ hex: normalizeHex(announcement.bg_color), label: 'Announcement' });
+    }
+    if (announcement?.highlight_color) {
+      raw.push({ hex: normalizeHex(announcement.highlight_color), label: 'Announcement highlight' });
     }
     const tc = hero?.text_colors;
     if (tc) {

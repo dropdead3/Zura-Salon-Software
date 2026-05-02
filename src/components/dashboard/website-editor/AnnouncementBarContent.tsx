@@ -46,11 +46,16 @@ export function AnnouncementBarContent() {
     cta_url: '',
     open_in_new_tab: true,
     bg_color: '',
+    highlight_color: '',
   });
 
   useEffect(() => {
     if (settings) {
-      setFormData({ ...settings, bg_color: settings.bg_color || '' });
+      setFormData({
+        ...settings,
+        bg_color: settings.bg_color || '',
+        highlight_color: settings.highlight_color || '',
+      });
     }
   }, [settings]);
 
@@ -166,6 +171,18 @@ export function AnnouncementBarContent() {
                 autoCapitalize="off"
               />
               <p className="text-xs text-muted-foreground">Displayed in bold/medium weight</p>
+              <div className="space-y-2 pt-2">
+                <Label className="text-sm">Highlight Color</Label>
+                <ThemeAwareColorInput
+                  value={formData.highlight_color || ''}
+                  onChange={(next) => handleChange('highlight_color', next ?? '')}
+                  placeholder="Auto (matches text)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to inherit. If contrast is too low against the bar, an auto-readable
+                  color is used instead.
+                </p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="message_suffix">Message Suffix</Label>

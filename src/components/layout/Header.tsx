@@ -10,6 +10,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } from "@/hooks/useWebsiteMenus";
 import { emitNavEvent } from "@/lib/nav-tracking";
+import { contrastRatio, readableForegroundFor } from "@/lib/color-contrast";
 
 function isColorDark(color: string): boolean {
   if (!color) return false;
@@ -381,14 +382,40 @@ export function Header() {
                 style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
               >
                 <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-                  <p className={cn(
-                    "text-sm text-center md:text-left",
-                    effectiveDark ? "text-white" : "text-foreground/80",
-                  )}>
-                    {announcementSettings.message_prefix}{' '}
-                    <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
-                    {announcementSettings.message_suffix}
-                  </p>
+                  {(() => {
+                    // Auto-contrast for the operator-set highlight color.
+                    // Effective bg: explicit bg_color when set, otherwise the
+                    // bar sits over hero scrim (≈ black) when effectiveDark,
+                    // or over a light surface (≈ white) post-scroll.
+                    const effectiveBg = announcementSettings.bg_color
+                      || (effectiveDark ? '#000000' : '#ffffff');
+                    const operatorHighlight = announcementSettings.highlight_color;
+                    let highlightColor: string | undefined;
+                    if (operatorHighlight) {
+                      const ratio = contrastRatio(operatorHighlight, effectiveBg);
+                      // 3:1 is WCAG AA for large/UI text. Below that, swap to
+                      // black/white for legibility but preserve operator intent
+                      // when their pick is already readable.
+                      highlightColor = ratio !== null && ratio < 3
+                        ? readableForegroundFor(effectiveBg)
+                        : operatorHighlight;
+                    }
+                    return (
+                      <p className={cn(
+                        "text-sm text-center md:text-left",
+                        effectiveDark ? "text-white" : "text-foreground/80",
+                      )}>
+                        {announcementSettings.message_prefix}{' '}
+                        <span
+                          className="font-medium"
+                          style={highlightColor ? { color: highlightColor } : undefined}
+                        >
+                          {announcementSettings.message_highlight}
+                        </span>{' '}
+                        {announcementSettings.message_suffix}
+                      </p>
+                    );
+                  })()}
                   <a
                     href={announcementSettings.cta_url || '#'}
                     target={announcementSettings.open_in_new_tab ? '_blank' : undefined}

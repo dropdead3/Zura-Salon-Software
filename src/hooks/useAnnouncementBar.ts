@@ -13,6 +13,7 @@ export interface AnnouncementBarSettings {
   cta_url: string;
   open_in_new_tab: boolean;
   bg_color?: string;
+  highlight_color?: string;
 }
 
 const DEFAULT_SETTINGS: AnnouncementBarSettings = {
@@ -23,6 +24,7 @@ const DEFAULT_SETTINGS: AnnouncementBarSettings = {
   cta_text: 'Shop Our Extensions Here',
   cta_url: '#',
   open_in_new_tab: true,
+  highlight_color: '',
 };
 
 export function useAnnouncementBarSettings(explicitOrgId?: string) {
