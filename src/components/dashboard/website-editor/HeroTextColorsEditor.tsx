@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useState } from 'react';
 import type { HeroTextColors } from '@/hooks/useSectionConfig';
 import { ThemeAwareColorInput } from '@/components/dashboard/website-editor/inputs/ThemeAwareColorInput';
+import { SectionSubhead } from '@/components/dashboard/website-editor/SectionSubhead';
 
 // Shim that preserves the legacy `<ColorRow label value onChange />` API
 // used throughout this file. Behind the scenes it's the canonical
@@ -75,7 +76,7 @@ export function HeroTextColorsEditor({
       {/* Order mirrors the live hero render stack: eyebrow → headline →
           subheadline → notes. Buttons follow in their own subheaded blocks. */}
       <div className="space-y-3">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Text</p>
+        <SectionSubhead>Text</SectionSubhead>
         <ColorRow label="Eyebrow" value={colors.eyebrow} onChange={(v) => update('eyebrow', v)} />
         <ColorRow label="Headline" value={colors.headline} onChange={(v) => update('headline', v)} />
         <ColorRow label="Subheadline" value={colors.subheadline} onChange={(v) => update('subheadline', v)} />
@@ -83,7 +84,7 @@ export function HeroTextColorsEditor({
       </div>
 
       <div className="space-y-3 pt-3 border-t border-border/40">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Primary Button</p>
+        <SectionSubhead>Primary Button</SectionSubhead>
         <ColorRow label="Background" value={colors.primary_button_bg} onChange={(v) => update('primary_button_bg', v)} />
         <ColorRow label="Text" value={colors.primary_button_fg} onChange={(v) => update('primary_button_fg', v)} />
         <ColorRow
@@ -94,7 +95,7 @@ export function HeroTextColorsEditor({
       </div>
 
       <div className="space-y-3 pt-3 border-t border-border/40">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Secondary Button</p>
+        <SectionSubhead>Secondary Button</SectionSubhead>
         <ColorRow
           label="Border"
           value={colors.secondary_button_border}
