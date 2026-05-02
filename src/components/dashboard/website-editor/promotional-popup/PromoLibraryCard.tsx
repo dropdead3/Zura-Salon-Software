@@ -308,7 +308,7 @@ export function PromoLibraryCard({ formData, setFormData, isDirty }: PromoLibrar
       {/* ── Saved promotions ── */}
       <div className="space-y-2 pt-2 border-t border-border/60">
         <div className="flex items-center justify-between gap-2">
-          <Label className="font-sans text-sm">
+          <Label className="text-xs">
             Your saved promotions{' '}
             <span className="text-muted-foreground tabular-nums">
               ({saved.length} / {SAVED_PROMO_CAP})
