@@ -4,7 +4,10 @@ import {
   forecastDaysToCap,
   suggestCapBump,
   summarizeGoalHistory,
+  summarizeCrossCodePattern,
+  bucketKeyForCode,
   MIN_GOAL_RUNS_FOR_NUDGE,
+  MIN_RUNS_PER_BUCKET,
   type PromoGoalRun,
 } from './promo-goal-velocity';
 
