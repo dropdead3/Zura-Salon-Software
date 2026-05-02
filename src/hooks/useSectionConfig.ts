@@ -413,6 +413,8 @@ export interface FooterCTAConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_cta_button: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 /**
