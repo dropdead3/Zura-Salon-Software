@@ -413,10 +413,42 @@ export function PopupAnalyticsCard({
               </div>
               <CardDescription>
                 {description ??
-                  `Conversion funnel for ${code} · last ${windowDays} days`}
+                  (activeRotation
+                    ? `${savedById.get(activeRotation.savedPromoId) ?? 'Rotation'} window · ${code}`
+                    : `Conversion funnel for ${code} · last ${windowDays} days`)}
               </CardDescription>
             </div>
           </div>
+          {showRotationSelector ? (
+            <div className="shrink-0">
+              <Select value={rotationId} onValueChange={setRotationId}>
+                <SelectTrigger className="h-9 w-[220px] text-xs">
+                  <SelectValue placeholder="All rotations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All rotations · last {windowDays}d
+                  </SelectItem>
+                  {rotationOptions.map((e) => {
+                    const name = savedById.get(e.savedPromoId) ?? '(deleted)';
+                    const start = new Date(e.startsAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                    const end = new Date(e.endsAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                    return (
+                      <SelectItem key={e.id} value={e.id}>
+                        {name} · {start}–{end}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
