@@ -358,30 +358,22 @@ export function ThemeAwareColorInput({
               </div>
             )}
 
-            {/* Custom row — native picker + EyeDropper. The eslint doctrine
-                allows native `<input type="color">` only inside this file.
-                Native picker fires onChange continuously while the operator
-                drags the saturation/hue handles; record into Recent only on
-                blur (commit) so we don't pollute the ring with intermediate
-                hexes from a single picking session. */}
-            <div className="space-y-1.5">
-              <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
-                Custom
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={colorPickerValue}
-                  onChange={(e) => onChange(e.target.value)}
-                  onBlur={(e) => recordPick(e.target.value)}
-                  className="h-9 flex-1 rounded-md border border-border cursor-pointer bg-transparent"
-                  aria-label="Custom color picker"
-                />
+            {/* Custom row — themed in-popover saturation/hue picker
+                (react-colorful) replaces the OS-level RGB dialog. The
+                picker fires onChange continuously while dragging; we only
+                record into Recent on pointerup so a single drag session
+                doesn't pollute the ring with intermediate hexes. The
+                EyeDropper button sits inline as the second sampling path. */}
+            <div className="space-y-2 theme-aware-color-picker">
+              <div className="flex items-center justify-between">
+                <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70">
+                  Custom
+                </span>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="h-9 px-2 gap-1.5"
+                  className="h-7 px-2 gap-1.5 -mr-1"
                   disabled={!eyeDropperSupported || eyedropperBusy}
                   onClick={handleEyeDropper}
                   title={
@@ -393,6 +385,16 @@ export function ThemeAwareColorInput({
                   <Pipette className="h-3.5 w-3.5" />
                   <span className="text-[11px]">Pick</span>
                 </Button>
+              </div>
+              <div
+                onPointerUp={() => recordPick(colorPickerValue)}
+                onBlur={() => recordPick(colorPickerValue)}
+              >
+                <HexColorPicker
+                  color={colorPickerValue}
+                  onChange={onChange}
+                  className="!w-full"
+                />
               </div>
               {!eyeDropperSupported && (
                 <span className="block text-[10px] text-muted-foreground/70">
