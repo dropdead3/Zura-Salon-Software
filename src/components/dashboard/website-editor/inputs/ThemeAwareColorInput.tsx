@@ -327,7 +327,12 @@ export function ThemeAwareColorInput({
                           setOpen(false);
                         }
                       }}
-                      color={s.cssVar}
+                      // Dot color must come from the website-theme-resolved
+                      // hex (s.hex), NOT s.cssVar — the cssVar would resolve
+                      // against the dashboard's <html> theme (e.g. theme-zura
+                      // purple) and mis-paint the chip even though the click
+                      // correctly applies the website theme's hex.
+                      color={s.hex || s.cssVar}
                     >
                       {s.label}
                     </SwatchChip>
