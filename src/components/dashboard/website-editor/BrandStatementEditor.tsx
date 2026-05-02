@@ -100,7 +100,6 @@ function SortableParagraph({ id, index, value, onChange, onRemove, canRemove }: 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className="rounded-lg"
       />
     </div>
   );
