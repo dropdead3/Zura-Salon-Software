@@ -91,6 +91,13 @@ function summarizeColors(c: HeroConfig): string {
   return overrides === 0 ? 'Auto-contrast' : `${overrides} color${overrides === 1 ? '' : 's'} customized`;
 }
 
+function summarizeWash(c: HeroConfig): string {
+  const mode = c.overlay_mode ?? 'darken';
+  const strength = Math.round((c.overlay_opacity ?? 0.4) * 100);
+  if (strength === 0) return 'No wash';
+  return `${mode === 'lighten' ? 'Lighten' : 'Darken'} · ${strength}%`;
+}
+
 function summarizeScrim(c: HeroConfig): string {
   const style = c.scrim_style ?? 'gradient-bottom';
   const strength = Math.round((c.scrim_strength ?? 0.55) * 100);
