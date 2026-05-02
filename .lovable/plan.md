@@ -1,60 +1,38 @@
-## Diagnosis
+## Problem
 
-The "See Offer" FAB shifts vertically based on the active hero's content alignment. The mechanism:
+When you open the Website editor (`?tab=editor`), the left rail jumps you straight into whichever editor you last touched (e.g. Hero Background, FAQ, a custom section). That's because the editor persists `editorTab` to `localStorage` per-org and restores it on every mount. So leaving and coming back never feels "fresh" — it always lands deep inside the last surface you happened to be editing.
 
-1. `HeroSlideRotator` and `HeroSection` publish the active slide's `content_alignment` to `<html data-hero-alignment="left|center|right">` via `publishHeroAlignment()` (`src/lib/heroAlignmentSignal.ts`).
-2. `PromotionalPopup` subscribes to that attribute (lines 149–153, 520–528) and, when the hero alignment matches the FAB's corner (`right` hero + `bottom-right` FAB, or `left` hero + `bottom-left` FAB), bumps the FAB from `bottom-6` to `bottom-24` — about 72px of vertical drift.
-3. Result: as slides rotate or as the operator changes per-slide alignment, the FAB jumps up and down. In your two screenshots, slide 1 (right-aligned) crowds the FAB → FAB lifts; slide 2 (left-aligned) doesn't crowd → FAB drops back down. Looks like a bug; reads as instability.
+You want normal navigation: open the editor, see the rail, pick what to work on. No automatic jump.
 
-## What's wrong with the current behavior
+## Fix
 
-- A FAB is a **global, persistent affordance** anchored to a viewport corner. Its job is to sit above content (`z-50` already handles that), not to dodge section-level layout changes.
-- The "stay out of the way" instinct is misapplied: the FAB and the hero CTA buttons live in different visual layers. The hero CTAs are inside the section; the FAB is overlaid above. They can coexist at the same baseline because the FAB is on a higher z-plane.
-- Operators read positional drift as broken, not as polish (you just did).
-- Doctrine fit: this is the same pattern as the Visibility Contracts core rule — silence/stability is a stronger signal than reactive nudging.
+Change the editor's landing behavior so re-entering the editor lands on a neutral starting point, while still letting the URL deep-link into a specific editor when something explicitly requests it.
 
-## Plan
+### What changes
 
-### 1. Decouple the FAB from hero alignment (`src/components/public/PromotionalPopup.tsx`)
+In `src/components/dashboard/website-editor/WebsiteEditorShell.tsx`:
 
-- Remove `heroAlignment` state + `subscribeHeroAlignment` subscription (lines 149–153).
-- Remove the `fabCrowded` derivation and the conditional `bottom-24` class (lines 520–522, 527).
-- FAB sits at `bottom-6` full-time, mirrored left/right by `fabPos`.
-- Drop the now-unused `subscribeHeroAlignment` and `HeroAlignmentSignal` imports (line 25).
-- Remove the now-dead `transition-[bottom] duration-300 ease-out` class from the FAB wrapper (line 526) since `bottom` no longer changes.
+1. **Stop persisting `editorTab`.** Remove it from the `PersistedState` shape and from the `writePersisted` payload. `selectedPageId` and `showPreview` stay persisted — those are layout preferences, not navigation history.
 
-### 2. Keep the alignment signal infrastructure intact
+2. **Land on a neutral default on every entry.** Initialize `editorTab` to `'hero'` for the home page (and `'page-settings'` for non-home pages, matching the existing fallback at lines 343–351). No localStorage read for the active editor.
 
-`src/lib/heroAlignmentSignal.ts`, `publishHeroAlignment()` calls in `HeroSlideRotator` and `HeroSection`, and the `<html data-hero-alignment>` attribute stay. Reasons:
-- Cheap to keep (single root attribute, no perf cost).
-- Future consumers may legitimately need section-aware placement (e.g. a chat widget that genuinely overlaps the hero CTA hit-target on mobile).
-- Removing the publishers would be a wider-blast-radius edit than the bug warrants.
+3. **Honor an explicit URL deep-link override.** If the URL carries `?editor=<tab>` (new param, opt-in), use that as the initial tab. This preserves the ability for "Edit this section" buttons elsewhere to jump straight into a specific editor without resurrecting the auto-jump behavior.
 
-Add a one-line note to `heroAlignmentSignal.ts` clarifying that the FAB intentionally does NOT consume this signal — prevents the next contributor from re-wiring it.
-
-### 3. Regression guard (`src/components/public/PromotionalPopup.test.tsx` if it exists, else add one)
-
-Single test: render `<PromotionalPopup>` in FAB state, mutate `<html data-hero-alignment>` between `left` / `right` / `center`, assert the FAB's class list does NOT change (specifically `bottom-6` stays, `bottom-24` never appears). Locks the decoupling so it can't quietly regress.
-
-### 4. Memory entry
-
-Add a short core rule: **"Global FABs and persistent overlays must not reposition based on section-level layout state. Anchor + z-layer is the contract; positional drift reads as broken."** Stops this pattern from re-emerging on the next FAB (chat widget, AI assistant button, etc.).
+4. **One-time cleanup of stale persisted state.** On mount, strip `editorTab` from the existing `zura.websiteEditor.<orgId>` localStorage entry so users carrying the old persisted value don't keep jumping once.
 
 ### Files touched
 
-- `src/components/public/PromotionalPopup.tsx` — strip alignment subscription + conditional `bottom-24`
-- `src/lib/heroAlignmentSignal.ts` — add note that FAB intentionally does not consume
-- `src/components/public/PromotionalPopup.test.tsx` — new (or extended) regression test
-- `mem://index.md` + `mem://style/global-overlay-stability.md` — new core rule + supporting memory
+- `src/components/dashboard/website-editor/WebsiteEditorShell.tsx` — drop `editorTab` from persistence, change initial value, optional `?editor=` deep-link, one-time cleanup.
 
 ### Out of scope
 
-- Removing `publishHeroAlignment()` / the publishers in HeroSlideRotator + HeroSection. Kept for future use; removal would be a separate cleanup if no consumer materializes within ~3 months (Deferral Register revisit trigger).
-- Mobile-specific FAB placement (e.g. dodging the iOS home indicator). Separate concern.
+- The "Discard changes" / unsaved-changes guard logic stays as-is.
+- `selectedPageId` persistence stays — remembering which page you were editing across reloads is genuinely useful and is not what's being complained about.
+- No changes to the sidebar component itself; the rail will simply render in its normal "nothing-selected-yet" state on entry.
 
-### Acceptance criteria
+### Verification
 
-- FAB stays at `bottom-6` regardless of which slide is active or what `content_alignment` the operator picks.
-- Switching slides in the live preview never moves the FAB vertically.
-- The `<html data-hero-alignment>` attribute still updates (other consumers preserved).
-- Regression test passes; memory rule documented.
+1. Open the editor, click into Hero Background, navigate away to another dashboard page, come back via the sidebar/nav — should land on the default Hero editor (or Page Settings on non-home pages), not Hero Background.
+2. `selectedPageId` still restores (open About page, leave, come back — still on About page).
+3. `showPreview` toggle still restores.
+4. Existing "open this section" deep-links from elsewhere keep working if any pass `?editor=...`.
