@@ -29,7 +29,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePromoLibrary } from '@/hooks/usePromoLibrary';
-import type { SavedPromoScheduleEntry } from '@/hooks/usePromotionalPopup';
+import type { SavedPromoScheduleEntry, PromoGoal } from '@/hooks/usePromotionalPopup';
+import { forecastDaysToCap } from '@/lib/promo-goal-velocity';
+import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
