@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { HeroSection } from '@/components/home/HeroSection';
+import { HeroSectionRoot } from '@/components/home/HeroSectionRoot';
 import { BrandStatement } from '@/components/home/BrandStatement';
 import { ExtensionsSection } from '@/components/home/ExtensionsSection';
 import { ServicesPreview } from '@/components/home/ServicesPreview';
@@ -25,7 +25,7 @@ import { InsertionLine } from '@/components/home/InsertionLine';
 
 function getBuiltinComponent(type: BuiltinSectionType, isPreview: boolean): React.ReactNode {
   switch (type) {
-    case 'hero': return <HeroSection isPreview={isPreview} />;
+    case 'hero': return <HeroSectionRoot isPreview={isPreview} />;
     case 'brand_statement': return <BrandStatement />;
     case 'testimonials': return <TestimonialSection />;
     case 'services_preview': return <ServicesPreview />;
