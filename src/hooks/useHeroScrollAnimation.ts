@@ -19,8 +19,12 @@
  * Tuning constants live ONLY in this file. Do not duplicate the magic ranges
  * downstream — extend the hook instead.
  */
-import { useScroll, useTransform, type MotionValue } from 'framer-motion';
-import type { RefObject } from 'react';
+import { useScroll, useTransform, useMotionValueEvent, type MotionValue } from 'framer-motion';
+import { useEffect, type RefObject } from 'react';
+import {
+  publishHeroExitProgress,
+  clearHeroExitProgress,
+} from '@/lib/heroExitProgressSignal';
 
 interface UseHeroScrollAnimationOptions {
   /** The hero `<section>` ref. Scroll progress is tracked relative to this element. */
