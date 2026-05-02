@@ -69,7 +69,7 @@ const cases: Array<[string, React.ComponentType<never>, ExtraProps]> = [
 describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
   it('renders headline, body, and both CTAs', () => {
     const h = makeHandlers();
-    render(<Component {...(sharedProps(h) as never)} {...(extra ?? {})} />);
+    render(<Component {...(sharedProps(h) as object)} {...(extra)} />);
     expect(screen.getByText('Test Headline')).toBeInTheDocument();
     expect(screen.getByText('Test body copy.')).toBeInTheDocument();
     expect(screen.getByText('Accept')).toBeInTheDocument();
@@ -78,14 +78,14 @@ describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
 
   it('fires accept handler on accept CTA click', () => {
     const h = makeHandlers();
-    render(<Component {...(sharedProps(h) as never)} {...(extra ?? {})} />);
+    render(<Component {...(sharedProps(h) as object)} {...(extra)} />);
     fireEvent.click(screen.getByText('Accept'));
     expect(h.onAccept).toHaveBeenCalledTimes(1);
   });
 
   it('fires decline handler on decline CTA click', () => {
     const h = makeHandlers();
-    render(<Component {...(sharedProps(h) as never)} {...(extra ?? {})} />);
+    render(<Component {...(sharedProps(h) as object)} {...(extra)} />);
     // Multiple variants render the decline label twice (e.g. compact stack
     // duplicates it). Click whichever is present first.
     const declineBtns = screen.getAllByText('Decline');
@@ -95,7 +95,7 @@ describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
 
   it('fires soft-close handler on the dismiss control', () => {
     const h = makeHandlers();
-    render(<Component {...(sharedProps(h) as never)} {...(extra ?? {})} />);
+    render(<Component {...(sharedProps(h) as object)} {...(extra)} />);
     // Each variant exposes at least one "Close"-labelled control. Click the
     // first dedicated dismiss button we find.
     const dismiss =
@@ -107,7 +107,7 @@ describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
 
   it('exposes orchestrator data attributes on the variant root', () => {
     const h = makeHandlers();
-    render(<Component {...(sharedProps(h) as never)} {...(extra ?? {})} />);
+    render(<Component {...(sharedProps(h) as object)} {...(extra)} />);
     const root = screen.getByTestId('promo-popup-root');
     expect(root.getAttribute('data-animation-key')).toBe('1');
     expect(root.getAttribute('data-popup-phase')).toBe('open');
@@ -117,8 +117,8 @@ describe.each(cases)('%s — parity contract', (_name, Component, extra) => {
     const h = makeHandlers();
     const { container } = render(
       <Component
-        {...(sharedProps(h) as never)}
-        {...(extra ?? {})}
+        {...(sharedProps(h) as object)}
+        {...(extra)}
         countdown={{ secondsLeft: 8, totalSeconds: 15 }}
       />,
     );
