@@ -600,7 +600,10 @@ export function PromotionalPopupEditor() {
           Renders null until an offer code exists (silence is valid output).
           Materiality threshold gates rate metrics so a 1/1 = 100% CTR doesn't
           ship a misleading signal. */}
-      <PopupAnalyticsCard offerCode={savedSnapshot.offerCode} />
+      <PopupAnalyticsCard
+        offerCode={savedSnapshot.offerCode}
+        schedule={formData.schedule}
+      />
 
       {/* Scheduled Rotation — pre-stage saved snapshots to swap into the live
           popup over a fixed window. Pure resolver in `@/lib/promo-schedule`;
