@@ -100,6 +100,29 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
           </div>
 
           <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <UserCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+              Assigned to
+            </Label>
+            <Select value={assignedTo} onValueChange={setAssignedTo}>
+              <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>
+                  <span className="text-muted-foreground">Unassigned</span>
+                </SelectItem>
+                {assignees.map((a) => (
+                  <SelectItem key={a.user_id} value={a.user_id}>
+                    {assigneeLabel(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Owner of this recovery — they'll see it in their queue and SLA clock applies.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label>Resolution Notes</Label>
             <Textarea
               value={notes}
