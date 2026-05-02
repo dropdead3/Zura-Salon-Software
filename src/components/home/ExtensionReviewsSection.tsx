@@ -6,6 +6,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useExtensionReviewsConfig, DEFAULT_EXTENSION_REVIEWS } from "@/hooks/useSectionConfig";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { InlineEditableText } from "./InlineEditableText";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 interface ReviewItem {
   id: string;
@@ -272,6 +273,7 @@ export function ExtensionReviewsSection() {
   };
 
   return (
+    <SectionStyleWrapper styleOverrides={chipsConfig?.style_overrides}>
     <section 
       ref={sectionRef} 
       className="py-20 lg:py-32 overflow-hidden bg-background"
@@ -444,5 +446,6 @@ export function ExtensionReviewsSection() {
         </motion.div>
       )}
     </section>
+    </SectionStyleWrapper>
   );
 }

@@ -31,6 +31,7 @@ import { useStylistsDisplayConfig, DEFAULT_STYLISTS_DISPLAY } from "@/hooks/useS
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "./InlineEditableText";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 import { locations as staticLocations, stylistLevels, type Stylist, type Location } from "@/data/stylists";
 import { useLocationName } from "@/hooks/useLocationName";
@@ -538,6 +539,7 @@ export function StylistsSection() {
   }, []);
 
   return (
+    <SectionStyleWrapper styleOverrides={displayConfig?.style_overrides}>
     <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-visible pb-0">
       {/* Gradient transition from previous section */}
       <div 
@@ -759,5 +761,6 @@ export function StylistsSection() {
         </Link>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }

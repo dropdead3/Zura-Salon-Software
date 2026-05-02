@@ -10,6 +10,7 @@ import { useLocationsSectionConfig, DEFAULT_LOCATIONS_SECTION } from "@/hooks/us
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "./InlineEditableText";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 import { 
   useActiveLocations, 
   formatHoursForDisplay, 
@@ -284,6 +285,7 @@ export function LocationsSection() {
   const headerY = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [40, 0, 0, -40]);
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section 
       ref={sectionRef}
       data-theme="light"
@@ -341,5 +343,6 @@ export function LocationsSection() {
         </div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }
