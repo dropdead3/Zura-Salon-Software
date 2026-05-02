@@ -1,26 +1,34 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';
+import {
+  readThemeTokenSwatches,
+  subscribeToThemeChanges,
+  normalizeHex,
+  type ThemeTokenSwatch,
+} from '@/lib/themeTokenSwatches';
+import { useWebsiteColorTheme } from '@/hooks/useWebsiteColorTheme';
+import { colorThemes } from '@/hooks/useColorTheme';
 
 /**
  * Per-section background color picker.
  *
- * Three rows in priority order:
- *   1. None — clears the override; section falls back to its theme background.
- *   2. Theme tokens — semantic colors from index.css (background, card,
- *      muted, accent, primary, oat). Resolve at render time so a theme swap
- *      reflows automatically.
- *   3. Brand presets — curated, color-confident hexes that look good across
- *      every public surface (warm neutrals, charcoals, soft creams).
- *   4. Custom — native color input + hex text field. Last-resort flexibility
- *      for operators with a brand spec sheet.
+ * Theme tokens MUST resolve against the WEBSITE theme (cream-lux by default),
+ * NOT the dashboard's <html> theme (e.g. theme-zura). This is the same
+ * canon enforced by ThemeAwareColorInput — the editor lives in the dashboard
+ * but every swatch operators see must represent the public site's palette.
  *
- * Mirrors the Promo Popup ACCENT_PRESETS pattern (chip row, active state,
- * hover hint) so the editor feels uniform across surfaces. Single-component
- * ownership avoids the Preview-Live Parity trap — section editors that need
- * a color picker import this, never inline their own swatch grid.
+ * Persisted value: theme tokens are saved as `hsl(var(--token))` so a later
+ * site-theme swap automatically reflows the section background. Brand
+ * presets and custom colors are saved as `#rrggbb` hexes.
+ *
+ * Active-state matching tolerates BOTH forms (cssVar string OR resolved hex)
+ * so legacy values keep their ring after a theme swap.
+ *
+ * Subscribes to the iframe's `editor-theme-preview` event so the chip dots
+ * repaint in the same tick the operator clicks a new theme tile, mirroring
+ * ThemeAwareColorInput's behavior.
  */
 
 export type SectionColorTokenKey =
@@ -35,15 +43,12 @@ export type SectionColorTokenKey =
 
 interface ThemeTokenOption {
   key: SectionColorTokenKey;
-  /** Operator-facing label — kept short so the chip row doesn't wrap aggressively. */
   label: string;
-  /** CSS expression used for both the swatch background and the persisted value. */
   cssVar: string;
-  /** One-line tooltip explaining where this token shows up elsewhere. */
   hint: string;
 }
 
-const THEME_TOKENS: ThemeTokenOption[] = [
+const THEME_TOKEN_ORDER: ThemeTokenOption[] = [
   { key: 'background', label: 'Background', cssVar: 'hsl(var(--background))', hint: 'Page background — the calmest surface' },
   { key: 'card',       label: 'Card',       cssVar: 'hsl(var(--card))',       hint: 'Card surface — slight contrast above background' },
   { key: 'muted',      label: 'Muted',      cssVar: 'hsl(var(--muted))',      hint: 'Muted surface — subtle separation' },
@@ -57,7 +62,6 @@ const THEME_TOKENS: ThemeTokenOption[] = [
 interface BrandPresetOption {
   key: string;
   label: string;
-  /** Persisted hex value. */
   value: string;
   hint: string;
 }
@@ -73,14 +77,14 @@ const BRAND_PRESETS: BrandPresetOption[] = [
 
 interface SectionBackgroundColorPickerProps {
   /**
-   * The persisted background value. May be:
-   *   - empty string / undefined → no override (None active)
+   * Persisted background value. May be:
+   *   - empty / undefined        → no override (None active)
    *   - `hsl(var(--token))`      → theme token reference
-   *   - `#RRGGBB`                → preset or custom hex
+   *   - `#RRGGBB`                → preset, custom hex, OR a hex that matches
+   *                                a website-theme swatch (still highlights)
    */
   value: string | undefined;
   onChange: (value: string) => void;
-  /** Optional label override — defaults to "Background Color". */
   label?: string;
 }
 
@@ -90,30 +94,80 @@ export function SectionBackgroundColorPicker({
   label = 'Background Color',
 }: SectionBackgroundColorPickerProps) {
   const normalizedValue = (value ?? '').trim();
+  const normalizedActiveHex = normalizeHex(normalizedValue);
 
-  // Active-state matching: a preset is active when its value matches exactly.
-  // None is active when the value is empty. Custom is active when the value
-  // is a hex that doesn't match any preset AND isn't a theme token reference.
+  // Resolve theme swatches against the WEBSITE theme — same canon as
+  // ThemeAwareColorInput. Subscribes to the iframe's instant-preview event
+  // so chip dots repaint in the same tick as the canvas.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const [previewThemeClass, setPreviewThemeClass] = useState<string | null>(null);
+  useEffect(() => {
+    const onThemePreview = (e: Event) => {
+      const next = (e as CustomEvent).detail?.themeClass;
+      if (typeof next === 'string' && next) setPreviewThemeClass(next);
+    };
+    window.addEventListener('editor-theme-preview', onThemePreview);
+    return () => window.removeEventListener('editor-theme-preview', onThemePreview);
+  }, []);
+  useEffect(() => {
+    if (previewThemeClass && previewThemeClass === `theme-${websiteTheme}`) {
+      setPreviewThemeClass(null);
+    }
+  }, [previewThemeClass, websiteTheme]);
+
+  const websiteThemeClass = previewThemeClass ?? `theme-${websiteTheme}`;
+  const websiteThemeName = useMemo(
+    () => colorThemes.find((t) => `theme-${t.id}` === websiteThemeClass)?.name ?? websiteTheme,
+    [websiteThemeClass, websiteTheme],
+  );
+
+  const [resolvedSwatches, setResolvedSwatches] = useState<ThemeTokenSwatch[]>(
+    () => readThemeTokenSwatches(websiteThemeClass),
+  );
+  useEffect(() => {
+    setResolvedSwatches(readThemeTokenSwatches(websiteThemeClass));
+    return subscribeToThemeChanges(() => {
+      setResolvedSwatches(readThemeTokenSwatches(websiteThemeClass));
+    });
+  }, [websiteThemeClass]);
+
+  // Merge our preferred token order with website-theme-resolved hex values.
+  // Falls back to the cssVar string for the swatch dot if resolution failed
+  // (SSR or pre-mount), which still paints (just against the dashboard theme).
+  const themeTokens = useMemo(() => {
+    return THEME_TOKEN_ORDER.map((opt) => {
+      const resolved = resolvedSwatches.find((s) => s.key === opt.key);
+      return {
+        ...opt,
+        hex: resolved?.hex ?? '',
+        swatchColor: resolved?.hex || opt.cssVar,
+      };
+    });
+  }, [resolvedSwatches]);
+
+  // Active-state matching tolerates either form: explicit cssVar string OR
+  // the website-theme-resolved hex equivalent. Custom = a hex that matches
+  // neither a preset NOR a theme token.
   const activeMatch = useMemo(() => {
     if (!normalizedValue) return { kind: 'none' as const };
-    const themeHit = THEME_TOKENS.find((t) => t.cssVar === normalizedValue);
-    if (themeHit) return { kind: 'theme' as const, key: themeHit.key };
-    const presetHit = BRAND_PRESETS.find(
-      (p) => p.value.toLowerCase() === normalizedValue.toLowerCase(),
-    );
-    if (presetHit) return { kind: 'preset' as const, key: presetHit.key };
-    return { kind: 'custom' as const };
-  }, [normalizedValue]);
-
-  // The native <input type="color"> only accepts 6-digit hex. Sanitize the
-  // value so theme-token refs (which would error in the picker) fall back to
-  // a sensible neutral instead of breaking the swatch.
-  const colorPickerValue = useMemo(() => {
-    if (activeMatch.kind === 'preset' || activeMatch.kind === 'custom') {
-      if (/^#[0-9a-f]{6}$/i.test(normalizedValue)) return normalizedValue;
+    const themeByCssVar = themeTokens.find((t) => t.cssVar === normalizedValue);
+    if (themeByCssVar) return { kind: 'theme' as const, key: themeByCssVar.key };
+    if (normalizedActiveHex) {
+      const themeByHex = themeTokens.find((t) => t.hex && t.hex === normalizedActiveHex);
+      if (themeByHex) return { kind: 'theme' as const, key: themeByHex.key };
+      const presetHit = BRAND_PRESETS.find(
+        (p) => p.value.toLowerCase() === normalizedActiveHex,
+      );
+      if (presetHit) return { kind: 'preset' as const, key: presetHit.key };
     }
+    return { kind: 'custom' as const };
+  }, [normalizedValue, normalizedActiveHex, themeTokens]);
+
+  const colorPickerValue = useMemo(() => {
+    if (/^#[0-9a-f]{6}$/i.test(normalizedValue)) return normalizedValue;
+    if (normalizedActiveHex) return normalizedActiveHex;
     return '#888888';
-  }, [activeMatch.kind, normalizedValue]);
+  }, [normalizedValue, normalizedActiveHex]);
 
   return (
     <div className="space-y-3">
@@ -141,7 +195,6 @@ export function SectionBackgroundColorPicker({
           onClick={() => onChange('')}
           title="No override — section uses the theme's default background"
         >
-          {/* Diagonal-line swatch reads as "empty" / "transparent" universally. */}
           <span
             className="h-3 w-3 rounded-full border border-border/60 bg-background"
             style={{
@@ -153,24 +206,27 @@ export function SectionBackgroundColorPicker({
         </ChipButton>
       </div>
 
-      {/* Row 2: Theme tokens — wrap freely; semantic surfaces first. */}
+      {/* Row 2: Theme tokens — resolved against the WEBSITE theme. */}
       <div className="space-y-1.5">
-        <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
-          Theme
+        <span
+          className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block"
+          title={`Theme: ${websiteThemeName}${previewThemeClass ? ' (previewing)' : ''}`}
+        >
+          Theme · {websiteThemeName}
         </span>
         <div className="flex flex-wrap items-center gap-1.5">
-          {THEME_TOKENS.map((token) => {
+          {themeTokens.map((token) => {
             const active = activeMatch.kind === 'theme' && activeMatch.key === token.key;
             return (
               <ChipButton
                 key={token.key}
                 active={active}
                 onClick={() => onChange(token.cssVar)}
-                title={token.hint}
+                title={`${token.hint}${token.hex ? ` (${token.hex})` : ''}`}
               >
                 <span
                   className="h-3 w-3 rounded-full border border-border/60"
-                  style={{ backgroundColor: token.cssVar }}
+                  style={{ backgroundColor: token.swatchColor }}
                 />
                 <span className="font-sans text-[11px]">{token.label}</span>
               </ChipButton>
@@ -205,9 +261,7 @@ export function SectionBackgroundColorPicker({
         </div>
       </div>
 
-      {/* Row 4: Custom hex — native picker + text input with hex validation
-          deferred to the live preview (an invalid hex just won't paint, which
-          is the same failure mode as before this picker existed). */}
+      {/* Row 4: Custom hex — native picker + text input. */}
       <div className="space-y-1.5">
         <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
           Custom
@@ -241,9 +295,6 @@ export function SectionBackgroundColorPicker({
 }
 
 // ── Local primitive ──────────────────────────────────────────────────────
-// Chip button shared by None / theme / preset rows. Inlined (not exported)
-// because the styling is opinionated to this picker — exporting would
-// invite drift between picker surfaces.
 function ChipButton({
   active,
   onClick,
