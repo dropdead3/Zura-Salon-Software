@@ -114,7 +114,7 @@ export function HeroBackground({
               as="image"
               href={url}
               imageSrcSet={srcSet}
-              imageSizes="100vw"
+              imageSizes={HERO_SIZES_ATTR}
               fetchPriority="high"
             />
           ) : (
