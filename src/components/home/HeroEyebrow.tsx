@@ -33,6 +33,8 @@ interface HeroEyebrowProps {
   show: boolean;
   /** Tone class for the muted text color (e.g. `text-muted-foreground`). */
   toneClass?: string;
+  /** Inline style override (operator-set color). Takes precedence over toneClass. */
+  style?: React.CSSProperties;
   /**
    * When true, wrap the value in <InlineEditableText/> so the editor's
    * click-to-edit overlay attaches. Live surfaces leave this false.
@@ -51,6 +53,7 @@ export function HeroEyebrow({
   text,
   show,
   toneClass = 'text-muted-foreground',
+  style,
   editable = false,
   fieldPath,
   className,
@@ -66,6 +69,7 @@ export function HeroEyebrow({
           toneClass,
           className,
         )}
+        style={style}
       >
         {/* eslint-disable-next-line no-restricted-syntax -- canonical owner of editable hero eyebrow rendering. */}
         <InlineEditableText
@@ -81,7 +85,7 @@ export function HeroEyebrow({
 
   return (
     <span data-hero-eyebrow>
-      <Eyebrow className={cn('section-eyebrow', toneClass, className)}>
+      <Eyebrow className={cn('section-eyebrow', toneClass, className)} style={style}>
         {text}
       </Eyebrow>
     </span>

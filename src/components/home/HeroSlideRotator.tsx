@@ -354,7 +354,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 <HeroEyebrow
                   show={!!slide.show_eyebrow}
                   text={slide.eyebrow}
-                  toneClass={mutedTone}
+                  toneClass={heroColors.eyebrowToneClass || mutedTone}
+                  style={heroColors.eyebrowStyle}
                   editable={isPreview}
                   fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
                   className={spacing.eyebrow}
@@ -460,6 +461,8 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                       alignment={alignment}
                       line1={config.consultation_note_line1 ?? ''}
                       line2={config.consultation_note_line2 ?? ''}
+                      toneClass={heroColors.notesToneClass}
+                      style={heroColors.notesStyle}
                     />
                   )}
                 </div>

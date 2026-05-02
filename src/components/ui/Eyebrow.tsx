@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 interface EyebrowProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function Eyebrow({ children, className }: EyebrowProps) {
+export function Eyebrow({ children, className, style }: EyebrowProps) {
   return (
     <span
       // `.section-eyebrow` is the opt-in hook for the section-level Eb (eyebrow)
@@ -17,6 +18,7 @@ export function Eyebrow({ children, className }: EyebrowProps) {
         "section-eyebrow text-xs uppercase tracking-[0.2em] block font-display font-medium",
         className
       )}
+      style={style}
     >
       {children}
     </span>

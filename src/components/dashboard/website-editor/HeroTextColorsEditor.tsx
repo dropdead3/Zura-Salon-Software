@@ -73,8 +73,10 @@ export function HeroTextColorsEditor({
   const body = (
     <div className="space-y-4">
       <div className="space-y-3">
+        <ColorRow label="Eyebrow" value={colors.eyebrow} onChange={(v) => update('eyebrow', v)} />
         <ColorRow label="Headline" value={colors.headline} onChange={(v) => update('headline', v)} />
         <ColorRow label="Subheadline" value={colors.subheadline} onChange={(v) => update('subheadline', v)} />
+        <ColorRow label="Notes (below buttons)" value={colors.notes} onChange={(v) => update('notes', v)} />
       </div>
 
       <div className="space-y-3 pt-3 border-t border-border/40">

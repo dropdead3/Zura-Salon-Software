@@ -15,6 +15,14 @@ export interface ResolvedHeroColors {
   headlineClass: string;
   /** Tailwind class fallback for the subheadline (auto-contrast). */
   subheadlineClass: string;
+  /** Inline style for the eyebrow (above headline). */
+  eyebrowStyle: React.CSSProperties;
+  /** Tone class for the eyebrow when no override is set. */
+  eyebrowToneClass: string;
+  /** Inline style for the consultation notes (below CTAs). */
+  notesStyle: React.CSSProperties;
+  /** Tone class for the notes when no override is set. */
+  notesToneClass: string;
   /** Inline style + className for the primary CTA button. Includes the
    *  `--hero-btn-hover` CSS var when an operator hover override is set. */
   primaryButtonStyle: React.CSSProperties;
@@ -58,6 +66,20 @@ export function resolveHeroColors(
       ? 'text-white/80'
       : 'text-muted-foreground';
 
+  const eyebrowStyle: React.CSSProperties = colors.eyebrow ? { color: colors.eyebrow } : {};
+  const eyebrowToneClass = colors.eyebrow
+    ? ''
+    : hasBackground
+      ? 'text-white/70'
+      : 'text-muted-foreground';
+
+  const notesStyle: React.CSSProperties = colors.notes ? { color: colors.notes } : {};
+  const notesToneClass = colors.notes
+    ? ''
+    : hasBackground
+      ? 'text-white/70'
+      : 'text-muted-foreground';
+
   // Primary button — overrides take precedence; fall back to white-on-black
   // over media, theme-foreground otherwise.
   const primaryButtonStyle: React.CSSProperties = {};
@@ -96,6 +118,10 @@ export function resolveHeroColors(
     subheadlineStyle,
     headlineClass,
     subheadlineClass,
+    eyebrowStyle,
+    eyebrowToneClass,
+    notesStyle,
+    notesToneClass,
     primaryButtonStyle,
     primaryButtonClass,
     secondaryButtonStyle,

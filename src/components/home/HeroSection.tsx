@@ -168,6 +168,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 editable
                 fieldPath="eyebrow"
                 className={spacing.eyebrow}
+                toneClass={heroColors.eyebrowToneClass}
+                style={heroColors.eyebrowStyle}
               />
               <h1
                 className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
@@ -217,6 +219,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   alignment={alignment}
                   line1="New clients begin with a $15 consultation"
                   line2="Returning clients are free to book their known services"
+                  toneClass={heroColors.notesToneClass}
+                  style={heroColors.notesStyle}
                 />
               </div>
             </div>
@@ -303,7 +307,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 transition={{ ...springTransition, delay: 2.0 }}
                 style={{ y: taglineY }}
               >
-                <HeroEyebrow show={true} text={eyebrowText} className={spacing.eyebrow} />
+                <HeroEyebrow show={true} text={eyebrowText} className={spacing.eyebrow} toneClass={heroColors.eyebrowToneClass} style={heroColors.eyebrowStyle} />
               </motion.div>
             )}
 
@@ -408,6 +412,8 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   alignment={alignment}
                   line1="New clients begin with a $15 consultation"
                   line2="Returning clients are free to book their known services"
+                  toneClass={heroColors.notesToneClass}
+                  style={heroColors.notesStyle}
                 />
               </motion.div>
             </motion.div>
