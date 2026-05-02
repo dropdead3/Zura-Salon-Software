@@ -111,9 +111,16 @@ export function resolveHeroColors(
   const primaryButtonStyle: React.CSSProperties = {};
   if (colors.primary_button_bg) primaryButtonStyle.backgroundColor = colors.primary_button_bg;
   if (colors.primary_button_fg) primaryButtonStyle.color = colors.primary_button_fg;
+  // Primary hover — if operator set hover-bg but no hover-fg, auto-pick
+  // black or white via WCAG luminance so light hover backgrounds don't
+  // strand the original (often white) text below AA contrast.
   if (colors.primary_button_hover_bg) {
     (primaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
       colors.primary_button_hover_bg;
+    const auto = pickContrastColor(colors.primary_button_hover_bg);
+    if (auto) {
+      (primaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] = auto;
+    }
   }
 
   const primaryButtonClass =
