@@ -43,7 +43,7 @@ import { InlineEditableText } from './InlineEditableText';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
 import type { ResolvedHeroColors } from '@/lib/heroColors';
 import type { HeroAlignmentClasses } from '@/lib/heroAlignment';
-import type { HeroSpacing } from '@/lib/heroSpacing';
+import type { HeroSpacingClasses } from '@/lib/heroSpacing';
 
 interface HeroForegroundProps {
   /** Active slide (already merged with section-level shared fields if applicable). */
