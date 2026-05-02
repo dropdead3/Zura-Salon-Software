@@ -316,9 +316,21 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
             className={cn(alignment.shellWrapper, 'relative w-full')}
             style={shellMinHeight > 0 ? { minHeight: shellMinHeight } : undefined}
           >
-            <AnimatePresence mode="wait" initial={false}>
+            {/* Foreground: in background_only mode we render OUTSIDE
+                AnimatePresence entirely so framer-motion can never trigger an
+                exit/enter on the shared content. The bare wrapper keeps the
+                same DOM shape (ref + classes) for layout measurement. */}
+            {rotatorMode === 'background_only' ? (
+              <div
+                data-hero-foreground="shared"
+                ref={slideContentRef}
+                className={cn('w-full', alignment.innerWrapper)}
+              >
+            ) : null}
+            {rotatorMode !== 'background_only' && (
+              <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={rotatorMode === 'background_only' ? 'fg-shared' : `fg-${activeIndex}`}
+                key={`fg-${activeIndex}`}
                 ref={slideContentRef}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
