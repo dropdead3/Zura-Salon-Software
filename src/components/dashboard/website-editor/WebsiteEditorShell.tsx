@@ -347,12 +347,13 @@ function WebsiteEditorShellInner() {
   const orgPreviewUrl = getPublicUrl();
   const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true, mode: 'view' });
 
-  // Persist layout preferences per org. `editorTab` is intentionally excluded
-  // — see PersistedState comment. Also strips any legacy `editorTab` value so
-  // users carrying old localStorage state stop jumping after this write.
+  // Persist layout preferences per org. `editorTab` and `selectedPageId` are
+  // intentionally excluded — see PersistedState comment. The writer overwrites
+  // the storage entry with only the fields we still persist, which strips any
+  // legacy `editorTab` / `selectedPageId` values from prior sessions.
   useEffect(() => {
-    writePersisted(orgId, { selectedPageId, showPreview });
-  }, [orgId, selectedPageId, showPreview]);
+    writePersisted(orgId, { showPreview });
+  }, [orgId, showPreview]);
 
   // When switching to a non-home page, default to its first section so the
   // canvas isn't stranded on an irrelevant home-page editor.
