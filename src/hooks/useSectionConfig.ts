@@ -359,6 +359,8 @@ export interface FAQConfig {
   show_intro_paragraphs: boolean;
   show_primary_cta: boolean;
   show_secondary_cta: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 export interface Brand {
