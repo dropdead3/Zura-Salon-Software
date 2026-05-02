@@ -82,10 +82,19 @@ export function BrandStatement() {
   }, [displayText, isDeleting, currentWordIndex, rotatingWords, config.typewriter_speed, config.typewriter_pause]);
 
   // Container frame defaults preserve the original dark card look (foreground
-  // fill, generous padding, soft radius). Operator overrides win — picking a
-  // Color / Gradient / Image / Video in the editor's Container Frame panel
-  // replaces the fill; toggling the Container Frame switch off removes it
-  // entirely.
+  // fill, generous padding, soft radius).
+  //
+  // Defaults vs operator-explicit:
+  // The persisted draft for legacy installs may carry `container_enabled: false`
+  // simply because the editor's `SectionStyleEditor` round-tripped its own
+  // defaults before the dark-card default existed. We treat the operator as
+  // having "explicitly customized the container frame" only when they have
+  // set their own `container_background_type` / `container_background_value`.
+  // Otherwise the dark card defaults always win.
+  const savedOverrides = config.style_overrides ?? {};
+  const operatorCustomizedContainer =
+    !!savedOverrides.container_background_type ||
+    !!savedOverrides.container_background_value;
   const containerDefaults: Partial<typeof config.style_overrides> = {
     container_enabled: true,
     container_background_type: 'color',
@@ -94,7 +103,15 @@ export function BrandStatement() {
     container_radius: 16,
     container_max_width: 'full',
   };
-  const mergedOverrides = { ...containerDefaults, ...(config.style_overrides ?? {}) };
+  const mergedOverrides = operatorCustomizedContainer
+    ? { ...containerDefaults, ...savedOverrides }
+    : {
+        // Strip stale `container_enabled: false` from legacy drafts; let
+        // dark-card defaults render. Section-level bg/padding/etc. still
+        // apply.
+        ...savedOverrides,
+        ...containerDefaults,
+      };
 
   // Auto-contrast text tone from the resolved container fill so the headline
   // stays legible whether the operator keeps the dark default, picks a light
