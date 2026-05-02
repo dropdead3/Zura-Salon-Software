@@ -70,11 +70,20 @@ export const NewClientSection = () => {
 
   return (
     <SectionStyleWrapper styleOverrides={config.style_overrides}>
+    {(() => {
+      // Suppress the default background→secondary gradient when an operator
+      // override is set so SectionStyleWrapper's paint can show through.
+      const hasBgOverride =
+        !!config.style_overrides?.background_type &&
+        config.style_overrides.background_type !== 'none';
+      return (
     <section 
       className="py-12 md:py-16 pb-16 md:pb-20 lg:pb-24 relative z-10"
-      style={{ 
-        background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' 
-      }}
+      style={
+        hasBgOverride
+          ? undefined
+          : { background: 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)' }
+      }
     >
       <div className="container mx-auto px-6">
         <motion.div 
