@@ -14,7 +14,7 @@
  * at 50MB and restricts MIME types as a defense-in-depth backstop.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -129,6 +129,18 @@ interface MediaUploadInputProps {
     onReset: () => void;
     enabled?: boolean;
   };
+  /**
+   * Optional file to auto-upload immediately on mount. Used by the Hero
+   * "+ Add background" tile so a single click on the empty tile picks a
+   * file AND uploads it — no need to enter the slide editor and click the
+   * upload tile a second time. The component runs the file through the
+   * exact same `uploadFile` pipeline as a manual selection (validation,
+   * autoCrunch, focal-analysis dataURL, telemetry). Consumed once per
+   * value-change to avoid re-triggering on every render.
+   */
+  pendingInitialFile?: File | null;
+  /** Called after `pendingInitialFile` has been consumed (success or fail). */
+  onPendingInitialFileConsumed?: () => void;
 }
 
 async function captureVideoPoster(file: File): Promise<Blob | null> {
@@ -184,6 +196,8 @@ export function MediaUploadInput({
   meta = null,
   isDirtyDraft = false,
   focal,
+  pendingInitialFile = null,
+  onPendingInitialFileConsumed,
 }: MediaUploadInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [statusLabel, setStatusLabel] = useState<string>('Uploading...');
