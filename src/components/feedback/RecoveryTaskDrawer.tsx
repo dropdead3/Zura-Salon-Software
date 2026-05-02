@@ -12,6 +12,7 @@ import {
 } from '@/hooks/useRecoveryTasks';
 import { SendReviewRequestButton } from './SendReviewRequestButton';
 import { AIRecoveryDraftButton } from './AIRecoveryDraftButton';
+import { CoachingNoteComposer } from './CoachingNoteComposer';
 import { format } from 'date-fns';
 
 interface Props {
