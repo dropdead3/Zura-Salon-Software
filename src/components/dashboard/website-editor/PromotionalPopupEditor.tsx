@@ -792,8 +792,8 @@ export function PromotionalPopupEditor() {
         title="Scheduled Rotations"
         icon={CalendarIcon}
         summary={
-          (formData.schedule?.entries?.length ?? 0) > 0
-            ? `${formData.schedule!.entries.length} rotation${formData.schedule!.entries.length === 1 ? '' : 's'} queued`
+          (formData.schedule?.length ?? 0) > 0
+            ? `${formData.schedule!.length} rotation${formData.schedule!.length === 1 ? '' : 's'} queued`
             : 'No rotations queued'
         }
       >
