@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/formatCurrency';
@@ -28,7 +29,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePromoLibrary } from '@/hooks/usePromoLibrary';
-import type { SavedPromoScheduleEntry } from '@/hooks/usePromotionalPopup';
+import type { SavedPromoScheduleEntry, PromoGoal } from '@/hooks/usePromotionalPopup';
+import { forecastDaysToCap } from '@/lib/promo-goal-velocity';
+import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
@@ -105,9 +108,13 @@ interface TrendChartProps {
   data: PromotionalPopupTrendPoint[];
   highlightedKey: TrendKey | null;
   onHoverKey: (key: TrendKey | null) => void;
+  /** Optional cap-hit ETA marker — vertical reference line projected forward
+   *  from today's date by N days. When set, the chart's X-axis extends past
+   *  the historical 14-day window so the marker has somewhere to render. */
+  capHitEta?: { daysFromToday: number; label: string } | null;
 }
 
-function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
+function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartProps) {
   const total = data.reduce(
     (sum, d) => sum + d.impressions + d.ctaClicks + d.redemptions,
     0,
@@ -117,10 +124,50 @@ function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
   const dim = (key: TrendKey) =>
     highlightedKey && highlightedKey !== key ? 0.25 : 1;
 
+  // Extend the X-axis with empty future buckets when an ETA marker exists,
+  // so the vertical line lands inside the chart rather than flush against
+  // the right edge. Capped at 21 days — beyond that, forecast confidence
+  // drops below useful and the chart compresses too much.
+  const FORWARD_BUCKET_CAP = 21;
+  const forwardBuckets = capHitEta
+    ? Math.min(FORWARD_BUCKET_CAP, Math.max(1, capHitEta.daysFromToday + 1))
+    : 0;
+  const chartData = (() => {
+    if (forwardBuckets === 0) return data;
+    const last = data[data.length - 1];
+    const lastDate = last ? new Date(last.date) : new Date();
+    const future: PromotionalPopupTrendPoint[] = [];
+    for (let i = 1; i <= forwardBuckets; i++) {
+      const d = new Date(lastDate);
+      d.setDate(d.getDate() + i);
+      future.push({
+        date: d.toISOString().slice(0, 10),
+        impressions: 0,
+        ctaClicks: 0,
+        dismissals: 0,
+        redemptions: 0,
+        revenue: 0,
+      });
+    }
+    return [...data, ...future];
+  })();
+
+  // X-axis date string for the ETA marker (matches the `date` data key).
+  const etaDate = capHitEta
+    ? (() => {
+        const last = data[data.length - 1];
+        const base = last ? new Date(last.date) : new Date();
+        base.setDate(base.getDate() + capHitEta.daysFromToday);
+        return base.toISOString().slice(0, 10);
+      })()
+    : null;
+
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className={tokens.kpi.label}>14-Day Trend</span>
+        <span className={tokens.kpi.label}>
+          14-Day Trend{capHitEta ? ' · projection' : ''}
+        </span>
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
@@ -134,11 +181,17 @@ function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
             <span className="inline-block w-2 h-2 rounded-full bg-foreground" />
             Redemptions
           </span>
+          {capHitEta ? (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2 h-0.5 bg-amber-500" />
+              Cap-hit ETA
+            </span>
+          ) : null}
         </div>
       </div>
       <ResponsiveContainer width="100%" height={140}>
         <AreaChart
-          data={data}
+          data={chartData}
           margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
           onMouseMove={(state) => {
             // Recharts forwards `tooltipPayload[0].dataKey` on hover; map back
@@ -218,6 +271,21 @@ function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
             fill="url(#popupRedemptionsFill)"
             name="Redemptions"
           />
+          {etaDate && capHitEta ? (
+            <ReferenceLine
+              x={etaDate}
+              stroke="hsl(38 92% 50%)"
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              label={{
+                value: capHitEta.label,
+                position: 'top',
+                fill: 'hsl(38 92% 50%)',
+                fontSize: 10,
+                fontFamily: 'inherit',
+              }}
+            />
+          ) : null}
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -387,6 +455,10 @@ interface PopupAnalyticsCardProps {
    *  this card also calls `onFocusRotation`. */
   focusedRotationId?: string | null;
   onFocusRotation?: (id: string | null) => void;
+  /** Optional active goal — when present AND a cap is set AND velocity exists,
+   *  the trend chart overlays a vertical "Cap-hit ETA" reference line. Closes
+   *  the loop visually so operators see suppression coming, not just after. */
+  goal?: PromoGoal | null;
 }
 
 function formatPercent(value: number | null): string {
@@ -470,6 +542,7 @@ export function PopupAnalyticsCard({
   schedule,
   focusedRotationId = null,
   onFocusRotation,
+  goal = null,
 }: PopupAnalyticsCardProps) {
   const code = (offerCode ?? '').trim();
 
@@ -561,6 +634,28 @@ export function PopupAnalyticsCard({
       revenue: trend.map((p) => p.revenue),
     };
   }, [data?.trend]);
+
+  // ── Cap-hit ETA marker ──
+  // Reuses the redemption hook + `forecastDaysToCap` so the projection here
+  // is identical to the one in `PromoGoalCard`. Silent when no goal/cap, no
+  // velocity, or already past the cap (other surfaces own those states).
+  // Only fires for the unfiltered "all rotations" view — projecting onto a
+  // narrow rotation window would be misleading.
+  const { data: redemptionStats } = usePromotionalPopupRedemptions(code);
+  const capHitEta = useMemo(() => {
+    if (!goal?.capRedemptions) return null;
+    if (focusedRotationId) return null;
+    const forecast = forecastDaysToCap({
+      cap: goal.capRedemptions,
+      redemptions: redemptionStats?.count ?? 0,
+      series: redemptionStats?.series ?? [],
+    });
+    if (forecast.kind !== 'on-pace') return null;
+    return {
+      daysFromToday: forecast.daysUntilCap,
+      label: `Cap in ~${forecast.daysUntilCap}d`,
+    };
+  }, [goal?.capRedemptions, focusedRotationId, redemptionStats]);
 
   // Silence-is-valid: no code configured → render nothing.
   if (!code) return null;
@@ -742,6 +837,7 @@ export function PopupAnalyticsCard({
               data={data.trend}
               highlightedKey={hoveredKey}
               onHoverKey={setHoveredKey}
+              capHitEta={capHitEta}
             />
 
             {compareRotation && compareData && activeRotation ? (

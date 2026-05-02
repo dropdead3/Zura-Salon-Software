@@ -4,7 +4,10 @@ import {
   forecastDaysToCap,
   suggestCapBump,
   summarizeGoalHistory,
+  summarizeCrossCodePattern,
+  bucketKeyForCode,
   MIN_GOAL_RUNS_FOR_NUDGE,
+  MIN_RUNS_PER_BUCKET,
   type PromoGoalRun,
 } from './promo-goal-velocity';
 
@@ -148,5 +151,112 @@ describe('summarizeGoalHistory', () => {
     } else {
       throw new Error('expected nudge');
     }
+  });
+});
+
+describe('bucketKeyForCode', () => {
+  it('returns the first hyphen-separated token, lowercased', () => {
+    expect(bucketKeyForCode('FREE-haircut-jan')).toBe('free');
+    expect(bucketKeyForCode('discount_25_vip')).toBe('discount');
+    expect(bucketKeyForCode('flash-friday')).toBe('flash');
+  });
+  it('handles codes with no separator', () => {
+    expect(bucketKeyForCode('VIP100')).toBe('vip100');
+  });
+  it('returns empty string for empty input', () => {
+    expect(bucketKeyForCode('')).toBe('');
+    expect(bucketKeyForCode('   ')).toBe('');
+  });
+});
+
+describe('summarizeCrossCodePattern', () => {
+  const r = (code: string, days: number, idx: number): PromoGoalRun => ({
+    id: `${code}-${idx}`,
+    offerCode: code,
+    cap: 50,
+    redemptionsAtHit: 50,
+    startedAt: null,
+    hitAt: new Date().toISOString(),
+    daysTaken: days,
+  });
+
+  it('is silent when fewer than 2 qualifying buckets exist', () => {
+    expect(summarizeCrossCodePattern([])).toEqual({ kind: 'silent' });
+    expect(
+      summarizeCrossCodePattern([r('free-a', 1, 0), r('free-b', 1, 1), r('free-c', 1, 2)]),
+    ).toEqual({ kind: 'silent' });
+  });
+
+  it('is silent when bucket has fewer than MIN_RUNS_PER_BUCKET runs', () => {
+    expect(MIN_RUNS_PER_BUCKET).toBe(3);
+    const runs = [
+      r('free-a', 1, 0),
+      r('free-b', 1, 1),
+      r('free-c', 1, 2),
+      r('discount-a', 5, 0),
+      r('discount-b', 5, 1),
+      // only 2 discount runs — below threshold
+    ];
+    expect(summarizeCrossCodePattern(runs).kind).toBe('silent');
+  });
+
+  it('is silent when speed ratio is below 2x', () => {
+    const runs = [
+      r('free-a', 2, 0),
+      r('free-b', 2, 1),
+      r('free-c', 2, 2),
+      r('discount-a', 3, 0),
+      r('discount-b', 3, 1),
+      r('discount-c', 3, 2),
+    ];
+    // ratio = 3/2 = 1.5 < 2
+    expect(summarizeCrossCodePattern(runs).kind).toBe('silent');
+  });
+
+  it('surfaces fast vs slow buckets when ratio meets 2x threshold', () => {
+    const runs = [
+      r('free-a', 1, 0),
+      r('free-b', 1, 1),
+      r('free-c', 1, 2),
+      r('discount-a', 4, 0),
+      r('discount-b', 5, 1),
+      r('discount-c', 4, 2),
+    ];
+    const result = summarizeCrossCodePattern(runs);
+    if (result.kind !== 'cross-code') throw new Error('expected cross-code');
+    expect(result.fastBucket).toBe('free');
+    expect(result.slowBucket).toBe('discount');
+    expect(result.fastMedianDays).toBe(1);
+    expect(result.slowMedianDays).toBe(4);
+    expect(result.ratio).toBe(4);
+    expect(result.fastRuns).toBe(3);
+    expect(result.slowRuns).toBe(3);
+  });
+
+  it('handles same-day cap-hit (median 0) by surfacing infinite ratio', () => {
+    const runs = [
+      r('free-a', 0, 0),
+      r('free-b', 0, 1),
+      r('free-c', 0, 2),
+      r('discount-a', 3, 0),
+      r('discount-b', 4, 1),
+      r('discount-c', 3, 2),
+    ];
+    const result = summarizeCrossCodePattern(runs);
+    if (result.kind !== 'cross-code') throw new Error('expected cross-code');
+    expect(result.ratio).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('skips runs with null daysTaken', () => {
+    const runs = [
+      r('free-a', 1, 0),
+      r('free-b', 1, 1),
+      { ...r('free-c', 1, 2), daysTaken: null },
+      r('discount-a', 4, 0),
+      r('discount-b', 4, 1),
+      r('discount-c', 4, 2),
+    ];
+    // free now has only 2 valid runs — silent
+    expect(summarizeCrossCodePattern(runs).kind).toBe('silent');
   });
 });

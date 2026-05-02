@@ -59,6 +59,48 @@ export function usePromoGoalHistory(
   });
 }
 
+/**
+ * Org-wide goal-run history (no offer-code filter). Powers the cross-code
+ * pattern nudge in `PromoGoalCard` ("free-* hits cap 3× faster than
+ * discount-*"). Pulls a larger ceiling than the per-code hook because the
+ * resolver buckets across many codes; 100 rows ≈ several months of activity
+ * for an active operator.
+ */
+const ORG_HISTORY_LIMIT = 100;
+
+export function usePromoGoalHistoryOrgWide(explicitOrgId?: string) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+  return useQuery<PromoGoalRun[]>({
+    queryKey: ['promo-goal-history-org', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from('promo_goal_runs')
+        .select(
+          'id, offer_code, cap, redemptions_at_hit, started_at, hit_at, days_taken',
+        )
+        .eq('organization_id', orgId)
+        .order('hit_at', { ascending: false })
+        .limit(ORG_HISTORY_LIMIT);
+      if (error || !data) return [];
+      return data.map((row) => ({
+        id: row.id as string,
+        offerCode: row.offer_code as string,
+        cap: row.cap as number,
+        redemptionsAtHit: row.redemptions_at_hit as number,
+        startedAt: (row.started_at as string | null) ?? null,
+        hitAt: row.hit_at as string,
+        daysTaken:
+          row.days_taken === null || row.days_taken === undefined
+            ? null
+            : Number(row.days_taken),
+      }));
+    },
+    enabled: !!orgId,
+    staleTime: 60_000,
+  });
+}
+
 export interface RecordGoalHitInput {
   offerCode: string;
   cap: number;

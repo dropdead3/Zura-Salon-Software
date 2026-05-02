@@ -170,3 +170,125 @@ export function summarizeGoalHistory(runs: PromoGoalRun[]): GoalHistoryNudge {
     suggestedNextCap,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cross-code pattern resolver
+//
+// Operators run many promos. Once enough goal-runs accumulate ACROSS codes,
+// we can surface comparative patterns ("free-* hits cap 3× faster than
+// discount-*") that no single-code log can express.
+//
+// Bucketing strategy:
+//   - Tokenize each `offer_code` on `-` / `_` and treat the FIRST segment
+//     (lowercased) as the bucket key. Real-world promo codes overwhelmingly
+//     follow this pattern: `free-haircut-jan`, `free-gloss`, `discount-25`,
+//     `discount-vip`, `flash-friday`. The first token is the *intent*; the
+//     rest is the variant. Codes with no separator become their own bucket
+//     (a bucket of 1 never triggers — fine).
+//
+// Materiality gates (kept tight to honor the silence-is-valid doctrine):
+//   - At least TWO distinct buckets present.
+//   - The two buckets compared each have ≥ MIN_RUNS_PER_BUCKET runs with a
+//     non-null `daysTaken`.
+//   - Median days-taken ratio between fast and slow bucket must be ≥ 2×
+//     (i.e. one bucket genuinely burns through caps twice as fast). Below
+//     that the comparison is noise dressed up as signal.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Minimum runs per bucket before we'll compare it. */
+export const MIN_RUNS_PER_BUCKET = 3;
+
+/** Minimum speed ratio between fast and slow bucket — 2× means "real". */
+const MIN_BUCKET_SPEED_RATIO = 2;
+
+export type CrossCodePattern =
+  | { kind: 'silent' }
+  | {
+      kind: 'cross-code';
+      fastBucket: string;
+      slowBucket: string;
+      fastMedianDays: number;
+      slowMedianDays: number;
+      ratio: number;
+      fastRuns: number;
+      slowRuns: number;
+    };
+
+/** Strip the variant suffix off an offer code. `free-haircut-jan` → `free`. */
+export function bucketKeyForCode(code: string): string {
+  const trimmed = (code ?? '').trim().toLowerCase();
+  if (!trimmed) return '';
+  // Split on common separators; first non-empty token is the bucket.
+  const tokens = trimmed.split(/[-_]/).filter(Boolean);
+  return tokens[0] ?? trimmed;
+}
+
+function median(xs: number[]): number {
+  return xs[Math.floor(xs.length / 2)];
+}
+
+/**
+ * Surface an org-wide cross-code pattern when enough history accumulates.
+ * Returns the SINGLE most material comparison (fastest vs slowest qualifying
+ * bucket) — we deliberately do NOT enumerate every bucket pair, because the
+ * goal is one decisive nudge, not a leaderboard.
+ */
+export function summarizeCrossCodePattern(runs: PromoGoalRun[]): CrossCodePattern {
+  if (!Array.isArray(runs) || runs.length === 0) return { kind: 'silent' };
+
+  const bucketDays = new Map<string, number[]>();
+  for (const r of runs) {
+    if (typeof r.daysTaken !== 'number' || r.daysTaken < 0) continue;
+    const key = bucketKeyForCode(r.offerCode);
+    if (!key) continue;
+    const arr = bucketDays.get(key) ?? [];
+    arr.push(r.daysTaken);
+    bucketDays.set(key, arr);
+  }
+
+  // Keep only buckets that meet the minimum-runs gate.
+  const qualifying = Array.from(bucketDays.entries())
+    .filter(([, days]) => days.length >= MIN_RUNS_PER_BUCKET)
+    .map(([bucket, days]) => {
+      const sorted = [...days].sort((a, b) => a - b);
+      return { bucket, runs: days.length, medianDays: median(sorted) };
+    });
+
+  if (qualifying.length < 2) return { kind: 'silent' };
+
+  // Fastest = smallest median days. Slowest = largest median days.
+  const sortedByDays = [...qualifying].sort((a, b) => a.medianDays - b.medianDays);
+  const fast = sortedByDays[0];
+  const slow = sortedByDays[sortedByDays.length - 1];
+
+  // Avoid divide-by-zero AND require a real speed gap.
+  if (fast.medianDays <= 0) {
+    // Fast bucket hits cap "same day" (median 0). Any slow bucket with
+    // median ≥ 1 is materially different — surface it.
+    if (slow.medianDays < 1) return { kind: 'silent' };
+    return {
+      kind: 'cross-code',
+      fastBucket: fast.bucket,
+      slowBucket: slow.bucket,
+      fastMedianDays: fast.medianDays,
+      slowMedianDays: slow.medianDays,
+      ratio: Number.POSITIVE_INFINITY,
+      fastRuns: fast.runs,
+      slowRuns: slow.runs,
+    };
+  }
+
+  const ratio = slow.medianDays / fast.medianDays;
+  if (ratio < MIN_BUCKET_SPEED_RATIO) return { kind: 'silent' };
+
+  return {
+    kind: 'cross-code',
+    fastBucket: fast.bucket,
+    slowBucket: slow.bucket,
+    fastMedianDays: fast.medianDays,
+    slowMedianDays: slow.medianDays,
+    ratio,
+    fastRuns: fast.runs,
+    slowRuns: slow.runs,
+  };
+}
