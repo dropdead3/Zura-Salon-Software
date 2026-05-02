@@ -12,13 +12,10 @@ html, body, #root {
    Inline style.backgroundColor (operator-set) cannot otherwise be beaten
    by a Tailwind hover: utility, so we apply the override via CSS var +
    !important when the element opts in with `.hero-cta-hover`.
-   Primary button overrides background; secondary button overrides border. */
+   Used by both primary and secondary hero buttons; each button supplies its
+   own `--hero-btn-hover` value via inline style. */
 .hero-cta-hover:hover {
-  background-color: var(--hero-btn-hover, inherit) !important;
-}
-.hero-cta-hover-border:hover {
-  border-color: var(--hero-btn-hover-border, inherit) !important;
-  color: var(--hero-btn-hover-fg, inherit) !important;
+  background-color: var(--hero-btn-hover) !important;
 }
 
 /* Animation intensity preference (set by AnimationIntensityInitializer)
