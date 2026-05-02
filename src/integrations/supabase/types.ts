@@ -20125,6 +20125,7 @@ export type Database = {
           session_id: string | null
           surface: string
           user_agent: string | null
+          variant_key: string | null
         }
         Insert: {
           created_at?: string
@@ -20135,6 +20136,7 @@ export type Database = {
           session_id?: string | null
           surface?: string
           user_agent?: string | null
+          variant_key?: string | null
         }
         Update: {
           created_at?: string
@@ -20145,6 +20147,7 @@ export type Database = {
           session_id?: string | null
           surface?: string
           user_agent?: string | null
+          variant_key?: string | null
         }
         Relationships: [
           {
@@ -20167,6 +20170,7 @@ export type Database = {
           session_id: string | null
           surface: string
           user_agent: string | null
+          variant_key: string | null
         }
         Insert: {
           created_at?: string
@@ -20178,6 +20182,7 @@ export type Database = {
           session_id?: string | null
           surface?: string
           user_agent?: string | null
+          variant_key?: string | null
         }
         Update: {
           created_at?: string
@@ -20189,6 +20194,7 @@ export type Database = {
           session_id?: string | null
           surface?: string
           user_agent?: string | null
+          variant_key?: string | null
         }
         Relationships: []
       }
@@ -32615,29 +32621,56 @@ export type Database = {
         }
         Returns: string
       }
-      record_promo_impression: {
-        Args: {
-          p_offer_code: string
-          p_organization_id: string
-          p_referrer?: string
-          p_session_id?: string
-          p_surface: string
-          p_user_agent?: string
-        }
-        Returns: string
-      }
-      record_promo_response: {
-        Args: {
-          p_offer_code: string
-          p_organization_id: string
-          p_referrer?: string
-          p_response: string
-          p_session_id?: string
-          p_surface: string
-          p_user_agent?: string
-        }
-        Returns: string
-      }
+      record_promo_impression:
+        | {
+            Args: {
+              p_offer_code: string
+              p_organization_id: string
+              p_referrer?: string
+              p_session_id?: string
+              p_surface: string
+              p_user_agent?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_offer_code: string
+              p_organization_id: string
+              p_referrer?: string
+              p_session_id?: string
+              p_surface: string
+              p_user_agent?: string
+              p_variant_key?: string
+            }
+            Returns: undefined
+          }
+      record_promo_response:
+        | {
+            Args: {
+              p_offer_code: string
+              p_organization_id: string
+              p_referrer?: string
+              p_response: string
+              p_session_id?: string
+              p_surface: string
+              p_user_agent?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_offer_code: string
+              p_organization_id: string
+              p_referrer?: string
+              p_response: string
+              p_session_id?: string
+              p_surface: string
+              p_user_agent?: string
+              p_variant_key?: string
+            }
+            Returns: undefined
+          }
       refresh_client_visit_stats: {
         Args: { p_organization_id?: string }
         Returns: {
