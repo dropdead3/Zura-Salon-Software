@@ -44,6 +44,7 @@ import {
   useUpdatePromotionalPopup,
   DEFAULT_PROMO_POPUP,
   type PromotionalPopupSettings,
+  type PopupSurface,
   type EyebrowIcon,
   type PopupAcceptDestination,
 } from '@/hooks/usePromotionalPopup';
