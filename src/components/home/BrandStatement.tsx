@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
@@ -7,6 +7,7 @@ import { useBrandStatementConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
+import { pickReadableForeground } from "@/lib/color-contrast";
 
 export function BrandStatement() {
   const isPreview = useIsEditorPreview();
