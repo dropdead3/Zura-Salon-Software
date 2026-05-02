@@ -134,6 +134,7 @@ export interface PromotionalPopupSettings {
 }
 
 export type { PromoExperimentConfig, PromoExperimentVariant } from '@/lib/promo-experiment';
+export type { PromoGoal, GoalStatus } from '@/lib/promo-goal';
 
 /** One queued rotation entry. References a `SavedPromo.id` from the library. */
 export interface SavedPromoScheduleEntry {
