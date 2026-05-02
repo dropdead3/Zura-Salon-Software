@@ -13,7 +13,6 @@ import { Megaphone, ExternalLink, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditorCard } from './EditorCard';
 import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
-import { contrastRatio, readableForegroundFor } from '@/lib/color-contrast';
 
 const BANNER_COLOR_PRESETS = [
   { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
@@ -174,58 +173,15 @@ export function AnnouncementBarContent() {
               <p className="text-xs text-muted-foreground">Displayed in bold/medium weight</p>
               <div className="space-y-2 pt-2">
                 <Label className="text-sm">Highlight Color</Label>
-                {(() => {
-                  // Mirror the live header's auto-contrast logic so the editor
-                  // preview shows exactly what the visitor will see.
-                  const previewBg = formData.bg_color || '#0a0a0a';
-                  const operatorPick = formData.highlight_color;
-                  let renderedColor: string | undefined;
-                  let overridden = false;
-                  if (operatorPick) {
-                    const ratio = contrastRatio(operatorPick, previewBg);
-                    if (ratio !== null && ratio < 3) {
-                      renderedColor = readableForegroundFor(previewBg);
-                      overridden = true;
-                    } else {
-                      renderedColor = operatorPick;
-                    }
-                  }
-                  const baseTextColor = isDark ? '#ffffff' : 'hsl(var(--foreground) / 0.8)';
-                  return (
-                    <>
-                      {/* Live mini-banner — WYSIWYG preview at editor-time */}
-                      <div
-                        className="rounded-lg border border-border/60 px-4 py-2.5 text-sm overflow-hidden"
-                        style={{ backgroundColor: previewBg, color: baseTextColor }}
-                      >
-                        {formData.message_prefix || 'Are you a salon'}{' '}
-                        <span
-                          className="font-medium"
-                          style={renderedColor ? { color: renderedColor } : undefined}
-                        >
-                          {formData.message_highlight || 'professional'}
-                        </span>{' '}
-                        {formData.message_suffix || 'looking for our extensions?'}
-                      </div>
-                      <ThemeAwareColorInput
-                        value={formData.highlight_color || ''}
-                        onChange={(next) => handleChange('highlight_color', next ?? '')}
-                        placeholder="Auto (matches text)"
-                      />
-                      {overridden ? (
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          ⚠️ Auto-readable color applied — your pick ({operatorPick}) had too little
-                          contrast against the bar background.
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Leave empty to inherit. If contrast is too low against the bar, an
-                          auto-readable color is used instead.
-                        </p>
-                      )}
-                    </>
-                  );
-                })()}
+                <ThemeAwareColorInput
+                  value={formData.highlight_color || ''}
+                  onChange={(next) => handleChange('highlight_color', next ?? '')}
+                  placeholder="Auto (matches text)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to inherit. If contrast is too low against the bar, an auto-readable
+                  color is used instead.
+                </p>
               </div>
             </div>
             <div className="space-y-2">
