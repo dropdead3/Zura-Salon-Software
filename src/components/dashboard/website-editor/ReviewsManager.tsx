@@ -245,7 +245,7 @@ function SortableReview({
       {/* Expanded form — single column for breathing room */}
       {expanded && (
         <div className="px-5 pb-6 pt-2 sm:px-6 space-y-5 border-t border-border/30">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-5">
+          <div className="grid grid-cols-1 gap-5 pt-5">{/* sidebar-narrow: stack vertically */}
             <div className="space-y-2">
               <Label className="text-xs font-sans text-muted-foreground">Author</Label>
               <Input

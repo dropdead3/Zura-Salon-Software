@@ -401,7 +401,7 @@ export function PromoGoalCard({ formData, setFormData }: PromoGoalCardProps) {
             ) : null}
 
             {/* Cap + deadline inputs. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">{/* sidebar-narrow: stack vertically — see mem://style/container-aware-responsiveness */}
               <div className="space-y-2">
                 <Label htmlFor="goal-cap" className="text-xs">
                   Redemption cap
