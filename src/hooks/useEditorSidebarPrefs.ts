@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * Persisted preferences for the website editor's left rail.
+ * Per-session preferences for the website editor's left rail.
  *
- * UI state only — not site content — so it lives in localStorage
- * scoped per org. Rationale: it shouldn't ride the draft/publish
- * pipeline used for actual site_settings.
+ * Section-group expand/collapse state is intentionally **not** persisted to
+ * localStorage. Restoring it across sessions made re-entering the editor
+ * feel like landing in a half-edited state instead of the canonical nav
+ * tree. Within a single editor session the operator's toggles still stick;
+ * closing the editor and coming back resets to the defaults below.
+ *
+ * The `orgId` argument is currently unused but retained on the hook
+ * signature so callers don't need to churn if we later reintroduce
+ * per-org defaults (e.g. surfacing whichever group the operator most
+ * recently edited inside this session).
  */
 
-interface SidebarPrefs {
-  collapsedGroups: string[];
-}
-
-const STORAGE_PREFIX = 'zura.editor.sidebar.prefs';
-
-// Default: only the highest-leverage groups are open.
+// Default: only the highest-leverage group ('Above the Fold') is open.
 // Keeps the rail to ~5 visible rows by default.
 const DEFAULT_COLLAPSED_GROUPS = [
   'Social Proof',
@@ -23,45 +24,17 @@ const DEFAULT_COLLAPSED_GROUPS = [
   'Team & Extras',
 ];
 
-function storageKey(orgId: string | null | undefined): string {
-  return `${STORAGE_PREFIX}.${orgId ?? 'anon'}`;
-}
-
-function readPrefs(orgId: string | null | undefined): SidebarPrefs {
-  if (typeof window === 'undefined') {
-    return { collapsedGroups: DEFAULT_COLLAPSED_GROUPS };
-  }
-  try {
-    const raw = window.localStorage.getItem(storageKey(orgId));
-    if (!raw) return { collapsedGroups: DEFAULT_COLLAPSED_GROUPS };
-    const parsed = JSON.parse(raw) as Partial<SidebarPrefs>;
-    return {
-      collapsedGroups: Array.isArray(parsed.collapsedGroups)
-        ? parsed.collapsedGroups
-        : DEFAULT_COLLAPSED_GROUPS,
-    };
-  } catch {
-    return { collapsedGroups: DEFAULT_COLLAPSED_GROUPS };
-  }
-}
-
-function writePrefs(orgId: string | null | undefined, prefs: SidebarPrefs): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(storageKey(orgId), JSON.stringify(prefs));
-  } catch {
-    // Quota or unavailable — silently degrade.
-  }
-}
-
 export function useEditorSidebarPrefs(orgId: string | null | undefined) {
+  void orgId; // reserved — see file header
   const [collapsedGroups, setCollapsedGroups] = useState<string[]>(
-    () => readPrefs(orgId).collapsedGroups,
+    () => [...DEFAULT_COLLAPSED_GROUPS],
   );
 
-  // Reload when org changes (preserves per-tenant preference).
+  // Re-seed defaults when the org changes. Belt-and-suspenders: in practice
+  // the editor remounts on org switch, but if a future caller keeps the hook
+  // alive across orgs we still want a clean tree.
   useEffect(() => {
-    setCollapsedGroups(readPrefs(orgId).collapsedGroups);
+    setCollapsedGroups([...DEFAULT_COLLAPSED_GROUPS]);
   }, [orgId]);
 
   const isCollapsed = useCallback(
@@ -69,18 +42,13 @@ export function useEditorSidebarPrefs(orgId: string | null | undefined) {
     [collapsedGroups],
   );
 
-  const toggleGroup = useCallback(
-    (groupTitle: string) => {
-      setCollapsedGroups((prev) => {
-        const next = prev.includes(groupTitle)
-          ? prev.filter((g) => g !== groupTitle)
-          : [...prev, groupTitle];
-        writePrefs(orgId, { collapsedGroups: next });
-        return next;
-      });
-    },
-    [orgId],
-  );
+  const toggleGroup = useCallback((groupTitle: string) => {
+    setCollapsedGroups((prev) =>
+      prev.includes(groupTitle)
+        ? prev.filter((g) => g !== groupTitle)
+        : [...prev, groupTitle],
+    );
+  }, []);
 
   return { isCollapsed, toggleGroup };
 }
