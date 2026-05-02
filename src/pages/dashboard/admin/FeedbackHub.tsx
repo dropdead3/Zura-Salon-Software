@@ -114,6 +114,11 @@ export default function FeedbackHub() {
                       <Settings className="h-4 w-4" /> Automation Rules
                     </Link>
                   </Button>
+                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
+                    <Link to={dashPath('/admin/feedback/templates')}>
+                      <MessageSquareText className="h-4 w-4" /> Request Templates
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             </div>
