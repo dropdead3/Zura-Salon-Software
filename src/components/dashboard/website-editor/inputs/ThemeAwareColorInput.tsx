@@ -8,20 +8,26 @@
  *
  * Inline footprint is intentionally tiny:
  *   - Swatch trigger button (opens the Popover)
- *   - Hex text field
+ *   - Hex text field (with inline `· Source` suffix when value matches a
+ *     theme token or in-use color — turns the picker into a documentation
+ *     surface so drift is visible at review time without opening anything)
  *   - Optional Clear affordance
  *
- * Inside the Popover, three rows of operator-actionable swatches keep
- * colors cohesive across the site:
+ * Inside the Popover, swatch rows + operator macros keep colors cohesive:
  *
  *   1. Theme — semantic CSS-var swatches (Primary / Accent / Foreground…).
  *      Resolves live from `<html>` so swapping themes refreshes the chips.
  *   2. Already in use — colors the operator already configured elsewhere
  *      on this site (See Offer chip, Announcement bar, Hero CTAs).
- *   3. Custom — native `<input type="color">`.
+ *   3. Custom — native `<input type="color">` + EyeDropper button (Chrome /
+ *      Edge only; falls back gracefully when the API is missing).
+ *   4. Optional `applyToEmpty` macro — surfaced by parent editors when
+ *      they have related sibling fields that are still empty (e.g. Hover /
+ *      Secondary BG). One click cascades the just-picked color.
  *
  * Active state is computed by normalized hex so picking the "See Offer"
- * swatch and typing the popup's literal hex both light up the same chip.
+ * swatch and typing the popup's literal hex both light up the same chip
+ * AND surface the same `· See Offer` source label.
  *
  * SINGLE-OWNERSHIP DOCTRINE: this is the only place native
  * `<input type="color">` is allowed in `src/components/dashboard/website-editor/**`.
@@ -33,7 +39,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, X } from 'lucide-react';
+import { Check, Pipette, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   readThemeTokenSwatches,
@@ -42,6 +48,28 @@ import {
   type ThemeTokenSwatch,
 } from '@/lib/themeTokenSwatches';
 import { useInUseSiteColors } from '@/hooks/useInUseSiteColors';
+
+/**
+ * Optional macro descriptor passed in by parent editors that have related
+ * sibling fields. Surfaced as a one-click chip inside the popover.
+ *
+ * Example (Hero panel, on the Primary CTA Background field):
+ *   applyToEmpty={{
+ *     label: 'Use for Hover BG and Secondary BG too',
+ *     emptyTargetCount: 2,
+ *     onApply: (hex) => { setHoverBg(hex); setSecondaryBg(hex); },
+ *   }}
+ *
+ * Parent decides which fields are "empty" — the picker just renders the
+ * affordance and triggers the callback with the active hex.
+ */
+export interface ApplyToEmptyMacro {
+  label: string;
+  /** Number of sibling fields the macro will fill. Hides chip when 0. */
+  emptyTargetCount: number;
+  /** Called with the currently-active hex (already validated, `#rrggbb`). */
+  onApply: (hex: string) => void;
+}
 
 interface ThemeAwareColorInputProps {
   /** Operator-facing label rendered above the picker. */
@@ -54,6 +82,20 @@ interface ThemeAwareColorInputProps {
   placeholder?: string;
   /** Whether to show the Clear affordance when a value is set. Defaults true. */
   allowClear?: boolean;
+  /** Optional macro to cascade the picked color into related empty fields. */
+  applyToEmpty?: ApplyToEmptyMacro;
+}
+
+// EyeDropper API is Chromium-only (Chrome 95+, Edge 95+). Safari and
+// Firefox don't ship it yet — feature-detect at click time so the button
+// degrades to a tooltip-only state instead of throwing.
+type EyeDropperResult = { sRGBHex: string };
+type EyeDropperCtor = new () => { open: () => Promise<EyeDropperResult> };
+function getEyeDropper(): EyeDropperCtor | null {
+  if (typeof window === 'undefined') return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctor = (window as any).EyeDropper as EyeDropperCtor | undefined;
+  return typeof ctor === 'function' ? ctor : null;
 }
 
 export function ThemeAwareColorInput({
@@ -62,6 +104,7 @@ export function ThemeAwareColorInput({
   onChange,
   placeholder = '#000000 (leave blank for auto)',
   allowClear = true,
+  applyToEmpty,
 }: ThemeAwareColorInputProps) {
   const display = (value ?? '').trim();
   const normalizedActive = normalizeHex(display);
@@ -91,6 +134,19 @@ export function ThemeAwareColorInput({
     [inUseSwatches, themeHexes],
   );
 
+  // Resolve a human-readable source label for the current value. Theme
+  // wins over in-use because token names are more durable / semantic.
+  // Returned as a short suffix so the hex remains the leading affordance:
+  //   `#a49584 · Primary` not `Primary · #a49584`
+  const sourceLabel = useMemo<string | null>(() => {
+    if (!normalizedActive) return null;
+    const themeHit = themeSwatches.find((s) => s.hex && s.hex === normalizedActive);
+    if (themeHit) return themeHit.label;
+    const inUseHit = inUseSwatches.find((s) => s.hex === normalizedActive);
+    if (inUseHit) return inUseHit.label;
+    return null;
+  }, [normalizedActive, themeSwatches, inUseSwatches]);
+
   // Native <input type="color"> only accepts 6-digit hex. Sanitize so token
   // refs / unset values fall back to a sensible neutral instead of erroring.
   const colorPickerValue = useMemo(() => {
@@ -103,6 +159,34 @@ export function ThemeAwareColorInput({
   const triggerColor = normalizedActive || 'transparent';
 
   const [open, setOpen] = useState(false);
+  const [eyedropperBusy, setEyedropperBusy] = useState(false);
+  const eyeDropperCtor = useMemo(() => getEyeDropper(), []);
+  const eyeDropperSupported = !!eyeDropperCtor;
+
+  const handleEyeDropper = async () => {
+    if (!eyeDropperCtor) return;
+    setEyedropperBusy(true);
+    try {
+      const dropper = new eyeDropperCtor();
+      const result = await dropper.open();
+      if (result?.sRGBHex) {
+        onChange(result.sRGBHex);
+        setOpen(false);
+      }
+    } catch {
+      // User cancelled (Esc) or page lost focus — silent no-op is the
+      // expected UX per the EyeDropper spec.
+    } finally {
+      setEyedropperBusy(false);
+    }
+  };
+
+  // Macro chip is only shown when (a) parent supplied the macro, (b) at
+  // least one sibling field is empty, and (c) we have a valid hex to apply.
+  const showApplyMacro =
+    !!applyToEmpty &&
+    applyToEmpty.emptyTargetCount > 0 &&
+    !!normalizedActive;
 
   return (
     <div className="space-y-1.5" data-testid="theme-aware-color-input">
@@ -136,7 +220,11 @@ export function ThemeAwareColorInput({
               )}
               style={{ backgroundColor: triggerColor }}
               aria-label={label ? `${label} swatch picker` : 'Open color picker'}
-              title="Pick from theme, in-use, or custom colors"
+              title={
+                sourceLabel
+                  ? `${normalizedActive} · ${sourceLabel}`
+                  : 'Pick from theme, in-use, or custom colors'
+              }
             >
               {!normalizedActive && (
                 <span
@@ -206,30 +294,93 @@ export function ThemeAwareColorInput({
               </div>
             )}
 
-            {/* Custom row — native picker. Hex text field stays inline outside
-                the popover so operators can type without re-opening. */}
+            {/* Custom row — native picker + EyeDropper. The eslint doctrine
+                allows native `<input type="color">` only inside this file. */}
             <div className="space-y-1.5">
               <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
                 Custom
               </span>
-              <input
-                type="color"
-                value={colorPickerValue}
-                onChange={(e) => onChange(e.target.value)}
-                className="h-9 w-full rounded-md border border-border cursor-pointer bg-transparent"
-                aria-label="Custom color picker"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={colorPickerValue}
+                  onChange={(e) => onChange(e.target.value)}
+                  className="h-9 flex-1 rounded-md border border-border cursor-pointer bg-transparent"
+                  aria-label="Custom color picker"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 px-2 gap-1.5"
+                  disabled={!eyeDropperSupported || eyedropperBusy}
+                  onClick={handleEyeDropper}
+                  title={
+                    eyeDropperSupported
+                      ? 'Sample a color from anywhere on screen'
+                      : 'Eyedropper not supported in this browser (try Chrome or Edge)'
+                  }
+                >
+                  <Pipette className="h-3.5 w-3.5" />
+                  <span className="text-[11px]">Pick</span>
+                </Button>
+              </div>
+              {!eyeDropperSupported && (
+                <span className="block text-[10px] text-muted-foreground/70">
+                  Eyedropper requires Chrome or Edge.
+                </span>
+              )}
             </div>
+
+            {/* Apply-to-empty macro — closes drift one level above per-field
+                cohesion. Parent decides what counts as "empty" and which
+                fields receive the cascade. */}
+            {showApplyMacro && applyToEmpty && (
+              <div className="pt-2 border-t border-border/60">
+                <button
+                  type="button"
+                  className={cn(
+                    'w-full inline-flex items-center justify-center gap-1.5 rounded-full',
+                    'border border-primary/40 bg-primary/10 hover:bg-primary/20',
+                    'px-3 h-8 text-[11px] text-foreground transition-colors',
+                  )}
+                  onClick={() => {
+                    if (normalizedActive) {
+                      applyToEmpty.onApply(normalizedActive);
+                      setOpen(false);
+                    }
+                  }}
+                  title={`Cascade ${normalizedActive} into ${applyToEmpty.emptyTargetCount} empty field${applyToEmpty.emptyTargetCount === 1 ? '' : 's'}`}
+                >
+                  <Sparkles className="h-3 w-3" />
+                  <span className="font-sans">{applyToEmpty.label}</span>
+                </button>
+              </div>
+            )}
           </PopoverContent>
         </Popover>
 
-        <Input
-          value={display}
-          onChange={(e) => onChange(e.target.value || undefined)}
-          placeholder={placeholder}
-          className="h-8 text-xs flex-1 font-mono"
-          spellCheck={false}
-        />
+        <div className="relative flex-1">
+          <Input
+            value={display}
+            onChange={(e) => onChange(e.target.value || undefined)}
+            placeholder={placeholder}
+            className={cn(
+              'h-8 text-xs font-mono',
+              sourceLabel && 'pr-[var(--source-pad,5rem)]',
+            )}
+            spellCheck={false}
+          />
+          {sourceLabel && (
+            <span
+              className="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-1 text-[10px] text-muted-foreground"
+              title={`Matches ${sourceLabel}`}
+            >
+              <span aria-hidden>·</span>
+              <span className="font-sans truncate max-w-[7rem]">{sourceLabel}</span>
+            </span>
+          )}
+        </div>
 
         {allowClear && display && !label && (
           <Button
