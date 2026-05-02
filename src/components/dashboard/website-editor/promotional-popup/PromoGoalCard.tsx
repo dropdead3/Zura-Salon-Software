@@ -36,7 +36,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { tokens } from '@/lib/design-tokens';
-import { cn } from '@/lib/utils';
+
 import { toast } from 'sonner';
 import {
   type PromotionalPopupSettings,
