@@ -139,7 +139,7 @@ export function HeroBackground({
       ) : (
         <img
           src={url}
-          {...(srcSet ? { srcSet, sizes: '100vw' } : {})}
+          {...(srcSet ? { srcSet, sizes: HERO_SIZES_ATTR } : {})}
           alt=""
           className={`w-full h-full ${objectFit}`}
           style={{ objectPosition }}
