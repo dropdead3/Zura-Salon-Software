@@ -1,18 +1,13 @@
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
+import { useHeroExitProgress } from "@/lib/heroExitProgressSignal";
 
 export function ScrollProgressButton() {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsVisible(window.scrollY > window.innerHeight * 0.5);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // One source of truth: the hero publishes its own exit progress; we just
+  // gate visibility on it. Replaces a duplicated `window.scrollY` listener
+  // that would drift if the hero's height/anchor changed.
+  const heroExit = useHeroExitProgress();
+  const isVisible = (heroExit ?? 0) > 0.5;
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
