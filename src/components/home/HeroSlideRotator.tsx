@@ -439,6 +439,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                         heroColors.primaryButtonClass,
                         heroColors.hasPrimaryHover && "hero-cta-hover",
+                        heroColors.hasPrimaryHoverFg && "hero-cta-hover-fg",
                       )}
                       style={heroColors.primaryButtonStyle}
                     >
