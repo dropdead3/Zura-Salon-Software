@@ -3258,3 +3258,36 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
 [role="textbox"]:not(textarea) {
   border-radius: 9999px !important;
 }
+
+/* ============================================================
+   ThemeAwareColorInput — react-colorful overrides
+   The library ships with its own minimal default styles. Override to
+   match the dark popover aesthetic: rounded corners, themed border,
+   themed handles. Scoped to .theme-aware-color-picker so we don't
+   leak into any future picker that might use react-colorful directly.
+   ============================================================ */
+.theme-aware-color-picker .react-colorful {
+  width: 100%;
+  height: 180px;
+  gap: 10px;
+}
+.theme-aware-color-picker .react-colorful__saturation {
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  margin-bottom: 0;
+}
+.theme-aware-color-picker .react-colorful__hue {
+  height: 14px;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--border));
+}
+.theme-aware-color-picker .react-colorful__pointer {
+  width: 16px;
+  height: 16px;
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 0 0 1px hsl(var(--foreground) / 0.4), 0 1px 2px hsl(0 0% 0% / 0.4);
+}
+.theme-aware-color-picker .react-colorful__saturation-pointer {
+  width: 14px;
+  height: 14px;
+}
