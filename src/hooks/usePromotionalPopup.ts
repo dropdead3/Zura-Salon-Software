@@ -4,6 +4,7 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsEditorPreview } from './useIsEditorPreview';
 import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
+import type { PromoExperimentConfig } from '@/lib/promo-experiment';
 
 export type PopupAppearance = 'modal' | 'banner' | 'corner-card';
 export type PopupTrigger = 'immediate' | 'delay' | 'exit-intent' | 'scroll';
