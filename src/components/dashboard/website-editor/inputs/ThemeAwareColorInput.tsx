@@ -488,17 +488,6 @@ export function ThemeAwareColorInput({
             )}
           </PopoverContent>
         </Popover>
-        {/* Caption directly under the trigger swatch — surfaces the
-            cohesion source ("Theme · Accent" / "Primary CTA") at-a-glance
-            so reviewers don't need to open the popover to verify drift.
-            Reserves a 1-line slot via min-h to prevent layout shift when
-            the value resolves vs. clears. */}
-        <span
-          className="font-sans text-[9px] leading-none text-muted-foreground/80 max-w-[6.5rem] truncate min-h-[10px]"
-          title={sourceLabel ? `Matches ${sourceLabel}` : undefined}
-        >
-          {sourceLabel ?? ''}
-        </span>
         </div>
 
         {/* Inline hint — replaces the old hex text input. When empty:
