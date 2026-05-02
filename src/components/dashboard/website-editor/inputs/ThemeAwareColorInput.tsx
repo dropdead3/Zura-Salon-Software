@@ -441,6 +441,19 @@ export function ThemeAwareColorInput({
                   className="!w-full"
                 />
               </div>
+              {/* Hex text field lives here (inside the popover, under the
+                  RGB picker) — not on the editor row. Operators who want
+                  to paste a hex still have the affordance; the editor row
+                  stays clean. */}
+              <Input
+                value={display}
+                onChange={(e) => onChange(e.target.value || undefined)}
+                onBlur={(e) => recordPick(e.target.value)}
+                placeholder={placeholder}
+                className="h-8 text-xs font-mono"
+                spellCheck={false}
+                aria-label="Hex value"
+              />
               {!eyeDropperSupported && (
                 <span className="block text-[10px] text-muted-foreground/70">
                   Eyedropper requires Chrome or Edge.
