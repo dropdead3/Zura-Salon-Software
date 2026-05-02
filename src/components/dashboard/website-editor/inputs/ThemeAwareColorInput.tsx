@@ -427,27 +427,31 @@ export function ThemeAwareColorInput({
             )}
           </PopoverContent>
         </Popover>
+        {/* Caption directly under the trigger swatch — surfaces the
+            cohesion source ("Theme · Accent" / "Primary CTA") at-a-glance
+            so reviewers don't need to open the popover to verify drift.
+            Reserves a 1-line slot via min-h to prevent layout shift when
+            the value resolves vs. clears. */}
+        <span
+          className="font-sans text-[9px] leading-none text-muted-foreground/80 max-w-[6.5rem] truncate min-h-[10px]"
+          title={sourceLabel ? `Matches ${sourceLabel}` : undefined}
+        >
+          {sourceLabel ?? ''}
+        </span>
+        </div>
 
         <div className="relative flex-1">
           <Input
             value={display}
             onChange={(e) => onChange(e.target.value || undefined)}
+            // Record into Recent on blur (commit) — not on every keystroke,
+            // since partial hexes ("#a4") would pollute the ring. recordPick
+            // normalizes + ignores invalid hexes so this is safe.
+            onBlur={(e) => recordPick(e.target.value)}
             placeholder={placeholder}
-            className={cn(
-              'h-8 text-xs font-mono',
-              sourceLabel && 'pr-[var(--source-pad,5rem)]',
-            )}
+            className="h-8 text-xs font-mono"
             spellCheck={false}
           />
-          {sourceLabel && (
-            <span
-              className="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-1 text-[10px] text-muted-foreground"
-              title={`Matches ${sourceLabel}`}
-            >
-              <span aria-hidden>·</span>
-              <span className="font-sans truncate max-w-[7rem]">{sourceLabel}</span>
-            </span>
-          )}
         </div>
 
         {allowClear && display && !label && (
