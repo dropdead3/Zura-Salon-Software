@@ -782,6 +782,8 @@ export function HeroEditor() {
             rotatorMode={rotatorMode}
             onUpdate={(patch) => updateSlide(view.id, patch)}
             onUpdateSection={updateField}
+            pendingInitialFile={pendingUploads[view.id] ?? null}
+            onPendingInitialFileConsumed={() => clearPendingUpload(view.id)}
           />
         );
       })()}
