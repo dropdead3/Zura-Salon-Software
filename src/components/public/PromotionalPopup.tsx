@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  usePromotionalPopup,
   type PopupSurface,
 } from '@/hooks/usePromotionalPopup';
+import { useResolvedPromotionalPopup } from '@/hooks/useResolvedPromotionalPopup';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useIsEditorPreview } from '@/hooks/useIsEditorPreview';
 import { useOrgPath } from '@/hooks/useOrgPath';
@@ -52,10 +52,16 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const orgId = useSettingsOrgId();
   const orgPath = useOrgPath();
   const navigate = useNavigate();
-  const { data: cfg } = usePromotionalPopup();
+  // Resolved = wrapper + any active schedule snapshot. Lifecycle (enabled,
+  // targeting, frequency, offerCode) reads the wrapper; rendering reads the
+  // resolved creative so a queued rotation swaps copy/imagery without
+  // touching the lifecycle state machine.
+  const { resolved: cfg, wrapper } = useResolvedPromotionalPopup();
   const isPreview = useIsEditorPreview();
 
-  const lifecycle = usePromoLifecycle({ cfg, surface, orgId, isPreview });
+  // Lifecycle reads the wrapper (drives enabled/frequency/offerCode/targeting).
+  // Creative comes from `cfg` (resolved, includes scheduled overrides).
+  const lifecycle = usePromoLifecycle({ cfg: wrapper, surface, orgId, isPreview });
 
   // Disabled / no config → render nothing at all.
   if (!lifecycle.active || !cfg) return null;

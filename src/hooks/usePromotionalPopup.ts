@@ -112,6 +112,28 @@ export interface PromotionalPopupSettings {
    *  modal variant (e.g. "$45 value", "Save 30%", "Limited to 10 bookings").
    *  Empty/undefined hides the chip — silence is valid. */
   valueAnchor?: string;
+  /** Scheduled rotation queue. When an entry's window covers `now`, the
+   *  saved snapshot it references swaps in over the base config (content +
+   *  styling fields only — `enabled` and `schedule` itself remain on the
+   *  wrapper). Empty / undefined = base config always wins. Pure resolver
+   *  in `@/lib/promo-schedule.ts`. */
+  schedule?: SavedPromoScheduleEntry[];
+}
+
+/** One queued rotation entry. References a `SavedPromo.id` from the library. */
+export interface SavedPromoScheduleEntry {
+  /** Stable id (uuid) — used for React keys and edits. */
+  id: string;
+  /** `SavedPromo.id` from `usePromoLibrary`. The resolver looks up the
+   *  snapshot at runtime so a renamed/edited library entry always wins. */
+  savedPromoId: string;
+  /** Optional human label — defaults to the saved-promo name in the UI. */
+  label?: string;
+  /** ISO timestamps. Both required: a scheduled rotation must have a bound
+   *  window (Signal Preservation: an open-ended schedule entry conflicts with
+   *  the base config in a way that's indistinguishable from "no schedule"). */
+  startsAt: string;
+  endsAt: string;
 }
 
 export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
