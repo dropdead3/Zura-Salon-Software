@@ -273,6 +273,26 @@ export interface BrandStatementConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_paragraphs: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
+}
+
+export interface TestimonialsConfig {
+  eyebrow: string;
+  headline: string;
+  google_review_url: string;
+  link_text: string;
+  // New advanced options
+  verified_badge_text: string;
+  scroll_animation_duration: number;
+  show_star_ratings: boolean;
+  max_visible_testimonials: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_headline: boolean;
+  show_google_review_link: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 export interface TestimonialsConfig {
