@@ -317,11 +317,33 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
         ) : (
           <>
             {sortedSchedule.length > 0 ? (
+              <ScheduleCalendarStrip schedule={sortedSchedule} saved={saved} />
+            ) : null}
+
+            {hasConflicts ? (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-display tracking-wide uppercase text-[11px]">
+                    Overlapping windows
+                  </span>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {conflicts.size} rotation{conflicts.size === 1 ? '' : 's'} share
+                    overlapping time windows. The resolver will pick the one with the
+                    later start — the others won't render during the overlap. Adjust
+                    the dates to make ownership unambiguous.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {sortedSchedule.length > 0 ? (
               <ul className="space-y-2">
                 {sortedSchedule.map((entry) => {
                   const snap = saved.find((s) => s.id === entry.savedPromoId);
                   const status = statusOf(entry, now);
                   const meta = STATUS_COPY[status];
+                  const isConflicting = conflicts.has(entry.id);
                   return (
                     <li
                       key={entry.id}
@@ -329,7 +351,9 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
                         'flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5',
                         status === 'active'
                           ? 'border-primary/40 bg-primary/5'
-                          : 'border-border/60',
+                          : isConflicting
+                            ? 'border-amber-500/40 bg-amber-500/5'
+                            : 'border-border/60',
                       )}
                     >
                       <div className="min-w-0 flex-1">
@@ -340,6 +364,15 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
                           <Badge variant="outline" className={cn('text-[10px]', meta.tone)}>
                             {meta.label}
                           </Badge>
+                          {isConflicting ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            >
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Overlaps another rotation
+                            </Badge>
+                          ) : null}
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {formatWindow(entry.startsAt, entry.endsAt)}
