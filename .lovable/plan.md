@@ -1,60 +1,79 @@
-## Hero Parallax Reveal
+# Fix Hero Parallax — Full-Screen Rest + Live Hero Animations
 
-Make the section immediately after the hero slide up *over* the hero as the visitor scrolls — so whichever section the operator drags into the second slot inherits the effect automatically. Operator-toggleable from Site Design, subtle intensity.
+## What's wrong today
 
-### How the effect works
+Two regressions visible in the screenshot, both caused by the current `HeroParallaxLayout` structure:
+
+1. **Rising panel bleeds into the hero at rest.** The cream rounded edge appears over the hero before any scrolling, because the rising panel uses `-mt-8` (negative margin) to hide the seam. That negative margin pulls the next section UP, exposing its rounded corner over the hero immediately.
+2. **Hero scroll animations stop working** (headline split, blur, parallax fade). The hero is wrapped in a `position: sticky; height: 100vh` container, which means the hero's own `<section>` element never moves relative to the viewport while sticky is engaged. Its `useScroll({ target: sectionRef })` consequently reads `scrollYProgress = 0` for the entire reveal — split/blur/parallax never fire.
+
+The user's intent is clear: hero is 100% full-screen at rest, hero animations run during scroll, and the next section parallaxes over the hero only as the user scrolls.
+
+## Solution: tall scroll-driver pattern
+
+Replace the current sticky-hero / negative-margin approach with the canonical "tall scroll driver" pattern used by every premium parallax site (Apple, Stripe, Linear).
 
 ```text
-Initial          ↓ scroll                  ↓ scroll more
-┌──────────┐    ┌──────────┐               ┌──────────┐
-│  HERO    │    │  HERO    │  ← sticky     │ (next §) │  ← top of page
-│          │    │          │               │          │
-│          │    ├══════════┤  ← next §     │          │
-└──────────┘    │ next §   │     rises     │ section  │
-│ next §   │    │          │     over      │ 3, 4 …   │
-└──────────┘    └──────────┘               └──────────┘
+┌─────────────────────────────────────┐
+│  [DRIVER]   height: 200vh           │
+│                                     │
+│   ┌─────────────────────────────┐   │
+│   │ [HERO]   sticky top:0       │   │  ← hero pins for 200vh of scroll
+│   │ height: 100vh, full-bleed   │   │     and runs its own animations
+│   │ — runs split/blur/parallax  │   │     against the driver's progress
+│   └─────────────────────────────┘   │
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  [RISING PANEL]                     │  ← starts at top: 200vh (no bleed
+│  rounded-t, shadow, bg-background   │     at rest), scrolls up over the
+│                                     │     hero naturally as user scrolls
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  [REST OF PAGE]                     │
+└─────────────────────────────────────┘
 ```
 
-Hero gets `position: sticky; top: 0; height: 100vh`. The next section is a normal-flow block that scrolls up *over* the hero. Once fully covered, sticky releases and the rest of the page scrolls normally. No JS scroll listeners — pure CSS, GPU-accelerated, smooth on every device.
+Three structural changes deliver both fixes:
 
-The "next section" gets a thin top shadow + slightly rounded top corners so the reveal edge reads as a deliberate panel, matching the aesthetic in your screenshot.
+- **Driver wraps the hero** at `height: 200vh` (one screen of full-bleed display + one screen of scroll runway for the animation). Hero is `sticky top:0 h-screen` inside the driver.
+- **Rising panel sits at normal flow position 200vh** — no negative margin. At scroll 0 the seam is below the fold, so the hero is genuinely full-screen at rest.
+- **Hero's `useScroll` target becomes the DRIVER**, not the hero `<section>`. The driver moves through the viewport as the user scrolls, so `scrollYProgress` advances 0 → 1 across the 200vh range, restoring the split/blur/parallax exactly as on flat sites.
 
-### Operator control
+## File-by-file changes
 
-New toggle under **Site Design → Effects** (creating the Effects subsection if it doesn't exist):
-- **Hero parallax reveal** — *Off by default* (no surprise behavior change for existing sites). When on, the section directly below the hero rises over the hero on scroll.
+**`src/components/home/HeroParallaxLayout.tsx`** — rewrite the layout primitive:
+- Driver `<div>` at `min-h-[200vh] relative` — this is what generates the scroll runway.
+- Hero shell `<div>` inside the driver at `sticky top-0 h-screen overflow-hidden`. Children render here.
+- Expose the driver ref so the hero can subscribe to it (see below).
+- Rising panel sits AFTER the driver in flow with `rounded-t-[2rem] shadow-[...] bg-background` — no negative margin. The shadow + radius become visible naturally as the panel scrolls up.
+- Cinematic mode keeps its CSS-variable scroll driver but reads from the new driver ref.
 
-Stored on `site_settings` under the design key, following the read-then-update doctrine.
+**Hero scroll target rewiring — minimal-touch via context:**
+- Add `src/components/home/HeroParallaxScrollContext.tsx`: a tiny React context exposing the driver `RefObject<HTMLElement>` (or `null` when parallax is off).
+- `HeroParallaxLayout` provides the context with the driver ref.
+- `useHeroScrollAnimation` reads the context. When a parallax driver is present, it binds `useScroll({ target: parallaxDriverRef, offset: ['start start', 'end start'] })`. When absent (parallax off), it falls back to the existing `target: sectionRef` behavior. Hook order stays stable — `useScroll` is always called once.
+- This keeps every other consumer of the hero (preview, edit-mode bento, reduced-motion, all 3 Vitest specs we just shipped) working unchanged.
 
-### What gets affected vs. what doesn't
+**`src/components/home/PageSectionRenderer.tsx`** — no behavior change; still selects slot-1 as the rising panel and forwards `mode`. The structural fix lives entirely in `HeroParallaxLayout`.
 
-| Surface | Behavior |
-|---|---|
-| Public site | Effect active when toggle on; flat scroll when off |
-| Editor preview, **view mode** (matches public) | Effect active when toggle on |
-| Editor preview, **edit mode** (floating bento cards) | Effect **always disabled** — sticky breaks the rearrangeable card layout |
-| Pages without a hero as section #1 | Effect **silently disabled** — no anchor section to be sticky |
-| Reduced-motion preference (`prefers-reduced-motion`) | Effect **disabled** — accessibility |
+## Tests
 
-The effect is **section-position-aware, not section-type-aware**: drag Stylists into slot 2, Stylists rises over the hero. Drag Gallery in, Gallery rises. The renderer attaches the parallax wrapper to *index 1*, regardless of type.
+Update existing specs and add coverage for the two regressions:
 
-### Files touched
+- `HeroParallaxLayout.test.tsx`: assert the driver exists at `[data-hero-parallax="driver"]` with min-height ≥ 100vh, hero shell is `sticky` inside it, rising panel has NO negative margin (no `-mt-` class), and rest still wraps slot 2+. Disabled / reduced-motion specs unchanged.
+- New `HeroParallaxLayout.no-bleed.test.tsx`: at scroll 0, `[data-hero-parallax="rising"]` `getBoundingClientRect().top` is `>= window.innerHeight` (the rising panel is below the fold). Locks the bug we're fixing.
+- New `useHeroScrollAnimation.parallax-binding.test.ts`: when wrapped in `HeroParallaxScrollContext` with a driver ref, `useScroll` is called with that ref; without context, it falls back to `sectionRef`. Locks the animation-restoration fix.
 
-**New / edited public-render layer**
-- `src/components/home/PageSectionRenderer.tsx` — wrap section #0 with a sticky-hero container and section #1 with a `relative z-10` "rising panel" wrapper, only when toggle on, only in non-edit-mode, only when first section is `hero`, only when reduced-motion is not requested.
-- `src/components/home/HeroParallaxLayout.tsx` (new) — small pure layout primitive owning the sticky/rising classes. Lives under `src/components/home/` so the live site and editor view-mode share the same component (Preview-Live Parity canon).
+Existing `HeroSlideRotator.scroll-fx.test.tsx` will be re-validated — it spies on `useScroll` calls and asserts the rotator binds it correctly. The context-aware change must not break that spec.
 
-**Site Design toggle**
-- `src/components/dashboard/website-editor/SiteDesignPanel.tsx` (or its `Effects` subpanel — locate during build) — add the toggle, persist via existing `siteSettingsDraft` flow.
-- `src/hooks/useSiteDesign.ts` (or equivalent reader) — surface `effects.heroParallax: boolean` (default `false`).
+## Out of scope
 
-**Tests (canon coverage)**
-- `HeroParallaxLayout.test.tsx` — renders sticky wrapper only when `enabled && firstIsHero && !reducedMotion`.
-- `PageSectionRenderer.parallax.test.tsx` — reorder fixture: when slot 2 changes from Stylists to Gallery, the rising-panel wrapper still attaches to slot 2.
-- `SiteDesignPanel.heroParallax.test.tsx` — toggle persists through the read-then-update path.
+- Editor edit-mode is unaffected (`PageSectionRenderer` already short-circuits parallax in edit-mode — bento cards don't get sticky positioning).
+- Cinematic-mode fade/scale math stays as-is; only the ref it reads from changes.
+- Reduced-motion behavior unchanged — silent no-op.
 
-### Out of scope
+## Risks & mitigation
 
-- No JS scroll-driven transforms (rejected: heavier, less smooth, unnecessary at "subtle" intensity).
-- No per-section opt-in (the effect belongs to the *seam*, not any single section).
-- No "cinematic" depth/fade variant in this pass — easy to add later behind the same toggle as a `mode` enum if you want.
+- **Risk:** doubling the hero's scroll runway (200vh) means users scroll one extra screen before reaching the rising panel. **Mitigation:** this is the intended UX — it gives the hero animation room to play out cinematically. Tunable via a single constant in the layout (`SCROLL_RUNWAY_VH`) if we want to ease it back to 150vh later.
+- **Risk:** the hero is a system-of-record component used by many tenants. **Mitigation:** the context fallback means tenants without parallax see ZERO change — `useHeroScrollAnimation` reads `null` from context and uses `sectionRef` exactly as today.
+- **Risk:** test fixture for `useHeroScrollAnimation` needs a Provider wrapper. **Mitigation:** ship a small `HeroParallaxScrollContext.Provider` test helper alongside the context.
