@@ -40,7 +40,11 @@ import {
   type PromotionalPopupSettings,
   type SavedPromoScheduleEntry,
 } from '@/hooks/usePromotionalPopup';
-import { pickActiveEntry, detectScheduleConflicts } from '@/lib/promo-schedule';
+import {
+  pickActiveEntry,
+  detectScheduleConflicts,
+  findOverlappingEntries,
+} from '@/lib/promo-schedule';
 
 interface PromoScheduleCardProps {
   formData: PromotionalPopupSettings;
