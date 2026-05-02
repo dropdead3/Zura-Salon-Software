@@ -635,6 +635,28 @@ export function PopupAnalyticsCard({
     };
   }, [data?.trend]);
 
+  // ── Cap-hit ETA marker ──
+  // Reuses the redemption hook + `forecastDaysToCap` so the projection here
+  // is identical to the one in `PromoGoalCard`. Silent when no goal/cap, no
+  // velocity, or already past the cap (other surfaces own those states).
+  // Only fires for the unfiltered "all rotations" view — projecting onto a
+  // narrow rotation window would be misleading.
+  const { data: redemptionStats } = usePromotionalPopupRedemptions(code);
+  const capHitEta = useMemo(() => {
+    if (!goal?.capRedemptions) return null;
+    if (focusedRotationId) return null;
+    const forecast = forecastDaysToCap({
+      cap: goal.capRedemptions,
+      redemptions: redemptionStats?.count ?? 0,
+      series: redemptionStats?.series ?? [],
+    });
+    if (forecast.kind !== 'on-pace') return null;
+    return {
+      daysFromToday: forecast.daysUntilCap,
+      label: `Cap in ~${forecast.daysUntilCap}d`,
+    };
+  }, [goal?.capRedemptions, focusedRotationId, redemptionStats]);
+
   // Silence-is-valid: no code configured → render nothing.
   if (!code) return null;
 
@@ -815,6 +837,7 @@ export function PopupAnalyticsCard({
               data={data.trend}
               highlightedKey={hoveredKey}
               onHoverKey={setHoveredKey}
+              capHitEta={capHitEta}
             />
 
             {compareRotation && compareData && activeRotation ? (
