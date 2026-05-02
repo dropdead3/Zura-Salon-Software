@@ -169,6 +169,7 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
                 id: task.id,
                 status,
                 resolution_notes: notes || null,
+                assigned_to: assignedTo === UNASSIGNED ? null : assignedTo,
               });
               onClose();
             }}
