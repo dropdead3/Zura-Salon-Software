@@ -346,6 +346,19 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
     useState<TestimonialSurface | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const expandAll = () => setExpandedIds(new Set(items.map((i) => i.id)));
+  const collapseAll = () => setExpandedIds(new Set());
 
   // Re-initialize local state whenever the surface changes or fresh data arrives.
   useEffect(() => {
