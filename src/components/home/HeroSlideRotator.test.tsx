@@ -232,9 +232,13 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
       ...DEFAULT_HERO,
       headline_text: 'Shared',
       slides: [
-        makeSlide({ id: 's1', background_type: 'image', background_url: 'https://example.com/a.jpg' }),
-        makeSlide({ id: 's2', background_type: 'image', background_url: 'https://example.com/b.jpg' }),
-        makeSlide({ id: 's3', background_type: 'image', background_url: 'https://example.com/c.jpg' }),
+        // background_type: 'inherit' (the makeSlide default) avoids
+        // HeroBackground's <Helmet> preload — would need HelmetProvider
+        // wrapping otherwise. The auto-rotate behavior under test doesn't
+        // depend on whether the background is rendered as an <img>.
+        makeSlide({ id: 's1' }),
+        makeSlide({ id: 's2' }),
+        makeSlide({ id: 's3' }),
       ],
       rotator_mode: 'background_only',
       auto_rotate: true,
@@ -262,8 +266,8 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
       ...DEFAULT_HERO,
       headline_text: 'Shared',
       slides: [
-        makeSlide({ id: 's1', background_type: 'image', background_url: 'https://example.com/a.jpg' }),
-        makeSlide({ id: 's2', background_type: 'image', background_url: 'https://example.com/b.jpg' }),
+        makeSlide({ id: 's1' }),
+        makeSlide({ id: 's2' }),
       ],
       // multi_slide is the default
       auto_rotate: true,
