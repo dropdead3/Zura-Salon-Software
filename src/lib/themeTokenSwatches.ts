@@ -1,18 +1,27 @@
 /**
  * themeTokenSwatches
  *
- * Reads the active website theme's CSS variables off `<html>` and returns a
- * stable list of `{ key, label, hex }` swatches. Used by the editor's
- * theme-aware color picker so operators can match "Primary" / "Accent" /
- * "Foreground" without knowing the raw hex.
+ * Reads a website theme's CSS variables and returns a stable list of
+ * `{ key, label, hex }` swatches. Used by the editor's theme-aware color
+ * picker so operators can match "Primary" / "Accent" / "Foreground" without
+ * knowing the raw hex.
+ *
+ * Why we accept a `themeClass` instead of reading `<html>` directly:
+ *
+ * The website editor lives inside the dashboard, whose `<html>` carries the
+ * operator's *dashboard* theme (e.g. `theme-zura`). The public site —
+ * including the editor's preview iframe — uses a separate, operator-pickable
+ * site theme (default `theme-cream-lux`). Resolving from `<html>` therefore
+ * surfaces the wrong swatches in the picker (April 2026 "Zura colors are
+ * showing in the Cream Lux site editor" report).
+ *
+ * Fix: resolve via a hidden sandbox element that gets the website theme
+ * class applied. The CSS rules in `index.css` use `.theme-<name>` selectors
+ * so a class on any ancestor is sufficient.
  *
  * The values are HSL CSS variables (e.g. `260 25% 95%`), so we resolve them
- * to a 6-digit hex via a hidden DOM element + getComputedStyle. This lets
- * the swatches match-by-hex against operator-saved hex values.
- *
- * A MutationObserver on `<html>`'s class / data-theme attribute lets the
- * picker repaint when the operator swaps website themes elsewhere in the
- * editor without a full reload.
+ * to a 6-digit hex via the sandbox + getComputedStyle. This lets the
+ * swatches match-by-hex against operator-saved hex values.
  */
 
 export interface ThemeTokenSwatch {
@@ -63,7 +72,14 @@ function computedColorToHex(input: string): string {
   return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
 }
 
-export function readThemeTokenSwatches(): ThemeTokenSwatch[] {
+/**
+ * Resolve theme swatches.
+ *
+ * @param themeClass Optional theme class (e.g. `theme-cream-lux`) to scope
+ *   resolution to. When omitted, falls back to whatever is on `<html>` —
+ *   keeps back-compat for callers outside the website editor.
+ */
+export function readThemeTokenSwatches(themeClass?: string | null): ThemeTokenSwatch[] {
   if (typeof document === 'undefined') {
     return TOKENS.map((t) => ({
       key: t.key,
@@ -73,30 +89,54 @@ export function readThemeTokenSwatches(): ThemeTokenSwatch[] {
       cssVar: `hsl(var(${t.cssVarName}))`,
     }));
   }
-  const root = document.documentElement;
-  const styles = getComputedStyle(root);
-  return TOKENS.map((t) => {
-    const raw = styles.getPropertyValue(t.cssVarName).trim();
-    // CSS vars in this codebase store HSL triplets without the `hsl(...)` wrapper.
-    const colorString = raw.startsWith('#') || raw.startsWith('rgb')
-      ? raw
-      : raw
-        ? `hsl(${raw})`
-        : '';
-    return {
-      key: t.key,
-      label: t.label,
-      hint: t.hint,
-      hex: colorString ? computedColorToHex(colorString) : '',
-      cssVar: `hsl(var(${t.cssVarName}))`,
-    };
-  });
+
+  // Build a sandbox element so we can resolve CSS vars under an arbitrary
+  // theme class without mutating the dashboard's <html>. Light mode is
+  // forced because the public site renders light-only (Layout.tsx removes
+  // `dark` before applying the website theme).
+  const sandbox = document.createElement('div');
+  sandbox.setAttribute('aria-hidden', 'true');
+  sandbox.style.position = 'absolute';
+  sandbox.style.visibility = 'hidden';
+  sandbox.style.pointerEvents = 'none';
+  sandbox.style.width = '0';
+  sandbox.style.height = '0';
+  if (themeClass) {
+    sandbox.className = themeClass;
+  } else {
+    // No override → mirror <html>'s current theme classes so behavior
+    // matches the legacy zero-arg path.
+    sandbox.className = document.documentElement.className;
+  }
+  document.body.appendChild(sandbox);
+
+  try {
+    const styles = getComputedStyle(sandbox);
+    return TOKENS.map((t) => {
+      const raw = styles.getPropertyValue(t.cssVarName).trim();
+      const colorString = raw.startsWith('#') || raw.startsWith('rgb')
+        ? raw
+        : raw
+          ? `hsl(${raw})`
+          : '';
+      return {
+        key: t.key,
+        label: t.label,
+        hint: t.hint,
+        hex: colorString ? computedColorToHex(colorString) : '',
+        cssVar: `hsl(var(${t.cssVarName}))`,
+      };
+    });
+  } finally {
+    document.body.removeChild(sandbox);
+  }
 }
 
 /**
  * Subscribe to theme swaps on `<html>`. Calls `cb` whenever the class or
  * `data-theme` attribute changes — i.e. when the operator picks a new
- * website theme in Site Design.
+ * dashboard theme. The website editor passes its own themeClass and so
+ * doesn't strictly need this, but it remains useful for back-compat callers.
  */
 export function subscribeToThemeChanges(cb: () => void): () => void {
   if (typeof document === 'undefined') return () => {};
