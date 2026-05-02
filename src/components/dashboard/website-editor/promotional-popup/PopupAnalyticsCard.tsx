@@ -232,6 +232,11 @@ interface PopupAnalyticsCardProps {
   organizationId?: string;
   /** Optional eyebrow above the title (e.g. for the editor mount). */
   description?: string;
+  /** When provided, enables a per-rotation breakdown selector. The funnel
+   *  underneath is the SAME `offerCode` (the wrapper's offer code is the
+   *  attribution key — see `applyScheduledSnapshot`); selecting a rotation
+   *  narrows the temporal window to that rotation's [startsAt, endsAt]. */
+  schedule?: SavedPromoScheduleEntry[];
 }
 
 function formatPercent(value: number | null): string {
