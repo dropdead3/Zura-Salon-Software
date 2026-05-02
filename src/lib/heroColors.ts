@@ -142,9 +142,18 @@ export function resolveHeroColors(
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-border'] =
       colors.secondary_button_hover_border;
   }
+  // Operator-set hover-fg wins; otherwise auto-pick from hover-bg luminance
+  // so light hover backgrounds don't strand white outline text below AA.
+  let secondaryAutoHoverFg = false;
   if (colors.secondary_button_hover_fg) {
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] =
       colors.secondary_button_hover_fg;
+  } else if (colors.secondary_button_hover_bg) {
+    const auto = pickContrastColor(colors.secondary_button_hover_bg);
+    if (auto) {
+      (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] = auto;
+      secondaryAutoHoverFg = true;
+    }
   }
 
   const secondaryButtonClass =
