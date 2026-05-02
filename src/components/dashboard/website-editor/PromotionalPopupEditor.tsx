@@ -1446,7 +1446,7 @@ export function PromotionalPopupEditor() {
           label="Reminder button position"
           hint="Where the floating reminder appears after a visitor closes the popup. Flip to bottom-left if a chat widget already lives in the right corner."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start">
+          <div className="space-y-4">
             <Select
               value={formData.fabPosition ?? 'bottom-right'}
               onValueChange={(v) => handleChange('fabPosition', v as PromotionalPopupSettings['fabPosition'])}
@@ -1457,11 +1457,16 @@ export function PromotionalPopupEditor() {
                 <SelectItem value="bottom-left">Bottom left</SelectItem>
               </SelectContent>
             </Select>
-            <FabPreviewSwatch
-              position={formData.fabPosition ?? 'bottom-right'}
-              headline={formData.headline}
-              accent={formData.accentColor}
-            />
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4 flex flex-col items-center gap-2">
+              <FabPreviewSwatch
+                position={formData.fabPosition ?? 'bottom-right'}
+                headline={formData.headline}
+                accent={formData.accentColor}
+              />
+              <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                Live preview
+              </span>
+            </div>
           </div>
         </Field>
       </Section>
