@@ -65,6 +65,7 @@ export function GallerySection() {
   const showCta = config?.show_cta ?? true;
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <Section theme="light">
       <motion.div
         ref={scrollRef}
