@@ -771,39 +771,9 @@ export function HeroEditor() {
         </EditorCard>
       )}
 
-      {view.kind === 'global' && view.id === 'wash' && (
-        <EditorCard title="Image Wash" icon={Droplet}>
-          <p className="text-xs text-muted-foreground -mt-1">
-            Flat uniform tint over the entire hero image — the section default
-            inherited by every slide unless that slide overrides it. Pair with
-            the Text-area Scrim for editorial gradients on top.
-          </p>
-          <HeroWashEditor
-            overlayMode={localConfig.overlay_mode ?? 'darken'}
-            overlayOpacity={localConfig.overlay_opacity ?? 0.4}
-            onChange={(patch) => {
-              if (patch.overlay_mode !== undefined) updateField('overlay_mode', patch.overlay_mode);
-              if (patch.overlay_opacity !== undefined) updateField('overlay_opacity', patch.overlay_opacity);
-            }}
-          />
-        </EditorCard>
-      )}
-
-      {view.kind === 'global' && view.id === 'scrim' && (
-        <EditorCard title="Text-area Scrim" icon={Layers}>
-          <p className="text-xs text-muted-foreground -mt-1">
-            Editorial gradient/vignette layered on top of the Image Wash. Strongest
-            where headline text lives — transparent everywhere else.
-          </p>
-          <HeroScrimEditor
-            scrimStyle={localConfig.scrim_style ?? 'gradient-bottom'}
-            scrimStrength={localConfig.scrim_strength ?? 0.55}
-            bgType={localConfig.background_type}
-            onChange={(patch) => {
-              if (patch.scrim_style !== undefined) updateField('scrim_style', patch.scrim_style ?? undefined);
-              if (patch.scrim_strength !== undefined) updateField('scrim_strength', patch.scrim_strength ?? undefined);
-            }}
-          />
+      {view.kind === 'global' && view.id === 'overlay' && (
+        <EditorCard title="Image Overlay" icon={Layers}>
+          <HeroOverlayEditor config={localConfig} onChange={updateField} />
         </EditorCard>
       )}
 
