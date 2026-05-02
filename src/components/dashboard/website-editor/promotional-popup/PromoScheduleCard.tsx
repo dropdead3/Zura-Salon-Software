@@ -413,16 +413,24 @@ export function PromoScheduleCard({
                   const status = statusOf(entry, now);
                   const meta = STATUS_COPY[status];
                   const isConflicting = conflicts.has(entry.id);
+                  const isFocused = focusedRotationId === entry.id;
                   return (
                     <li
                       key={entry.id}
+                      ref={(el) => {
+                        if (el) rowRefs.current.set(entry.id, el);
+                        else rowRefs.current.delete(entry.id);
+                      }}
+                      onClick={() => handleFocusRotation(isFocused ? null : entry.id)}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5',
-                        status === 'active'
-                          ? 'border-primary/40 bg-primary/5'
-                          : isConflicting
-                            ? 'border-amber-500/40 bg-amber-500/5'
-                            : 'border-border/60',
+                        'flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 cursor-pointer transition-all',
+                        isFocused
+                          ? 'border-primary ring-2 ring-primary/40 bg-primary/10'
+                          : status === 'active'
+                            ? 'border-primary/40 bg-primary/5'
+                            : isConflicting
+                              ? 'border-amber-500/40 bg-amber-500/5'
+                              : 'border-border/60',
                       )}
                     >
                       <div className="min-w-0 flex-1">
