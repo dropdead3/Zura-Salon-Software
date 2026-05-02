@@ -138,7 +138,7 @@ export function usePromotionalPopupFunnel({
         windowDays,
         firstImpressionAt: null,
         firstResponseAt: null,
-        trend: buildTrendBuckets([], [], []),
+        trend: buildTrendBuckets([], [], [], []),
       };
       if (!orgId) return empty;
 
@@ -225,7 +225,13 @@ export function usePromotionalPopupFunnel({
       const trend = buildTrendBuckets(
         impressionRows.map((r) => r.created_at),
         responses.filter((r) => r.response === 'accepted').map((r) => r.created_at),
-        redemptionRows.map((r) => r.transaction_date),
+        responses
+          .filter((r) => r.response === 'declined' || r.response === 'soft')
+          .map((r) => r.created_at),
+        redemptionRows.map((r) => ({
+          date: r.transaction_date,
+          revenue: Number(r.revenue_attributed) || 0,
+        })),
       );
 
       const firstImpressionAt =
