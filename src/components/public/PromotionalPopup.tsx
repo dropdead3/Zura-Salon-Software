@@ -514,19 +514,14 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   }
 
   // FAB element rendered after dismissal. Reuses the offer's accent color and
-  // headline so the visitor can re-open the offer at any time during the session.
-  // Alignment-aware safe zone: when the active hero pushes content into the
-  // FAB's corner (right-hero + bottom-right FAB, or left-hero + bottom-left
-  // FAB), nudge the FAB upward so it doesn't visually crowd the headline.
-  // Smooth-transitioned so the lift reads as intentional, not glitchy.
-  const fabCrowded =
-    (heroAlignment === 'right' && fabPos === 'bottom-right') ||
-    (heroAlignment === 'left' && fabPos === 'bottom-left');
+  // headline so the visitor can re-open the offer at any time during the
+  // session. Position is fixed: bottom-6 + the configured horizontal corner.
+  // The FAB intentionally does NOT shift based on hero alignment — see the
+  // note above and `mem://style/global-overlay-stability`.
   const fab = showFab && !open ? (
     <div
       className={cn(
-        'fixed z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 transition-[bottom] duration-300 ease-out',
-        fabCrowded ? 'bottom-24' : 'bottom-6',
+        'fixed bottom-6 z-50 flex items-center motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300',
         fabPos === 'bottom-left' ? 'left-6 flex-row-reverse' : 'right-6',
       )}
     >
