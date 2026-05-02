@@ -129,6 +129,11 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     const params = new URLSearchParams();
     if (code) params.set('promo', code);
     if (destination === 'consultation') params.set('consultation', 'true');
+    // Variant tag closes the funnel: HostedBookingPage forwards `?v=` to the
+    // booking edge function, which stamps it onto promotion_redemptions so
+    // the experiment card can attribute bookings to the arm the visitor
+    // actually saw — not just CTR.
+    if (variantKey) params.set('v', variantKey);
     navigate(params.toString() ? `${target}?${params.toString()}` : target);
   }
 

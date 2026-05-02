@@ -192,6 +192,9 @@ export function HostedBookingPage() {
       // function so it can persist it on the appointment + write a row to
       // promotion_redemptions when the code matches the org's active popup.
       const promoCode = (searchParams.get('promo') ?? '').trim() || null;
+      // Variant tag forwarded from the popup deep-link. Stamped onto the
+      // redemption row so per-arm funnel close (impression → booking) works.
+      const variantKey = (searchParams.get('v') ?? '').trim() || null;
 
       const { data, error } = await supabase.functions.invoke('create-public-booking', {
         body: {
@@ -211,6 +214,7 @@ export function HostedBookingPage() {
           // Wave 9: Inline-signed forms — empty array means deferred to check-in
           signed_form_template_ids: signedFormTemplateIds,
           promo_code: promoCode,
+          variant_key: variantKey,
         },
       });
 
