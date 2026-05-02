@@ -66,6 +66,9 @@ export function useInUseSiteColors(): InUseColorSwatch[] {
     if (announcement?.bg_color) {
       raw.push({ hex: normalizeHex(announcement.bg_color), label: 'Announcement' });
     }
+    if (announcement?.highlight_color) {
+      raw.push({ hex: normalizeHex(announcement.highlight_color), label: 'Announcement highlight' });
+    }
     const tc = hero?.text_colors;
     if (tc) {
       if (tc.headline)               raw.push({ hex: normalizeHex(tc.headline),               label: 'Headline' });
