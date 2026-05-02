@@ -187,6 +187,7 @@ export function usePromotionalPopupFunnel({
             .eq('surface', POPUP_SURFACE)
             .gte('created_at', windowStart);
           if (windowEnd) q = q.lte('created_at', windowEnd);
+          if (variantKey) q = q.eq('variant_key', variantKey);
           return q.limit(20_000);
         })(),
         (() => {
@@ -198,6 +199,7 @@ export function usePromotionalPopupFunnel({
             .eq('surface', POPUP_SURFACE)
             .gte('created_at', windowStart);
           if (windowEnd) q = q.lte('created_at', windowEnd);
+          if (variantKey) q = q.eq('variant_key', variantKey);
           return q.limit(10_000);
         })(),
         (() => {
