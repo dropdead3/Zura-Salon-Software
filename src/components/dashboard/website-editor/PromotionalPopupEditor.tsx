@@ -82,6 +82,7 @@ import {
   type OverflowFinding,
 } from './promotional-popup/internals';
 import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
+import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -593,6 +594,12 @@ export function PromotionalPopupEditor() {
         setFormData={setFormData}
         isDirty={isDirty}
       />
+
+      {/* Top-of-funnel analytics — impressions → CTA → redemptions → revenue.
+          Renders null until an offer code exists (silence is valid output).
+          Materiality threshold gates rate metrics so a 1/1 = 100% CTR doesn't
+          ship a misleading signal. */}
+      <PopupAnalyticsCard offerCode={savedSnapshot.offerCode} />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent

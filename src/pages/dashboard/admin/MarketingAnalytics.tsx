@@ -30,6 +30,8 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { SEOContentTasksCard } from '@/components/dashboard/seo-workshop/SEOContentTasksCard';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { PopupAnalyticsCard } from '@/components/dashboard/website-editor/promotional-popup/PopupAnalyticsCard';
+import { usePromotionalPopup } from '@/hooks/usePromotionalPopup';
 
 type DateRange = 'week' | 'month' | '3months';
 
@@ -44,6 +46,9 @@ export default function MarketingAnalytics() {
   const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
   
   const { data: analytics, isLoading } = useMarketingAnalytics(dateRange, locationFilter);
+  // Active promotional popup offer code — drives the funnel card below.
+  const { data: popupCfg } = usePromotionalPopup();
+  const popupOfferCode = popupCfg?.enabled ? popupCfg.offerCode : null;
 
   // Check if there's any spend data to show ROI metrics
   const hasSpendData = analytics?.summary.totalSpend ? analytics.summary.totalSpend > 0 : false;
@@ -240,6 +245,15 @@ export default function MarketingAnalytics() {
             isLoading={isLoading} 
           />
         </div>
+
+        {/* Promotional popup funnel — impressions → CTA → redemptions →
+            attributed revenue. Renders null when no popup is active or no
+            offer code configured (silence is valid output). */}
+        {popupOfferCode ? (
+          <div className="mt-6">
+            <PopupAnalyticsCard offerCode={popupOfferCode} />
+          </div>
+        ) : null}
 
         {/* M2: SEO Content Tasks integration */}
         <VisibilityGate

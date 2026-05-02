@@ -18,10 +18,12 @@ import { PromoCornerCard } from './promo/PromoCornerCard';
 import { PromoFab } from './promo/PromoFab';
 import {
   usePromoLifecycle,
+  recordImpression,
   recordResponse,
   writeDismissal,
   markSessionDismissed,
 } from './promo/usePromoLifecycle';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   /**
@@ -64,6 +66,20 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const accentFg = readableForegroundFor(cfg.accentColor);
   const fabPos = cfg.fabPosition === 'bottom-left' ? 'bottom-left' : 'bottom-right';
   const code = lifecycle.code;
+
+  // Record one impression per session for this (org, code, surface). DB-level
+  // partial unique index dedups; this guard just avoids the wasted round-trip
+  // on re-renders / FAB reopen within the same mount. Preview suppressed —
+  // operator QA shouldn't pollute production funnel data.
+  const impressionRecordedRef = useRef(false);
+  useEffect(() => {
+    if (isPreview) return;
+    if (!orgId || !lifecycle.open) return;
+    if (impressionRecordedRef.current) return;
+    impressionRecordedRef.current = true;
+    void recordImpression({ organizationId: orgId, offerCode: code, surface });
+  }, [isPreview, orgId, lifecycle.open, code, surface]);
+
 
   function handleAccept() {
     const destination = cfg!.acceptDestination ?? 'booking';
