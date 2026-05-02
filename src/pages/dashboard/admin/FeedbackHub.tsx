@@ -34,8 +34,6 @@ export default function FeedbackHub() {
   const organizationId = effectiveOrganization?.id;
   const [activeTab, setActiveTab] = useState('overview');
 
-  const { data: surveys } = useFeedbackSurveys(organizationId);
-  const { data: staffStats } = useStaffFeedbackStats(organizationId);
   const { data: profile } = useEmployeeProfile();
   const isSuperAdmin = profile?.is_super_admin;
 
