@@ -324,11 +324,11 @@ export function PopupAnalyticsCard({
   organizationId,
   description,
   schedule,
+  focusedRotationId = null,
+  onFocusRotation,
 }: PopupAnalyticsCardProps) {
   const code = (offerCode ?? '').trim();
 
-  // Per-rotation breakdown — selector value is "all" or a schedule entry id.
-  const [rotationId, setRotationId] = useState<string>('all');
   const { data: library } = usePromoLibrary();
   const savedById = useMemo(() => {
     const m = new Map<string, string>();
@@ -336,7 +336,7 @@ export function PopupAnalyticsCard({
     return m;
   }, [library?.saved]);
 
-  // Only show selector when there are at least two rotations to compare.
+  // Valid, sortable rotation list — gates the selector + compare UI.
   const rotationOptions = useMemo(() => {
     const list = (schedule ?? []).filter(
       (e) =>
@@ -348,10 +348,33 @@ export function PopupAnalyticsCard({
   }, [schedule]);
   const showRotationSelector = rotationOptions.length >= 2;
 
+  // Primary rotation comes from focusedRotationId when controlled, else local.
+  const [localRotationId, setLocalRotationId] = useState<string>('all');
+  const rotationId = focusedRotationId ?? localRotationId;
+  const setRotationId = (id: string) => {
+    setLocalRotationId(id);
+    onFocusRotation?.(id === 'all' ? null : id);
+  };
+
+  // Compare mode — operator picks a second rotation to overlay.
+  const [compareRotationId, setCompareRotationId] = useState<string | null>(null);
+  // Reset comparison if either rotation disappears or primary drops to "all".
+  useEffect(() => {
+    if (compareRotationId && !rotationOptions.find((r) => r.id === compareRotationId)) {
+      setCompareRotationId(null);
+    }
+    if (rotationId === 'all') {
+      setCompareRotationId(null);
+    }
+  }, [compareRotationId, rotationId, rotationOptions]);
+
   const activeRotation =
     rotationId !== 'all'
       ? rotationOptions.find((e) => e.id === rotationId) ?? null
       : null;
+  const compareRotation = compareRotationId
+    ? rotationOptions.find((e) => e.id === compareRotationId) ?? null
+    : null;
 
   const { data, isLoading } = usePromotionalPopupFunnel({
     offerCode: code,
@@ -362,6 +385,20 @@ export function PopupAnalyticsCard({
           id: activeRotation.id,
           startsAt: activeRotation.startsAt,
           endsAt: activeRotation.endsAt,
+        }
+      : null,
+  });
+
+  // Compare-mode second funnel — only fires when a second rotation is picked.
+  const { data: compareData } = usePromotionalPopupFunnel({
+    offerCode: code,
+    windowDays,
+    explicitOrgId: organizationId,
+    rotationWindow: compareRotation
+      ? {
+          id: compareRotation.id,
+          startsAt: compareRotation.startsAt,
+          endsAt: compareRotation.endsAt,
         }
       : null,
   });
