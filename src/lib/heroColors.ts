@@ -114,12 +114,14 @@ export function resolveHeroColors(
   // Primary hover — if operator set hover-bg but no hover-fg, auto-pick
   // black or white via WCAG luminance so light hover backgrounds don't
   // strand the original (often white) text below AA contrast.
+  let primaryAutoHoverFg = false;
   if (colors.primary_button_hover_bg) {
     (primaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
       colors.primary_button_hover_bg;
     const auto = pickContrastColor(colors.primary_button_hover_bg);
     if (auto) {
       (primaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] = auto;
+      primaryAutoHoverFg = true;
     }
   }
 
