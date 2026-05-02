@@ -92,6 +92,19 @@ import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 import { PromoScheduleCard } from './promotional-popup/PromoScheduleCard';
 import { PromoExperimentCard } from './promotional-popup/PromoExperimentCard';
 import { PromoGoalCard } from './promotional-popup/PromoGoalCard';
+import { CollapsibleSection } from './promotional-popup/CollapsibleSection';
+import {
+  Sparkles as SparklesIcon,
+  BarChart3,
+  Calendar as CalendarIcon,
+  FlaskConical,
+  Target as TargetIcon,
+  Type as TypeIcon,
+  MousePointerClick,
+  Settings2,
+  Eye as EyeIcon,
+  Clock as ClockIcon,
+} from 'lucide-react';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
