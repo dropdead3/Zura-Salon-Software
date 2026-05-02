@@ -202,7 +202,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                 <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                   <button
                     onClick={() => setConsultationOpen(true)}
-                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass, heroColors.hasPrimaryHover && "hero-cta-hover")}
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full", heroColors.primaryButtonClass, heroColors.hasPrimaryHover && "hero-cta-hover", heroColors.hasPrimaryHoverFg && "hero-cta-hover-fg")}
                     style={heroColors.primaryButtonStyle}
                   >
                     I am a new client
