@@ -182,7 +182,7 @@ export function resolveHeroColors(
     secondaryButtonStyle,
     secondaryButtonClass,
     hasPrimaryHover: !!colors.primary_button_hover_bg,
-    hasPrimaryHoverFg: !!colors.primary_button_fg ? false : primaryAutoHoverFg,
+    hasPrimaryHoverFg: primaryAutoHoverFg,
     hasSecondaryHover: !!colors.secondary_button_hover_bg,
     hasSecondaryHoverBorder: !!colors.secondary_button_hover_border,
     hasSecondaryHoverFg: !!colors.secondary_button_hover_fg || secondaryAutoHoverFg,
