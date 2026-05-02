@@ -22848,6 +22848,78 @@ export type Database = {
           },
         ]
       }
+      review_request_dispatch_queue: {
+        Row: {
+          appointment_id: string
+          attempts: number
+          channel: string
+          client_email: string | null
+          client_id: string | null
+          client_phone: string | null
+          enqueued_at: string
+          id: string
+          last_error: string | null
+          organization_id: string
+          rule_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          skipped_at: string | null
+          skipped_reason: string | null
+          survey_response_id: string | null
+        }
+        Insert: {
+          appointment_id: string
+          attempts?: number
+          channel?: string
+          client_email?: string | null
+          client_id?: string | null
+          client_phone?: string | null
+          enqueued_at?: string
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          rule_id?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          skipped_at?: string | null
+          skipped_reason?: string | null
+          survey_response_id?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          attempts?: number
+          channel?: string
+          client_email?: string | null
+          client_id?: string | null
+          client_phone?: string | null
+          enqueued_at?: string
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          rule_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          skipped_at?: string | null
+          skipped_reason?: string | null
+          survey_response_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_request_dispatch_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_request_dispatch_queue_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "review_request_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reward_redemptions: {
         Row: {
           created_at: string | null
