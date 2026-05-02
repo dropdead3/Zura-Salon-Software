@@ -85,6 +85,7 @@ import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
 import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 import { PromoScheduleCard } from './promotional-popup/PromoScheduleCard';
 import { PromoExperimentCard } from './promotional-popup/PromoExperimentCard';
+import { PromoGoalCard } from './promotional-popup/PromoGoalCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -628,6 +629,13 @@ export function PromotionalPopupEditor() {
           rotation takes priority (resolver enforces); this card surfaces a
           banner when overridden so the operator understands precedence. */}
       <PromoExperimentCard formData={formData} setFormData={setFormData} />
+
+      {/* Goal-Based Auto-Suppression — operator caps total redemptions
+          (and/or sets a deadline). When the live count hits the cap, the
+          public lifecycle hook auto-suppresses the popup for new visitors
+          without flipping the wrapper toggle, so schedule + experiment
+          state stay intact. Pure resolver in `@/lib/promo-goal`. */}
+      <PromoGoalCard formData={formData} setFormData={setFormData} />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
