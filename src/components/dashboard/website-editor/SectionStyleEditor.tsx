@@ -44,9 +44,19 @@ export function SectionStyleEditor({
   // If the operator hasn't explicitly set container_enabled, fall back to the
   // section's live default (e.g. Brand Statement renders the dark card by
   // default, so the editor should expose its controls without a toggle dance).
+  //
+  // Legacy drafts may carry `container_enabled: false` from before defaults
+  // existed. When the section forces a container by default AND the operator
+  // hasn't customized any container_* field, treat the stale `false` as
+  // "use default" so the color/media editor stays reachable.
+  const hasContainerOverrides = Object.keys(value).some(
+    (k) => k.startsWith('container_') && k !== 'container_enabled'
+  );
   const containerEnabled =
     value.container_enabled !== undefined
-      ? !!value.container_enabled
+      ? containerDefaultEnabled && value.container_enabled === false && !hasContainerOverrides
+        ? true
+        : !!value.container_enabled
       : containerDefaultEnabled;
 
   return (
