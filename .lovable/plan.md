@@ -1,92 +1,167 @@
-## Per-Section Color Editing — Universal Coverage
+## Section Background, Container & Media Overlays — Universal Editor
 
-### What you have today
+### Goal
+Every section gets a unified "Background & Container" editor giving operators:
+1. **Section background** — color, gradient, image, or video (with overlays/grain)
+2. **Container background** — an inset content frame (color, gradient, image/video, radius, padding)
+3. **Media overlays** — darken/lighten scrim, grain texture, blur, vignette, opacity
 
-| Surface | Color controls | How |
-|---|---|---|
-| Hero | Headline, subheadline, primary/secondary CTA bg+fg+border, hover bg, eyebrow | `HeroTextColorsEditor` (full granular) |
-| Announcement bar | Banner bg, highlight color (auto-contrast) | `AnnouncementBarContent` |
-| Promo popup | Accent color | `PromotionalPopupEditor` |
-| Site Design panel | Site-wide theme palette | `SiteDesignPanel` |
-| **Every other section** (Generic) | Background type/color, generic text-color override | `SectionStyleEditor` via the `Style` pill on the section card |
+This extends the existing `SectionStyleEditor` (which already covers section bg color/gradient/image, padding, max-width, radius) with: video support, overlay/grain/vignette controls, and a new container layer.
 
-Every section already has *some* color control (the generic Style pill), but only Hero/Announcement/Popup expose **per-element** colors. The gap is granular tokens (heading vs. body vs. eyebrow vs. button vs. accent) for the 12 content sections.
+---
 
-### What's missing
+### 1) Schema extension — `StyleOverrides`
 
-Sections that render multiple distinct text elements but only expose one blanket "text override":
-
-1. **FAQ** — section heading, eyebrow, question text, answer text, accent (open-state border/icon)
-2. **Testimonials** — section heading, eyebrow, quote text, attribution, star color
-3. **Footer CTA** — heading, subheading, primary button bg+fg, secondary button bg+fg
-4. **Footer** (full footer) — link color, heading color, divider, social icon color
-5. **New Client** — heading, body, CTA button colors
-6. **Brand Statement** — heading, body, accent
-7. **Brands** — section heading, eyebrow, label color
-8. **Drinks** — section heading, eyebrow, item name, item description
-9. **Extensions** — section heading, eyebrow, body, CTA colors
-10. **Extension Reviews Chips** — chip bg, chip text, accent
-11. **Popular Services** — heading, eyebrow, service-card text, price color, CTA
-12. **Locations / Stylists / Services / Gallery display editors** — heading + eyebrow color
-13. **Sticky Footer Bar** — bg, text, button colors
-
-### The plan — three layers
-
-**Layer 1 — Schema (one shared shape).** Add a `text_colors` JSON object to each section's settings, modeled after Hero's `text_colors`. Each section declares only the slots it actually has:
+Extend `src/components/home/SectionStyleWrapper.tsx`:
 
 ```ts
-// shared shape, per-section keys vary
-type SectionTextColors = {
-  heading?: string;
-  eyebrow?: string;
-  body?: string;
-  accent?: string;
-  primary_button_bg?: string;
-  primary_button_fg?: string;
-  primary_button_hover_bg?: string;
-  secondary_button_bg?: string;
-  secondary_button_fg?: string;
-  // section-specific extras (e.g. star_color for Testimonials)
-};
+export interface StyleOverrides {
+  // Existing
+  background_type: 'none' | 'color' | 'gradient' | 'image' | 'video';  // + video
+  background_value: string;            // url for image/video, css for gradient, hex for color
+  background_poster_url?: string;      // video poster
+  background_fit?: 'cover' | 'contain';
+  background_focal_x?: number;         // 0..100
+  background_focal_y?: number;
+
+  // NEW — Section media overlays (apply over image/video bg)
+  overlay_mode?: 'none' | 'darken' | 'lighten' | 'color';
+  overlay_color?: string;              // when overlay_mode === 'color'
+  overlay_opacity?: number;            // 0..1
+  grain_intensity?: number;            // 0..1 — SVG noise overlay
+  vignette_strength?: number;          // 0..1 — radial dark edges
+  background_blur?: number;            // 0..20 px
+
+  // Existing
+  padding_top, padding_bottom, max_width, text_color_override,
+  border_radius, heading_scale, eyebrow_visible
+
+  // NEW — Container layer (inset frame around content)
+  container_enabled?: boolean;
+  container_background_type?: 'none' | 'color' | 'gradient' | 'image' | 'video';
+  container_background_value?: string;
+  container_background_poster_url?: string;
+  container_overlay_mode?: 'none' | 'darken' | 'lighten' | 'color';
+  container_overlay_color?: string;
+  container_overlay_opacity?: number;
+  container_grain_intensity?: number;
+  container_padding?: number;          // inner padding px
+  container_radius?: number;           // 0..48
+  container_max_width?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+}
 ```
 
-Persisted at `site_settings.<section_key>.text_colors`. Empty = inherit from theme. No DB migration — `site_settings.value` is JSONB, so this is purely a settings-payload addition.
+Renders as two stacked layers in `SectionStyleWrapper`:
+- Outer `<section>` carries section bg + section media + scrim/grain/vignette layers
+- Inner `<div>` (when `container_enabled`) carries container bg + overlays + radius + padding
 
-**Layer 2 — One canonical reusable editor.** Build `SectionTextColorsEditor` (mirrors `HeroTextColorsEditor`) that takes a `slots` config + `value` + `onChange`. It renders one labeled `ThemeAwareColorInput` per slot, so every section-specific editor wires it in 5 lines. Reuses the existing theme-token swatch row, "in-use" swatch row, custom hex picker, and auto-contrast logic from the canon — no new color-picker code.
+---
 
-**Layer 3 — Wire it into each section editor.** For each of the 12 editors above:
-- Import `SectionTextColorsEditor`, declare which slots that section supports.
-- Add a "Section Colors" group (collapsible, matches the "Banner Color" group's styling in `AnnouncementBarContent`).
-- Pass `formData.text_colors` ↔ `handleChange('text_colors', next)` through the existing dirty-state hook.
-- Inject `auto-contrast hover defaults` (the same fallback already used on Hero) so operators can't ship illegible hover states.
+### 2) New shared editor — `SectionBackgroundEditor`
 
-**Layer 4 — Live render.** Each `home/<Section>.tsx` component reads `text_colors` from its settings hook and applies inline `style={{ color: ... }}` to the matching elements (or via CSS variables on the section root). Mirrors the Hero pattern verbatim — same tone-fallback resolver, same `pickReadableForeground` helper, same auto-contrast for hover states.
+`src/components/dashboard/website-editor/inputs/SectionBackgroundEditor.tsx`
 
-### Order of work
+Reused for both **section** and **container** (via a `scope: 'section' | 'container'` prop that prefixes keys). Sub-blocks:
 
-1. **Foundation** — extract `SectionTextColorsEditor` from `HeroTextColorsEditor` into `inputs/SectionTextColorsEditor.tsx`. Pure refactor: Hero keeps its existing shape; the new component takes a `slots` array.
-2. **Wave 1 (highest-traffic sections)** — FAQ, Testimonials, Footer CTA, Brand Statement.
-3. **Wave 2** — Brands, Drinks, Extensions, Extension Reviews Chips, New Client, Popular Services.
-4. **Wave 3** — Locations, Stylists, Services, Gallery display editors + Footer (full) + Sticky Footer Bar.
+- **Background type** chips: None / Color / Gradient / Image / Video
+- **Color** → `ThemeAwareColorInput` (theme tokens + in-use)
+- **Gradient** → preset chips + custom CSS input
+- **Image** → `MediaUploadInput` (kind=image) + `FocalPointPicker` overlay + Fit toggle
+- **Video** → `MediaUploadInput` (kind=video) + poster upload + Fit toggle
+- **Media overlays** (only when type is image/video):
+  - Mode chips: None / Darken / Lighten / Custom Color (`ThemeAwareColorInput`)
+  - Opacity slider 0–100%
+  - Grain intensity slider 0–100% (SVG `feTurbulence` overlay)
+  - Vignette slider 0–100% (radial-gradient edge darken)
+  - Background blur slider 0–20px
 
-Each wave: editor → live component → quick visual verify in the editor preview.
+Reuses existing primitives: `MediaUploadInput`, `ThemeAwareColorInput`, `SliderInput`, `FocalPointPicker`. No new uploaders.
 
-### Guardrails carried forward
+---
 
-- Auto-contrast hover fallback (already canon for Hero) applied to every new `*_hover_bg` slot — operator can't ship a light hover bg with dark text below 4.5:1.
-- `useDirtyState` wired against `text_colors` so the Save bar activates correctly (we just hardened this on 11 editors — same pattern reused).
-- Live-edit bridge (`usePreviewBridge`) carries the new payload to the iframe with no extra plumbing — it streams the whole formData object.
-- Theme-aware swatches resolve against the **website** theme, not the dashboard theme (per ThemeAwareColorInput Canon).
-- "In-use" swatch aggregator (`useInUseSiteColors`) gets new sources added so colors picked in section A appear as one-click chips in section B.
+### 3) New `SectionContainerEditor`
 
-### What this does NOT do
+Same component as above, scoped to `container_*` keys, plus:
+- "Enable container frame" toggle (off by default — back-compat with existing sections)
+- Container max-width selector
+- Inner padding slider (0–96px)
+- Corner radius slider (0–48px)
 
-- No new global theme tokens — operators still paint via the existing 12 site themes. This adds *per-section overrides on top* of the theme.
-- No per-element color editing for *Hero* — Hero already has it; this brings the rest of the site to parity.
-- No element-level overrides inside structural editors that don't render text (e.g. Hero Background Editor, Gallery image grid).
+---
 
-### Estimated scope
+### 4) Wire into `SectionStyleEditor`
 
-~14 editor files touched, ~12 home-section render files touched, 1 new shared input component, 1 update to `useInUseSiteColors`. No DB migration. No breaking changes — empty `text_colors` = current behavior.
+Refactor `SectionStyleEditor.tsx` into three collapsible sub-blocks (using existing `EditorCard`):
+1. **Section Background** — `<SectionBackgroundEditor scope="section" />`
+2. **Container** — `<SectionContainerEditor />` (collapsed by default until enabled)
+3. **Layout** — existing padding/max-width/radius/text-color/heading-scale/eyebrow controls
 
-After approval I'll implement Foundation + Wave 1 in the first pass and stop for review before touching Waves 2–3, since this is a wide change and you'll want to QA the visual treatment on a couple sections before I roll the same pattern across all twelve.
+This keeps the public prop shape (`value: Partial<StyleOverrides>`, `onChange`) identical, so all 12+ section editors that already wire `SectionStyleEditor` get the new capabilities for free — no per-editor changes needed.
+
+---
+
+### 5) Render layers in `SectionStyleWrapper`
+
+```text
+<section [section-bg-color/gradient]>
+  [if image/video bg] <div absolute media-layer with focal + fit + blur />
+  [if media bg]       <div absolute scrim-layer (darken/lighten/color) />
+  [if grain]          <div absolute grain-svg-layer />
+  [if vignette]       <div absolute vignette-radial-layer />
+  <div max-width-class>
+    [if container]
+      <div container-frame [bg/radius/padding]>
+        [container media + overlays in same stack pattern]
+        {children}
+      </div>
+    [else]
+      {children}
+  </div>
+</section>
+```
+
+Z-order: media → scrim → grain → vignette → content. All overlay layers `pointer-events-none`.
+
+---
+
+### 6) Grain & vignette utilities
+
+Add `src/lib/sectionOverlayLayers.ts`:
+- `grainDataUri(intensity)` → inline SVG `feTurbulence` data-URI, opacity scaled by intensity
+- `vignetteGradient(strength)` → `radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,${strength}) 100%)`
+
+Both pure, zero dependencies, reusable in Hero too (future cleanup).
+
+---
+
+### 7) Back-compat & migration
+
+- All new fields optional with safe defaults (`undefined` / `0` / `'none'`).
+- Existing sections render identically (no container, no overlays) until operator opts in.
+- No DB migration needed — fields nest into existing `style_overrides` JSON column.
+- Hero keeps its dedicated `HeroBackgroundEditor` (slide-aware, more complex) — this new editor is for the other 12+ sections.
+
+---
+
+### Files
+
+**New:**
+- `src/components/dashboard/website-editor/inputs/SectionBackgroundEditor.tsx`
+- `src/components/dashboard/website-editor/inputs/SectionContainerEditor.tsx`
+- `src/lib/sectionOverlayLayers.ts`
+
+**Edited:**
+- `src/components/home/SectionStyleWrapper.tsx` — schema + multi-layer render
+- `src/components/dashboard/website-editor/SectionStyleEditor.tsx` — compose new sub-editors
+- `src/components/dashboard/website-editor/inputs/SectionBackgroundColorPicker.tsx` — extend or absorb
+
+**No changes needed in 12+ section editors** — they already use `SectionStyleEditor`, so they inherit the new capabilities automatically.
+
+---
+
+### Out of scope (this wave)
+- Hero gets these features later (its own editor is more complex with slides).
+- Per-element media (e.g., card-level backgrounds inside a section) — separate future wave.
+- Animated/parallax backgrounds — future.
+
+Approve to implement.
