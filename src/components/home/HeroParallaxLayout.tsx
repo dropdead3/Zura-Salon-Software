@@ -90,12 +90,16 @@ function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * Cinematic-mode scroll driver. Writes `--hero-parallax-progress` (0→1)
- * on the driver element so CSS can interpolate opacity/scale on the
- * sticky hero shell without React re-renders. One listener,
+ * Scroll driver. Writes `--hero-parallax-progress` (0→1) on the driver
+ * element so CSS can interpolate transforms (rising panel translateY,
+ * cinematic hero opacity/scale) without React re-renders. One listener,
  * rAF-throttled, auto-detached on unmount.
+ *
+ * Runs whenever parallax is `active` (not just cinematic) — the rising
+ * panel needs the same progress signal in subtle mode to translate up
+ * over the hero in lockstep with the hero's exit animations.
  */
-function useCinematicScrollDriver(
+function useParallaxScrollDriver(
   driverRef: React.RefObject<HTMLDivElement>,
   active: boolean,
 ) {
