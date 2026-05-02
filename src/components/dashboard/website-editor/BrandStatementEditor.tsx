@@ -295,6 +295,13 @@ export function BrandStatementEditor() {
           </div>
         )}
 
+        {/* Per-element color overrides */}
+        <SectionTextColorsEditor
+          value={localConfig.text_colors}
+          onChange={(next) => updateField('text_colors', next)}
+          slots={BRAND_STATEMENT_COLOR_SLOTS}
+        />
+
         {/* Advanced Settings */}
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
           <CollapsibleTrigger asChild>
