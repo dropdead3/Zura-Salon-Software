@@ -144,6 +144,8 @@ export default function FeedbackHub() {
 
             <ParkedDispatchCard />
 
+            <RecoveryOutcomeCard />
+
             <AIWeeklyFeedbackSummary />
 
             <div className="grid gap-6 lg:grid-cols-2">
