@@ -188,6 +188,8 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
                 if (wasNewImage) suggestFocal(url, { analysisDataUrl });
               }}
               pathPrefix="hero/slides"
+              pendingInitialFile={pendingInitialFile}
+              onPendingInitialFileConsumed={onPendingInitialFileConsumed}
             />
             {focalPending && (
               <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
