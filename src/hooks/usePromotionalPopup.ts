@@ -144,6 +144,40 @@ export const DEFAULT_PROMO_POPUP: PromotionalPopupSettings = {
   valueAnchor: '$45 value',
 };
 
+/**
+ * Pure resolver for "what should the popup render for the image, per surface".
+ *
+ * Two-tier read:
+ *   1. New per-surface fields win when present (`modalImageLayout`,
+ *      `cornerCardImage`).
+ *   2. Otherwise, map the legacy `imageTreatment` onto the per-surface fields:
+ *        - `'cover'`            → modal=cover, corner=show
+ *        - `'side'`             → modal=side,  corner=show
+ *        - `'hidden-on-corner'` → modal=cover, corner=hide
+ *      (The legacy `'hidden-on-corner'` value never controlled the modal —
+ *       it always rendered as a top strip there. This is the migration shim;
+ *       once an editor save writes the new fields, the legacy value is ignored.)
+ *
+ * `imageUrl` is the master kill switch: no URL → no image anywhere, regardless
+ * of layout choice.
+ */
+export function resolveImageRender(
+  cfg: Pick<PromotionalPopupSettings, 'imageUrl' | 'imageTreatment' | 'modalImageLayout' | 'cornerCardImage'>,
+): { modal: 'cover' | 'side' | 'none'; cornerCard: 'top' | 'none' } {
+  if (!cfg.imageUrl) return { modal: 'none', cornerCard: 'none' };
+
+  const legacy = cfg.imageTreatment;
+  const modal: 'cover' | 'side' =
+    cfg.modalImageLayout
+      ?? (legacy === 'side' ? 'side' : 'cover');
+  const cornerCard: 'top' | 'none' =
+    cfg.cornerCardImage
+      ? (cfg.cornerCardImage === 'show' ? 'top' : 'none')
+      : (legacy === 'hidden-on-corner' ? 'none' : 'top');
+
+  return { modal, cornerCard };
+}
+
 const SETTING_KEY = 'promotional_popup';
 
 /**
