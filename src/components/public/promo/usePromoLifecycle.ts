@@ -91,6 +91,39 @@ function getOrCreateSessionId(): string {
   }
 }
 
+/**
+ * Records a single popup *impression* (render). Top-of-funnel signal that
+ * pairs with `recordResponse` (CTA click / dismissal) and
+ * `promotion_redemptions` (final booking) to produce a true conversion
+ * funnel. De-duped per session at the DB level via a partial unique index
+ * on `(org, code, surface, session_id)` so refreshes / re-mounts inside the
+ * same session don't inflate impression counts.
+ *
+ * Suppressed during editor preview — the operator's QA renders shouldn't
+ * pollute production analytics.
+ */
+export async function recordImpression(args: {
+  organizationId: string | undefined | null;
+  offerCode: string;
+  surface: PopupSurface;
+}) {
+  if (!args.organizationId) return;
+  try {
+    await supabase.rpc('record_promo_impression', {
+      p_organization_id: args.organizationId,
+      p_offer_code: args.offerCode || '',
+      p_surface: args.surface,
+      p_session_id: getOrCreateSessionId(),
+      p_user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      p_referrer: typeof document !== 'undefined' ? document.referrer || null : null,
+    });
+  } catch (err) {
+    // Non-fatal: missing impression rows simply mean a slightly under-counted
+    // funnel — never block the popup from rendering.
+    console.warn('[promo] failed to record impression', err);
+  }
+}
+
 export async function recordResponse(args: {
   organizationId: string | undefined | null;
   offerCode: string;
