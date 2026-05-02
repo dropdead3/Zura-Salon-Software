@@ -30,6 +30,8 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { SEOContentTasksCard } from '@/components/dashboard/seo-workshop/SEOContentTasksCard';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { PopupAnalyticsCard } from '@/components/dashboard/website-editor/promotional-popup/PopupAnalyticsCard';
+import { usePromotionalPopup } from '@/hooks/usePromotionalPopup';
 
 type DateRange = 'week' | 'month' | '3months';
 
