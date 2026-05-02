@@ -118,7 +118,15 @@ export interface PromotionalPopupSettings {
    *  wrapper). Empty / undefined = base config always wins. Pure resolver
    *  in `@/lib/promo-schedule.ts`. */
   schedule?: SavedPromoScheduleEntry[];
+  /** A/B experiment config. When `enabled`, each visitor is deterministically
+   *  bucketed into one variant whose saved snapshot supplies the creative.
+   *  Schedule rotation takes priority — experiments only run while no
+   *  rotation window is active. Pure resolver in `@/lib/promo-experiment.ts`. */
+  experiment?: PromoExperimentConfig;
 }
+
+import type { PromoExperimentConfig } from '@/lib/promo-experiment';
+export type { PromoExperimentConfig, PromoExperimentVariant } from '@/lib/promo-experiment';
 
 /** One queued rotation entry. References a `SavedPromo.id` from the library. */
 export interface SavedPromoScheduleEntry {
