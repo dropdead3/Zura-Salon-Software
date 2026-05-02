@@ -44,6 +44,7 @@ import { useWebsiteColorTheme, useUpdateWebsiteColorTheme } from '@/hooks/useWeb
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
 import { cn } from '@/lib/utils';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 // ─── Schema ───
 export type ButtonShape = 'square' | 'rounded' | 'pill';
