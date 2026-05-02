@@ -56,6 +56,7 @@ export function ExtensionsEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_extensions');
 
   const updateField = <K extends keyof ExtensionsConfig>(field: K, value: ExtensionsConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
