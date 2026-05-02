@@ -4,23 +4,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { ScrollProgressButton } from "./ScrollProgressButton";
 import { useOrgPath } from "@/hooks/useOrgPath";
+import { useHeroExitProgress } from "@/lib/heroExitProgressSignal";
 
 export function StickyBookButton() {
   const orgPath = useOrgPath();
-  const [isVisible, setIsVisible] = useState(false);
   const [shine, setShine] = useState(false);
   const location = useLocation();
   const isBookingPage = location.pathname === "/booking";
 
-  useEffect(() => {
-    const handleScroll = () => {
-      // Show after scrolling past hero
-      setIsVisible(window.scrollY > window.innerHeight * 0.5);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Subscribe to the hero's exit-progress signal instead of binding our own
+  // scroll listener. When no hero is mounted (non-public-site routes) the
+  // signal is `null` — we treat that as "not past the hero" so the FAB
+  // stays hidden on routes that never had a hero to begin with.
+  const heroExit = useHeroExitProgress();
+  const isVisible = (heroExit ?? 0) > 0.5;
 
   // Shine animation every 6 seconds
   useEffect(() => {
