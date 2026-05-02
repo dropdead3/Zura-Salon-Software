@@ -109,6 +109,14 @@ export function resolveHeroColors(
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
       colors.secondary_button_hover_bg;
   }
+  if (colors.secondary_button_hover_border) {
+    (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-border'] =
+      colors.secondary_button_hover_border;
+  }
+  if (colors.secondary_button_hover_fg) {
+    (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] =
+      colors.secondary_button_hover_fg;
+  }
 
   const secondaryButtonClass =
     colors.secondary_button_border || colors.secondary_button_fg
