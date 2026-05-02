@@ -133,6 +133,7 @@ export function BrandStatementEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_brand_statement');
 
   const updateField = <K extends keyof BrandStatementConfig>(field: K, value: BrandStatementConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
