@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useState } from 'react';
 import type { HeroTextColors } from '@/hooks/useSectionConfig';
 import { ThemeAwareColorInput } from '@/components/dashboard/website-editor/inputs/ThemeAwareColorInput';
+import { SectionSubhead } from '@/components/dashboard/website-editor/SectionSubhead';
 
 // Shim that preserves the legacy `<ColorRow label value onChange />` API
 // used throughout this file. Behind the scenes it's the canonical
