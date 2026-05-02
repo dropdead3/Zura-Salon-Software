@@ -383,6 +383,14 @@ export function DrinksManager() {
           <strong>Tip:</strong> Drag drinks to reorder them. Changes are saved when you click "Save Changes" above.
         </p>
       </EditorCard>
+
+      <EditorCard title="Background &amp; Style" description="Background, container, and media for the Drink Menu section.">
+        <SectionStyleEditor
+          value={localConfig.style_overrides ?? {}}
+          onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+          sectionId="drink_menu"
+        />
+      </EditorCard>
     </div>
   );
 }
