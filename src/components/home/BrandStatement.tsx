@@ -150,7 +150,7 @@ export function BrandStatement() {
           >
             {config.show_eyebrow && config.eyebrow && (
               <Eyebrow
-                className="text-background/60 mb-4"
+                className={`${eyebrowColorClass} mb-4`}
                 style={config.text_colors?.eyebrow ? { color: config.text_colors.eyebrow } : undefined}
               >
                 {config.eyebrow}
