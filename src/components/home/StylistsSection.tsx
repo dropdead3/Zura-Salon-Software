@@ -761,5 +761,6 @@ export function StylistsSection() {
         </Link>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }
