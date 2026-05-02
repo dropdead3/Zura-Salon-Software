@@ -6,6 +6,7 @@ import { useVisibleTestimonials } from "@/hooks/useTestimonials";
 import { useTestimonialsConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 
 interface ReviewItem {
   id: string;
@@ -121,6 +122,7 @@ export function TestimonialSection() {
   const verifiedText = config?.verified_badge_text ?? 'Verified Customer';
 
   return (
+    <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section
       ref={sectionRef}
       data-theme="light"
@@ -216,5 +218,6 @@ export function TestimonialSection() {
         }
       `}</style>
     </section>
+    </SectionStyleWrapper>
   );
 }

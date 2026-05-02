@@ -12,6 +12,7 @@ import { useFAQConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useVisibleFAQItems } from "@/hooks/useFAQItems";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 
 type FAQRow = { id: string; question: string; answer: string; category?: string | null; sort_order?: number };
 
@@ -118,6 +119,7 @@ export function FAQSection() {
   };
 
   return (
+    <SectionStyleWrapper styleOverrides={config.style_overrides}>
     <section
       ref={sectionRef}
       data-theme="light"
@@ -304,5 +306,6 @@ export function FAQSection() {
         </div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }

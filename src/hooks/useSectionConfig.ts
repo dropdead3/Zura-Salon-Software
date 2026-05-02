@@ -300,6 +300,8 @@ export interface TestimonialsConfig {
   show_google_review_link: boolean;
   /** Per-element color overrides. Empty/missing = inherit theme. */
   text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface NewClientConfig {
@@ -368,6 +370,8 @@ export interface FAQConfig {
   show_secondary_cta: boolean;
   /** Per-element color overrides. Empty/missing = inherit theme. */
   text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface Brand {
@@ -422,6 +426,8 @@ export interface FooterCTAConfig {
   show_cta_button: boolean;
   /** Per-element color overrides. Empty/missing = inherit theme. */
   text_colors?: SectionTextColors;
+  /** Section background / container / media overrides. See SectionStyleEditor. */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 /**
