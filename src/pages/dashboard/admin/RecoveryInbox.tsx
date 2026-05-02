@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import {
 } from '@/hooks/useRecoveryTasks';
 import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
+import { RecoverySLABadge } from '@/components/feedback/RecoverySLABadge';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -24,6 +26,23 @@ export default function RecoveryInbox() {
   const { dashPath } = useOrgDashboardPath();
   const { data: tasks, isLoading } = useRecoveryTasks();
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
+  useEffect(() => {
+    const responseId = searchParams.get('response');
+    if (!responseId || !tasks?.length || selected) return;
+    const match = tasks.find(t => t.feedback_response_id === responseId);
+    if (match) setSelected(match);
+  }, [searchParams, tasks, selected]);
+
+  const handleClose = () => {
+    setSelected(null);
+    if (searchParams.get('response')) {
+      searchParams.delete('response');
+      setSearchParams(searchParams, { replace: true });
+    }
+  };
 
   const grouped = useMemo(() => {
     const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
@@ -95,6 +114,12 @@ export default function RecoveryInbox() {
                           </Badge>
                         )}
                       </div>
+                      <RecoverySLABadge
+                        status={t.status}
+                        createdAt={t.created_at}
+                        firstContactedAt={(t as any).first_contacted_at ?? null}
+                        resolvedAt={t.resolved_at}
+                      />
                       {t.feedback?.comments && (
                         <p className="text-xs text-muted-foreground line-clamp-2">"{t.feedback.comments}"</p>
                       )}
@@ -111,7 +136,7 @@ export default function RecoveryInbox() {
         )}
       </div>
 
-      <RecoveryTaskDrawer task={selected} open={!!selected} onClose={() => setSelected(null)} />
+      <RecoveryTaskDrawer task={selected} open={!!selected} onClose={handleClose} />
     </DashboardLayout>
   );
 }

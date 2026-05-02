@@ -1,12 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Star, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Star, MessageSquare, ThumbsUp, ThumbsDown, LifeBuoy } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useFeedbackResponses, type FeedbackResponse } from '@/hooks/useFeedbackSurveys';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { usePaginatedSort } from '@/hooks/usePaginatedSort';
 import { TablePagination } from '@/components/ui/TablePagination';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { tokens } from '@/lib/design-tokens';
 
 interface FeedbackResponseListProps {
   organizationId?: string;
@@ -32,12 +35,25 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function FeedbackCard({ response }: { response: FeedbackResponse }) {
+function FeedbackCard({
+  response,
+  recoveryHref,
+}: {
+  response: FeedbackResponse;
+  recoveryHref?: string;
+}) {
   const { formatDate } = useFormatDate();
   const npsInfo = response.nps_score !== null ? getNPSLabel(response.nps_score) : null;
+  const isDetractor =
+    (response.overall_rating != null && response.overall_rating <= 3) ||
+    (response.nps_score != null && response.nps_score <= 6);
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
+    <div
+      className={`border rounded-lg p-4 space-y-3 ${
+        isDetractor ? 'border-destructive/30 bg-destructive/5' : ''
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           {response.overall_rating && (
@@ -70,7 +86,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 text-xs">
+      <div className="flex flex-wrap items-center gap-3 text-xs">
         {response.service_quality && (
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">Service:</span>
@@ -89,6 +105,19 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
             <span className="font-medium">{response.cleanliness}/5</span>
           </div>
         )}
+        {isDetractor && recoveryHref && (
+          <Button
+            asChild
+            size={tokens.button.inline}
+            variant="destructive"
+            className="ml-auto gap-1.5"
+          >
+            <Link to={recoveryHref}>
+              <LifeBuoy className="h-3.5 w-3.5" />
+              Open recovery
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -96,6 +125,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
 
 export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackResponseListProps) {
   const { data: responses, isLoading } = useFeedbackResponses(organizationId, limit);
+  const { dashPath } = useOrgDashboardPath();
 
   const {
     paginatedData,
@@ -152,7 +182,11 @@ export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackRes
       <CardContent>
         <div className="space-y-3">
           {paginatedData.map((response) => (
-            <FeedbackCard key={response.id} response={response} />
+            <FeedbackCard
+              key={response.id}
+              response={response}
+              recoveryHref={dashPath(`/admin/feedback/recovery?response=${response.id}`)}
+            />
           ))}
         </div>
         <TablePagination

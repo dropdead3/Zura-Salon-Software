@@ -17,9 +17,10 @@ import { ParkedDispatchCard } from '@/components/feedback/ParkedDispatchCard';
 import { NegativeReviewHeatmap } from '@/components/feedback/NegativeReviewHeatmap';
 import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackSummary';
 import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
+import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
+import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
+import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
-import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
@@ -31,8 +32,6 @@ export default function FeedbackHub() {
   const organizationId = effectiveOrganization?.id;
   const [activeTab, setActiveTab] = useState('overview');
 
-  const { data: surveys } = useFeedbackSurveys(organizationId);
-  const { data: staffStats } = useStaffFeedbackStats(organizationId);
   const { data: profile } = useEmployeeProfile();
   const isSuperAdmin = profile?.is_super_admin;
 
@@ -82,60 +81,50 @@ export default function FeedbackHub() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
+            <TodaysMustTouchStrip />
+
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <NPSScoreCard organizationId={organizationId} />
               <RecoverySLAWidget />
-              
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Active Surveys</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-medium">
-                    {surveys?.filter(s => s.is_active).length || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {surveys?.length || 0} total surveys configured
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Star className="h-4 w-4 text-amber-500" />
-                    Reputation Engine
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Link to={dashPath('/admin/feedback/recovery')}>
-                      <Send className="h-4 w-4" /> Recovery Inbox
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Link to={dashPath('/admin/feedback/links')}>
-                      <Star className="h-4 w-4" /> Location Review Links
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Link to={dashPath('/admin/feedback/automations')}>
-                      <Settings className="h-4 w-4" /> Automation Rules
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Link to={dashPath('/admin/feedback/templates')}>
-                      <MessageSquareText className="h-4 w-4" /> Request Templates
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
-                    <Link to={dashPath('/admin/feedback/dispatch')}>
-                      <BarChart3 className="h-4 w-4" /> Dispatch Queue
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
+              <ResponseRateCard />
+              <PublicConversionCard />
             </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  Reputation Engine
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
+                  <Link to={dashPath('/admin/feedback/recovery')}>
+                    <Send className="h-4 w-4" /> Recovery Inbox
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
+                  <Link to={dashPath('/admin/feedback/links')}>
+                    <Star className="h-4 w-4" /> Review Links
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
+                  <Link to={dashPath('/admin/feedback/automations')}>
+                    <Settings className="h-4 w-4" /> Automations
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
+                  <Link to={dashPath('/admin/feedback/templates')}>
+                    <MessageSquareText className="h-4 w-4" /> Templates
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
+                  <Link to={dashPath('/admin/feedback/dispatch')}>
+                    <BarChart3 className="h-4 w-4" /> Dispatch Queue
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
 
             <div className="flex justify-end">
               <ComplianceExportButton />
@@ -163,41 +152,7 @@ export default function FeedbackHub() {
           </TabsContent>
 
           <TabsContent value="staff" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Staff Feedback Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {staffStats && Object.keys(staffStats).length > 0 ? (
-                  <div className="space-y-4">
-                    {Object.entries(staffStats).map(([staffId, stats]) => (
-                      <div key={staffId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium">Staff Member</p>
-                          <p className="text-xs text-muted-foreground">
-                            {stats.totalResponses} reviews
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="text-center">
-                            <p className="font-medium">{stats.avgRating.toFixed(1)}</p>
-                            <p className="text-xs text-muted-foreground">Rating</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-medium">{stats.avgFriendliness.toFixed(1)}</p>
-                            <p className="text-xs text-muted-foreground">Friendliness</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-8">
-                    No staff feedback data yet
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <StaffFeedbackSummary organizationId={organizationId} />
           </TabsContent>
 
           {isSuperAdmin && (
