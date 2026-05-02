@@ -6,6 +6,28 @@
  */
 import type { HeroTextColors } from '@/hooks/useSectionConfig';
 
+/**
+ * Pick black or white for best contrast against a hex background. Uses the
+ * WCAG relative-luminance formula; threshold 0.5 gives stable AA-or-better
+ * pairings for the operator-set hover backgrounds (light hover-bg → black
+ * text, dark hover-bg → white text). Returns `null` for unparseable input
+ * so callers can fall through to their existing fallback.
+ */
+export function pickContrastColor(hex: string | undefined): '#000000' | '#ffffff' | null {
+  if (!hex) return null;
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  let h = m[1];
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  // Linearize per sRGB
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.5 ? '#000000' : '#ffffff';
+}
+
 export interface ResolvedHeroColors {
   /** Inline style for the headline element. */
   headlineStyle: React.CSSProperties;
