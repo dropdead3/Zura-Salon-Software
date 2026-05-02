@@ -73,7 +73,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useWebsitePages,
   useUpdateWebsitePages,
