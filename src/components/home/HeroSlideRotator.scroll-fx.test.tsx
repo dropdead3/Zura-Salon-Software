@@ -13,13 +13,28 @@
  *      props on the live render, and does NOT carry them in editor preview
  *      mode (operators need a static canvas).
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import * as framerMotion from 'framer-motion';
 import { HeroSlideRotator } from './HeroSlideRotator';
 import { DEFAULT_HERO, type HeroConfig, type HeroSlide } from '@/hooks/useSectionConfig';
+
+// Capture every `useScroll` call so we can assert the rotator binds it to the
+// hero <section> with the correct offset window. ESM exports aren't spy-able
+// at runtime (vi.spyOn fails on read-only module namespaces), so we wrap the
+// real export at the module-mock layer instead.
+const useScrollCalls: Array<{ target?: { current: HTMLElement | null }; offset?: unknown }> = [];
+vi.mock('framer-motion', async () => {
+  const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion');
+  return {
+    ...actual,
+    useScroll: (opts: { target?: { current: HTMLElement | null }; offset?: unknown }) => {
+      useScrollCalls.push(opts);
+      return actual.useScroll(opts as Parameters<typeof actual.useScroll>[0]);
+    },
+  };
+});
 
 function makeSlide(overrides: Partial<HeroSlide> = {}): HeroSlide {
   return {
@@ -66,13 +81,8 @@ function renderRotator(config: HeroConfig, isPreview: boolean) {
 }
 
 describe('HeroSlideRotator — scroll-fx regression guard', () => {
-  let useScrollSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
-    useScrollSpy = vi.spyOn(framerMotion, 'useScroll');
-  });
-  afterEach(() => {
-    useScrollSpy.mockRestore();
+    useScrollCalls.length = 0;
   });
 
   it('binds useScroll to the hero <section> on the live (non-preview) render', () => {
@@ -80,10 +90,8 @@ describe('HeroSlideRotator — scroll-fx regression guard', () => {
     renderRotator(config, /* isPreview */ false);
 
     // The hook is invoked unconditionally to keep React hook order stable.
-    expect(useScrollSpy).toHaveBeenCalled();
-    const args = useScrollSpy.mock.calls[0]?.[0] as
-      | { target?: { current: HTMLElement | null }; offset?: unknown }
-      | undefined;
+    expect(useScrollCalls.length).toBeGreaterThan(0);
+    const args = useScrollCalls[0];
     expect(args?.target).toBeDefined();
     // `target` is a ref object — its `.current` should resolve to the rendered
     // <section> after mount (proves the ref was actually attached, not just
