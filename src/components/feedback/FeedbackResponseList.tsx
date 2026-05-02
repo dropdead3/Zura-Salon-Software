@@ -125,6 +125,7 @@ function FeedbackCard({
 
 export function FeedbackResponseList({ organizationId, limit = 50 }: FeedbackResponseListProps) {
   const { data: responses, isLoading } = useFeedbackResponses(organizationId, limit);
+  const { dashPath } = useOrgDashboardPath();
 
   const {
     paginatedData,
