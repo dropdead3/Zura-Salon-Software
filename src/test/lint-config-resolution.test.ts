@@ -306,4 +306,30 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       `Global Overlay Stability ban should NOT apply to non-overlay hero files. The doctrine is scoped to filename patterns, not the lib path. Resolved paths:\n${paths.map((p) => `  - ${p}`).join('\n')}`,
     ).toBe(true);
   });
+
+  it('keeps the ThemeAwareColorInput single-ownership ban on the banned fixture', async () => {
+    // Codifies the May 2026 "color picker drift" finding. If this assertion
+    // fails, a future PR can re-introduce a raw <input type="color"> in
+    // any website-editor file and ship cohesion-breaking color rows.
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/theme-aware-color-input-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes("value.value='color'")),
+      `ThemeAwareColorInput JSX-usage selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('does NOT apply the ThemeAwareColorInput ban to the canonical owner', async () => {
+    // The owner file legitimately renders a native <input type="color">
+    // as the "Custom" row. Guard against a future maintainer dropping
+    // the `ignores` entry and breaking the canonical picker itself.
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/components/dashboard/website-editor/inputs/ThemeAwareColorInput.tsx',
+    );
+    expect(
+      selectors.every((s) => !s.includes("value.value='color'")),
+      `ThemeAwareColorInput native-input ban should NOT apply to the owner file.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
 });
