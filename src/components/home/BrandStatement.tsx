@@ -80,13 +80,29 @@ export function BrandStatement() {
     return () => clearTimeout(timeout);
   }, [displayText, isDeleting, currentWordIndex, rotatingWords, config.typewriter_speed, config.typewriter_pause]);
 
+  // Container frame defaults preserve the original dark card look (foreground
+  // fill, generous padding, soft radius). Operator overrides win — picking a
+  // Color / Gradient / Image / Video in the editor's Container Frame panel
+  // replaces the fill; toggling the Container Frame switch off removes it
+  // entirely. Text color stays light by default (`text-background`) so the
+  // dark fill reads correctly; switch to Text Color Override in the editor
+  // when picking a light container color.
+  const containerDefaults: Partial<typeof config.style_overrides> = {
+    container_enabled: true,
+    container_background_type: 'color',
+    container_background_value: 'hsl(var(--foreground))',
+    container_padding: 80,
+    container_radius: 16,
+    container_max_width: 'full',
+  };
+  const mergedOverrides = { ...containerDefaults, ...(config.style_overrides ?? {}) };
+
   return (
-    <SectionStyleWrapper styleOverrides={config.style_overrides}>
+    <SectionStyleWrapper styleOverrides={mergedOverrides}>
     <Section theme="light">
-      <motion.div 
+      <motion.div
         ref={containerRef}
-        data-theme="dark"
-        className="bg-foreground text-background rounded-2xl p-12 md:p-20 lg:p-24"
+        className="text-background"
         style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
