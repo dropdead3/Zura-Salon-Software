@@ -18,8 +18,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PromotionalPopup } from './PromotionalPopup';
 import { PROMO_POPUP_PREVIEW_RESET_EVENT } from '@/lib/promoPopupPreviewReset';
+
+function renderWithProviders(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
+}
 
 // Editor preview short-circuits frequency caps + forces immediate trigger,
 // which is the path the operator's "Restart popup preview" button drives.
