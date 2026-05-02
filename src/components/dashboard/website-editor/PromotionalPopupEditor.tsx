@@ -973,7 +973,7 @@ export function PromotionalPopupEditor() {
                         Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
                       </p>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3">
                         <div>
                           <div className="flex items-center gap-1.5">
                             <Label size="xs">Modal layout</Label>
@@ -1271,7 +1271,7 @@ export function PromotionalPopupEditor() {
             </div>
           )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Accept button label">
             <Input
               value={formData.ctaAcceptLabel}
@@ -1524,7 +1524,7 @@ export function PromotionalPopupEditor() {
 
       {/* Schedule */}
       <Section title="Schedule (optional)">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Starts at" hint="Leave blank for immediate.">
             <Input
               type="datetime-local"
