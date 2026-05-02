@@ -121,7 +121,10 @@ html, body, #root {
     --muted-strong: 32 10% 88%;
     --muted-foreground: 30 8% 42%;
 
-    --accent: 30 14% 90%;
+    /* Accent — warm taupe (#b2a395). Operator-set brand accent for the
+       Cream Lux website theme; light-mode only (dark cream-lux shares the
+       global dark-theme block and must not be tinted from here). */
+    --accent: 29 16% 64%;
     --accent-foreground: 30 18% 8%;
 
     /* Oat/Tan accent - soft warm neutral */
