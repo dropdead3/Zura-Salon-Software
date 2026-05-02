@@ -37,7 +37,63 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
   // Inactive slides (active === false) are excluded from the live rotator;
   // they remain in `config.slides` so the editor can re-enable them.
   // `undefined`/`null` is treated as active for legacy slides.
-  const slides = (config.slides ?? []).filter((s) => s.active !== false);
+  //
+  // Empty-slides fallback: when the operator has not configured any slides,
+  // we synthesize a master slide from the section-level fields so the rotator
+  // can render. This is the path taken by tenants on the legacy single-slide
+  // hero — replaces the retired `HeroSection.tsx` static fallback.
+  const configuredSlides = (config.slides ?? []).filter((s) => s.active !== false);
+  const slides: HeroSlide[] = useMemo(() => {
+    if (configuredSlides.length > 0) return configuredSlides;
+    return [{
+      id: '__implicit_master__',
+      background_type: config.background_type === 'none' ? 'inherit' : config.background_type,
+      background_url: config.background_url ?? '',
+      background_poster_url: config.background_poster_url ?? '',
+      overlay_opacity: null,
+      scrim_style: null,
+      scrim_strength: null,
+      background_focal_x: null,
+      background_focal_y: null,
+      overlay_mode: null,
+      background_fit: null,
+      eyebrow: config.eyebrow ?? '',
+      show_eyebrow: !!config.show_eyebrow,
+      headline_text: config.headline_text ?? '',
+      subheadline_line1: config.show_subheadline ? (config.subheadline_line1 ?? '') : '',
+      subheadline_line2: config.show_subheadline ? (config.subheadline_line2 ?? '') : '',
+      cta_new_client: config.cta_new_client ?? '',
+      cta_new_client_url: config.cta_new_client_url ?? '',
+      cta_returning_client: config.cta_returning_client ?? '',
+      cta_returning_client_url: config.cta_returning_client_url ?? '/booking',
+      show_secondary_button: !!config.show_secondary_button,
+      text_colors: undefined,
+      media_width: null,
+      media_height: null,
+      media_size_bytes: null,
+      media_format: null,
+      media_optimized_with_profile: null,
+      content_alignment: null,
+      content_width: null,
+      active: true,
+    }];
+  }, [
+    configuredSlides,
+    config.background_type,
+    config.background_url,
+    config.background_poster_url,
+    config.eyebrow,
+    config.show_eyebrow,
+    config.headline_text,
+    config.show_subheadline,
+    config.subheadline_line1,
+    config.subheadline_line2,
+    config.cta_new_client,
+    config.cta_new_client_url,
+    config.cta_returning_client,
+    config.cta_returning_client_url,
+    config.show_secondary_button,
+  ]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [consultationOpen, setConsultationOpen] = useState(false);
