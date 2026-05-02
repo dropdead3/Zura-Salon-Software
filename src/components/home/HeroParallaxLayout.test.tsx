@@ -68,8 +68,14 @@ describe('HeroParallaxLayout', () => {
     // Driver wraps the anchor; anchor wraps the hero.
     expect(driver.contains(anchor)).toBe(true);
     expect(anchor.contains(screen.getByTestId('hero'))).toBe(true);
-    // Rising panel sits OUTSIDE the driver (so at scroll 0 it's below the fold).
-    expect(driver.contains(rising)).toBe(false);
+    // Rising panel now lives INSIDE the driver (v2 contract — concurrent
+    // hero exit + panel rise). At scroll 0 it's anchored at bottom-0 of
+    // the driver and translated 100vh further down by --hero-parallax-progress=0,
+    // so it still sits one viewport below the fold (no bleed).
+    expect(driver.contains(rising)).toBe(true);
+    expect(rising.className).toMatch(/(^|\s)absolute(\s|$)/);
+    expect(rising.className).toMatch(/(^|\s)bottom-0(\s|$)/);
+    expect(rising.style.transform).toContain('--hero-parallax-progress');
     expect(rising.contains(screen.getByTestId('next'))).toBe(true);
 
     // Driver must be tall enough to give the sticky shell a scroll runway.
