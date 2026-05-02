@@ -9,20 +9,20 @@ import { useCallback, useEffect, useState } from 'react';
  * tree. Within a single editor session the operator's toggles still stick;
  * closing the editor and coming back resets to the defaults below.
  *
+ * Default policy: **all groups expanded** on entry. The earlier "only Above
+ * the Fold open" default hid most of the rail behind chevrons and made the
+ * inventory of editable sections invisible. Operators wanted a full bird's-
+ * eye view by default and explicit Collapse-All / Expand-All controls when
+ * the rail gets dense — that's what this hook now exposes.
+ *
  * The `orgId` argument is currently unused but retained on the hook
  * signature so callers don't need to churn if we later reintroduce
  * per-org defaults (e.g. surfacing whichever group the operator most
  * recently edited inside this session).
  */
 
-// Default: only the highest-leverage group ('Above the Fold') is open.
-// Keeps the rail to ~5 visible rows by default.
-const DEFAULT_COLLAPSED_GROUPS = [
-  'Social Proof',
-  'Services & Portfolio',
-  'Conversion',
-  'Team & Extras',
-];
+// Default: every group expanded. Empty array = nothing collapsed.
+const DEFAULT_COLLAPSED_GROUPS: string[] = [];
 
 export function useEditorSidebarPrefs(orgId: string | null | undefined) {
   void orgId; // reserved — see file header
@@ -50,5 +50,22 @@ export function useEditorSidebarPrefs(orgId: string | null | undefined) {
     );
   }, []);
 
-  return { isCollapsed, toggleGroup };
+  /**
+   * Collapse every group the caller knows about. Caller passes the full
+   * list of group titles currently rendered (the hook is title-agnostic;
+   * SECTION_GROUPS lives in the sidebar, not here, so we don't hardcode it).
+   */
+  const collapseAll = useCallback((groupTitles: string[]) => {
+    setCollapsedGroups([...groupTitles]);
+  }, []);
+
+  /** Expand every group — clears the collapsed set. */
+  const expandAll = useCallback(() => {
+    setCollapsedGroups([]);
+  }, []);
+
+  /** True when at least one group is collapsed (drives Expand-All affordance). */
+  const hasAnyCollapsed = collapsedGroups.length > 0;
+
+  return { isCollapsed, toggleGroup, collapseAll, expandAll, hasAnyCollapsed };
 }
