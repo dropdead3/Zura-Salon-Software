@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Paintbrush, ArrowUpDown, Maximize2 } from 'lucide-react';
