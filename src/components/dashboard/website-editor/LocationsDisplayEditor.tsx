@@ -35,6 +35,7 @@ export function LocationsDisplayEditor() {
       isSaving={isSaving}
       update={update}
       fields={FIELDS}
+      styleSectionId="locations_display"
     />
   );
 }

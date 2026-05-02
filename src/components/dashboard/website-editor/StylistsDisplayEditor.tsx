@@ -37,6 +37,7 @@ export function StylistsDisplayEditor() {
         isSaving={isSaving}
         update={update}
         fields={FIELDS}
+        styleSectionId="stylists_display"
       />
       <div className="mt-3 mx-1 p-3 bg-muted/50 rounded-lg border border-border/30">
         <p className="text-xs text-muted-foreground leading-relaxed">

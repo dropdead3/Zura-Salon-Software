@@ -33,6 +33,7 @@ export function ServicesPreviewEditor() {
       isSaving={isSaving}
       update={update}
       fields={FIELDS}
+      styleSectionId="services_preview"
     />
   );
 }
