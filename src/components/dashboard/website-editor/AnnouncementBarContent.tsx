@@ -72,6 +72,36 @@ export function AnnouncementBarContent() {
   // Compare against the persisted settings, not the local default object.
   useDirtyState(formData, settings, 'announcement_bar');
 
+  // Seed banner color presets from the active website theme palette so the
+  // chips always reflect the operator's chosen site theme (not a fixed list).
+  // Mirrors ThemeAwareColorInput's resolution scope + preview-event repaint.
+  const { theme: websiteTheme } = useWebsiteColorTheme();
+  const [previewThemeClass, setPreviewThemeClass] = useState<string | null>(null);
+  useEffect(() => {
+    const onThemePreview = (e: Event) => {
+      const next = (e as CustomEvent).detail?.themeClass;
+      if (typeof next === 'string' && next) setPreviewThemeClass(next);
+    };
+    window.addEventListener('editor-theme-preview', onThemePreview);
+    return () => window.removeEventListener('editor-theme-preview', onThemePreview);
+  }, []);
+  useEffect(() => {
+    if (previewThemeClass && previewThemeClass === `theme-${websiteTheme}`) {
+      setPreviewThemeClass(null);
+    }
+  }, [previewThemeClass, websiteTheme]);
+  const websiteThemeClass = previewThemeClass ?? `theme-${websiteTheme}`;
+
+  const [themeSwatches, setThemeSwatches] = useState<ThemeTokenSwatch[]>(
+    () => readThemeTokenSwatches(websiteThemeClass),
+  );
+  useEffect(() => {
+    setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    return subscribeToThemeChanges(() => {
+      setThemeSwatches(readThemeTokenSwatches(websiteThemeClass));
+    });
+  }, [websiteThemeClass]);
+
   const handleChange = (field: keyof AnnouncementBarSettings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -84,7 +114,8 @@ export function AnnouncementBarContent() {
     );
   }
 
-  const isDark = isDarkColor(formData.bg_color || '');
+  const normalizedActive = normalizeHex(formData.bg_color || '');
+
 
   return (
     <EditorCard title="Announcement Bar" icon={Megaphone} description="Customize the promotional banner displayed above the header on the public website">
