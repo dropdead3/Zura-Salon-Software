@@ -68,29 +68,34 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
     if (file) {
       onImageUpload(brand.id, file);
     }
+    // Allow re-uploading the same filename later by resetting the input.
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  const logoHeight = brand.logo_height_px ?? 32;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-start gap-3 p-4 rounded-xl border border-border/40 bg-card/60 transition-all",
+        "grid grid-cols-[auto_auto_1fr_auto] items-start gap-3 p-4 rounded-xl border border-border/40 bg-card/60 transition-all",
         isDragging && "opacity-50 shadow-lg ring-2 ring-primary"
       )}
     >
       <button
-        className="mt-3 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+        className="mt-3 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors self-start"
         {...attributes}
         {...listeners}
+        aria-label="Reorder brand"
       >
         <GripVertical className="h-5 w-5" />
       </button>
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 self-start">
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept=".svg,image/svg+xml,image/png,image/webp"
           className="hidden"
           onChange={handleFileChange}
         />
@@ -99,12 +104,13 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
             <img
               src={brand.logo_url}
               alt={brand.name}
-              className="w-16 h-16 object-contain rounded-lg border bg-background"
+              className="w-16 h-16 object-contain rounded-lg border bg-background p-1"
             />
             <button
               type="button"
               onClick={() => onImageRemove(brand.id)}
               className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Remove logo"
             >
               <X className="h-3 w-3" />
             </button>
@@ -115,6 +121,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
             onClick={() => fileInputRef.current?.click()}
             className="w-16 h-16 border-2 border-dashed rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
             disabled={isUploading}
+            aria-label="Upload logo"
           >
             {isUploading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -124,7 +131,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
           </button>
         )}
       </div>
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 min-w-0 space-y-3">
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">Brand Name</Label>
@@ -145,18 +152,32 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
             />
           </div>
         </div>
-        {!brand.logo_url && (
-          <Button
-            type="button"
-            variant="outline"
-            size={tokens.button.inline}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="text-xs"
-          >
-            <Upload className="h-3 w-3 mr-1" />
-            Upload Logo (Optional)
-          </Button>
+        {brand.logo_url ? (
+          <SliderInput
+            label="Logo Height"
+            value={logoHeight}
+            onChange={(value) => onUpdate(brand.id, { logo_height_px: value })}
+            min={16}
+            max={64}
+            step={2}
+            unit="px"
+            description="Height in the marquee. Width scales to keep the logo's aspect ratio."
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size={tokens.button.inline}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="text-xs"
+            >
+              <Upload className="h-3 w-3 mr-1" />
+              Upload Logo (SVG recommended)
+            </Button>
+            <span className="text-[11px] text-muted-foreground">Optional — text alone looks great.</span>
+          </div>
         )}
       </div>
       <Button
@@ -164,7 +185,8 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
         variant="ghost"
         size="icon"
         onClick={() => onRemove(brand.id)}
-        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 mt-2"
+        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 self-start"
+        aria-label="Delete brand"
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -240,18 +262,25 @@ export function BrandsManager() {
   const handleImageUpload = async (brandId: string, file: File) => {
     try {
       setUploadingBrandId(brandId);
+      const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
       const fileExt = file.name.split('.').pop();
       const fileName = `brand-${brandId}-${Date.now()}.${fileExt}`;
       const filePath = `brands/${fileName}`;
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type || undefined });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage
         .from('business-logos')
         .getPublicUrl(filePath);
       handleUpdateBrand(brandId, { logo_url: urlData.publicUrl });
-      toast.success('Logo uploaded');
+      if (isSvg) {
+        toast.success('Logo uploaded');
+      } else {
+        toast.success('Logo uploaded', {
+          description: 'SVG scales cleaner at any size — consider replacing with an SVG when you can.',
+        });
+      }
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload logo');
@@ -329,7 +358,7 @@ export function BrandsManager() {
 
       <EditorCard
         title="Brand Logos"
-        description="Drag to reorder. Logos are optional - text will display in the marquee."
+        description="Drag to reorder. Logos are optional — Display Text alone keeps every brand cohesive in the marquee."
         headerActions={
           <Button onClick={handleAddBrand} variant="outline" size={tokens.button.card}>
             <Plus className="h-4 w-4 mr-2" />
@@ -337,6 +366,10 @@ export function BrandsManager() {
           </Button>
         }
       >
+        <div className="mb-4 rounded-lg border border-dashed border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Easiest path:</span>{' '}
+          leave logos empty and just fill <span className="font-medium text-foreground">Display Text</span>. A text-only marquee stays perfectly cohesive across every brand. Upload an SVG only when you want the actual logo mark.
+        </div>
         {localConfig.brands.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-50" />

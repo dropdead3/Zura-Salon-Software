@@ -387,6 +387,8 @@ export interface Brand {
   name: string;
   display_text: string;
   logo_url?: string;
+  /** Rendered height in pixels for the marquee logo. Width auto-scales. Default 32. */
+  logo_height_px?: number;
 }
 
 export interface BrandsConfig {

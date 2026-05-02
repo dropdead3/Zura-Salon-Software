@@ -63,32 +63,60 @@ export function BrandsSection() {
             }}
           >
             <div 
-              className="flex hover:[animation-play-state:paused]"
+              className="flex hover:[animation-play-state:paused] items-center"
               style={{
                 animation: `marquee ${config.marquee_speed}s linear infinite`,
               }}
             >
               {/* First set */}
-              {brands.map((brand, index) => (
-                <span
-                  key={index}
-                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18"
-                  style={{ fontFamily: "'Termina', sans-serif" }}
-                >
-                  {brand.display_text}
-                </span>
-              ))}
+              {brands.map((brand, index) => {
+                const showLogo = config.show_logos && !!brand.logo_url;
+                const height = brand.logo_height_px ?? 32;
+                return (
+                  <span
+                    key={index}
+                    className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18 inline-flex items-center"
+                    style={{ fontFamily: "'Termina', sans-serif" }}
+                  >
+                    {showLogo ? (
+                      <img
+                        src={brand.logo_url}
+                        alt={brand.name || brand.display_text}
+                        loading="lazy"
+                        style={{ height: `${height}px` }}
+                        className="w-auto inline-block align-middle object-contain"
+                      />
+                    ) : (
+                      brand.display_text
+                    )}
+                  </span>
+                );
+              })}
               {/* Duplicate set for seamless loop */}
-              {brands.map((brand, index) => (
-                <span
-                  key={`dup-${index}`}
-                  className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18"
-                  style={{ fontFamily: "'Termina', sans-serif" }}
-                  aria-hidden="true"
-                >
-                  {brand.display_text}
-                </span>
-              ))}
+              {brands.map((brand, index) => {
+                const showLogo = config.show_logos && !!brand.logo_url;
+                const height = brand.logo_height_px ?? 32;
+                return (
+                  <span
+                    key={`dup-${index}`}
+                    className="text-lg md:text-xl lg:text-2xl font-medium tracking-[0.1em] text-foreground whitespace-nowrap uppercase flex-shrink-0 px-8 md:px-14 lg:px-18 inline-flex items-center"
+                    style={{ fontFamily: "'Termina', sans-serif" }}
+                    aria-hidden="true"
+                  >
+                    {showLogo ? (
+                      <img
+                        src={brand.logo_url}
+                        alt=""
+                        loading="lazy"
+                        style={{ height: `${height}px` }}
+                        className="w-auto inline-block align-middle object-contain"
+                      />
+                    ) : (
+                      brand.display_text
+                    )}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
