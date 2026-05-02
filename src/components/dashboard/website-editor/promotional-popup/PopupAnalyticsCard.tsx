@@ -41,22 +41,55 @@ function formatTrackingFootnote(
   return `Since ${since}, when impression tracking went live for this organization.`;
 }
 
-function formatTrackingFootnote(
-  firstImpressionAt: string | null,
-  firstResponseAt: string | null,
-): string | null {
-  if (!firstImpressionAt) {
-    return 'Impression tracking not yet recording — data populates after the first popup render.';
+function Sparkline({
+  points,
+  highlighted,
+}: {
+  points: number[];
+  highlighted: boolean;
+}) {
+  const max = Math.max(...points, 1);
+  const total = points.reduce((s, p) => s + p, 0);
+  if (total === 0) {
+    // Honest empty: flat baseline so operators see the chart shape, not a
+    // missing element.
+    return (
+      <svg viewBox="0 0 56 14" className="w-full h-3.5 mt-1" aria-hidden="true">
+        <line
+          x1="0"
+          y1="13"
+          x2="56"
+          y2="13"
+          stroke="hsl(var(--border))"
+          strokeWidth="1"
+          strokeDasharray="2 2"
+        />
+      </svg>
+    );
   }
-  const since = new Date(firstImpressionAt).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-  if (firstResponseAt && new Date(firstResponseAt) < new Date(firstImpressionAt)) {
-    return `Funnel rates reflect activity since ${since}, when impression tracking went live. Earlier CTA clicks exist in the response log but cannot be matched to an impression.`;
-  }
-  return `Since ${since}, when impression tracking went live.`;
+  const w = 56;
+  const h = 14;
+  const stepX = w / Math.max(points.length - 1, 1);
+  const path = points
+    .map((p, i) => {
+      const x = i * stepX;
+      const y = h - (p / max) * (h - 1);
+      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-3.5 mt-1" aria-hidden="true">
+      <path
+        d={path}
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth={highlighted ? 1.6 : 1.1}
+        strokeOpacity={highlighted ? 1 : 0.65}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 interface TrendChartProps {
