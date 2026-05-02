@@ -53,15 +53,11 @@ Deno.serve(async (req) => {
 
     if (taskErr || !task) return json({ error: "Task not found" }, 404);
 
-    // Verify membership in the task's org
-    const { data: membership } = await supabase
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .eq("organization_id", task.organization_id)
-      .maybeSingle();
-
-    if (!membership) return json({ error: "Forbidden" }, 403);
+    // Verify org admin/manager
+    const { data: isAdmin } = await supabase.rpc("is_org_admin", {
+      _user_id: user.id, _org_id: task.organization_id,
+    });
+    if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
     const { data: feedback } = await supabase
       .from("client_feedback_responses")
@@ -73,10 +69,10 @@ Deno.serve(async (req) => {
     if (task.client_id) {
       const { data: client } = await supabase
         .from("clients")
-        .select("first_name, full_name")
+        .select("first_name")
         .eq("id", task.client_id)
         .maybeSingle();
-      clientFirstName = client?.first_name || (client?.full_name?.split(" ")[0]) || "there";
+      clientFirstName = client?.first_name || "there";
     }
 
     let serviceName: string | null = null;
