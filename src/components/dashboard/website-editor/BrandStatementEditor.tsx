@@ -21,6 +21,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
 import { BRAND_STATEMENT_COLOR_SLOTS } from '@/lib/sectionColorSlots';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import {
   DndContext,
   closestCenter,
