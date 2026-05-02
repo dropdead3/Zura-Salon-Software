@@ -276,4 +276,34 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
       ).toBe(true);
     }
   });
+
+  it('keeps the Global Overlay Stability import ban on the banned fixture', async () => {
+    // The fixture lives outside src/components/** and is the file the
+    // smoke surface lints. If this assertion fails, a future PR adding
+    // `subscribeHeroAlignment` to a global FAB / Popup / Overlay /
+    // Widget will pass lint silently — the exact regression the
+    // PromotionalPopup canon (Nov 2026) closed.
+    const paths = await getRestrictedImportPaths(
+      'src/test/lint-fixtures/hero-alignment-signal-overlay-banned.tsx',
+    );
+    expect(
+      paths.includes('@/lib/heroAlignmentSignal'),
+      `Global Overlay Stability import ban missing from resolved config for the banned fixture.\nExpected: @/lib/heroAlignmentSignal\nResolved paths:\n${paths.map((p) => `  - ${p}`).join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('does NOT apply the Global Overlay Stability ban to non-overlay hero files', async () => {
+    // The hero subtree may legitimately consume the alignment signal in
+    // the future (e.g. a hero-internal reading-progress bar). The scope
+    // intentionally targets *Fab* / *Popup* / *Overlay* / *Widget*
+    // filenames, not the lib itself. Guard against a future maintainer
+    // broadening the scope and breaking the hero subtree.
+    const paths = await getRestrictedImportPaths(
+      'src/components/home/HeroSlideRotator.tsx',
+    );
+    expect(
+      paths.every((p) => p !== '@/lib/heroAlignmentSignal'),
+      `Global Overlay Stability ban should NOT apply to non-overlay hero files. The doctrine is scoped to filename patterns, not the lib path. Resolved paths:\n${paths.map((p) => `  - ${p}`).join('\n')}`,
+    ).toBe(true);
+  });
 });

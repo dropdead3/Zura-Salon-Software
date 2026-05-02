@@ -18,6 +18,7 @@ import tseslint from "typescript-eslint";
 import {
   defineScopedDoctrine,
   defineScopedImportDoctrine,
+  HERO_ALIGNMENT_OVERLAY_PATHS,
 } from "./eslint.helpers.js";
 
 
@@ -314,5 +315,49 @@ export default tseslint.config(
         message: "Importing FocalPointPicker outside MediaUploadInput.tsx is forbidden. The component is owned exclusively by the consolidated upload tile — use <MediaUploadInput focal={{ ... }} /> instead. If you need a focal picker without an upload tile, extend MediaUploadInput's focal prop or factor a hookless <FocalOverlay> primitive rather than re-importing this component.",
       },
     ],
+  }),
+  // ─────────────────────────────────────────────────────────────────────
+  // Global Overlay Stability — bans @/lib/heroAlignmentSignal imports
+  // from any file under src/components/** whose name contains Fab,
+  // Popup, Overlay, or Widget. Codifies the November 2026 PromotionalPopup
+  // FAB regression: the FAB shifted from bottom-6 to bottom-24 on slide
+  // change because it subscribed to hero alignment, and operators read
+  // the positional drift as a bug. The contract for global overlays is
+  // anchor + z-layer, never section-level layout state.
+  //
+  // Why a separate scoped block (and not a global ban): the alignment
+  // signal lib has legitimate future consumers inside the hero subtree
+  // (e.g. an alignment-aware reading-progress bar inside the hero). A
+  // global ban would over-reach. Scoping by file-name pattern matches
+  // exactly the surface the memory rule calls out.
+  //
+  // Override: `// eslint-disable-next-line no-restricted-imports
+  // -- <reason>` if a future overlay genuinely needs alignment-aware
+  // behavior — but prefer routing through a hero-subtree wrapper first.
+  //
+  // Pairs with:
+  //   - src/test/lint-fixtures/hero-alignment-signal-overlay-banned.tsx
+  //   - src/test/lint-rule-hero-alignment-signal-overlay.test.ts
+  //   - src/test/lint-config-resolution.test.ts (resolution assertion)
+  //   - mem://style/global-overlay-stability
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedImportDoctrine({
+    files: [
+      "src/components/**/*Fab*.{ts,tsx}",
+      "src/components/**/*Popup*.{ts,tsx}",
+      "src/components/**/*Overlay*.{ts,tsx}",
+      "src/components/**/*Widget*.{ts,tsx}",
+      // Lint fixture lives outside src/components/**; include explicitly
+      // so the smoke / resolution tests (which use `ignore: false`) see
+      // the rule applied.
+      "src/test/lint-fixtures/hero-alignment-signal-overlay-banned.tsx",
+    ],
+    ignores: [
+      // Test files for the popup itself shouldn't be subject to a runtime
+      // import ban — they only assert behavior, not subscribe to signals.
+      "**/*.test.{ts,tsx}",
+    ],
+    basePaths: HERO_ALIGNMENT_OVERLAY_PATHS,
+    extraPaths: [],
   }),
 );
