@@ -13,6 +13,7 @@ import { useGalleryDisplayConfig, DEFAULT_GALLERY_DISPLAY } from "@/hooks/useSec
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "./InlineEditableText";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 import { cn } from "@/lib/utils";
 
 // Gallery images - replace with real salon work
