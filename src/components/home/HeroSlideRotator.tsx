@@ -146,28 +146,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.overlay_opacity ?? config.overlay_opacity ?? 0.4;
   }, [slide, config.overlay_opacity]);
 
-  const scrimStyle = useMemo(() => {
-    if (!slide) return config.scrim_style ?? 'gradient-bottom';
-    return slide.scrim_style ?? config.scrim_style ?? 'gradient-bottom';
-  }, [slide, config.scrim_style]);
-
-  const scrimStrength = useMemo(() => {
-    if (!slide) return config.scrim_strength ?? 0.55;
-    // A per-slide override of `0` paired with a non-`none` style is
-    // meaningless (gradient with peak 0 = invisible) and almost always a
-    // legacy artifact from when the per-slide editor wrote `0` instead of
-    // `null` to express "inherit". Treat it as inherit so the section
-    // strength wins. Operators who explicitly want no scrim choose the
-    // `none` style — that branch is already short-circuited upstream.
-    const slideStrength = slide.scrim_strength;
-    const slideStyle = slide.scrim_style;
-    const isMeaninglessZero =
-      slideStrength === 0 && slideStyle != null && slideStyle !== 'none';
-    if (slideStrength == null || isMeaninglessZero) {
-      return config.scrim_strength ?? 0.55;
-    }
-    return slideStrength;
-  }, [slide, config.scrim_strength]);
+  // Slide-level scrim resolution lives in `heroScrim.ts` so the live
+  // renderer + the editor previews stay in lockstep. The shared helper also
+  // heals legacy slides that wrote `scrim_strength: 0` (instead of `null`)
+  // to express "inherit", which silently shadowed the section setting.
+  const { style: scrimStyle, strength: scrimStrength } = useMemo(() => {
+    return resolveScrim({
+      slideStyle: slide?.scrim_style,
+      slideStrength: slide?.scrim_strength,
+      sectionStyle: config.scrim_style,
+      sectionStrength: config.scrim_strength,
+    });
+  }, [slide, config.scrim_style, config.scrim_strength]);
 
   // Background-only mode splits ownership:
   //   - `slide` (above) stays the foreground source, always anchored to the
