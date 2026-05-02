@@ -863,7 +863,7 @@ export function PopupAnalyticsCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {showSkeleton ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
+          <div ref={funnelGridRef} className={cn('grid gap-2.5', gridColsClass)}>
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
