@@ -581,7 +581,7 @@ export function HeroEditor() {
 
                 {/* Background gallery */}
                 <div className="pt-3">
-                  <div className="flex items-center justify-between pb-2">
+                  <div className="flex items-center justify-between gap-4 pb-2">
                     <div className="flex items-baseline gap-2">
                       <h4 className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
                         Rotating Backgrounds
