@@ -251,7 +251,9 @@ export function HeroEditor() {
   const orgId = effectiveOrganization?.id ?? null;
 
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
-  const [view, setView] = useState<HeroView>(() => readPersistedView(orgId));
+  // Always start at the hub on mount — no localStorage hydration. See
+  // entry-contract block above viewStorageKey's removal.
+  const [view, setView] = useState<HeroView>({ kind: 'hub' });
   const migratedRef = useRef(false);
 
   // Canonical dirty-state hook (key-order-stable structural compare).
