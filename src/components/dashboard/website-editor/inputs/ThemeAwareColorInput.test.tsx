@@ -36,6 +36,26 @@ vi.mock('@/hooks/useRecentColorPicks', () => ({
 vi.mock('@/hooks/useInUseSiteColors', () => ({
   useInUseSiteColors: () => [],
 }));
+// Mock the resolver so the test controls the website-theme hex deterministically.
+// Real resolution requires getComputedStyle -> RGB parsing which jsdom doesn't do.
+vi.mock('@/lib/themeTokenSwatches', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/themeTokenSwatches')>(
+    '@/lib/themeTokenSwatches',
+  );
+  return {
+    ...actual,
+    readThemeTokenSwatches: () => [
+      {
+        key: 'primary',
+        label: 'Primary',
+        hint: 'CTAs and accents',
+        cssVar: 'hsl(var(--primary))',
+        hex: '#837363', // cream-lux primary (warm taupe)
+      },
+    ],
+    subscribeToThemeChanges: () => () => {},
+  };
+});
 
 beforeEach(() => {
   // Simulate the dashboard environment: <html> carries `theme-zura`. This
@@ -87,5 +107,28 @@ describe('ThemeAwareColorInput — website theme resolution scope', () => {
       );
     });
     expect(screen.getByText(/Theme · Marine/i)).toBeInTheDocument();
+  });
+
+  it('paints the swatch dot from the resolved website-theme hex (not a CSS-var that would resolve against the dashboard <html>)', () => {
+    // Regression: the dot inside the Primary chip used to receive
+    // `style.backgroundColor = "hsl(var(--primary))"`, which the browser
+    // resolved against <html class="theme-zura"> (purple) even though the
+    // click correctly applied cream-lux's #837363. Now the dot must use
+    // the same hex the click writes.
+    render(
+      <ThemeAwareColorInput label="Color" value="" onChange={vi.fn()} />,
+    );
+    act(() => {
+      screen.getByLabelText(/swatch picker/i).click();
+    });
+
+    const primaryChip = screen.getByTitle(/^Primary —/i);
+    const dot = primaryChip.querySelector('span[style*="background"]') as HTMLElement | null;
+    expect(dot).not.toBeNull();
+    // Must paint the resolved hex, NOT a `var(...)` ref that would pick up
+    // the dashboard's theme variables.
+    expect(dot!.style.backgroundColor).not.toMatch(/var\(/);
+    // jsdom normalizes `#837363` to `rgb(131, 115, 99)`.
+    expect(dot!.style.backgroundColor).toBe('rgb(131, 115, 99)');
   });
 });
