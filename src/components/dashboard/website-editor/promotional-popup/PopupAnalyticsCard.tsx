@@ -237,6 +237,12 @@ interface PopupAnalyticsCardProps {
    *  attribution key — see `applyScheduledSnapshot`); selecting a rotation
    *  narrows the temporal window to that rotation's [startsAt, endsAt]. */
   schedule?: SavedPromoScheduleEntry[];
+  /** Externally-controlled focused rotation (from calendar-strip click in the
+   *  schedule card). When set, narrows the funnel to that rotation's window
+   *  and lights up the selector tile. Two-way: clicking a rotation pill in
+   *  this card also calls `onFocusRotation`. */
+  focusedRotationId?: string | null;
+  onFocusRotation?: (id: string | null) => void;
 }
 
 function formatPercent(value: number | null): string {
