@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Megaphone, ExternalLink, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditorCard } from './EditorCard';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 const BANNER_COLOR_PRESETS = [
   { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
