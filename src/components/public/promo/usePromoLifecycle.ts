@@ -264,8 +264,44 @@ export function usePromoLifecycle({
     return sp.get('promo');
   }, [location.search]);
 
-  const active = isPopupActive(cfg, surface);
   const code = cfg?.offerCode?.trim() ?? '';
+
+  // ── Goal-based auto-suppression (PR 4) ──
+  // Cheap head-only count of confirmed redemptions for this offer code.
+  // Only fires when the operator has set a goal AND the popup has an
+  // offer code (unattributable popups can't be goal-tracked — Materiality).
+  // Skipped in preview so operators can still QA past the suppression.
+  const goalEnabled = !isPreview && isGoalConfigured(cfg?.goal) && !!orgId && !!code;
+  const { data: goalRedemptionCount } = useQuery({
+    queryKey: ['promo-goal-count', orgId, code],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('promotion_redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', orgId!)
+        .eq('promo_code_used', code)
+        .eq('surface', 'promotional_popup');
+      // Honest absence: query failure → 0, not a fabricated estimate.
+      // The popup will simply NOT auto-suppress in this case (fail-open),
+      // which matches operator expectation: "if my analytics fail, my
+      // popup keeps running" beats "popup silently disappears".
+      if (error) return 0;
+      return count ?? 0;
+    },
+    enabled: goalEnabled,
+    staleTime: 60_000,
+  });
+  const goalStatus = useMemo(
+    () =>
+      evaluateGoal({
+        goal: cfg?.goal,
+        redemptions: goalRedemptionCount ?? 0,
+      }),
+    [cfg?.goal, goalRedemptionCount],
+  );
+  const goalSuppressed = !isPreview && isGoalSuppressing(goalStatus);
+
+  const active = isPopupActiveResult && !goalSuppressed;
 
   // ── Trigger gate (immediate / delay / scroll / exit-intent) ──
   useEffect(() => {
