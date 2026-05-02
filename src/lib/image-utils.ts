@@ -381,8 +381,16 @@ export function buildSupabaseSrcSet(
   return useful.map((w) => `${withSupabaseImageWidth(url, w)} ${w}w`).join(', ');
 }
 
-/** Default width ladder for full-bleed hero/slider art. */
-export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200];
+/**
+ * Default width ladder for full-bleed hero/slider art.
+ *
+ * Covers retina up through 5K (5120px) — a 27" 5K iMac is 5120 device px wide,
+ * a 32" 4K display at DPR 2 is 7680, but we cap at 5120 as the practical
+ * ceiling for hero photography. The ladder is filtered against the source's
+ * natural width at runtime so we never request a variant larger than the
+ * uploaded master (Storage would just upscale and waste a request).
+ */
+export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200, 3840, 5120];
 
 // ---------------------------------------------------------------------------
 // Image dimension probe (post-upload metadata capture)
