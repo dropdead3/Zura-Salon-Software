@@ -79,7 +79,7 @@ describe('applyPresetContent', () => {
       ...DEFAULT_PROMO_POPUP,
       enabled: true,
       appearance: 'corner-card' as const,
-      showOn: ['booking'] as const,
+      showOn: ['booking'] as Parameters<typeof applyPresetContent>[0]['showOn'],
       audience: 'new-visitors-only' as const,
       frequency: 'daily' as const,
       accentColor: '#FF0000',
