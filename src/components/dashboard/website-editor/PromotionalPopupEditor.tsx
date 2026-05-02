@@ -82,6 +82,7 @@ import {
   type OverflowFinding,
 } from './promotional-popup/internals';
 import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
+import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
