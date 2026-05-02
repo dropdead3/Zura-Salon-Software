@@ -32,41 +32,9 @@ import { Palette, RotateCcw } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ThemeAwareColorInput } from '@/components/dashboard/website-editor/inputs/ThemeAwareColorInput';
 import { SectionSubhead } from '@/components/dashboard/website-editor/SectionSubhead';
+import type { SectionTextColors, SectionColorSlotKey } from '@/lib/sectionTextColors';
 
-/**
- * Generic shape — every supported color slot is optional. Sections never
- * declare new top-level keys; they pick from this set so cross-section reuse
- * + the in-use swatch aggregator stay coherent.
- */
-export interface SectionTextColors {
-  // Text
-  heading?: string;
-  eyebrow?: string;
-  body?: string;
-  accent?: string;
-
-  // Primary button
-  primary_button_bg?: string;
-  primary_button_fg?: string;
-  primary_button_hover_bg?: string;
-
-  // Secondary button
-  secondary_button_bg?: string;
-  secondary_button_border?: string;
-  secondary_button_fg?: string;
-  secondary_button_hover_bg?: string;
-  secondary_button_hover_fg?: string;
-
-  // Section-specific extras
-  /** Testimonials: filled star color */
-  star?: string;
-  /** FAQ: open-state border + chevron tint */
-  faq_open_accent?: string;
-  /** Footer / link surfaces: link / hover-link tint */
-  link?: string;
-}
-
-export type SectionColorSlotKey = keyof SectionTextColors;
+export type { SectionTextColors, SectionColorSlotKey };
 
 export interface SectionColorSlot {
   key: SectionColorSlotKey;
