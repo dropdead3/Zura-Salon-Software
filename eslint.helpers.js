@@ -96,6 +96,11 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     dispatcher: "dispatchEditorSectionHover({ sectionId })",
     rationale: "sidebar→canvas hover bridge depends on a single typed payload shape; inlining the CustomEvent risks string drift between dispatcher and the LivePreviewPanel forwarder",
   }),
+  defineEventOwnershipSelector({
+    event: "zura:recent-color-picks",
+    owner: "src/hooks/useRecentColorPicks.ts",
+    rationale: "in-tab sync for the session-scoped Recent picks ring; dispatching from anywhere else would let stale ring state leak across pickers without going through writeStored()'s normalize+dedup+truncate pipeline",
+  }),
   {
     selector: "BinaryExpression[operator=/^[!=]==$/][left.type='CallExpression'][left.callee.object.name='JSON'][left.callee.property.name='stringify'][right.type='CallExpression'][right.callee.object.name='JSON'][right.callee.property.name='stringify']",
     message: "Brittle dirty-state check: JSON.stringify is key-order sensitive and reports false positives after save round-trips. Use `useDirtyState(local, server)` from @/hooks/useDirtyState (preferred for editors) or `isStructurallyEqual` from @/lib/stableStringify.",

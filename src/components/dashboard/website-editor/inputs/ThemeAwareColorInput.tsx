@@ -48,6 +48,7 @@ import {
   type ThemeTokenSwatch,
 } from '@/lib/themeTokenSwatches';
 import { useInUseSiteColors } from '@/hooks/useInUseSiteColors';
+import { useRecentColorPicks } from '@/hooks/useRecentColorPicks';
 
 /**
  * Optional macro descriptor passed in by parent editors that have related
@@ -163,6 +164,31 @@ export function ThemeAwareColorInput({
   const eyeDropperCtor = useMemo(() => getEyeDropper(), []);
   const eyeDropperSupported = !!eyeDropperCtor;
 
+  const { picks: recentPicks, recordPick } = useRecentColorPicks();
+  // Recent row should not double-list anything already in Theme or In-Use
+  // (those have their own labeled chips; duplicating bloats the popover
+  // and obscures the Recent row's purpose: arbitrary custom hexes).
+  const inUseHexes = useMemo(
+    () => new Set(inUseSwatches.map((s) => s.hex)),
+    [inUseSwatches],
+  );
+  const dedupedRecent = useMemo(
+    () =>
+      recentPicks.filter(
+        (hex) => !themeHexes.has(hex) && !inUseHexes.has(hex),
+      ),
+    [recentPicks, themeHexes, inUseHexes],
+  );
+
+  // Centralized "user picked a custom color" path: records into Recent
+  // ring AND fires onChange. Used by hex field, native picker, eyedropper.
+  // Theme-token / in-use chip clicks bypass this — they already have
+  // their own swatch row and would just bloat Recent.
+  const handleCustomPick = (hex: string) => {
+    onChange(hex);
+    recordPick(hex);
+  };
+
   const handleEyeDropper = async () => {
     if (!eyeDropperCtor) return;
     setEyedropperBusy(true);
@@ -170,7 +196,7 @@ export function ThemeAwareColorInput({
       const dropper = new eyeDropperCtor();
       const result = await dropper.open();
       if (result?.sRGBHex) {
-        onChange(result.sRGBHex);
+        handleCustomPick(result.sRGBHex);
         setOpen(false);
       }
     } catch {
@@ -208,8 +234,11 @@ export function ThemeAwareColorInput({
       )}
 
       {/* Inline trigger row — swatch button + hex field. All swatch grids
-          live inside the Popover to keep the editor side rail clean. */}
-      <div className="flex items-center gap-2">
+          live inside the Popover to keep the editor side rail clean. The
+          row is items-start so the caption under the trigger swatch
+          ("· Primary") doesn't shove the hex field down. */}
+      <div className="flex items-start gap-2">
+        <div className="flex flex-col items-start gap-1">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
@@ -294,8 +323,46 @@ export function ThemeAwareColorInput({
               </div>
             )}
 
+            {/* Recent row — session-scoped ring of custom hexes the operator
+                already picked this session (excludes Theme/In-Use to avoid
+                duplicate chips). Lets iteration ("warmer red…") skip the
+                native picker on the second pass. */}
+            {dedupedRecent.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
+                  Recent
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {dedupedRecent.map((hex) => {
+                    const active = hex === normalizedActive;
+                    return (
+                      <SwatchChip
+                        key={hex}
+                        active={active}
+                        title={hex}
+                        onClick={() => {
+                          // Re-selecting from Recent counts as a custom
+                          // pick — recordPick re-orders the ring so the
+                          // most-recently-clicked hex moves to the front.
+                          handleCustomPick(hex);
+                          setOpen(false);
+                        }}
+                        color={hex}
+                      >
+                        {hex}
+                      </SwatchChip>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Custom row — native picker + EyeDropper. The eslint doctrine
-                allows native `<input type="color">` only inside this file. */}
+                allows native `<input type="color">` only inside this file.
+                Native picker fires onChange continuously while the operator
+                drags the saturation/hue handles; record into Recent only on
+                blur (commit) so we don't pollute the ring with intermediate
+                hexes from a single picking session. */}
             <div className="space-y-1.5">
               <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
                 Custom
@@ -305,6 +372,7 @@ export function ThemeAwareColorInput({
                   type="color"
                   value={colorPickerValue}
                   onChange={(e) => onChange(e.target.value)}
+                  onBlur={(e) => recordPick(e.target.value)}
                   className="h-9 flex-1 rounded-md border border-border cursor-pointer bg-transparent"
                   aria-label="Custom color picker"
                 />
@@ -359,27 +427,31 @@ export function ThemeAwareColorInput({
             )}
           </PopoverContent>
         </Popover>
+        {/* Caption directly under the trigger swatch — surfaces the
+            cohesion source ("Theme · Accent" / "Primary CTA") at-a-glance
+            so reviewers don't need to open the popover to verify drift.
+            Reserves a 1-line slot via min-h to prevent layout shift when
+            the value resolves vs. clears. */}
+        <span
+          className="font-sans text-[9px] leading-none text-muted-foreground/80 max-w-[6.5rem] truncate min-h-[10px]"
+          title={sourceLabel ? `Matches ${sourceLabel}` : undefined}
+        >
+          {sourceLabel ?? ''}
+        </span>
+        </div>
 
         <div className="relative flex-1">
           <Input
             value={display}
             onChange={(e) => onChange(e.target.value || undefined)}
+            // Record into Recent on blur (commit) — not on every keystroke,
+            // since partial hexes ("#a4") would pollute the ring. recordPick
+            // normalizes + ignores invalid hexes so this is safe.
+            onBlur={(e) => recordPick(e.target.value)}
             placeholder={placeholder}
-            className={cn(
-              'h-8 text-xs font-mono',
-              sourceLabel && 'pr-[var(--source-pad,5rem)]',
-            )}
+            className="h-8 text-xs font-mono"
             spellCheck={false}
           />
-          {sourceLabel && (
-            <span
-              className="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-1 text-[10px] text-muted-foreground"
-              title={`Matches ${sourceLabel}`}
-            >
-              <span aria-hidden>·</span>
-              <span className="font-sans truncate max-w-[7rem]">{sourceLabel}</span>
-            </span>
-          )}
         </div>
 
         {allowClear && display && !label && (
