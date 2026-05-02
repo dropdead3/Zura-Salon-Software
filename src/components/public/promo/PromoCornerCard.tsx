@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { PromotionalPopupSettings, FabPosition } from '@/hooks/usePromotionalPopup';
+import { type PromotionalPopupSettings, type FabPosition, resolveImageRender } from '@/hooks/usePromotionalPopup';
 import { PromoBody } from './PromoBody';
 import { PromoCountdownBar } from './PromoCountdownBar';
 
