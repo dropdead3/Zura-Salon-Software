@@ -581,25 +581,27 @@ export function HeroEditor() {
 
                 {/* Background gallery */}
                 <div className="pt-3">
-                  <div className="flex items-center justify-between gap-4 pb-2">
-                    <div className="flex items-baseline gap-2">
+                  {/* Title row + helper line stack vertically so the narrow
+                      editor column never wraps the cadence pill into the
+                      helper text (the previous flex-between collapsed both
+                      sides into a 3-column wrap soup). */}
+                  <div className="pb-2 space-y-0.5">
+                    <div className="flex items-baseline gap-2 flex-wrap">
                       <h4 className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
                         Rotating Backgrounds
                       </h4>
-                      {/* Inline cadence hint — connects "I uploaded N backgrounds"
-                          to "they rotate every Xs" without forcing a trip into
-                          Settings. Only renders when rotation is actually on
-                          and there are 2+ backgrounds (otherwise cadence is
-                          meaningless). */}
+                      {/* Inline cadence hint — only renders when rotation is
+                          actually on and there are 2+ backgrounds (otherwise
+                          cadence is meaningless). */}
                       {slides.length > 1 && localConfig.auto_rotate && (
                         <span className="text-[10px] text-muted-foreground font-sans">
-                          · rotate every {Math.round((localConfig.slide_interval_ms ?? 6000) / 100) / 10}s
+                          · rotates every {Math.round((localConfig.slide_interval_ms ?? 6000) / 100) / 10}s
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-muted-foreground font-sans">
+                    <p className="text-[10px] text-muted-foreground/80 font-sans">
                       Click a tile to upload or edit
-                    </span>
+                    </p>
                   </div>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                     <SortableContext items={slides.slice(1).map((s) => s.id)} strategy={rectSortingStrategy}>
