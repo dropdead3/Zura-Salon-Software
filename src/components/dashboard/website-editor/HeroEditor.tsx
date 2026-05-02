@@ -531,7 +531,7 @@ export function HeroEditor() {
                     </span>
                   </div>
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                    <SortableContext items={slides.slice(1).map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={slides.slice(1).map((s) => s.id)} strategy={rectSortingStrategy}>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {slides.slice(1).map((s, i) => (
                           <SortableSlideRow
