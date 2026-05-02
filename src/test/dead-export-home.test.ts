@@ -44,8 +44,13 @@ const TARGET_DIR = resolve(SRC, 'components', 'home');
  * and well-justified — every entry is potential drift bait.
  */
 const INTENTIONALLY_UNREFERENCED = new Set<string>([
-  // (empty) — add `relative(SRC, file)` paths here with a comment explaining
-  // why and what condition would let us delete the entry.
+  // Pre-existing dead components found when the guard first ran (May 2026).
+  // Kept in the override list to land the guard non-disruptively; either
+  // wire them up to the marketing site or delete them in a follow-up PR.
+  // Revisit trigger: next time a hero/marketing copy refresh ships — if
+  // these are still unreferenced, delete the files and remove these entries.
+  'components/home/ApplicationFormDialog.tsx',
+  'components/home/FounderWelcome.tsx',
 ]);
 
 function walk(dir: string): string[] {
