@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { EditorCard } from './EditorCard';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 interface FieldConfig {
   key: string;
@@ -38,6 +41,8 @@ interface SectionDisplayEditorProps<T extends object> {
   isSaving: boolean;
   update: (value: T) => Promise<void>;
   fields: FieldConfig[];
+  /** Optional sectionId for the Style tab. Omit to hide the Style tab. */
+  styleSectionId?: string;
 }
 
 export function SectionDisplayEditor<T extends object>({
@@ -49,6 +54,7 @@ export function SectionDisplayEditor<T extends object>({
   isSaving,
   update,
   fields,
+  styleSectionId,
 }: SectionDisplayEditorProps<T>) {
   const __saveTelemetry = useSaveTelemetry(`section-display-editor:${title}`);
   const [localConfig, setLocalConfig] = useState<T>(data);
