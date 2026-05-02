@@ -43,6 +43,12 @@ const SRC = resolve(ROOT, 'src');
 const TARGET_DIRS = [
   resolve(SRC, 'components', 'home'),
   resolve(SRC, 'components', 'layout'),
+  // Promo variant tree (modal/banner/corner-card/body/countdown/fab + lifecycle hook).
+  // Same divergence risk pattern as the original `HeroSection` regression: the
+  // orchestrator (`PromotionalPopup.tsx`) selects one variant per render, so an
+  // unimported `PromoXyz.tsx` here would silently rot until an operator switches
+  // appearance and discovers the drift live.
+  resolve(SRC, 'components', 'public', 'promo'),
 ];
 
 /**
