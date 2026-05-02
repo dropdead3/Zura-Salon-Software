@@ -89,15 +89,20 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
   const rawSlide: HeroSlide | undefined = slides[activeIndex];
 
-  // Background-only mode: slides own only their backgrounds; foreground copy +
-  // CTAs come from the section-level fields. Per-slide copy is preserved on
-  // disk so toggling back to multi-slide restores it.
+  // Background-only mode: the FOREGROUND (eyebrow/headline/subheadline/CTAs/
+  // text colors) is owned exclusively by the master slide (slides[0]) merged
+  // with section-level shared fields. The active slide is consulted ONLY for
+  // background fields (handled below in the bgType/bgUrl/etc. derivations).
+  // This guarantees that rotating to a non-master background never bleeds
+  // that slide's per-slide copy or text-color override into the shared
+  // foreground.
   const rotatorMode = config.rotator_mode ?? 'multi_slide';
+  const masterSlide = slides[0];
   const slide: HeroSlide | undefined = useMemo(() => {
-    if (!rawSlide) return rawSlide;
     if (rotatorMode !== 'background_only') return rawSlide;
+    if (!masterSlide) return rawSlide;
     return {
-      ...rawSlide,
+      ...masterSlide,
       eyebrow: config.eyebrow ?? '',
       show_eyebrow: !!config.show_eyebrow,
       headline_text: config.headline_text ?? '',
@@ -111,6 +116,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     };
   }, [
     rawSlide,
+    masterSlide,
     rotatorMode,
     config.eyebrow,
     config.show_eyebrow,
