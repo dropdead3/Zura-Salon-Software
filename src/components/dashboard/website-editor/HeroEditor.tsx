@@ -578,19 +578,45 @@ export function HeroEditor() {
                             onToggleActive={(next) => updateSlide(s.id, { active: next })}
                           />
                         ))}
-                        {/* "Add Background" tile — completes the grid as a peer */}
-                        <button
-                          type="button"
-                          onClick={addBackgroundSlide}
-                          className="aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label="Add rotating background"
+                        {/* "Add Background" tile — single-click upload.
+                            The label wraps a hidden file input so picking
+                            a file (a) creates a new image-typed slide and
+                            (b) stages the file against its id; the slide
+                            editor reads the staged file on mount and
+                            forwards it into MediaUploadInput's auto-upload
+                            path. One click instead of two; cancelling the
+                            picker leaves no orphan slide behind. */}
+                        <label
+                          className="aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          aria-label="Add rotating background — pick a file to upload"
+                          title="Pick an image or video to add as a rotating background"
                         >
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                            className="sr-only"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) addBackgroundFromFile(file);
+                              e.target.value = '';
+                            }}
+                          />
                           <Plus className="h-5 w-5" />
                           <span className="text-[10px] font-display tracking-wider uppercase">Add</span>
-                        </button>
+                        </label>
                       </div>
                     </SortableContext>
                   </DndContext>
+                  {/* Escape hatch — create an empty slide for the rare case
+                      where the operator wants to configure background type
+                      (color, inherit) before uploading any file. */}
+                  <button
+                    type="button"
+                    onClick={addBackgroundSlide}
+                    className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline mt-2 ml-1 font-sans"
+                  >
+                    or add an empty background slot
+                  </button>
                   {slides.length === 1 && (
                     <p className="text-[11px] text-muted-foreground mt-2 pl-1">
                       Add a second background to start the rotator. The headline above stays the same on every rotation.
