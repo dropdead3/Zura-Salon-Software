@@ -539,6 +539,7 @@ export function StylistsSection() {
   }, []);
 
   return (
+    <SectionStyleWrapper styleOverrides={displayConfig?.style_overrides}>
     <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-visible pb-0">
       {/* Gradient transition from previous section */}
       <div 
