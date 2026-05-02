@@ -704,6 +704,14 @@ export function WebsiteEditorSidebar({
                             onDuplicate={() => handleDuplicateSection(section)}
                             onHover={() => dispatchEditorSectionHover({ sectionId: section.id })}
                             onHoverEnd={() => dispatchEditorSectionHover({ sectionId: null })}
+                            effectBadge={
+                              section.id === parallaxRisingSectionId
+                                ? {
+                                    label: 'Parallax',
+                                    tooltip: `Hero parallax effect active (${parallaxModeLabel}). This section rises over the hero on scroll.`,
+                                  }
+                                : undefined
+                            }
                           />
                         ))}
                     </div>
