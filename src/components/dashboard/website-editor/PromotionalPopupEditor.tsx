@@ -43,10 +43,13 @@ import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
   DEFAULT_PROMO_POPUP,
+  resolveImageRender,
   type PromotionalPopupSettings,
   type PopupSurface,
   type EyebrowIcon,
   type PopupAcceptDestination,
+  type ModalImageLayout,
+  type CornerCardImage,
 } from '@/hooks/usePromotionalPopup';
 import { useBookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
 import { useHydratedFormState } from '@/hooks/useHydratedFormState';
