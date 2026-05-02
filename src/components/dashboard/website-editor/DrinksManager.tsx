@@ -185,6 +185,7 @@ export function DrinksManager() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_drink_menu');
 
   const updateField = <K extends keyof DrinkMenuConfig>(field: K, value: DrinkMenuConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
