@@ -237,6 +237,13 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
     ? saved.find((s) => s.id === activeEntry.savedPromoId)?.name ?? '(deleted snapshot)'
     : null;
 
+  // Authoring-time conflict detection — surfaces overlapping windows BEFORE
+  // the resolver silently picks one. Without this, an operator who queues two
+  // rotations covering the same week sees one go live and assumes the other
+  // is broken.
+  const conflicts = useMemo(() => detectScheduleConflicts(schedule), [schedule]);
+  const hasConflicts = conflicts.size > 0;
+
   const updateSchedule = (next: SavedPromoScheduleEntry[]) => {
     setFormData({ ...formData, schedule: next });
   };
