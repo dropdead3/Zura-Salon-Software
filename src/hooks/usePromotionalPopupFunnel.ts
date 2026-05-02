@@ -1,0 +1,151 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useSettingsOrgId } from './useSettingsOrgId';
+
+/**
+ * End-to-end funnel for a single promotional popup offer code.
+ *
+ * Joins three independent signals into one rollup so operators can answer
+ * "is the popup actually working?" with the same numbers across the editor
+ * card and the org-wide marketing analytics page:
+ *
+ *   1. **Impressions** — `promo_offer_impressions` (popup rendered to a
+ *      visitor; deduped per session at the DB level).
+ *   2. **Responses** — `promo_offer_responses`:
+ *        - `accepted`  → CTA clicked (the lever we're optimizing)
+ *        - `declined`  → "No thanks" pressed
+ *        - `soft`      → X-closed
+ *   3. **Redemptions** — `promotion_redemptions` filtered to
+ *      `surface = 'promotional_popup'` and matching `promo_code_used`.
+ *
+ * Materiality threshold (`MIN_IMPRESSIONS_FOR_RATES`) gates rate metrics
+ * (CTR, redemption rate) until the sample is large enough to be
+ * non-noisy — matches the visibility-contracts canon: silence is valid
+ * output. Below threshold the card surfaces raw counts only.
+ */
+
+const POPUP_SURFACE = 'promotional_popup';
+export const MIN_IMPRESSIONS_FOR_RATES = 100;
+
+export interface PromotionalPopupFunnel {
+  impressions: number;
+  ctaClicks: number; // 'accepted' responses
+  dismissals: number; // 'declined' + 'soft'
+  redemptions: number;
+  revenueAttributed: number;
+  /** CTR = ctaClicks / impressions. `null` until materiality threshold met. */
+  ctr: number | null;
+  /** Redemption rate = redemptions / impressions. `null` until threshold met. */
+  redemptionRate: number | null;
+  /** Conversion of CTA → actual booking. `null` when ctaClicks === 0. */
+  bookingRate: number | null;
+  hasSufficientData: boolean;
+  windowDays: number;
+}
+
+interface UsePromotionalPopupFunnelArgs {
+  offerCode: string | null | undefined;
+  /** Defaults to 30 days. */
+  windowDays?: number;
+  explicitOrgId?: string;
+}
+
+export function usePromotionalPopupFunnel({
+  offerCode,
+  windowDays = 30,
+  explicitOrgId,
+}: UsePromotionalPopupFunnelArgs) {
+  const orgId = useSettingsOrgId(explicitOrgId);
+  const code = (offerCode ?? '').trim();
+
+  return useQuery<PromotionalPopupFunnel>({
+    queryKey: ['promotional-popup-funnel', orgId, code, windowDays],
+    queryFn: async () => {
+      const empty: PromotionalPopupFunnel = {
+        impressions: 0,
+        ctaClicks: 0,
+        dismissals: 0,
+        redemptions: 0,
+        revenueAttributed: 0,
+        ctr: null,
+        redemptionRate: null,
+        bookingRate: null,
+        hasSufficientData: false,
+        windowDays,
+      };
+      if (!orgId) return empty;
+
+      const windowStart = new Date(
+        Date.now() - windowDays * 86_400_000,
+      ).toISOString();
+
+      // Run the three counts in parallel — three small head-only queries are
+      // cheaper than one fat join, and any single failure shouldn't crash the
+      // whole card.
+      const [
+        impressionsRes,
+        responsesRes,
+        redemptionsRes,
+      ] = await Promise.all([
+        supabase
+          .from('promo_offer_impressions')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('offer_code', code)
+          .eq('surface', POPUP_SURFACE)
+          .gte('created_at', windowStart),
+        supabase
+          .from('promo_offer_responses')
+          .select('response')
+          .eq('organization_id', orgId)
+          .eq('offer_code', code)
+          .eq('surface', POPUP_SURFACE)
+          .gte('created_at', windowStart)
+          .limit(10_000),
+        supabase
+          .from('promotion_redemptions')
+          .select('revenue_attributed')
+          .eq('organization_id', orgId)
+          .eq('promo_code_used', code)
+          .eq('surface', POPUP_SURFACE)
+          .gte('transaction_date', windowStart)
+          .limit(10_000),
+      ]);
+
+      const impressions = impressionsRes.count ?? 0;
+      const responses = (responsesRes.data ?? []) as Array<{ response: string }>;
+      const ctaClicks = responses.filter((r) => r.response === 'accepted').length;
+      const dismissals = responses.filter(
+        (r) => r.response === 'declined' || r.response === 'soft',
+      ).length;
+      const redemptionRows = (redemptionsRes.data ?? []) as Array<{
+        revenue_attributed: number | null;
+      }>;
+      const redemptions = redemptionRows.length;
+      const revenueAttributed = redemptionRows.reduce(
+        (sum, r) => sum + (Number(r.revenue_attributed) || 0),
+        0,
+      );
+
+      const hasSufficientData = impressions >= MIN_IMPRESSIONS_FOR_RATES;
+      const ctr = hasSufficientData ? ctaClicks / impressions : null;
+      const redemptionRate = hasSufficientData ? redemptions / impressions : null;
+      const bookingRate = ctaClicks > 0 ? redemptions / ctaClicks : null;
+
+      return {
+        impressions,
+        ctaClicks,
+        dismissals,
+        redemptions,
+        revenueAttributed,
+        ctr,
+        redemptionRate,
+        bookingRate,
+        hasSufficientData,
+        windowDays,
+      };
+    },
+    enabled: !!orgId,
+    staleTime: 30_000,
+  });
+}
