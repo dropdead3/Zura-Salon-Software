@@ -164,4 +164,59 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
     expect(getByText('Per-Slide Headline')).toBeTruthy();
     expect(container.textContent).not.toContain('Shared Headline');
   });
+
+  it('marks the foreground wrapper as shared in background_only mode (key-stable across rotation)', () => {
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared Headline',
+      slides: [
+        makeSlide({ id: 's1', headline_text: 'Master' }),
+        makeSlide({ id: 's2', headline_text: 'Other', background_type: 'image', background_url: 'https://example.com/a.jpg' }),
+      ],
+      rotator_mode: 'background_only',
+    };
+    const { container } = renderRotator(config);
+    const fg = container.querySelector('[data-hero-foreground="shared"]');
+    expect(fg).toBeTruthy();
+    // The non-shared marker should NOT exist in background_only mode.
+    expect(container.querySelector('[data-hero-foreground="per-slide"]')).toBeNull();
+  });
+
+  it('always sources foreground from the master slide (not slides[activeIndex]) in background_only mode', () => {
+    // Per-slide text_colors on a non-master slide must NOT bleed into the
+    // shared foreground. Validates the "foreground source short-circuit".
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared Headline',
+      slides: [
+        makeSlide({ id: 's1', headline_text: 'Master Copy' }),
+        makeSlide({
+          id: 's2',
+          headline_text: 'Should Never Render',
+          cta_new_client: 'Should Never Render Either',
+        }),
+      ],
+      rotator_mode: 'background_only',
+    };
+    const { container } = renderRotator(config);
+    expect(container.textContent).toContain('Shared Headline');
+    expect(container.textContent).not.toContain('Should Never Render');
+  });
+
+  it('relabels pagination as backgrounds in background_only mode', () => {
+    const config: HeroConfig = {
+      ...DEFAULT_HERO,
+      headline_text: 'Shared',
+      slides: [
+        makeSlide({ id: 's1' }),
+        makeSlide({ id: 's2', background_type: 'image', background_url: 'https://example.com/a.jpg' }),
+      ],
+      rotator_mode: 'background_only',
+    };
+    const { container } = renderRotator(config);
+    expect(container.querySelector('[aria-label="Previous background"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Next background"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Go to background 1"]')).toBeTruthy();
+    expect(container.querySelector('[aria-label="Previous slide"]')).toBeNull();
+  });
 });
