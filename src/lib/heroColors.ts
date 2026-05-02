@@ -140,5 +140,7 @@ export function resolveHeroColors(
     secondaryButtonClass,
     hasPrimaryHover: !!colors.primary_button_hover_bg,
     hasSecondaryHover: !!colors.secondary_button_hover_bg,
+    hasSecondaryHoverBorder: !!colors.secondary_button_hover_border,
+    hasSecondaryHoverFg: !!colors.secondary_button_hover_fg,
   };
 }
