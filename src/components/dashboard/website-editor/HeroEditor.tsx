@@ -10,7 +10,6 @@ import {
   Settings2,
   AlignJustify,
   Plus,
-  Droplet,
 } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useEditorDiscardAction } from '@/hooks/useEditorDiscardAction';
