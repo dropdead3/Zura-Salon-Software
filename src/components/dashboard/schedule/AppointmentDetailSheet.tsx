@@ -2960,6 +2960,15 @@ export function AppointmentDetailSheet({
                           onPaymentLinkSent={() => queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] })}
                         />
                       )}
+                      {status === 'completed' && appointment.id && (
+                        <SendReviewRequestButton
+                          appointmentId={appointment.id}
+                          variant="outline"
+                          size={tokens.button.card}
+                          className="gap-1.5"
+                          label="Review Request"
+                        />
+                      )}
                       {overflowActions.length > 0 && (
                         <OverflowActions actions={overflowActions} />
                       )}
