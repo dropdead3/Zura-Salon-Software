@@ -51,7 +51,11 @@ export function AnnouncementBarContent() {
 
   useEffect(() => {
     if (settings) {
-      setFormData({ ...settings, bg_color: settings.bg_color || '' });
+      setFormData({
+        ...settings,
+        bg_color: settings.bg_color || '',
+        highlight_color: settings.highlight_color || '',
+      });
     }
   }, [settings]);
 
