@@ -287,6 +287,8 @@ export function TestimonialsEditor() {
       </EditorCard>
 
       <ReviewsManager surface="general" title="Homepage Reviews" />
+
+      <ZuraReviewLibrary open={libraryOpen} onOpenChange={setLibraryOpen} />
     </div>
   );
 }
