@@ -1,167 +1,69 @@
-## Section Background, Container & Media Overlays — Universal Editor
+## Brand Logos editor — UX + functional refresh
 
-### Goal
-Every section gets a unified "Background & Container" editor giving operators:
-1. **Section background** — color, gradient, image, or video (with overlays/grain)
-2. **Container background** — an inset content frame (color, gradient, image/video, radius, padding)
-3. **Media overlays** — darken/lighten scrim, grain texture, blur, vignette, opacity
+Scope: `src/components/dashboard/website-editor/BrandsManager.tsx` + the live `src/components/home/BrandsSection.tsx`. Three problems to fix and one new capability to add.
 
-This extends the existing `SectionStyleEditor` (which already covers section bg color/gradient/image, padding, max-width, radius) with: video support, overlay/grain/vignette controls, and a new container layer.
+### Problems observed
 
----
+1. **Delete button is clipped on the right** (visible in your screenshot — the trash icon sits past the card's right edge). The `SortableBrandItem` row uses `flex items-start gap-3` with the trash `<Button>` as the last flex child but the card itself has no padding budget for it, and on narrower editor widths it overflows.
+2. **Upload accepts any image type**, with no nudge toward SVG (the only format that scales cleanly in the marquee).
+3. **No way to resize an uploaded logo** — uploaded images render at a fixed `w-16 h-16` thumbnail in the editor, and the live site doesn't render uploaded logos at all today (the marquee only renders `display_text`). So uploads currently have zero public effect.
 
-### 1) Schema extension — `StyleOverrides`
+### What ships
 
-Extend `src/components/home/SectionStyleWrapper.tsx`:
+**1. Layout fix for the row (no more clipped delete)**
 
-```ts
-export interface StyleOverrides {
-  // Existing
-  background_type: 'none' | 'color' | 'gradient' | 'image' | 'video';  // + video
-  background_value: string;            // url for image/video, css for gradient, hex for color
-  background_poster_url?: string;      // video poster
-  background_fit?: 'cover' | 'contain';
-  background_focal_x?: number;         // 0..100
-  background_focal_y?: number;
-
-  // NEW — Section media overlays (apply over image/video bg)
-  overlay_mode?: 'none' | 'darken' | 'lighten' | 'color';
-  overlay_color?: string;              // when overlay_mode === 'color'
-  overlay_opacity?: number;            // 0..1
-  grain_intensity?: number;            // 0..1 — SVG noise overlay
-  vignette_strength?: number;          // 0..1 — radial dark edges
-  background_blur?: number;            // 0..20 px
-
-  // Existing
-  padding_top, padding_bottom, max_width, text_color_override,
-  border_radius, heading_scale, eyebrow_visible
-
-  // NEW — Container layer (inset frame around content)
-  container_enabled?: boolean;
-  container_background_type?: 'none' | 'color' | 'gradient' | 'image' | 'video';
-  container_background_value?: string;
-  container_background_poster_url?: string;
-  container_overlay_mode?: 'none' | 'darken' | 'lighten' | 'color';
-  container_overlay_color?: string;
-  container_overlay_opacity?: number;
-  container_grain_intensity?: number;
-  container_padding?: number;          // inner padding px
-  container_radius?: number;           // 0..48
-  container_max_width?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-}
-```
-
-Renders as two stacked layers in `SectionStyleWrapper`:
-- Outer `<section>` carries section bg + section media + scrim/grain/vignette layers
-- Inner `<div>` (when `container_enabled`) carries container bg + overlays + radius + padding
-
----
-
-### 2) New shared editor — `SectionBackgroundEditor`
-
-`src/components/dashboard/website-editor/inputs/SectionBackgroundEditor.tsx`
-
-Reused for both **section** and **container** (via a `scope: 'section' | 'container'` prop that prefixes keys). Sub-blocks:
-
-- **Background type** chips: None / Color / Gradient / Image / Video
-- **Color** → `ThemeAwareColorInput` (theme tokens + in-use)
-- **Gradient** → preset chips + custom CSS input
-- **Image** → `MediaUploadInput` (kind=image) + `FocalPointPicker` overlay + Fit toggle
-- **Video** → `MediaUploadInput` (kind=video) + poster upload + Fit toggle
-- **Media overlays** (only when type is image/video):
-  - Mode chips: None / Darken / Lighten / Custom Color (`ThemeAwareColorInput`)
-  - Opacity slider 0–100%
-  - Grain intensity slider 0–100% (SVG `feTurbulence` overlay)
-  - Vignette slider 0–100% (radial-gradient edge darken)
-  - Background blur slider 0–20px
-
-Reuses existing primitives: `MediaUploadInput`, `ThemeAwareColorInput`, `SliderInput`, `FocalPointPicker`. No new uploaders.
-
----
-
-### 3) New `SectionContainerEditor`
-
-Same component as above, scoped to `container_*` keys, plus:
-- "Enable container frame" toggle (off by default — back-compat with existing sections)
-- Container max-width selector
-- Inner padding slider (0–96px)
-- Corner radius slider (0–48px)
-
----
-
-### 4) Wire into `SectionStyleEditor`
-
-Refactor `SectionStyleEditor.tsx` into three collapsible sub-blocks (using existing `EditorCard`):
-1. **Section Background** — `<SectionBackgroundEditor scope="section" />`
-2. **Container** — `<SectionContainerEditor />` (collapsed by default until enabled)
-3. **Layout** — existing padding/max-width/radius/text-color/heading-scale/eyebrow controls
-
-This keeps the public prop shape (`value: Partial<StyleOverrides>`, `onChange`) identical, so all 12+ section editors that already wire `SectionStyleEditor` get the new capabilities for free — no per-editor changes needed.
-
----
-
-### 5) Render layers in `SectionStyleWrapper`
+Restructure `SortableBrandItem` so the delete button is always visible and the controls stack predictably at narrow widths:
 
 ```text
-<section [section-bg-color/gradient]>
-  [if image/video bg] <div absolute media-layer with focal + fit + blur />
-  [if media bg]       <div absolute scrim-layer (darken/lighten/color) />
-  [if grain]          <div absolute grain-svg-layer />
-  [if vignette]       <div absolute vignette-radial-layer />
-  <div max-width-class>
-    [if container]
-      <div container-frame [bg/radius/padding]>
-        [container media + overlays in same stack pattern]
-        {children}
-      </div>
-    [else]
-      {children}
-  </div>
-</section>
+[grip] [logo tile]  [Brand Name input             ]  [trash]
+                    [Display Text input           ]
+                    [Upload / Size controls       ]
 ```
 
-Z-order: media → scrim → grain → vignette → content. All overlay layers `pointer-events-none`.
+- Wrap the row in a stable grid: `grid grid-cols-[auto_auto_1fr_auto] gap-3` so the trash column always reserves space.
+- Drop `mt-2` magic spacing on the trash button; align it to the top row with `self-start`.
+- Add `min-w-0` on the form column so long brand names don't push the trash off-screen.
 
----
+**2. SVG-preferred optional upload + helper copy**
 
-### 6) Grain & vignette utilities
+- The upload button stays optional and gets a clearer label: **"Upload Logo (SVG recommended)"**.
+- File input switches to `accept=".svg,image/svg+xml,image/png,image/webp"` — SVG listed first so the OS file picker defaults to it.
+- Add an inline helper line under the Brand Logos card description:
+  > **Easiest path:** leave logos empty and just fill **Display Text**. Text-only marquees stay perfectly cohesive across every brand. Upload an SVG only if you want the actual logo mark.
+- On non-SVG upload, show a soft warning toast: *"PNG accepted. SVG scales cleaner — consider replacing later."* (No hard block — operators may not have an SVG yet.)
 
-Add `src/lib/sectionOverlayLayers.ts`:
-- `grainDataUri(intensity)` → inline SVG `feTurbulence` data-URI, opacity scaled by intensity
-- `vignetteGradient(strength)` → `radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,${strength}) 100%)`
+**3. Per-brand logo size control**
 
-Both pure, zero dependencies, reusable in Hero too (future cleanup).
+Add `logo_height_px?: number` to the `Brand` type (default 32, range 16–64). Renders only when `logo_url` is set:
 
----
+```text
+[Logo height]  [— slider 16–64 —]  32px
+```
 
-### 7) Back-compat & migration
+- Editor: small `SliderInput` rendered under the Display Text field, only when `brand.logo_url` is truthy.
+- Live `BrandsSection` (currently text-only): when `show_logos` is true AND `brand.logo_url` exists, render the logo as `<img>` at `height: {logo_height_px}px width:auto` next to (or instead of, depending on text presence) the display text inside the same marquee item. Falls back to text when no logo URL exists. This is the bit that finally makes the upload do something on the public site — without it the new size slider would be cosmetic.
 
-- All new fields optional with safe defaults (`undefined` / `0` / `'none'`).
-- Existing sections render identically (no container, no overlays) until operator opts in.
-- No DB migration needed — fields nest into existing `style_overrides` JSON column.
-- Hero keeps its dedicated `HeroBackgroundEditor` (slide-aware, more complex) — this new editor is for the other 12+ sections.
+**4. Display-Text-first guidance in the empty/sparse state**
 
----
+When a brand row has no logo URL, the upload CTA loses prominence: smaller `ghost` button instead of `outline`, with the helper line "Optional — text alone looks great."
 
-### Files
+### Technical details
 
-**New:**
-- `src/components/dashboard/website-editor/inputs/SectionBackgroundEditor.tsx`
-- `src/components/dashboard/website-editor/inputs/SectionContainerEditor.tsx`
-- `src/lib/sectionOverlayLayers.ts`
+Files changed:
+- `src/hooks/useSectionConfig.ts` — extend `Brand` interface with optional `logo_height_px?: number`. Add to `DEFAULT_BRANDS` brand seeds (omitted = use renderer default 32).
+- `src/components/dashboard/website-editor/BrandsManager.tsx`:
+  - Restructure `SortableBrandItem` layout (grid + `min-w-0` + `self-start` trash).
+  - Update file input `accept` and CTA copy.
+  - Add `SliderInput` for `logo_height_px` (16–64, step 2, unit "px"), gated on `brand.logo_url`.
+  - Add helper paragraph under the "Brand Logos" `EditorCard` description.
+  - SVG-preference toast on non-SVG uploads.
+- `src/components/home/BrandsSection.tsx`:
+  - When `config.show_logos && brand.logo_url`, render `<img src={brand.logo_url} alt={brand.name} style={{ height: brand.logo_height_px ?? 32 }} className="w-auto inline-block align-middle" />` inside the marquee item, replacing or alongside the text per existing layout. Both sets (live + duplicated) get the same treatment to keep the loop seamless.
 
-**Edited:**
-- `src/components/home/SectionStyleWrapper.tsx` — schema + multi-layer render
-- `src/components/dashboard/website-editor/SectionStyleEditor.tsx` — compose new sub-editors
-- `src/components/dashboard/website-editor/inputs/SectionBackgroundColorPicker.tsx` — extend or absorb
+No DB migration — `Brand` lives inside the JSON `value` of the existing `section_brands` site_setting, and the new field is optional.
 
-**No changes needed in 12+ section editors** — they already use `SectionStyleEditor`, so they inherit the new capabilities automatically.
+### Out of scope
 
----
-
-### Out of scope (this wave)
-- Hero gets these features later (its own editor is more complex with slides).
-- Per-element media (e.g., card-level backgrounds inside a section) — separate future wave.
-- Animated/parallax backgrounds — future.
-
-Approve to implement.
+- Logo color/inversion controls (dark vs light marquee). Can be a follow-up if operators ship dark-background brand logos.
+- Cropping / focal-point — SVG doesn't need it; raster fallback is intentionally bare.
+- Bulk SVG conversion. We nudge but don't block.
