@@ -106,6 +106,113 @@ const STATUS_COPY: Record<EntryStatus, { label: string; tone: string }> = {
   },
 };
 
+/**
+ * 30-day horizontal timeline showing rotation ownership per day. Each entry
+ * gets a deterministic accent stripe; days with no rotation render as a faint
+ * baseline (the wrapper's base config is what runs). Overlap days stack the
+ * later-startsAt rotation on top — same precedence as `pickActiveEntry`, so
+ * what the operator sees in the strip is what the resolver will actually pick.
+ */
+function ScheduleCalendarStrip({
+  schedule,
+  saved,
+}: {
+  schedule: SavedPromoScheduleEntry[];
+  saved: { id: string; name: string }[];
+}) {
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const days = useMemo(() => {
+    const out: Date[] = [];
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      out.push(d);
+    }
+    return out;
+  }, [today]);
+
+  // Stable per-entry color via hash of id → HSL hue band.
+  const colorFor = (id: string) => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+    return `hsl(${h % 360} 60% 55%)`;
+  };
+
+  const labelFor = (entryId: string) => {
+    const e = schedule.find((s) => s.id === entryId);
+    if (!e) return '';
+    return saved.find((s) => s.id === e.savedPromoId)?.name ?? '(deleted)';
+  };
+
+  // For each day, find the rotation that would win (later startsAt on overlap).
+  const ownerByDay = days.map((d) => {
+    const ts = d.getTime();
+    const candidates = schedule.filter((e) => {
+      const s = Date.parse(e.startsAt);
+      const en = Date.parse(e.endsAt);
+      return Number.isFinite(s) && Number.isFinite(en) && s <= ts + 86_400_000 - 1 && en >= ts;
+    });
+    if (candidates.length === 0) return null;
+    return candidates.reduce((latest, cur) =>
+      Date.parse(cur.startsAt) > Date.parse(latest.startsAt) ? cur : latest,
+    );
+  });
+
+  const monthLabels: { idx: number; label: string }[] = [];
+  let lastMonth = -1;
+  days.forEach((d, idx) => {
+    const m = d.getMonth();
+    if (m !== lastMonth) {
+      monthLabels.push({
+        idx,
+        label: d.toLocaleString(undefined, { month: 'short' }),
+      });
+      lastMonth = m;
+    }
+  });
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className={tokens.kpi.label}>Next 30 Days</span>
+        <span className="text-[10px] text-muted-foreground">
+          Today → {days[days.length - 1].toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </span>
+      </div>
+      <div className="grid grid-cols-30 gap-[2px]" style={{ gridTemplateColumns: 'repeat(30, minmax(0, 1fr))' }}>
+        {days.map((d, i) => {
+          const owner = ownerByDay[i];
+          const isToday = i === 0;
+          const tip = owner
+            ? `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${labelFor(owner.id)}`
+            : `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · base config`;
+          return (
+            <div
+              key={i}
+              title={tip}
+              className={cn(
+                'h-6 rounded-sm border transition-colors',
+                owner ? 'border-transparent' : 'border-border/40 bg-muted/40',
+                isToday && 'ring-1 ring-primary/60',
+              )}
+              style={owner ? { background: colorFor(owner.id) } : undefined}
+            />
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-3 mt-2 text-[10px] text-muted-foreground">
+        {monthLabels.map((m) => (
+          <span key={m.idx}>{m.label}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardProps) {
   const { data: library } = usePromoLibrary();
   const saved = library?.saved ?? [];
