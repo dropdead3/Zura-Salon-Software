@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Megaphone, Loader2, RotateCcw, Gift, ChevronRight, X, Sparkles, ExternalLink, Clock, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
+import { Megaphone, Loader2, RotateCcw, Gift, X, ExternalLink, Link2, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolvePopupDestination } from '@/lib/promo-destination';
@@ -24,7 +24,6 @@ import {
   makeOverflowGuard,
   makeContrastGuard,
 } from '@/hooks/usePersistGuards';
-import { useDismissedSuggestion } from '@/hooks/useDismissedSuggestion';
 import { GlyphPicker } from '@/components/ui/glyph-picker';
 import { useSettingsOrgId } from '@/hooks/useSettingsOrgId';
 import { useOrgPublicUrl } from '@/hooks/useOrgPublicUrl';
@@ -39,20 +38,46 @@ import {
 import { coerceAutoMinimizeMs } from '@/lib/clampAutoMinimizeSeconds';
 import { createEditorTelemetry } from '@/lib/editor-telemetry';
 import { cn } from '@/lib/utils';
-import { useWebsitePrimaryColor } from '@/hooks/useWebsitePrimaryColor';
-import { readableForegroundFor, bestTextContrast } from '@/lib/color-contrast';
+import { bestTextContrast } from '@/lib/color-contrast';
 import {
   usePromotionalPopup,
   useUpdatePromotionalPopup,
   DEFAULT_PROMO_POPUP,
   type PromotionalPopupSettings,
-  type PopupSurface,
   type EyebrowIcon,
   type PopupAcceptDestination,
 } from '@/hooks/usePromotionalPopup';
 import { useBookingSurfaceConfig } from '@/hooks/useBookingSurfaceConfig';
 import { useHydratedFormState } from '@/hooks/useHydratedFormState';
 import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
+// All pure helpers (constants, char counters, swatch mocks, datetime
+// utilities, char-overflow detection, and the time-aware eyebrow chip)
+// were lifted into a colocated `internals.tsx` module during the Wave 1
+// editor split. The editor body itself (state, save flow, save guards,
+// section JSX) stays here. Wave 2 will further decompose the body into
+// per-tab sub-editors, but this PR is a pure refactor — zero behavior
+// change. See `mem://architecture/promo-variant-parity-contract.md` for
+// the parity rules around the public-side variants this editor configures.
+import {
+  SURFACE_OPTIONS,
+  ACCENT_PRESETS,
+  HEADLINE_CEILINGS,
+  BODY_CEILINGS,
+  DISCLAIMER_CEILING,
+  collectOverflows,
+  EyebrowUrgencySuggestion,
+  Section,
+  Field,
+  CharCounter,
+  appearanceLabel,
+  FabPreviewSwatch,
+  AppearancePreviewSwatch,
+  toLocalInput,
+  fromLocalInput,
+  AccentContrastWarning,
+  type OverflowFinding,
+} from './promotional-popup/internals';
+
 
 const SURFACE_OPTIONS: { value: PopupSurface; label: string; description: string }[] = [
   { value: 'home', label: 'Home page', description: 'Show on the homepage only' },
