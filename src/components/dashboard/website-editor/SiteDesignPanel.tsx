@@ -71,6 +71,10 @@ export interface DesignOverrides {
   // effect when the first section isn't a hero, when in editor edit-mode, or
   // when the visitor has prefers-reduced-motion set.
   hero_parallax_enabled: boolean;
+  /** Intensity for the hero parallax reveal. Only meaningful when the
+   *  toggle above is on. 'subtle' = sticky hero + rising panel only.
+   *  'cinematic' = hero also fades + scales as it's covered. */
+  hero_parallax_mode: 'subtle' | 'cinematic';
 }
 
 const DEFAULTS: DesignOverrides = {
@@ -85,6 +89,7 @@ const DEFAULTS: DesignOverrides = {
   hero_overlay_opacity: 40,
   section_tint_opacity: 0,
   hero_parallax_enabled: false,
+  hero_parallax_mode: 'subtle',
 };
 
 // Curated font stacks. Adding a stack is a one-line change.
@@ -563,6 +568,42 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
                 checked={draft.hero_parallax_enabled}
                 onCheckedChange={(v) => setField('hero_parallax_enabled', v)}
               />
+            </div>
+
+            {/* Mode selector — only meaningful when the parallax toggle is on.
+                Disabled (not hidden) so operators can preview the choices. */}
+            <div className={cn(
+              'space-y-2 transition-opacity',
+              !draft.hero_parallax_enabled && 'opacity-50 pointer-events-none'
+            )}>
+              <Label className="text-[11px] text-muted-foreground uppercase tracking-wider">
+                Intensity
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['subtle', 'cinematic'] as const).map((m) => {
+                  const active = draft.hero_parallax_mode === m;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setField('hero_parallax_mode', m)}
+                      className={cn(
+                        'rounded-lg border px-3 py-2 text-left transition-colors',
+                        active
+                          ? 'border-primary/60 bg-primary/5'
+                          : 'border-border/60 hover:border-border'
+                      )}
+                    >
+                      <div className="text-xs text-foreground capitalize">{m}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                        {m === 'subtle'
+                          ? 'Sticky hero + rising panel'
+                          : 'Hero also fades + scales'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>

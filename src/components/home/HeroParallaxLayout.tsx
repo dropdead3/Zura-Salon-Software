@@ -13,17 +13,26 @@
  * Position-aware, not type-aware: whatever the operator drags into slot
  * 2 inherits the rising-panel treatment automatically.
  *
+ * Mode variants (behind the same Site Design toggle):
+ *   - 'subtle'    → hero stays at full opacity; rising panel reveals via
+ *                   shadow + radius. Calm, executive, the default.
+ *   - 'cinematic' → hero additionally fades + scales DOWN as it's covered,
+ *                   giving a depth-receding feel. Driven by a single
+ *                   scroll listener that writes CSS variables on the
+ *                   anchor element (no per-frame React re-renders).
+ *
  * Doctrine alignment:
  *   - Preview-Live Parity: this single primitive is rendered identically
  *     in the public site and the editor's view-mode preview.
  *   - Visibility contract: silently no-ops when prerequisites aren't met
  *     (no hero in slot 0, only one section, reduced-motion preference).
- *   - No hooks beyond `useEffect` for reduced-motion subscription — the
- *     layout itself is a pure render so test fixtures don't need a router
- *     or query client.
+ *   - Container-aware: cinematic mode uses one rAF-throttled scroll
+ *     listener, never re-renders, and is safely tree-shaken when subtle.
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+
+export type HeroParallaxMode = 'subtle' | 'cinematic';
 
 interface HeroParallaxLayoutProps {
   /** The hero section node (will become sticky). */
@@ -34,6 +43,8 @@ interface HeroParallaxLayoutProps {
   rest: ReactNode;
   /** Operator toggle. When false, renders the three slots flat (no parallax). */
   enabled: boolean;
+  /** Intensity. Defaults to 'subtle'. */
+  mode?: HeroParallaxMode;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -49,9 +60,54 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export function HeroParallaxLayout({ hero, next, rest, enabled }: HeroParallaxLayoutProps) {
+/**
+ * Cinematic-mode scroll driver. Writes `--hero-parallax-progress` (0→1) on
+ * the anchor element so CSS can interpolate opacity/scale without React
+ * re-renders. One listener, rAF-throttled, auto-detached when the hero is
+ * fully covered.
+ */
+function useCinematicScrollDriver(active: boolean) {
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!active) return;
+    const el = anchorRef.current;
+    if (!el || typeof window === 'undefined') return;
+
+    let rafId = 0;
+    const update = () => {
+      rafId = 0;
+      const rect = el.getBoundingClientRect();
+      // rect.top goes from 0 (at rest) → -rect.height (fully covered).
+      // Progress 0 (at rest) → 1 (covered).
+      const h = rect.height || 1;
+      const p = Math.min(1, Math.max(0, -rect.top / h));
+      el.style.setProperty('--hero-parallax-progress', p.toFixed(3));
+    };
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [active]);
+  return anchorRef;
+}
+
+export function HeroParallaxLayout({
+  hero,
+  next,
+  rest,
+  enabled,
+  mode = 'subtle',
+}: HeroParallaxLayoutProps) {
   const reducedMotion = usePrefersReducedMotion();
   const active = enabled && !reducedMotion;
+  const cinematic = active && mode === 'cinematic';
+  const anchorRef = useCinematicScrollDriver(cinematic);
 
   if (!active) {
     // Silent no-op — render the three slots in normal flow.
@@ -66,21 +122,32 @@ export function HeroParallaxLayout({ hero, next, rest, enabled }: HeroParallaxLa
 
   return (
     <>
-      {/* Sticky hero shell. h-screen pins the hero to the viewport; sticky
-          releases as soon as the parent's scroll position exceeds the
-          hero's height (i.e. when the rising panel below has fully
-          covered it). z-0 keeps it behind the rising panel. */}
+      {/* Sticky hero shell. h-screen pins the hero; sticky releases as the
+          rising panel covers it. z-0 keeps it behind the rising panel.
+          In cinematic mode we read --hero-parallax-progress (set by the
+          scroll driver above) to fade + scale the hero as it's covered. */}
       <div
+        ref={anchorRef}
         className="sticky top-0 h-screen w-full z-0 overflow-hidden"
         data-hero-parallax="anchor"
+        data-hero-parallax-mode={mode}
+        style={
+          cinematic
+            ? ({
+                opacity:
+                  'calc(1 - 0.6 * var(--hero-parallax-progress, 0))',
+                transform:
+                  'scale(calc(1 - 0.05 * var(--hero-parallax-progress, 0)))',
+                transformOrigin: 'center center',
+                willChange: 'opacity, transform',
+              } as React.CSSProperties)
+            : undefined
+        }
       >
         {hero}
       </div>
 
-      {/* Rising panel — normal flow but stacks above the sticky hero via
-          z-10. The negative top margin pulls the panel up under the hero
-          so the SEAM isn't visible at rest; rounded top corners + soft
-          shadow draw the reveal edge as the panel scrolls into view. */}
+      {/* Rising panel — normal flow, stacks above the sticky hero via z-10. */}
       <div
         className={cn(
           'relative z-10 -mt-8',

@@ -22,6 +22,10 @@ interface SectionNavItemProps {
    *  section in the live-preview iframe. Hover-end fires `onHoverEnd`. */
   onHover?: () => void;
   onHoverEnd?: () => void;
+  /** Optional small chip rendered next to the title — used today by the
+   *  Hero Parallax effect to mark the section currently acting as the
+   *  rising panel ("Effect: Parallax"). Position-aware, not type-aware. */
+  effectBadge?: { label: string; tooltip?: string };
 }
 
 // Fixed width reserved for the right-side action cluster, regardless of hover
@@ -44,6 +48,7 @@ export function SectionNavItem({
   onDuplicate,
   onHover,
   onHoverEnd,
+  effectBadge,
 }: SectionNavItemProps) {
   const {
     attributes,
@@ -107,6 +112,16 @@ export function SectionNavItem({
           </Badge>
           {deletable && (
             <Badge variant="secondary" className="shrink-0 text-[9px] px-1 py-0 h-4">Custom</Badge>
+          )}
+          {effectBadge && (
+            <Badge
+              variant="outline"
+              className="shrink-0 text-[9px] px-1.5 py-0 h-4 border-primary/40 bg-primary/5 text-primary"
+              title={effectBadge.tooltip ?? effectBadge.label}
+              data-testid="section-effect-badge"
+            >
+              {effectBadge.label}
+            </Badge>
           )}
         </div>
         <p className="text-[10px] text-muted-foreground truncate hidden xl:block">
