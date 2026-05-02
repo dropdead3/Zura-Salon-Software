@@ -34,6 +34,7 @@ import { HeroSharedContentEditor } from './hero/HeroSharedContentEditor';
 
 import { HeroSlideListCard } from './hero/HeroSlideListCard';
 import { HeroSlideEditor } from './hero/HeroSlideEditor';
+import { useEditorSubViewState } from './useEditorSubViewState';
 
 import {
   DndContext,
@@ -251,9 +252,9 @@ export function HeroEditor() {
   const orgId = effectiveOrganization?.id ?? null;
 
   const [localConfig, setLocalConfig] = useState<HeroConfig>(DEFAULT_HERO);
-  // Always start at the hub on mount — no localStorage hydration. See
-  // entry-contract block above viewStorageKey's removal.
-  const [view, setView] = useState<HeroView>({ kind: 'hub' });
+  // Sub-view navigation state — in-memory only by contract. Hook name
+  // documents the entry contract; see useEditorSubViewState.ts.
+  const [view, setView] = useEditorSubViewState<HeroView>({ kind: 'hub' });
   const migratedRef = useRef(false);
 
   // Canonical dirty-state hook (key-order-stable structural compare).
