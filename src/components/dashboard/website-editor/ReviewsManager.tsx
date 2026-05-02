@@ -546,11 +546,38 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
         </Tabs>
       )}
 
-      <p className="text-sm text-muted-foreground">
-        Manage customer reviews shown on the{' '}
-        {surface === 'extensions' ? 'Extensions page' : 'homepage'}. Drag to
-        reorder. Hidden items stay in your library but are not shown to visitors.
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-sm text-muted-foreground flex-1">
+          Manage customer reviews shown on the{' '}
+          {surface === 'extensions' ? 'Extensions page' : 'homepage'}. Drag to
+          reorder. Hidden items stay in your library but are not shown to visitors.
+        </p>
+        {items.length > 1 && (
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={expandedIds.size === items.length ? collapseAll : expandAll}
+              className="text-xs text-muted-foreground hover:text-foreground h-8"
+            >
+              {expandedIds.size === items.length ? 'Collapse all' : 'Expand all'}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <div className="flex items-center gap-3 text-xs font-sans text-muted-foreground">
+          <span>
+            <span className="text-foreground font-medium">{items.filter((i) => i.enabled).length}</span> visible
+          </span>
+          <span className="text-border">·</span>
+          <span>
+            <span className="text-foreground font-medium">{items.length}</span> total
+          </span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex items-center justify-center h-32">
@@ -568,12 +595,14 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {items.map((item, idx) => (
                 <SortableReview
                   key={item.id}
                   item={item}
                   index={idx}
+                  expanded={expandedIds.has(item.id)}
+                  onToggleExpand={toggleExpand}
                   onUpdate={handleUpdate}
                   onRemove={handleRemove}
                 />
