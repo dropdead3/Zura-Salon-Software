@@ -46,6 +46,9 @@ export default function MarketingAnalytics() {
   const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
   
   const { data: analytics, isLoading } = useMarketingAnalytics(dateRange, locationFilter);
+  // Active promotional popup offer code — drives the funnel card below.
+  const { data: popupCfg } = usePromotionalPopup();
+  const popupOfferCode = popupCfg?.enabled ? popupCfg.offerCode : null;
 
   // Check if there's any spend data to show ROI metrics
   const hasSpendData = analytics?.summary.totalSpend ? analytics.summary.totalSpend > 0 : false;
