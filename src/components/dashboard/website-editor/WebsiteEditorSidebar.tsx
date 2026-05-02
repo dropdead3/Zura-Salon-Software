@@ -62,6 +62,8 @@ import {
 } from '@/hooks/useWebsiteSections';
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useEditorSidebarPrefs } from '@/hooks/useEditorSidebarPrefs';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import type { DesignOverrides } from './SiteDesignPanel';
 import { SectionNavItem } from './SectionNavItem';
 import { dispatchEditorSectionHover } from '@/lib/editorSectionHover';
 import { SectionGroupHeader } from './SectionGroupHeader';
@@ -226,6 +228,19 @@ export function WebsiteEditorSidebar({
 
   const builtinSections = useMemo(() => localSections.filter(s => isBuiltinSection(s.type)), [localSections]);
   const customSections = useMemo(() => localSections.filter(s => !isBuiltinSection(s.type)), [localSections]);
+
+  // Hero parallax: which section is currently acting as the "rising panel"?
+  // Position-aware (slot 1) and only when the toggle is on AND slot 0 is a hero.
+  // Mirrors the gating logic in PageSectionRenderer so the chip never lies.
+  const { data: designOverrides } = useSiteSettings<DesignOverrides>('website_design_overrides');
+  const parallaxRisingSectionId = useMemo<string | null>(() => {
+    if (!designOverrides?.hero_parallax_enabled) return null;
+    if (localSections.length < 2) return null;
+    if (localSections[0]?.type !== 'hero') return null;
+    return localSections[1]?.id ?? null;
+  }, [designOverrides?.hero_parallax_enabled, localSections]);
+  const parallaxModeLabel =
+    designOverrides?.hero_parallax_mode === 'cinematic' ? 'Cinematic' : 'Subtle';
 
   // --- Homepage section operations ---
   const saveSections = async (newSections: SectionConfig[]) => {
