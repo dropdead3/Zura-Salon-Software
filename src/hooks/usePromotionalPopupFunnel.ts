@@ -112,18 +112,34 @@ interface UsePromotionalPopupFunnelArgs {
   /** Defaults to 30 days. */
   windowDays?: number;
   explicitOrgId?: string;
+  /** Optional rotation filter. When provided, restricts the funnel to the
+   *  [startsAt, endsAt] window of a single scheduled rotation entry. The
+   *  underlying `offerCode` stays the same — the wrapper's offer code is the
+   *  attribution key (see `applyScheduledSnapshot`), so per-rotation slicing
+   *  is purely a temporal narrowing. `windowDays` is ignored when this is set.
+   */
+  rotationWindow?: { id: string; startsAt: string; endsAt: string } | null;
 }
 
 export function usePromotionalPopupFunnel({
   offerCode,
   windowDays = 30,
   explicitOrgId,
+  rotationWindow,
 }: UsePromotionalPopupFunnelArgs) {
   const orgId = useSettingsOrgId(explicitOrgId);
   const code = (offerCode ?? '').trim();
 
   return useQuery<PromotionalPopupFunnel>({
-    queryKey: ['promotional-popup-funnel', orgId, code, windowDays],
+    queryKey: [
+      'promotional-popup-funnel',
+      orgId,
+      code,
+      windowDays,
+      rotationWindow?.id ?? null,
+      rotationWindow?.startsAt ?? null,
+      rotationWindow?.endsAt ?? null,
+    ],
     queryFn: async () => {
       const empty: PromotionalPopupFunnel = {
         impressions: 0,
@@ -142,9 +158,10 @@ export function usePromotionalPopupFunnel({
       };
       if (!orgId) return empty;
 
-      const windowStart = new Date(
-        Date.now() - windowDays * 86_400_000,
-      ).toISOString();
+      const windowStart = rotationWindow
+        ? rotationWindow.startsAt
+        : new Date(Date.now() - windowDays * 86_400_000).toISOString();
+      const windowEnd = rotationWindow ? rotationWindow.endsAt : null;
 
       const [
         impressionsRes,
