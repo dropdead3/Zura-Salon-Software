@@ -545,6 +545,7 @@ export function PromoLibraryCard({ formData, setFormData, isDirty }: PromoLibrar
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
