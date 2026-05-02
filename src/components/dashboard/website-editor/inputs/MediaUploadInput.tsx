@@ -614,8 +614,8 @@ export function MediaUploadInput({
                 <TooltipContent side="top" className="max-w-[260px] text-xs">
                   This asset was uploaded before the hero quality profile
                   existed. Re-uploading captures the original at full
-                  resolution (≤3200px, near-lossless WebP) instead of the
-                  smaller standard variant.
+                  resolution (≤5120px, near-lossless WebP) instead of the
+                  smaller standard variant — required for crisp 4K/5K retina.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
