@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
+import type { SectionTextColors } from '@/lib/sectionTextColors';
 
 // Generic hook for section configurations.
 // Editor + preview iframe read drafts; the public site reads live `value`.
