@@ -229,6 +229,7 @@ const RecoveryInbox = lazyWithRetry(() => import("./pages/dashboard/admin/Recove
 const LocationReviewLinks = lazyWithRetry(() => import("./pages/dashboard/admin/LocationReviewLinks"));
 const ReviewAutomationRules = lazyWithRetry(() => import("./pages/dashboard/admin/ReviewAutomationRules"));
 const ReviewTemplates = lazyWithRetry(() => import("./pages/dashboard/admin/ReviewTemplates"));
+const DispatchQueue = lazyWithRetry(() => import("./pages/dashboard/admin/DispatchQueue"));
 const SEOWorkshopHub = lazyWithRetry(() => import("./pages/dashboard/admin/SEOWorkshopHub"));
 const ReengagementHub = lazyWithRetry(() => import("./pages/dashboard/admin/ReengagementHub"));
 const ClientHealthHub = lazyWithRetry(() => import("./pages/dashboard/admin/ClientHealthHub"));
