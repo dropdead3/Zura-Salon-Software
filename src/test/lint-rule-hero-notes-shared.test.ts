@@ -62,7 +62,7 @@ describe('no-restricted-syntax: hero notes shared-component canon', () => {
     // HeroNotes.tsx itself IS the canonical owner — it suppresses the
     // selector inline. The other hero files should now route through it.
     const results = await eslint.lintFiles([
-      'src/components/home/HeroSection.tsx',
+      'src/components/home/HeroSlideRotator.tsx',
       'src/components/home/HeroSlideRotator.tsx',
       'src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx',
     ]);

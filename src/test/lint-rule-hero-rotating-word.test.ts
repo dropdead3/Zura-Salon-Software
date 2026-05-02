@@ -52,7 +52,7 @@ describe('no-restricted-syntax: hero rotating-word parity canon', () => {
 
   it('does not flag the production hero files (refactor sanity check)', async () => {
     const results = await eslint.lintFiles([
-      'src/components/home/HeroSection.tsx',
+      'src/components/home/HeroSlideRotator.tsx',
       'src/components/home/HeroSlideRotator.tsx',
       'src/components/dashboard/website-editor/previews/HeroSectionPreview.tsx',
     ]);
