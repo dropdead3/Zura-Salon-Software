@@ -118,6 +118,10 @@ export function PromotionalPopupEditor() {
     DEFAULT_PROMO_POPUP,
   );
   const [autoSaving, setAutoSaving] = useState(false);
+  // Cross-card rotation focus — calendar-strip click in `PromoScheduleCard`
+  // and rotation-pill click in `PopupAnalyticsCard` both write here so the
+  // two surfaces stay in lockstep ("visual → row → metrics").
+  const [focusedRotationId, setFocusedRotationId] = useState<string | null>(null);
 
   // Dev-only save-trace telemetry. Records every step of a save attempt
   // (click → mutation success → refetch result → form snapshot) and emits
@@ -603,6 +607,8 @@ export function PromotionalPopupEditor() {
       <PopupAnalyticsCard
         offerCode={savedSnapshot.offerCode}
         schedule={formData.schedule}
+        focusedRotationId={focusedRotationId}
+        onFocusRotation={setFocusedRotationId}
       />
 
       {/* Scheduled Rotation — pre-stage saved snapshots to swap into the live
@@ -610,7 +616,12 @@ export function PromotionalPopupEditor() {
           public component reads via `useResolvedPromotionalPopup` so live and
           preview honor the same active entry. Wrapper toggle still gates the
           popup; rotations only override creative. */}
-      <PromoScheduleCard formData={formData} setFormData={setFormData} />
+      <PromoScheduleCard
+        formData={formData}
+        setFormData={setFormData}
+        focusedRotationId={focusedRotationId}
+        onFocusRotation={setFocusedRotationId}
+      />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent

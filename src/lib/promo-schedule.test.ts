@@ -122,3 +122,34 @@ describe('detectScheduleConflicts', () => {
     expect(detectScheduleConflicts([a, b]).size).toBe(0);
   });
 });
+
+import { findOverlappingEntries } from './promo-schedule';
+
+describe('findOverlappingEntries', () => {
+  const a = entry('a', '2026-06-01T00:00:00Z', '2026-06-15T00:00:00Z');
+  const b = entry('b', '2026-07-01T00:00:00Z', '2026-07-15T00:00:00Z');
+
+  it('returns [] when draft is outside all windows', () => {
+    expect(findOverlappingEntries([a, b], '2026-08-01T00:00:00Z', '2026-08-05T00:00:00Z')).toEqual([]);
+  });
+
+  it('flags the entry whose window the draft intersects', () => {
+    const out = findOverlappingEntries([a, b], '2026-06-10T00:00:00Z', '2026-06-12T00:00:00Z');
+    expect(out.map((e) => e.id)).toEqual(['a']);
+  });
+
+  it('treats touching boundaries as non-overlap', () => {
+    const out = findOverlappingEntries([a], '2026-06-15T00:00:00Z', '2026-06-20T00:00:00Z');
+    expect(out).toEqual([]);
+  });
+
+  it('ignores excludeId (in-place edit case)', () => {
+    const out = findOverlappingEntries([a], '2026-06-05T00:00:00Z', '2026-06-10T00:00:00Z', 'a');
+    expect(out).toEqual([]);
+  });
+
+  it('returns [] for missing/invalid drafts', () => {
+    expect(findOverlappingEntries([a], null, '2026-06-10T00:00:00Z')).toEqual([]);
+    expect(findOverlappingEntries([a], 'bad', 'also-bad')).toEqual([]);
+  });
+});

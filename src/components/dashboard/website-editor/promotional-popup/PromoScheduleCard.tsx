@@ -18,7 +18,7 @@
  *     queued rotation it powers.
  *   - Currency / financial values: none on this surface.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Trash2, Plus, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,11 +40,21 @@ import {
   type PromotionalPopupSettings,
   type SavedPromoScheduleEntry,
 } from '@/hooks/usePromotionalPopup';
-import { pickActiveEntry, detectScheduleConflicts } from '@/lib/promo-schedule';
+import {
+  pickActiveEntry,
+  detectScheduleConflicts,
+  findOverlappingEntries,
+} from '@/lib/promo-schedule';
 
 interface PromoScheduleCardProps {
   formData: PromotionalPopupSettings;
   setFormData: (next: PromotionalPopupSettings) => void;
+  /** Currently focused rotation id (controlled by parent so the analytics
+   *  card and this card share the same selection — click in the calendar
+   *  strip lights up both surfaces and scrolls the matching queue row into
+   *  view). `null` = no rotation focused. */
+  focusedRotationId?: string | null;
+  onFocusRotation?: (id: string | null) => void;
 }
 
 function generateId(): string {
@@ -116,9 +126,13 @@ const STATUS_COPY: Record<EntryStatus, { label: string; tone: string }> = {
 function ScheduleCalendarStrip({
   schedule,
   saved,
+  focusedRotationId,
+  onFocusRotation,
 }: {
   schedule: SavedPromoScheduleEntry[];
   saved: { id: string; name: string }[];
+  focusedRotationId: string | null;
+  onFocusRotation: (id: string | null) => void;
 }) {
   const today = useMemo(() => {
     const d = new Date();
@@ -191,15 +205,24 @@ function ScheduleCalendarStrip({
             ? `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · ${labelFor(owner.id)}`
             : `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · base config`;
           return (
-            <div
+            <button
               key={i}
+              type="button"
               title={tip}
+              onClick={() => {
+                if (!owner) return;
+                onFocusRotation(focusedRotationId === owner.id ? null : owner.id);
+              }}
+              disabled={!owner}
               className={cn(
-                'h-6 rounded-sm border transition-colors',
-                owner ? 'border-transparent' : 'border-border/40 bg-muted/40',
+                'h-6 rounded-sm border transition-all',
+                owner ? 'border-transparent cursor-pointer hover:scale-110' : 'border-border/40 bg-muted/40 cursor-default',
                 isToday && 'ring-1 ring-primary/60',
+                owner && focusedRotationId === owner.id && 'ring-2 ring-primary scale-110',
+                owner && focusedRotationId && focusedRotationId !== owner.id && 'opacity-40',
               )}
               style={owner ? { background: colorFor(owner.id) } : undefined}
+              aria-label={tip}
             />
           );
         })}
@@ -213,7 +236,12 @@ function ScheduleCalendarStrip({
   );
 }
 
-export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardProps) {
+export function PromoScheduleCard({
+  formData,
+  setFormData,
+  focusedRotationId = null,
+  onFocusRotation,
+}: PromoScheduleCardProps) {
   const { data: library } = usePromoLibrary();
   const saved = library?.saved ?? [];
 
@@ -225,6 +253,21 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
   const [draftPromoId, setDraftPromoId] = useState<string>('');
   const [draftStart, setDraftStart] = useState<string>('');
   const [draftEnd, setDraftEnd] = useState<string>('');
+  const [confirmOverlap, setConfirmOverlap] = useState(false);
+  const rowRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+
+  const handleFocusRotation = (id: string | null) => {
+    onFocusRotation?.(id);
+  };
+
+  // Scroll focused row into view when focus changes (from calendar click).
+  useEffect(() => {
+    if (!focusedRotationId) return;
+    const el = rowRefs.current.get(focusedRotationId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [focusedRotationId]);
 
   const sortedSchedule = useMemo(
     () =>
@@ -244,6 +287,20 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
   const conflicts = useMemo(() => detectScheduleConflicts(schedule), [schedule]);
   const hasConflicts = conflicts.size > 0;
 
+  // Live overlap detection on the draft form. Powers the inline pre-warn so
+  // the operator sees the collision *before* hitting "Add to queue".
+  const draftStartIso = useMemo(() => localInputToIso(draftStart), [draftStart]);
+  const draftEndIso = useMemo(() => localInputToIso(draftEnd), [draftEnd]);
+  const draftOverlaps = useMemo(
+    () => findOverlappingEntries(schedule, draftStartIso, draftEndIso),
+    [schedule, draftStartIso, draftEndIso],
+  );
+  // Reset two-step confirm whenever the draft window changes — operator must
+  // re-acknowledge the overlap explicitly.
+  useEffect(() => {
+    setConfirmOverlap(false);
+  }, [draftStartIso, draftEndIso, draftPromoId]);
+
   const updateSchedule = (next: SavedPromoScheduleEntry[]) => {
     setFormData({ ...formData, schedule: next });
   };
@@ -253,26 +310,33 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
       toast.error('Pick a saved promo to rotate in.');
       return;
     }
-    const startsAt = localInputToIso(draftStart);
-    const endsAt = localInputToIso(draftEnd);
-    if (!startsAt || !endsAt) {
+    if (!draftStartIso || !draftEndIso) {
       toast.error('Pick a start and end date.');
       return;
     }
-    if (Date.parse(endsAt) <= Date.parse(startsAt)) {
+    if (Date.parse(draftEndIso) <= Date.parse(draftStartIso)) {
       toast.error('End must be after start.');
+      return;
+    }
+    // Pre-validation: block first click on overlap, allow second click.
+    if (draftOverlaps.length > 0 && !confirmOverlap) {
+      setConfirmOverlap(true);
+      toast.warning(
+        `Overlaps ${draftOverlaps.length} existing rotation${draftOverlaps.length === 1 ? '' : 's'}. Click "Add anyway" to confirm.`,
+      );
       return;
     }
     const entry: SavedPromoScheduleEntry = {
       id: generateId(),
       savedPromoId: draftPromoId,
-      startsAt,
-      endsAt,
+      startsAt: draftStartIso,
+      endsAt: draftEndIso,
     };
     updateSchedule([...schedule, entry]);
     setDraftPromoId('');
     setDraftStart('');
     setDraftEnd('');
+    setConfirmOverlap(false);
     toast.success('Rotation queued — Save to publish.');
   };
 
@@ -317,7 +381,12 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
         ) : (
           <>
             {sortedSchedule.length > 0 ? (
-              <ScheduleCalendarStrip schedule={sortedSchedule} saved={saved} />
+              <ScheduleCalendarStrip
+                schedule={sortedSchedule}
+                saved={saved}
+                focusedRotationId={focusedRotationId}
+                onFocusRotation={handleFocusRotation}
+              />
             ) : null}
 
             {hasConflicts ? (
@@ -344,16 +413,24 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
                   const status = statusOf(entry, now);
                   const meta = STATUS_COPY[status];
                   const isConflicting = conflicts.has(entry.id);
+                  const isFocused = focusedRotationId === entry.id;
                   return (
                     <li
                       key={entry.id}
+                      ref={(el) => {
+                        if (el) rowRefs.current.set(entry.id, el);
+                        else rowRefs.current.delete(entry.id);
+                      }}
+                      onClick={() => handleFocusRotation(isFocused ? null : entry.id)}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5',
-                        status === 'active'
-                          ? 'border-primary/40 bg-primary/5'
-                          : isConflicting
-                            ? 'border-amber-500/40 bg-amber-500/5'
-                            : 'border-border/60',
+                        'flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-2.5 cursor-pointer transition-all',
+                        isFocused
+                          ? 'border-primary ring-2 ring-primary/40 bg-primary/10'
+                          : status === 'active'
+                            ? 'border-primary/40 bg-primary/5'
+                            : isConflicting
+                              ? 'border-amber-500/40 bg-amber-500/5'
+                              : 'border-border/60',
                       )}
                     >
                       <div className="min-w-0 flex-1">
@@ -381,7 +458,10 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleRemove(entry.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(entry.id);
+                        }}
                         aria-label="Remove rotation"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -430,10 +510,26 @@ export function PromoScheduleCard({ formData, setFormData }: PromoScheduleCardPr
                   />
                 </div>
               </div>
+              {draftOverlaps.length > 0 ? (
+                <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-2.5 py-2 text-[11px] text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    Overlaps{' '}
+                    {draftOverlaps
+                      .map((e) => saved.find((s) => s.id === e.savedPromoId)?.name ?? '(deleted)')
+                      .join(', ')}
+                    . The resolver will pick the rotation with the later start during the overlap.
+                  </span>
+                </div>
+              ) : null}
               <div className="flex justify-end">
-                <Button onClick={handleAdd} size="sm">
+                <Button
+                  onClick={handleAdd}
+                  size="sm"
+                  variant={confirmOverlap ? 'destructive' : 'default'}
+                >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add to queue
+                  {confirmOverlap ? 'Add anyway' : 'Add to queue'}
                 </Button>
               </div>
             </div>

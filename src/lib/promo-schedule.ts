@@ -124,6 +124,35 @@ export function detectScheduleConflicts(
   return conflicts;
 }
 
+/**
+ * Returns the existing schedule entries whose windows overlap the given
+ * [draftStart, draftEnd] window. Used by the editor's "Add to queue" form to
+ * pre-warn the operator BEFORE the entry lands in the queue (vs.
+ * `detectScheduleConflicts`, which audits an already-committed schedule).
+ *
+ * Pure. Touching boundaries (a.endsAt === b.startsAt) do NOT overlap — that
+ * matches the back-to-back semantics in `detectScheduleConflicts`.
+ */
+export function findOverlappingEntries(
+  schedule: SavedPromoScheduleEntry[] | undefined,
+  draftStartIso: string | null,
+  draftEndIso: string | null,
+  excludeId?: string,
+): SavedPromoScheduleEntry[] {
+  if (!schedule || schedule.length === 0) return [];
+  if (!draftStartIso || !draftEndIso) return [];
+  const ds = Date.parse(draftStartIso);
+  const de = Date.parse(draftEndIso);
+  if (!Number.isFinite(ds) || !Number.isFinite(de) || de <= ds) return [];
+  return schedule.filter((e) => {
+    if (excludeId && e.id === excludeId) return false;
+    const s = Date.parse(e.startsAt);
+    const en = Date.parse(e.endsAt);
+    if (!Number.isFinite(s) || !Number.isFinite(en) || en <= s) return false;
+    return s < de && ds < en;
+  });
+}
+
 /** End-to-end: resolve `cfg` against the library at the given moment. */
 export function resolvePromotionalPopupForNow(
   cfg: PromotionalPopupSettings | null | undefined,
