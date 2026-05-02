@@ -56,10 +56,13 @@ export interface ResolvedHeroColors {
    *  Consumers must add the `hero-cta-hover` utility class when true so the
    *  CSS rule can override the inline `background-color`. */
   hasPrimaryHover: boolean;
+  /** True when the primary CTA has an explicit OR auto-derived hover text
+   *  color. Consumers must add `.hero-cta-hover-fg` when true. */
+  hasPrimaryHoverFg: boolean;
   hasSecondaryHover: boolean;
   /** True when an operator-set hover border color exists for the secondary CTA. */
   hasSecondaryHoverBorder: boolean;
-  /** True when an operator-set hover text color exists for the secondary CTA. */
+  /** True when an explicit OR auto-derived hover text color exists for the secondary CTA. */
   hasSecondaryHoverFg: boolean;
 }
 
