@@ -64,6 +64,14 @@ const INTENTIONALLY_UNREFERENCED = new Set<string>([
   // still unreferenced, delete the files and remove these entries.
   'components/layout/PageHeader.tsx',
   'components/layout/StickyPhoneSidebar.tsx',
+  // StickyBookButton was migrated onto useHeroExitProgress in the same
+  // refactor that introduced this guard, but the component itself was
+  // never wired into the public layout (Layout.tsx renders the global
+  // CTA via a different surface). Parking it here surfaces the latent
+  // dead-code rather than papering over it.
+  // Revisit trigger: when the next sticky-CTA experiment ships — either
+  // wire StickyBookButton into Layout.tsx or delete it outright.
+  'components/layout/StickyBookButton.tsx',
 ]);
 
 function walk(dir: string): string[] {
