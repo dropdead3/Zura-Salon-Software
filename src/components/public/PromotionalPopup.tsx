@@ -18,10 +18,12 @@ import { PromoCornerCard } from './promo/PromoCornerCard';
 import { PromoFab } from './promo/PromoFab';
 import {
   usePromoLifecycle,
+  recordImpression,
   recordResponse,
   writeDismissal,
   markSessionDismissed,
 } from './promo/usePromoLifecycle';
+import { useEffect, useRef } from 'react';
 
 interface Props {
   /**
