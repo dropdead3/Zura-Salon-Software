@@ -2,11 +2,18 @@ import * as React from "react";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 import { CheckCircle2, AlertTriangle, Info, XCircle } from "lucide-react";
+import { useUnsavedToastVisible } from "@/lib/unsavedToastPresence";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
+// Pill height (~44px) + gap (12px) on desktop; full-width pill (~48px) + gap
+// (12px) on mobile. Kept in sync with `UnsavedChangesToast` geometry.
+const UNSAVED_PILL_OFFSET_DESKTOP = 56;
+const UNSAVED_PILL_OFFSET_MOBILE = 60;
+
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
+  const unsavedVisible = useUnsavedToastVisible();
 
   return (
     <Sonner
@@ -15,6 +22,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       // Render above all overlays/drawers (PremiumFloatingPanel uses z-50,
       // radix dialogs/sheets up to z-[100]). Toasts must always win.
       style={{ zIndex: 2147483000 } as React.CSSProperties}
+      // When the persistent unsaved-changes pill is mounted in the same
+      // bottom-right region, lift the toast stack so they coexist instead of
+      // colliding/stacking visually. Falls back to sonner default when absent.
+      offset={unsavedVisible ? UNSAVED_PILL_OFFSET_DESKTOP : undefined}
+      mobileOffset={unsavedVisible ? UNSAVED_PILL_OFFSET_MOBILE : undefined}
       icons={{
         success: <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
         error: <XCircle className="h-4 w-4 text-destructive" />,

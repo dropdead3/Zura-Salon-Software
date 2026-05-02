@@ -3,6 +3,7 @@ import { Circle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DirtyActionButton } from '@/components/ui/dirty-action-button';
 import { cn } from '@/lib/utils';
+import { registerUnsavedToast } from '@/lib/unsavedToastPresence';
 
 /**
  * UnsavedChangesToast — canonical persistent dirty-state indicator for inline
@@ -30,6 +31,13 @@ export function UnsavedChangesToast({
   onSave: () => void;
   className?: string;
 }) {
+  // Register presence so the global Sonner toaster offsets upward and the
+  // success/error toast never lands on top of the pill.
+  React.useEffect(() => {
+    if (!isDirty) return;
+    return registerUnsavedToast();
+  }, [isDirty]);
+
   if (!isDirty) return null;
   return (
     <div
