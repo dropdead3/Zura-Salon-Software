@@ -22867,6 +22867,7 @@ export type Database = {
           last_error: string | null
           next_retry_at: string | null
           organization_id: string
+          parked_at: string | null
           rule_id: string | null
           scheduled_for: string
           sent_at: string | null
@@ -22886,6 +22887,7 @@ export type Database = {
           last_error?: string | null
           next_retry_at?: string | null
           organization_id: string
+          parked_at?: string | null
           rule_id?: string | null
           scheduled_for: string
           sent_at?: string | null
@@ -22905,6 +22907,7 @@ export type Database = {
           last_error?: string | null
           next_retry_at?: string | null
           organization_id?: string
+          parked_at?: string | null
           rule_id?: string | null
           scheduled_for?: string
           sent_at?: string | null
