@@ -32,6 +32,7 @@ import { usePromoLibrary } from '@/hooks/usePromoLibrary';
 import type { SavedPromoScheduleEntry, PromoGoal } from '@/hooks/usePromotionalPopup';
 import { forecastDaysToCap } from '@/lib/promo-goal-velocity';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
+import { useContainerWidth } from '@/hooks/useContainerWidth';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
