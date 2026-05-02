@@ -59,7 +59,9 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   const { resolved: cfg, wrapper } = useResolvedPromotionalPopup();
   const isPreview = useIsEditorPreview();
 
-  const lifecycle = usePromoLifecycle({ cfg, surface, orgId, isPreview });
+  // Lifecycle reads the wrapper (drives enabled/frequency/offerCode/targeting).
+  // Creative comes from `cfg` (resolved, includes scheduled overrides).
+  const lifecycle = usePromoLifecycle({ cfg: wrapper, surface, orgId, isPreview });
 
   // Disabled / no config → render nothing at all.
   if (!lifecycle.active || !cfg) return null;
