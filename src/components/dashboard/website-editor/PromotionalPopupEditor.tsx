@@ -785,43 +785,54 @@ export function PromotionalPopupEditor() {
             overflowVerb="Over limit"
           />
         </Field>
-        <Field label="Image (optional)" hint="Auto-optimized to WebP. Treatment + alt text below.">
+        <Field label="Image (optional)" hint="Auto-optimized to WebP. Layout + alt text below.">
           {(() => {
-            // Treatment options vary per appearance: in `corner-card` the
-            // surface is a single ~360px tile, so "cover" and "side" both
-            // collapse to a top strip — exposing both would be a phantom
-            // choice. Banner doesn't render an image at all.
-            type TreatmentOption = {
-              value: 'cover' | 'side' | 'hidden-on-corner';
-              label: string;
-              hint: string;
-            };
+            // Per-surface controls. Old `imageTreatment` collapsed two
+            // independent decisions ("how does the modal lay out the image"
+            // and "does the corner card show it at all") into one enum,
+            // which made `cover` and `hidden-on-corner` look identical on
+            // the modal preview. We now expose them as separate toggles —
+            // each surface owns its own choice. The legacy field is read
+            // only via `resolveImageRender` for back-compat; once the
+            // operator interacts with either toggle, the new fields take
+            // precedence.
             const appearance = formData.appearance ?? 'modal';
-            const activeTreatment = formData.imageTreatment ?? 'cover';
-            const treatmentOptions: TreatmentOption[] = appearance === 'corner-card'
-              ? [
-                  { value: 'cover', label: 'Show', hint: 'Render the image as a strip above the headline' },
-                  { value: 'hidden-on-corner', label: 'Hide', hint: 'Hide the image on the corner card' },
-                ]
-              : appearance === 'banner'
-                ? []
-                : [
-                    { value: 'cover', label: 'Cover', hint: 'Full-width strip above headline' },
-                    { value: 'side', label: 'Side', hint: 'Left rail on the modal' },
-                    { value: 'hidden-on-corner', label: 'Hide on corner', hint: 'Show on modal; hide on the corner card' },
-                  ];
+            const resolved = resolveImageRender({
+              imageUrl: formData.imageUrl,
+              imageTreatment: formData.imageTreatment,
+              modalImageLayout: formData.modalImageLayout,
+              cornerCardImage: formData.cornerCardImage,
+            });
+            const modalValue: ModalImageLayout =
+              formData.modalImageLayout
+                ?? (formData.imageTreatment === 'side' ? 'side' : 'cover');
+            const cornerValue: CornerCardImage =
+              formData.cornerCardImage
+                ?? (formData.imageTreatment === 'hidden-on-corner' ? 'hide' : 'show');
 
-            // Focal point has no visible effect when the active surface
-            // doesn't render the image: corner-card+hidden-on-corner OR any
-            // banner appearance. Lock the picker to prevent operators from
-            // tuning a value the audience won't see.
+            // Focal point has no visible effect when no surface renders the
+            // image (banner appearance always, OR corner-card with image
+            // hidden AND modal-as-active-appearance with image hidden — but
+            // modal can't hide the image, so realistically: banner OR
+            // corner-card+hide while previewing corner card). Lock the picker
+            // to prevent operators from tuning a value the audience won't see
+            // *on the surface they're previewing*.
             const focalDisabled =
               appearance === 'banner' ||
-              (appearance === 'corner-card' && activeTreatment === 'hidden-on-corner');
+              (appearance === 'corner-card' && resolved.cornerCard === 'none');
             const focalDisabledReason =
               appearance === 'banner'
                 ? "Banner appearance doesn't render the image. Switch to Modal or Corner Card to use the focal point."
-                : "The corner card is set to hide the image. Switch Treatment to Show to use the focal point.";
+                : "The corner card is set to hide the image. Switch Corner card → Show to use the focal point.";
+
+            const modalOptions: { value: ModalImageLayout; label: string; hint: string }[] = [
+              { value: 'cover', label: 'Cover', hint: 'Full-width strip above the headline' },
+              { value: 'side', label: 'Side', hint: 'Left rail beside the copy' },
+            ];
+            const cornerOptions: { value: CornerCardImage; label: string; hint: string }[] = [
+              { value: 'show', label: 'Show', hint: 'Strip above the headline on the corner card' },
+              { value: 'hide', label: 'Hide', hint: 'Text-only on the corner card (saves vertical space)' },
+            ];
 
             return (
               <>
@@ -845,35 +856,71 @@ export function PromotionalPopupEditor() {
                 />
                 {formData.imageUrl && (
                   <div className="mt-3 space-y-3">
-                    {treatmentOptions.length > 0 ? (
-                      <div>
-                        <Label size="xs">Image on popup</Label>
-                        <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
-                          {treatmentOptions.map(({ value, label, hint }) => {
-                            const active = activeTreatment === value;
-                            return (
-                              <button
-                                key={value}
-                                type="button"
-                                role="radio"
-                                aria-checked={active}
-                                title={hint}
-                                onClick={() => handleChange('imageTreatment', value)}
-                                className={cn(
-                                  'h-7 px-3 rounded-full font-sans text-xs transition-colors',
-                                  active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
-                                )}
-                              >
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
+                    {appearance === 'banner' ? (
                       <p className="font-sans text-[11px] text-muted-foreground">
                         Banner appearance does not display the image. Switch to Modal or Corner Card in <span className="text-foreground">Appearance</span> to use it.
                       </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <Label size="xs">Modal layout</Label>
+                            {appearance !== 'modal' && (
+                              <span className="font-sans text-[10px] text-muted-foreground">· not previewing</span>
+                            )}
+                          </div>
+                          <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
+                            {modalOptions.map(({ value, label, hint }) => {
+                              const active = modalValue === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={active}
+                                  title={hint}
+                                  onClick={() => handleChange('modalImageLayout', value)}
+                                  className={cn(
+                                    'h-7 px-3 rounded-full font-sans text-xs transition-colors',
+                                    active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                  )}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <Label size="xs">Corner card</Label>
+                            {appearance !== 'corner-card' && (
+                              <span className="font-sans text-[10px] text-muted-foreground">· not previewing</span>
+                            )}
+                          </div>
+                          <div className="mt-1.5 inline-flex items-center gap-0.5 rounded-full border border-border bg-background p-0.5 h-9">
+                            {cornerOptions.map(({ value, label, hint }) => {
+                              const active = cornerValue === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={active}
+                                  title={hint}
+                                  onClick={() => handleChange('cornerCardImage', value)}
+                                  className={cn(
+                                    'h-7 px-3 rounded-full font-sans text-xs transition-colors',
+                                    active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                  )}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
                     )}
                     <div>
                       <Label size="xs">Alt text</Label>
