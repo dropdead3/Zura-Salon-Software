@@ -343,5 +343,6 @@ export function LocationsSection() {
         </div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }
