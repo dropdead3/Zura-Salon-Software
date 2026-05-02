@@ -32,7 +32,9 @@ export interface PromotionalPopupTrendPoint {
   date: string;
   impressions: number;
   ctaClicks: number;
+  dismissals: number;
   redemptions: number;
+  revenue: number;
 }
 
 export interface PromotionalPopupFunnel {
@@ -49,14 +51,10 @@ export interface PromotionalPopupFunnel {
   bookingRate: number | null;
   hasSufficientData: boolean;
   windowDays: number;
-  /** Earliest impression timestamp (any code, this org/surface). Drives the
-   *  "Since impression tracking went live" footnote. */
   firstImpressionAt: string | null;
-  /** Earliest response timestamp for this code — used to detect the
-   *  pre-tracking asymmetry where responses pre-date impressions. */
   firstResponseAt: string | null;
-  /** 14-day daily trend (oldest → newest). Always returned, even when
-   *  impressions are zero, so the chart can render an honest flat baseline. */
+  /** 14-day daily trend (oldest → newest). Always returned so tiles can
+   *  render a sparkline fallback even when the area chart is empty. */
   trend: PromotionalPopupTrendPoint[];
 }
 
@@ -68,8 +66,9 @@ function utcDateKey(iso: string): string {
 
 function buildTrendBuckets(
   impressionDates: string[],
-  responseDates: string[],
-  redemptionDates: string[],
+  ctaDates: string[],
+  dismissalDates: string[],
+  redemptions: Array<{ date: string; revenue: number }>,
 ): PromotionalPopupTrendPoint[] {
   const buckets = new Map<string, PromotionalPopupTrendPoint>();
   const today = new Date();
@@ -77,19 +76,33 @@ function buildTrendBuckets(
     const d = new Date(today);
     d.setUTCDate(d.getUTCDate() - i);
     const key = d.toISOString().slice(0, 10);
-    buckets.set(key, { date: key, impressions: 0, ctaClicks: 0, redemptions: 0 });
+    buckets.set(key, {
+      date: key,
+      impressions: 0,
+      ctaClicks: 0,
+      dismissals: 0,
+      redemptions: 0,
+      revenue: 0,
+    });
   }
   for (const iso of impressionDates) {
     const b = buckets.get(utcDateKey(iso));
     if (b) b.impressions += 1;
   }
-  for (const iso of responseDates) {
+  for (const iso of ctaDates) {
     const b = buckets.get(utcDateKey(iso));
     if (b) b.ctaClicks += 1;
   }
-  for (const iso of redemptionDates) {
+  for (const iso of dismissalDates) {
     const b = buckets.get(utcDateKey(iso));
-    if (b) b.redemptions += 1;
+    if (b) b.dismissals += 1;
+  }
+  for (const r of redemptions) {
+    const b = buckets.get(utcDateKey(r.date));
+    if (b) {
+      b.redemptions += 1;
+      b.revenue += r.revenue;
+    }
   }
   return Array.from(buckets.values());
 }
