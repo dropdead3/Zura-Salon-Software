@@ -484,7 +484,11 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
       </EditorCard>
       </>)}
 
-      {backgroundOnly && (
+      {/* Master-slide hint — shown on slide 1 in background-only mode where
+          there's no inert-field banner above. Non-master slides already get
+          the amber banner at the top of the editor and don't need a second
+          mention here. */}
+      {backgroundOnly && index === 0 && (
         <div className="rounded-xl border border-dashed border-border/50 px-4 py-3 text-[11px] text-muted-foreground font-sans">
           Headline, subheadline & buttons are shared across all slides in
           Background-Only mode. Edit them under{' '}
