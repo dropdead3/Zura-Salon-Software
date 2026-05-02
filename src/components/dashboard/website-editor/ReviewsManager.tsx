@@ -614,7 +614,7 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {items.map((item, idx) => (
                 <SortableReview
                   key={item.id}
