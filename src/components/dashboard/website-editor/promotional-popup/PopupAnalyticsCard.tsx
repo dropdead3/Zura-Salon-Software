@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Eye, MousePointerClick, X, Gift, DollarSign, BarChart3 } from 'lucide-react';
 import {
@@ -17,6 +18,28 @@ import {
   type PromotionalPopupTrendPoint,
 } from '@/hooks/usePromotionalPopupFunnel';
 import { tokens } from '@/lib/design-tokens';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { cn } from '@/lib/utils';
+
+type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
+
+function formatTrackingFootnote(
+  firstImpressionAt: string | null,
+  firstResponseAt: string | null,
+): string {
+  if (!firstImpressionAt) {
+    return 'Impression tracking is armed but has not yet recorded a popup render. The funnel will populate once the popup is shown to a visitor.';
+  }
+  const since = new Date(firstImpressionAt).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  if (firstResponseAt && new Date(firstResponseAt) < new Date(firstImpressionAt)) {
+    return `Funnel rates reflect activity since ${since}, when impression tracking went live. Earlier CTA clicks exist in the response log but cannot be matched to an impression — this is expected, not a data bug.`;
+  }
+  return `Since ${since}, when impression tracking went live for this organization.`;
+}
 
 function formatTrackingFootnote(
   firstImpressionAt: string | null,
