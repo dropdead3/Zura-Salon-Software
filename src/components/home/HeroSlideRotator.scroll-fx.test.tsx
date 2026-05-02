@@ -81,13 +81,14 @@ describe('HeroSlideRotator — scroll-fx regression guard', () => {
 
     // The hook is invoked unconditionally to keep React hook order stable.
     expect(useScrollSpy).toHaveBeenCalled();
-    const args = useScrollSpy.mock.calls[0]?.[0];
+    const args = useScrollSpy.mock.calls[0]?.[0] as
+      | { target?: { current: HTMLElement | null }; offset?: unknown }
+      | undefined;
     expect(args?.target).toBeDefined();
     // `target` is a ref object — its `.current` should resolve to the rendered
     // <section> after mount (proves the ref was actually attached, not just
     // a fresh disconnected ref handed off by the rotator).
-    const ref = args!.target as { current: HTMLElement | null };
-    expect(ref.current?.tagName).toBe('SECTION');
+    expect(args!.target!.current?.tagName).toBe('SECTION');
     // Range covers the full hero exit; documented in useHeroScrollAnimation.
     expect(args?.offset).toEqual(['start start', 'end start']);
   });
