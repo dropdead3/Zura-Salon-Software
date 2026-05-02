@@ -222,6 +222,24 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
     ).toBe(true);
   });
 
+  it('keeps the zura:recent-color-picks selector on the banned fixture', async () => {
+    const selectors = await getRestrictedSyntaxSelectors(
+      'src/test/lint-fixtures/recent-color-picks-banned.tsx',
+    );
+    expect(
+      selectors.some((s) => s.includes('zura:recent-color-picks')),
+      `zura:recent-color-picks selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
+    ).toBe(true);
+  });
+
+  it('applies the zura:recent-color-picks rule to the owning module (suppression is per-line)', async () => {
+    const selectors = await getRestrictedSyntaxSelectors('src/hooks/useRecentColorPicks.ts');
+    expect(
+      selectors.some((s) => s.includes('zura:recent-color-picks')),
+      'zura:recent-color-picks rule should be active on src/hooks/useRecentColorPicks.ts; the dispatch carries an inline eslint-disable.',
+    ).toBe(true);
+  });
+
   it('keeps the hero-specific selector (alignment + shared component) on hero files', async () => {
     // The hero block appends two extraSelectors via defineScopedDoctrine.
     // Auto-iteration above covers the consolidated 5; this one asserts
