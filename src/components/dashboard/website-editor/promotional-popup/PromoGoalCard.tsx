@@ -305,7 +305,38 @@ export function PromoGoalCard({ formData, setFormData }: PromoGoalCardProps) {
               </div>
             ) : null}
 
-            {/* Suppression banner — only when the goal has actually fired. */}
+            {/* Cross-code pattern nudge — org-wide comparative insight.
+                Surfaces only when 2+ buckets each have ≥3 runs AND the
+                speed ratio is ≥2×. Suppressed when the current code IS the
+                fast bucket (operator already knows). */}
+            {showCrossCodeNudge && crossCodeNudge.kind === 'cross-code' ? (
+              <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5 text-xs">
+                <Sparkles className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                <div className="flex-1">
+                  <span className="font-display tracking-wide uppercase text-[11px] text-foreground">
+                    Cross-promo pattern
+                  </span>
+                  <p className="mt-0.5 text-muted-foreground">
+                    Your{' '}
+                    <span className="font-mono text-foreground">
+                      {crossCodeNudge.fastBucket}-*
+                    </span>{' '}
+                    promos hit cap{' '}
+                    {crossCodeNudge.ratio === Number.POSITIVE_INFINITY
+                      ? 'same-day'
+                      : `${crossCodeNudge.ratio.toFixed(1)}× faster`}{' '}
+                    than your{' '}
+                    <span className="font-mono text-foreground">
+                      {crossCodeNudge.slowBucket}-*
+                    </span>{' '}
+                    promos ({crossCodeNudge.fastMedianDays}d vs{' '}
+                    {crossCodeNudge.slowMedianDays}d median, {crossCodeNudge.fastRuns}+
+                    {crossCodeNudge.slowRuns} runs). Size caps accordingly.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {status.kind === 'reached-count' ? (
               <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
