@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {
   hashBucket,
   pickVariant,
   resolvePromotionalPopupForVisitor,
+  __resetOrphanWarnings,
   type PromoExperimentConfig,
 } from './promo-experiment';
 import type { PromotionalPopupSettings } from '@/hooks/usePromotionalPopup';
