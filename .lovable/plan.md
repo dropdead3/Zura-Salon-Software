@@ -1,117 +1,108 @@
-## Promotion Library — Preset Catalog + Saved Promotions
+# PR 4 — Goal-Based Auto-Suppression
 
-Adds a "Promotion Library" layer above the Promotional Popup editor. Operators pick from curated **presets** (industry-tested offer archetypes) to start fast, and persist their own **saved promotions** (named snapshots of the popup config) they can reload, duplicate, or schedule on rotation.
+**Prompt feedback:** Tight pick. "Goal-based auto-suppression" earns its place because it solves a real operator failure mode (over-redeeming a capacity-constrained promo overnight) and pairs naturally with the funnel data we already have. Even better next time: hint at the *suppression mechanic* you prefer — soft pause (visitor sees nothing, operator sees a banner) vs hard disable (toggle flips off). I've defaulted to soft pause below since it preserves the experiment + schedule state, but flag it now if you want hard disable instead.
 
-The popup itself stays exactly as-is — this layer only writes into the existing `PromotionalPopupSettings` shape via the editor's current save path. Zero migration of existing live popups.
+## What ships
 
----
+A `goal` block on the popup wrapper config that lets operators set a redemption-count cap (and optionally a calendar deadline). When the live redemption count for the wrapper's `offerCode` hits the cap, the popup auto-suppresses for new visitors. The wrapper card surfaces a progress gauge and a banner explaining the suppressed state. Operators can raise the cap or clear the goal in one click to re-arm.
 
-### 1. Curated preset catalog (read-only, in-code)
+Three doctrine ties:
+- **Honest silence** — when goal is hit, public-side returns `null` (no popup), not a fake "expired" state. Operators see the suppression in-editor; visitors just don't see the popup.
+- **Visibility contracts** — the goal block is opt-in. When goal is unset, the card stays out of the way (collapsed/empty state).
+- **Materiality** — progress copy only renders when the operator has set a goal AND the popup has an `offerCode`. Unattributable popups can't be goal-tracked.
 
-A new `src/lib/promo-presets.ts` ships ~8 archetypes. Each preset is a partial `PromotionalPopupSettings` covering the content + offer slots only (eyebrow, headline, body, CTA labels, disclaimer, value anchor, offerCode placeholder, eyebrowIcon). Behavior/targeting/style fields are NOT touched — those stay at whatever the operator has set, so applying a preset never silently changes appearance, schedule, or audience.
-
-Initial preset set (operator-tested archetypes, not industry-specific to hair):
-
-| Key | Label | Use case |
-|---|---|---|
-| `new-client-discount` | New Client Welcome | First-visit % off |
-| `complimentary-addon` | Complimentary Add-On | Free service with paid booking (current default) |
-| `referral-bonus` | Referral Reward | Bring-a-friend credit |
-| `birthday-month` | Birthday Month Gift | Birthday-month perk |
-| `weekday-fill` | Midweek Fill | Tue/Wed/Thu utilization booster |
-| `holiday-gift-card` | Gift Card Promo | Seasonal gift-card lift |
-| `winback-lapsed` | We Miss You | Lapsed-client reactivation |
-| `flash-24h` | 24-Hour Flash | Urgency-driven short window |
-
-Each preset includes a one-line `rationale` (when to use it) and a `category` tag (`acquisition` / `retention` / `utilization` / `seasonal`) for filtering.
-
-### 2. Saved promotions (per-org, persisted)
-
-A new `site_settings` row keyed `promotional_popup_library` stores an array of saved promo snapshots scoped to the org. Reusing `site_settings` (vs a new table) keeps it inside the existing draft/publish + RLS posture and avoids another migration surface for a low-write, low-cardinality feature.
-
-```ts
-type SavedPromo = {
-  id: string;            // uuid
-  name: string;          // operator label, e.g. "Spring Color Promo"
-  notes?: string;        // optional context
-  createdAt: string;     // ISO
-  updatedAt: string;
-  config: PromotionalPopupSettings; // full snapshot (excluding `enabled`)
-  lastAppliedAt?: string;
-};
-
-type PromoLibrary = { saved: SavedPromo[] };
-```
-
-Cap: 25 saved promos per org (silent enforcement at save time — operator cannot accidentally bloat the row).
-
-New hook `usePromoLibrary()` mirrors the `usePromotionalPopup` pattern: `fetchSiteSetting` / `writeSiteSettingDraft` against the `promotional_popup_library` key. Library writes go through draft → publish like every other site setting.
-
-### 3. Editor UI: a "Library" surface above the existing form
-
-Adds a single new `<EditorCard>` at the **top** of `PromotionalPopupEditor.tsx` titled "Promotion Library". Two stacked rows:
+## Surfaces
 
 ```text
-┌─ Promotion Library ─────────────────────────────────────┐
-│  Start from a template                                  │
-│  [▼ Choose a preset…]   8 archetypes · category-filtered│
-│                                                         │
-│  Your saved promotions  (3 / 25)                        │
-│  ▸ Spring Color Promo      Apply · Rename · Duplicate · │
-│    Last used Mar 14                       Delete        │
-│  ▸ Winter Gift Card        Apply · …                    │
-│                                                         │
-│  [Save current as promotion…]                           │
-└─────────────────────────────────────────────────────────┘
+Editor                                     Public site
+┌─────────────────────────────────┐        ┌─────────────────────────┐
+│ PromotionalPopupEditor          │        │ PromotionalPopup        │
+│  ├─ Wrapper card                │        │  ├─ usePromoLifecycle   │
+│  ├─ PopupAnalyticsCard          │        │  │   isGoalSuppressed?  │
+│  ├─ PromoScheduleCard           │        │  └─ returns null when   │
+│  ├─ PromoExperimentCard         │        │      suppressed         │
+│  └─ PromoGoalCard      ← NEW    │        └─────────────────────────┘
+└─────────────────────────────────┘
 ```
 
-Behaviors:
+## Files
 
-- **Apply preset** / **Apply saved**: merges the preset/snapshot's content+offer fields into `formData` (preserves operator's `enabled`, `appearance`, `trigger`, `showOn`, `audience`, schedule, accent). Marks the form dirty so the existing Save flow + parity contract handles the rest. Toast: "Loaded 'Spring Color Promo' — review and Save to apply."
-- **Save current as promotion**: opens a small inline name field. Snapshots the current `formData` minus `enabled` (so reloading later doesn't auto-publish). Stamps `createdAt` / `updatedAt`. Confirms via toast.
-- **Rename / Duplicate / Delete**: inline row actions. Delete uses the canonical `<UnsavedChangesDialog />` pattern variant for destructive confirm (or a simple `AlertDialog` — pick whichever the editor tree already uses; one inline ask if ambiguous).
-- **Apply confirmation when dirty**: if `isDirty` is true, route through the existing unsaved-changes guard before swapping the form (prevents silent loss of in-progress edits).
-
-### 4. Doctrine compliance
-
-- **Preview-Live Parity**: this surface only reads/writes via the editor's existing state — no new public-side render path, so no parity contract impact.
-- **Brand Abstraction**: preset copy uses neutral language ("Welcome offer", not stylist-specific verbiage). No hardcoded tenant references.
-- **Site Settings Persistence**: library writes go through `writeSiteSettingDraft` (read-then-update/insert pattern, project canon).
-- **Visibility Contracts**: empty saved-list renders the "no saved promotions yet" empty state with `tokens.empty.*` (silence is valid here only when zero — when ≥1 exists, list always renders).
-- **Stylist Privacy Contract**: editor lives under admin website-hub, already gated.
-- **Container-Aware**: library card uses `<EditorCard>` + existing `Section`/`Field` primitives — inherits compression behavior.
-- **Typography**: `font-display` for the card title (Termina), `font-sans` for preset labels (Aeonik, never uppercase).
-
-### 5. Tests (locks the contract)
-
-- `promo-presets.test.ts` — every preset deserializes into a valid partial `PromotionalPopupSettings`; no preset includes `enabled` (would auto-publish on apply); no preset includes `appearance` / `showOn` / schedule (would silently change targeting).
-- `usePromoLibrary.test.ts` — 25-cap enforcement; rename uniqueness allowed (no constraint, names can repeat); apply merges content+offer fields only.
-- `PromotionalPopupEditor.library.test.tsx` — applying a preset/saved promo marks form dirty; applying while dirty triggers the unsaved-changes guard; "Save current as promotion" snapshots without `enabled`.
-
-### 6. Files
-
-**Created**
-- `src/lib/promo-presets.ts` — the 8 archetypes + category metadata
-- `src/lib/promo-presets.test.ts`
-- `src/hooks/usePromoLibrary.ts` — fetch/save/delete/apply hook
-- `src/hooks/usePromoLibrary.test.ts`
-- `src/components/dashboard/website-editor/promotional-popup/PromoLibraryCard.tsx` — the new EditorCard
-- `src/components/dashboard/website-editor/PromotionalPopupEditor.library.test.tsx`
+**New**
+- `src/lib/promo-goal.ts` — pure `evaluateGoal({ goal, redemptions, now })` returning `{ status: 'unset' | 'active' | 'reached-count' | 'reached-deadline'; progressPct; remaining }`. Plus `clampGoalCap` (1–10000) and `isGoalSuppressing` helper.
+- `src/lib/promo-goal.test.ts` — 6+ unit tests covering: unset, active mid-run, hits cap exactly, exceeds cap (still suppressed), past deadline, deadline + count both set (whichever fires first wins).
+- `src/components/dashboard/website-editor/promotional-popup/PromoGoalCard.tsx` — editor card. Cap input (number), optional deadline (datetime-local), live progress bar, "Goal reached — popup paused" banner with **Raise cap** + **Clear goal** actions. Pulls live redemption count from the existing global funnel hook.
 
 **Edited**
-- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` — mount `<PromoLibraryCard formData={formData} setFormData={setFormData} isDirty={isDirty} />` at the top of the form
+- `src/hooks/usePromotionalPopup.ts` — extend `PromotionalPopupSettings` with optional `goal?: { capRedemptions?: number | null; deadline?: string | null }`. `isPopupActive` stays unchanged (goal evaluation needs live redemption data, so it lives in the lifecycle hook, not the pure config validator — same split as schedule resolution).
+- `src/components/public/promo/usePromoLifecycle.ts` — fetch goal status (read live redemption count for the offerCode, same query the funnel uses but lighter — head-only count). When suppressed, `lifecycle.active` returns false; preview mode bypasses suppression so operators can still QA. Suppression decision memoized + refreshed on a 60s `staleTime` (no polling).
+- `src/components/dashboard/website-editor/PromotionalPopupEditor.tsx` — mount `PromoGoalCard` between the wrapper card and `PopupAnalyticsCard` (goal is a wrapper-level concern, not analytics).
+- `src/components/dashboard/website-editor/promotional-popup/PopupAnalyticsCard.tsx` — surface a small "Goal" chip in the header when goal is set + reached, so operators scanning analytics see the suppression state without scrolling to the goal card.
 
-**No DB migration** — `promotional_popup_library` is a new `site_settings.id`, and the existing RLS policies on `site_settings` already cover org-scoped reads/writes.
+## Logic
 
-### 7. Out of scope (explicit deferrals)
+```ts
+// promo-goal.ts (sketch)
+export interface PromoGoal {
+  capRedemptions?: number | null;   // null/undefined = no count cap
+  deadline?: string | null;          // ISO; null/undefined = no deadline
+}
 
-- **Scheduled rotation** ("auto-swap promo X on April 1"): deferred. Listed as Wave 3. Operators today manually Apply + Save.
-- **Cross-org template marketplace** ("share with my other locations"): deferred until multi-location promo governance is real.
-- **AI-generated presets**: explicitly NOT in scope — violates the "AI cannot determine business eligibility/priorities" doctrine. Presets are curated and static.
-- **Performance ranking on saved promos** ("which one converted best"): the existing `usePromotionalPopupRedemptions` is per-`offerCode`, not per-snapshot. Could be added in Wave 3 by stamping a `libraryEntryId` onto redemption records.
+export type GoalStatus =
+  | { kind: 'unset' }
+  | { kind: 'active'; progressPct: number; remaining: number | null;
+      deadlineDaysLeft: number | null }
+  | { kind: 'reached-count'; cap: number; redemptions: number }
+  | { kind: 'reached-deadline'; deadline: string };
 
-### 8. Open questions for confirmation
+export function evaluateGoal(args: {
+  goal: PromoGoal | null | undefined;
+  redemptions: number;
+  now?: Date;
+}): GoalStatus { /* pure */ }
 
-1. **Preset list** — is the 8-archetype starter set above the right spread, or do you want me to lean acquisition-heavy / utilization-heavy for hair-salon operators specifically?
-2. **Apply behavior on `enabled`** — confirm: applying a preset/saved promo should leave `enabled` untouched (operator must manually flip the popup live), never auto-enable. This is the safe default and what I've planned.
-3. **Saved promo cap** — 25 feels right for low-cardinality; raise/lower?
+export function isGoalSuppressing(status: GoalStatus): boolean {
+  return status.kind === 'reached-count' || status.kind === 'reached-deadline';
+}
+```
+
+```ts
+// usePromoLifecycle.ts (delta)
+const { data: redempCount } = useQuery({
+  queryKey: ['promo-goal-count', orgId, cfg.offerCode],
+  queryFn: () => supabase.from('promotion_redemptions')
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', orgId)
+    .eq('promo_code_used', cfg.offerCode)
+    .eq('surface', 'promotional_popup'),
+  enabled: !!orgId && !!cfg.offerCode && !!cfg.goal && !isPreview,
+  staleTime: 60_000,
+});
+const goalStatus = evaluateGoal({ goal: cfg.goal, redemptions: redempCount ?? 0 });
+const goalSuppressed = !isPreview && isGoalSuppressing(goalStatus);
+// active = isPopupActive(cfg, surface) && !goalSuppressed
+```
+
+## Why no schema change
+
+Storing `goal` on the existing `site_settings.promotional_popup` JSONB row is correct because:
+- It's a wrapper-level config, not telemetry.
+- Read-then-update via `writeSiteSettingDraft` matches the [Site Settings Persistence](mem://tech-decisions/site-settings-persistence-standard) canon.
+- Redemption count is already queryable from `promotion_redemptions` — no new write path.
+
+## Out of scope (deliberately)
+
+- **Push notification when goal hit** — would belong in alert governance layer, separate PR.
+- **Per-rotation or per-arm goals** — wrapper-level only for v1. Multi-goal would compound with experiment + schedule precedence in ways that need their own design pass.
+- **Hard-disable on goal hit** — soft suppression preserves operator state. If you want hard-disable instead, say so and I'll flip the suppression to `setFormData({ enabled: false })` with toast confirmation.
+
+## Tests
+
+- `promo-goal.test.ts` — 6+ pure unit tests on the resolver (above).
+- `PromoGoalCard.test.tsx` (small) — renders progress at 50%, surfaces "Goal reached" banner at 100%, Raise-cap action mutates correctly, Clear-goal removes the block.
+- Existing `usePromotionalPopupFunnel` tests untouched.
+
+## Further enhancements you'll likely want next
+
+- **Goal forecast** — extrapolate days-to-hit-cap from current daily redemption velocity (we have 14-day trend already), surface as "On pace to hit goal in ~6 days".
+- **Auto-extend deadline** — when count cap hits but deadline hasn't, suggest raising the cap by N% based on the velocity.
+- **Goal history log** — when goal is hit, archive `{ cap, hit_at, days_taken }` so operators see "Last 3 free-haircut promos all hit cap in <48h — consider raising cap to 100".
