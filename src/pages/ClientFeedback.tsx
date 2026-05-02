@@ -105,6 +105,8 @@ export default function ClientFeedback() {
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
   const [comments, setComments] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const [displayConsent, setDisplayConsent] = useState(false);
+  const [displayNamePref, setDisplayNamePref] = useState<'first_only' | 'first_initial' | 'anonymous'>('first_initial');
   const [submissionState, setSubmissionState] = useState<SubmissionState>('form');
   const [passedGate, setPassedGate] = useState(false);
   const [showManagerFollowUp, setShowManagerFollowUp] = useState(false);
@@ -189,10 +191,20 @@ export default function ClientFeedback() {
       isPublic,
     });
 
-    // Update with gate status
+    // Update with gate status + consent + display lifecycle.
+    const eligible = (overallRating === 5) && comments.trim().length > 0;
+    const nextDisplayStatus = eligible
+      ? (displayConsent ? 'eligible' : 'needs_consent')
+      : 'new';
     await supabase
       .from('client_feedback_responses')
-      .update({ passed_review_gate: passes })
+      .update({
+        passed_review_gate: passes,
+        display_consent: displayConsent,
+        display_consent_at: displayConsent ? new Date().toISOString() : null,
+        display_name_preference: displayConsent ? displayNamePref : null,
+        display_status: nextDisplayStatus,
+      })
       .eq('token', token);
 
     // If low score, trigger manager notification
@@ -293,12 +305,58 @@ export default function ClientFeedback() {
               />
             </div>
 
-            {/* Public Review */}
+            {/* Website display consent */}
+            <div className="space-y-3 rounded-lg border border-border/60 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="display-consent" className="text-sm font-medium">
+                    Show my review on the salon's website
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Optional. Your review will only appear after the salon approves it.
+                  </p>
+                </div>
+                <Switch
+                  id="display-consent"
+                  checked={displayConsent}
+                  onCheckedChange={setDisplayConsent}
+                />
+              </div>
+
+              {displayConsent && (
+                <div className="space-y-2 pt-2 border-t border-border/40">
+                  <Label className="text-xs text-muted-foreground">How should your name appear?</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { v: 'first_only', l: 'First name only' },
+                      { v: 'first_initial', l: 'First name + last initial' },
+                      { v: 'anonymous', l: 'Anonymous' },
+                    ] as const).map((o) => (
+                      <button
+                        key={o.v}
+                        type="button"
+                        onClick={() => setDisplayNamePref(o.v)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-full text-xs border transition-colors',
+                          displayNamePref === o.v
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-background hover:bg-muted border-input',
+                        )}
+                      >
+                        {o.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Internal sharing */}
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="public">Share publicly</Label>
+                <Label htmlFor="public">Allow internal team to reference</Label>
                 <p className="text-xs text-muted-foreground">
-                  Allow us to display your feedback on our website
+                  Lets the salon team review your feedback for coaching and quality.
                 </p>
               </div>
               <Switch
