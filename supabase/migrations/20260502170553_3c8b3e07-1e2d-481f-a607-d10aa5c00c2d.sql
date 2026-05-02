@@ -1,0 +1,2 @@
+ALTER TABLE public.promotion_redemptions ADD COLUMN IF NOT EXISTS variant_key text;
+CREATE INDEX IF NOT EXISTS idx_promotion_redemptions_variant ON public.promotion_redemptions (organization_id, promo_code_used, variant_key) WHERE variant_key IS NOT NULL;
