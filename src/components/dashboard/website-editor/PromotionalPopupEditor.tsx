@@ -1098,10 +1098,10 @@ export function PromotionalPopupEditor() {
             );
           })()}
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Offer + CTAs */}
-      <Section title="Offer & Call to Action">
+      <CollapsibleSection title="Offer & Call to Action" icon={MousePointerClick} summary="Code, accept/decline buttons, destination">
         <Field
           label="Offer code"
           hint="Attached to the booking URL when a visitor accepts (e.g. FREECUT). Recorded for the team."
@@ -1332,10 +1332,10 @@ export function PromotionalPopupEditor() {
             />
           </Field>
         </div>
-      </Section>
+      </CollapsibleSection>
 
       {/* Behavior */}
-      <Section title="Behavior">
+      <CollapsibleSection title="Behavior" icon={Settings2} summary="Variant, timing, frequency, dismissal">
         <Field
           label="Appearance"
           hint="How the offer enters the page. Pick the layout that matches your brand's tone."
@@ -1529,10 +1529,10 @@ export function PromotionalPopupEditor() {
             </div>
           </div>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Targeting */}
-      <Section title="Where it shows">
+      <CollapsibleSection title="Where it shows" icon={EyeIcon} summary={`${formData.showOn.length} surface${formData.showOn.length === 1 ? '' : 's'} · audience: ${formData.audience === 'all' ? 'all' : 'new visitors'}`}>
         <div className="space-y-2">
           {SURFACE_OPTIONS.map((opt) => (
             <label
@@ -1565,10 +1565,10 @@ export function PromotionalPopupEditor() {
             </SelectContent>
           </Select>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Schedule */}
-      <Section title="Schedule (optional)">
+      <CollapsibleSection title="Schedule window" icon={ClockIcon} summary={formData.startsAt || formData.endsAt ? 'Time-bounded' : 'Always on'}>
         <div className="grid grid-cols-1 gap-3">
           <Field label="Starts at" hint="Leave blank for immediate.">
             <Input
@@ -1585,7 +1585,7 @@ export function PromotionalPopupEditor() {
             />
           </Field>
         </div>
-      </Section>
+      </CollapsibleSection>
 
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
         <strong className="font-display uppercase tracking-wider text-[10px] text-foreground">
