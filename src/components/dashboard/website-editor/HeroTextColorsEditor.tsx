@@ -84,7 +84,7 @@ export function HeroTextColorsEditor({
       </div>
 
       <div className="space-y-3 pt-3 border-t border-border/40">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Primary Button</p>
+        <SectionSubhead>Primary Button</SectionSubhead>
         <ColorRow label="Background" value={colors.primary_button_bg} onChange={(v) => update('primary_button_bg', v)} />
         <ColorRow label="Text" value={colors.primary_button_fg} onChange={(v) => update('primary_button_fg', v)} />
         <ColorRow
