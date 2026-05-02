@@ -56,7 +56,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-type GlobalView = 'colors' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
+type GlobalView = 'colors' | 'wash' | 'scrim' | 'alignment' | 'rotator' | 'advanced' | 'shared_content';
 type HeroView =
   | { kind: 'hub' }
   | { kind: 'global'; id: GlobalView }
@@ -64,6 +64,7 @@ type HeroView =
 
 const GLOBAL_LABELS: Record<GlobalView, string> = {
   colors: 'Text & Buttons Color',
+  wash: 'Image Wash',
   scrim: 'Text-area Scrim',
   alignment: 'Content Alignment',
   rotator: 'Slides Rotator',
