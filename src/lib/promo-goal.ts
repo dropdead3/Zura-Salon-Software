@@ -23,6 +23,10 @@ export interface PromoGoal {
   /** ISO timestamp. Once `now > deadline`, the popup auto-suppresses.
    *  Null / undefined = no deadline. */
   deadline?: string | null;
+  /** ISO timestamp of when the current goal was first armed. Stamped by
+   *  the editor when the operator sets a cap (or raises one after a hit
+   *  re-arms the goal). Powers `days_taken` in the goal-history log. */
+  startedAt?: string | null;
 }
 
 export type GoalStatus =
