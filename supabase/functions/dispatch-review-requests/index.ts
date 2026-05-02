@@ -148,10 +148,10 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
         supabase.from("appointments").select("client_name, client_id").eq("id", row.appointment_id).single(),
       ]);
 
-      // Create a feedback response shell with a token (the dispatcher is the
-      // sole source of token-bearing rows for this channel). We need a survey
-      // to attach to; use the org's first active survey, or skip.
-      const { data: survey } = await supabase
+      // Lookup or auto-create the org's default survey. Reputation Engine
+      // doctrine: dispatcher is the source of truth for review requests, so
+      // missing survey config must NOT silently block sends — bootstrap one.
+      let { data: survey } = await supabase
         .from("client_feedback_surveys")
         .select("id")
         .eq("organization_id", row.organization_id)
@@ -159,11 +159,25 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
         .limit(1)
         .maybeSingle();
       if (!survey) {
-        await supabase.from("review_request_dispatch_queue").update({
-          skipped_at: nowIso, skipped_reason: "no_active_survey",
-        }).eq("id", row.id);
-        summary.skipped++;
-        continue;
+        const { data: created, error: createErr } = await supabase
+          .from("client_feedback_surveys")
+          .insert({
+            organization_id: row.organization_id,
+            name: "Default Post-Appointment Feedback",
+            description: "Auto-created by Reputation Engine dispatcher.",
+            trigger_type: "post_appointment",
+            is_active: true,
+          })
+          .select("id")
+          .single();
+        if (createErr) {
+          await supabase.from("review_request_dispatch_queue").update({
+            attempts: row.attempts + 1, last_error: `survey_create_failed: ${createErr.message}`,
+          }).eq("id", row.id);
+          summary.errors++;
+          continue;
+        }
+        survey = created;
       }
 
       const token = crypto.randomUUID().replace(/-/g, "");
