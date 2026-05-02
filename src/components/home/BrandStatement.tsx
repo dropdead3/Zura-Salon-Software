@@ -241,17 +241,20 @@ export function BrandStatement() {
                 className="space-y-6"
               >
                 {config.paragraphs.map((paragraph, i) => (
-                  <InlineEditableText
+                  <div
                     key={i}
-                    as="p"
-                    multiline
-                    className={`text-base md:text-lg font-sans font-light leading-relaxed ${config.text_colors?.body ? '' : paragraphColorClass}`}
                     style={config.text_colors?.body ? { color: config.text_colors.body } : undefined}
-                    value={paragraph}
-                    sectionKey="section_brand_statement"
-                    fieldPath={`paragraphs.${i}`}
-                    placeholder="Paragraph text"
-                  />
+                  >
+                    <InlineEditableText
+                      as="p"
+                      multiline
+                      className={`text-base md:text-lg font-sans font-light leading-relaxed ${config.text_colors?.body ? '' : paragraphColorClass}`}
+                      value={paragraph}
+                      sectionKey="section_brand_statement"
+                      fieldPath={`paragraphs.${i}`}
+                      placeholder="Paragraph text"
+                    />
+                  </div>
                 ))}
               </motion.div>
             )}
