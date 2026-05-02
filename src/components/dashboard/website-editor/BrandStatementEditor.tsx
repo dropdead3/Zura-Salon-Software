@@ -363,6 +363,7 @@ export function BrandStatementEditor() {
             value={localConfig.style_overrides ?? {}}
             onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
             sectionId="brand_statement"
+            containerDefaultEnabled
           />
         </TabsContent>
         </Tabs>
