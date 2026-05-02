@@ -72,7 +72,10 @@ export function HeroTextColorsEditor({
 
   const body = (
     <div className="space-y-4">
+      {/* Order mirrors the live hero render stack: eyebrow → headline →
+          subheadline → notes. Buttons follow in their own subheaded blocks. */}
       <div className="space-y-3">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-display">Text</p>
         <ColorRow label="Eyebrow" value={colors.eyebrow} onChange={(v) => update('eyebrow', v)} />
         <ColorRow label="Headline" value={colors.headline} onChange={(v) => update('headline', v)} />
         <ColorRow label="Subheadline" value={colors.subheadline} onChange={(v) => update('subheadline', v)} />
