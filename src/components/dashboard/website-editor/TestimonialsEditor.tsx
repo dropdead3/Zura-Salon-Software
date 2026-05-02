@@ -20,6 +20,11 @@ import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
+import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
+import { TESTIMONIALS_COLOR_SLOTS } from '@/lib/sectionColorSlots';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 export function TestimonialsEditor() {
   const __saveTelemetry = useSaveTelemetry('testimonials-editor');
@@ -81,6 +86,12 @@ export function TestimonialsEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow"
@@ -195,7 +206,21 @@ export function TestimonialsEditor() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+          </TabsContent>
 
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionTextColorsEditor
+              value={localConfig.text_colors}
+              onChange={(next) => updateField('text_colors', next)}
+              slots={TESTIMONIALS_COLOR_SLOTS}
+            />
+            <SectionStyleEditor
+              value={localConfig.style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId="testimonials"
+            />
+          </TabsContent>
+        </Tabs>
       </EditorCard>
 
       <ReviewsManager surface="general" title="Homepage Reviews" />
