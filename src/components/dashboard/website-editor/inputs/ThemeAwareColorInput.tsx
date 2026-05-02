@@ -320,8 +320,46 @@ export function ThemeAwareColorInput({
               </div>
             )}
 
+            {/* Recent row — session-scoped ring of custom hexes the operator
+                already picked this session (excludes Theme/In-Use to avoid
+                duplicate chips). Lets iteration ("warmer red…") skip the
+                native picker on the second pass. */}
+            {dedupedRecent.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
+                  Recent
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {dedupedRecent.map((hex) => {
+                    const active = hex === normalizedActive;
+                    return (
+                      <SwatchChip
+                        key={hex}
+                        active={active}
+                        title={hex}
+                        onClick={() => {
+                          // Re-selecting from Recent counts as a custom
+                          // pick — recordPick re-orders the ring so the
+                          // most-recently-clicked hex moves to the front.
+                          handleCustomPick(hex);
+                          setOpen(false);
+                        }}
+                        color={hex}
+                      >
+                        {hex}
+                      </SwatchChip>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Custom row — native picker + EyeDropper. The eslint doctrine
-                allows native `<input type="color">` only inside this file. */}
+                allows native `<input type="color">` only inside this file.
+                Native picker fires onChange continuously while the operator
+                drags the saturation/hue handles; record into Recent only on
+                blur (commit) so we don't pollute the ring with intermediate
+                hexes from a single picking session. */}
             <div className="space-y-1.5">
               <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground/70 block">
                 Custom
@@ -331,6 +369,7 @@ export function ThemeAwareColorInput({
                   type="color"
                   value={colorPickerValue}
                   onChange={(e) => onChange(e.target.value)}
+                  onBlur={(e) => recordPick(e.target.value)}
                   className="h-9 flex-1 rounded-md border border-border cursor-pointer bg-transparent"
                   aria-label="Custom color picker"
                 />
