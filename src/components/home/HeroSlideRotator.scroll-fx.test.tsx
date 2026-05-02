@@ -117,9 +117,15 @@ describe('HeroSlideRotator — scroll-fx regression guard', () => {
       inlineStyle.includes('blur('),
       `Expected <h1> inline style to include blur() filter (proves headingBlurFilter motion value attached). Got:\n  ${inlineStyle}`,
     ).toBe(true);
+    // At scrollY=0, framer-motion serializes the headline `y` motion value
+    // to `transform: none` (the resting position). The presence of an
+    // inline `transform:` declaration at all proves the motion-value pipeline
+    // attached — a refactor that strips the choreography would leave the
+    // <h1> with no `transform` inline declaration whatsoever (preview-mode
+    // assertion below verifies the absent case).
     expect(
-      inlineStyle.includes('translateY') || inlineStyle.includes('translate('),
-      `Expected <h1> inline style to include translateY/translate() (proves headlineY motion value attached). Got:\n  ${inlineStyle}`,
+      /(^|;)\s*transform\s*:/.test(inlineStyle),
+      `Expected <h1> inline style to include a transform declaration (proves headlineY motion value attached). Got:\n  ${inlineStyle}`,
     ).toBe(true);
   });
 
