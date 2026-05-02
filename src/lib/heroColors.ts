@@ -35,6 +35,10 @@ export interface ResolvedHeroColors {
    *  CSS rule can override the inline `background-color`. */
   hasPrimaryHover: boolean;
   hasSecondaryHover: boolean;
+  /** True when an operator-set hover border color exists for the secondary CTA. */
+  hasSecondaryHoverBorder: boolean;
+  /** True when an operator-set hover text color exists for the secondary CTA. */
+  hasSecondaryHoverFg: boolean;
 }
 
 /**
