@@ -772,6 +772,24 @@ export function HeroEditor() {
         </EditorCard>
       )}
 
+      {view.kind === 'global' && view.id === 'wash' && (
+        <EditorCard title="Image Wash" icon={Droplet}>
+          <p className="text-xs text-muted-foreground -mt-1">
+            Flat uniform tint over the entire hero image — the section default
+            inherited by every slide unless that slide overrides it. Pair with
+            the Text-area Scrim for editorial gradients on top.
+          </p>
+          <HeroWashEditor
+            overlayMode={localConfig.overlay_mode ?? 'darken'}
+            overlayOpacity={localConfig.overlay_opacity ?? 0.4}
+            onChange={(patch) => {
+              if (patch.overlay_mode !== undefined) updateField('overlay_mode', patch.overlay_mode);
+              if (patch.overlay_opacity !== undefined) updateField('overlay_opacity', patch.overlay_opacity);
+            }}
+          />
+        </EditorCard>
+      )}
+
       {view.kind === 'global' && view.id === 'scrim' && (
         <EditorCard title="Text-area Scrim" icon={Layers}>
           <p className="text-xs text-muted-foreground -mt-1">
