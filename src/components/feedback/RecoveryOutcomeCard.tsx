@@ -5,7 +5,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { formatCurrency } from '@/lib/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import { tokens } from '@/lib/design-tokens';
-import { MetricInfoTooltip } from '@/components/analytics/MetricInfoTooltip';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 /**
  * P3 Reputation Engine — Recovery outcome card.
