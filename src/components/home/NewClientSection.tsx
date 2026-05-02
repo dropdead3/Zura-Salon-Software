@@ -7,6 +7,7 @@ import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useNewClientConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 
 export const NewClientSection = () => {
   const isPreview = useIsEditorPreview();
@@ -68,6 +69,7 @@ export const NewClientSection = () => {
   }, [displayText, isDeleting, currentWordIndex, rotatingWords]);
 
   return (
+    <SectionStyleWrapper styleOverrides={config.style_overrides}>
     <section 
       className="py-12 md:py-16 pb-16 md:pb-20 lg:pb-24 relative z-10"
       style={{ 
@@ -181,5 +183,6 @@ export const NewClientSection = () => {
         </motion.div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 };
