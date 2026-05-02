@@ -563,7 +563,7 @@ export function PromotionalPopupEditor() {
   }, [fullPreviewUrl]);
 
   if (isLoading) {
-    return <DashboardLoader label="Loading promotional popup…" />;
+    return <DashboardLoader caption="Loading promotional popup…" />;
   }
 
   return (
