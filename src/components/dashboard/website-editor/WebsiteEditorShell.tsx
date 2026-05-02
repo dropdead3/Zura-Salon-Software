@@ -214,17 +214,26 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 type PersistedState = {
-  editorTab: string;
+  // Note: `editorTab` intentionally NOT persisted. Restoring the last-active
+  // editor on every entry made the rail jump deep into whatever surface the
+  // user last touched, which felt like broken navigation. Entering the editor
+  // should land on a neutral default; explicit deep-links can override via
+  // `?editor=<tab>`.
   selectedPageId: string;
   showPreview: boolean;
 };
 
-function readPersisted(orgId: string | undefined): Partial<PersistedState> {
+// Legacy persisted shape included `editorTab`. We keep reading it only to
+// strip it (one-time cleanup) so users carrying old localStorage state stop
+// jumping after their next entry.
+type LegacyPersistedState = PersistedState & { editorTab?: string };
+
+function readPersisted(orgId: string | undefined): Partial<LegacyPersistedState> {
   if (!orgId || typeof window === 'undefined') return {};
   try {
     const raw = window.localStorage.getItem(`zura.websiteEditor.${orgId}`);
     if (!raw) return {};
-    return JSON.parse(raw) as Partial<PersistedState>;
+    return JSON.parse(raw) as Partial<LegacyPersistedState>;
   } catch {
     return {};
   }
@@ -252,10 +261,15 @@ function WebsiteEditorShellInner() {
   const isMobile = useIsMobile();
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const [searchParams] = useSearchParams();
 
   const persisted = useMemo(() => readPersisted(orgId), [orgId]);
 
-  const [editorTab, setEditorTab] = useState<string>(persisted.editorTab ?? 'hero');
+  // Initial editor tab: explicit `?editor=` deep-link wins; otherwise neutral
+  // default ('hero' for home page; non-home pages get auto-corrected to a
+  // valid page-scoped tab by the effect at lines ~343-351).
+  const initialEditorTab = searchParams.get('editor') ?? 'hero';
+  const [editorTab, setEditorTab] = useState<string>(initialEditorTab);
   const [selectedPageId, setSelectedPageId] = useState<string>(persisted.selectedPageId ?? 'home');
   const [showPreview, setShowPreview] = useState<boolean>(
     persisted.showPreview ?? (typeof window !== 'undefined' ? window.innerWidth >= 1280 : true),
