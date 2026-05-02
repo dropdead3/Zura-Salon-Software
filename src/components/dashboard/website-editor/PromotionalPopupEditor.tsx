@@ -83,6 +83,7 @@ import {
 } from './promotional-popup/internals';
 import { PromoLibraryCard } from './promotional-popup/PromoLibraryCard';
 import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
+import { PromoScheduleCard } from './promotional-popup/PromoScheduleCard';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -600,6 +601,13 @@ export function PromotionalPopupEditor() {
           Materiality threshold gates rate metrics so a 1/1 = 100% CTR doesn't
           ship a misleading signal. */}
       <PopupAnalyticsCard offerCode={savedSnapshot.offerCode} />
+
+      {/* Scheduled Rotation — pre-stage saved snapshots to swap into the live
+          popup over a fixed window. Pure resolver in `@/lib/promo-schedule`;
+          public component reads via `useResolvedPromotionalPopup` so live and
+          preview honor the same active entry. Wrapper toggle still gates the
+          popup; rotations only override creative. */}
+      <PromoScheduleCard formData={formData} setFormData={setFormData} />
 
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
