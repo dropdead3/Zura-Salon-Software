@@ -442,12 +442,18 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
         </div>
       </div>
 
-      {/* Pagination + arrows */}
+      {/* Pagination + arrows.
+          In background_only mode the rotator iterates BACKGROUNDS, not slides:
+          the foreground is shared and never changes. Aria labels reflect that
+          so screen readers + the editor's mental model stay aligned. */}
       {slides.length > 1 && (
-        <div className={`${HERO_OVERLAY_ANCHORS.bottomLeft} flex items-center gap-6`}>
+        <div
+          className={`${HERO_OVERLAY_ANCHORS.bottomLeft} flex items-center gap-6`}
+          data-rotator-mode={rotatorMode}
+        >
           <button
             onClick={() => goTo(activeIndex - 1)}
-            aria-label="Previous slide"
+            aria-label={rotatorMode === 'background_only' ? 'Previous background' : 'Previous slide'}
             className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -457,7 +463,11 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
               <button
                 key={i}
                 onClick={() => goTo(i)}
-                aria-label={`Go to slide ${i + 1}`}
+                aria-label={
+                  rotatorMode === 'background_only'
+                    ? `Go to background ${i + 1}`
+                    : `Go to slide ${i + 1}`
+                }
                 className={`h-1 transition-all duration-500 ${
                   i === activeIndex
                     ? `w-8 ${hasBackground ? 'bg-white' : 'bg-foreground'}`
@@ -468,7 +478,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
           </div>
           <button
             onClick={() => goTo(activeIndex + 1)}
-            aria-label="Next slide"
+            aria-label={rotatorMode === 'background_only' ? 'Next background' : 'Next slide'}
             className={`p-2 rounded-full transition-colors ${hasBackground ? 'text-white/80 hover:text-white' : 'text-muted-foreground hover:text-foreground'}`}
           >
             <ChevronRight className="h-5 w-5" />
