@@ -126,9 +126,13 @@ const STATUS_COPY: Record<EntryStatus, { label: string; tone: string }> = {
 function ScheduleCalendarStrip({
   schedule,
   saved,
+  focusedRotationId,
+  onFocusRotation,
 }: {
   schedule: SavedPromoScheduleEntry[];
   saved: { id: string; name: string }[];
+  focusedRotationId: string | null;
+  onFocusRotation: (id: string | null) => void;
 }) {
   const today = useMemo(() => {
     const d = new Date();
