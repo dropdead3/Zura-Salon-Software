@@ -1507,6 +1507,21 @@ export function PromotionalPopupEditor() {
             </label>
           ))}
         </div>
+        <Field
+          label="Audience"
+          hint="Limit who sees this popup. 'New visitors only' suppresses the popup for anyone who's already visited your site in this browser."
+        >
+          <Select
+            value={formData.audience}
+            onValueChange={(v) => handleChange('audience', v as PopupAudience)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All visitors</SelectItem>
+              <SelectItem value="new-visitors-only">New visitors only</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
       </Section>
 
       {/* Schedule */}
