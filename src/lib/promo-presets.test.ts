@@ -86,10 +86,7 @@ describe('applyPresetContent', () => {
       imageUrl: 'https://example.com/x.jpg',
     };
     const preset = PROMO_PRESETS[0];
-    const result = applyPresetContent(
-      current as Parameters<typeof applyPresetContent>[0],
-      preset,
-    );
+    const result = applyPresetContent(current, preset);
     expect(result.enabled).toBe(true);
     expect(result.appearance).toBe('corner-card');
     expect(result.showOn).toEqual(['booking']);
