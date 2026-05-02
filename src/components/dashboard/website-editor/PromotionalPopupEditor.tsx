@@ -584,6 +584,16 @@ export function PromotionalPopupEditor() {
         </div>
       </div>
 
+      {/* Promotion Library — preset templates + saved snapshots. Mounted
+          high so operators discover "start from a template" before they
+          hand-author copy. Apply paths route through the card's internal
+          dirty-state guard so silent overwrites can't happen. */}
+      <PromoLibraryCard
+        formData={formData}
+        setFormData={setFormData}
+        isDirty={isDirty}
+      />
+
       {/* Redemption stat — closes the marketing loop. Shows the operator that
           the popup → booking flow is actually producing redemptions. Silent
           when no code is configured (silence is valid output) and shows "0"
