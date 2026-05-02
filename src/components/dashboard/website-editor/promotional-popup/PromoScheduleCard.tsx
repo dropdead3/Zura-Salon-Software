@@ -18,7 +18,7 @@
  *     queued rotation it powers.
  *   - Currency / financial values: none on this surface.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Trash2, Plus, ArrowRight, Sparkles, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
