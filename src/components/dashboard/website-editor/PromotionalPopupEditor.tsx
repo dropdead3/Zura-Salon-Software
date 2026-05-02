@@ -1358,49 +1358,21 @@ export function PromotionalPopupEditor() {
           label="Accent color"
           hint="Drives the FAB and CTA accents. Match this to your brand's primary color."
         >
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              aria-label="Accent color"
-              value={normalizeHex(formData.accentColor)}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  accentColor: e.target.value,
-                  accentPresetKey: null, // custom color picked
-                }))
-              }
-              className="h-9 w-12 rounded-md border border-border bg-transparent cursor-pointer p-0.5"
-            />
-            <Input
-              value={formData.accentColor ?? ''}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  accentColor: e.target.value || undefined,
-                  accentPresetKey: null, // custom color typed
-                }))
-              }
-              placeholder="#7C3AED or hsl(...) — leave blank for theme primary"
-              className="flex-1"
-            />
-            {formData.accentColor && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    accentColor: undefined,
-                    accentPresetKey: null,
-                  }))
-                }
-              >
-                Reset
-              </Button>
-            )}
-          </div>
+          {/* Canonical theme-aware picker — surfaces theme tokens + colors
+              already used elsewhere on the site (announcement bar, hero CTAs)
+              so the See Offer chip stays cohesive with the rest of the brand.
+              The branded ACCENT_PRESETS row below is intentionally separate. */}
+          <ThemeAwareColorInput
+            value={formData.accentColor}
+            onChange={(next) =>
+              setFormData((prev) => ({
+                ...prev,
+                accentColor: next,
+                accentPresetKey: null, // any swatch / custom pick clears preset
+              }))
+            }
+            placeholder="#7C3AED — leave blank for theme primary"
+          />
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground mr-1">
               Presets
