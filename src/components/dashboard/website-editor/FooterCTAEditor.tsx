@@ -45,6 +45,7 @@ export function FooterCTAEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_footer_cta');
 
   const updateField = <K extends keyof FooterCTAConfig>(field: K, value: FooterCTAConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
