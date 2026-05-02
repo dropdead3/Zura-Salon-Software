@@ -843,7 +843,7 @@ export function PromotionalPopupEditor() {
       )}
 
       {/* Content */}
-      <Section title="Content">
+      <CollapsibleSection title="Content" icon={TypeIcon} summary="Eyebrow, headline, body, image">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
           {(() => {
             const SelectedEyebrowIcon = getEyebrowIcon(formData.eyebrowIcon);
