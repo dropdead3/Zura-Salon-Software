@@ -23,7 +23,7 @@ import {
   writeDismissal,
   markSessionDismissed,
 } from './promo/usePromoLifecycle';
-import { useEffect, useRef } from 'react';
+import { useImpressionOnce } from '@/hooks/useImpressionOnce';
 
 interface Props {
   /**
@@ -69,16 +69,15 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // partial unique index dedups; this guard just avoids the wasted round-trip
   // on re-renders / FAB reopen within the same mount. Preview suppressed —
   // operator QA shouldn't pollute production funnel data.
-  // CRITICAL: hooks must run unconditionally — keep above any early returns.
-  // Internal guards handle the "no config / inactive / booking surface" cases.
-  const impressionRecordedRef = useRef(false);
-  useEffect(() => {
-    if (isPreview) return;
-    if (!orgId || !lifecycle.open) return;
-    if (impressionRecordedRef.current) return;
-    impressionRecordedRef.current = true;
-    void recordImpression({ organizationId: orgId, offerCode: code, surface, variantKey });
-  }, [isPreview, orgId, lifecycle.open, code, surface, variantKey]);
+  // CRITICAL: useImpressionOnce runs unconditionally — keep above any early
+  // returns. Internal guards handle the "no config / inactive / booking
+  // surface" cases via the `when` predicate.
+  useImpressionOnce({
+    when: !isPreview && !!orgId && lifecycle.open,
+    record: () => {
+      void recordImpression({ organizationId: orgId, offerCode: code, surface, variantKey });
+    },
+  });
 
   // Disabled / no config → render nothing at all.
   if (!lifecycle.active || !cfg) return null;
