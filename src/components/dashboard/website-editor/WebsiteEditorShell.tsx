@@ -343,10 +343,12 @@ function WebsiteEditorShellInner() {
   const orgPreviewUrl = getPublicUrl();
   const livePreviewUrl = publicPageUrl(selectedPage?.slug, { preview: true, mode: 'view' });
 
-  // Persist last-used editor state per org.
+  // Persist layout preferences per org. `editorTab` is intentionally excluded
+  // — see PersistedState comment. Also strips any legacy `editorTab` value so
+  // users carrying old localStorage state stop jumping after this write.
   useEffect(() => {
-    writePersisted(orgId, { editorTab, selectedPageId, showPreview });
-  }, [orgId, editorTab, selectedPageId, showPreview]);
+    writePersisted(orgId, { selectedPageId, showPreview });
+  }, [orgId, selectedPageId, showPreview]);
 
   // When switching to a non-home page, default to its first section so the
   // canvas isn't stranded on an irrelevant home-page editor.
