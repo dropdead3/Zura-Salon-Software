@@ -1244,7 +1244,7 @@ export function PromotionalPopupEditor() {
           label="Appearance"
           hint="How the offer enters the page. Pick the layout that matches your brand's tone."
         >
-          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-start">
+          <div className="space-y-4">
             <Select
               value={formData.appearance}
               onValueChange={(v) => handleChange('appearance', v as PromotionalPopupSettings['appearance'])}
@@ -1256,13 +1256,18 @@ export function PromotionalPopupEditor() {
                 <SelectItem value="corner-card">Bottom-right card</SelectItem>
               </SelectContent>
             </Select>
-            <AppearancePreviewSwatch
-              appearance={formData.appearance}
-              accent={formData.accentColor}
-              headline={formData.headline}
-              eyebrow={formData.eyebrow}
-              eyebrowIcon={formData.eyebrowIcon}
-            />
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4 flex flex-col items-center gap-2">
+              <AppearancePreviewSwatch
+                appearance={formData.appearance}
+                accent={formData.accentColor}
+                headline={formData.headline}
+                eyebrow={formData.eyebrow}
+                eyebrowIcon={formData.eyebrowIcon}
+              />
+              <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                Live preview
+              </span>
+            </div>
           </div>
         </Field>
         <Field label="Trigger">
