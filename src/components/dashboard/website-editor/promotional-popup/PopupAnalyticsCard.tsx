@@ -600,6 +600,14 @@ export function PopupAnalyticsCard({
               onHoverKey={setHoveredKey}
             />
 
+            {compareRotation && compareData && activeRotation ? (
+              <ComparePanel
+                aLabel={savedById.get(activeRotation.savedPromoId) ?? 'Rotation A'}
+                bLabel={savedById.get(compareRotation.savedPromoId) ?? 'Rotation B'}
+                aData={data}
+                bData={compareData}
+              />
+            ) : null}
             {!data.hasSufficientData ? (
               <p className="text-xs text-muted-foreground">
                 Click-through and redemption rates appear after{' '}
