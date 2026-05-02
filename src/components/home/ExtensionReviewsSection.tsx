@@ -446,5 +446,6 @@ export function ExtensionReviewsSection() {
         </motion.div>
       )}
     </section>
+    </SectionStyleWrapper>
   );
 }
