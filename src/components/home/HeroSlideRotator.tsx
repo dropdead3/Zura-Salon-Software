@@ -156,55 +156,63 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return slide.scrim_strength ?? config.scrim_strength ?? 0.55;
   }, [slide, config.scrim_strength]);
 
+  // Background-only mode splits ownership:
+  //   - `slide` (above) stays the foreground source, always anchored to the
+  //     master slide + section-level shared fields.
+  //   - `backgroundSlide` below stays the MEDIA source, always anchored to the
+  //     active rotating slide. If we derive media from `slide`, every cycle
+  //     reuses the master slide image — the exact May 2026 regression.
+  const backgroundSlide = rotatorMode === 'background_only' ? rawSlide : slide;
+
   const bgType = useMemo(() => {
-    if (!slide) return 'none' as const;
-    if (slide.background_type === 'inherit') return config.background_type;
-    return slide.background_type;
-  }, [slide, config.background_type]);
+    if (!backgroundSlide) return 'none' as const;
+    if (backgroundSlide.background_type === 'inherit') return config.background_type;
+    return backgroundSlide.background_type;
+  }, [backgroundSlide, config.background_type]);
 
   const bgUrl = useMemo(() => {
-    if (!slide) return '';
-    if (slide.background_type === 'inherit') return config.background_url;
-    return slide.background_url;
-  }, [slide, config.background_url]);
+    if (!backgroundSlide) return '';
+    if (backgroundSlide.background_type === 'inherit') return config.background_url;
+    return backgroundSlide.background_url;
+  }, [backgroundSlide, config.background_url]);
 
   const bgPoster = useMemo(() => {
-    if (!slide) return '';
-    if (slide.background_type === 'inherit') return config.background_poster_url;
-    return slide.background_poster_url;
-  }, [slide, config.background_poster_url]);
+    if (!backgroundSlide) return '';
+    if (backgroundSlide.background_type === 'inherit') return config.background_poster_url;
+    return backgroundSlide.background_poster_url;
+  }, [backgroundSlide, config.background_poster_url]);
 
   const focalX = useMemo(() => {
     const sectionFx = config.background_focal_x ?? 50;
-    if (!slide) return sectionFx;
-    return slide.background_focal_x ?? sectionFx;
-  }, [slide, config.background_focal_x]);
+    if (!backgroundSlide) return sectionFx;
+    return backgroundSlide.background_focal_x ?? sectionFx;
+  }, [backgroundSlide, config.background_focal_x]);
 
   const focalY = useMemo(() => {
     const sectionFy = config.background_focal_y ?? 50;
-    if (!slide) return sectionFy;
-    return slide.background_focal_y ?? sectionFy;
-  }, [slide, config.background_focal_y]);
+    if (!backgroundSlide) return sectionFy;
+    return backgroundSlide.background_focal_y ?? sectionFy;
+  }, [backgroundSlide, config.background_focal_y]);
 
   const overlayMode = useMemo<'darken' | 'lighten'>(() => {
     const sectionMode = config.overlay_mode ?? 'darken';
-    if (!slide) return sectionMode;
-    return slide.overlay_mode ?? sectionMode;
-  }, [slide, config.overlay_mode]);
+    if (!backgroundSlide) return sectionMode;
+    return backgroundSlide.overlay_mode ?? sectionMode;
+  }, [backgroundSlide, config.overlay_mode]);
 
   const fit = useMemo<'cover' | 'contain'>(() => {
     const sectionFit = config.background_fit ?? 'cover';
-    if (!slide) return sectionFit;
-    return slide.background_fit ?? sectionFit;
-  }, [slide, config.background_fit]);
+    if (!backgroundSlide) return sectionFit;
+    return backgroundSlide.background_fit ?? sectionFit;
+  }, [backgroundSlide, config.background_fit]);
 
   // Resolve the master width for srcSet capping: per-slide media owns its own
   // width; inherited slides borrow the section background's master width.
   const mediaWidth = useMemo<number | null>(() => {
-    if (!slide) return config.media_width ?? null;
-    if (slide.background_type === 'inherit') return config.media_width ?? null;
-    return slide.media_width ?? null;
-  }, [slide, config.media_width]);
+    if (!backgroundSlide) return config.media_width ?? null;
+    if (backgroundSlide.background_type === 'inherit') return config.media_width ?? null;
+    return backgroundSlide.media_width ?? null;
+  }, [backgroundSlide, config.media_width]);
 
   if (!slide) return null;
 
