@@ -586,9 +586,21 @@ export function HeroEditor() {
                 {/* Background gallery */}
                 <div className="pt-3">
                   <div className="flex items-center justify-between pb-2">
-                    <h4 className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
-                      Rotating Backgrounds
-                    </h4>
+                    <div className="flex items-baseline gap-2">
+                      <h4 className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
+                        Rotating Backgrounds
+                      </h4>
+                      {/* Inline cadence hint — connects "I uploaded N backgrounds"
+                          to "they rotate every Xs" without forcing a trip into
+                          Settings. Only renders when rotation is actually on
+                          and there are 2+ backgrounds (otherwise cadence is
+                          meaningless). */}
+                      {slides.length > 1 && localConfig.auto_rotate && (
+                        <span className="text-[10px] text-muted-foreground font-sans">
+                          · rotate every {Math.round((localConfig.slide_interval_ms ?? 6000) / 100) / 10}s
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] text-muted-foreground font-sans">
                       Click a tile to upload or edit
                     </span>
