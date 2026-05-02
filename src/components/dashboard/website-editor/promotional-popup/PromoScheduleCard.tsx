@@ -49,6 +49,12 @@ import {
 interface PromoScheduleCardProps {
   formData: PromotionalPopupSettings;
   setFormData: (next: PromotionalPopupSettings) => void;
+  /** Currently focused rotation id (controlled by parent so the analytics
+   *  card and this card share the same selection — click in the calendar
+   *  strip lights up both surfaces and scrolls the matching queue row into
+   *  view). `null` = no rotation focused. */
+  focusedRotationId?: string | null;
+  onFocusRotation?: (id: string | null) => void;
 }
 
 function generateId(): string {
