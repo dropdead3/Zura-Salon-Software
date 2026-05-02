@@ -8,6 +8,7 @@ import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { SectionBackgroundColorPicker } from './inputs/SectionBackgroundColorPicker';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 interface SectionStyleEditorProps {
   value: Partial<StyleOverrides>;
