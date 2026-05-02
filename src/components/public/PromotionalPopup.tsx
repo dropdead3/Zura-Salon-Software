@@ -108,7 +108,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     }
 
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
-    markSessionDismissed();
+    markSessionDismissed(orgId, code);
     void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted', variantKey });
     lifecycle.beginExit('accept');
 
