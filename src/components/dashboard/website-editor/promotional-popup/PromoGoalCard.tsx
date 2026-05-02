@@ -66,6 +66,7 @@ import {
   suggestCapBump,
   summarizeGoalHistory,
   summarizeCrossCodePattern,
+  bucketKeyForCode,
 } from '@/lib/promo-goal-velocity';
 import { usePromotionalPopupRedemptions } from '@/hooks/usePromotionalPopupRedemptions';
 import {
@@ -153,7 +154,7 @@ export function PromoGoalCard({ formData, setFormData }: PromoGoalCardProps) {
   // bucket OR an unrelated bucket — that's when the nudge changes a decision.
   const showCrossCodeNudge =
     crossCodeNudge.kind === 'cross-code' &&
-    bucketKeyFromOfferCode(offerCode) !== crossCodeNudge.fastBucket;
+    bucketKeyForCode(offerCode) !== crossCodeNudge.fastBucket;
 
   // ── One-shot write when cap-hit is observed for the first time ──
   // Guards against a re-render storm logging the same hit repeatedly.
