@@ -76,7 +76,7 @@ import {
   DISCLAIMER_CEILING,
   collectOverflows,
   EyebrowUrgencySuggestion,
-  Section,
+  
   Field,
   CharCounter,
   appearanceLabel,
@@ -92,6 +92,19 @@ import { PopupAnalyticsCard } from './promotional-popup/PopupAnalyticsCard';
 import { PromoScheduleCard } from './promotional-popup/PromoScheduleCard';
 import { PromoExperimentCard } from './promotional-popup/PromoExperimentCard';
 import { PromoGoalCard } from './promotional-popup/PromoGoalCard';
+import { CollapsibleSection } from './promotional-popup/CollapsibleSection';
+import {
+  Sparkles as SparklesIcon,
+  BarChart3,
+  Calendar as CalendarIcon,
+  FlaskConical,
+  Target as TargetIcon,
+  Type as TypeIcon,
+  MousePointerClick,
+  Settings2,
+  Eye as EyeIcon,
+  Clock as ClockIcon,
+} from 'lucide-react';
 
 export function PromotionalPopupEditor() {
   const orgId = useSettingsOrgId();
@@ -650,144 +663,172 @@ export function PromotionalPopupEditor() {
         </div>
       </div>
 
-      {/* Promotion Library — preset templates + saved snapshots. Mounted
-          high so operators discover "start from a template" before they
-          hand-author copy. Apply paths route through the card's internal
-          dirty-state guard so silent overwrites can't happen. */}
-      <PromoLibraryCard
-        formData={formData}
-        setFormData={setFormData}
-        isDirty={isDirty}
-      />
+      {/* ─── Rail navigation ─────────────────────────────────────────────
+          The popup editor accumulated ~10 stacked cards; collapsing each
+          into a CollapsibleSection turns a 1500+px scroll into a
+          navigable table-of-contents. Library defaults open because it's
+          the recommended entry point ("start from a template before
+          hand-authoring"). All other groups default closed — operators
+          can scan titles + summary chips to find what they need without
+          scrolling past unrelated controls.
 
-      {/* Top-of-funnel analytics — impressions → CTA → redemptions → revenue.
-          Renders null until an offer code exists (silence is valid output).
-          Materiality threshold gates rate metrics so a 1/1 = 100% CTR doesn't
-          ship a misleading signal. */}
-      <PopupAnalyticsCard
-        offerCode={savedSnapshot.offerCode}
-        schedule={formData.schedule}
-        focusedRotationId={focusedRotationId}
-        onFocusRotation={setFocusedRotationId}
-        goal={formData.goal ?? null}
-      />
+          Per the Website Editor Entry Contract, expand state is
+          in-memory only — re-entering the editor lands on the canonical
+          default tree (Library open, everything else closed). */}
 
-      {/* Scheduled Rotation — pre-stage saved snapshots to swap into the live
-          popup over a fixed window. Pure resolver in `@/lib/promo-schedule`;
-          public component reads via `useResolvedPromotionalPopup` so live and
-          preview honor the same active entry. Wrapper toggle still gates the
-          popup; rotations only override creative. */}
-      <PromoScheduleCard
-        formData={formData}
-        setFormData={setFormData}
-        focusedRotationId={focusedRotationId}
-        onFocusRotation={setFocusedRotationId}
-      />
+      <CollapsibleSection
+        title="Promotion Library"
+        icon={SparklesIcon}
+        summary="Templates & saved promos"
+        defaultOpen
+      >
+        <PromoLibraryCard
+          formData={formData}
+          setFormData={setFormData}
+          isDirty={isDirty}
+        />
+      </CollapsibleSection>
 
-      {/* A/B Experiment — split traffic across saved snapshots. Schedule
-          rotation takes priority (resolver enforces); this card surfaces a
-          banner when overridden so the operator understands precedence. */}
-      <PromoExperimentCard formData={formData} setFormData={setFormData} />
+      <CollapsibleSection
+        title="Performance"
+        icon={BarChart3}
+        summary={
+          savedSnapshot.offerCode?.trim()
+            ? `Code ${savedSnapshot.offerCode.trim()} · ${redemptionCount} redemption${redemptionCount === 1 ? '' : 's'}`
+            : 'Add an offer code to track funnel'
+        }
+      >
+        <PopupAnalyticsCard
+          offerCode={savedSnapshot.offerCode}
+          schedule={formData.schedule}
+          focusedRotationId={focusedRotationId}
+          onFocusRotation={setFocusedRotationId}
+          goal={formData.goal ?? null}
+        />
 
-      {/* Goal-Based Auto-Suppression — operator caps total redemptions
-          (and/or sets a deadline). When the live count hits the cap, the
-          public lifecycle hook auto-suppresses the popup for new visitors
-          without flipping the wrapper toggle, so schedule + experiment
-          state stay intact. Pure resolver in `@/lib/promo-goal`. */}
-      <PromoGoalCard formData={formData} setFormData={setFormData} />
-
-      {/* Redemption stat — closes the marketing loop. Shows the operator that
-          the popup → booking flow is actually producing redemptions. Silent
-          when no code is configured (silence is valid output) and shows "0"
-          honestly when the code exists but hasn't been redeemed yet.
-
-          14-day sparkline answers "is it still working?" — flat-zero for new
-          codes (silence is valid), then traces velocity as redemptions land.
-          Last-24h chip surfaces momentum at a glance. */}
-      {savedSnapshot.offerCode?.trim() && (
-        <div className="px-3 py-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-2">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
-              <div className="min-w-0">
-                <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
-                  Redemptions
-                </p>
-                <p className="font-sans text-sm text-foreground">
-                  <span className="font-medium tabular-nums">{redemptionCount}</span>
-                  <span className="text-muted-foreground">
-                    {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
-                    <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
-                  </span>
-                </p>
+        {/* Redemption stat — closes the marketing loop. Silent when no
+            code is configured (silence is valid output). */}
+        {savedSnapshot.offerCode?.trim() && (
+          <div className="px-3 py-2.5 rounded-lg border border-border/60 bg-muted/30 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Gift className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="font-display uppercase tracking-wider text-[10px] text-muted-foreground">
+                    Redemptions
+                  </p>
+                  <p className="font-sans text-sm text-foreground">
+                    <span className="font-medium tabular-nums">{redemptionCount}</span>
+                    <span className="text-muted-foreground">
+                      {' '}booking{redemptionCount === 1 ? '' : 's'} confirmed with{' '}
+                      <span className="font-mono">{savedSnapshot.offerCode.trim()}</span>
+                    </span>
+                  </p>
+                </div>
               </div>
+              {redemptionCount === 0 ? (
+                <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
+                  No redemptions yet
+                </p>
+              ) : (
+                <div
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-sans shrink-0',
+                    redemptionLast24h > 0
+                      ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
+                      : 'border-border/60 bg-background text-muted-foreground',
+                  )}
+                  title="Confirmed redemptions in the last 24 hours"
+                >
+                  {redemptionLast24h > 0 ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  <span className="tabular-nums">{redemptionLast24h}</span>
+                  <span>last 24h</span>
+                </div>
+              )}
             </div>
-            {redemptionCount === 0 ? (
-              <p className="font-sans text-[11px] text-muted-foreground italic shrink-0">
-                No redemptions yet
-              </p>
-            ) : (
-              <div
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-sans shrink-0',
-                  redemptionLast24h > 0
-                    ? 'border-emerald-500/40 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400'
-                    : 'border-border/60 bg-background text-muted-foreground',
-                )}
-                title="Confirmed redemptions in the last 24 hours"
-              >
-                {redemptionLast24h > 0 ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-                <span className="tabular-nums">{redemptionLast24h}</span>
-                <span>last 24h</span>
+            {redemptionCount > 0 && redemptionSeries.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground shrink-0">
+                  14d
+                </span>
+                <div className="flex-1 text-primary">
+                  <Sparkline
+                    data={redemptionSeries}
+                    height={24}
+                    ariaLabel="14-day redemption velocity"
+                  />
+                </div>
+              </div>
+            )}
+            {revenueAttributed > 0 && (
+              <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
+                <div className="min-w-0">
+                  <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground block">
+                    Revenue attributed
+                  </span>
+                  {revenueAttributedSince && (
+                    <span
+                      className="font-sans text-[10px] text-muted-foreground/80 block mt-0.5"
+                      title={`Earliest redemption with attributed revenue: ${new Date(revenueAttributedSince).toLocaleString()}. Earlier redemptions exist but pre-date attribution tracking.`}
+                    >
+                      since {new Date(revenueAttributedSince).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+                <BlurredAmount className="font-sans text-sm font-medium tabular-nums text-foreground">
+                  {formatCurrency(revenueAttributed)}
+                </BlurredAmount>
               </div>
             )}
           </div>
-          {redemptionCount > 0 && redemptionSeries.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="font-display uppercase tracking-wider text-[9px] text-muted-foreground shrink-0">
-                14d
-              </span>
-              <div className="flex-1 text-primary">
-                <Sparkline
-                  data={redemptionSeries}
-                  height={24}
-                  ariaLabel="14-day redemption velocity"
-                />
-              </div>
-            </div>
-          )}
-          {/* Lifetime attributed revenue — silence is valid: rows pre-dating
-              the attribution column write resolve to 0 (honest absence). We
-              only render when there's signal, keeping the card calm for new
-              codes and historic redemptions. The "since DATE" caption makes
-              that exclusion legible — without it, operators see count=12 but
-              revenue worth of 8 and reasonably ask "where are the other 4?". */}
-          {revenueAttributed > 0 && (
-            <div className="flex items-center justify-between gap-3 pt-1 border-t border-border/40">
-              <div className="min-w-0">
-                <span className="font-display uppercase tracking-wider text-[10px] text-muted-foreground block">
-                  Revenue attributed
-                </span>
-                {revenueAttributedSince && (
-                  <span
-                    className="font-sans text-[10px] text-muted-foreground/80 block mt-0.5"
-                    title={`Earliest redemption with attributed revenue: ${new Date(revenueAttributedSince).toLocaleString()}. Earlier redemptions exist but pre-date attribution tracking.`}
-                  >
-                    since {new Date(revenueAttributedSince).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
-                )}
-              </div>
-              <BlurredAmount className="font-sans text-sm font-medium tabular-nums text-foreground">
-                {formatCurrency(revenueAttributed)}
-              </BlurredAmount>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Scheduled Rotations"
+        icon={CalendarIcon}
+        summary={
+          (formData.schedule?.entries?.length ?? 0) > 0
+            ? `${formData.schedule!.entries.length} rotation${formData.schedule!.entries.length === 1 ? '' : 's'} queued`
+            : 'No rotations queued'
+        }
+      >
+        <PromoScheduleCard
+          formData={formData}
+          setFormData={setFormData}
+          focusedRotationId={focusedRotationId}
+          onFocusRotation={setFocusedRotationId}
+        />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="A/B Experiment"
+        icon={FlaskConical}
+        summary={
+          formData.experiment?.enabled
+            ? `Active · ${formData.experiment.variants?.length ?? 0} variants`
+            : 'Off'
+        }
+      >
+        <PromoExperimentCard formData={formData} setFormData={setFormData} />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Goal & Auto-Suppression"
+        icon={TargetIcon}
+        summary={
+          formData.goal?.capRedemptions
+            ? `Cap ${formData.goal.capRedemptions} redemptions`
+            : 'No cap set'
+        }
+      >
+        <PromoGoalCard formData={formData} setFormData={setFormData} />
+      </CollapsibleSection>
+
 
       {isDirty && (
         <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5">
@@ -802,7 +843,7 @@ export function PromotionalPopupEditor() {
       )}
 
       {/* Content */}
-      <Section title="Content">
+      <CollapsibleSection title="Content" icon={TypeIcon} summary="Eyebrow, headline, body, image">
         <Field label="Eyebrow (optional)" hint="Small uppercase tag above the headline. Leave blank to hide.">
           {(() => {
             const SelectedEyebrowIcon = getEyebrowIcon(formData.eyebrowIcon);
@@ -1057,10 +1098,10 @@ export function PromotionalPopupEditor() {
             );
           })()}
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Offer + CTAs */}
-      <Section title="Offer & Call to Action">
+      <CollapsibleSection title="Offer & Call to Action" icon={MousePointerClick} summary="Code, accept/decline buttons, destination">
         <Field
           label="Offer code"
           hint="Attached to the booking URL when a visitor accepts (e.g. FREECUT). Recorded for the team."
@@ -1291,10 +1332,10 @@ export function PromotionalPopupEditor() {
             />
           </Field>
         </div>
-      </Section>
+      </CollapsibleSection>
 
       {/* Behavior */}
-      <Section title="Behavior">
+      <CollapsibleSection title="Behavior" icon={Settings2} summary="Variant, timing, frequency, dismissal">
         <Field
           label="Appearance"
           hint="How the offer enters the page. Pick the layout that matches your brand's tone."
@@ -1488,10 +1529,10 @@ export function PromotionalPopupEditor() {
             </div>
           </div>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Targeting */}
-      <Section title="Where it shows">
+      <CollapsibleSection title="Where it shows" icon={EyeIcon} summary={`${formData.showOn.length} surface${formData.showOn.length === 1 ? '' : 's'} · audience: ${formData.audience === 'all' ? 'all' : 'new visitors'}`}>
         <div className="space-y-2">
           {SURFACE_OPTIONS.map((opt) => (
             <label
@@ -1524,10 +1565,10 @@ export function PromotionalPopupEditor() {
             </SelectContent>
           </Select>
         </Field>
-      </Section>
+      </CollapsibleSection>
 
       {/* Schedule */}
-      <Section title="Schedule (optional)">
+      <CollapsibleSection title="Schedule window" icon={ClockIcon} summary={formData.startsAt || formData.endsAt ? 'Time-bounded' : 'Always on'}>
         <div className="grid grid-cols-1 gap-3">
           <Field label="Starts at" hint="Leave blank for immediate.">
             <Input
@@ -1544,7 +1585,7 @@ export function PromotionalPopupEditor() {
             />
           </Field>
         </div>
-      </Section>
+      </CollapsibleSection>
 
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground leading-relaxed">
         <strong className="font-display uppercase tracking-wider text-[10px] text-foreground">
