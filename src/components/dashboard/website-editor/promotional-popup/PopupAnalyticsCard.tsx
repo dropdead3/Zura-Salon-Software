@@ -280,6 +280,8 @@ export function PopupAnalyticsCard({
               />
             </div>
 
+            <TrendChart data={data.trend} />
+
             {!data.hasSufficientData ? (
               <p className="text-xs text-muted-foreground">
                 Click-through and redemption rates appear after{' '}
@@ -290,6 +292,16 @@ export function PopupAnalyticsCard({
                 Until then, raw counts only.
               </p>
             ) : null}
+
+            {(() => {
+              const note = formatTrackingFootnote(
+                data.firstImpressionAt,
+                data.firstResponseAt,
+              );
+              return note ? (
+                <p className="text-[11px] text-muted-foreground/80 italic">{note}</p>
+              ) : null;
+            })()}
           </>
         )}
       </CardContent>
