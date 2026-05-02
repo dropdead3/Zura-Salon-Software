@@ -31,7 +31,7 @@ export function ExtensionsSection() {
 
   return (
     <SectionStyleWrapper styleOverrides={config.style_overrides}>
-    <Section className="bg-background overflow-hidden" theme="light">
+    <Section className="overflow-hidden" theme="light">
       <motion.div 
         ref={scrollRef} 
         className="relative bg-foreground text-background rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden"

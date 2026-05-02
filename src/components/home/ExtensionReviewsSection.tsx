@@ -276,7 +276,7 @@ export function ExtensionReviewsSection() {
     <SectionStyleWrapper styleOverrides={chipsConfig?.style_overrides}>
     <section 
       ref={sectionRef} 
-      className="py-20 lg:py-32 overflow-hidden bg-background"
+      className="py-20 lg:py-32 overflow-hidden"
     >
       {/* Navigation Arrows & Progress - Desktop */}
       <div className="hidden md:flex container mx-auto px-6 mb-6 items-center justify-between">

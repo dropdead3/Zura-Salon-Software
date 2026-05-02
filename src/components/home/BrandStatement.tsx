@@ -82,7 +82,7 @@ export function BrandStatement() {
 
   return (
     <SectionStyleWrapper styleOverrides={config.style_overrides}>
-    <Section className="bg-background" theme="light">
+    <Section theme="light">
       <motion.div 
         ref={containerRef}
         data-theme="dark"
