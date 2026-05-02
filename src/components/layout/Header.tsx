@@ -363,23 +363,22 @@ export function Header() {
             <div className="overflow-hidden">
               <div
                 className={cn(
-                  "relative py-4 md:py-2.5 px-4 md:px-6 backdrop-blur-xl border-b border-border/40",
+                  "relative py-4 md:py-2.5 px-4 md:px-6 border-b border-border/40",
                   "transition-opacity duration-300 ease-out",
                   announcementHidden ? "opacity-0 pointer-events-none" : "opacity-100",
+                  // Glass treatment ONLY when no explicit bg_color is set.
+                  // Setting a banner color replaces glass entirely with a solid fill.
+                  !hasExplicitBg && "backdrop-blur-xl",
                   // Default to dark scrim over hero media — same default-dark
                   // assumption as the text contrast above. The light variant
                   // (`bg-secondary/90`) only kicks in once theme detection
                   // confirms a light section is behind the bar (post-scroll).
                   !hasExplicitBg && (isOverDark ? "bg-black/70" : "bg-black/50"),
                   // Subtle top-down gradient scrim improves readability over photographic backgrounds
-                  overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
-                  // Warm cream overlay — sits above the glass to add a soft champagne tint.
-                  // Only apply when an explicit bg_color is set; over hero media it
-                  // washes out the dark scrim and hurts white-text contrast.
-                  hasExplicitBg && "before:pointer-events-none before:absolute before:inset-0 before:bg-[hsl(42_38%_90%/0.18)] before:mix-blend-soft-light",
+                  !hasExplicitBg && overMediaDark && "bg-gradient-to-b from-black/80 to-black/60",
                   "[&>*]:relative [&>*]:z-[1]",
                 )}
-                style={hasExplicitBg ? { backgroundColor: `${announcementSettings.bg_color}F2` } : undefined}
+                style={hasExplicitBg ? { backgroundColor: announcementSettings.bg_color } : undefined}
               >
                 <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
                   {(() => {
