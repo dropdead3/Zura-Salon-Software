@@ -271,11 +271,11 @@ export function ThemeAwareColorInput({
         </div>
       )}
 
-      {/* Inline trigger row — swatch button + hex field. All swatch grids
-          live inside the Popover to keep the editor side rail clean. The
-          row is items-start so the caption under the trigger swatch
-          ("· Primary") doesn't shove the hex field down. */}
-      <div className="flex items-start gap-2">
+      {/* Inline trigger row — swatch button only. The hex text field lives
+          inside the Popover (next to the Custom RGB picker) so the editor
+          side rail stays compact. When no value is set, an inline hint
+          tells the operator that empty == inherit defaults. */}
+      <div className="flex items-center gap-2">
         <div className="flex flex-col items-start gap-1">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
