@@ -360,4 +360,43 @@ export default tseslint.config(
     basePaths: HERO_ALIGNMENT_OVERLAY_PATHS,
     extraPaths: [],
   }),
+  // ─────────────────────────────────────────────────────────────────────
+  // ThemeAwareColorInput single-ownership doctrine — bans raw native
+  // `<input type="color">` JSX inside the website-editor tree. Codifies the
+  // May 2026 "color picker drift" finding: the editor had four ad-hoc
+  // native color inputs (HeroTextColorsEditor, SectionStyleEditor,
+  // AnnouncementBarContent, SiteDesignPanel + the custom row in
+  // PromotionalPopupEditor), and operators couldn't pick "the same color
+  // as the See Offer chip" without eyedropping the live preview. The
+  // canonical `<ThemeAwareColorInput>` surfaces theme tokens + colors
+  // already in use elsewhere on the site, then falls through to a native
+  // picker — adopt it everywhere, never hand-roll a new swatch grid.
+  //
+  // Override (only legitimate consumers):
+  //   - src/components/dashboard/website-editor/inputs/ThemeAwareColorInput.tsx
+  //   - src/components/dashboard/website-editor/inputs/SectionBackgroundColorPicker.tsx
+  //     (the per-section background picker shipped before this canon and
+  //      uses the same swatch UX; harmless to keep its native input).
+  //
+  // Backed by:
+  //   - mem://style/theme-aware-color-input
+  //   - src/test/lint-fixtures/theme-aware-color-input-banned.tsx
+  //   - src/test/lint-config-resolution.test.ts
+  // ─────────────────────────────────────────────────────────────────────
+  defineScopedDoctrine({
+    files: [
+      "src/components/dashboard/website-editor/**/*.{ts,tsx}",
+      "src/test/lint-fixtures/theme-aware-color-input-banned.tsx",
+    ],
+    ignores: [
+      "src/components/dashboard/website-editor/inputs/ThemeAwareColorInput.tsx",
+      "src/components/dashboard/website-editor/inputs/SectionBackgroundColorPicker.tsx",
+    ],
+    extraSelectors: [
+      {
+        selector: "JSXOpeningElement[name.name='input'] > JSXAttribute[name.name='type'][value.value='color']",
+        message: "Native <input type=\"color\"> is forbidden inside the website-editor tree. Use <ThemeAwareColorInput value onChange label /> from '@/components/dashboard/website-editor/inputs/ThemeAwareColorInput' instead — it surfaces theme tokens and colors already used elsewhere on the site, so operators can match the See Offer chip / theme primary in one click.",
+      },
+    ],
+  }),
 );
