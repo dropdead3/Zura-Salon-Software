@@ -122,10 +122,50 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
   const dim = (key: TrendKey) =>
     highlightedKey && highlightedKey !== key ? 0.25 : 1;
 
+  // Extend the X-axis with empty future buckets when an ETA marker exists,
+  // so the vertical line lands inside the chart rather than flush against
+  // the right edge. Capped at 21 days — beyond that, forecast confidence
+  // drops below useful and the chart compresses too much.
+  const FORWARD_BUCKET_CAP = 21;
+  const forwardBuckets = capHitEta
+    ? Math.min(FORWARD_BUCKET_CAP, Math.max(1, capHitEta.daysFromToday + 1))
+    : 0;
+  const chartData = (() => {
+    if (forwardBuckets === 0) return data;
+    const last = data[data.length - 1];
+    const lastDate = last ? new Date(last.date) : new Date();
+    const future: PromotionalPopupTrendPoint[] = [];
+    for (let i = 1; i <= forwardBuckets; i++) {
+      const d = new Date(lastDate);
+      d.setDate(d.getDate() + i);
+      future.push({
+        date: d.toISOString().slice(0, 10),
+        impressions: 0,
+        ctaClicks: 0,
+        dismissals: 0,
+        redemptions: 0,
+        revenue: 0,
+      });
+    }
+    return [...data, ...future];
+  })();
+
+  // X-axis date string for the ETA marker (matches the `date` data key).
+  const etaDate = capHitEta
+    ? (() => {
+        const last = data[data.length - 1];
+        const base = last ? new Date(last.date) : new Date();
+        base.setDate(base.getDate() + capHitEta.daysFromToday);
+        return base.toISOString().slice(0, 10);
+      })()
+    : null;
+
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className={tokens.kpi.label}>14-Day Trend</span>
+        <span className={tokens.kpi.label}>
+          14-Day Trend{capHitEta ? ' · projection' : ''}
+        </span>
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
@@ -139,6 +179,12 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
             <span className="inline-block w-2 h-2 rounded-full bg-foreground" />
             Redemptions
           </span>
+          {capHitEta ? (
+            <span className="flex items-center gap-1">
+              <span className="inline-block w-2 h-0.5 bg-amber-500" />
+              Cap-hit ETA
+            </span>
+          ) : null}
         </div>
       </div>
       <ResponsiveContainer width="100%" height={140}>
