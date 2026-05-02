@@ -303,7 +303,18 @@ export function ThemeAwareColorInput({
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            className="w-72 p-3 space-y-3 bg-popover"
+            side="bottom"
+            sideOffset={6}
+            // Radix collision detection: flip / shift to stay inside the
+            // viewport, with 12px breathing room on every edge so the popup
+            // never butts against the editor drawer chrome or the top toolbar.
+            avoidCollisions
+            collisionPadding={12}
+            // Cap height to the available viewport (Radix exposes this as a
+            // CSS var on the content element) and scroll inside if the
+            // swatch rows + custom picker exceed it. Prevents the top of the
+            // popover from being clipped behind the toolbar on short screens.
+            className="w-72 p-3 space-y-3 bg-popover max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
           >
             {/* Theme swatches */}
             <div className="space-y-1.5">
