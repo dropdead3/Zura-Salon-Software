@@ -268,11 +268,11 @@ export function MediaUploadInput({
       }
       stage = 'decode';
       if (isImage) {
-        // Hero/slide profile uploads the autoCrunch output (3200px @ q0.9 WebP)
+        // Hero/slide profile uploads the autoCrunch output (5120px @ q0.9 WebP)
         // directly. The standard re-encode at 1920×1200 @ q0.85 is what made
         // full-bleed sliders look pixelated on retina — a 1920px source has
-        // to upscale to ~2880 device px on a 2x display. Skipping it for hero
-        // preserves real pixels with minimal file-size cost.
+        // to upscale to ~2880 device px on a 2x display, and ~5120 on a 5K
+        // iMac. Skipping it for hero preserves real pixels through 5K.
         let uploadBlob: Blob = workingFile;
         let uploadContentType = workingFile.type || 'image/webp';
         let uploadExt = 'webp';
