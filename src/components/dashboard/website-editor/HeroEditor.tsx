@@ -322,7 +322,39 @@ export function HeroEditor() {
 
   const updateField = useCallback(
     <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => {
-      setLocalConfig((prev) => ({ ...prev, [field]: value }));
+      setLocalConfig((prev) => {
+        // Background-Only seed: when an operator first flips into background_only,
+        // section-level shared copy is typically empty (the migration that lifts
+        // legacy fields into slides[0] only runs when slides is empty). Without
+        // seeding, the shared headline/CTAs disappear on switch and the operator
+        // reads the mode change as broken. Lift master slide copy up — but only
+        // for fields that are empty/undefined at the section level, so a second
+        // toggle never overwrites operator edits.
+        if (field === 'rotator_mode' && value === 'background_only' && prev.rotator_mode !== 'background_only') {
+          const master = (prev.slides ?? [])[0];
+          if (master) {
+            const seedString = (sectionVal: string | null | undefined, masterVal: string | null | undefined) =>
+              sectionVal && sectionVal.trim() !== '' ? sectionVal : (masterVal ?? '');
+            const seedBool = (sectionVal: boolean | null | undefined, masterVal: boolean | null | undefined) =>
+              typeof sectionVal === 'boolean' ? sectionVal : !!masterVal;
+            return {
+              ...prev,
+              rotator_mode: 'background_only',
+              eyebrow: seedString(prev.eyebrow, master.eyebrow),
+              show_eyebrow: seedBool(prev.show_eyebrow, master.show_eyebrow),
+              headline_text: seedString(prev.headline_text, master.headline_text),
+              subheadline_line1: seedString(prev.subheadline_line1, master.subheadline_line1),
+              subheadline_line2: seedString(prev.subheadline_line2, master.subheadline_line2),
+              cta_new_client: seedString(prev.cta_new_client, master.cta_new_client),
+              cta_new_client_url: seedString(prev.cta_new_client_url, master.cta_new_client_url),
+              cta_returning_client: seedString(prev.cta_returning_client, master.cta_returning_client),
+              cta_returning_client_url: seedString(prev.cta_returning_client_url, master.cta_returning_client_url),
+              show_secondary_button: seedBool(prev.show_secondary_button, master.show_secondary_button),
+            };
+          }
+        }
+        return { ...prev, [field]: value };
+      });
     },
     [],
   );
