@@ -439,24 +439,6 @@ export function AppearancePreviewSwatch({
   );
 }
 
-// ─── Hex normalization ───
-// Coerce arbitrary CSS color strings into a `#rrggbb` value the native color
-// input can render. Falls back to a neutral primary when the value isn't a
-// 6-digit hex (the swatch text input still accepts hsl(...) etc.).
-export function normalizeHex(value: string | undefined): string {
-  if (!value) return '#7c3aed';
-  const trimmed = value.trim();
-  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed;
-  if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
-    return `#${trimmed
-      .slice(1)
-      .split('')
-      .map((c) => c + c)
-      .join('')}`;
-  }
-  return '#7c3aed';
-}
-
 // ─── datetime-local <-> ISO helpers ───
 
 export function toLocalInput(iso: string | null | undefined): string {
