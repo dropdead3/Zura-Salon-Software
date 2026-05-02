@@ -48,6 +48,7 @@ import {
   type ThemeTokenSwatch,
 } from '@/lib/themeTokenSwatches';
 import { useInUseSiteColors } from '@/hooks/useInUseSiteColors';
+import { useRecentColorPicks } from '@/hooks/useRecentColorPicks';
 
 /**
  * Optional macro descriptor passed in by parent editors that have related
