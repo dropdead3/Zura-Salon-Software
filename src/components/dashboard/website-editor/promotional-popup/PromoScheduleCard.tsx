@@ -510,10 +510,26 @@ export function PromoScheduleCard({
                   />
                 </div>
               </div>
+              {draftOverlaps.length > 0 ? (
+                <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-2.5 py-2 text-[11px] text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    Overlaps{' '}
+                    {draftOverlaps
+                      .map((e) => saved.find((s) => s.id === e.savedPromoId)?.name ?? '(deleted)')
+                      .join(', ')}
+                    . The resolver will pick the rotation with the later start during the overlap.
+                  </span>
+                </div>
+              ) : null}
               <div className="flex justify-end">
-                <Button onClick={handleAdd} size="sm">
+                <Button
+                  onClick={handleAdd}
+                  size="sm"
+                  variant={confirmOverlap ? 'destructive' : 'default'}
+                >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add to queue
+                  {confirmOverlap ? 'Add anyway' : 'Add to queue'}
                 </Button>
               </div>
             </div>
