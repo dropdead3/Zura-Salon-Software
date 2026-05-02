@@ -164,6 +164,31 @@ export function ThemeAwareColorInput({
   const eyeDropperCtor = useMemo(() => getEyeDropper(), []);
   const eyeDropperSupported = !!eyeDropperCtor;
 
+  const { picks: recentPicks, recordPick } = useRecentColorPicks();
+  // Recent row should not double-list anything already in Theme or In-Use
+  // (those have their own labeled chips; duplicating bloats the popover
+  // and obscures the Recent row's purpose: arbitrary custom hexes).
+  const inUseHexes = useMemo(
+    () => new Set(inUseSwatches.map((s) => s.hex)),
+    [inUseSwatches],
+  );
+  const dedupedRecent = useMemo(
+    () =>
+      recentPicks.filter(
+        (hex) => !themeHexes.has(hex) && !inUseHexes.has(hex),
+      ),
+    [recentPicks, themeHexes, inUseHexes],
+  );
+
+  // Centralized "user picked a custom color" path: records into Recent
+  // ring AND fires onChange. Used by hex field, native picker, eyedropper.
+  // Theme-token / in-use chip clicks bypass this — they already have
+  // their own swatch row and would just bloat Recent.
+  const handleCustomPick = (hex: string) => {
+    onChange(hex);
+    recordPick(hex);
+  };
+
   const handleEyeDropper = async () => {
     if (!eyeDropperCtor) return;
     setEyedropperBusy(true);
@@ -171,7 +196,7 @@ export function ThemeAwareColorInput({
       const dropper = new eyeDropperCtor();
       const result = await dropper.open();
       if (result?.sRGBHex) {
-        onChange(result.sRGBHex);
+        handleCustomPick(result.sRGBHex);
         setOpen(false);
       }
     } catch {
