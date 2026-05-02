@@ -153,11 +153,14 @@ export function formatFileSize(bytes: number): string {
 
 const CRUNCH_TRIGGER_BYTES = 8 * 1024 * 1024; // 8MB
 const CRUNCH_TRIGGER_DIMENSION = 5000;
-// Hero/slide art is rendered full-bleed at retina densities (a 1440px CSS
-// hero on a 2x display = 2880 device px). Cap the long edge at 3200 so we
-// retain real pixels instead of upscaling a downsampled WebP — earlier
-// 2400px cap was the root cause of "pixelated slider images" reports.
-const CRUNCH_PASS1_MAX_EDGE = 3200;
+// Hero/slide art is rendered full-bleed at retina densities. A 27" 5K iMac
+// is 5120 device px wide; a 14"/16" MacBook at DPR 2 is 3024–3456. Cap the
+// long edge at 5120 so we retain real pixels through 5K instead of upscaling
+// a downsampled WebP. The public srcSet (`HERO_SRCSET_WIDTHS`) extends to
+// 5120 to match — keep these two constants in lockstep. Earlier 3200 cap
+// soft-blurred 4K+ retina screens; earlier 2400 cap was the original
+// "pixelated slider images" regression.
+const CRUNCH_PASS1_MAX_EDGE = 5120;
 const CRUNCH_PASS1_QUALITY = 0.9;
 const CRUNCH_PASS2_QUALITY = 0.82;
 const CRUNCH_PASS2_THRESHOLD_BYTES = 3 * 1024 * 1024; // 3MB
