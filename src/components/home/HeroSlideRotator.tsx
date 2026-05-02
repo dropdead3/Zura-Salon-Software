@@ -303,6 +303,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
   return (
     <section
+      ref={sectionRef}
       data-theme={hasBackground ? 'dark' : 'light'}
       className="relative z-10 flex flex-col overflow-visible min-h-[600px] lg:min-h-screen"
       onMouseEnter={handleHoverEnter}
