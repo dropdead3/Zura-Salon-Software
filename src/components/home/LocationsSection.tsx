@@ -10,6 +10,7 @@ import { useLocationsSectionConfig, DEFAULT_LOCATIONS_SECTION } from "@/hooks/us
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "./InlineEditableText";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionStyleWrapper } from "./SectionStyleWrapper";
 import { 
   useActiveLocations, 
   formatHoursForDisplay, 
