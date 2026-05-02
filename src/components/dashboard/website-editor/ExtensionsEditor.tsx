@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Star, Award, MapPin, Settings2, RotateCcw, Puzzle } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
