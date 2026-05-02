@@ -457,8 +457,7 @@ export function HeroEditor() {
       cards.push(
         { id: 'alignment', title: 'Content Alignment', icon: AlignJustify, summary: summarizeAlignment(localConfig) },
         { id: 'colors', title: 'Text & Buttons Color', icon: Palette, summary: summarizeColors(localConfig) },
-        { id: 'wash', title: 'Image Wash', icon: Droplet, summary: summarizeWash(localConfig) },
-        { id: 'scrim', title: 'Text-area Scrim', icon: Layers, summary: summarizeScrim(localConfig) },
+        { id: 'overlay', title: 'Image Overlay', icon: Layers, summary: summarizeOverlay(localConfig) },
         { id: 'rotator', title: 'Slides Rotator', icon: Settings2, summary: summarizeRotator(localConfig) },
         { id: 'advanced', title: 'Advanced', icon: Settings2, summary: summarizeAdvanced(localConfig) },
       );
