@@ -21,6 +21,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
 import { BRAND_STATEMENT_COLOR_SLOTS } from '@/lib/sectionColorSlots';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import {
   DndContext,
   closestCenter,
@@ -194,6 +197,12 @@ export function BrandStatementEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow"
@@ -347,6 +356,16 @@ export function BrandStatementEditor() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+        </TabsContent>
+
+        <TabsContent value="style" className="space-y-6 mt-0">
+          <SectionStyleEditor
+            value={localConfig.style_overrides ?? {}}
+            onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+            sectionId="brand_statement"
+          />
+        </TabsContent>
+        </Tabs>
       </EditorCard>
     </div>
   );

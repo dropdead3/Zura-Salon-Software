@@ -6,6 +6,7 @@ import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
 import { useBrandStatementConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 
 export function BrandStatement() {
   const isPreview = useIsEditorPreview();
@@ -80,6 +81,7 @@ export function BrandStatement() {
   }, [displayText, isDeleting, currentWordIndex, rotatingWords, config.typewriter_speed, config.typewriter_pause]);
 
   return (
+    <SectionStyleWrapper styleOverrides={config.style_overrides}>
     <Section className="bg-background" theme="light">
       <motion.div 
         ref={containerRef}
@@ -165,5 +167,6 @@ export function BrandStatement() {
         </div>
       </motion.div>
     </Section>
+    </SectionStyleWrapper>
   );
 }

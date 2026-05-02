@@ -275,6 +275,13 @@ export interface BrandStatementConfig {
   show_paragraphs: boolean;
   /** Per-element color overrides. Empty/missing = inherit theme. */
   text_colors?: SectionTextColors;
+  /**
+   * Section background / container / media overrides (same shape as
+   * pages.sections[].style_overrides). Brand Statement writes to global
+   * site_settings, so its style lives on the config rather than on a
+   * sections[] row. See `SectionStyleWrapper` / `SectionStyleEditor`.
+   */
+  style_overrides?: Partial<import('@/components/home/SectionStyleWrapper').StyleOverrides>;
 }
 
 export interface TestimonialsConfig {
