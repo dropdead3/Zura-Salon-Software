@@ -83,6 +83,27 @@ export function SectionStyleEditor({
           />
         </div>
 
+        {/* Reset to section default — strips every container_* key so the
+            live renderer's built-in defaults (e.g. Brand Statement's dark
+            card) take over. Only shown when the operator has actually
+            overridden a container field. */}
+        {containerDefaultEnabled && Object.keys(value).some(k => k.startsWith('container_')) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-[11px] text-muted-foreground hover:text-foreground -ml-2"
+            onClick={() => {
+              const next: Partial<StyleOverrides> = { ...value };
+              for (const k of Object.keys(next) as (keyof StyleOverrides)[]) {
+                if (typeof k === 'string' && k.startsWith('container_')) delete next[k];
+              }
+              onChange(next);
+            }}
+          >
+            ↺ Reset Container Frame to section default
+          </Button>
+        )}
+
         {containerEnabled && (
           <div className="space-y-4 pl-1">
             <SectionBackgroundEditor
