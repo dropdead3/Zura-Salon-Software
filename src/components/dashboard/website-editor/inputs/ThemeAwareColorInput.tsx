@@ -501,18 +501,27 @@ export function ThemeAwareColorInput({
         </span>
         </div>
 
-        <div className="relative flex-1">
-          <Input
-            value={display}
-            onChange={(e) => onChange(e.target.value || undefined)}
-            // Record into Recent on blur (commit) — not on every keystroke,
-            // since partial hexes ("#a4") would pollute the ring. recordPick
-            // normalizes + ignores invalid hexes so this is safe.
-            onBlur={(e) => recordPick(e.target.value)}
-            placeholder={placeholder}
-            className="h-8 text-xs font-mono"
-            spellCheck={false}
-          />
+        {/* Inline hint — replaces the old hex text input. When empty:
+            "Leave blank for default". When set: shows the cohesion source
+            (e.g. "Primary") or the hex itself, so reviewers can scan
+            without opening the popover. Hex editing happens inside the
+            popover next to the RGB picker. */}
+        <div className="flex-1 min-w-0">
+          {!display ? (
+            <span className="font-sans text-[11px] text-muted-foreground/80 italic">
+              Leave blank for default
+            </span>
+          ) : (
+            <span className="font-mono text-[11px] text-muted-foreground truncate block">
+              {normalizedActive || display}
+              {sourceLabel && (
+                <span className="font-sans not-italic text-muted-foreground/70">
+                  {' · '}
+                  {sourceLabel}
+                </span>
+              )}
+            </span>
+          )}
         </div>
 
         {allowClear && display && !label && (
