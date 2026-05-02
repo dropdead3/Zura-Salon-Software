@@ -287,6 +287,20 @@ export function PromoScheduleCard({
   const conflicts = useMemo(() => detectScheduleConflicts(schedule), [schedule]);
   const hasConflicts = conflicts.size > 0;
 
+  // Live overlap detection on the draft form. Powers the inline pre-warn so
+  // the operator sees the collision *before* hitting "Add to queue".
+  const draftStartIso = useMemo(() => localInputToIso(draftStart), [draftStart]);
+  const draftEndIso = useMemo(() => localInputToIso(draftEnd), [draftEnd]);
+  const draftOverlaps = useMemo(
+    () => findOverlappingEntries(schedule, draftStartIso, draftEndIso),
+    [schedule, draftStartIso, draftEndIso],
+  );
+  // Reset two-step confirm whenever the draft window changes — operator must
+  // re-acknowledge the overlap explicitly.
+  useEffect(() => {
+    setConfirmOverlap(false);
+  }, [draftStartIso, draftEndIso, draftPromoId]);
+
   const updateSchedule = (next: SavedPromoScheduleEntry[]) => {
     setFormData({ ...formData, schedule: next });
   };
@@ -296,26 +310,33 @@ export function PromoScheduleCard({
       toast.error('Pick a saved promo to rotate in.');
       return;
     }
-    const startsAt = localInputToIso(draftStart);
-    const endsAt = localInputToIso(draftEnd);
-    if (!startsAt || !endsAt) {
+    if (!draftStartIso || !draftEndIso) {
       toast.error('Pick a start and end date.');
       return;
     }
-    if (Date.parse(endsAt) <= Date.parse(startsAt)) {
+    if (Date.parse(draftEndIso) <= Date.parse(draftStartIso)) {
       toast.error('End must be after start.');
+      return;
+    }
+    // Pre-validation: block first click on overlap, allow second click.
+    if (draftOverlaps.length > 0 && !confirmOverlap) {
+      setConfirmOverlap(true);
+      toast.warning(
+        `Overlaps ${draftOverlaps.length} existing rotation${draftOverlaps.length === 1 ? '' : 's'}. Click "Add anyway" to confirm.`,
+      );
       return;
     }
     const entry: SavedPromoScheduleEntry = {
       id: generateId(),
       savedPromoId: draftPromoId,
-      startsAt,
-      endsAt,
+      startsAt: draftStartIso,
+      endsAt: draftEndIso,
     };
     updateSchedule([...schedule, entry]);
     setDraftPromoId('');
     setDraftStart('');
     setDraftEnd('');
+    setConfirmOverlap(false);
     toast.success('Rotation queued — Save to publish.');
   };
 
