@@ -50,6 +50,7 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -219,6 +220,7 @@ function SortableSlideRow({
   isFirst,
   section,
   rotatorMode,
+  variant = 'row',
   onClick,
   onDelete,
   onToggleActive,
@@ -228,6 +230,7 @@ function SortableSlideRow({
   isFirst: boolean;
   section: HeroConfig;
   rotatorMode: 'multi_slide' | 'background_only';
+  variant?: 'row' | 'tile';
   onClick: () => void;
   onDelete: () => void;
   onToggleActive: (next: boolean) => void;
@@ -244,6 +247,7 @@ function SortableSlideRow({
         sectionBgPoster={section.background_poster_url}
         sectionBgType={section.background_type}
         rotatorMode={rotatorMode}
+        variant={variant}
         onClick={onClick}
         onDelete={onDelete}
         onToggleActive={onToggleActive}
@@ -340,6 +344,19 @@ export function HeroEditor() {
   const addSlide = useCallback(() => {
     const slide = makeEmptySlide();
     setLocalConfig((prev) => ({ ...prev, slides: [...(prev.slides ?? []), slide] }));
+    setView({ kind: 'slide', id: slide.id });
+  }, []);
+
+  /**
+   * Background-Only mode: append a slide that's pre-configured as a rotating
+   * background contributor. Pre-sets `background_type: 'image'` so the new
+   * tile lands ready to upload, and stays on the hub view (no jump into the
+   * full slide editor — copy fields aren't relevant in this mode anyway).
+   */
+  const addBackgroundSlide = useCallback(() => {
+    const slide: HeroSlide = { ...makeEmptySlide(), background_type: 'image' };
+    setLocalConfig((prev) => ({ ...prev, slides: [...(prev.slides ?? []), slide] }));
+    // Open the slide editor so the user can immediately upload media.
     setView({ kind: 'slide', id: slide.id });
   }, []);
 
@@ -458,14 +475,21 @@ export function HeroEditor() {
             </p>
           </div>
 
-          {/* SLIDES group */}
+          {/* SLIDES group — render shape diverges by rotator mode:
+              - Multi-Slide: vertical list of full slide rows.
+              - Background-Only: master row (slide 1) on top, then a square
+                gallery of background tiles for slides[1..]. The gallery
+                mirrors the data model — one slide owns the copy, the rest
+                contribute rotating backgrounds. */}
           <div className="space-y-2 pt-4 border-t border-border/40">
             <div className="flex items-center justify-between">
               <h3 className="font-display text-[11px] tracking-wider text-muted-foreground uppercase">
-                Slides
+                {rotatorMode === 'background_only' ? 'Master Slide' : 'Slides'}
               </h3>
               <span className="text-[11px] text-muted-foreground font-sans">
-                {slides.length} slide{slides.length === 1 ? '' : 's'}
+                {rotatorMode === 'background_only'
+                  ? `${Math.max(slides.length - 1, 0)} background${slides.length - 1 === 1 ? '' : 's'}`
+                  : `${slides.length} slide${slides.length === 1 ? '' : 's'}`}
               </span>
             </div>
 
@@ -479,38 +503,101 @@ export function HeroEditor() {
                   Add First Slide
                 </Button>
               </div>
-            ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-                  <div className="flex flex-col gap-2">
-                    {slides.map((s, i) => (
-                      <SortableSlideRow
-                        key={s.id}
-                        slide={s}
-                        index={i}
-                        isFirst={i === 0}
-                        section={localConfig}
-                        rotatorMode={rotatorMode}
-                        onClick={() => setView({ kind: 'slide', id: s.id })}
-                        onDelete={() => deleteSlide(s.id)}
-                        onToggleActive={(next) => updateSlide(s.id, { active: next })}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            )}
+            ) : rotatorMode === 'background_only' ? (
+              <>
+                {/* Master slide row — full editor access, not draggable.
+                    Rendered outside any DndContext so the drag handle is
+                    suppressed by `variant`'s isMaster branch in HeroSlideListCard. */}
+                <SortableSlideRow
+                  slide={slides[0]}
+                  index={0}
+                  isFirst
+                  section={localConfig}
+                  rotatorMode={rotatorMode}
+                  variant="row"
+                  onClick={() => setView({ kind: 'slide', id: slides[0].id })}
+                  onDelete={() => deleteSlide(slides[0].id)}
+                  onToggleActive={(next) => updateSlide(slides[0].id, { active: next })}
+                />
 
-            {slides.length > 0 && (
-              <Button
-                variant="outline"
-                size={tokens.button.card}
-                onClick={addSlide}
-                className="w-full gap-1.5 mt-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add Slide
-              </Button>
+                {/* Background gallery */}
+                <div className="pt-3">
+                  <div className="flex items-center justify-between pb-2">
+                    <h4 className="font-display text-[10px] tracking-wider text-muted-foreground uppercase">
+                      Rotating Backgrounds
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground font-sans">
+                      Click a tile to upload or edit
+                    </span>
+                  </div>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                    <SortableContext items={slides.slice(1).map((s) => s.id)} strategy={rectSortingStrategy}>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {slides.slice(1).map((s, i) => (
+                          <SortableSlideRow
+                            key={s.id}
+                            slide={s}
+                            index={i + 1}
+                            isFirst={false}
+                            section={localConfig}
+                            rotatorMode={rotatorMode}
+                            variant="tile"
+                            onClick={() => setView({ kind: 'slide', id: s.id })}
+                            onDelete={() => deleteSlide(s.id)}
+                            onToggleActive={(next) => updateSlide(s.id, { active: next })}
+                          />
+                        ))}
+                        {/* "Add Background" tile — completes the grid as a peer */}
+                        <button
+                          type="button"
+                          onClick={addBackgroundSlide}
+                          className="aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Add rotating background"
+                        >
+                          <Plus className="h-5 w-5" />
+                          <span className="text-[10px] font-display tracking-wider uppercase">Add</span>
+                        </button>
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                  {slides.length === 1 && (
+                    <p className="text-[11px] text-muted-foreground mt-2 pl-1">
+                      Add a second background to start the rotator. The headline above stays the same on every rotation.
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                  <SortableContext items={slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                    <div className="flex flex-col gap-2">
+                      {slides.map((s, i) => (
+                        <SortableSlideRow
+                          key={s.id}
+                          slide={s}
+                          index={i}
+                          isFirst={i === 0}
+                          section={localConfig}
+                          rotatorMode={rotatorMode}
+                          onClick={() => setView({ kind: 'slide', id: s.id })}
+                          onDelete={() => deleteSlide(s.id)}
+                          onToggleActive={(next) => updateSlide(s.id, { active: next })}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+                <Button
+                  variant="outline"
+                  size={tokens.button.card}
+                  onClick={addSlide}
+                  className="w-full gap-1.5 mt-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Slide
+                </Button>
+              </>
             )}
           </div>
 
