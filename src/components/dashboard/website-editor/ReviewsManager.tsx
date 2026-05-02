@@ -412,10 +412,11 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
   };
 
   const handleAdd = () => {
+    const newId = crypto.randomUUID();
     setItems((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: newId,
         title: '',
         author: '',
         body: '',
@@ -426,6 +427,7 @@ export function ReviewsManager({ surface: lockedSurface, title }: ReviewsManager
         _isNew: true,
       },
     ]);
+    setExpandedIds((prev) => new Set(prev).add(newId));
   };
 
   const handleUpdate = (id: string, updates: Partial<DraftReview>) => {
