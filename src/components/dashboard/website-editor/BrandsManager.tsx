@@ -262,18 +262,25 @@ export function BrandsManager() {
   const handleImageUpload = async (brandId: string, file: File) => {
     try {
       setUploadingBrandId(brandId);
+      const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
       const fileExt = file.name.split('.').pop();
       const fileName = `brand-${brandId}-${Date.now()}.${fileExt}`;
       const filePath = `brands/${fileName}`;
       const { error: uploadError } = await supabase.storage
         .from('business-logos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type || undefined });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage
         .from('business-logos')
         .getPublicUrl(filePath);
       handleUpdateBrand(brandId, { logo_url: urlData.publicUrl });
-      toast.success('Logo uploaded');
+      if (isSvg) {
+        toast.success('Logo uploaded');
+      } else {
+        toast.success('Logo uploaded', {
+          description: 'SVG scales cleaner at any size — consider replacing with an SVG when you can.',
+        });
+      }
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload logo');
