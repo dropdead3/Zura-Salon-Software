@@ -23,7 +23,8 @@ export type SectionType = BuiltinSectionType | CustomSectionType;
 // Re-export the canonical schema from the renderer so editor + persistence
 // + render share one source of truth (extended May 2026 with video/overlay/
 // grain/vignette/blur + container frame fields).
-export type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+export type { StyleOverrides };
 
 export interface SectionConfig {
   id: string;
