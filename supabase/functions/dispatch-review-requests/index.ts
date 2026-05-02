@@ -117,6 +117,44 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
   }
 }
 
+const MAX_ATTEMPTS = 5;
+
+async function handleFailure(
+  supabase: any,
+  row: any,
+  errorMessage: string,
+  summary: DispatchSummary,
+) {
+  const nextAttempts = (row.attempts ?? 0) + 1;
+  // Exponential backoff: 5min * 2^(attempts-1) — 5m, 10m, 20m, 40m, then park at 5.
+  const backoffMin = 5 * Math.pow(2, nextAttempts - 1);
+  const nextRetry = new Date(Date.now() + backoffMin * 60 * 1000).toISOString();
+  const isParked = nextAttempts >= MAX_ATTEMPTS;
+  const nowIso = new Date().toISOString();
+
+  await supabase.from("review_request_dispatch_queue").update({
+    attempts: nextAttempts,
+    last_error: errorMessage,
+    next_retry_at: isParked ? null : nextRetry,
+    parked_at: isParked ? nowIso : null,
+  }).eq("id", row.id);
+
+  if (isParked) {
+    // Immutable compliance log entry — operators can audit parked rows.
+    await supabase.from("review_compliance_log").insert({
+      organization_id: row.organization_id,
+      event_type: "request_parked",
+      payload: {
+        appointment_id: row.appointment_id,
+        attempts: nextAttempts,
+        last_error: errorMessage,
+        channel: row.channel,
+      },
+    });
+  }
+  summary.errors++;
+}
+
 async function sendDue(supabase: any, summary: DispatchSummary) {
   const nowIso = new Date().toISOString();
   // Pull due rows: scheduled, not sent, not skipped, attempts under cap (5),
