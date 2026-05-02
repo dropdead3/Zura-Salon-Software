@@ -52,6 +52,7 @@ import {
   type PopupSurface,
   type EyebrowIcon,
   type PopupAcceptDestination,
+  type PopupAudience,
   type ModalImageLayout,
   type CornerCardImage,
 } from '@/hooks/usePromotionalPopup';
