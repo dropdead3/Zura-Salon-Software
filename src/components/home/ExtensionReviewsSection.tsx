@@ -273,6 +273,7 @@ export function ExtensionReviewsSection() {
   };
 
   return (
+    <SectionStyleWrapper styleOverrides={chipsConfig?.style_overrides}>
     <section 
       ref={sectionRef} 
       className="py-20 lg:py-32 overflow-hidden bg-background"
