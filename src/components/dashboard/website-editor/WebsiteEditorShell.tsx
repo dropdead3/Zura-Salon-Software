@@ -214,19 +214,22 @@ const TAB_LABELS: Record<string, string> = {
 };
 
 type PersistedState = {
-  // Note: `editorTab` intentionally NOT persisted. Restoring the last-active
-  // editor on every entry made the rail jump deep into whatever surface the
-  // user last touched, which felt like broken navigation. Entering the editor
-  // should land on a neutral default; explicit deep-links can override via
-  // `?editor=<tab>`.
-  selectedPageId: string;
+  // Editor entry contract: only layout preferences survive across sessions.
+  //   - `editorTab` is NOT persisted — landing deep in whatever surface the
+  //     user last touched read as broken navigation.
+  //   - `selectedPageId` is NOT persisted for the same reason — re-entering
+  //     should always land on Home, not the last page they edited.
+  // Explicit deep-links override via `?editor=<tab>`.
   showPreview: boolean;
 };
 
-// Legacy persisted shape included `editorTab`. We keep reading it only to
-// strip it (one-time cleanup) so users carrying old localStorage state stop
-// jumping after their next entry.
-type LegacyPersistedState = PersistedState & { editorTab?: string };
+// Legacy persisted shape included `editorTab` and `selectedPageId`. We keep
+// reading the old shape only to strip those fields on next write so users
+// carrying old localStorage state stop jumping after their next entry.
+type LegacyPersistedState = PersistedState & {
+  editorTab?: string;
+  selectedPageId?: string;
+};
 
 function readPersisted(orgId: string | undefined): Partial<LegacyPersistedState> {
   if (!orgId || typeof window === 'undefined') return {};
