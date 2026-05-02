@@ -599,6 +599,9 @@ function OutcomeStat({
     </div>
   );
 }
+
+/**
+ * Popup conversion funnel card. Joins impressions → CTA clicks → redemptions
  * → attributed revenue for a single promotional popup offer code.
  *
  * Honest empty state: when there is no offer code or no impressions yet, the
