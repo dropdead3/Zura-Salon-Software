@@ -144,7 +144,11 @@ export default function FeedbackHub() {
               <StylistReputationCard />
             </div>
 
+            <FeedbackTrendDriftCard />
+
             <NegativeReviewHeatmap />
+
+            <CoachingLoopCard />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
