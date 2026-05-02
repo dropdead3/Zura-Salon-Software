@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, MessageSquareQuote } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -48,6 +49,8 @@ export function TestimonialsEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  // Broadcast dirty state so the Website Editor Save bar activates.
+  useDirtyState(localConfig, data, 'section_testimonials');
 
   const updateField = <K extends keyof TestimonialsConfig>(field: K, value: TestimonialsConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));

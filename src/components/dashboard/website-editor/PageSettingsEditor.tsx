@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Paintbrush, ArrowUpDown, Maximize2 } from 'lucide-react';
@@ -114,6 +115,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
   }, [local, onUpdate, slugError]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(local, page, 'page_settings');
 
   const previewUrl = page.page_type === 'home'
     ? '/org/your-salon'

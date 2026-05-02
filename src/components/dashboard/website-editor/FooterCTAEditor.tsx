@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, MousePointerClick } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -44,6 +45,7 @@ export function FooterCTAEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_footer_cta');
 
   const updateField = <K extends keyof FooterCTAConfig>(field: K, value: FooterCTAConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));

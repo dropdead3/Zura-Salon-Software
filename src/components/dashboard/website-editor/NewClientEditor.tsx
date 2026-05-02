@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, UserPlus } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ export function NewClientEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_new_client');
 
   const updateField = <K extends keyof NewClientConfig>(field: K, value: NewClientConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));

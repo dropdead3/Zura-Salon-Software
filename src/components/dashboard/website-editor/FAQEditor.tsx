@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Settings2, RotateCcw, HelpCircle } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -50,6 +51,7 @@ export function FAQEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_faq');
 
   const updateField = <K extends keyof FAQConfig>(field: K, value: FAQConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));

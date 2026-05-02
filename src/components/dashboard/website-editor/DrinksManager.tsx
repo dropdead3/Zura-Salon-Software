@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Trash2, GripVertical, Upload, X, Coffee } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
+import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
@@ -184,6 +185,7 @@ export function DrinksManager() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(localConfig, data, 'section_drink_menu');
 
   const updateField = <K extends keyof DrinkMenuConfig>(field: K, value: DrinkMenuConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
