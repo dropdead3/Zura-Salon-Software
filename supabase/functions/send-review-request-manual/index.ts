@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
     // Authorization: actor must be an org admin/manager
     const { data: isAdmin } = await supabase.rpc("is_org_admin", {
-      _user_id: actorId, _organization_id: appt.organization_id,
+      _user_id: actorId, _org_id: appt.organization_id,
     });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {
