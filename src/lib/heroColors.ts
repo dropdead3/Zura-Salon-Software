@@ -15,16 +15,18 @@ export interface ResolvedHeroColors {
   headlineClass: string;
   /** Tailwind class fallback for the subheadline (auto-contrast). */
   subheadlineClass: string;
-  /** Inline style + className for the primary CTA button. */
+  /** Inline style + className for the primary CTA button. Includes the
+   *  `--hero-btn-hover` CSS var when an operator hover override is set. */
   primaryButtonStyle: React.CSSProperties;
   primaryButtonClass: string;
   /** Inline style + className for the secondary CTA button. */
   secondaryButtonStyle: React.CSSProperties;
   secondaryButtonClass: string;
-  /** Hover background for primary button — applied via CSS var. */
-  primaryHoverVar: React.CSSProperties;
-  /** Hover background for secondary button — applied via CSS var. */
-  secondaryHoverVar: React.CSSProperties;
+  /** True when an operator-set hover background exists for the primary CTA.
+   *  Consumers must add the `hero-cta-hover` utility class when true so the
+   *  CSS rule can override the inline `background-color`. */
+  hasPrimaryHover: boolean;
+  hasSecondaryHover: boolean;
 }
 
 /**
@@ -61,6 +63,10 @@ export function resolveHeroColors(
   const primaryButtonStyle: React.CSSProperties = {};
   if (colors.primary_button_bg) primaryButtonStyle.backgroundColor = colors.primary_button_bg;
   if (colors.primary_button_fg) primaryButtonStyle.color = colors.primary_button_fg;
+  if (colors.primary_button_hover_bg) {
+    (primaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
+      colors.primary_button_hover_bg;
+  }
 
   const primaryButtonClass =
     colors.primary_button_bg || colors.primary_button_fg
@@ -73,6 +79,10 @@ export function resolveHeroColors(
   const secondaryButtonStyle: React.CSSProperties = {};
   if (colors.secondary_button_border) secondaryButtonStyle.borderColor = colors.secondary_button_border;
   if (colors.secondary_button_fg) secondaryButtonStyle.color = colors.secondary_button_fg;
+  if (colors.secondary_button_hover_bg) {
+    (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
+      colors.secondary_button_hover_bg;
+  }
 
   const secondaryButtonClass =
     colors.secondary_button_border || colors.secondary_button_fg
@@ -80,15 +90,6 @@ export function resolveHeroColors(
       : hasBackground
         ? 'border-white text-white'
         : 'border-foreground text-foreground';
-
-  // Hover backgrounds applied as CSS custom properties so :hover can pick
-  // them up via inline style + the class `hover:[background-color:var(--h)]`.
-  const primaryHoverVar: React.CSSProperties = colors.primary_button_hover_bg
-    ? ({ ['--hero-btn-hover' as string]: colors.primary_button_hover_bg })
-    : {};
-  const secondaryHoverVar: React.CSSProperties = colors.secondary_button_hover_bg
-    ? ({ ['--hero-btn-hover' as string]: colors.secondary_button_hover_bg })
-    : {};
 
   return {
     headlineStyle,
@@ -99,7 +100,7 @@ export function resolveHeroColors(
     primaryButtonClass,
     secondaryButtonStyle,
     secondaryButtonClass,
-    primaryHoverVar,
-    secondaryHoverVar,
+    hasPrimaryHover: !!colors.primary_button_hover_bg,
+    hasSecondaryHover: !!colors.secondary_button_hover_bg,
   };
 }

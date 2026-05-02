@@ -433,6 +433,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                       className={cn(
                         "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                         heroColors.primaryButtonClass,
+                        heroColors.hasPrimaryHover && "hero-cta-hover",
                       )}
                       style={heroColors.primaryButtonStyle}
                     >
@@ -445,6 +446,7 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         className={cn(
                           "group w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full transition-all duration-300 inline-flex items-center justify-center gap-0 hover:gap-2 hover:pr-6",
                           heroColors.secondaryButtonClass,
+                          heroColors.hasSecondaryHover && "hero-cta-hover",
                         )}
                         style={heroColors.secondaryButtonStyle}
                       >
