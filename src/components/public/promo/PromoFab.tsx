@@ -60,7 +60,7 @@ export function PromoFab({
         aria-label="Dismiss offer reminder"
         onClick={onDismiss}
         className={cn(
-          'hidden sm:flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors',
+          'flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 hover:bg-foreground/20 text-muted-foreground hover:text-foreground transition-colors',
           position === 'bottom-left' ? 'mr-2' : 'ml-2',
         )}
       >
