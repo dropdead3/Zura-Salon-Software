@@ -153,7 +153,20 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
 
   const scrimStrength = useMemo(() => {
     if (!slide) return config.scrim_strength ?? 0.55;
-    return slide.scrim_strength ?? config.scrim_strength ?? 0.55;
+    // A per-slide override of `0` paired with a non-`none` style is
+    // meaningless (gradient with peak 0 = invisible) and almost always a
+    // legacy artifact from when the per-slide editor wrote `0` instead of
+    // `null` to express "inherit". Treat it as inherit so the section
+    // strength wins. Operators who explicitly want no scrim choose the
+    // `none` style — that branch is already short-circuited upstream.
+    const slideStrength = slide.scrim_strength;
+    const slideStyle = slide.scrim_style;
+    const isMeaninglessZero =
+      slideStrength === 0 && slideStyle != null && slideStyle !== 'none';
+    if (slideStrength == null || isMeaninglessZero) {
+      return config.scrim_strength ?? 0.55;
+    }
+    return slideStrength;
   }, [slide, config.scrim_strength]);
 
   // Background-only mode splits ownership:
