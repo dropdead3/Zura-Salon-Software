@@ -110,11 +110,7 @@ describe('PromotionalPopup — close path waits for animationend', () => {
   });
 
   it('ignores animationend bubbling up from a child element', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     const root = await screen.findByTestId('promo-popup-root');
 
