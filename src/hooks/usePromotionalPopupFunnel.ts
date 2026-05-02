@@ -170,30 +170,39 @@ export function usePromotionalPopupFunnel({
         firstImpressionRes,
         firstResponseRes,
       ] = await Promise.all([
-        supabase
-          .from('promo_offer_impressions')
-          .select('created_at')
-          .eq('organization_id', orgId)
-          .eq('offer_code', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('created_at', windowStart)
-          .limit(20_000),
-        supabase
-          .from('promo_offer_responses')
-          .select('response, created_at')
-          .eq('organization_id', orgId)
-          .eq('offer_code', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('created_at', windowStart)
-          .limit(10_000),
-        supabase
-          .from('promotion_redemptions')
-          .select('revenue_attributed, transaction_date')
-          .eq('organization_id', orgId)
-          .eq('promo_code_used', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('transaction_date', windowStart)
-          .limit(10_000),
+        (() => {
+          let q = supabase
+            .from('promo_offer_impressions')
+            .select('created_at')
+            .eq('organization_id', orgId)
+            .eq('offer_code', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('created_at', windowStart);
+          if (windowEnd) q = q.lte('created_at', windowEnd);
+          return q.limit(20_000);
+        })(),
+        (() => {
+          let q = supabase
+            .from('promo_offer_responses')
+            .select('response, created_at')
+            .eq('organization_id', orgId)
+            .eq('offer_code', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('created_at', windowStart);
+          if (windowEnd) q = q.lte('created_at', windowEnd);
+          return q.limit(10_000);
+        })(),
+        (() => {
+          let q = supabase
+            .from('promotion_redemptions')
+            .select('revenue_attributed, transaction_date')
+            .eq('organization_id', orgId)
+            .eq('promo_code_used', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('transaction_date', windowStart);
+          if (windowEnd) q = q.lte('transaction_date', windowEnd);
+          return q.limit(10_000);
+        })(),
         // Earliest impression for THIS org/surface (any code) — establishes
         // when impression tracking actually started recording. Powers the
         // "Since {date}" footnote and detects the pre-tracking asymmetry.
