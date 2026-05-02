@@ -263,5 +263,6 @@ export function DrinkMenuSection() {
         }}
       />
     </section>
+    </SectionStyleWrapper>
   );
 }
