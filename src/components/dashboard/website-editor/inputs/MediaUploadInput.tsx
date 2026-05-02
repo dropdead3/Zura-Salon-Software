@@ -399,6 +399,21 @@ export function MediaUploadInput({
     }
   }, [bucket, pathPrefix, onChange, imageOnly, qualityProfile]);
 
+  // Auto-upload a file handed in via `pendingInitialFile`. Runs once per
+  // distinct File reference — useRef tracks which file we've already
+  // consumed so a parent re-render can't double-upload. The consumer
+  // callback fires regardless of success/failure so the parent can clear
+  // its own pending-file state.
+  const consumedFileRef = useRef<File | null>(null);
+  useEffect(() => {
+    if (!pendingInitialFile) return;
+    if (consumedFileRef.current === pendingInitialFile) return;
+    consumedFileRef.current = pendingInitialFile;
+    void uploadFile(pendingInitialFile).finally(() => {
+      onPendingInitialFileConsumed?.();
+    });
+  }, [pendingInitialFile, uploadFile, onPendingInitialFileConsumed]);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
