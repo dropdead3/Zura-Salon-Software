@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 
 import { HeroTextColorsEditor } from './HeroTextColorsEditor';
 import { HeroScrimEditor } from './HeroScrimEditor';
+import { HeroWashEditor } from './HeroWashEditor';
 import { EditorCard } from './EditorCard';
 import { HeroEditorHubCard } from './hero/HeroEditorHubCard';
 import { HeroAdvancedEditor } from './hero/HeroAdvancedEditor';
