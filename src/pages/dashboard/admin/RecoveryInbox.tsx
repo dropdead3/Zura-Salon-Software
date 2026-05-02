@@ -136,7 +136,7 @@ export default function RecoveryInbox() {
         )}
       </div>
 
-      <RecoveryTaskDrawer task={selected} open={!!selected} onClose={() => setSelected(null)} />
+      <RecoveryTaskDrawer task={selected} open={!!selected} onClose={handleClose} />
     </DashboardLayout>
   );
 }
