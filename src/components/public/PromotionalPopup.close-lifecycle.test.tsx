@@ -77,11 +77,7 @@ describe('PromotionalPopup — close path waits for animationend', () => {
   });
 
   it('Esc key starts the close animation but keeps the popup mounted until animationend', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
 
     const root = await screen.findByTestId('promo-popup-root');
     expect(root.getAttribute('data-popup-phase')).toBe('entering');
