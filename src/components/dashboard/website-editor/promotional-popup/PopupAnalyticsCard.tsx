@@ -20,6 +20,15 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { usePromoLibrary } from '@/hooks/usePromoLibrary';
+import type { SavedPromoScheduleEntry } from '@/hooks/usePromotionalPopup';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
