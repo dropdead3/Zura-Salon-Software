@@ -395,6 +395,21 @@ export function buildSupabaseSrcSet(
  */
 export const HERO_SRCSET_WIDTHS = [640, 960, 1440, 1920, 2560, 3200, 3840, 5120];
 
+/**
+ * `sizes` attribute for hero `<img srcSet>` and `<link rel="preload">`.
+ *
+ * Default rung is `100vw` — let the browser pick the rung matching the
+ * device's CSS viewport × DPR. Save-Data clients (`prefers-reduced-data:
+ * reduce` — emerging-market mobile, throttled tethering, OS data-saver
+ * toggles) get capped at 1920px instead, trading retina sharpness for a
+ * 5–8× smaller LCP payload (a 5120w WebP is ~1.5MB, a 1920w is ~250KB).
+ *
+ * Honored by Chromium-family browsers when "Lite mode" / "Save Data" is on.
+ * Safari/Firefox ignore the media query and fall through to the 100vw rung,
+ * which is the safe default — no regression for the majority case.
+ */
+export const HERO_SIZES_ATTR = '(prefers-reduced-data: reduce) 1920px, 100vw';
+
 // ---------------------------------------------------------------------------
 // Image dimension probe (post-upload metadata capture)
 // ---------------------------------------------------------------------------

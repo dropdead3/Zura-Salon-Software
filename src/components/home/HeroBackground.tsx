@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import type { HeroScrimStyle } from '@/hooks/useSectionConfig';
-import { buildSupabaseSrcSet, HERO_SRCSET_WIDTHS } from '@/lib/image-utils';
+import { buildSupabaseSrcSet, HERO_SRCSET_WIDTHS, HERO_SIZES_ATTR } from '@/lib/image-utils';
 
 interface HeroBackgroundProps {
   type: 'none' | 'image' | 'video';
@@ -114,7 +114,7 @@ export function HeroBackground({
               as="image"
               href={url}
               imageSrcSet={srcSet}
-              imageSizes="100vw"
+              imageSizes={HERO_SIZES_ATTR}
               fetchPriority="high"
             />
           ) : (
@@ -139,7 +139,7 @@ export function HeroBackground({
       ) : (
         <img
           src={url}
-          {...(srcSet ? { srcSet, sizes: '100vw' } : {})}
+          {...(srcSet ? { srcSet, sizes: HERO_SIZES_ATTR } : {})}
           alt=""
           className={`w-full h-full ${objectFit}`}
           style={{ objectPosition }}
