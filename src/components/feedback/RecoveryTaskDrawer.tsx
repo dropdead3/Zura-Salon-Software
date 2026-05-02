@@ -121,6 +121,8 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
               />
             </div>
           )}
+
+          <AIRecoveryDraftButton recoveryTaskId={task.id} />
         </div>
 
         <div className="flex items-center justify-end gap-2 p-6 border-t border-border/40">
