@@ -94,5 +94,6 @@ export function BrandsSection() {
         </div>
       </div>
     </section>
+    </SectionStyleWrapper>
   );
 }
