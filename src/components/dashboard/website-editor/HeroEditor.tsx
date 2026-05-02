@@ -276,15 +276,12 @@ export function HeroEditor() {
     }
   }, [data, isLoading]);
 
-  // Re-read persisted view when org context changes (per-tenant view memory).
+  // Reset to hub when org context changes (tenant switch must not strand
+  // the operator inside a sub-panel from the previous org).
   useEffect(() => {
-    setView(readPersistedView(orgId));
+    setView({ kind: 'hub' });
     migratedRef.current = false;
   }, [orgId]);
-
-  useEffect(() => {
-    writePersistedView(orgId, view);
-  }, [orgId, view]);
 
   const handleSave = useCallback(async () => {
     try {
