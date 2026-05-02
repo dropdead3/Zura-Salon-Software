@@ -156,41 +156,7 @@ export default function FeedbackHub() {
           </TabsContent>
 
           <TabsContent value="staff" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">Staff Feedback Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {staffStats && Object.keys(staffStats).length > 0 ? (
-                  <div className="space-y-4">
-                    {Object.entries(staffStats).map(([staffId, stats]) => (
-                      <div key={staffId} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                        <div>
-                          <p className="font-medium">Staff Member</p>
-                          <p className="text-xs text-muted-foreground">
-                            {stats.totalResponses} reviews
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="text-center">
-                            <p className="font-medium">{stats.avgRating.toFixed(1)}</p>
-                            <p className="text-xs text-muted-foreground">Rating</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-medium">{stats.avgFriendliness.toFixed(1)}</p>
-                            <p className="text-xs text-muted-foreground">Friendliness</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm text-center py-8">
-                    No staff feedback data yet
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+            <StaffFeedbackSummary organizationId={organizationId} />
           </TabsContent>
 
           {isSuperAdmin && (
