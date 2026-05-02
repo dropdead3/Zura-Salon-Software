@@ -1,43 +1,92 @@
-## Problem
+## Per-Section Color Editing — Universal Coverage
 
-Re-entering the website editor lands the operator on whatever they last touched (last page, last expanded groups), instead of a clean default rail. This reads as "navigation took me to the last area visited" rather than "back to the original nav tree."
+### What you have today
 
-## Goal
+| Surface | Color controls | How |
+|---|---|---|
+| Hero | Headline, subheadline, primary/secondary CTA bg+fg+border, hover bg, eyebrow | `HeroTextColorsEditor` (full granular) |
+| Announcement bar | Banner bg, highlight color (auto-contrast) | `AnnouncementBarContent` |
+| Promo popup | Accent color | `PromotionalPopupEditor` |
+| Site Design panel | Site-wide theme palette | `SiteDesignPanel` |
+| **Every other section** (Generic) | Background type/color, generic text-color override | `SectionStyleEditor` via the `Style` pill on the section card |
 
-On every entry to the website editor:
-- Selected page resets to **Home**.
-- Section-group expand/collapse resets to defaults (Above the Fold open, others collapsed).
-- Side panels (Site Design, Publish, History, Discard) start closed.
+Every section already has *some* color control (the generic Style pill), but only Hero/Announcement/Popup expose **per-element** colors. The gap is granular tokens (heading vs. body vs. eyebrow vs. button vs. accent) for the 12 content sections.
 
-In-session navigation (clicking around, expanding groups, switching pages) still behaves normally — state only resets when you re-open the editor.
+### What's missing
 
-## Changes
+Sections that render multiple distinct text elements but only expose one blanket "text override":
 
-### 1. `WebsiteEditorShell.tsx` — stop persisting `selectedPageId`
-- `PersistedState` currently saves `{ selectedPageId, showPreview }` to `localStorage`. Drop `selectedPageId` from both the type and the writer; keep `showPreview` (that's a layout preference, not a navigation choice).
-- Initial state: `useState<string>('home')` instead of `persisted.selectedPageId ?? 'home'`.
-- Mirror the existing one-time-cleanup pattern used for the legacy `editorTab` field: read the old persisted shape and strip `selectedPageId` on next write so users carrying stale state don't keep landing on the wrong page once.
-- Confirm `editorTab` already defaults to `'hero'` on entry (it does — only `?editor=` deep-links override). No change needed there.
-- Confirm the panel-open booleans (`siteDesignOpen`, `publishOpen`, `historyOpen`, `discardOpen`, `revertDraftOpen`, `addPageOpen`, `templatePickerOpen`, `mobileSidebarOpen`) all initialize to `false` and aren't driven by URL/localStorage. They are — no change needed, but verify during implementation.
+1. **FAQ** — section heading, eyebrow, question text, answer text, accent (open-state border/icon)
+2. **Testimonials** — section heading, eyebrow, quote text, attribution, star color
+3. **Footer CTA** — heading, subheading, primary button bg+fg, secondary button bg+fg
+4. **Footer** (full footer) — link color, heading color, divider, social icon color
+5. **New Client** — heading, body, CTA button colors
+6. **Brand Statement** — heading, body, accent
+7. **Brands** — section heading, eyebrow, label color
+8. **Drinks** — section heading, eyebrow, item name, item description
+9. **Extensions** — section heading, eyebrow, body, CTA colors
+10. **Extension Reviews Chips** — chip bg, chip text, accent
+11. **Popular Services** — heading, eyebrow, service-card text, price color, CTA
+12. **Locations / Stylists / Services / Gallery display editors** — heading + eyebrow color
+13. **Sticky Footer Bar** — bg, text, button colors
 
-### 2. `useEditorSidebarPrefs.ts` — make group state session-only
-The hook currently persists `collapsedGroups` to `localStorage` per org, so groups stay the way you left them across sessions. Switch to in-memory state seeded from `DEFAULT_COLLAPSED_GROUPS` on every mount:
-- Drop `readPrefs` / `writePrefs` and the `STORAGE_PREFIX` constant.
-- `useState` initializes directly from `DEFAULT_COLLAPSED_GROUPS`.
-- `toggleGroup` updates state only — no `writePrefs` call.
-- The `orgId` arg becomes unused; keep the signature so callers don't churn, but document that it's reserved for future per-org defaults.
+### The plan — three layers
 
-This means: clicking around in one editor session keeps groups the way you left them; closing the editor and coming back resets to defaults.
+**Layer 1 — Schema (one shared shape).** Add a `text_colors` JSON object to each section's settings, modeled after Hero's `text_colors`. Each section declares only the slots it actually has:
 
-### 3. Tests
-- Add a Vitest for `WebsiteEditorShell` that mounts with stale `localStorage` containing `selectedPageId: 'about'` and asserts the rail still lands on Home, and the stale key gets stripped on next write.
-- Add a Vitest for `useEditorSidebarPrefs` confirming: (a) initial state matches `DEFAULT_COLLAPSED_GROUPS` regardless of any pre-existing `localStorage` value, (b) `toggleGroup` flips state, (c) remounting resets to defaults.
+```ts
+// shared shape, per-section keys vary
+type SectionTextColors = {
+  heading?: string;
+  eyebrow?: string;
+  body?: string;
+  accent?: string;
+  primary_button_bg?: string;
+  primary_button_fg?: string;
+  primary_button_hover_bg?: string;
+  secondary_button_bg?: string;
+  secondary_button_fg?: string;
+  // section-specific extras (e.g. star_color for Testimonials)
+};
+```
 
-### 4. Memory note
-Add a one-liner to `mem://index.md` Core: *Editor rail entry contract: selected page resets to Home, section groups reset to defaults, side panels closed. Only `showPreview` and `?editor=` deep-link survive entry.*
+Persisted at `site_settings.<section_key>.text_colors`. Empty = inherit from theme. No DB migration — `site_settings.value` is JSONB, so this is purely a settings-payload addition.
 
-## Out of scope
+**Layer 2 — One canonical reusable editor.** Build `SectionTextColorsEditor` (mirrors `HeroTextColorsEditor`) that takes a `slots` config + `value` + `onChange`. It renders one labeled `ThemeAwareColorInput` per slot, so every section-specific editor wires it in 5 lines. Reuses the existing theme-token swatch row, "in-use" swatch row, custom hex picker, and auto-contrast logic from the canon — no new color-picker code.
 
-- Nav tree visual hierarchy is unchanged (Zone 1 This Page → Zone 2 Site Chrome → Zone 3 Library stays).
-- `?editor=hero` deep-link override stays — programmatic entry from elsewhere (e.g. "Edit this section" buttons) still works.
-- `showPreview` persistence stays (it's a layout preference, not navigation).
+**Layer 3 — Wire it into each section editor.** For each of the 12 editors above:
+- Import `SectionTextColorsEditor`, declare which slots that section supports.
+- Add a "Section Colors" group (collapsible, matches the "Banner Color" group's styling in `AnnouncementBarContent`).
+- Pass `formData.text_colors` ↔ `handleChange('text_colors', next)` through the existing dirty-state hook.
+- Inject `auto-contrast hover defaults` (the same fallback already used on Hero) so operators can't ship illegible hover states.
+
+**Layer 4 — Live render.** Each `home/<Section>.tsx` component reads `text_colors` from its settings hook and applies inline `style={{ color: ... }}` to the matching elements (or via CSS variables on the section root). Mirrors the Hero pattern verbatim — same tone-fallback resolver, same `pickReadableForeground` helper, same auto-contrast for hover states.
+
+### Order of work
+
+1. **Foundation** — extract `SectionTextColorsEditor` from `HeroTextColorsEditor` into `inputs/SectionTextColorsEditor.tsx`. Pure refactor: Hero keeps its existing shape; the new component takes a `slots` array.
+2. **Wave 1 (highest-traffic sections)** — FAQ, Testimonials, Footer CTA, Brand Statement.
+3. **Wave 2** — Brands, Drinks, Extensions, Extension Reviews Chips, New Client, Popular Services.
+4. **Wave 3** — Locations, Stylists, Services, Gallery display editors + Footer (full) + Sticky Footer Bar.
+
+Each wave: editor → live component → quick visual verify in the editor preview.
+
+### Guardrails carried forward
+
+- Auto-contrast hover fallback (already canon for Hero) applied to every new `*_hover_bg` slot — operator can't ship a light hover bg with dark text below 4.5:1.
+- `useDirtyState` wired against `text_colors` so the Save bar activates correctly (we just hardened this on 11 editors — same pattern reused).
+- Live-edit bridge (`usePreviewBridge`) carries the new payload to the iframe with no extra plumbing — it streams the whole formData object.
+- Theme-aware swatches resolve against the **website** theme, not the dashboard theme (per ThemeAwareColorInput Canon).
+- "In-use" swatch aggregator (`useInUseSiteColors`) gets new sources added so colors picked in section A appear as one-click chips in section B.
+
+### What this does NOT do
+
+- No new global theme tokens — operators still paint via the existing 12 site themes. This adds *per-section overrides on top* of the theme.
+- No per-element color editing for *Hero* — Hero already has it; this brings the rest of the site to parity.
+- No element-level overrides inside structural editors that don't render text (e.g. Hero Background Editor, Gallery image grid).
+
+### Estimated scope
+
+~14 editor files touched, ~12 home-section render files touched, 1 new shared input component, 1 update to `useInUseSiteColors`. No DB migration. No breaking changes — empty `text_colors` = current behavior.
+
+After approval I'll implement Foundation + Wave 1 in the first pass and stop for review before touching Waves 2–3, since this is a wide change and you'll want to QA the visual treatment on a couple sections before I roll the same pattern across all twelve.
