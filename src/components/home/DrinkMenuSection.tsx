@@ -160,15 +160,24 @@ export function DrinkMenuSection() {
     return null;
   }
 
+  // Suppress the default white→cream gradient when the operator has set a
+  // section background override — otherwise the inline gradient would shadow
+  // SectionStyleWrapper's paint.
+  const hasBgOverride =
+    !!config?.style_overrides?.background_type &&
+    config.style_overrides.background_type !== 'none';
+
   return (
     <SectionStyleWrapper styleOverrides={config?.style_overrides}>
     <section 
       ref={sectionRef} 
       data-theme="light" 
       className="pt-16 lg:pt-24 pb-32 lg:pb-40 overflow-hidden relative"
-      style={{
-        background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 75%, hsl(40 20% 92%) 100%)'
-      }}
+      style={
+        hasBgOverride
+          ? undefined
+          : { background: 'linear-gradient(to bottom, hsl(0 0% 100%) 0%, hsl(0 0% 100%) 75%, hsl(40 20% 92%) 100%)' }
+      }
     >
       {/* Header - use config values */}
       <motion.div
