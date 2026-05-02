@@ -17,7 +17,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
 import { HeroSlideRotator } from './HeroSlideRotator';
 import { DEFAULT_HERO, type HeroConfig, type HeroSlide } from '@/hooks/useSectionConfig';
 
@@ -55,13 +54,11 @@ function makeSlide(overrides: Partial<HeroSlide> = {}): HeroSlide {
   };
 }
 
-function renderRotator(config: HeroConfig, opts: { isPreview?: boolean } = { isPreview: true }) {
+function renderRotator(config: HeroConfig) {
   return render(
-    <HelmetProvider>
-      <MemoryRouter>
-        <HeroSlideRotator config={config} isPreview={opts.isPreview} />
-      </MemoryRouter>
-    </HelmetProvider>,
+    <MemoryRouter>
+      <HeroSlideRotator config={config} isPreview />
+    </MemoryRouter>,
   );
 }
 
