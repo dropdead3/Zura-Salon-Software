@@ -41,6 +41,13 @@ import {
   X,
   Check,
 } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,6 +70,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import {
   PROMO_PRESETS,
   applyPresetContent,
@@ -242,22 +250,26 @@ export function PromoLibraryCard({ formData, setFormData, isDirty }: PromoLibrar
   // ── Render ──
 
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-display uppercase tracking-wider text-xs text-foreground flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-            Promotion Library
-          </h3>
-          <p className="font-sans text-xs text-muted-foreground mt-1">
-            Start from a curated template, or reload one of your saved promotions.
-          </p>
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className={tokens.card.title}>Promotion Library</CardTitle>
+              <CardDescription>
+                Start from a curated template, or reload one of your saved promotions.
+              </CardDescription>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* ── Preset picker ── */}
-      <div className="space-y-1.5">
-        <Label className="font-sans text-sm">Start from a template</Label>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* ── Preset picker ── */}
+        <div className="space-y-1.5">
+          <Label className="text-xs">Start from a template</Label>
         <div className="flex gap-2">
           <Select value={presetKey} onValueChange={setPresetKey}>
             <SelectTrigger className="flex-1">
@@ -296,7 +308,7 @@ export function PromoLibraryCard({ formData, setFormData, isDirty }: PromoLibrar
       {/* ── Saved promotions ── */}
       <div className="space-y-2 pt-2 border-t border-border/60">
         <div className="flex items-center justify-between gap-2">
-          <Label className="font-sans text-sm">
+          <Label className="text-xs">
             Your saved promotions{' '}
             <span className="text-muted-foreground tabular-nums">
               ({saved.length} / {SAVED_PROMO_CAP})
@@ -533,6 +545,7 @@ export function PromoLibraryCard({ formData, setFormData, isDirty }: PromoLibrar
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
