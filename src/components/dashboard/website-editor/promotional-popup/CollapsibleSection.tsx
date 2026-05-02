@@ -75,7 +75,7 @@ export function CollapsibleSection({
           </span>
         )}
         <span className="flex-1 min-w-0">
-          <span className="font-display uppercase tracking-wide text-[11px] text-foreground block truncate">
+          <span className="font-display uppercase tracking-wide text-[10px] text-foreground block truncate">
             {title}
           </span>
           {summary && (
