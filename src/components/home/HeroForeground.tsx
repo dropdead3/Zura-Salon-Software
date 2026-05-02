@@ -65,7 +65,7 @@ interface HeroForegroundProps {
   /** Resolved alignment classes (.headline / .subheadline / .cta / .ctaRow / .notes). */
   alignment: HeroAlignmentClasses;
   /** Resolved spacing tokens (eyebrow / subheadline / cta / notesGap). */
-  spacing: HeroSpacing;
+  spacing: HeroSpacingClasses;
   /** Rotating-word state (lifted to parent so the interval lives once per section). */
   rotatingWords: string[];
   showRotatingWords: boolean;
