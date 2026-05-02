@@ -368,8 +368,7 @@ function ComparePanel({
     </div>
   );
 }
-
-
+interface PopupAnalyticsCardProps {
   offerCode: string | null | undefined;
   /** Defaults to 30. */
   windowDays?: number;
