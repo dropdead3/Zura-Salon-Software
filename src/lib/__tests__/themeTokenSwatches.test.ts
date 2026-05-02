@@ -113,18 +113,18 @@ describe('readThemeTokenSwatches — resolution scope', () => {
 
     const swatches = readThemeTokenSwatches('theme-cream-lux');
     const primary = swatches.find((s) => s.key === 'primary');
-    expect(primary?.hex).toBe('#847569'); // hsl(30 14% 45%) → warm taupe
+    expect(primary?.hex).toBe('#837363'); // hsl(30 14% 45%) → warm taupe
 
     // Sanity: the same call with the wrong scope returns Zura's purple,
     // confirming the test infra distinguishes the two outcomes.
     const wrongScope = readThemeTokenSwatches('theme-zura');
-    expect(wrongScope.find((s) => s.key === 'primary')?.hex).toBe('#a73be6');
+    expect(wrongScope.find((s) => s.key === 'primary')?.hex).toBe('#8c3cdd');
   });
 
   it('falls back to <html> classes when no themeClass arg is provided (back-compat for non-editor callers)', () => {
     document.documentElement.classList.add('theme-cream-lux');
 
     const swatches = readThemeTokenSwatches();
-    expect(swatches.find((s) => s.key === 'primary')?.hex).toBe('#847569');
+    expect(swatches.find((s) => s.key === 'primary')?.hex).toBe('#837363');
   });
 });
