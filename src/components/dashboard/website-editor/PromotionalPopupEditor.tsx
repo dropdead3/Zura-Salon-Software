@@ -118,6 +118,10 @@ export function PromotionalPopupEditor() {
     DEFAULT_PROMO_POPUP,
   );
   const [autoSaving, setAutoSaving] = useState(false);
+  // Cross-card rotation focus — calendar-strip click in `PromoScheduleCard`
+  // and rotation-pill click in `PopupAnalyticsCard` both write here so the
+  // two surfaces stay in lockstep ("visual → row → metrics").
+  const [focusedRotationId, setFocusedRotationId] = useState<string | null>(null);
 
   // Dev-only save-trace telemetry. Records every step of a save attempt
   // (click → mutation success → refetch result → form snapshot) and emits
