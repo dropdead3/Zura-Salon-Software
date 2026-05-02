@@ -115,6 +115,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
   }, [local, onUpdate, slugError]);
 
   useEditorSaveAction(handleSave);
+  useDirtyState(local, page, 'page_settings');
 
   const previewUrl = page.page_type === 'home'
     ? '/org/your-salon'
