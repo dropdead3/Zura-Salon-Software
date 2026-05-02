@@ -83,6 +83,14 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   const isViewMode = getIsViewMode();
   const queryClient = useQueryClient();
 
+  // Read site-design overrides for the hero parallax effect. Only meaningful
+  // in non-edit-mode renders (the rearrangeable bento cards in edit-mode
+  // would break under sticky positioning, so we always disable there).
+  // Hero parallax also requires the first enabled section to be a `hero` —
+  // if the operator dragged the hero out of slot 0, parallax silently no-ops.
+  const { data: designOverrides } = useSiteSettings<DesignOverrides>('website_design_overrides');
+  const heroParallaxEnabled = !!designOverrides?.hero_parallax_enabled;
+
   const enabledSections = useMemo(() => {
     const base = isEditorPreview && !isViewMode
       ? [...sections].sort((a, b) => a.order - b.order)
