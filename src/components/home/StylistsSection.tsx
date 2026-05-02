@@ -540,7 +540,10 @@ export function StylistsSection() {
 
   return (
     <SectionStyleWrapper styleOverrides={displayConfig?.style_overrides}>
-    <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 bg-secondary overflow-visible pb-0">
+    {/* No bg-* class: SectionStyleWrapper owns the background paint so the
+        per-section color override takes effect. The gradient handoff above
+        intentionally keeps its --secondary stop for the default look. */}
+    <section ref={sectionRef} id="stylists-section" data-theme="light" className="relative py-20 lg:py-32 overflow-visible pb-0">
       {/* Gradient transition from previous section */}
       <div 
         className="absolute top-0 left-0 right-0 h-24 sm:h-32 md:h-40 -translate-y-full pointer-events-none"
