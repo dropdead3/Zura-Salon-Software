@@ -228,6 +228,22 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
     // correct for multi_slide (each slide owns editable text — rotation
     // would yank the active edit target), but wrong for background_only
     // because the foreground is shared/static.
+    //
+    // LIVE DB SHAPE (anchored to real-world repro, May 2026):
+    //   psql> select section_payload->'rotator_mode',
+    //                section_payload->'auto_rotate',
+    //                section_payload->'slide_interval_ms',
+    //                jsonb_array_length(section_payload->'slides')
+    //         from site_settings_sections
+    //         where organization_id = '<drop-dead-salons>' and section_type = 'hero';
+    //   => background_only | true | 9000 | 4
+    //
+    // The bug ONLY repros with all four conditions:
+    //   slides.length > 1  AND  auto_rotate=true  AND  rotator_mode='background_only'  AND  isPreview
+    // A future "simplify the rotator" refactor that re-introduces the
+    // unconditional `isPreview` suppression would still pass a test written
+    // with `slides.length === 1`. Keep this test at 3 slides + auto_rotate
+    // + background_only or the regression door reopens silently.
     const config: HeroConfig = {
       ...DEFAULT_HERO,
       headline_text: 'Shared',
@@ -243,6 +259,9 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
       rotator_mode: 'background_only',
       auto_rotate: true,
       // Floor-clamped to 2000ms by the rotator (Math.max(2000, ...)).
+      // Real prod value is 9000ms; we use the floor here to keep test
+      // wall-clock cheap. The clamp + the suppression branch are the
+      // two pieces under test; the literal interval value is incidental.
       slide_interval_ms: 2000,
     };
     const { container } = renderRotator(config);
@@ -252,16 +271,25 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
       container.querySelector('[aria-label^="Go to background"].w-8');
     expect(activeDot()?.getAttribute('aria-label')).toBe('Go to background 1');
 
+    // background_only mode must NOT show the "auto-rotate paused" hint —
+    // the hint is an editing-suppression affordance, not a generic preview
+    // affordance. Showing it here would lie to the operator.
+    expect(container.querySelector('[data-testid="hero-rotator-paused-hint"]')).toBeNull();
+
     // Advance past one rotation interval. Auto-rotate should fire.
     await new Promise((r) => setTimeout(r, 2200));
     expect(activeDot()?.getAttribute('aria-label')).toBe('Go to background 2');
   }, 5000);
 
-  it('does NOT auto-rotate in editor preview when rotator_mode is multi_slide (suppression preserved)', async () => {
+  it('does NOT auto-rotate in editor preview when rotator_mode is multi_slide (suppression preserved) AND surfaces the paused-hint affordance', async () => {
     // The other half of the contract: suppressing auto-rotate in preview
     // for multi_slide mode is the correct behavior — operators editing
     // per-slide copy must not have the slide rotate out from under their
     // cursor. This guards the doctrinal split the bug fix introduced.
+    //
+    // Companion affordance: when we suppress, we must SAY we suppressed,
+    // otherwise the preview looks broken (same UX failure mode that
+    // produced the May 2026 bug report on the background_only branch).
     const config: HeroConfig = {
       ...DEFAULT_HERO,
       headline_text: 'Shared',
@@ -277,6 +305,14 @@ describe('HeroSlideRotator — rotator_mode background_only', () => {
     const activeDot = () =>
       container.querySelector('[aria-label^="Go to slide"].w-8');
     expect(activeDot()?.getAttribute('aria-label')).toBe('Go to slide 1');
+
+    // Hint must be visible the moment the rotator mounts in preview with
+    // suppression active — operators should never wait `slide_interval_ms`
+    // to learn the preview won't move.
+    expect(
+      container.querySelector('[data-testid="hero-rotator-paused-hint"]'),
+    ).not.toBeNull();
+
     await new Promise((r) => setTimeout(r, 2200));
     expect(activeDot()?.getAttribute('aria-label')).toBe('Go to slide 1');
   }, 5000);
