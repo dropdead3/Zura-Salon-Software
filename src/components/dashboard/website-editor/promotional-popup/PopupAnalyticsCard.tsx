@@ -189,7 +189,7 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
       </div>
       <ResponsiveContainer width="100%" height={140}>
         <AreaChart
-          data={data}
+          data={chartData}
           margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
           onMouseMove={(state) => {
             // Recharts forwards `tooltipPayload[0].dataKey` on hover; map back
@@ -269,6 +269,21 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
             fill="url(#popupRedemptionsFill)"
             name="Redemptions"
           />
+          {etaDate && capHitEta ? (
+            <ReferenceLine
+              x={etaDate}
+              stroke="hsl(38 92% 50%)"
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              label={{
+                value: capHitEta.label,
+                position: 'top',
+                fill: 'hsl(38 92% 50%)',
+                fontSize: 10,
+                fontFamily: 'inherit',
+              }}
+            />
+          ) : null}
         </AreaChart>
       </ResponsiveContainer>
     </div>
