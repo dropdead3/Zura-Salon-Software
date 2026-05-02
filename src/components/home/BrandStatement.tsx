@@ -113,6 +113,22 @@ export function BrandStatement() {
         ...containerDefaults,
       };
 
+  const sectionStyleOverrides = {
+    ...mergedOverrides,
+    container_enabled: false,
+  };
+
+  const contentFrameOverrides = {
+    ...mergedOverrides,
+    background_type: 'none' as const,
+    background_value: '',
+    padding_top: 0,
+    padding_bottom: 0,
+    max_width: 'full' as const,
+    text_color_override: '',
+    border_radius: 0,
+  };
+
   // Auto-contrast text tone from the resolved container fill so the headline
   // stays legible whether the operator keeps the dark default, picks a light
   // preset (Ivory/Porcelain), or disables the container frame entirely.
@@ -151,90 +167,92 @@ export function BrandStatement() {
   const paragraphColorClass = isLightText ? 'text-background/80' : 'text-foreground/80';
 
   return (
-    <SectionStyleWrapper styleOverrides={mergedOverrides}>
+    <SectionStyleWrapper styleOverrides={sectionStyleOverrides}>
     <Section theme="light">
-      <motion.div
-        ref={containerRef}
-        className={textColorClass}
-        style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
-      >
-        <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
-          {/* Left side - Title */}
-          <motion.div
-            initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-            animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
-            transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
-          >
-            {config.show_eyebrow && config.eyebrow && (
-              <Eyebrow
-                className={`${eyebrowColorClass} mb-4`}
-                style={config.text_colors?.eyebrow ? { color: config.text_colors.eyebrow } : undefined}
-              >
-                {config.eyebrow}
-              </Eyebrow>
-            )}
-            {config.show_headline && (
-              <h2
-                className="font-display font-normal tracking-tight leading-[1.1]"
-                // Heading scale opt-in — multiplies the base size via the
-                // `--section-heading-scale` CSS var on the section wrapper.
-                style={{ fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))' }}
-              >
-                <InlineEditableText
-                  as="span"
-                  value={config.headline_prefix}
-                  sectionKey="section_brand_statement"
-                  fieldPath="headline_prefix"
-                  placeholder="Headline prefix"
-                />
-                <br />
-                <span className="font-light">
-                  {displayText}
-                  {config.show_typewriter_cursor && (
-                    <span className="inline-block w-[2px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
-                  )}
-                </span>
-                {(config.headline_suffix || isPreview) && (
-                  <>
-                    <br />
-                    <InlineEditableText
-                      as="span"
-                      className="font-light"
-                      value={config.headline_suffix ?? ''}
-                      sectionKey="section_brand_statement"
-                      fieldPath="headline_suffix"
-                      placeholder="Headline suffix (optional)"
-                    />
-                  </>
-                )}
-              </h2>
-            )}
-          </motion.div>
-
-          {/* Right side - Description */}
-          {config.show_paragraphs && config.paragraphs.length > 0 && (
+      <SectionStyleWrapper styleOverrides={contentFrameOverrides}>
+        <motion.div
+          ref={containerRef}
+          className={textColorClass}
+          style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
+        >
+          <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
+            {/* Left side - Title */}
             <motion.div
-              initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+              initial={{ opacity: 0, x: -20, filter: "blur(4px)" }}
               animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
-              transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-              className="space-y-6"
+              transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              {config.paragraphs.map((paragraph, i) => (
-                <InlineEditableText
-                  key={i}
-                  as="p"
-                  multiline
-                  className={`text-base md:text-lg font-sans font-light leading-relaxed ${paragraphColorClass}`}
-                  value={paragraph}
-                  sectionKey="section_brand_statement"
-                  fieldPath={`paragraphs.${i}`}
-                  placeholder="Paragraph text"
-                />
-              ))}
+              {config.show_eyebrow && config.eyebrow && (
+                <Eyebrow
+                  className={`${eyebrowColorClass} mb-4`}
+                  style={config.text_colors?.eyebrow ? { color: config.text_colors.eyebrow } : undefined}
+                >
+                  {config.eyebrow}
+                </Eyebrow>
+              )}
+              {config.show_headline && (
+                <h2
+                  className="font-display font-normal tracking-tight leading-[1.1]"
+                  // Heading scale opt-in — multiplies the base size via the
+                  // `--section-heading-scale` CSS var on the section wrapper.
+                  style={{ fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))' }}
+                >
+                  <InlineEditableText
+                    as="span"
+                    value={config.headline_prefix}
+                    sectionKey="section_brand_statement"
+                    fieldPath="headline_prefix"
+                    placeholder="Headline prefix"
+                  />
+                  <br />
+                  <span className="font-light">
+                    {displayText}
+                    {config.show_typewriter_cursor && (
+                      <span className="inline-block w-[2px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
+                    )}
+                  </span>
+                  {(config.headline_suffix || isPreview) && (
+                    <>
+                      <br />
+                      <InlineEditableText
+                        as="span"
+                        className="font-light"
+                        value={config.headline_suffix ?? ''}
+                        sectionKey="section_brand_statement"
+                        fieldPath="headline_suffix"
+                        placeholder="Headline suffix (optional)"
+                      />
+                    </>
+                  )}
+                </h2>
+              )}
             </motion.div>
-          )}
-        </div>
-      </motion.div>
+
+            {/* Right side - Description */}
+            {config.show_paragraphs && config.paragraphs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
+                animate={isInView ? { opacity: 1, x: 0, filter: "blur(0px)" } : {}}
+                transition={{ duration: 0.9, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+                className="space-y-6"
+              >
+                {config.paragraphs.map((paragraph, i) => (
+                  <InlineEditableText
+                    key={i}
+                    as="p"
+                    multiline
+                    className={`text-base md:text-lg font-sans font-light leading-relaxed ${paragraphColorClass}`}
+                    value={paragraph}
+                    sectionKey="section_brand_statement"
+                    fieldPath={`paragraphs.${i}`}
+                    placeholder="Paragraph text"
+                  />
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      </SectionStyleWrapper>
     </Section>
     </SectionStyleWrapper>
   );
