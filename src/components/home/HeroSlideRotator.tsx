@@ -271,6 +271,36 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
     return () => ro.disconnect();
   }, [activeIndex]);
 
+  /*
+   * Scroll-driven exit choreography (live site only).
+   *
+   * Mirrors the legacy single-slide HeroSection so the canonical multi-slide
+   * rotator keeps the signature "headline splits + blurs + parallax fade-out
+   * on scroll up" feel. Suppressed in editor preview (operators need a static
+   * canvas to edit) and when the user prefers reduced motion.
+   */
+  const sectionRef = useRef<HTMLElement>(null);
+  const enableScrollFx = !isPreview && !reduceMotion;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+  const sectionOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const headingBlur = useTransform(scrollYProgress, [0, 0.3], [0, 15]);
+  const headingBlurFilter = useTransform(headingBlur, (v) => `blur(${v}px)`);
+  const headlineScrollOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
+  const taglineY = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const headlineY = useTransform(scrollYProgress, [0, 1], [0, -100]);
+  const subheadlineY = useTransform(scrollYProgress, [0, 1], [0, -150]);
+  const ctaY = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const topLineX = useTransform(scrollYProgress, [0, 0.4], [0, -150]);
+  const bottomLineX = useTransform(scrollYProgress, [0, 0.4], [0, 150]);
+
+  // When effects are disabled (preview/reduced-motion), fall back to undefined
+  // so the elements render as plain static nodes — no MotionValue subscriptions.
+  const fx = (mv: MotionValue<number> | MotionValue<string>) => (enableScrollFx ? mv : undefined);
+
+
   return (
     <section
       data-theme={hasBackground ? 'dark' : 'light'}
