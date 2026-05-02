@@ -271,11 +271,11 @@ export function ThemeAwareColorInput({
         </div>
       )}
 
-      {/* Inline trigger row — swatch button + hex field. All swatch grids
-          live inside the Popover to keep the editor side rail clean. The
-          row is items-start so the caption under the trigger swatch
-          ("· Primary") doesn't shove the hex field down. */}
-      <div className="flex items-start gap-2">
+      {/* Inline trigger row — swatch button only. The hex text field lives
+          inside the Popover (next to the Custom RGB picker) so the editor
+          side rail stays compact. When no value is set, an inline hint
+          tells the operator that empty == inherit defaults. */}
+      <div className="flex items-center gap-2">
         <div className="flex flex-col items-start gap-1">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -441,6 +441,19 @@ export function ThemeAwareColorInput({
                   className="!w-full"
                 />
               </div>
+              {/* Hex text field lives here (inside the popover, under the
+                  RGB picker) — not on the editor row. Operators who want
+                  to paste a hex still have the affordance; the editor row
+                  stays clean. */}
+              <Input
+                value={display}
+                onChange={(e) => onChange(e.target.value || undefined)}
+                onBlur={(e) => recordPick(e.target.value)}
+                placeholder={placeholder}
+                className="h-8 text-xs font-mono"
+                spellCheck={false}
+                aria-label="Hex value"
+              />
               {!eyeDropperSupported && (
                 <span className="block text-[10px] text-muted-foreground/70">
                   Eyedropper requires Chrome or Edge.
@@ -475,31 +488,29 @@ export function ThemeAwareColorInput({
             )}
           </PopoverContent>
         </Popover>
-        {/* Caption directly under the trigger swatch — surfaces the
-            cohesion source ("Theme · Accent" / "Primary CTA") at-a-glance
-            so reviewers don't need to open the popover to verify drift.
-            Reserves a 1-line slot via min-h to prevent layout shift when
-            the value resolves vs. clears. */}
-        <span
-          className="font-sans text-[9px] leading-none text-muted-foreground/80 max-w-[6.5rem] truncate min-h-[10px]"
-          title={sourceLabel ? `Matches ${sourceLabel}` : undefined}
-        >
-          {sourceLabel ?? ''}
-        </span>
         </div>
 
-        <div className="relative flex-1">
-          <Input
-            value={display}
-            onChange={(e) => onChange(e.target.value || undefined)}
-            // Record into Recent on blur (commit) — not on every keystroke,
-            // since partial hexes ("#a4") would pollute the ring. recordPick
-            // normalizes + ignores invalid hexes so this is safe.
-            onBlur={(e) => recordPick(e.target.value)}
-            placeholder={placeholder}
-            className="h-8 text-xs font-mono"
-            spellCheck={false}
-          />
+        {/* Inline hint — replaces the old hex text input. When empty:
+            "Leave blank for default". When set: shows the cohesion source
+            (e.g. "Primary") or the hex itself, so reviewers can scan
+            without opening the popover. Hex editing happens inside the
+            popover next to the RGB picker. */}
+        <div className="flex-1 min-w-0">
+          {!display ? (
+            <span className="font-sans text-[11px] text-muted-foreground/80 italic">
+              Leave blank for default
+            </span>
+          ) : (
+            <span className="font-mono text-[11px] text-muted-foreground truncate block">
+              {normalizedActive || display}
+              {sourceLabel && (
+                <span className="font-sans not-italic text-muted-foreground/70">
+                  {' · '}
+                  {sourceLabel}
+                </span>
+              )}
+            </span>
+          )}
         </div>
 
         {allowClear && display && !label && (
