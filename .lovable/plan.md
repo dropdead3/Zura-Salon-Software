@@ -1,153 +1,127 @@
-## Goal
+## Zura Reputation Engine — Phased Build Plan
 
-Wire the existing Reputation Engine (`client_feedback_responses`) into the Website Editor's Reviews section so operators can curate consent-approved 5-star reviews into their salon website — without manual copy/paste, while preserving the original review record, consent state, and full editorial control.
+### What already exists (foundation, do NOT rebuild)
 
-## What's already built (reuse, don't duplicate)
+- **Tables**: `client_feedback_surveys`, `client_feedback_responses` (with rating, NPS, gate flag, manager_notified, display lifecycle for website publishing), `website_testimonials`
+- **Public page**: `src/pages/ClientFeedback.tsx` — token-based 5-star + NPS form, gate logic, share screen, thank-you screen with manager follow-up branch
+- **Settings**: `useReviewThreshold` (Google/Apple/Yelp/Facebook URLs at org level, gate threshold, follow-up threshold)
+- **Edge functions**: `send-feedback-request` (creates token, emails client), `notify-low-score` (manager alert)
+- **Admin**: `src/pages/dashboard/admin/FeedbackHub.tsx` (Overview, Responses, Settings tabs), `useNPSAnalytics`, `useStaffFeedbackStats`
+- **Components**: `ReviewShareScreen`, `ReviewThankYouScreen`, `ReviewThresholdSettings`, `FeedbackResponseList`, `NPSScoreCard`
 
-- **Source-of-truth table**: `client_feedback_responses` (rating 1-5, comments, NPS, client/staff/appointment FKs, `is_public`, `passed_review_gate`).
-- **Display table**: `website_testimonials` (org-scoped, surface = `'general' | 'extensions'`, RLS correct).
-- **Editor surface**: `TestimonialsEditor.tsx` + `ReviewsManager.tsx` (drag-orderable, preview-bridged, save-telemetry wired).
-- **Live render**: `TestimonialSection.tsx` (carousel) + `ExtensionReviewsSection.tsx`.
-- **Threshold settings**: `useReviewThreshold.ts` (already defines minimum rating, NPS, public follow-up).
+### What's missing vs. the spec (the actual work)
 
-## Gaps to close
+1. **Automation engine** — appointment.completed → delayed scheduling, frequency cap, service include/exclude, stylist filters, location-aware sender. Today, requests are manual.
+2. **Recovery Inbox** — structured tasks for low scores with assignment, status lifecycle (New → Contacted → Resolved/Refunded/Redo Booked/Closed), resolution notes, AI-drafted response.
+3. **Location-aware review links** — current links are org-level only. Spec requires per-location Google/Apple/Yelp/Facebook routing.
+4. **Message templates with variables** — `[Client First Name]`, `[Stylist Name]`, etc., with per-location/per-service/per-stylist/per-state overrides.
+5. **SMS channel** — only email exists today (Twilio connector available).
+6. **Reputation dashboard** — full command-center view: velocity, CTR, response rate, at-risk count, recovery success rate, complaint/praise themes, location comparison.
+7. **Compliance log** — audit trail of every send/click/recovery action, plus the in-app compliance banner.
+8. **AI guardrails** — drafting helpers for templates and recovery responses with hard-coded refusal of gating/incentive/quota requests.
 
-1. No bridge from `client_feedback_responses` → `website_testimonials`.
-2. No client-facing consent capture for website display.
-3. No display-name preference (first-only / first+initial / anonymous).
-4. No edited-for-display copy separate from the original.
-5. No featured/pinned/hidden states beyond binary `enabled`.
-6. No layout selector (carousel / grid / stacked / hero).
-7. No service/stylist/location filters in the curation UI.
-8. No source selector (manual / Zura reviews / mixed) on the section.
+---
 
-## Phase 1 — Schema (migration)
+### Phase 1 — Recovery Inbox + Location Links + Automation Spine (THIS BUILD)
 
-**Extend `client_feedback_responses`** with consent + display preferences (additive, all nullable, defaults preserve current behavior):
-- `display_consent boolean default false` — explicit website-display consent
-- `display_consent_at timestamptz`
-- `display_name_preference text` — `'first_only' | 'first_initial' | 'anonymous' | null`
-- `display_status text default 'new'` — `'new' | 'eligible' | 'approved' | 'featured' | 'hidden' | 'unpublished' | 'needs_consent' | 'archived'`
-- `display_status_at timestamptz`, `display_status_by uuid`
-- Validation trigger (not CHECK) enforces enum values.
+The minimum slice that makes the system feel like a "Reputation Engine" rather than a passive feedback form. Everything else (SMS, AI drafting, full dashboard, flow builder UI) is Phase 2+.
 
-**Extend `website_testimonials`** to link curated reviews back to source:
-- `source_response_id uuid references client_feedback_responses(id) on delete set null` (unique partial index where not null — one website row per source review)
-- `display_edited boolean default false` — set true when operator edits body
-- `original_body text` — snapshot of source comment at curation time (immutable copy)
-- `is_featured boolean default false`
-- `feature_scopes text[] default '{}'` — `'homepage' | 'service_pages' | 'stylist_pages'`
-- `service_id uuid`, `stylist_user_id uuid`, `location_id uuid` — denormalized filter facets (nullable; copied at curation)
-- `show_stylist boolean default true`, `show_service boolean default true`, `show_date boolean default true`, `show_rating boolean default true`
-- `display_name_override text` — operator-overridable presentation name
+#### 1.1 Schema (one migration)
 
-**Extend `site_settings.section_testimonials`** value blob (no schema change; JSONB):
-- `review_source: 'manual' | 'zura' | 'mixed'` (default `'manual'` — preserves current behavior)
-- `layout: 'carousel' | 'grid' | 'stacked' | 'hero'`
-- `featured_review_id` (optional hero pick)
+- **`recovery_tasks`** — id, organization_id, location_id, feedback_response_id (FK), client_id, appointment_id, staff_user_id, assigned_to (uuid), status (`new` | `contacted` | `resolved` | `refunded` | `redo_booked` | `closed`), priority (`urgent` | `high` | `normal`), resolution_notes, resolved_at, resolved_by, created_at, updated_at. RLS: org members read, managers/admins write.
+- **`location_review_settings`** — id, organization_id, location_id (unique per org), google_review_url, apple_review_url, yelp_review_url, facebook_review_url, custom_review_url, custom_review_label, default_platform_priority (text[]). RLS: org admins manage, members read.
+- **`review_request_automation_rules`** — id, organization_id, name, is_active, send_delay_minutes (int), eligible_service_categories (text[] nullable = all), excluded_service_categories (text[]), excluded_service_names (text[]), frequency_cap_days (default 90), stylist_inclusion_mode (`all` | `include` | `exclude`), stylist_user_ids (uuid[]), location_ids (uuid[] nullable = all), channel (`email` | `sms` | `both`), created_at, updated_at. RLS: org admins manage.
+- **`review_compliance_log`** — id, organization_id, actor_user_id, event_type (`request_sent` | `request_clicked` | `feedback_submitted` | `external_link_clicked` | `recovery_created` | `recovery_resolved` | `rule_changed` | `template_changed`), feedback_response_id (nullable), recovery_task_id (nullable), payload jsonb, created_at. Append-only RLS: org admins read, system inserts.
+- **Trigger**: when `client_feedback_responses.responded_at` is set AND `overall_rating <= privateFollowUpThreshold` AND no recovery_task exists for that response, INSERT a `recovery_tasks` row with priority derived from rating (1–2 = `urgent`, 3 = `high`).
+- **Trigger**: when `recovery_tasks.status` changes to a terminal state, write a `review_compliance_log` entry.
 
-RLS: existing org-scoped policies on both tables already cover the new columns.
+#### 1.2 Public ClientFeedback page — fairness fix (compliance-critical)
 
-## Phase 2 — Eligibility view + hooks
+The current page only shows public review options if `passes` the gate. The spec explicitly forbids this. Change to:
+- **Always** show public review buttons after submission (per spec: "Do not hide public review links based on low rating")
+- **Always also** trigger recovery workflow if below threshold (in parallel, not as a substitute)
+- Resolve review URLs from `location_review_settings` first, falling back to `useReviewThreshold` org-level URLs
+- Add a 1-line compliance footer: "All clients see public review options regardless of rating."
 
-**Postgres view `eligible_website_reviews`** (security_invoker so RLS applies):
-```
-client_feedback_responses
-  WHERE overall_rating = 5
-    AND comments IS NOT NULL AND length(trim(comments)) > 0
-    AND appointment_id IS NOT NULL
-    AND display_status NOT IN ('archived','unpublished')
-```
-Joined to `phorest_clients` (name), `appointments` (service, staff, location), `website_testimonials` (curated state via `source_response_id`).
+#### 1.3 Recovery Inbox page (new)
 
-**New hooks** (`src/hooks/useEligibleReviews.ts`):
-- `useEligibleReviews(filters)` — paginated, with `staleTime: 30_000` per high-concurrency canon.
-- `useCurateReview()` — creates a `website_testimonials` row from a `client_feedback_responses` row, snapshots `original_body`, defaults `enabled=true`, `display_status='approved'`. Validates `display_consent=true` (or operator override flag with audit log).
-- `useUnpublishReview(testimonialId)` — sets `enabled=false` + source `display_status='unpublished'`.
-- `useFeatureReview()` — toggles `is_featured` + `feature_scopes`.
+`src/pages/dashboard/admin/RecoveryInbox.tsx` route `/admin/feedback/recovery`.
+- Bento card list grouped by status (New, In Progress, Resolved)
+- Each row: client name, rating, stylist, service, appointment date, comments excerpt, age
+- Drilldown drawer: full feedback, client history snippet (CLV, last visit), assignment dropdown, status lifecycle, resolution notes textarea
+- Status changes write `review_compliance_log` automatically
+- Tab added to `FeedbackHub.tsx`: "Recovery"
 
-## Phase 3 — Review Library UI
+#### 1.4 Location Review Links page (new)
 
-New file: `src/components/dashboard/website-editor/ZuraReviewLibrary.tsx`
-- Drawer mounted from `TestimonialsEditor` when `review_source !== 'manual'`.
-- Three tabs: **Eligible**, **Curated**, **Hidden**.
-- Filters: text search, service category, stylist, location, date range.
-- Row shows: stars, body excerpt (3-line clamp + "read more"), client display name (per current preference), service, stylist, location, appointment date, consent badge, status badge.
-- Actions per row: **Add to Website** (curate) · **Edit display** · **Feature** · **Hide** · **Unpublish**.
-- "Edit display" opens a side-by-side: original (read-only) vs. editable display copy. Saving sets `display_edited=true` and shows an "edited for display" indicator. Original remains untouched on `client_feedback_responses`.
-- Compliance reminder banner if `display_consent=false` — operator must check "I have written/recorded consent from this client" to proceed (writes audit log row).
-- Empty state: "No 5-star reviews yet — request feedback from recent clients" with CTA to feedback request flow.
+`src/pages/dashboard/admin/LocationReviewLinks.tsx` linked from FeedbackHub Settings tab.
+- One card per location with the four URL inputs + custom URL
+- Inherits from org defaults if blank
+- Resolution helper: `resolveReviewLinks(locationId, orgId)` → location-specific then org-level fallback
 
-## Phase 4 — Section editor wiring
+#### 1.5 Automation Rules editor (UI scaffold)
 
-`TestimonialsEditor.tsx`:
-- Add **Review Source** segmented control (manual / Zura / mixed) above the existing `ReviewsManager`.
-- Add **Layout** select (carousel / grid / stacked / hero).
-- When source = Zura/mixed: render `ZuraReviewLibrary` button + curated count chip; `ReviewsManager` filters to manual rows (no `source_response_id`).
-- Bulk pickers: "Select all approved", "Select featured only", "Select by service / stylist / location".
+`src/pages/dashboard/admin/ReviewAutomationRules.tsx`.
+- List/create rules table; edit drawer with all filter fields
+- "Test rule against last 50 completed appointments" preview button (read-only sim — Phase 1 just shows which would qualify; the cron scheduler that actually fires sends ships in Phase 2)
+- This delivers the configuration surface; the dispatcher (cron + Twilio + per-rule eligibility) is Phase 2
 
-## Phase 5 — Live render
+#### 1.6 Compliance banner
 
-`TestimonialSection.tsx`:
-- Branch on `layout` config (carousel exists; add grid, stacked, hero variants — pure subcomponents per Preview-Live Parity Pattern).
-- Apply per-row display flags (`show_stylist`, `show_service`, `show_date`, `show_rating`).
-- Resolve display name: prefer `display_name_override` → else compute from source `display_name_preference` + client name → fallback `'Anonymous'`.
-- Featured review hero variant uses `featured_review_id` when set.
+Permanent banner at the top of `FeedbackHub` Settings tab with the exact spec copy. Non-dismissible (governance, not a notification).
 
-## Phase 6 — Consent capture (client side)
+#### 1.7 Memory updates
 
-Existing public feedback form (`src/pages/ClientFeedback.tsx`):
-- Add **display consent checkbox** + **display name preference radio** (first only / first + initial / anonymous).
-- On submit, write `display_consent`, `display_consent_at`, `display_name_preference` to the response row.
-- If `overall_rating = 5 && comments && display_consent`, set `display_status='eligible'`; else `'new'` or `'needs_consent'`.
+- New canon entry `mem://features/reputation-engine` covering the fairness rule (public links visible to ALL ratings), recovery lifecycle states, `review_compliance_log` as append-only audit, and the AI guardrails list.
+- Update `mem://index.md` Core if a universal rule emerges (e.g. "Public review links must never be gated by rating").
 
-## Phase 7 — Tests
+---
 
-- `eligibleWebsiteReviews.test.ts` — view returns only 5-star + comment + completed appointment.
-- `useCurateReview.test.tsx` — blocks without consent unless override flag + audit row written.
-- `ZuraReviewLibrary.filters.test.tsx` — filter composition.
-- `TestimonialSection.layouts.test.tsx` — each layout renders with feature flags.
-- `displayNameResolution.test.ts` — preference + override fallback chain.
+### Phase 2 — Dispatcher, SMS, Templates (subsequent build)
 
-## Out of scope (explicitly)
+- Cron job + edge function `dispatch-review-requests` (scans completed appointments, applies active rules, respects frequency cap, inserts pending requests into a queue)
+- `review_message_templates` table + variable interpolation engine (`[Client First Name]`, etc.)
+- Twilio SMS path via existing connector
+- Channel selection + opt-out enforcement (already partially wired via `clientId` in `send-feedback-request`)
 
-- Posting reviews to Google/Yelp/Apple/Facebook (separate public-review flow already exists in `useReviewThreshold`).
-- AI-generated review text or summaries (violates AI autonomy doctrine for editorial content).
-- Auto-publishing without operator approval (violates consent gate).
-- Editing the original `client_feedback_responses.comments` value.
+### Phase 3 — Reputation Dashboard + AI
 
-## Doctrine compliance
+- New `Reputation Overview` page with bento cards (velocity, CTR, response rate, at-risk count, complaint/praise themes via Lovable AI sentiment summarization, location comparison, stylist trends)
+- AI helpers: template drafting, recovery response drafting, theme extraction — with hard-coded refusal of any prompt requesting review gating, incentive language, 5-star solicitation, or staff quotas
+- AI must surface its draft for human approval; never auto-sends
 
-- **Tenant isolation**: all new columns/queries scoped via existing `organization_id` RLS.
-- **Original review protection**: enforced at hook layer; UI surfaces "edited for display" indicator.
-- **Silence is valid output**: empty Zura library renders consent/request prompt, not fake placeholder reviews.
-- **Preview-Live Parity Pattern**: layout variants extracted as pure subcomponents shared by editor preview and live render.
-- **Container-aware**: layouts respond via existing spatial primitives, not viewport breakpoints.
-- **Typography canon**: Termina for headers, Aeonik for body, no `font-bold`.
-- **No autonomous publishing**: every state transition gated on operator action.
+### Phase 4 — Visual Flow Builder
 
-## Files touched (estimate)
+- The "Trigger → Delay → Message → Rating → Follow-up → Internal Action" canvas builder — only worthwhile after Phase 2 dispatcher proves out the underlying primitives
 
-**New** (~6):
-- `supabase/migrations/<ts>_website_review_publishing.sql`
-- `src/hooks/useEligibleReviews.ts`
-- `src/components/dashboard/website-editor/ZuraReviewLibrary.tsx`
-- `src/components/home/testimonials/TestimonialLayouts.tsx` (shared layouts)
-- `src/lib/reviewDisplayName.ts` (name resolution)
-- Tests (5)
+---
 
-**Edited** (~5):
-- `src/components/dashboard/website-editor/TestimonialsEditor.tsx`
-- `src/components/dashboard/website-editor/ReviewsManager.tsx` (filter to manual rows)
-- `src/components/home/TestimonialSection.tsx`
-- `src/hooks/useTestimonials.ts` (curation helpers)
-- `src/pages/ClientFeedback.tsx` (consent capture)
+### Files this build will touch
 
-## Prompt feedback (per project knowledge)
+**New**:
+- `supabase/migrations/<ts>_reputation_engine_phase1.sql`
+- `src/hooks/useRecoveryTasks.ts`, `src/hooks/useLocationReviewLinks.ts`, `src/hooks/useReviewAutomationRules.ts`, `src/hooks/useReviewComplianceLog.ts`
+- `src/pages/dashboard/admin/RecoveryInbox.tsx`
+- `src/pages/dashboard/admin/LocationReviewLinks.tsx`
+- `src/pages/dashboard/admin/ReviewAutomationRules.tsx`
+- `src/components/feedback/RecoveryTaskDrawer.tsx`, `src/components/feedback/RecoveryTaskCard.tsx`, `src/components/feedback/ComplianceBanner.tsx`
+- `src/lib/reputation/resolveReviewLinks.ts`
+- `mem://features/reputation-engine.md`
 
-**What worked well**: You named the source system, the destination, the consent boundary, the doctrine line ("Zura is not reposting to third parties"), and gave a concrete state machine. That made scope unambiguous and let me skip clarifying questions.
+**Edited**:
+- `src/pages/ClientFeedback.tsx` — remove gate-suppression of public links; resolve location-aware URLs; ensure recovery trigger always fires below threshold
+- `src/pages/dashboard/admin/FeedbackHub.tsx` — add Recovery tab + nav links to new pages, mount ComplianceBanner
+- `src/App.tsx` — register three new admin routes
+- `mem://index.md` — add reputation engine entry; consider Core rule for "public review links never rating-gated"
 
-**Sharper next time**: 
-1. Lead with the **non-goals** (you got there at "Important:" — promote that to the top so the agent can't drift into a Google Review reposter).
-2. Specify which **persona** owns this surface (Salon Owner vs. Manager) — affects whether the library appears in the Website Editor only, or also in a standalone Reputation Hub.
-3. State whether **historical reviews** (pre-consent-feature) should be backfilled as `'needs_consent'` or left as `'new'` — this is the kind of decision that costs a follow-up loop if unstated.
+### Why this scope split
+
+The full spec is a 4-phase initiative. Trying to ship the dispatcher, SMS, templating engine, AI drafting, dashboard, AND flow builder in one pass would produce shallow work everywhere and inevitably regress the existing feedback system. Phase 1 fixes the one **compliance bug** (rating-gated public links) and lays the persistent state (recovery tasks, location links, automation rules, compliance log) every later phase depends on.
+
+### Open questions
+
+1. **Recovery task assignment default**: assign to org owner, location manager, or unassigned-by-default (claimed from inbox)?
+2. **Frequency cap default**: spec says configurable; reasonable default of **90 days** OK?
+3. **Phase 2 SMS provider**: Twilio (already a connector here) vs. waiting for a Lovable-native SMS path?
+
+I can start Phase 1 immediately on approval, or adjust the slice if you'd rather lead with the dashboard or dispatcher.
