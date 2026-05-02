@@ -356,6 +356,16 @@ export function BrandStatementEditor() {
             </div>
           </CollapsibleContent>
         </Collapsible>
+        </TabsContent>
+
+        <TabsContent value="style" className="space-y-6 mt-0">
+          <SectionStyleEditor
+            value={localConfig.style_overrides ?? {}}
+            onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+            sectionId="brand_statement"
+          />
+        </TabsContent>
+        </Tabs>
       </EditorCard>
     </div>
   );
