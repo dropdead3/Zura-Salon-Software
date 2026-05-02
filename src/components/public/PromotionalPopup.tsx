@@ -22,7 +22,10 @@ import {
 import { clampAutoMinimizeSeconds } from '@/lib/clampAutoMinimizeSeconds';
 import { useReplayableMount } from '@/hooks/useReplayableMount';
 import { usePresenceLifecycle } from '@/hooks/usePresenceLifecycle';
-import { subscribeHeroAlignment, type HeroAlignmentSignal } from '@/lib/heroAlignmentSignal';
+// NOTE: heroAlignmentSignal is intentionally NOT consumed here. The FAB is a
+// global anchored affordance — it must not reposition based on section-level
+// layout state (operators read positional drift as a bug). See
+// `mem://style/global-overlay-stability` and the comment in heroAlignmentSignal.ts.
 
 interface Props {
   /**
