@@ -25,9 +25,11 @@ import {
   publishHeroExitProgress,
   clearHeroExitProgress,
 } from '@/lib/heroExitProgressSignal';
+import { useHeroParallaxScrollTarget } from '@/components/home/HeroParallaxScrollContext';
 
 interface UseHeroScrollAnimationOptions {
-  /** The hero `<section>` ref. Scroll progress is tracked relative to this element. */
+  /** The hero `<section>` ref. Default scroll target when no parallax
+   *  layout is wrapping the hero. */
   target: RefObject<HTMLElement>;
   /**
    * Whether the choreography is "live". When false, the hook still binds
@@ -61,10 +63,21 @@ export function useHeroScrollAnimation({
   target,
   enabled,
 }: UseHeroScrollAnimationOptions): HeroScrollAnimation {
+  // When the hero is rendered inside a HeroParallaxLayout, the section
+  // itself is wrapped in a sticky container that doesn't move relative to
+  // the viewport while pinned — meaning `useScroll({ target: sectionRef })`
+  // would read scrollYProgress = 0 the entire time the hero is visible
+  // (broken split / blur / parallax). The parallax layout exposes its
+  // tall driver element via context; when present, we bind to THAT so
+  // progress advances normally. When absent (every flat / non-parallax
+  // tenant), we fall back to the local section ref — unchanged behavior.
+  const parallaxDriver = useHeroParallaxScrollTarget();
+  const scrollTarget = parallaxDriver ?? target;
+
   // useScroll is bound unconditionally so hook order stays stable when the
   // caller's `enabled` flag flips (e.g. reduced-motion media query change).
   const { scrollYProgress } = useScroll({
-    target,
+    target: scrollTarget,
     offset: ['start start', 'end start'],
   });
 

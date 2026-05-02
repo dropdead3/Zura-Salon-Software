@@ -1,43 +1,72 @@
 /**
- * HeroParallaxLayout — sticky-hero / rising-panel scroll treatment.
+ * HeroParallaxLayout — full-screen hero + scroll-revealed rising panel.
  *
- * Wraps a `[hero, nextSection, ...rest]` sequence so the hero stays pinned
- * at the top of the viewport while the section directly below it scrolls
- * UP and OVER the hero. Once the next section fully covers the hero,
- * sticky releases naturally and the rest of the page scrolls flat.
+ * Structure (the "tall scroll-driver" pattern used by Apple / Stripe /
+ * Linear for cinematic hero reveals):
  *
- * Pure CSS (`position: sticky`) — no scroll listeners, no JS transforms,
- * GPU-accelerated by default. Works with any browser that supports
- * `position: sticky` (universal in 2024+).
+ *   ┌─────────────────────────────────────┐
+ *   │ [DRIVER]  height: SCROLL_RUNWAY_VH  │
+ *   │   ┌─────────────────────────────┐   │
+ *   │   │ [HERO]  sticky top:0        │   │  ← pinned for the whole runway
+ *   │   │ height: 100vh               │   │     hero animations fire because
+ *   │   └─────────────────────────────┘   │     `useScroll` is bound to the
+ *   └─────────────────────────────────────┘     DRIVER (which moves), not the
+ *   ┌─────────────────────────────────────┐     hero (which stays put).
+ *   │ [RISING PANEL]  rounded-t + shadow  │
+ *   │ — sits at normal flow position      │  ← starts BELOW the fold at rest
+ *   │   (i.e. immediately after driver)   │     (no negative margin = no bleed)
+ *   └─────────────────────────────────────┘
+ *   ┌─────────────────────────────────────┐
+ *   │ [REST OF PAGE]                      │
+ *   └─────────────────────────────────────┘
  *
- * Position-aware, not type-aware: whatever the operator drags into slot
- * 2 inherits the rising-panel treatment automatically.
+ * Why this shape:
+ *   1. Hero is genuinely full-screen at rest — the rising panel is one
+ *      viewport-height below the fold, never bleeding over the hero.
+ *   2. Hero animations (split-headline, blur, parallax) work as before
+ *      because `useHeroScrollAnimation` reads the driver ref from
+ *      `HeroParallaxScrollContext` and binds `useScroll` to the driver.
+ *   3. Pure CSS positioning — no scroll listeners, no JS transforms in
+ *      the layout primitive itself. Cinematic mode adds a single
+ *      rAF-throttled listener that writes a CSS variable on the driver.
+ *
+ * Position-aware, not type-aware: whatever the operator drags into slot 2
+ * inherits the rising-panel treatment automatically.
  *
  * Mode variants (behind the same Site Design toggle):
  *   - 'subtle'    → hero stays at full opacity; rising panel reveals via
- *                   shadow + radius. Calm, executive, the default.
- *   - 'cinematic' → hero additionally fades + scales DOWN as it's covered,
- *                   giving a depth-receding feel. Driven by a single
- *                   scroll listener that writes CSS variables on the
- *                   anchor element (no per-frame React re-renders).
+ *                   its own shadow + radius as it scrolls up. Default.
+ *   - 'cinematic' → hero additionally fades + scales DOWN as it's covered.
+ *                   Driven by a single scroll listener that writes
+ *                   `--hero-parallax-progress` (0→1) on the driver
+ *                   element; CSS does the interpolation.
  *
  * Doctrine alignment:
- *   - Preview-Live Parity: this single primitive is rendered identically
- *     in the public site and the editor's view-mode preview.
- *   - Visibility contract: silently no-ops when prerequisites aren't met
- *     (no hero in slot 0, only one section, reduced-motion preference).
- *   - Container-aware: cinematic mode uses one rAF-throttled scroll
- *     listener, never re-renders, and is safely tree-shaken when subtle.
+ *   - Preview-Live Parity: identical primitive in public site + editor view-mode.
+ *   - Visibility contract: silent no-op when disabled or reduced-motion.
+ *   - Container-aware: cinematic mode uses one rAF-throttled listener,
+ *     never re-renders, and is safely tree-shaken when subtle.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { HeroParallaxScrollProvider } from './HeroParallaxScrollContext';
 
 export type HeroParallaxMode = 'subtle' | 'cinematic';
 
+/**
+ * Total scroll runway for the pinned hero, in vh units. 200vh = the user
+ * scrolls one full screen-height while the hero is pinned (during which
+ * the hero exit animations play out), then the rising panel takes over.
+ *
+ * Tunable in one place. Lower = snappier reveal, less animation room.
+ * Higher = more cinematic, more scroll required to clear the hero.
+ */
+const SCROLL_RUNWAY_VH = 200;
+
 interface HeroParallaxLayoutProps {
-  /** The hero section node (will become sticky). */
+  /** The hero section node (rendered inside the sticky shell). */
   hero: ReactNode;
-  /** The section directly below the hero (will rise over the hero). */
+  /** The section directly below the hero (rises over the hero on scroll). */
   next: ReactNode;
   /** Everything after the rising section — flows normally. */
   rest: ReactNode;
@@ -61,26 +90,30 @@ function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * Cinematic-mode scroll driver. Writes `--hero-parallax-progress` (0→1) on
- * the anchor element so CSS can interpolate opacity/scale without React
- * re-renders. One listener, rAF-throttled, auto-detached when the hero is
- * fully covered.
+ * Cinematic-mode scroll driver. Writes `--hero-parallax-progress` (0→1)
+ * on the driver element so CSS can interpolate opacity/scale on the
+ * sticky hero shell without React re-renders. One listener,
+ * rAF-throttled, auto-detached on unmount.
  */
-function useCinematicScrollDriver(active: boolean) {
-  const anchorRef = useRef<HTMLDivElement | null>(null);
+function useCinematicScrollDriver(
+  driverRef: React.RefObject<HTMLDivElement>,
+  active: boolean,
+) {
   useEffect(() => {
     if (!active) return;
-    const el = anchorRef.current;
+    const el = driverRef.current;
     if (!el || typeof window === 'undefined') return;
 
     let rafId = 0;
     const update = () => {
       rafId = 0;
       const rect = el.getBoundingClientRect();
-      // rect.top goes from 0 (at rest) → -rect.height (fully covered).
-      // Progress 0 (at rest) → 1 (covered).
-      const h = rect.height || 1;
-      const p = Math.min(1, Math.max(0, -rect.top / h));
+      // Driver enters the viewport at rect.top = 0 and fully exits at
+      // rect.top = -(rect.height - window.innerHeight). The hero stays
+      // pinned while the driver is in this range; map that range to 0→1.
+      const travel = Math.max(1, rect.height - window.innerHeight);
+      const traveled = Math.min(travel, Math.max(0, -rect.top));
+      const p = traveled / travel;
       el.style.setProperty('--hero-parallax-progress', p.toFixed(3));
     };
     const onScroll = () => {
@@ -89,12 +122,13 @@ function useCinematicScrollDriver(active: boolean) {
     };
     update();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
     return () => {
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
-  }, [active]);
-  return anchorRef;
+  }, [active, driverRef]);
 }
 
 export function HeroParallaxLayout({
@@ -107,50 +141,71 @@ export function HeroParallaxLayout({
   const reducedMotion = usePrefersReducedMotion();
   const active = enabled && !reducedMotion;
   const cinematic = active && mode === 'cinematic';
-  const anchorRef = useCinematicScrollDriver(cinematic);
+
+  // Driver ref must be created unconditionally to keep hook order stable
+  // when the operator flips the toggle while the page is mounted.
+  const driverRef = useRef<HTMLDivElement>(null);
+  useCinematicScrollDriver(driverRef, cinematic);
 
   if (!active) {
-    // Silent no-op — render the three slots in normal flow.
+    // Silent no-op — render the three slots in normal flow. Provider
+    // value is null so the hero falls back to its own sectionRef.
     return (
-      <>
+      <HeroParallaxScrollProvider value={null}>
         {hero}
         {next}
         {rest}
-      </>
+      </HeroParallaxScrollProvider>
     );
   }
 
   return (
-    <>
-      {/* Sticky hero shell. h-screen pins the hero; sticky releases as the
-          rising panel covers it. z-0 keeps it behind the rising panel.
-          In cinematic mode we read --hero-parallax-progress (set by the
-          scroll driver above) to fade + scale the hero as it's covered. */}
+    <HeroParallaxScrollProvider value={driverRef}>
+      {/* Driver — the tall scroll runway. Its height is what gives the
+          sticky hero shell room to remain pinned while the user scrolls
+          and the hero animations play out. The hero's useScroll is bound
+          to THIS element via context, so scrollYProgress advances 0→1
+          across the runway exactly like a flat-flow hero. */}
       <div
-        ref={anchorRef}
-        className="sticky top-0 h-screen w-full z-0 overflow-hidden"
-        data-hero-parallax="anchor"
+        ref={driverRef}
+        className="relative"
+        style={{ height: `${SCROLL_RUNWAY_VH}vh` }}
+        data-hero-parallax="driver"
         data-hero-parallax-mode={mode}
-        style={
-          cinematic
-            ? ({
-                opacity:
-                  'calc(1 - 0.6 * var(--hero-parallax-progress, 0))',
-                transform:
-                  'scale(calc(1 - 0.05 * var(--hero-parallax-progress, 0)))',
-                transformOrigin: 'center center',
-                willChange: 'opacity, transform',
-              } as React.CSSProperties)
-            : undefined
-        }
       >
-        {hero}
+        {/* Sticky hero shell. Pinned to top:0 for the full driver height.
+            In cinematic mode we read --hero-parallax-progress (set by
+            the scroll driver above) to fade + scale the hero as it's
+            being covered by the rising panel below. */}
+        <div
+          className="sticky top-0 h-screen w-full overflow-hidden"
+          data-hero-parallax="anchor"
+          style={
+            cinematic
+              ? ({
+                  opacity:
+                    'calc(1 - 0.6 * var(--hero-parallax-progress, 0))',
+                  transform:
+                    'scale(calc(1 - 0.05 * var(--hero-parallax-progress, 0)))',
+                  transformOrigin: 'center center',
+                  willChange: 'opacity, transform',
+                } as React.CSSProperties)
+              : undefined
+          }
+        >
+          {hero}
+        </div>
       </div>
 
-      {/* Rising panel — normal flow, stacks above the sticky hero via z-10. */}
+      {/* Rising panel — sits in normal flow IMMEDIATELY after the driver,
+          which means at scroll 0 it sits one driver-height below the
+          fold (out of sight). As the user scrolls and the driver exits,
+          this panel scrolls up over the still-pinned hero, the rounded
+          top + soft shadow drawing the reveal edge. NO negative margin
+          is used here — that was the cause of the "bleed at rest" bug. */}
       <div
         className={cn(
-          'relative z-10 -mt-8',
+          'relative z-10',
           'rounded-t-[2rem] overflow-hidden',
           'shadow-[0_-24px_48px_-24px_rgba(0,0,0,0.35)]',
           'bg-background',
@@ -160,10 +215,10 @@ export function HeroParallaxLayout({
         {next}
       </div>
 
-      {/* Rest of the page — also above the hero. No special treatment. */}
+      {/* Rest of the page — flows normally below the rising panel. */}
       <div className="relative z-10 bg-background" data-hero-parallax="tail">
         {rest}
       </div>
-    </>
+    </HeroParallaxScrollProvider>
   );
 }
