@@ -87,8 +87,8 @@ export function SectionDisplayEditor<T extends object>({
     return <DashboardLoader className="h-64" size="xl" />;
   }
 
-  return (
-    <EditorCard title={title} icon={icon} description={description}>
+  const contentBody = (
+    <>
       {fields.map((field) => {
         const value = localConfig[field.key as keyof T];
 
@@ -160,6 +160,31 @@ export function SectionDisplayEditor<T extends object>({
             return null;
         }
       })}
+    </>
+  );
+
+  return (
+    <EditorCard title={title} icon={icon} description={description}>
+      {styleSectionId ? (
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
+            {contentBody}
+          </TabsContent>
+          <TabsContent value="style" className="space-y-6 mt-0">
+            <SectionStyleEditor
+              value={(localConfig as { style_overrides?: Partial<StyleOverrides> }).style_overrides ?? {}}
+              onChange={(next: Partial<StyleOverrides>) => updateField('style_overrides', next)}
+              sectionId={styleSectionId}
+            />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        contentBody
+      )}
     </EditorCard>
   );
 }
