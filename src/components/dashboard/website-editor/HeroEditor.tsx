@@ -69,29 +69,16 @@ const GLOBAL_LABELS: Record<GlobalView, string> = {
   shared_content: 'Shared Hero Content',
 };
 
-function viewStorageKey(orgId: string | undefined | null): string {
-  return `zura.heroEditor.view.v2.${orgId ?? 'anon'}`;
-}
-
-function readPersistedView(orgId: string | undefined | null): HeroView {
-  if (typeof window === 'undefined') return { kind: 'hub' };
-  try {
-    const raw = window.localStorage.getItem(viewStorageKey(orgId));
-    if (raw) return JSON.parse(raw) as HeroView;
-  } catch {
-    /* ignore */
-  }
-  return { kind: 'hub' };
-}
-
-function writePersistedView(orgId: string | undefined | null, view: HeroView): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(viewStorageKey(orgId), JSON.stringify(view));
-  } catch {
-    /* ignore */
-  }
-}
+// View state is intentionally NOT persisted to localStorage. Per the
+// Website Editor entry contract, re-entering the editor (clicking
+// "Hero Section" in the rail) MUST land on the canonical default tree —
+// the Hero hub overview — never the operator's last-visited sub-panel
+// (e.g. "Text & Buttons Color"). Landing deep in a sub-editor reads as
+// broken navigation: the user has to figure out how to back out before
+// they can see the hub. In-memory state is sufficient for in-session
+// navigation between hub ↔ slide ↔ global cards; a fresh mount resets.
+//
+// Regression locked by `HeroEditor.entry.test.tsx`.
 
 /* ─── Status summary helpers ─── */
 
