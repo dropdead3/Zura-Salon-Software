@@ -17,6 +17,14 @@ html, body, #root {
 .hero-cta-hover:hover {
   background-color: var(--hero-btn-hover) !important;
 }
+/* Secondary CTA hover overrides — border + text color. Each is opt-in via
+   its own utility class so we don't force `unset` when only one knob is set. */
+.hero-cta-hover-border:hover {
+  border-color: var(--hero-btn-hover-border) !important;
+}
+.hero-cta-hover-fg:hover {
+  color: var(--hero-btn-hover-fg) !important;
+}
 
 /* Animation intensity preference (set by AnimationIntensityInitializer)
    - animations-off: instant, accessibility / focus mode

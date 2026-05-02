@@ -74,6 +74,8 @@ export interface HeroTextColors {
   secondary_button_border?: string;
   secondary_button_fg?: string;
   secondary_button_hover_bg?: string;
+  secondary_button_hover_border?: string;
+  secondary_button_hover_fg?: string;
 }
 
 /**

@@ -107,6 +107,16 @@ export function HeroTextColorsEditor({
           value={colors.secondary_button_hover_bg}
           onChange={(v) => update('secondary_button_hover_bg', v)}
         />
+        <ColorRow
+          label="Hover Border"
+          value={colors.secondary_button_hover_border}
+          onChange={(v) => update('secondary_button_hover_border', v)}
+        />
+        <ColorRow
+          label="Hover Text"
+          value={colors.secondary_button_hover_fg}
+          onChange={(v) => update('secondary_button_hover_fg', v)}
+        />
       </div>
 
       {hasAny && (

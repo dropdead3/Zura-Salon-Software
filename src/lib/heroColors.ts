@@ -35,6 +35,10 @@ export interface ResolvedHeroColors {
    *  CSS rule can override the inline `background-color`. */
   hasPrimaryHover: boolean;
   hasSecondaryHover: boolean;
+  /** True when an operator-set hover border color exists for the secondary CTA. */
+  hasSecondaryHoverBorder: boolean;
+  /** True when an operator-set hover text color exists for the secondary CTA. */
+  hasSecondaryHoverFg: boolean;
 }
 
 /**
@@ -105,6 +109,14 @@ export function resolveHeroColors(
     (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover'] =
       colors.secondary_button_hover_bg;
   }
+  if (colors.secondary_button_hover_border) {
+    (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-border'] =
+      colors.secondary_button_hover_border;
+  }
+  if (colors.secondary_button_hover_fg) {
+    (secondaryButtonStyle as Record<string, string>)['--hero-btn-hover-fg'] =
+      colors.secondary_button_hover_fg;
+  }
 
   const secondaryButtonClass =
     colors.secondary_button_border || colors.secondary_button_fg
@@ -128,5 +140,7 @@ export function resolveHeroColors(
     secondaryButtonClass,
     hasPrimaryHover: !!colors.primary_button_hover_bg,
     hasSecondaryHover: !!colors.secondary_button_hover_bg,
+    hasSecondaryHoverBorder: !!colors.secondary_button_hover_border,
+    hasSecondaryHoverFg: !!colors.secondary_button_hover_fg,
   };
 }
