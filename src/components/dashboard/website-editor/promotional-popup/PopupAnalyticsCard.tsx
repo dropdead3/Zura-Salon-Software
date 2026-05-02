@@ -164,11 +164,11 @@ function TrendChart({ data, highlightedKey, onHoverKey, capHitEta }: TrendChartP
 
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
         <span className={tokens.kpi.label}>
           14-Day Trend{capHitEta ? ' · projection' : ''}
         </span>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
             Impressions
@@ -499,19 +499,19 @@ function FunnelStat({
       onMouseEnter={() => onHover(trendKey)}
       onMouseLeave={() => onHover(null)}
       className={cn(
-        'flex flex-col gap-1.5 px-4 py-3 rounded-lg border bg-muted/30 transition-colors',
+        'flex flex-col gap-1 px-3 py-2.5 rounded-lg border bg-muted/30 transition-colors min-w-0',
         highlighted
           ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/30'
           : 'border-border/60',
       )}
     >
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className={tokens.kpi.label}>{label}</span>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className={cn(tokens.kpi.label, 'truncate')}>{label}</span>
       </div>
-      <div className={tokens.kpi.value}>{value}</div>
+      <div className={cn(tokens.kpi.value, 'truncate')}>{value}</div>
       {rate !== undefined ? (
-        <div className="text-xs text-muted-foreground">
+        <div className="text-[11px] text-muted-foreground truncate">
           {rate ?? '—'}
           {rateLabel ? <span className="ml-1">{rateLabel}</span> : null}
         </div>
@@ -758,7 +758,7 @@ export function PopupAnalyticsCard({
       </CardHeader>
       <CardContent className="space-y-4">
         {showSkeleton ? (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -768,7 +768,7 @@ export function PopupAnalyticsCard({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2.5">
               <FunnelStat
                 label="Impressions"
                 value={data.impressions.toLocaleString()}
