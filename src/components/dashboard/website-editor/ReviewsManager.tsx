@@ -26,6 +26,9 @@ import {
   Star,
   Save,
   Quote,
+  ChevronDown,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { toast } from 'sonner';
