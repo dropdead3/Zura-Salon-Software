@@ -93,6 +93,37 @@ export function applyScheduledSnapshot(
   return merged;
 }
 
+/**
+ * Detects overlapping schedule entries. Two entries overlap when their
+ * [startsAt, endsAt] windows intersect by any non-zero amount. The resolver
+ * silently picks the entry with the later `startsAt` on overlap (operator
+ * intent: "the new offer starts now"), which means the *other* entry will
+ * appear "missing" to the operator unless we surface it pre-publish.
+ *
+ * Returns a Set of entry ids that participate in at least one overlap.
+ * Pure; safe to call on every render.
+ */
+export function detectScheduleConflicts(
+  schedule: SavedPromoScheduleEntry[] | undefined,
+): Set<string> {
+  const conflicts = new Set<string>();
+  if (!schedule || schedule.length < 2) return conflicts;
+  const parsed = schedule
+    .map((e) => ({ e, s: Date.parse(e.startsAt), en: Date.parse(e.endsAt) }))
+    .filter((x) => Number.isFinite(x.s) && Number.isFinite(x.en) && x.en > x.s);
+  for (let i = 0; i < parsed.length; i++) {
+    for (let j = i + 1; j < parsed.length; j++) {
+      const a = parsed[i];
+      const b = parsed[j];
+      if (a.s < b.en && b.s < a.en) {
+        conflicts.add(a.e.id);
+        conflicts.add(b.e.id);
+      }
+    }
+  }
+  return conflicts;
+}
+
 /** End-to-end: resolve `cfg` against the library at the given moment. */
 export function resolvePromotionalPopupForNow(
   cfg: PromotionalPopupSettings | null | undefined,

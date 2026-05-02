@@ -112,18 +112,34 @@ interface UsePromotionalPopupFunnelArgs {
   /** Defaults to 30 days. */
   windowDays?: number;
   explicitOrgId?: string;
+  /** Optional rotation filter. When provided, restricts the funnel to the
+   *  [startsAt, endsAt] window of a single scheduled rotation entry. The
+   *  underlying `offerCode` stays the same — the wrapper's offer code is the
+   *  attribution key (see `applyScheduledSnapshot`), so per-rotation slicing
+   *  is purely a temporal narrowing. `windowDays` is ignored when this is set.
+   */
+  rotationWindow?: { id: string; startsAt: string; endsAt: string } | null;
 }
 
 export function usePromotionalPopupFunnel({
   offerCode,
   windowDays = 30,
   explicitOrgId,
+  rotationWindow,
 }: UsePromotionalPopupFunnelArgs) {
   const orgId = useSettingsOrgId(explicitOrgId);
   const code = (offerCode ?? '').trim();
 
   return useQuery<PromotionalPopupFunnel>({
-    queryKey: ['promotional-popup-funnel', orgId, code, windowDays],
+    queryKey: [
+      'promotional-popup-funnel',
+      orgId,
+      code,
+      windowDays,
+      rotationWindow?.id ?? null,
+      rotationWindow?.startsAt ?? null,
+      rotationWindow?.endsAt ?? null,
+    ],
     queryFn: async () => {
       const empty: PromotionalPopupFunnel = {
         impressions: 0,
@@ -142,9 +158,10 @@ export function usePromotionalPopupFunnel({
       };
       if (!orgId) return empty;
 
-      const windowStart = new Date(
-        Date.now() - windowDays * 86_400_000,
-      ).toISOString();
+      const windowStart = rotationWindow
+        ? rotationWindow.startsAt
+        : new Date(Date.now() - windowDays * 86_400_000).toISOString();
+      const windowEnd = rotationWindow ? rotationWindow.endsAt : null;
 
       const [
         impressionsRes,
@@ -153,30 +170,39 @@ export function usePromotionalPopupFunnel({
         firstImpressionRes,
         firstResponseRes,
       ] = await Promise.all([
-        supabase
-          .from('promo_offer_impressions')
-          .select('created_at')
-          .eq('organization_id', orgId)
-          .eq('offer_code', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('created_at', windowStart)
-          .limit(20_000),
-        supabase
-          .from('promo_offer_responses')
-          .select('response, created_at')
-          .eq('organization_id', orgId)
-          .eq('offer_code', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('created_at', windowStart)
-          .limit(10_000),
-        supabase
-          .from('promotion_redemptions')
-          .select('revenue_attributed, transaction_date')
-          .eq('organization_id', orgId)
-          .eq('promo_code_used', code)
-          .eq('surface', POPUP_SURFACE)
-          .gte('transaction_date', windowStart)
-          .limit(10_000),
+        (() => {
+          let q = supabase
+            .from('promo_offer_impressions')
+            .select('created_at')
+            .eq('organization_id', orgId)
+            .eq('offer_code', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('created_at', windowStart);
+          if (windowEnd) q = q.lte('created_at', windowEnd);
+          return q.limit(20_000);
+        })(),
+        (() => {
+          let q = supabase
+            .from('promo_offer_responses')
+            .select('response, created_at')
+            .eq('organization_id', orgId)
+            .eq('offer_code', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('created_at', windowStart);
+          if (windowEnd) q = q.lte('created_at', windowEnd);
+          return q.limit(10_000);
+        })(),
+        (() => {
+          let q = supabase
+            .from('promotion_redemptions')
+            .select('revenue_attributed, transaction_date')
+            .eq('organization_id', orgId)
+            .eq('promo_code_used', code)
+            .eq('surface', POPUP_SURFACE)
+            .gte('transaction_date', windowStart);
+          if (windowEnd) q = q.lte('transaction_date', windowEnd);
+          return q.limit(10_000);
+        })(),
         // Earliest impression for THIS org/surface (any code) — establishes
         // when impression tracking actually started recording. Powers the
         // "Since {date}" footnote and detects the pre-tracking asymmetry.

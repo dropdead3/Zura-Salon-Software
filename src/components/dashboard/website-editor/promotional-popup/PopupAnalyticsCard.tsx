@@ -20,6 +20,15 @@ import {
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { usePromoLibrary } from '@/hooks/usePromoLibrary';
+import type { SavedPromoScheduleEntry } from '@/hooks/usePromotionalPopup';
 
 type TrendKey = 'impressions' | 'ctaClicks' | 'dismissals' | 'redemptions' | 'revenue';
 
@@ -223,6 +232,11 @@ interface PopupAnalyticsCardProps {
   organizationId?: string;
   /** Optional eyebrow above the title (e.g. for the editor mount). */
   description?: string;
+  /** When provided, enables a per-rotation breakdown selector. The funnel
+   *  underneath is the SAME `offerCode` (the wrapper's offer code is the
+   *  attribution key — see `applyScheduledSnapshot`); selecting a rotation
+   *  narrows the temporal window to that rotation's [startsAt, endsAt]. */
+  schedule?: SavedPromoScheduleEntry[];
 }
 
 function formatPercent(value: number | null): string {
@@ -303,12 +317,47 @@ export function PopupAnalyticsCard({
   windowDays = 30,
   organizationId,
   description,
+  schedule,
 }: PopupAnalyticsCardProps) {
   const code = (offerCode ?? '').trim();
+
+  // Per-rotation breakdown — selector value is "all" or a schedule entry id.
+  const [rotationId, setRotationId] = useState<string>('all');
+  const { data: library } = usePromoLibrary();
+  const savedById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of library?.saved ?? []) m.set(s.id, s.name);
+    return m;
+  }, [library?.saved]);
+
+  // Only show selector when there are at least two rotations to compare.
+  const rotationOptions = useMemo(() => {
+    const list = (schedule ?? []).filter(
+      (e) =>
+        Number.isFinite(Date.parse(e.startsAt)) &&
+        Number.isFinite(Date.parse(e.endsAt)) &&
+        Date.parse(e.endsAt) > Date.parse(e.startsAt),
+    );
+    return [...list].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  }, [schedule]);
+  const showRotationSelector = rotationOptions.length >= 2;
+
+  const activeRotation =
+    rotationId !== 'all'
+      ? rotationOptions.find((e) => e.id === rotationId) ?? null
+      : null;
+
   const { data, isLoading } = usePromotionalPopupFunnel({
     offerCode: code,
     windowDays,
     explicitOrgId: organizationId,
+    rotationWindow: activeRotation
+      ? {
+          id: activeRotation.id,
+          startsAt: activeRotation.startsAt,
+          endsAt: activeRotation.endsAt,
+        }
+      : null,
   });
 
   // Shared hover index — chart hover lights up tile, tile hover dims chart.
@@ -364,10 +413,42 @@ export function PopupAnalyticsCard({
               </div>
               <CardDescription>
                 {description ??
-                  `Conversion funnel for ${code} · last ${windowDays} days`}
+                  (activeRotation
+                    ? `${savedById.get(activeRotation.savedPromoId) ?? 'Rotation'} window · ${code}`
+                    : `Conversion funnel for ${code} · last ${windowDays} days`)}
               </CardDescription>
             </div>
           </div>
+          {showRotationSelector ? (
+            <div className="shrink-0">
+              <Select value={rotationId} onValueChange={setRotationId}>
+                <SelectTrigger className="h-9 w-[220px] text-xs">
+                  <SelectValue placeholder="All rotations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    All rotations · last {windowDays}d
+                  </SelectItem>
+                  {rotationOptions.map((e) => {
+                    const name = savedById.get(e.savedPromoId) ?? '(deleted)';
+                    const start = new Date(e.startsAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                    const end = new Date(e.endsAt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                    return (
+                      <SelectItem key={e.id} value={e.id}>
+                        {name} · {start}–{end}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
