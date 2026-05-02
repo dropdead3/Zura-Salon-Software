@@ -273,7 +273,8 @@ function WebsiteEditorShellInner() {
   // valid page-scoped tab by the effect at lines ~343-351).
   const initialEditorTab = searchParams.get('editor') ?? 'hero';
   const [editorTab, setEditorTab] = useState<string>(initialEditorTab);
-  const [selectedPageId, setSelectedPageId] = useState<string>(persisted.selectedPageId ?? 'home');
+  // Always land on Home on entry — see PersistedState comment.
+  const [selectedPageId, setSelectedPageId] = useState<string>('home');
   const [showPreview, setShowPreview] = useState<boolean>(
     persisted.showPreview ?? (typeof window !== 'undefined' ? window.innerWidth >= 1280 : true),
   );
