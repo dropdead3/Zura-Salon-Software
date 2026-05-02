@@ -1,14 +1,13 @@
 import { tokens } from '@/lib/design-tokens';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
-import { ImageUploadInput } from './inputs/ImageUploadInput';
-import { SectionBackgroundColorPicker } from './inputs/SectionBackgroundColorPicker';
 import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
+import { SectionBackgroundEditor } from './inputs/SectionBackgroundEditor';
 
 interface SectionStyleEditorProps {
   value: Partial<StyleOverrides>;
@@ -29,120 +28,160 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
     return v !== undefined && v !== '' && v !== 0 && v !== 'none' && v !== 'full';
   });
 
+  const containerEnabled = !!merged.container_enabled;
+
   return (
-    <div className="space-y-5 py-1">
-      {/* Background Type */}
-      <div className="space-y-2">
-        <Label className="text-xs">Background</Label>
-        <Select value={merged.background_type} onValueChange={v => update('background_type', v)}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None (inherit)</SelectItem>
-            <SelectItem value="color">Solid Color</SelectItem>
-            <SelectItem value="gradient">Gradient</SelectItem>
-            <SelectItem value="image">Image</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Background Value */}
-      {merged.background_type === 'color' && (
-        // Per-section background picker: theme tokens + brand presets +
-        // custom hex with an explicit "None" affordance. Mirrors the
-        // Promo Popup accent pattern so operators get a consistent
-        // chip-row vocabulary across every editor surface.
-        <SectionBackgroundColorPicker
-          value={merged.background_value}
-          onChange={(v) => update('background_value', v)}
-          label="Background Color"
-        />
-      )}
-      {merged.background_type !== 'none' && merged.background_type !== 'color' && (
-        <div className="space-y-2">
-          <Label className="text-xs">
-            {merged.background_type === 'gradient' ? 'CSS Gradient' : 'Image URL'}
+    <div className="space-y-6 py-1">
+      {/* ─── Section Background ──────────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-display uppercase tracking-wider text-muted-foreground">
+            Section Background
           </Label>
-          {merged.background_type === 'image' ? (
-            <ImageUploadInput
-              value={merged.background_value}
-              onChange={v => update('background_value', v)}
-              label=""
-              pathPrefix={`sections/${sectionId ?? 'bg'}`}
-            />
-          ) : (
-            <Input
-              value={merged.background_value}
-              onChange={e => update('background_value', e.target.value)}
-              placeholder="linear-gradient(135deg, #667eea, #764ba2)"
-              className="h-8 text-xs"
-            />
-          )}
         </div>
-      )}
-
-      {/* Text Color Override — uses the canonical theme-aware picker so the
-          row inherits theme/in-use swatches alongside the native color input. */}
-      <ThemeAwareColorInput
-        label="Text Color Override"
-        value={merged.text_color_override}
-        onChange={(next) => update('text_color_override', next ?? '')}
-        placeholder="Leave empty to inherit"
-      />
-
-      {/* Padding */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label className="text-xs">Padding Top ({merged.padding_top}px)</Label>
-          <Slider
-            value={[merged.padding_top]}
-            onValueChange={([v]) => update('padding_top', v)}
-            min={0}
-            max={200}
-            step={8}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Padding Bottom ({merged.padding_bottom}px)</Label>
-          <Slider
-            value={[merged.padding_bottom]}
-            onValueChange={([v]) => update('padding_bottom', v)}
-            min={0}
-            max={200}
-            step={8}
-          />
-        </div>
-      </div>
-
-      {/* Max Width */}
-      <div className="space-y-2">
-        <Label className="text-xs">Content Max Width</Label>
-        <Select value={merged.max_width} onValueChange={v => update('max_width', v)}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="sm">Small (672px)</SelectItem>
-            <SelectItem value="md">Medium (896px)</SelectItem>
-            <SelectItem value="lg">Large (1152px)</SelectItem>
-            <SelectItem value="xl">Extra Large (1280px)</SelectItem>
-            <SelectItem value="full">Full Width</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Border Radius */}
-      <div className="space-y-2">
-        <Label className="text-xs">Border Radius ({merged.border_radius}px)</Label>
-        <Slider
-          value={[merged.border_radius]}
-          onValueChange={([v]) => update('border_radius', v)}
-          min={0}
-          max={32}
-          step={4}
+        <SectionBackgroundEditor
+          scope="section"
+          value={value}
+          onChange={onChange}
+          sectionId={sectionId}
         />
-      </div>
+      </section>
+
+      {/* ─── Container (inset frame around content) ──────────────────── */}
+      <section className="space-y-3 pt-4 border-t border-border/40">
+        <div className="flex items-center justify-between">
+          <div>
+            <Label className="text-xs font-display uppercase tracking-wider text-muted-foreground">
+              Container Frame
+            </Label>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Optional inset card around the content with its own background
+            </p>
+          </div>
+          <Switch
+            checked={containerEnabled}
+            onCheckedChange={(v) => update('container_enabled', v)}
+          />
+        </div>
+
+        {containerEnabled && (
+          <div className="space-y-4 pl-1">
+            <SectionBackgroundEditor
+              scope="container"
+              value={value}
+              onChange={onChange}
+              sectionId={sectionId}
+            />
+
+            {/* Container layout */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Inner Padding ({merged.container_padding ?? 32}px)</Label>
+                <Slider
+                  value={[merged.container_padding ?? 32]}
+                  onValueChange={([v]) => update('container_padding', v)}
+                  min={0}
+                  max={96}
+                  step={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Corner Radius ({merged.container_radius ?? 16}px)</Label>
+                <Slider
+                  value={[merged.container_radius ?? 16]}
+                  onValueChange={([v]) => update('container_radius', v)}
+                  min={0}
+                  max={48}
+                  step={2}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">Container Max Width</Label>
+              <Select
+                value={merged.container_max_width ?? 'lg'}
+                onValueChange={v => update('container_max_width', v)}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sm">Small (672px)</SelectItem>
+                  <SelectItem value="md">Medium (896px)</SelectItem>
+                  <SelectItem value="lg">Large (1152px)</SelectItem>
+                  <SelectItem value="xl">Extra Large (1280px)</SelectItem>
+                  <SelectItem value="full">Full Width</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ─── Layout ──────────────────────────────────────────────────── */}
+      <section className="space-y-4 pt-4 border-t border-border/40">
+        <Label className="text-xs font-display uppercase tracking-wider text-muted-foreground">
+          Layout
+        </Label>
+
+        <ThemeAwareColorInput
+          label="Text Color Override"
+          value={merged.text_color_override}
+          onChange={(next) => update('text_color_override', next ?? '')}
+          placeholder="Leave empty to inherit"
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs">Padding Top ({merged.padding_top}px)</Label>
+            <Slider
+              value={[merged.padding_top]}
+              onValueChange={([v]) => update('padding_top', v)}
+              min={0}
+              max={200}
+              step={8}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Padding Bottom ({merged.padding_bottom}px)</Label>
+            <Slider
+              value={[merged.padding_bottom]}
+              onValueChange={([v]) => update('padding_bottom', v)}
+              min={0}
+              max={200}
+              step={8}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Content Max Width</Label>
+          <Select value={merged.max_width} onValueChange={v => update('max_width', v)}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="sm">Small (672px)</SelectItem>
+              <SelectItem value="md">Medium (896px)</SelectItem>
+              <SelectItem value="lg">Large (1152px)</SelectItem>
+              <SelectItem value="xl">Extra Large (1280px)</SelectItem>
+              <SelectItem value="full">Full Width</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Section Border Radius ({merged.border_radius}px)</Label>
+          <Slider
+            value={[merged.border_radius]}
+            onValueChange={([v]) => update('border_radius', v)}
+            min={0}
+            max={32}
+            step={4}
+          />
+        </div>
+      </section>
 
       {/* Reset */}
       {hasOverrides && (
