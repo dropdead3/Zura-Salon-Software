@@ -224,7 +224,152 @@ function TrendChart({ data, highlightedKey, onHoverKey }: TrendChartProps) {
   );
 }
 
-interface PopupAnalyticsCardProps {
+/**
+ * Side-by-side comparison of two rotation funnels under the same offer code.
+ * Renders an impressions overlay chart (the cleanest single-axis comparison
+ * — CTR/redemption rates would need their own scale) plus a 4-row delta
+ * table. Sample-size warnings carry the "honest silence" doctrine: when
+ * either side is below the materiality threshold, the comparison labels the
+ * gap as "not yet comparable" rather than rendering misleading deltas.
+ */
+function ComparePanel({
+  aLabel,
+  bLabel,
+  aData,
+  bData,
+}: {
+  aLabel: string;
+  bLabel: string;
+  aData: import('@/hooks/usePromotionalPopupFunnel').PromotionalPopupFunnel;
+  bData: import('@/hooks/usePromotionalPopupFunnel').PromotionalPopupFunnel;
+}) {
+  // Merge trend points by date for an overlay chart. Both funnels return
+  // 14 points by date string so the merge is a straight zip on `date`.
+  const overlay = useMemo(() => {
+    const byDate = new Map<string, { date: string; a: number; b: number }>();
+    for (const p of aData.trend) byDate.set(p.date, { date: p.date, a: p.impressions, b: 0 });
+    for (const p of bData.trend) {
+      const ex = byDate.get(p.date);
+      if (ex) ex.b = p.impressions;
+      else byDate.set(p.date, { date: p.date, a: 0, b: p.impressions });
+    }
+    return Array.from(byDate.values()).sort((x, y) => x.date.localeCompare(y.date));
+  }, [aData.trend, bData.trend]);
+
+  const rows: Array<{ metric: string; a: string; b: string; comparable: boolean }> = [
+    {
+      metric: 'Impressions',
+      a: aData.impressions.toLocaleString(),
+      b: bData.impressions.toLocaleString(),
+      comparable: true,
+    },
+    {
+      metric: 'CTA Clicks',
+      a: aData.ctaClicks.toLocaleString(),
+      b: bData.ctaClicks.toLocaleString(),
+      comparable: true,
+    },
+    {
+      metric: 'Click rate',
+      a: aData.ctr === null ? 'not yet comparable' : `${(aData.ctr * 100).toFixed(1)}%`,
+      b: bData.ctr === null ? 'not yet comparable' : `${(bData.ctr * 100).toFixed(1)}%`,
+      comparable: aData.ctr !== null && bData.ctr !== null,
+    },
+    {
+      metric: 'Redemptions',
+      a: aData.redemptions.toLocaleString(),
+      b: bData.redemptions.toLocaleString(),
+      comparable: true,
+    },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className={tokens.kpi.label}>Side-by-side</span>
+        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-primary" />
+            {aLabel}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-foreground" />
+            {bLabel}
+          </span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={120}>
+        <AreaChart data={overlay} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={(v: string) => v.slice(5)}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            axisLine={false}
+            tickLine={false}
+            width={28}
+            allowDecimals={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: 'hsl(var(--popover))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 8,
+              fontSize: 12,
+            }}
+          />
+          <Area
+            type="monotone"
+            dataKey="a"
+            name={aLabel}
+            stroke="hsl(var(--primary))"
+            fill="hsl(var(--primary))"
+            fillOpacity={0.15}
+            strokeWidth={1.5}
+          />
+          <Area
+            type="monotone"
+            dataKey="b"
+            name={bLabel}
+            stroke="hsl(var(--foreground))"
+            fill="hsl(var(--foreground))"
+            fillOpacity={0.1}
+            strokeWidth={1.5}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="text-muted-foreground font-display tracking-wide uppercase text-[10px]">
+          Metric
+        </div>
+        <div className="text-foreground font-display tracking-wide uppercase text-[10px]">
+          {aLabel}
+        </div>
+        <div className="text-foreground font-display tracking-wide uppercase text-[10px]">
+          {bLabel}
+        </div>
+        {rows.map((r) => (
+          <div key={r.metric} className="contents">
+            <div className="text-muted-foreground">{r.metric}</div>
+            <div className={r.comparable ? 'text-foreground' : 'text-muted-foreground italic'}>
+              {r.a}
+            </div>
+            <div className={r.comparable ? 'text-foreground' : 'text-muted-foreground italic'}>
+              {r.b}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
   offerCode: string | null | undefined;
   /** Defaults to 30. */
   windowDays?: number;
