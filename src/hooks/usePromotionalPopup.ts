@@ -13,12 +13,21 @@ export type PopupSurface = 'home' | 'services' | 'booking' | 'all-public';
 export type FabPosition = 'bottom-right' | 'bottom-left';
 /** Curated companion glyph for the eyebrow tag. `none` hides the icon. */
 export type EyebrowIcon = 'none' | 'zap' | 'gift' | 'clock' | 'sparkles' | 'scissors';
-/** Per-layout image treatment.
- *  - `cover`: full-width image strip above the headline (default).
+/** @deprecated Cross-surface image treatment — kept as legacy fallback only.
+ *  Replaced by the per-surface pair `modalImageLayout` + `cornerCardImage`,
+ *  which avoid phantom-equivalent options (e.g. on the modal, both `cover`
+ *  and `hidden-on-corner` rendered identically — only the corner card differed).
+ *  Existing rows still set `imageTreatment` and the resolver below maps it.
+ *  - `cover`: full-width image strip above the headline.
  *  - `side`: image rendered as a left rail on modal (ignored on corner-card).
- *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card,
- *    where vertical room is the tightest. */
+ *  - `hidden-on-corner`: image shown on modal/banner but hidden on corner-card. */
 export type ImageTreatment = 'cover' | 'side' | 'hidden-on-corner';
+/** Modal-only layout for the image. `cover` = full-width strip above the headline.
+ *  `side` = left rail. */
+export type ModalImageLayout = 'cover' | 'side';
+/** Corner-card image visibility. `show` = top strip; `hide` = no image (the corner
+ *  card is the smallest surface, and many operators want it text-only). */
+export type CornerCardImage = 'show' | 'hide';
 /** Where the Claim Offer CTA sends the visitor.
  *  - `booking`: deep-links into the public booking surface with the promo code attached.
  *  - `consultation`: same as booking but flips on `?consultation=true` so the booking
