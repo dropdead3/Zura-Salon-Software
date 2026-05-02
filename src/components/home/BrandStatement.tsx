@@ -193,9 +193,10 @@ export function BrandStatement() {
               {config.show_headline && (
                 <h2
                   className="font-display font-normal tracking-tight leading-[1.1]"
-                  // Heading scale opt-in — multiplies the base size via the
-                  // `--section-heading-scale` CSS var on the section wrapper.
-                  style={{ fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))' }}
+                  style={{
+                    fontSize: 'calc(clamp(1.875rem, 4vw, 3rem) * var(--section-heading-scale, 1))',
+                    ...(config.text_colors?.heading ? { color: config.text_colors.heading } : {}),
+                  }}
                 >
                   <InlineEditableText
                     as="span"
@@ -205,7 +206,10 @@ export function BrandStatement() {
                     placeholder="Headline prefix"
                   />
                   <br />
-                  <span className="font-light">
+                  <span
+                    className="font-light"
+                    style={config.text_colors?.accent ? { color: config.text_colors.accent } : undefined}
+                  >
                     {displayText}
                     {config.show_typewriter_cursor && (
                       <span className="inline-block w-[2px] h-[0.9em] bg-current ml-1 animate-pulse align-middle" />
@@ -237,16 +241,20 @@ export function BrandStatement() {
                 className="space-y-6"
               >
                 {config.paragraphs.map((paragraph, i) => (
-                  <InlineEditableText
+                  <div
                     key={i}
-                    as="p"
-                    multiline
-                    className={`text-base md:text-lg font-sans font-light leading-relaxed ${paragraphColorClass}`}
-                    value={paragraph}
-                    sectionKey="section_brand_statement"
-                    fieldPath={`paragraphs.${i}`}
-                    placeholder="Paragraph text"
-                  />
+                    style={config.text_colors?.body ? { color: config.text_colors.body } : undefined}
+                  >
+                    <InlineEditableText
+                      as="p"
+                      multiline
+                      className={`text-base md:text-lg font-sans font-light leading-relaxed ${config.text_colors?.body ? '' : paragraphColorClass}`}
+                      value={paragraph}
+                      sectionKey="section_brand_statement"
+                      fieldPath={`paragraphs.${i}`}
+                      placeholder="Paragraph text"
+                    />
+                  </div>
                 ))}
               </motion.div>
             )}
