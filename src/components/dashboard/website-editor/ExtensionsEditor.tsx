@@ -21,6 +21,9 @@ import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
 import { ExtensionReviewsChipsManager } from './ExtensionReviewsChipsManager';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SectionStyleEditor } from './SectionStyleEditor';
+import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 const ICON_OPTIONS = [
   { value: 'Star', icon: Star },
@@ -93,6 +96,12 @@ export function ExtensionsEditor() {
           </Button>
         }
       >
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="content">Content</TabsTrigger>
+            <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
+          </TabsList>
+          <TabsContent value="content" className="space-y-6 mt-0">
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow"
