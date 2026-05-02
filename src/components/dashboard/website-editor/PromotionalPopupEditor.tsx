@@ -52,6 +52,7 @@ import {
   type PopupSurface,
   type EyebrowIcon,
   type PopupAcceptDestination,
+  type PopupAudience,
   type ModalImageLayout,
   type CornerCardImage,
 } from '@/hooks/usePromotionalPopup';
@@ -514,7 +515,24 @@ export function PromotionalPopupEditor() {
         if (k && k.startsWith(prefix)) toDelete.push(k);
       }
       toDelete.forEach((k) => window.localStorage.removeItem(k));
-      window.sessionStorage.removeItem('zura.promo.session');
+      // Session sentinels are now namespaced per `${STORAGE_PREFIX}.session.${orgId}.${code}`
+      // (see usePromoLifecycle.ts). Clear every session key for this org so
+      // "once-per-session" dismissals don't survive a manual restart.
+      const sessionPrefix = `zura.promo.session.${orgId}.`;
+      const sessionToDelete: string[] = [];
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const k = window.sessionStorage.key(i);
+        if (k && k.startsWith(sessionPrefix)) sessionToDelete.push(k);
+      }
+      sessionToDelete.forEach((k) => window.sessionStorage.removeItem(k));
+      // Pulse-hint sentinel is also session-scoped per org+code now.
+      const pulsePrefix = `zura.promo.fab-pulsed.${orgId}.`;
+      const pulseToDelete: string[] = [];
+      for (let i = 0; i < window.sessionStorage.length; i++) {
+        const k = window.sessionStorage.key(i);
+        if (k && k.startsWith(pulsePrefix)) pulseToDelete.push(k);
+      }
+      pulseToDelete.forEach((k) => window.sessionStorage.removeItem(k));
       // Same-tab mutation — `storage` event won't fire for this tab, so
       // recount inline to keep the tooltip accurate without waiting for
       // a re-render trigger.
@@ -1490,6 +1508,21 @@ export function PromotionalPopupEditor() {
             </label>
           ))}
         </div>
+        <Field
+          label="Audience"
+          hint="Limit who sees this popup. 'New visitors only' suppresses the popup for anyone who's already visited your site in this browser."
+        >
+          <Select
+            value={formData.audience}
+            onValueChange={(v) => handleChange('audience', v as PopupAudience)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All visitors</SelectItem>
+              <SelectItem value="new-visitors-only">New visitors only</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
       </Section>
 
       {/* Schedule */}
