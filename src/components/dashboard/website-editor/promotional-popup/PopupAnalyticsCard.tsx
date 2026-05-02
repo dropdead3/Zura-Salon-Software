@@ -139,27 +139,17 @@ export function PopupAnalyticsCard({
               <FunnelStat
                 label="Revenue"
                 value={
-                  // BlurredAmount wraps the currency display per the privacy canon.
-                  // Fall back to raw "—" when zero so we don't blur an empty value.
-                  data.revenueAttributed > 0
-                    ? '•••'
-                    : '—'
+                  data.revenueAttributed > 0 ? (
+                    <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
+                  ) : (
+                    '—'
+                  )
                 }
                 icon={DollarSign}
+                rate={data.bookingRate !== null ? formatPercent(data.bookingRate) : undefined}
+                rateLabel={data.bookingRate !== null ? 'CTA → booking' : undefined}
               />
             </div>
-            {/* Show the real (privacy-aware) revenue under the tile so BlurredAmount can do its thing. */}
-            {data.revenueAttributed > 0 ? (
-              <div className="text-xs text-muted-foreground text-right">
-                Attributed revenue:{' '}
-                <BlurredAmount>{formatCurrency(data.revenueAttributed)}</BlurredAmount>
-                {data.bookingRate !== null ? (
-                  <span className="ml-2">
-                    · {formatPercent(data.bookingRate)} of CTA clicks book
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
 
             {!data.hasSufficientData ? (
               <p className="text-xs text-muted-foreground">
