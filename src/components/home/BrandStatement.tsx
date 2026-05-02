@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Section } from "@/components/ui/section";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useIsEditorPreview } from "@/hooks/useIsEditorPreview";
@@ -7,6 +7,7 @@ import { useBrandStatementConfig } from "@/hooks/useSectionConfig";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
+import { pickReadableForeground } from "@/lib/color-contrast";
 
 export function BrandStatement() {
   const isPreview = useIsEditorPreview();
@@ -84,9 +85,7 @@ export function BrandStatement() {
   // fill, generous padding, soft radius). Operator overrides win — picking a
   // Color / Gradient / Image / Video in the editor's Container Frame panel
   // replaces the fill; toggling the Container Frame switch off removes it
-  // entirely. Text color stays light by default (`text-background`) so the
-  // dark fill reads correctly; switch to Text Color Override in the editor
-  // when picking a light container color.
+  // entirely.
   const containerDefaults: Partial<typeof config.style_overrides> = {
     container_enabled: true,
     container_background_type: 'color',
@@ -97,12 +96,49 @@ export function BrandStatement() {
   };
   const mergedOverrides = { ...containerDefaults, ...(config.style_overrides ?? {}) };
 
+  // Auto-contrast text tone from the resolved container fill so the headline
+  // stays legible whether the operator keeps the dark default, picks a light
+  // preset (Ivory/Porcelain), or disables the container frame entirely.
+  // The text-color override in SectionStyleEditor still wins via
+  // SectionStyleWrapper's `outerStyle.color`.
+  const textTone = useMemo<'light' | 'dark'>(() => {
+    if (!mergedOverrides.container_enabled) {
+      // No container frame → text sits on the section bg (or the page bg).
+      // Section bg overrides also feed pickReadableForeground; otherwise
+      // assume the page is light (cream-lux) and use dark text.
+      const sectionBg = mergedOverrides.background_value;
+      if (mergedOverrides.background_type === 'color' && sectionBg) {
+        const tone = pickReadableForeground(sectionBg);
+        if (tone) return tone === 'light' ? 'light' : 'dark';
+      }
+      return 'dark';
+    }
+    const fill = mergedOverrides.container_background_value ?? '';
+    // CSS-var ref → assume foreground token (dark fill, light text).
+    if (fill.includes('var(--foreground)')) return 'light';
+    if (fill.includes('var(--background)') || fill.includes('var(--card)')) return 'dark';
+    if (fill.includes('var(--')) return 'light'; // most brand tokens are darker
+    const tone = pickReadableForeground(fill);
+    if (tone) return tone === 'light' ? 'light' : 'dark';
+    return 'light';
+  }, [
+    mergedOverrides.container_enabled,
+    mergedOverrides.container_background_value,
+    mergedOverrides.background_type,
+    mergedOverrides.background_value,
+  ]);
+
+  const isLightText = textTone === 'light';
+  const textColorClass = isLightText ? 'text-background' : 'text-foreground';
+  const eyebrowColorClass = isLightText ? 'text-background/60' : 'text-foreground/60';
+  const paragraphColorClass = isLightText ? 'text-background/80' : 'text-foreground/80';
+
   return (
     <SectionStyleWrapper styleOverrides={mergedOverrides}>
     <Section theme="light">
       <motion.div
         ref={containerRef}
-        className="text-background"
+        className={textColorClass}
         style={isPreview ? { opacity: 1, filter: 'none', y: 0 } : { opacity, filter: blurFilter, y }}
       >
         <div ref={contentRef} className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-8 lg:gap-12 items-center">
@@ -114,7 +150,7 @@ export function BrandStatement() {
           >
             {config.show_eyebrow && config.eyebrow && (
               <Eyebrow
-                className="text-background/60 mb-4"
+                className={`${eyebrowColorClass} mb-4`}
                 style={config.text_colors?.eyebrow ? { color: config.text_colors.eyebrow } : undefined}
               >
                 {config.eyebrow}
@@ -171,7 +207,7 @@ export function BrandStatement() {
                   key={i}
                   as="p"
                   multiline
-                  className="text-base md:text-lg font-sans font-light leading-relaxed text-background/80"
+                  className={`text-base md:text-lg font-sans font-light leading-relaxed ${paragraphColorClass}`}
                   value={paragraph}
                   sectionKey="section_brand_statement"
                   fieldPath={`paragraphs.${i}`}
