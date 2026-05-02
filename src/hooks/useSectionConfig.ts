@@ -298,6 +298,17 @@ export interface TestimonialsConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_google_review_link: boolean;
+  /**
+   * Reputation Engine integration:
+   * - 'manual' (default): operator-typed testimonials only
+   * - 'zura': only consent-approved client reviews curated from the Reputation Engine
+   * - 'mixed': both, sorted by sort_order
+   */
+  review_source?: 'manual' | 'zura' | 'mixed';
+  /** Live render layout. Default 'carousel' preserves the existing infinite-scroll behaviour. */
+  layout?: 'carousel' | 'grid' | 'stacked' | 'hero';
+  /** Optional ID of the testimonial to spotlight in 'hero' layout. */
+  featured_review_id?: string | null;
   /** Per-element color overrides. Empty/missing = inherit theme. */
   text_colors?: SectionTextColors;
   /** Section background / container / media overrides. See SectionStyleEditor. */
@@ -646,6 +657,9 @@ export const DEFAULT_TESTIMONIALS: TestimonialsConfig = {
   show_eyebrow: true,
   show_headline: true,
   show_google_review_link: true,
+  review_source: 'manual',
+  layout: 'carousel',
+  featured_review_id: null,
 };
 
 export const DEFAULT_NEW_CLIENT: NewClientConfig = {

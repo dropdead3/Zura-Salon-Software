@@ -3,7 +3,7 @@ import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, RotateCcw, MessageSquareQuote } from 'lucide-react';
+import { Loader2, Settings2, RotateCcw, MessageSquareQuote, Sparkles } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { useDirtyState } from '@/hooks/useDirtyState';
 import { usePreviewBridge, clearPreviewOverride } from '@/hooks/usePreviewBridge';
@@ -20,17 +20,33 @@ import { triggerPreviewRefresh } from '@/lib/preview-utils';
 import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { ReviewsManager } from './ReviewsManager';
+import { ZuraReviewLibrary } from './ZuraReviewLibrary';
 import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
 import { TESTIMONIALS_COLOR_SLOTS } from '@/lib/sectionColorSlots';
 import { SectionStyleEditor } from './SectionStyleEditor';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
+
+const REVIEW_SOURCE_OPTIONS: { value: NonNullable<TestimonialsConfig['review_source']>; label: string; hint: string }[] = [
+  { value: 'manual', label: 'Manual testimonials only', hint: 'Use only the testimonials you type below.' },
+  { value: 'zura', label: 'Approved Zura reviews only', hint: 'Pull consent-approved 5-star client reviews from the Reputation Engine.' },
+  { value: 'mixed', label: 'Mixed (manual + Zura)', hint: 'Show both your manual testimonials and curated client reviews.' },
+];
+
+const LAYOUT_OPTIONS: { value: NonNullable<TestimonialsConfig['layout']>; label: string }[] = [
+  { value: 'carousel', label: 'Infinite carousel (default)' },
+  { value: 'grid', label: 'Grid' },
+  { value: 'stacked', label: 'Stacked' },
+  { value: 'hero', label: 'Featured hero' },
+];
 
 export function TestimonialsEditor() {
   const __saveTelemetry = useSaveTelemetry('testimonials-editor');
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
   const [localConfig, setLocalConfig] = useState<TestimonialsConfig>(DEFAULT_TESTIMONIALS);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
   const { effectiveOrganization } = useOrganizationContext();
@@ -92,6 +108,53 @@ export function TestimonialsEditor() {
             <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
           </TabsList>
           <TabsContent value="content" className="space-y-6 mt-0">
+        {/* Review Source */}
+        <div className="space-y-2">
+          <Label className="text-sm">Review Source</Label>
+          <Select
+            value={localConfig.review_source ?? 'manual'}
+            onValueChange={(v) => updateField('review_source', v as NonNullable<TestimonialsConfig['review_source']>)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {REVIEW_SOURCE_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {REVIEW_SOURCE_OPTIONS.find((o) => o.value === (localConfig.review_source ?? 'manual'))?.hint}
+          </p>
+          {(localConfig.review_source === 'zura' || localConfig.review_source === 'mixed') && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLibraryOpen(true)}
+              className="gap-1.5 mt-2"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Open Zura Review Library
+            </Button>
+          )}
+        </div>
+
+        {/* Layout */}
+        <div className="space-y-2">
+          <Label className="text-sm">Layout</Label>
+          <Select
+            value={localConfig.layout ?? 'carousel'}
+            onValueChange={(v) => updateField('layout', v as NonNullable<TestimonialsConfig['layout']>)}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {LAYOUT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Eyebrow */}
         <ToggleInput
           label="Show Eyebrow"
@@ -224,6 +287,8 @@ export function TestimonialsEditor() {
       </EditorCard>
 
       <ReviewsManager surface="general" title="Homepage Reviews" />
+
+      <ZuraReviewLibrary open={libraryOpen} onOpenChange={setLibraryOpen} />
     </div>
   );
 }
