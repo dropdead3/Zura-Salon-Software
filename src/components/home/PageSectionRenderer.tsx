@@ -208,20 +208,39 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
   // View mode inside editor: render exact public layout (no bento cards)
   // Also used for the public site (non-preview)
   if (!isEditorPreview || isViewMode) {
-    return (
-      <>
-        {enabledSections.map((section) => (
-          <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
-            <div id={`section-${section.id}`}>
-              {isBuiltinSection(section.type)
-                ? getBuiltinComponent(section.type, false)
-                : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-              }
-            </div>
-          </SectionStyleWrapper>
-        ))}
-      </>
+    const renderSection = (section: SectionConfig) => (
+      <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
+        <div id={`section-${section.id}`}>
+          {isBuiltinSection(section.type)
+            ? getBuiltinComponent(section.type, false)
+            : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+          }
+        </div>
+      </SectionStyleWrapper>
     );
+
+    // Hero parallax: only when toggle ON, slot 0 is a hero, and there's at
+    // least one section after it to rise. Position-aware (not type-aware) —
+    // whatever the operator drags into slot 1 inherits the rising-panel
+    // treatment automatically.
+    const canParallax =
+      heroParallaxEnabled &&
+      enabledSections.length >= 2 &&
+      enabledSections[0]?.type === 'hero';
+
+    if (canParallax) {
+      const [heroSection, nextSection, ...restSections] = enabledSections;
+      return (
+        <HeroParallaxLayout
+          enabled
+          hero={renderSection(heroSection)}
+          next={renderSection(nextSection)}
+          rest={<>{restSections.map(renderSection)}</>}
+        />
+      );
+    }
+
+    return <>{enabledSections.map(renderSection)}</>;
   }
 
   // Edit mode inside editor: floating bento cards
