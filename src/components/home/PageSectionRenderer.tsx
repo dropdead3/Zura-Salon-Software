@@ -16,6 +16,9 @@ import { BrandsSection } from '@/components/home/BrandsSection';
 import { DrinkMenuSection } from '@/components/home/DrinkMenuSection';
 import { CustomSectionRenderer } from '@/components/home/CustomSectionRenderer';
 import { SectionStyleWrapper } from '@/components/home/SectionStyleWrapper';
+import { HeroParallaxLayout } from '@/components/home/HeroParallaxLayout';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import type { DesignOverrides } from '@/components/dashboard/website-editor/SiteDesignPanel';
 import { isBuiltinSection, type BuiltinSectionType, type CustomSectionType, type SectionConfig } from '@/hooks/useWebsiteSections';
 
 const FULL_BLEED_SECTIONS = new Set<string>(['hero', 'gallery', 'new_client', 'brand_statement', 'extensions']);
