@@ -44,6 +44,7 @@ import { useWebsiteColorTheme, useUpdateWebsiteColorTheme } from '@/hooks/useWeb
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
 import { cn } from '@/lib/utils';
 import { pushEditorHistoryEntry } from './EditorHistoryProvider';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 // ─── Schema ───
 export type ButtonShape = 'square' | 'rounded' | 'pill';
@@ -324,31 +325,22 @@ export function SiteDesignPanel({ onClose }: SiteDesignPanelProps) {
     };
   }, [handleCloseIntent, handleDiscardConfirmed]);
 
-  // Color helpers
+  // Color helpers — values are stored as HSL triplets ("260 25% 95%") in
+  // design tokens, but the canonical picker speaks hex. Convert in/out at
+  // the boundary so the row gets theme + in-use swatches "for free".
   const colorRow = (
     label: string,
     field: keyof Pick<DesignOverrides, 'primary_hsl' | 'secondary_hsl' | 'accent_hsl' | 'background_hsl'>,
   ) => {
     const hex = hslTripletToHex(draft[field]);
     return (
-      <div key={field} className="flex items-center justify-between gap-3">
-        <Label className="text-xs text-muted-foreground flex-1">{label}</Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={hex}
-            onChange={(e) => setField(field, hexToHslTriplet(e.target.value))}
-            className="h-8 w-12 rounded-lg border border-border cursor-pointer bg-transparent p-0"
-            aria-label={`${label} color`}
-          />
-          <Input
-            value={draft[field] ?? ''}
-            onChange={(e) => setField(field, e.target.value || null)}
-            placeholder="0 0% 0%"
-            className="h-8 w-32 text-[11px] font-mono rounded-full"
-            aria-label={`${label} HSL value`}
-          />
-        </div>
+      <div key={field} className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+        <ThemeAwareColorInput
+          value={hex || undefined}
+          onChange={(next) => setField(field, next ? hexToHslTriplet(next) : null)}
+          placeholder="0 0% 0%"
+        />
       </div>
     );
   };

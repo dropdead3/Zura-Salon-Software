@@ -8,6 +8,7 @@ import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
 import { ImageUploadInput } from './inputs/ImageUploadInput';
 import { SectionBackgroundColorPicker } from './inputs/SectionBackgroundColorPicker';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 interface SectionStyleEditorProps {
   value: Partial<StyleOverrides>;
@@ -81,34 +82,14 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
         </div>
       )}
 
-      {/* Text Color Override */}
-      <div className="space-y-2">
-        <Label className="text-xs">Text Color Override</Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={merged.text_color_override || '#000000'}
-            onChange={e => update('text_color_override', e.target.value)}
-            className="h-8 w-10 rounded border cursor-pointer"
-          />
-          <Input
-            value={merged.text_color_override}
-            onChange={e => update('text_color_override', e.target.value)}
-            placeholder="Leave empty to inherit"
-            className="h-8 text-xs flex-1"
-          />
-          {merged.text_color_override && (
-            <Button
-              variant="ghost"
-              size={tokens.button.inline}
-              className="h-8 text-xs"
-              onClick={() => update('text_color_override', '')}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* Text Color Override — uses the canonical theme-aware picker so the
+          row inherits theme/in-use swatches alongside the native color input. */}
+      <ThemeAwareColorInput
+        label="Text Color Override"
+        value={merged.text_color_override}
+        onChange={(next) => update('text_color_override', next ?? '')}
+        placeholder="Leave empty to inherit"
+      />
 
       {/* Padding */}
       <div className="grid grid-cols-2 gap-4">

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Megaphone, ExternalLink, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EditorCard } from './EditorCard';
+import { ThemeAwareColorInput } from './inputs/ThemeAwareColorInput';
 
 const BANNER_COLOR_PRESETS = [
   { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
@@ -129,23 +130,12 @@ export function AnnouncementBarContent() {
             })}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="custom_color" className="text-sm">Custom color</Label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                id="custom_color_picker"
-                value={formData.bg_color || '#ebe6df'}
-                onChange={(e) => handleChange('bg_color', e.target.value)}
-                className="w-8 h-8 rounded border border-border cursor-pointer shrink-0"
-              />
-              <Input
-                id="custom_color"
-                value={formData.bg_color || ''}
-                onChange={(e) => handleChange('bg_color', e.target.value)}
-                placeholder="e.g. hsl(40, 20%, 92%)"
-                className="min-w-0"
-              />
-            </div>
+            <Label className="text-sm">Custom color</Label>
+            <ThemeAwareColorInput
+              value={formData.bg_color || ''}
+              onChange={(next) => handleChange('bg_color', next ?? '')}
+              placeholder="e.g. #ebe6df"
+            />
           </div>
         </div>
 

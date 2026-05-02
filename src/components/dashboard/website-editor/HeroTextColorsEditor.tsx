@@ -5,52 +5,36 @@
  * and reused inside each slide row to override section-level values.
  */
 import { tokens } from '@/lib/design-tokens';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Palette, RotateCcw } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useState } from 'react';
 import type { HeroTextColors } from '@/hooks/useSectionConfig';
+import { ThemeAwareColorInput } from '@/components/dashboard/website-editor/inputs/ThemeAwareColorInput';
 
-interface ColorRowProps {
+// Shim that preserves the legacy `<ColorRow label value onChange />` API
+// used throughout this file. Behind the scenes it's the canonical
+// `<ThemeAwareColorInput>` so every row gets the theme + in-use swatches
+// — and so the eslint single-ownership doctrine for `<input type="color">`
+// stays satisfied (no native picker lives in this file anymore).
+function ColorRow({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
   label: string;
   value: string | undefined;
   onChange: (next: string | undefined) => void;
   placeholder?: string;
-}
-
-function ColorRow({ label, value, onChange, placeholder }: ColorRowProps) {
-  const display = value || '';
+}) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-[11px] text-muted-foreground">{label}</Label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          value={display || '#000000'}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-8 w-10 rounded border border-border cursor-pointer bg-background"
-          aria-label={`${label} color picker`}
-        />
-        <Input
-          value={display}
-          onChange={(e) => onChange(e.target.value || undefined)}
-          placeholder={placeholder ?? '#000000 (leave blank for auto)'}
-          className="h-8 text-xs flex-1 font-mono"
-        />
-        {display && (
-          <Button
-            variant="ghost"
-            size={tokens.button.inline}
-            className="h-8 px-2 text-xs"
-            onClick={() => onChange(undefined)}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-    </div>
+    <ThemeAwareColorInput
+      label={label}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+    />
   );
 }
 
