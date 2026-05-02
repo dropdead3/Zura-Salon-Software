@@ -32,6 +32,14 @@ interface HeroSlideEditorProps {
   onUpdate: (patch: Partial<HeroSlide>) => void;
   /** Section-level updater for global fields surfaced inline (e.g. rotating words). */
   onUpdateSection: <K extends keyof HeroConfig>(field: K, value: HeroConfig[K]) => void;
+  /**
+   * Optional file to immediately upload into this slide's background slot
+   * on mount. Set when the user picked a file via the +Add background tile
+   * — the editor opens with the upload already in flight.
+   */
+  pendingInitialFile?: File | null;
+  /** Called after `pendingInitialFile` has been consumed by MediaUploadInput. */
+  onPendingInitialFileConsumed?: () => void;
 }
 
 /**
@@ -47,7 +55,7 @@ interface HeroSlideEditorProps {
  * are hidden — those fields are edited once at the section level via the
  * Shared Hero Content card on the hub.
  */
-export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_slide', onUpdate, onUpdateSection }: HeroSlideEditorProps) {
+export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_slide', onUpdate, onUpdateSection, pendingInitialFile = null, onPendingInitialFileConsumed }: HeroSlideEditorProps) {
   const [overridesOpen, setOverridesOpen] = useState(false);
   const backgroundOnly = rotatorMode === 'background_only';
 
@@ -79,6 +87,26 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
 
   return (
     <div className="space-y-4">
+      {/* Inert-field banner — non-master slides in background_only mode have
+          no live copy fields. The Copy/Buttons cards are gated below, but a
+          deep-link (?slide=N) lands the user here with no explanation; this
+          banner closes that loop and points them at the right surface. */}
+      {backgroundOnly && index > 0 && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-[12px] text-foreground/90 font-sans flex items-start gap-3">
+          <div className="h-5 w-5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 inline-flex items-center justify-center flex-shrink-0 font-display text-[10px] tracking-wider">
+            i
+          </div>
+          <div className="space-y-0.5">
+            <div className="font-medium">Background-Only mode · this slide contributes its background only</div>
+            <div className="text-muted-foreground text-[11px] leading-relaxed">
+              Headline, subheadline & buttons are shared across every slide and edited under{' '}
+              <span className="text-foreground">Shared Hero Content</span> on the hub. Switch the
+              rotator to <span className="text-foreground">Multi-Slide</span> if you want this
+              slide to carry its own copy.
+            </div>
+          </div>
+        </div>
+      )}
       {/* Background media */}
       <EditorCard title={`Slide ${index + 1} · Background`} icon={ImageIcon}>
         <p className="text-xs text-muted-foreground -mt-1">
@@ -160,6 +188,8 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
                 if (wasNewImage) suggestFocal(url, { analysisDataUrl });
               }}
               pathPrefix="hero/slides"
+              pendingInitialFile={pendingInitialFile}
+              onPendingInitialFileConsumed={onPendingInitialFileConsumed}
             />
             {focalPending && (
               <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
@@ -464,7 +494,11 @@ export function HeroSlideEditor({ slide, index, section, rotatorMode = 'multi_sl
       </EditorCard>
       </>)}
 
-      {backgroundOnly && (
+      {/* Master-slide hint — shown on slide 1 in background-only mode where
+          there's no inert-field banner above. Non-master slides already get
+          the amber banner at the top of the editor and don't need a second
+          mention here. */}
+      {backgroundOnly && index === 0 && (
         <div className="rounded-xl border border-dashed border-border/50 px-4 py-3 text-[11px] text-muted-foreground font-sans">
           Headline, subheadline & buttons are shared across all slides in
           Background-Only mode. Edit them under{' '}

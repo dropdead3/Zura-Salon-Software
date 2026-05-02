@@ -358,7 +358,38 @@ export function HeroEditor() {
     setLocalConfig((prev) => ({ ...prev, slides: [...(prev.slides ?? []), slide] }));
     // Open the slide editor so the user can immediately upload media.
     setView({ kind: 'slide', id: slide.id });
+    return slide.id;
   }, []);
+
+  /**
+   * Pending-upload bridge for the +Add background tile. When the user picks
+   * a file directly from the empty tile (one click instead of two), we:
+   *   1. create a new slide pre-typed as 'image',
+   *   2. stash the File against the new slide id, and
+   *   3. open the slide editor — which reads the pending file out of this
+   *      map and forwards it into MediaUploadInput's `pendingInitialFile`
+   *      prop so the upload pipeline runs automatically.
+   * The map entry is cleared once the upload pipeline reports it consumed
+   * the file, regardless of success/failure (toast-driven feedback covers
+   * the failure case).
+   */
+  const [pendingUploads, setPendingUploads] = useState<Record<string, File>>({});
+  const stagePendingUpload = useCallback((slideId: string, file: File) => {
+    setPendingUploads((prev) => ({ ...prev, [slideId]: file }));
+  }, []);
+  const clearPendingUpload = useCallback((slideId: string) => {
+    setPendingUploads((prev) => {
+      if (!(slideId in prev)) return prev;
+      const next = { ...prev };
+      delete next[slideId];
+      return next;
+    });
+  }, []);
+
+  const addBackgroundFromFile = useCallback((file: File) => {
+    const id = addBackgroundSlide();
+    stagePendingUpload(id, file);
+  }, [addBackgroundSlide, stagePendingUpload]);
 
   const handleReset = () => {
     setLocalConfig(DEFAULT_HERO);
@@ -547,19 +578,45 @@ export function HeroEditor() {
                             onToggleActive={(next) => updateSlide(s.id, { active: next })}
                           />
                         ))}
-                        {/* "Add Background" tile — completes the grid as a peer */}
-                        <button
-                          type="button"
-                          onClick={addBackgroundSlide}
-                          className="aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                          aria-label="Add rotating background"
+                        {/* "Add Background" tile — single-click upload.
+                            The label wraps a hidden file input so picking
+                            a file (a) creates a new image-typed slide and
+                            (b) stages the file against its id; the slide
+                            editor reads the staged file on mount and
+                            forwards it into MediaUploadInput's auto-upload
+                            path. One click instead of two; cancelling the
+                            picker leaves no orphan slide behind. */}
+                        <label
+                          className="aspect-square rounded-xl border-2 border-dashed border-border/60 hover:border-foreground/40 bg-muted/20 hover:bg-muted/40 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                          aria-label="Add rotating background — pick a file to upload"
+                          title="Pick an image or video to add as a rotating background"
                         >
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                            className="sr-only"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) addBackgroundFromFile(file);
+                              e.target.value = '';
+                            }}
+                          />
                           <Plus className="h-5 w-5" />
                           <span className="text-[10px] font-display tracking-wider uppercase">Add</span>
-                        </button>
+                        </label>
                       </div>
                     </SortableContext>
                   </DndContext>
+                  {/* Escape hatch — create an empty slide for the rare case
+                      where the operator wants to configure background type
+                      (color, inherit) before uploading any file. */}
+                  <button
+                    type="button"
+                    onClick={addBackgroundSlide}
+                    className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline mt-2 ml-1 font-sans"
+                  >
+                    or add an empty background slot
+                  </button>
                   {slides.length === 1 && (
                     <p className="text-[11px] text-muted-foreground mt-2 pl-1">
                       Add a second background to start the rotator. The headline above stays the same on every rotation.
@@ -725,6 +782,8 @@ export function HeroEditor() {
             rotatorMode={rotatorMode}
             onUpdate={(patch) => updateSlide(view.id, patch)}
             onUpdateSection={updateField}
+            pendingInitialFile={pendingUploads[view.id] ?? null}
+            onPendingInitialFileConsumed={() => clearPendingUpload(view.id)}
           />
         );
       })()}
