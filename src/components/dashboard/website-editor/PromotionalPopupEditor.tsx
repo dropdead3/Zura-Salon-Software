@@ -1428,7 +1428,12 @@ export function PromotionalPopupEditor() {
                 >
                   <span
                     className="h-3 w-3 rounded-full border border-border/60"
-                    style={{ backgroundColor: preset.swatch }}
+                    style={{
+                      backgroundColor:
+                        preset.key === 'house' && websitePrimaryHex
+                          ? websitePrimaryHex
+                          : preset.swatch,
+                    }}
                   />
                   <span className="font-sans text-[11px]">{preset.label}</span>
                 </button>
