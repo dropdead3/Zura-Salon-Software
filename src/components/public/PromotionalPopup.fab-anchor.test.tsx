@@ -91,11 +91,7 @@ describe('PromotionalPopup FAB — positional stability vs hero alignment', () =
   });
 
   it('FAB stays at bottom-6 regardless of hero alignment changes', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
     await dismissPopupToFab();
 
     const fabButton = screen.getByLabelText(/Reopen offer/i);
@@ -120,11 +116,7 @@ describe('PromotionalPopup FAB — positional stability vs hero alignment', () =
   });
 
   it('FAB does NOT carry a transition-[bottom] class (no animated drift)', async () => {
-    render(
-      <MemoryRouter>
-        <PromotionalPopup surface="all-public" />
-      </MemoryRouter>
-    );
+    renderWithProviders(<PromotionalPopup surface="all-public" />);
     await dismissPopupToFab();
 
     const wrapper = screen.getByLabelText(/Reopen offer/i).closest('div')!;
