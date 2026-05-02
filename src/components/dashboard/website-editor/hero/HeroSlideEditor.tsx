@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Image as ImageIcon, Sparkles, Sun, Moon, ChevronDown, ChevronRight as ChevronRightIcon, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
 import type { HeroConfig, HeroSlide } from '@/hooks/useSectionConfig';
+import { resolveScrim } from '@/components/home/heroScrim';
 import { EditorCard } from '../EditorCard';
 import { MediaUploadInput } from '../inputs/MediaUploadInput';
 import { ToggleInput } from '../inputs/ToggleInput';
