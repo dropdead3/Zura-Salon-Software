@@ -352,16 +352,18 @@ describe('eslint.config.js: flat-config resolution meta-test', () => {
   });
 
   it('keeps the Container-Aware viewport-grid ban on the banned fixture', async () => {
-    // Codifies the May 2026 promo-popup-editor finding (B7): three
-    // `sm:grid-cols-2` rows crushed paired fields in the narrow editor
-    // sidebar. If this assertion fails, a future PR can re-introduce
-    // viewport-driven 2-column grids anywhere under
+    // Codifies the May 2026 promo-popup-editor findings (Wave 2 B7 +
+    // PopupAnalyticsCard tile-crush): viewport-prefixed multi-column
+    // grids (`sm:grid-cols-N` / `md:grid-cols-N`) snap to N columns
+    // regardless of how narrow the editor sidebar actually is. If this
+    // assertion fails, a future PR can re-introduce viewport-driven
+    // multi-column grids anywhere under
     // `src/components/dashboard/website-editor/**`.
     const selectors = await getRestrictedSyntaxSelectors(
       'src/test/lint-fixtures/website-editor-viewport-grid-banned.tsx',
     );
     expect(
-      selectors.some((s) => s.includes('sm:grid-cols-2')),
+      selectors.some((s) => s.includes('(sm|md):grid-cols-[2-9]')),
       `Container-Aware viewport-grid selector missing from resolved config for the banned fixture.\nResolved selectors:\n${selectors.join('\n')}`,
     ).toBe(true);
   });
