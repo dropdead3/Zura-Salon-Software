@@ -370,6 +370,14 @@ export function BrandsManager() {
           </DndContext>
         )}
       </EditorCard>
+
+      <EditorCard title="Background &amp; Style" description="Background, container, and media for the Brands section.">
+        <SectionStyleEditor
+          value={localConfig.style_overrides ?? {}}
+          onChange={(next: Partial<StyleOverrides>) => setLocalConfig({ ...localConfig, style_overrides: next })}
+          sectionId="brands"
+        />
+      </EditorCard>
     </div>
   );
 }
