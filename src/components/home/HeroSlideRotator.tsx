@@ -382,7 +382,10 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
        *   - A measured `min-height` on the shell prevents the section from
        *     collapsing in the gap between exit and enter.
        */}
-      <div className="flex-1 flex items-center justify-center relative z-10 py-16">
+      <motion.div
+        className="flex-1 flex items-center justify-center relative z-10 py-16"
+        style={enableScrollFx ? { opacity: sectionOpacity } : undefined}
+      >
         <div className="container mx-auto px-6 lg:px-12">
           <div
             ref={contentWrapRef}
@@ -407,45 +410,63 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                 transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                 className={cn('w-full', alignment.innerWrapper)}
               >
-                <HeroEyebrow
-                  show={!!slide.show_eyebrow}
-                  text={slide.eyebrow}
-                  toneClass={heroColors.eyebrowToneClass || mutedTone}
-                  style={heroColors.eyebrowStyle}
-                  editable={isPreview}
-                  fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
-                  className={spacing.eyebrow}
-                />
-
-                <h1
-                  className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
-                  style={{ fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))', ...heroColors.headlineStyle }}
-                >
-                  {isPreview ? (
-                    <InlineEditableText
-                      as="span"
-                      className="whitespace-nowrap block"
-                      value={slide.headline_text}
-                      sectionKey="section_hero"
-                      fieldPath={rotatorMode === 'background_only' ? 'headline_text' : `slides.${activeIndex}.headline_text`}
-                      placeholder="Headline"
-                    />
-                  ) : (
-                    <span className="whitespace-nowrap block">{slide.headline_text}</span>
-                  )}
-                  <HeroRotatingWord
-                    show={showRotatingWords}
-                    words={rotatingWords}
-                    index={wordIndex}
-                    isOverDark={hasBackground}
-                    colorOverride={!!heroColors.headlineStyle.color}
+                <motion.div style={enableScrollFx ? { y: taglineY } : undefined}>
+                  <HeroEyebrow
+                    show={!!slide.show_eyebrow}
+                    text={slide.eyebrow}
+                    toneClass={heroColors.eyebrowToneClass || mutedTone}
+                    style={heroColors.eyebrowStyle}
+                    editable={isPreview}
+                    fieldPath={rotatorMode === 'background_only' ? 'eyebrow' : `slides.${activeIndex}.eyebrow`}
+                    className={spacing.eyebrow}
                   />
-                </h1>
+                </motion.div>
+
+                <motion.h1
+                  className={cn("font-display font-normal leading-[0.95] flex flex-col", alignment.headline, heroColors.headlineClass)}
+                  style={{
+                    fontSize: 'calc(clamp(2.25rem, 8vw, 5.5rem) * var(--section-heading-scale, 1))',
+                    ...heroColors.headlineStyle,
+                    ...(enableScrollFx ? { y: headlineY, filter: headingBlurFilter } : {}),
+                  }}
+                >
+                  {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
+                  <motion.span
+                    className="whitespace-nowrap block"
+                    style={enableScrollFx ? { x: topLineX, opacity: headlineScrollOpacity } : undefined}
+                  >
+                    {isPreview ? (
+                      <InlineEditableText
+                        as="span"
+                        className="whitespace-nowrap block"
+                        value={slide.headline_text}
+                        sectionKey="section_hero"
+                        fieldPath={rotatorMode === 'background_only' ? 'headline_text' : `slides.${activeIndex}.headline_text`}
+                        placeholder="Headline"
+                      />
+                    ) : (
+                      slide.headline_text
+                    )}
+                  </motion.span>
+                  {/* eslint-disable-next-line no-restricted-syntax -- headline-line scroll-parallax wrapper, not a rotating-word render. */}
+                  <motion.span
+                    className="block"
+                    style={enableScrollFx ? { x: bottomLineX, opacity: headlineScrollOpacity } : undefined}
+                  >
+                    <HeroRotatingWord
+                      show={showRotatingWords}
+                      words={rotatingWords}
+                      index={wordIndex}
+                      isOverDark={hasBackground}
+                      colorOverride={!!heroColors.headlineStyle.color}
+                    />
+                  </motion.span>
+                </motion.h1>
 
                 {(slide.subheadline_line1 || slide.subheadline_line2) && (
-                  <p
+                  <motion.p
                     className={cn(spacing.subheadline, "text-sm md:text-base font-sans font-light leading-relaxed", alignment.subheadline, heroColors.subheadlineClass)}
-                    style={heroColors.subheadlineStyle}
+                    style={{ ...heroColors.subheadlineStyle, ...(enableScrollFx ? { y: subheadlineY } : {}) }}
                   >
                     {isPreview ? (
                       <InlineEditableText
@@ -474,10 +495,13 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                         )}
                       </>
                     )}
-                  </p>
+                  </motion.p>
                 )}
 
-                <div className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}>
+                <motion.div
+                  className={cn(spacing.cta, "flex flex-col", spacing.notesGap, alignment.cta)}
+                  style={enableScrollFx ? { y: ctaY } : undefined}
+                >
                   <div className={cn("flex flex-col sm:flex-row items-center gap-4", alignment.ctaRow)}>
                     <button
                       onClick={() => {
@@ -524,12 +548,12 @@ export function HeroSlideRotator({ config, isPreview = false }: HeroSlideRotator
                       style={heroColors.notesStyle}
                     />
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             </AnimatePresence>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Pagination + arrows.
           In background_only mode the rotator iterates BACKGROUNDS, not slides:
