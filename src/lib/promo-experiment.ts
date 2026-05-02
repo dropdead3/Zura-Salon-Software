@@ -122,26 +122,36 @@ export function resolvePromotionalPopupForVisitor(args: {
   const activeEntry = pickActiveEntry(schedule ?? cfg.schedule, now);
   if (activeEntry) {
     const snap = library.find((s) => s.id === activeEntry.savedPromoId)?.config ?? null;
-    return {
-      resolved: applyScheduledSnapshot(cfg, snap),
-      // Experiments don't run during a scheduled rotation — attribution would
-      // braid two operator intents into one funnel and become unreadable.
-      variantKey: null,
-      variantLabel: null,
-      scheduleEntryId: activeEntry.id,
-    };
+    if (!snap) {
+      // Referenced saved-promo was deleted. Fall through to base creative
+      // WITHOUT attributing impressions to the orphaned schedule entry —
+      // doing so would surface phantom rotation analytics for a creative
+      // the visitor never actually saw.
+    } else {
+      return {
+        resolved: applyScheduledSnapshot(cfg, snap),
+        // Experiments don't run during a scheduled rotation — attribution would
+        // braid two operator intents into one funnel and become unreadable.
+        variantKey: null,
+        variantLabel: null,
+        scheduleEntryId: activeEntry.id,
+      };
+    }
   }
 
   // 2. Experiment variant.
   const variant = pickVariant(experiment, bucketingKey);
   if (variant) {
     const snap = library.find((s) => s.id === variant.savedPromoId)?.config ?? null;
-    return {
-      resolved: applySnapshotCreative(cfg, snap),
-      variantKey: variant.id,
-      variantLabel: variant.label,
-      scheduleEntryId: null,
-    };
+    if (snap) {
+      return {
+        resolved: applySnapshotCreative(cfg, snap),
+        variantKey: variant.id,
+        variantLabel: variant.label,
+        scheduleEntryId: null,
+      };
+    }
+    // Orphaned variant arm — fall through to base, drop attribution.
   }
 
   // 3. Base wrapper.
