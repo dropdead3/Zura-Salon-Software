@@ -463,9 +463,9 @@ export function PopupAnalyticsCard({
             </div>
           </div>
           {showRotationSelector ? (
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-2">
               <Select value={rotationId} onValueChange={setRotationId}>
-                <SelectTrigger className="h-9 w-[220px] text-xs">
+                <SelectTrigger className="h-9 w-[200px] text-xs">
                   <SelectValue placeholder="All rotations" />
                 </SelectTrigger>
                 <SelectContent>
@@ -490,6 +490,29 @@ export function PopupAnalyticsCard({
                   })}
                 </SelectContent>
               </Select>
+              {activeRotation ? (
+                <Select
+                  value={compareRotationId ?? 'none'}
+                  onValueChange={(v) => setCompareRotationId(v === 'none' ? null : v)}
+                >
+                  <SelectTrigger className="h-9 w-[180px] text-xs">
+                    <SelectValue placeholder="Compare…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Compare with…</SelectItem>
+                    {rotationOptions
+                      .filter((e) => e.id !== activeRotation.id)
+                      .map((e) => {
+                        const name = savedById.get(e.savedPromoId) ?? '(deleted)';
+                        return (
+                          <SelectItem key={e.id} value={e.id}>
+                            vs. {name}
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+              ) : null}
             </div>
           ) : null}
         </div>
