@@ -19,6 +19,8 @@ import { useSaveTelemetry } from '@/hooks/useSaveTelemetry';
 import { EditorCard } from './EditorCard';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SectionTextColorsEditor } from './inputs/SectionTextColorsEditor';
+import { BRAND_STATEMENT_COLOR_SLOTS } from '@/lib/sectionColorSlots';
 import {
   DndContext,
   closestCenter,
@@ -292,6 +294,13 @@ export function BrandStatementEditor() {
             </DndContext>
           </div>
         )}
+
+        {/* Per-element color overrides */}
+        <SectionTextColorsEditor
+          value={localConfig.text_colors}
+          onChange={(next) => updateField('text_colors', next)}
+          slots={BRAND_STATEMENT_COLOR_SLOTS}
+        />
 
         {/* Advanced Settings */}
         <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>

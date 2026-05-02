@@ -95,7 +95,10 @@ export function BrandStatement() {
             transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
           >
             {config.show_eyebrow && config.eyebrow && (
-              <Eyebrow className="text-background/60 mb-4">
+              <Eyebrow
+                className="text-background/60 mb-4"
+                style={config.text_colors?.eyebrow ? { color: config.text_colors.eyebrow } : undefined}
+              >
                 {config.eyebrow}
               </Eyebrow>
             )}

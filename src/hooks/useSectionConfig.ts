@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSettingsOrgId } from './useSettingsOrgId';
 import { useIsDraftReader } from './useIsDraftReader';
 import { fetchSiteSetting, writeSiteSettingDraft } from '@/lib/siteSettingsDraft';
+import type { SectionTextColors } from '@/lib/sectionTextColors';
 
 // Generic hook for section configurations.
 // Editor + preview iframe read drafts; the public site reads live `value`.
@@ -272,6 +273,8 @@ export interface BrandStatementConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_paragraphs: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 export interface TestimonialsConfig {
@@ -288,6 +291,8 @@ export interface TestimonialsConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_google_review_link: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 export interface NewClientConfig {
@@ -354,6 +359,8 @@ export interface FAQConfig {
   show_intro_paragraphs: boolean;
   show_primary_cta: boolean;
   show_secondary_cta: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 export interface Brand {
@@ -406,6 +413,8 @@ export interface FooterCTAConfig {
   show_eyebrow: boolean;
   show_headline: boolean;
   show_cta_button: boolean;
+  /** Per-element color overrides. Empty/missing = inherit theme. */
+  text_colors?: SectionTextColors;
 }
 
 /**
