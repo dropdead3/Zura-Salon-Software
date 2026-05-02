@@ -209,7 +209,7 @@ export function HeroSection({ videoSrc, isPreview = false }: HeroSectionProps) {
                   </button>
                   <Link
                     to="/booking"
-                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass, heroColors.hasSecondaryHover && "hero-cta-hover")}
+                    className={cn("w-full sm:w-auto px-8 py-4 text-base font-sans font-normal border rounded-full", heroColors.secondaryButtonClass, heroColors.hasSecondaryHover && "hero-cta-hover", heroColors.hasSecondaryHoverBorder && "hero-cta-hover-border", heroColors.hasSecondaryHoverFg && "hero-cta-hover-fg")}
                     style={heroColors.secondaryButtonStyle}
                   >
                     I am a returning client
