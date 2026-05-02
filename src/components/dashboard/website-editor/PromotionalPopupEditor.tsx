@@ -101,6 +101,7 @@ export function PromotionalPopupEditor() {
   const { data: bookingConfig } = useBookingSurfaceConfig();
   const consultationPolicyEnabled =
     bookingConfig?.flow?.newClientPolicy === 'consultation-required';
+  const { dashPath } = useOrgDashboardPath();
 
   // Resolve the public booking URL once so the destination chip + lint can
   // render the exact URL a visitor will land on. Falls back to relative path
