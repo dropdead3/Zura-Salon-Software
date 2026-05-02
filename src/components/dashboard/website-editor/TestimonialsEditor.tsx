@@ -49,6 +49,8 @@ export function TestimonialsEditor() {
   }, [localConfig, update, effectiveOrganization?.id]);
 
   useEditorSaveAction(handleSave);
+  // Broadcast dirty state so the Website Editor Save bar activates.
+  useDirtyState(localConfig, data, 'section_testimonials');
 
   const updateField = <K extends keyof TestimonialsConfig>(field: K, value: TestimonialsConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
