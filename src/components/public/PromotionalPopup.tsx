@@ -56,7 +56,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
   // targeting, frequency, offerCode) reads the wrapper; rendering reads the
   // resolved creative so a queued rotation swaps copy/imagery without
   // touching the lifecycle state machine.
-  const { resolved: cfg, wrapper } = useResolvedPromotionalPopup();
+  const { resolved: cfg, wrapper, variantKey } = useResolvedPromotionalPopup();
   const isPreview = useIsEditorPreview();
 
   // Lifecycle reads the wrapper (drives enabled/frequency/offerCode/targeting).
@@ -83,8 +83,8 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (!orgId || !lifecycle.open) return;
     if (impressionRecordedRef.current) return;
     impressionRecordedRef.current = true;
-    void recordImpression({ organizationId: orgId, offerCode: code, surface });
-  }, [isPreview, orgId, lifecycle.open, code, surface]);
+    void recordImpression({ organizationId: orgId, offerCode: code, surface, variantKey });
+  }, [isPreview, orgId, lifecycle.open, code, surface, variantKey]);
 
 
   function handleAccept() {
@@ -109,7 +109,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
 
     writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'accepted' });
     markSessionDismissed();
-    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted' });
+    void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'accepted', variantKey });
     lifecycle.beginExit('accept');
 
     // Custom URL: open externally in a new tab. tel:/mailto: trigger the
@@ -136,7 +136,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (!isPreview) {
       writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'declined' });
       markSessionDismissed();
-      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined' });
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'declined', variantKey });
     }
     lifecycle.beginExit('decline');
   }
@@ -145,7 +145,7 @@ export function PromotionalPopup({ surface = 'all-public' }: Props) {
     if (!isPreview) {
       writeDismissal(orgId, code, { lastShownAt: Date.now(), response: 'soft' });
       markSessionDismissed();
-      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft' });
+      void recordResponse({ organizationId: orgId, offerCode: code, surface, response: 'soft', variantKey });
     }
     lifecycle.beginExit('soft');
   }
