@@ -161,11 +161,18 @@ export default function RecoveryInbox() {
                             />
                           ))}
                         </div>
-                        {t.priority === 'urgent' && (
-                          <Badge variant="destructive" className="gap-1 text-[10px]">
-                            <AlertTriangle className="h-3 w-3" /> Urgent
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {isSnoozed(t) && (
+                            <Badge variant="secondary" className="gap-1 text-[10px]">
+                              <BellOff className="h-3 w-3" /> Snoozed
+                            </Badge>
+                          )}
+                          {t.priority === 'urgent' && (
+                            <Badge variant="destructive" className="gap-1 text-[10px]">
+                              <AlertTriangle className="h-3 w-3" /> Urgent
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <RecoverySLABadge
                         status={t.status}
