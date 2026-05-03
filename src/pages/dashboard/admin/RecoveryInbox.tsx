@@ -4,9 +4,9 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, AlertTriangle, Inbox } from 'lucide-react';
+import { Star, AlertTriangle, Inbox, BellOff } from 'lucide-react';
 import {
-  useRecoveryTasks, STATUS_LABELS, RecoveryTaskWithFeedback,
+  useRecoveryTasks, STATUS_LABELS, RecoveryTaskWithFeedback, isSnoozed,
 } from '@/hooks/useRecoveryTasks';
 import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
