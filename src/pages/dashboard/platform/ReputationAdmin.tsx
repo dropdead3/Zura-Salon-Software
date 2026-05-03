@@ -55,6 +55,7 @@ const navGroups: NavGroup[] = [
       { value: 'sales-brief', label: 'Sales Brief', icon: Megaphone },
       { value: 'pricing', label: 'Pricing Sheet', icon: DollarSign },
       { value: 'roi', label: 'ROI Calculator', icon: Calculator },
+      { value: 'competitors', label: 'Competitor Matrix', icon: Swords },
     ],
   },
   {
