@@ -43,7 +43,7 @@ export function useReputationKillSwitches() {
         .eq('singleton', true)
         .maybeSingle();
       if (error) throw error;
-      return (data as ReputationKillSwitchesRow) ?? null;
+      return ((data as unknown) as ReputationKillSwitchesRow) ?? null;
     },
     staleTime: 30_000,
   });
