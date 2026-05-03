@@ -719,6 +719,7 @@ function DashboardSections({
     my_quick_stats: hasStylistRole && <MyQuickStatsSection />,
     personal_goals: hasStylistRole && <PersonalGoalsSection />,
     my_performance: hasStylistRole && <MyPerformanceSection />,
+    my_praise: hasStylistRole && <MyPraiseSection />,
 
     push_list: hasStylistRole && (
       <VisibilityGate elementKey="push_list" elementName="Push List" elementCategory="retail">
