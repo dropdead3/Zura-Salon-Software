@@ -615,6 +615,8 @@ async function handleSubscriptionDeleted(
       })
       .eq('organization_id', org.id);
     console.log(`Reputation subscription entered 30-day grace for org ${org.id} (until ${graceUntil})`);
+    return; // skip org-wide subscription_status / platform_notifications for addon-only cancellations
+  }
 
   await supabase
     .from('organizations')
