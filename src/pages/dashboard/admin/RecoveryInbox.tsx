@@ -73,11 +73,12 @@ export default function RecoveryInbox() {
   );
 
   const grouped = useMemo(() => {
-    const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
+    const out: Record<string, RecoveryTaskWithFeedback[]> = {
+      new: [], contacted: [], redo_booked: [], refunded: [], resolved: [],
+    };
     for (const t of visibleTasks) {
-      if (t.status === 'new') out.new.push(t);
-      else if (t.status === 'contacted') out.inProgress.push(t);
-      else out.resolved.push(t);
+      const group = STATUS_GROUPS.find((g) => g.statuses.includes(t.status));
+      if (group) out[group.key].push(t);
     }
     return out;
   }, [visibleTasks]);
