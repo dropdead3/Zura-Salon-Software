@@ -19,6 +19,7 @@ import { BillingHealthTab } from '@/components/platform/reputation/BillingHealth
 import { DispatchMonitorTab } from '@/components/platform/reputation/DispatchMonitorTab';
 import { KillSwitchesTab } from '@/components/platform/reputation/KillSwitchesTab';
 import { AuditLogTab } from '@/components/platform/reputation/AuditLogTab';
+import { WebhookHealthTab } from '@/components/platform/reputation/WebhookHealthTab';
 import { cn } from '@/lib/utils';
 import {
   Megaphone,
@@ -29,6 +30,7 @@ import {
   Send,
   History,
   AlertOctagon,
+  Webhook,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -59,6 +61,7 @@ const navGroups: NavGroup[] = [
     items: [
       { value: 'entitlements', label: 'Entitlements', icon: Building2 },
       { value: 'billing-health', label: 'Billing Health', icon: CreditCard },
+      { value: 'webhook-health', label: 'Webhook Health', icon: Webhook },
       { value: 'dispatch', label: 'Dispatch Monitor', icon: Send },
       { value: 'audit', label: 'Audit Log', icon: History },
     ],
@@ -75,6 +78,7 @@ const panels: Record<string, React.ReactNode> = {
   cohorts: <CohortsTab />,
   entitlements: <EntitlementsTab />,
   'billing-health': <BillingHealthTab />,
+  'webhook-health': <WebhookHealthTab />,
   dispatch: <DispatchMonitorTab />,
   'kill-switches': <KillSwitchesTab />,
   audit: <AuditLogTab />,
