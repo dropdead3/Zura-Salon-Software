@@ -23,6 +23,7 @@ import {
   Package,
   Users,
   Landmark,
+  MessageSquare,
 } from 'lucide-react';
 
 export type PlatformNavRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -82,6 +83,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
     label: 'Products',
     items: [
       { href: '/platform/color-bar', label: 'Color Bar', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/platform/reputation', label: 'Reputation', icon: MessageSquare, platformRoles: ['platform_owner', 'platform_admin'] },
     ],
   },
   {

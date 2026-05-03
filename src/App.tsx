@@ -260,6 +260,7 @@ const DemoFeatures = lazyWithRetry(() => import("./pages/dashboard/platform/Demo
 const HealthScoresPage = lazyWithRetry(() => import("./pages/dashboard/platform/HealthScores"));
 const BenchmarksPage = lazyWithRetry(() => import("./pages/dashboard/platform/Benchmarks"));
 const ColorBarAdmin = lazyWithRetry(() => import("./pages/dashboard/platform/ColorBarAdmin"));
+const ReputationAdmin = lazyWithRetry(() => import("./pages/dashboard/platform/ReputationAdmin"));
 const CoachDashboard = lazyWithRetry(() => import("./pages/dashboard/platform/CoachDashboard"));
 const BillingGuide = lazyWithRetry(() => import("./pages/dashboard/platform/BillingGuide"));
 const PlatformNetwork = lazyWithRetry(() => import("./pages/dashboard/platform/Network"));
@@ -602,6 +603,7 @@ const App = () => (
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                         <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
                         <Route path="color-bar" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
+                        <Route path="reputation" element={<ProtectedRoute requirePlatformRole="platform_admin"><ReputationAdmin /></ProtectedRoute>} />
                         <Route path="capital" element={<ProtectedRoute requirePlatformRole="platform_admin"><CapitalControlTower /></ProtectedRoute>} />
                         <Route path="capital/guide" element={<ProtectedRoute requirePlatformRole="platform_admin"><CapitalKnowledgeBase /></ProtectedRoute>} />
                         <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
