@@ -19,6 +19,7 @@ import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackS
 import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
 import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
 import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
+import { ReviewVelocityCard } from '@/components/feedback/ReviewVelocityCard';
 import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
 import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
 import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
