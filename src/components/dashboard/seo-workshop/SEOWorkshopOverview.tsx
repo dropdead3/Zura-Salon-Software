@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   SEO_WORKSHOP_ACTIONS,
   SEO_WORKSHOP_CATEGORY_LABELS,
-  getActionsByCategory,
   type SEOWorkshopCategory,
   type SEOWorkshopAction,
 } from '@/config/seoWorkshopActions';
