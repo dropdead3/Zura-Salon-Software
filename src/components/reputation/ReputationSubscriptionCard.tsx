@@ -61,7 +61,7 @@ export function ReputationSubscriptionCard() {
       setOpening(false);
     }
   }
-  }
+
 
   const isPastDue = status === 'past_due';
   const isCanceling = status === 'canceled' || (isPastDue && grace_until);
