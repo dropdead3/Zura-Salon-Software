@@ -230,6 +230,7 @@ export function BillingHealthTab() {
             <Table>
               <TableHeader>
                 <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                  <TableHead className="w-8" />
                   <TableHead>Organization</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Source</TableHead>
@@ -240,37 +241,67 @@ export function BillingHealthTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((o) => (
-                  <TableRow key={o.organizationId} className="border-[hsl(var(--platform-border)/0.3)]">
-                    <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
-                      {o.organizationName}
-                    </TableCell>
-                    <TableCell>{statusBadge(o.status)}</TableCell>
-                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                      {o.grantSource ?? '—'}
-                    </TableCell>
-                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] tabular-nums">
-                      {daysUntil(o.currentPeriodEnd)}
-                    </TableCell>
-                    <TableCell className="font-sans text-xs tabular-nums">
-                      {o.status === 'past_due' ? (
-                        <span className="text-rose-400">{daysUntil(o.graceUntil)}</span>
-                      ) : (
-                        <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                {filtered.map((o) => {
+                  const isOpen = expanded === o.organizationId;
+                  const couponState = o.retentionCouponUsed
+                    ? 'applied'
+                    : o.retentionCouponOfferedAt
+                      ? 'offered'
+                      : 'none';
+                  return (
+                    <Fragment key={o.organizationId}>
+                      <TableRow
+                        onClick={() => setExpanded(isOpen ? null : o.organizationId)}
+                        className="border-[hsl(var(--platform-border)/0.3)] cursor-pointer hover:bg-[hsl(var(--platform-bg-hover)/0.4)]"
+                      >
+                        <TableCell className="pl-4">
+                          <ChevronRight
+                            className={cn(
+                              'w-3.5 h-3.5 text-[hsl(var(--platform-foreground-subtle))] transition-transform',
+                              isOpen && 'rotate-90',
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
+                          {o.organizationName}
+                        </TableCell>
+                        <TableCell>{statusBadge(o.status)}</TableCell>
+                        <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+                          {o.grantSource ?? '—'}
+                        </TableCell>
+                        <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] tabular-nums">
+                          {daysUntil(o.currentPeriodEnd)}
+                        </TableCell>
+                        <TableCell className="font-sans text-xs tabular-nums">
+                          {o.status === 'past_due' ? (
+                            <span className="text-rose-400">{daysUntil(o.graceUntil)}</span>
+                          ) : (
+                            <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {couponState === 'applied' ? (
+                            <PlatformBadge variant="success" size="sm">Applied</PlatformBadge>
+                          ) : couponState === 'offered' ? (
+                            <PlatformBadge variant="warning" size="sm">Offered</PlatformBadge>
+                          ) : (
+                            <span className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-sans text-sm tabular-nums text-right pr-4">
+                          <BlurredAmount disableTooltip>${o.estimatedMRR}</BlurredAmount>
+                        </TableCell>
+                      </TableRow>
+                      {isOpen && (
+                        <TableRow className="border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-hover)/0.25)]">
+                          <TableCell colSpan={8} className="p-0">
+                            <OrgDetail row={o} />
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {o.retentionCouponUsed ? (
-                        <PlatformBadge variant="default" size="sm">Used</PlatformBadge>
-                      ) : (
-                        <span className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-right pr-4">
-                      <BlurredAmount disableTooltip>${o.estimatedMRR}</BlurredAmount>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
