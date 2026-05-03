@@ -19,6 +19,7 @@ import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackS
 import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
 import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
 import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
+import { ReviewVelocityCard } from '@/components/feedback/ReviewVelocityCard';
 import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
 import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
 import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
@@ -93,11 +94,12 @@ export default function FeedbackHub() {
           <TabsContent value="overview" className="space-y-6 mt-6">
             <TodaysMustTouchStrip />
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
               <NPSScoreCard organizationId={organizationId} />
               <RecoverySLAWidget />
               <ResponseRateCard />
               <PublicConversionCard />
+              <ReviewVelocityCard />
             </div>
 
             <Card>
