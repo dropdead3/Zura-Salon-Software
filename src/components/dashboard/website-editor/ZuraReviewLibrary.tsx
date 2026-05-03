@@ -164,11 +164,12 @@ export function ZuraReviewLibrary({ open, onOpenChange }: ZuraReviewLibraryProps
                     })
                   }
                   onHide={() => hide.mutate({ responseId: row.response_id })}
-                  onFeature={(featured) =>
+                  onFeature={(featured, scopes) =>
                     row.website_testimonial_id &&
                     feature.mutate({
                       testimonialId: row.website_testimonial_id,
                       isFeatured: featured,
+                      scopes,
                     })
                   }
                   onSaveDisplay={(body) => {
