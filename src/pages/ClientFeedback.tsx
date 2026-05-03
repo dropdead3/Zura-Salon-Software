@@ -13,6 +13,7 @@ import { useResolvedReviewLinks } from '@/hooks/useResolvedReviewLinks';
 import { ReviewThankYouScreen } from '@/components/feedback/ReviewThankYouScreen';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { shouldShowPublicShareScreen } from '@/lib/reputation/shareScreenGate';
 
 function StarRatingInput({ 
   value, 
@@ -232,11 +233,10 @@ export default function ClientFeedback() {
       }
     }
 
-    // Compliance rule: ALL clients see public review options regardless of rating.
-    // Recovery workflow runs in parallel for low scores (notify-low-score above + DB trigger creates recovery_tasks row).
-    const hasAnyPublicLink = !!(thresholdSettings?.googleReviewUrl || thresholdSettings?.appleReviewUrl
-      || thresholdSettings?.yelpReviewUrl || thresholdSettings?.facebookReviewUrl);
-    if (hasAnyPublicLink) {
+    // Non-Gating Doctrine: ALL clients see public review options regardless of rating.
+    // Locked by `shareScreenGate.test.ts`. Recovery workflow runs in parallel for low
+    // scores (notify-low-score above + DB trigger creates recovery_tasks row).
+    if (shouldShowPublicShareScreen(thresholdSettings)) {
       setSubmissionState('share');
     } else {
       setSubmissionState('thankyou');
