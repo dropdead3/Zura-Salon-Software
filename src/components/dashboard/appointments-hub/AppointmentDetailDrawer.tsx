@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { useClientReviewHistory, useAppointmentFeedbackStatus } from '@/hooks/useClientReviewHistory';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { toast } from 'sonner';
 
 interface AppointmentDetailDrawerProps {
@@ -108,8 +109,10 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
     staleTime: 5 * 60 * 1000,
   });
 
-  // Client review history
-  const { data: reviewSummary } = useClientReviewHistory(resolvedClientId);
+  // Client review history (only when org has Zura Reputation — otherwise the
+  // surrounding "Client Reviews" block has no signal to display).
+  const { isEntitled: reputationEntitled } = useReputationEntitlement();
+  const { data: reviewSummary } = useClientReviewHistory(reputationEntitled ? resolvedClientId : undefined);
 
   // Feedback status for THIS appointment
   const { data: feedbackStatus } = useAppointmentFeedbackStatus(appointment?.id);
@@ -347,8 +350,8 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               )}
             </div>
 
-            {/* ── Client Reviews ── */}
-            {(() => {
+            {/* ── Client Reviews ── (Reputation-gated; silent when org not subscribed) */}
+            {reputationEntitled && (() => {
               // Find if THIS appointment has a specific review
               const thisApptReview = reviewSummary?.reviews.find(
                 (r) => r.appointment_id === appointment.id

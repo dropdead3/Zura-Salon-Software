@@ -114,6 +114,34 @@ export function TestimonialsEditor() {
             <TabsTrigger value="style">Background &amp; Style</TabsTrigger>
           </TabsList>
           <TabsContent value="content" className="space-y-6 mt-0">
+        {/* Lapse safety: prior subscriber whose `review_source` is still 'zura'/'mixed'
+            after Reputation lapsed. Curated reviews are auto-hidden by the
+            sync_reputation_entitlement trigger, so the live section silently goes empty. */}
+        {!reputationEntitled && (localConfig.review_source === 'zura' || localConfig.review_source === 'mixed') && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2">
+            <Lock className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs text-foreground space-y-1.5">
+              <p className="font-medium">This section will be empty on your live site.</p>
+              <p className="text-muted-foreground">
+                Review source is set to <strong>{localConfig.review_source === 'zura' ? 'Approved Zura reviews only' : 'Mixed'}</strong>,
+                but Zura Reputation is not active. Curated 5-star reviews are hidden until you resubscribe.
+              </p>
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => updateField('review_source', 'manual')}
+                >
+                  Switch to Manual
+                </Button>
+                <Button asChild size="sm" variant="link" className="h-auto p-0 text-amber-600 dark:text-amber-400">
+                  <Link to={dashPath('/apps?app=reputation')}>Resubscribe →</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Review Source */}
         <div className="space-y-2">
           <Label className="text-sm">Review Source</Label>

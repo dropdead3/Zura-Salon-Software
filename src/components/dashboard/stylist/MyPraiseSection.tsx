@@ -16,6 +16,7 @@ import { Sparkles, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { useMyPraise, type MyPraiseItem } from '@/hooks/useMyPraise';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 
 function PraiseTile({ item }: { item: MyPraiseItem }) {
   return (
@@ -42,7 +43,11 @@ function PraiseTile({ item }: { item: MyPraiseItem }) {
 }
 
 export function MyPraiseSection() {
+  const { isEntitled } = useReputationEntitlement();
   const { data, isLoading } = useMyPraise(9);
+
+  // Stylist Privacy Contract: silence is valid output. No paywalls on stylist surfaces.
+  if (!isEntitled) return null;
 
   if (isLoading) {
     return (

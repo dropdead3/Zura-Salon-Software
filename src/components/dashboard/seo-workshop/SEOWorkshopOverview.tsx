@@ -2,11 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   SEO_WORKSHOP_ACTIONS,
   SEO_WORKSHOP_CATEGORY_LABELS,
-  getActionsByCategory,
   type SEOWorkshopCategory,
   type SEOWorkshopAction,
 } from '@/config/seoWorkshopActions';
 import { useSEOWorkshopProgress } from '@/hooks/useSEOWorkshop';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,24 @@ interface SEOWorkshopOverviewProps {
 
 export function SEOWorkshopOverview({ organizationId, onGoToActions }: SEOWorkshopOverviewProps) {
   const { data: completions = [], isLoading } = useSEOWorkshopProgress(organizationId);
+  const { isEntitled: reputationEntitled } = useReputationEntitlement();
   const completedSet = useMemo(() => new Set(completions.map((c) => c.action_key)), [completions]);
 
-  const byCategory = useMemo(() => getActionsByCategory(), []);
+  // When org is not subscribed to Zura Reputation, hide the 'reputation' category
+  // SEO tasks — they all point at infrastructure the org hasn't bought.
+  const visibleActions = useMemo(
+    () => SEO_WORKSHOP_ACTIONS.filter((a) => reputationEntitled || a.category !== 'reputation'),
+    [reputationEntitled],
+  );
+
+  const byCategory = useMemo(() => {
+    const map: Record<SEOWorkshopCategory, SEOWorkshopAction[]> = {
+      local: [], on_page: [], technical: [], content: [], schema: [], reputation: [],
+    };
+    visibleActions.forEach((a) => map[a.category].push(a));
+    return map;
+  }, [visibleActions]);
+
   const categoryStats = useMemo(() => {
     const categories: SEOWorkshopCategory[] = ['local', 'on_page', 'technical', 'content', 'schema', 'reputation'];
     return categories.map((cat) => {
@@ -31,15 +46,15 @@ export function SEOWorkshopOverview({ organizationId, onGoToActions }: SEOWorksh
     }).filter((s) => s.total > 0);
   }, [byCategory, completedSet]);
 
-  const totalActions = SEO_WORKSHOP_ACTIONS.length;
-  const totalDone = completions.length;
+  const totalActions = visibleActions.length;
+  const totalDone = visibleActions.filter((a) => completedSet.has(a.key)).length;
   const overallPct = totalActions > 0 ? Math.round((totalDone / totalActions) * 100) : 0;
 
   const nextRecommended = useMemo(() => {
-    const incomplete = SEO_WORKSHOP_ACTIONS.filter((a) => !completedSet.has(a.key))
+    const incomplete = visibleActions.filter((a) => !completedSet.has(a.key))
       .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
     return incomplete.slice(0, 5);
-  }, [completedSet]);
+  }, [visibleActions, completedSet]);
 
   if (isLoading) {
     return (

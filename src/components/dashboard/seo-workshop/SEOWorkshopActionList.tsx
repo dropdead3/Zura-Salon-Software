@@ -9,6 +9,7 @@ import {
   type SEOWorkshopCategory,
 } from '@/config/seoWorkshopActions';
 import { useSEOWorkshopProgress, useCompleteSEOWorkshopAction, useUncompleteSEOWorkshopAction } from '@/hooks/useSEOWorkshop';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { useTasks } from '@/hooks/useTasks';
 import { ExternalLink, PlusCircle, BookOpen, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,13 +20,18 @@ interface SEOWorkshopActionListProps {
 
 export function SEOWorkshopActionList({ organizationId }: SEOWorkshopActionListProps) {
   const { data: completions = [], isLoading } = useSEOWorkshopProgress(organizationId);
+  const { isEntitled: reputationEntitled } = useReputationEntitlement();
   const completeMutation = useCompleteSEOWorkshopAction();
   const uncompleteMutation = useUncompleteSEOWorkshopAction();
   const { createTask } = useTasks();
 
   const completedSet = new Set(completions.map((c) => c.action_key));
   const byCategory = getActionsByCategory();
-  const categories: SEOWorkshopCategory[] = ['local', 'on_page', 'technical', 'content', 'schema', 'reputation'];
+  // Hide 'reputation' category for unsubscribed orgs — these tasks point at
+  // the Zura Reputation app and are not actionable without entitlement.
+  const categories: SEOWorkshopCategory[] = reputationEntitled
+    ? ['local', 'on_page', 'technical', 'content', 'schema', 'reputation']
+    : ['local', 'on_page', 'technical', 'content', 'schema'];
 
   const handleToggle = (actionKey: string, willBeCompleted: boolean) => {
     if (!organizationId) return;
