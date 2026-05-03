@@ -610,6 +610,11 @@ async function handleSubscriptionDeleted(
 
   // Reputation subscription cancellation → start 30-day grace window
   if (subMetadata?.addon_type === 'reputation') {
+    const repGuard = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (repGuard.blocked) {
+      console.log("[stripe-webhook] reputation cancel branch skipped:", repGuard.reason);
+      return;
+    }
     const graceUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     await supabase
       .from('reputation_subscriptions')
