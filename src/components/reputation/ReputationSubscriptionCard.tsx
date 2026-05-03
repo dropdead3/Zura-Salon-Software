@@ -30,7 +30,7 @@ function formatDate(iso: string | null): string {
 }
 
 export function ReputationSubscriptionCard() {
-  const { isEntitled } = useReputationEntitlement();
+  const { isEntitled, orgId } = useReputationEntitlement();
   const { data, isLoading } = useReputationSubscription();
   const [opening, setOpening] = useState(false);
 
@@ -39,15 +39,15 @@ export function ReputationSubscriptionCard() {
   const { status, current_period_end, grace_until, curated_testimonial_count } = data;
 
   async function openPortal() {
-    if (!data) return;
+    if (!orgId) {
+      toast.error('No organization context');
+      return;
+    }
     setOpening(true);
     try {
-      // Re-fetch org id from the entitlement hook closure via a fresh call.
-      const orgRow = await supabase.auth.getUser();
-      void orgRow;
       const { data: invoke, error } = await supabase.functions.invoke(
         'reputation-customer-portal',
-        { body: { organization_id: (window as unknown as { __orgId?: string }).__orgId } },
+        { body: { organization_id: orgId } },
       );
       if (error) throw error;
       const url = (invoke as { url?: string } | null)?.url;
@@ -60,6 +60,7 @@ export function ReputationSubscriptionCard() {
     } finally {
       setOpening(false);
     }
+  }
   }
 
   const isPastDue = status === 'past_due';
