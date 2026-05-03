@@ -38,7 +38,7 @@ export function useReputationSubscription() {
           .not('source_response_id', 'is', null),
       ]);
 
-      const sub = (subRes.data ?? null) as {
+      const sub = (subRes.data ?? null) as unknown as {
         status: ReputationSubscriptionState['status'];
         current_period_end: string | null;
         grace_until: string | null;
