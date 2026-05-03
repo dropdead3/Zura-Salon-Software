@@ -84,6 +84,7 @@ const InventoryManagerDashboardCard = React.lazy(() => import('@/components/dash
 const MyQuickStatsSection = React.lazy(() => import('@/components/dashboard/stylist/MyQuickStatsSection').then(m => ({ default: m.MyQuickStatsSection })));
 const PersonalGoalsSection = React.lazy(() => import('@/components/dashboard/stylist/PersonalGoalsSection').then(m => ({ default: m.PersonalGoalsSection })));
 const MyPerformanceSection = React.lazy(() => import('@/components/dashboard/stylist/MyPerformanceSection').then(m => ({ default: m.MyPerformanceSection })));
+const MyPraiseSection = React.lazy(() => import('@/components/dashboard/stylist/MyPraiseSection').then(m => ({ default: m.MyPraiseSection })));
 import { SEOMyTasksCard } from '@/components/dashboard/seo-workshop/SEOMyTasksCard';
 import { DailyBriefingPanel } from '@/components/dashboard/DailyBriefingPanel';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
