@@ -673,6 +673,42 @@ async function handleSubscriptionUpdated(
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
 
+  // Reputation subscription state sync
+  const subMetadata = subscription.metadata as Record<string, string> | null;
+  if (subMetadata?.addon_type === 'reputation') {
+    const repStatusMap: Record<string, 'trialing' | 'active' | 'past_due' | 'canceled'> = {
+      trialing: 'trialing',
+      active: 'active',
+      past_due: 'past_due',
+      unpaid: 'past_due',
+      canceled: 'canceled',
+      incomplete: 'past_due',
+      incomplete_expired: 'canceled',
+    };
+    const repStatus = repStatusMap[status] ?? 'past_due';
+    const updates: Record<string, unknown> = {
+      status: repStatus,
+      updated_at: new Date().toISOString(),
+    };
+    // Set grace window when transitioning to past_due
+    if (repStatus === 'past_due') {
+      updates.grace_until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
+    // Clear grace + canceled_at when restored
+    if (repStatus === 'active' || repStatus === 'trialing') {
+      updates.grace_until = null;
+      updates.canceled_at = null;
+    }
+    if (repStatus === 'canceled') {
+      updates.canceled_at = new Date().toISOString();
+    }
+    await supabase
+      .from('reputation_subscriptions')
+      .update(updates)
+      .eq('organization_id', org.id);
+    console.log(`Reputation subscription synced: org ${org.id} → ${repStatus}`);
+  }
+
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
 
