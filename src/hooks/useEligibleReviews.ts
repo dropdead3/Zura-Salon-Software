@@ -234,6 +234,7 @@ export function useCurateReview() {
 }
 
 export function useUnpublishReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -243,6 +244,7 @@ export function useUnpublishReview() {
       testimonialId: string;
       responseId: string | null;
     }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('website_testimonials')
         .update({ enabled: false })
@@ -261,6 +263,7 @@ export function useUnpublishReview() {
 }
 
 export function useFeatureReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -272,6 +275,7 @@ export function useFeatureReview() {
       isFeatured: boolean;
       scopes?: string[];
     }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('website_testimonials')
         .update({
@@ -287,6 +291,7 @@ export function useFeatureReview() {
 }
 
 export function useUpdateDisplayCopy() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -298,6 +303,7 @@ export function useUpdateDisplayCopy() {
       body?: string;
       displayNameOverride?: string | null;
     }) => {
+      await assertReputationEntitled(orgId);
       const updates: Record<string, unknown> = {};
       if (body !== undefined) {
         updates.body = body;
@@ -320,9 +326,11 @@ export function useUpdateDisplayCopy() {
 }
 
 export function useHideReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({ responseId }: { responseId: string }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('client_feedback_responses')
         .update({ display_status: 'hidden' })
