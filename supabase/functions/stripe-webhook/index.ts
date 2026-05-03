@@ -643,6 +643,7 @@ async function handleSubscriptionDeleted(
 // Handler for customer.subscription.updated
 async function handleSubscriptionUpdated(
   supabase: SupabaseClientAny,
+  resend: Resend | null,
   subscription: Record<string, unknown>
 ) {
   const customerId = subscription.customer as string;
