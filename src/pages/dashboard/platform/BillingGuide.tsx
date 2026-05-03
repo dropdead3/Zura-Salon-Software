@@ -412,6 +412,14 @@ export default function BillingGuide() {
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Grace behavior:</span> {REPUTATION_PRICING_SHEET.graceWindow.behavior}</p>
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Refund policy:</span> {REPUTATION_PRICING_SHEET.refundPolicy}</p>
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Per-location quoting:</span> {REPUTATION_PRICING_SHEET.perLocationAddOn.note}</p>
+                <p className="pt-2">
+                  <a
+                    href="/platform/reputation?tab=pricing"
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    View sales-facing reference at /platform/reputation → Pricing Sheet →
+                  </a>
+                </p>
               </div>
             </div>
           </PlatformCardContent>
