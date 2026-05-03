@@ -4,9 +4,9 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, AlertTriangle, Inbox } from 'lucide-react';
+import { Star, AlertTriangle, Inbox, BellOff } from 'lucide-react';
 import {
-  useRecoveryTasks, STATUS_LABELS, RecoveryTaskWithFeedback,
+  useRecoveryTasks, STATUS_LABELS, RecoveryTaskWithFeedback, isSnoozed,
 } from '@/hooks/useRecoveryTasks';
 import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
@@ -32,6 +32,7 @@ export default function RecoveryInbox() {
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [mineOnly, setMineOnly] = useState(false);
+  const [showSnoozed, setShowSnoozed] = useState(false);
 
   // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
   useEffect(() => {
@@ -51,13 +52,20 @@ export default function RecoveryInbox() {
 
   const visibleTasks = useMemo(() => {
     if (!tasks) return [];
-    if (mineOnly && user?.id) return tasks.filter((t) => t.assigned_to === user.id);
-    return tasks;
-  }, [tasks, mineOnly, user?.id]);
+    let list = tasks;
+    if (!showSnoozed) list = list.filter((t) => !isSnoozed(t));
+    if (mineOnly && user?.id) list = list.filter((t) => t.assigned_to === user.id);
+    return list;
+  }, [tasks, mineOnly, user?.id, showSnoozed]);
 
   const mineCount = useMemo(
-    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id).length,
+    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id && !isSnoozed(t)).length,
     [tasks, user?.id],
+  );
+
+  const snoozedCount = useMemo(
+    () => (tasks ?? []).filter((t) => isSnoozed(t)).length,
+    [tasks],
   );
 
   const grouped = useMemo(() => {
@@ -82,18 +90,33 @@ export default function RecoveryInbox() {
 
         <ComplianceBanner />
 
-        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3">
-          <div>
-            <Label htmlFor="mine-only" className="cursor-pointer">
-              Show only mine
-            </Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {mineCount > 0
-                ? `You're assigned to ${mineCount} recovery${mineCount === 1 ? '' : 'ies'}.`
-                : 'Nothing assigned to you yet.'}
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+          <div className="flex items-center gap-6">
+            <div>
+              <Label htmlFor="mine-only" className="cursor-pointer">Show only mine</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {mineCount > 0
+                  ? `You're assigned to ${mineCount} active recovery${mineCount === 1 ? '' : 'ies'}.`
+                  : 'Nothing assigned to you yet.'}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-border/60" />
+            <div>
+              <Label htmlFor="show-snoozed" className="cursor-pointer flex items-center gap-1.5">
+                <BellOff className="h-3.5 w-3.5 text-muted-foreground" />
+                Show snoozed
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {snoozedCount > 0
+                  ? `${snoozedCount} task${snoozedCount === 1 ? '' : 's'} parked for later.`
+                  : 'No snoozed tasks.'}
+              </p>
+            </div>
           </div>
-          <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+          <div className="flex items-center gap-3">
+            <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+            <Switch id="show-snoozed" checked={showSnoozed} onCheckedChange={setShowSnoozed} />
+          </div>
         </div>
 
         {isLoading ? (
@@ -138,11 +161,18 @@ export default function RecoveryInbox() {
                             />
                           ))}
                         </div>
-                        {t.priority === 'urgent' && (
-                          <Badge variant="destructive" className="gap-1 text-[10px]">
-                            <AlertTriangle className="h-3 w-3" /> Urgent
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {isSnoozed(t) && (
+                            <Badge variant="secondary" className="gap-1 text-[10px]">
+                              <BellOff className="h-3 w-3" /> Snoozed
+                            </Badge>
+                          )}
+                          {t.priority === 'urgent' && (
+                            <Badge variant="destructive" className="gap-1 text-[10px]">
+                              <AlertTriangle className="h-3 w-3" /> Urgent
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <RecoverySLABadge
                         status={t.status}

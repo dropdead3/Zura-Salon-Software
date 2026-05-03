@@ -29,6 +29,7 @@ export const STYLIST_ALLOWED_SECTIONS = new Set<string>([
   'announcements',        // role-filtered by RLS
   'seo_my_tasks',         // their own SEO assignments
   'widgets',              // schedule/birthdays/changelog only — no peer perf
+  'my_praise',            // self-scoped 5-star/NPS-9+ comments (Phase 3.3)
 ]);
 
 /**

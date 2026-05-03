@@ -21111,6 +21111,9 @@ export type Database = {
           resolution_notes: string | null
           resolved_at: string | null
           resolved_by: string | null
+          snooze_reason: string | null
+          snoozed_by: string | null
+          snoozed_until: string | null
           staff_user_id: string | null
           status: string
           updated_at: string
@@ -21130,6 +21133,9 @@ export type Database = {
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          snooze_reason?: string | null
+          snoozed_by?: string | null
+          snoozed_until?: string | null
           staff_user_id?: string | null
           status?: string
           updated_at?: string
@@ -21149,6 +21155,9 @@ export type Database = {
           resolution_notes?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          snooze_reason?: string | null
+          snoozed_by?: string | null
+          snoozed_until?: string | null
           staff_user_id?: string | null
           status?: string
           updated_at?: string

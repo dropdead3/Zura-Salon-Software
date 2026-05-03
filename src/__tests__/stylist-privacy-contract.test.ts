@@ -46,6 +46,10 @@ describe('Stylist Privacy Contract', () => {
     expect(isStylistAllowedSection('my_performance')).toBe(true);
   });
 
+  it('Phase 3.3 self-scoped praise wall is allowed', () => {
+    expect(isStylistAllowedSection('my_praise')).toBe(true);
+  });
+
   it('Phase 2 owner operator primitives are forbidden for stylists', () => {
     expect(STYLIST_FORBIDDEN_SECTIONS.has('today_at_glance')).toBe(true);
     expect(STYLIST_FORBIDDEN_SECTIONS.has('decisions_awaiting')).toBe(true);

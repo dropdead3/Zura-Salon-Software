@@ -22,7 +22,7 @@ export function useRecoverySLA() {
     queryFn: async (): Promise<RecoverySLAStats> => {
       const { data, error } = await supabase
         .from('recovery_tasks' as any)
-        .select('status, created_at, first_contacted_at, resolved_at')
+        .select('status, created_at, first_contacted_at, resolved_at, snoozed_until')
         .eq('organization_id', orgId)
         .order('created_at', { ascending: false })
         .limit(500);
@@ -33,6 +33,7 @@ export function useRecoverySLA() {
         created_at: string;
         first_contacted_at: string | null;
         resolved_at: string | null;
+        snoozed_until: string | null;
       }>;
 
       const now = Date.now();
@@ -42,11 +43,14 @@ export function useRecoverySLA() {
 
       for (const r of rows) {
         const created = new Date(r.created_at).getTime();
+        const snoozed = !!r.snoozed_until && new Date(r.snoozed_until).getTime() > now;
         if (r.status === 'new') {
-          open += 1;
-          if ((now - created) / 3_600_000 > SLA_HOURS) breachedSLA += 1;
+          if (!snoozed) {
+            open += 1;
+            if ((now - created) / 3_600_000 > SLA_HOURS) breachedSLA += 1;
+          }
         } else if (r.status === 'contacted') {
-          contacted += 1;
+          if (!snoozed) contacted += 1;
         } else if (['resolved', 'refunded', 'redo_booked', 'closed'].includes(r.status)) {
           resolved += 1;
         }
