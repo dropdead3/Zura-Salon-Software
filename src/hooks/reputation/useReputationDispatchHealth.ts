@@ -58,6 +58,7 @@ export function useReputationDispatchHealth() {
       let failedLast24h = 0;
       let oldestPending: string | null = null;
       const buckets = { zero: 0, one: 0, two: 0, threePlus: 0 };
+      const reasonCounts = new Map<string, number>();
 
       for (const r of rows as any[]) {
         const isPending = !r.sent_at && !r.skipped_at;
@@ -72,7 +73,11 @@ export function useReputationDispatchHealth() {
         }
         if (r.sent_at && r.sent_at >= since24h) sentLast24h += 1;
         if (r.skipped_at && r.skipped_at >= since24h) skippedLast24h += 1;
-        if (r.last_error && r.enqueued_at >= since24h) failedLast24h += 1;
+        if (r.last_error && r.enqueued_at >= since24h) {
+          failedLast24h += 1;
+          const bucket = bucketFailureReason(String(r.last_error));
+          reasonCounts.set(bucket, (reasonCounts.get(bucket) ?? 0) + 1);
+        }
       }
 
       const oldestPendingAgeMinutes = oldestPending
@@ -81,6 +86,11 @@ export function useReputationDispatchHealth() {
 
       const optOutRows = (optOuts ?? []) as any[];
       const optOutsLast7d = optOutRows.filter((o) => o.opted_out_at >= since7d).length;
+
+      const topFailureReasons = [...reasonCounts.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
       return {
         pendingCount,
@@ -91,6 +101,7 @@ export function useReputationDispatchHealth() {
         retryBuckets: buckets,
         optOutsTotal: optOutRows.length,
         optOutsLast7d,
+        topFailureReasons,
       };
     },
   });
