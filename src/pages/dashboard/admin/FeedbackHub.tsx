@@ -29,6 +29,7 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ReputationGate } from '@/components/reputation/ReputationGate';
+import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
 
 
 export default function FeedbackHub() {
@@ -64,6 +65,9 @@ export default function FeedbackHub() {
         </div>
 
         <ReputationGate surfaceLabel="Feedback Hub · Zura Reputation">
+        <div className="mb-6">
+          <ReputationSubscriptionCard />
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview" className="gap-2">
