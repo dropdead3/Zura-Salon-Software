@@ -14,6 +14,13 @@ export const REPUTATION_STRIPE = {
 } as const;
 
 export const REPUTATION_PRICING_SHEET = {
+  /**
+   * Bump this date (YYYY-MM-DD) every time you change pricing, coupon,
+   * grace, or refund fields below. The matching `BILLING_CHANGELOG[0].date`
+   * in `src/pages/dashboard/platform/BillingGuide.tsx` MUST equal this
+   * value — locked by `BillingGuide.reputation-pricing-contract.test.ts`.
+   */
+  pricingVersion: '2026-05-03',
   baseSku: {
     name: 'Zura Reputation',
     monthlyPrice: 49, // USD per first location
