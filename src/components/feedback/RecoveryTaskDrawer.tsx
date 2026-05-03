@@ -171,6 +171,39 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
             </p>
           </div>
 
+          {!snoozed && task.status !== 'resolved' && task.status !== 'closed' && (
+            <div className="space-y-2 rounded-xl border border-border/60 bg-card/40 p-4">
+              <Label className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                Snooze
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Park this task and re-surface it later. Useful when you've left a voicemail and are awaiting a callback.
+              </p>
+              <Textarea
+                value={snoozeReason}
+                onChange={(e) => setSnoozeReason(e.target.value)}
+                placeholder="Optional reason (e.g. Left voicemail, awaiting callback)"
+                rows={2}
+                className="text-xs"
+              />
+              <div className="flex flex-wrap gap-2">
+                {SNOOZE_PRESETS.map((p) => (
+                  <Button
+                    key={p.hours}
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    disabled={snooze.isPending}
+                    onClick={() => snooze.mutate({ id: task.id, hours: p.hours, reason: snoozeReason || null })}
+                  >
+                    {p.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {task.appointment_id && (
             <div className="space-y-2 rounded-xl border border-border/60 bg-card/40 p-4">
               <Label>Follow-up</Label>
