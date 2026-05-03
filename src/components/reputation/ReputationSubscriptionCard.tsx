@@ -162,6 +162,21 @@ export function ReputationSubscriptionCard() {
             </div>
           </div>
         )}
+
+        {(status === 'active' || status === 'trialing') && !redeemed && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-3">
+            <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
+            <div className="text-sm flex-1">
+              <p className="font-medium">Thinking about cancelling?</p>
+              <p className="text-muted-foreground mt-1">
+                One-time save offer: <strong>$20 off for the next 3 months</strong>. Apply it before opening the cancel flow.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={redeemSaveOffer} disabled={redeeming}>
+              {redeeming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply offer'}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
