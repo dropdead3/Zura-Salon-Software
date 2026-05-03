@@ -15,6 +15,20 @@ export interface DispatchHealth {
   retryBuckets: { zero: number; one: number; two: number; threePlus: number };
   optOutsTotal: number;
   optOutsLast7d: number;
+  topFailureReasons: { reason: string; count: number }[];
+}
+
+/** Bucket raw Twilio / SMTP errors into operator-meaningful reasons. */
+function bucketFailureReason(raw: string): string {
+  const s = raw.toLowerCase();
+  if (s.includes('opt') && s.includes('out')) return 'Opted out';
+  if (s.includes('landline') || s.includes('not mobile') || s.includes('30006')) return 'Landline / not mobile';
+  if (s.includes('blocked') || s.includes('30007') || s.includes('carrier')) return 'Carrier blocked';
+  if (s.includes('invalid') || s.includes('21211') || s.includes('21614')) return 'Invalid number';
+  if (s.includes('unreachable') || s.includes('30005')) return 'Unreachable handset';
+  if (s.includes('quota') || s.includes('rate')) return 'Rate / quota limit';
+  if (s.includes('email') || s.includes('bounce') || s.includes('smtp')) return 'Email bounce';
+  return 'Other';
 }
 
 export function useReputationDispatchHealth() {
