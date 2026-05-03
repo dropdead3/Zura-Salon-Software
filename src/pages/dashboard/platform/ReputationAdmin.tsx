@@ -21,6 +21,7 @@ import { KillSwitchesTab } from '@/components/platform/reputation/KillSwitchesTa
 import { AuditLogTab } from '@/components/platform/reputation/AuditLogTab';
 import { WebhookHealthTab } from '@/components/platform/reputation/WebhookHealthTab';
 import { RoiCalculatorTab } from '@/components/platform/reputation/RoiCalculatorTab';
+import { CompetitorMatrixTab } from '@/components/platform/reputation/CompetitorMatrixTab';
 import { cn } from '@/lib/utils';
 import {
   Megaphone,
