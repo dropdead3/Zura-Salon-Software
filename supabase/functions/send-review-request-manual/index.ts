@@ -9,6 +9,7 @@
 // is enforced by the manual_actor check).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSms } from "../_shared/sms-sender.ts";
+import { checkReputationKillSwitch } from "../_shared/reputation-kill-switch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +57,14 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+    const guard = await checkReputationKillSwitch("manual_send_disabled", supabase);
+    if (guard.blocked) {
+      return new Response(
+        JSON.stringify({ error: guard.reason, message: guard.message }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { data: appt, error: apptErr } = await supabase
       .from("appointments")

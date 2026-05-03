@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { checkReputationKillSwitch } from "../_shared/reputation-kill-switch.ts";
 
 // Use 'any' for Supabase client since we don't have generated types in edge functions
 type SupabaseClientAny = SupabaseClient<any, any, any>;
@@ -388,6 +389,11 @@ async function handleCheckoutCompleted(
 
   // ── Reputation addon ─────────────────────────────────────────
   if (metadata?.addon_type === 'reputation') {
+    const guard = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (guard.blocked) {
+      console.log("[stripe-webhook] reputation branch skipped:", guard.reason, guard.message);
+      return;
+    }
     const orgId = metadata.organization_id;
     const stripeSubId = (session.subscription as string) || null;
     const stripeCustomerId = (session.customer as string) || null;
@@ -604,6 +610,11 @@ async function handleSubscriptionDeleted(
 
   // Reputation subscription cancellation → start 30-day grace window
   if (subMetadata?.addon_type === 'reputation') {
+    const repGuard = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (repGuard.blocked) {
+      console.log("[stripe-webhook] reputation cancel branch skipped:", repGuard.reason);
+      return;
+    }
     const graceUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     await supabase
       .from('reputation_subscriptions')
@@ -756,6 +767,11 @@ async function handleSubscriptionUpdated(
   // Reputation subscription state sync
   const subMetadata = subscription.metadata as Record<string, string> | null;
   if (subMetadata?.addon_type === 'reputation') {
+    const repGuard2 = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (repGuard2.blocked) {
+      console.log("[stripe-webhook] reputation sync branch skipped:", repGuard2.reason);
+      return;
+    }
     const repStatusMap: Record<string, 'trialing' | 'active' | 'past_due' | 'canceled'> = {
       trialing: 'trialing',
       active: 'active',
