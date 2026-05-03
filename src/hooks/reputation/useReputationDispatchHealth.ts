@@ -66,7 +66,7 @@ export function useReputationDispatchHealth() {
         : null;
 
       const optOutRows = (optOuts ?? []) as any[];
-      const optOutsLast7d = optOutRows.filter((o) => o.created_at >= since7d).length;
+      const optOutsLast7d = optOutRows.filter((o) => o.opted_out_at >= since7d).length;
 
       return {
         pendingCount,
