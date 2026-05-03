@@ -697,6 +697,11 @@ export const PAGE_EXPLAINERS: Record<string, PageExplainerEntry> = {
     description: 'Platform-level Color Bar management. Monitor adoption, configure defaults, and manage cross-account chemical tracking settings.',
     icon: Palette,
   },
+  'platform-reputation': {
+    title: 'Reputation Administration',
+    description: 'Sales reference, subscription cohorts, per-org entitlements, billing health, dispatch monitoring, and master kill switches for the Zura Reputation engine.',
+    icon: Star,
+  },
   'platform-permissions': {
     title: 'Permission Architecture',
     description: 'Define and manage platform-level permission structures. Configure role templates and access control patterns.',

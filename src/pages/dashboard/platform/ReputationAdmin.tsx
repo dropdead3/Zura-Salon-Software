@@ -1,22 +1,35 @@
 /**
  * ReputationAdmin — Platform-side console for the Zura Reputation engine.
- * Mirrors the ColorBarAdmin layout (left nav + content area).
  *
- * Tabs:
- *   - Cohorts        → subscription lifecycle distribution
- *   - Entitlements   → per-org reputation_enabled toggle (comp/suspend)
- *   - Kill Switches  → master dispatch / manual / webhook overrides
- *   - Audit Log      → every platform-side intervention
+ * Layout mirrors ColorBarAdmin: left rail navigation + content area.
+ * Default tab is Sales Brief — the most common entry path for AEs / CSMs.
+ *
+ * Memory: mem://architecture/platform-console-pattern
  */
 import { useState } from 'react';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { PageExplainer } from '@/components/ui/PageExplainer';
+import { SalesBriefTab } from '@/components/platform/reputation/SalesBriefTab';
+import { PricingSheetTab } from '@/components/platform/reputation/PricingSheetTab';
 import { CohortsTab } from '@/components/platform/reputation/CohortsTab';
 import { EntitlementsTab } from '@/components/platform/reputation/EntitlementsTab';
+import { BillingHealthTab } from '@/components/platform/reputation/BillingHealthTab';
+import { DispatchMonitorTab } from '@/components/platform/reputation/DispatchMonitorTab';
 import { KillSwitchesTab } from '@/components/platform/reputation/KillSwitchesTab';
 import { AuditLogTab } from '@/components/platform/reputation/AuditLogTab';
 import { cn } from '@/lib/utils';
-import { BarChart3, Building2, AlertOctagon, History, type LucideIcon } from 'lucide-react';
+import {
+  Megaphone,
+  DollarSign,
+  BarChart3,
+  Building2,
+  CreditCard,
+  Send,
+  History,
+  AlertOctagon,
+  type LucideIcon,
+} from 'lucide-react';
 
 interface NavItem {
   value: string;
@@ -30,42 +43,52 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Intelligence',
+    label: 'Sales',
     items: [
-      { value: 'cohorts', label: 'Cohorts', icon: BarChart3 },
+      { value: 'sales-brief', label: 'Sales Brief', icon: Megaphone },
+      { value: 'pricing', label: 'Pricing Sheet', icon: DollarSign },
     ],
+  },
+  {
+    label: 'Intelligence',
+    items: [{ value: 'cohorts', label: 'Cohorts', icon: BarChart3 }],
   },
   {
     label: 'Operations',
     items: [
       { value: 'entitlements', label: 'Entitlements', icon: Building2 },
+      { value: 'billing-health', label: 'Billing Health', icon: CreditCard },
+      { value: 'dispatch', label: 'Dispatch Monitor', icon: Send },
       { value: 'audit', label: 'Audit Log', icon: History },
     ],
   },
   {
     label: 'Risk',
-    items: [
-      { value: 'kill-switches', label: 'Kill Switches', icon: AlertOctagon },
-    ],
+    items: [{ value: 'kill-switches', label: 'Kill Switches', icon: AlertOctagon }],
   },
 ];
 
 const panels: Record<string, React.ReactNode> = {
+  'sales-brief': <SalesBriefTab />,
+  pricing: <PricingSheetTab />,
   cohorts: <CohortsTab />,
   entitlements: <EntitlementsTab />,
+  'billing-health': <BillingHealthTab />,
+  dispatch: <DispatchMonitorTab />,
   'kill-switches': <KillSwitchesTab />,
   audit: <AuditLogTab />,
 };
 
 export default function ReputationAdmin() {
-  const [tab, setTab] = useState('cohorts');
+  const [tab, setTab] = useState('sales-brief');
 
   return (
     <PlatformPageContainer className="space-y-6">
       <PlatformPageHeader
         title="Zura Reputation"
-        description="Subscription cohorts, per-org entitlements, master kill switches, and platform-side intervention audit."
+        description="Sales reference, subscription cohorts, per-org entitlements, billing health, dispatch monitoring, master kill switches, and audit trail."
       />
+      <PageExplainer pageId="platform-reputation" />
 
       <div className="flex gap-6 min-h-[calc(100vh-220px)]">
         <nav className="w-[200px] shrink-0 p-3 space-y-4 self-start sticky top-6">
