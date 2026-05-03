@@ -164,11 +164,12 @@ export function ZuraReviewLibrary({ open, onOpenChange }: ZuraReviewLibraryProps
                     })
                   }
                   onHide={() => hide.mutate({ responseId: row.response_id })}
-                  onFeature={(featured) =>
+                  onFeature={(featured, scopes) =>
                     row.website_testimonial_id &&
                     feature.mutate({
                       testimonialId: row.website_testimonial_id,
                       isFeatured: featured,
+                      scopes,
                     })
                   }
                   onSaveDisplay={(body) => {
@@ -215,6 +216,13 @@ export function ZuraReviewLibrary({ open, onOpenChange }: ZuraReviewLibraryProps
   );
 }
 
+type PlacementScope = 'homepage' | 'service_pages' | 'stylist_pages';
+const PLACEMENT_SCOPES: { value: PlacementScope; label: string }[] = [
+  { value: 'homepage', label: 'Homepage' },
+  { value: 'service_pages', label: 'Service pages' },
+  { value: 'stylist_pages', label: 'Stylist pages' },
+];
+
 interface ReviewRowProps {
   row: EligibleReview;
   isEditing: boolean;
@@ -223,7 +231,7 @@ interface ReviewRowProps {
   onCurate: () => void;
   onUnpublish: () => void;
   onHide: () => void;
-  onFeature: (featured: boolean) => void;
+  onFeature: (featured: boolean, scopes?: PlacementScope[]) => void;
   onSaveDisplay: (body: string) => void;
   pending: boolean;
 }
@@ -353,6 +361,36 @@ function ReviewRow({
                   Featured
                 </Label>
               </div>
+              {row.is_featured && (
+                <div className="flex items-center gap-1 pl-1 flex-wrap">
+                  {PLACEMENT_SCOPES.map((scope) => {
+                    const current = (row.feature_scopes ?? []) as PlacementScope[];
+                    const active = current.includes(scope.value);
+                    return (
+                      <button
+                        key={scope.value}
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                          const next = active
+                            ? current.filter((s) => s !== scope.value)
+                            : [...current, scope.value];
+                          // Doctrine: featured review must surface somewhere — keep at least homepage.
+                          onFeature(true, next.length > 0 ? next : ['homepage']);
+                        }}
+                        className={cn(
+                          'rounded-full px-2.5 py-0.5 text-[11px] font-sans border transition-colors',
+                          active
+                            ? 'bg-primary/15 border-primary/40 text-foreground'
+                            : 'border-border/50 text-muted-foreground hover:bg-muted/40',
+                        )}
+                      >
+                        {scope.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </>
           ) : (
             <Button

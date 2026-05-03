@@ -19,10 +19,14 @@ import { Label } from '@/components/ui/label';
 import { format, formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 
+// Full pipeline per Reputation Engine §4: New → Contacted → Redo Booked → Refunded → Resolved → Closed.
+// 'closed' rolls into Resolved column to keep the visible board lean; status filter chip exposes it.
 const STATUS_GROUPS: { key: string; title: string; statuses: string[] }[] = [
   { key: 'new', title: 'New', statuses: ['new'] },
-  { key: 'inProgress', title: 'In Progress', statuses: ['contacted'] },
-  { key: 'resolved', title: 'Resolved', statuses: ['resolved', 'refunded', 'redo_booked', 'closed'] },
+  { key: 'contacted', title: 'Contacted', statuses: ['contacted'] },
+  { key: 'redo_booked', title: 'Redo Booked', statuses: ['redo_booked'] },
+  { key: 'refunded', title: 'Refunded', statuses: ['refunded'] },
+  { key: 'resolved', title: 'Resolved', statuses: ['resolved', 'closed'] },
 ];
 
 export default function RecoveryInbox() {
@@ -69,11 +73,12 @@ export default function RecoveryInbox() {
   );
 
   const grouped = useMemo(() => {
-    const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
+    const out: Record<string, RecoveryTaskWithFeedback[]> = {
+      new: [], contacted: [], redo_booked: [], refunded: [], resolved: [],
+    };
     for (const t of visibleTasks) {
-      if (t.status === 'new') out.new.push(t);
-      else if (t.status === 'contacted') out.inProgress.push(t);
-      else out.resolved.push(t);
+      const group = STATUS_GROUPS.find((g) => g.statuses.includes(t.status));
+      if (group) out[group.key].push(t);
     }
     return out;
   }, [visibleTasks]);
@@ -134,7 +139,7 @@ export default function RecoveryInbox() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-5">
             {STATUS_GROUPS.map((group) => (
               <Card key={group.key}>
                 <CardHeader>
