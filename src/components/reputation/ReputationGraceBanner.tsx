@@ -97,15 +97,13 @@ export function ReputationGraceBanner() {
           {opening ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5" />}
           Update payment
         </button>
-        {orgSlug && (
-          <button
-            type="button"
-            onClick={() => navigate(dashPath('admin/feedback', orgSlug))}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            View details
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => navigate(dashPath('/admin/feedback'))}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          View details
+        </button>
         <button
           type="button"
           onClick={dismissForOneDay}
