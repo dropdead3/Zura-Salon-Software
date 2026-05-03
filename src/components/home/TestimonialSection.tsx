@@ -108,7 +108,13 @@ export function TestimonialSection() {
   const { data: dbItems } = useVisibleTestimonials('general');
   const liveItems = useLiveOverride<ReviewItem[]>('testimonial_items:general', dbItems);
   const items = (liveItems ?? dbItems ?? []) as ReviewItem[];
-  const reviews = items.length > 0 ? items : FALLBACK_REVIEWS;
+  // Marketing site (no tenant context) gets the FALLBACK_REVIEWS demo deck.
+  // Real tenants (dbItems defined, even when empty) must NEVER see fake "Lexi V." reviews —
+  // this prevents a Reputation lapse (curated reviews auto-hidden by sync_reputation_entitlement
+  // trigger) from silently swapping in marketing fallbacks on a production salon site.
+  const isTenantContext = dbItems !== undefined;
+  const reviews = items.length > 0 ? items : (isTenantContext ? [] : FALLBACK_REVIEWS);
+  if (isTenantContext && reviews.length === 0) return null;
 
   // Cap visible items based on config.
   const cap = config?.max_visible_testimonials ?? 20;
