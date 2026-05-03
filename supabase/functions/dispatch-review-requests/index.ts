@@ -11,6 +11,7 @@
 // All writes use the service role; RLS does not apply.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSms } from "../_shared/sms-sender.ts";
+import { checkReputationKillSwitch } from "../_shared/reputation-kill-switch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
