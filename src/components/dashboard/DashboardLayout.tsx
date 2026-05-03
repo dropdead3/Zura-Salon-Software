@@ -629,6 +629,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           <BackfillWelcomeBanner />
           <InitialSetupGateBanner />
+          <ReputationGraceBanner />
           {children}
         </div>
       </main>
