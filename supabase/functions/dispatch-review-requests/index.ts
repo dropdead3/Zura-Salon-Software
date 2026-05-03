@@ -295,6 +295,14 @@ Deno.serve(async (req) => {
   const summary: DispatchSummary = { enqueued: 0, sent: 0, skipped: 0, errors: 0 };
 
   try {
+    const guard = await checkReputationKillSwitch("dispatch_disabled", supabase);
+    if (guard.blocked) {
+      console.log("[dispatch-review-requests] skipped:", guard.reason, guard.message);
+      return new Response(
+        JSON.stringify({ ok: true, skipped: true, reason: guard.reason, message: guard.message, ...summary }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     await enqueueEligible(supabase, summary);
     await sendDue(supabase, summary);
     return new Response(JSON.stringify({ ok: true, ...summary }), {
