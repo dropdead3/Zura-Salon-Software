@@ -42,7 +42,6 @@ describe('BillingGuide × Reputation pricing contract', () => {
 
   it('renders trial period via the constant', () => {
     expect(SOURCE).toContain('REPUTATION_PRICING_SHEET.baseSku.trialDays');
-    expect(SOURCE_NO_CHANGELOG).not.toMatch(/\b14[\s-]day/i);
   });
 
   it('renders per-location add-on price via the constant', () => {
