@@ -109,6 +109,19 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     selector: "Literal[value=/^(Overlay (Darkness|Lightness)|Background Scrim)$/]",
     message: "Use the canonical hero overlay labels: 'Image Wash' (flat tint, replaces 'Overlay Darkness/Lightness') and 'Text-area Scrim' (gradient/vignette, replaces 'Background Scrim'). Renamed to disambiguate the two layers — see HeroBackground.tsx two-layer contract.",
   },
+  // Multi-line Input Radius Canon — see mem://style/input-shape-canon.
+  // Multi-line inputs (Textarea / PlatformTextarea) are square-ish with
+  // slightly rounded corners (rounded-lg / 8px). rounded-xl/2xl/3xl/full
+  // turns them into lozenges and breaks the visual contract that
+  // distinguishes single-line pill inputs from multi-line containers.
+  {
+    selector: "JSXOpeningElement[name.name=/^(Textarea|PlatformTextarea)$/] JSXAttribute[name.name='className'] Literal[value=/(^|\\s)rounded-(xl|2xl|3xl|full)(\\s|$)/]",
+    message: "Multi-line Input Radius Canon: <Textarea>/<PlatformTextarea> must use rounded-lg (8px). rounded-xl/2xl/3xl/full breaks the input shape canon — see mem://style/input-shape-canon.",
+  },
+  {
+    selector: "JSXOpeningElement[name.name=/^(Textarea|PlatformTextarea)$/] JSXAttribute[name.name='className'] TemplateElement[value.raw=/(^|\\s)rounded-(xl|2xl|3xl|full)(\\s|$)/]",
+    message: "Multi-line Input Radius Canon: <Textarea>/<PlatformTextarea> must use rounded-lg (8px). rounded-xl/2xl/3xl/full breaks the input shape canon — see mem://style/input-shape-canon.",
+  },
 ];
 
 /**
