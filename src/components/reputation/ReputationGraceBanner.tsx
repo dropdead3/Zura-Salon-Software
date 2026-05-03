@@ -22,7 +22,7 @@ const DISMISS_KEY = 'reputation-grace-banner-dismissed-until';
 export function ReputationGraceBanner() {
   const { isEntitled, orgId } = useReputationEntitlement();
   const { data } = useReputationSubscription();
-  const { effectiveOrganization } = useOrganizationContext();
+  const { dashPath } = useOrgDashboardPath();
   const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
   const [dismissedUntil, setDismissedUntil] = useState<number>(() => {
