@@ -49,15 +49,26 @@ export default function RecoveryInbox() {
     }
   };
 
+  const visibleTasks = useMemo(() => {
+    if (!tasks) return [];
+    if (mineOnly && user?.id) return tasks.filter((t) => t.assigned_to === user.id);
+    return tasks;
+  }, [tasks, mineOnly, user?.id]);
+
+  const mineCount = useMemo(
+    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id).length,
+    [tasks, user?.id],
+  );
+
   const grouped = useMemo(() => {
     const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
-    for (const t of tasks ?? []) {
+    for (const t of visibleTasks) {
       if (t.status === 'new') out.new.push(t);
       else if (t.status === 'contacted') out.inProgress.push(t);
       else out.resolved.push(t);
     }
     return out;
-  }, [tasks]);
+  }, [visibleTasks]);
 
   return (
     <DashboardLayout>
