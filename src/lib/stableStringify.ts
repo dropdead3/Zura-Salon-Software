@@ -16,10 +16,20 @@
  * `stableStringify(...) !== stableStringify(...)` ad-hoc in each editor.
  */
 export function stableStringify(v: unknown): string {
-  if (v === null || typeof v !== 'object') return JSON.stringify(v);
-  if (Array.isArray(v)) return `[${v.map(stableStringify).join(',')}]`;
+  if (v === undefined) return 'undefined';
+  if (v === null || typeof v !== 'object') return JSON.stringify(v) ?? 'undefined';
+  if (Array.isArray(v)) {
+    // Match JSON.stringify: undefined inside arrays serializes to null.
+    return `[${v.map((item) => (item === undefined ? 'null' : stableStringify(item))).join(',')}]`;
+  }
   const obj = v as Record<string, unknown>;
-  const keys = Object.keys(obj).sort();
+  // Match JSON.stringify semantics: drop keys whose values are undefined.
+  // Without this, a local object `{ a: undefined }` and a server-roundtripped
+  // `{}` (Postgres / JSON.stringify both strip undefined) compare as unequal,
+  // sticking the editor's "Unsaved changes" pill on forever after save.
+  // Trap fixed May 2026: HeroEditor's `migrateLegacyToFirstSlide` seeds
+  // `text_colors: undefined` on slides, which the DB drops on write.
+  const keys = Object.keys(obj).filter((k) => obj[k] !== undefined).sort();
   return `{${keys.map(k => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
 }
 

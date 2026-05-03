@@ -36,15 +36,27 @@ describe('stableStringify', () => {
 
   it('handles null, undefined, primitives, and empty containers', () => {
     expect(stableStringify(null)).toBe('null');
-    expect(stableStringify(undefined)).toBe(undefined as unknown as string);
-    // ^ JSON.stringify(undefined) returns undefined; mirroring that is fine
-    //   because `isStructurallyEqual(undefined, undefined)` still works
-    //   (both sides produce the same value).
+    // Top-level undefined returns the literal string 'undefined' (was
+    // previously the undefined value itself; tightened so `isStructurallyEqual`
+    // never short-circuits on a falsy compare).
+    expect(stableStringify(undefined)).toBe('undefined');
     expect(stableStringify('hi')).toBe('"hi"');
     expect(stableStringify(42)).toBe('42');
     expect(stableStringify(true)).toBe('true');
     expect(stableStringify({})).toBe('{}');
     expect(stableStringify([])).toBe('[]');
+  });
+
+  it('drops undefined object values (matches JSON.stringify semantics)', () => {
+    // Regression: HeroEditor seeded `text_colors: undefined` on slides; the
+    // DB roundtrip dropped the key, leaving the dirty-state pill stuck on
+    // forever after save. stableStringify must mirror JSON.stringify here.
+    expect(stableStringify({ a: 1, b: undefined })).toBe(stableStringify({ a: 1 }));
+    expect(isStructurallyEqual({ a: 1, b: undefined }, { a: 1 })).toBe(true);
+  });
+
+  it('serializes undefined inside arrays as null (matches JSON.stringify)', () => {
+    expect(stableStringify([1, undefined, 3])).toBe('[1,null,3]');
   });
 
   it('distinguishes objects with different values at the same key', () => {
