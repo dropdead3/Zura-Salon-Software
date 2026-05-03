@@ -70,7 +70,6 @@ export function ReputationGraceBanner() {
   }
 
   const curated = data.curated_testimonial_count;
-  const orgSlug = effectiveOrganization?.slug;
 
   return (
     <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 mb-4 flex items-start gap-3">
