@@ -32,6 +32,7 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // --- Changelog entries (add newest first) ---
 const BILLING_CHANGELOG = [
+  { date: '2026-05-03', description: 'Added Zura Reputation add-on section: $49/mo base SKU, 14-day trial, $l1tzNWQq retention coupon, 30-day grace window doctrine.' },
   { date: '2026-03-17', description: 'Pricing restructure: monthly-only billing, per-location pricing ($99 Operator, $200/loc Growth/Infrastructure), removed cycle discounts.' },
   { date: '2026-03-16', description: 'Added Billing Guide page with live plan data and billing logic walkthrough.' },
   { date: '2026-03-16', description: 'Added interactive billing calculator widget and section anchor navigation.' },
@@ -47,6 +48,7 @@ const SECTIONS = [
   { id: 'calculator', label: 'Calculator' },
   { id: 'color-bar' , label: 'Color Bar' },
   { id: 'color-bar-calc', label: 'Color Bar Calc' },
+  { id: 'reputation', label: 'Reputation' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
 ];
