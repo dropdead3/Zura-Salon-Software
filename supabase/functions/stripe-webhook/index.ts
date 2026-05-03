@@ -1726,7 +1726,7 @@ Deno.serve(async (req) => {
         break;
         
       case "customer.subscription.updated":
-        if (!isConnectEvent) await handleSubscriptionUpdated(supabase, event.data.object);
+        if (!isConnectEvent) await handleSubscriptionUpdated(supabase, resend, event.data.object);
         break;
 
       // --- Connect terminal events ---
