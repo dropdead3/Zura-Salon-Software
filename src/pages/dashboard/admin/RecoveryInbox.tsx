@@ -139,7 +139,7 @@ export default function RecoveryInbox() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-5">
             {STATUS_GROUPS.map((group) => (
               <Card key={group.key}>
                 <CardHeader>
