@@ -9137,6 +9137,125 @@ export type Database = {
           },
         ]
       }
+      feedback_theme_clusters: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          category: string | null
+          created_at: string
+          evidence_quote: string | null
+          id: string
+          organization_id: string
+          rank: number
+          response_count: number
+          sample_response_ids: string[]
+          severity: string
+          share_of_negative: number | null
+          snapshot_id: string
+          status: string
+          suggested_action: string | null
+          theme_label: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: string | null
+          created_at?: string
+          evidence_quote?: string | null
+          id?: string
+          organization_id: string
+          rank?: number
+          response_count?: number
+          sample_response_ids?: string[]
+          severity?: string
+          share_of_negative?: number | null
+          snapshot_id: string
+          status?: string
+          suggested_action?: string | null
+          theme_label: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: string | null
+          created_at?: string
+          evidence_quote?: string | null
+          id?: string
+          organization_id?: string
+          rank?: number
+          response_count?: number
+          sample_response_ids?: string[]
+          severity?: string
+          share_of_negative?: number | null
+          snapshot_id?: string
+          status?: string
+          suggested_action?: string | null
+          theme_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_theme_clusters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_theme_clusters_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_theme_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_theme_snapshots: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          generated_by: string | null
+          id: string
+          model: string | null
+          negative_count: number
+          organization_id: string
+          response_count: number
+          status: string
+          window_days: number
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          generated_by?: string | null
+          id?: string
+          model?: string | null
+          negative_count?: number
+          organization_id: string
+          response_count?: number
+          status?: string
+          window_days?: number
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          generated_by?: string | null
+          id?: string
+          model?: string | null
+          negative_count?: number
+          organization_id?: string
+          response_count?: number
+          status?: string
+          window_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_theme_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financed_project_ledger: {
         Row: {
           amount: number
