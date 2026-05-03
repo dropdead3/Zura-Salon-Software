@@ -5,16 +5,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, AlertTriangle, X, UserCircle2 } from 'lucide-react';
+import { Star, AlertTriangle, X, UserCircle2, Clock, BellOff } from 'lucide-react';
 import {
   RecoveryTaskWithFeedback, RecoveryStatus, STATUS_LABELS,
-  useUpdateRecoveryTask,
+  useUpdateRecoveryTask, useSnoozeRecoveryTask, useUnsnoozeRecoveryTask, isSnoozed,
 } from '@/hooks/useRecoveryTasks';
 import { useOrgAssignees, assigneeLabel } from '@/hooks/useOrgAssignees';
 import { SendReviewRequestButton } from './SendReviewRequestButton';
 import { AIRecoveryDraftButton } from './AIRecoveryDraftButton';
 import { CoachingNoteComposer } from './CoachingNoteComposer';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface Props {
   task: RecoveryTaskWithFeedback | null;
