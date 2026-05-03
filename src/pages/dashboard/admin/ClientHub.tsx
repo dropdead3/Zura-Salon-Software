@@ -8,7 +8,7 @@ import {
 
   Users,
   Brain,
-  MessageSquarePlus,
+  
   UserCheck,
   GitMerge,
   ChevronRight,
