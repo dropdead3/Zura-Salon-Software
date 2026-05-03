@@ -602,6 +602,20 @@ async function handleSubscriptionDeleted(
     console.log(`Color Bar disabled for org ${org.id} after subscription cancellation`);
   }
 
+  // Reputation subscription cancellation → start 30-day grace window
+  if (subMetadata?.addon_type === 'reputation') {
+    const graceUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await supabase
+      .from('reputation_subscriptions')
+      .update({
+        status: 'past_due',
+        canceled_at: new Date().toISOString(),
+        grace_until: graceUntil,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('organization_id', org.id);
+    console.log(`Reputation subscription entered 30-day grace for org ${org.id} (until ${graceUntil})`);
+
   await supabase
     .from('organizations')
     .update({ subscription_status: 'cancelled' })
