@@ -26,6 +26,10 @@ import { TESTIMONIALS_COLOR_SLOTS } from '@/lib/sectionColorSlots';
 import { SectionStyleEditor } from './SectionStyleEditor';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Lock } from 'lucide-react';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { Link } from 'react-router-dom';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 
 const REVIEW_SOURCE_OPTIONS: { value: NonNullable<TestimonialsConfig['review_source']>; label: string; hint: string }[] = [
@@ -47,6 +51,8 @@ export function TestimonialsEditor() {
   const [localConfig, setLocalConfig] = useState<TestimonialsConfig>(DEFAULT_TESTIMONIALS);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const { isEntitled: reputationEntitled } = useReputationEntitlement();
+  const { dashPath } = useOrgDashboardPath();
   const debouncedConfig = useDebounce(localConfig, 300);
 
   const { effectiveOrganization } = useOrganizationContext();
@@ -117,25 +123,43 @@ export function TestimonialsEditor() {
           >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {REVIEW_SOURCE_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
+              {REVIEW_SOURCE_OPTIONS.map((o) => {
+                const gated = (o.value === 'zura' || o.value === 'mixed') && !reputationEntitled;
+                return (
+                  <SelectItem key={o.value} value={o.value} disabled={gated}>
+                    {o.label}{gated ? ' — requires Zura Reputation' : ''}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
             {REVIEW_SOURCE_OPTIONS.find((o) => o.value === (localConfig.review_source ?? 'manual'))?.hint}
           </p>
           {(localConfig.review_source === 'zura' || localConfig.review_source === 'mixed') && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLibraryOpen(true)}
-              className="gap-1.5 mt-2"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              Open Zura Review Library
-            </Button>
+            reputationEntitled ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setLibraryOpen(true)}
+                className="gap-1.5 mt-2"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Open Zura Review Library
+              </Button>
+            ) : (
+              <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 flex items-start gap-2">
+                <Lock className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <div className="flex-1 text-xs text-muted-foreground">
+                  Auto-curating 5-star client reviews onto your website requires
+                  the Zura Reputation app.
+                  <Button asChild variant="link" size="sm" className="h-auto p-0 ml-1 text-amber-600 dark:text-amber-400">
+                    <Link to={dashPath('/apps?app=reputation')}>Subscribe →</Link>
+                  </Button>
+                </div>
+              </div>
+            )
           )}
         </div>
 

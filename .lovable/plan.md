@@ -1,127 +1,85 @@
-## Zura Reputation Engine — Phased Build Plan
+# Gate Zura Reputation as a paid app
 
-### What already exists (foundation, do NOT rebuild)
+## Feedback on the prompt
+Strong framing — you scoped it to two layers (the dashboard app + the website wire-through) and asked the open-ended "what else." That's the right shape for a gating question. To sharpen further next time: (1) name the **billing model** up front (flat monthly vs per-location vs metered review-sends — they fan out to very different schemas), (2) state the **trial posture** (free trial? grandfathering for existing pilot orgs?), and (3) declare the **degraded-state contract** (what happens to already-published testimonials when a sub lapses — hide, watermark, or grace period?). Those three answers collapse ~80% of the implementation forks.
 
-- **Tables**: `client_feedback_surveys`, `client_feedback_responses` (with rating, NPS, gate flag, manager_notified, display lifecycle for website publishing), `website_testimonials`
-- **Public page**: `src/pages/ClientFeedback.tsx` — token-based 5-star + NPS form, gate logic, share screen, thank-you screen with manager follow-up branch
-- **Settings**: `useReviewThreshold` (Google/Apple/Yelp/Facebook URLs at org level, gate threshold, follow-up threshold)
-- **Edge functions**: `send-feedback-request` (creates token, emails client), `notify-low-score` (manager alert)
-- **Admin**: `src/pages/dashboard/admin/FeedbackHub.tsx` (Overview, Responses, Settings tabs), `useNPSAnalytics`, `useStaffFeedbackStats`
-- **Components**: `ReviewShareScreen`, `ReviewThankYouScreen`, `ReviewThresholdSettings`, `FeedbackResponseList`, `NPSScoreCard`
+## What's already in place
 
-### What's missing vs. the spec (the actual work)
+- **Entitlement pattern is established.** `useConnectEntitlement` + `useColorBarEntitlement` both read `organization_feature_flags` by `flag_key`. Adding `reputation_enabled` follows the exact same shape — no new infra.
+- **App is already cataloged.** `src/pages/dashboard/AppsMarketplace.tsx` line 118 has the `reputation` card (currently "Coming Soon" per the screenshot).
+- **Reputation surfaces exist and are unsubscribed-aware-able.** Hubs that touch reviews: Operations Hub (Feedback Hub), `useFeedbackThemes` (AI tagger), `StylistReputationCard`, `NegativeFeedbackThemes`, `RecoveryOutcomeCard`, `ComplianceBanner`, `useStylistReputation`.
+- **Website wire-through point is single-source.** `ZuraReviewLibrary` (drawer inside `TestimonialsEditor`) is the only path that promotes a `client_feedback_responses` row into a `website_testimonials` row. The public site (`TestimonialSection.tsx`) reads `website_testimonials` directly — so gating happens at curation, not at render.
 
-1. **Automation engine** — appointment.completed → delayed scheduling, frequency cap, service include/exclude, stylist filters, location-aware sender. Today, requests are manual.
-2. **Recovery Inbox** — structured tasks for low scores with assignment, status lifecycle (New → Contacted → Resolved/Refunded/Redo Booked/Closed), resolution notes, AI-drafted response.
-3. **Location-aware review links** — current links are org-level only. Spec requires per-location Google/Apple/Yelp/Facebook routing.
-4. **Message templates with variables** — `[Client First Name]`, `[Stylist Name]`, etc., with per-location/per-service/per-stylist/per-state overrides.
-5. **SMS channel** — only email exists today (Twilio connector available).
-6. **Reputation dashboard** — full command-center view: velocity, CTR, response rate, at-risk count, recovery success rate, complaint/praise themes, location comparison.
-7. **Compliance log** — audit trail of every send/click/recovery action, plus the in-app compliance banner.
-8. **AI guardrails** — drafting helpers for templates and recovery responses with hard-coded refusal of gating/incentive/quota requests.
+## Plan
 
----
+### 1. Database — entitlement + audit
+Migration adds:
+- `reputation_enabled` flag convention in `organization_feature_flags` (no schema change — same table as Connect/Color Bar).
+- `reputation_subscriptions` table: `organization_id`, `status` (`trialing|active|past_due|canceled`), `started_at`, `current_period_end`, `canceled_at`, `stripe_subscription_id` (nullable for manual/God Mode grants), `grant_source` (`stripe|platform_grant|trial`).
+- DB trigger: when `reputation_subscriptions.status` flips to `active|trialing`, upsert `organization_feature_flags{reputation_enabled:true}`; when it flips to `canceled|past_due` past grace, set false. Single source of truth = subscription row; flag is a denormalized read cache (matches Connect pattern).
+- RLS: org-scoped via `is_org_admin` for writes, `is_org_member` for reads.
 
-### Phase 1 — Recovery Inbox + Location Links + Automation Spine (THIS BUILD)
+### 2. Entitlement hook
+Create `src/hooks/reputation/useReputationEntitlement.ts` mirroring `useConnectEntitlement` exactly — reads `reputation_enabled` flag, 60s staleTime, fallback org resolution.
 
-The minimum slice that makes the system feel like a "Reputation Engine" rather than a passive feedback form. Everything else (SMS, AI drafting, full dashboard, flow builder UI) is Phase 2+.
+### 3. Dashboard gating (the Reputation app surface)
+Wrap entry points with the entitlement check:
+- **Operations Hub → Feedback Hub card**: render a locked variant when `!isEntitled` (lock icon + "Upgrade to Zura Reputation" CTA → routes to `/dashboard/apps?app=reputation`).
+- **`FeedbackHub.tsx` page**: top-level gate — if not entitled, render `ConfigurationStubCard` variant with subscribe CTA instead of the dashboards (recovery queues, theme tagger, NPS).
+- **`StylistReputationCard`** (stylist self-view): hide via `VisibilityGate` when org lacks entitlement (stylists shouldn't see paywall — silence is valid output per doctrine).
+- **AI theme tagger edge function** (`ai-feedback-theme-tagger`): add server-side entitlement check before invoking model — prevents bypass via direct function call. Uses service-role client + reads the flag.
 
-#### 1.1 Schema (one migration)
+### 4. Website wire-through gating
+This is the leverage point you asked about. Three enforcement layers:
 
-- **`recovery_tasks`** — id, organization_id, location_id, feedback_response_id (FK), client_id, appointment_id, staff_user_id, assigned_to (uuid), status (`new` | `contacted` | `resolved` | `refunded` | `redo_booked` | `closed`), priority (`urgent` | `high` | `normal`), resolution_notes, resolved_at, resolved_by, created_at, updated_at. RLS: org members read, managers/admins write.
-- **`location_review_settings`** — id, organization_id, location_id (unique per org), google_review_url, apple_review_url, yelp_review_url, facebook_review_url, custom_review_url, custom_review_label, default_platform_priority (text[]). RLS: org admins manage, members read.
-- **`review_request_automation_rules`** — id, organization_id, name, is_active, send_delay_minutes (int), eligible_service_categories (text[] nullable = all), excluded_service_categories (text[]), excluded_service_names (text[]), frequency_cap_days (default 90), stylist_inclusion_mode (`all` | `include` | `exclude`), stylist_user_ids (uuid[]), location_ids (uuid[] nullable = all), channel (`email` | `sms` | `both`), created_at, updated_at. RLS: org admins manage.
-- **`review_compliance_log`** — id, organization_id, actor_user_id, event_type (`request_sent` | `request_clicked` | `feedback_submitted` | `external_link_clicked` | `recovery_created` | `recovery_resolved` | `rule_changed` | `template_changed`), feedback_response_id (nullable), recovery_task_id (nullable), payload jsonb, created_at. Append-only RLS: org admins read, system inserts.
-- **Trigger**: when `client_feedback_responses.responded_at` is set AND `overall_rating <= privateFollowUpThreshold` AND no recovery_task exists for that response, INSERT a `recovery_tasks` row with priority derived from rating (1–2 = `urgent`, 3 = `high`).
-- **Trigger**: when `recovery_tasks.status` changes to a terminal state, write a `review_compliance_log` entry.
+**a. Curation gate (UX layer)** — `TestimonialsEditor.tsx`: hide the "Open Zura Review Library" button when `!isEntitled`; replace with "Upgrade to auto-curate 5-star reviews" inline upsell. Source mode dropdown loses `mixed` and `auto` options; falls back to `manual`.
 
-#### 1.2 Public ClientFeedback page — fairness fix (compliance-critical)
+**b. Mutation gate (API layer)** — `useCurateReview`, `useFeatureReview`, `useUpdateDisplayCopy`, `useUnpublishReview`, `useHideReview`: pre-flight entitlement check before the mutation; throws if not entitled. Defense-in-depth against direct devtools calls.
 
-The current page only shows public review options if `passes` the gate. The spec explicitly forbids this. Change to:
-- **Always** show public review buttons after submission (per spec: "Do not hide public review links based on low rating")
-- **Always also** trigger recovery workflow if below threshold (in parallel, not as a substitute)
-- Resolve review URLs from `location_review_settings` first, falling back to `useReviewThreshold` org-level URLs
-- Add a 1-line compliance footer: "All clients see public review options regardless of rating."
+**c. Render gate (degraded-state contract)** — when subscription lapses, `website_testimonials` rows with `source = 'zura_review'` need a contract. **Recommended**: 30-day grace where they keep rendering, then auto-hide (`published = false`) via a scheduled function, leaving manual testimonials untouched. Operator gets a Reputation lapse notification (uses Alert Governance throttling). Re-subscribing flips them back automatically.
 
-#### 1.3 Recovery Inbox page (new)
+### 5. Subscription lifecycle (Stripe)
+- Add `reputation` to the existing Stripe billing flow (same pattern as Color Bar / Connect). New product + price in Stripe; webhook updates `reputation_subscriptions.status`.
+- Marketplace card swaps "Notify Me" → "Subscribe" when entitled-org-admin views it; "Manage Subscription" when already active.
+- God Mode override path exists (per God Mode Governance memory) — platform grant writes a `reputation_subscriptions` row with `grant_source='platform_grant'`.
 
-`src/pages/dashboard/admin/RecoveryInbox.tsx` route `/admin/feedback/recovery`.
-- Bento card list grouped by status (New, In Progress, Resolved)
-- Each row: client name, rating, stylist, service, appointment date, comments excerpt, age
-- Drilldown drawer: full feedback, client history snippet (CLV, last visit), assignment dropdown, status lifecycle, resolution notes textarea
-- Status changes write `review_compliance_log` automatically
-- Tab added to `FeedbackHub.tsx`: "Recovery"
+### 6. Tests
+- `useReputationEntitlement.test.ts` — flag resolution + fallback org.
+- `ReputationGate.test.tsx` — Feedback Hub renders stub when unentitled.
+- `ZuraReviewLibrary.entitlement.test.tsx` — library button hidden, mutation hooks throw.
+- `reputation_subscription_trigger.sql` test — status flip propagates to flag.
+- Edge function entitlement check covered in `ai-feedback-theme-tagger.test.ts`.
 
-#### 1.4 Location Review Links page (new)
+## What else to consider (the open-ended half)
 
-`src/pages/dashboard/admin/LocationReviewLinks.tsx` linked from FeedbackHub Settings tab.
-- One card per location with the four URL inputs + custom URL
-- Inherits from org defaults if blank
-- Resolution helper: `resolveReviewLinks(locationId, orgId)` → location-specific then org-level fallback
+1. **Trial economics.** A 14-day trial on Reputation makes sense because the value (5-star curation) compounds over weeks, not days. Without a trial, conversion is hard — operators can't see the wire-through magic until reviews flow in.
 
-#### 1.5 Automation Rules editor (UI scaffold)
+2. **Per-location vs per-org pricing.** Multi-location orgs scale review volume linearly. Current Color Bar model is per-location. Recommend matching — otherwise enterprise orgs underpay and Stripe MRR doesn't track reality.
 
-`src/pages/dashboard/admin/ReviewAutomationRules.tsx`.
-- List/create rules table; edit drawer with all filter fields
-- "Test rule against last 50 completed appointments" preview button (read-only sim — Phase 1 just shows which would qualify; the cron scheduler that actually fires sends ships in Phase 2)
-- This delivers the configuration surface; the dispatcher (cron + Twilio + per-rule eligibility) is Phase 2
+3. **Already-collected reviews.** You likely have `client_feedback_responses` from pre-gate pilot use. Decision: do those become "free" assets a non-subscriber can still curate? Recommend **no** — gate is on the *curation action*, not on review collection (collection should stay on so churn-back is low-friction).
 
-#### 1.6 Compliance banner
+4. **Stylist Privacy Contract intersection.** `StylistReputationCard` is on the stylist allowlist. When org is unentitled, the card should disappear silently from the stylist dashboard — do *not* show stylists a paywall (they can't act on it; surfaces a manager problem to a non-manager).
 
-Permanent banner at the top of `FeedbackHub` Settings tab with the exact spec copy. Non-dismissible (governance, not a notification).
+5. **Public site SEO impact on lapse.** If reputation lapses and 50 testimonials disappear from the public site, that's a measurable SEO/conversion hit. The 30-day grace + warning notification is the mitigation, but worth surfacing in the cancel-confirmation modal: "30 curated reviews will be hidden in 30 days."
 
-#### 1.7 Memory updates
+6. **Compliance carryover.** `ComplianceBanner` enforces SMS opt-out / review request frequency caps (per Reputation Engine memory). If a non-subscriber is no longer sending review requests, the banner should self-suppress — don't nag operators about a system they aren't using.
 
-- New canon entry `mem://features/reputation-engine` covering the fairness rule (public links visible to ALL ratings), recovery lifecycle states, `review_compliance_log` as append-only audit, and the AI guardrails list.
-- Update `mem://index.md` Core if a universal rule emerges (e.g. "Public review links must never be gated by rating").
+7. **Platform observability.** Add `reputation_subscription_status` to platform admin dashboards (alongside Color Bar / Connect rollout views) so internal team sees adoption, churn, and grace-period orgs.
 
----
+8. **AI cost control.** The theme tagger uses Lovable AI credits. Gating it behind subscription naturally caps spend — but consider also rate-limiting per org (current code requires ≥5 negatives, which helps, but no daily cap exists).
 
-### Phase 2 — Dispatcher, SMS, Templates (subsequent build)
+## Files to create
+- `supabase/migrations/<ts>_reputation_subscription.sql`
+- `src/hooks/reputation/useReputationEntitlement.ts`
+- `src/hooks/reputation/useReputationSubscription.ts` (Stripe checkout + portal)
+- `src/components/reputation/ReputationGate.tsx` (locked-state stub)
+- Tests above
 
-- Cron job + edge function `dispatch-review-requests` (scans completed appointments, applies active rules, respects frequency cap, inserts pending requests into a queue)
-- `review_message_templates` table + variable interpolation engine (`[Client First Name]`, etc.)
-- Twilio SMS path via existing connector
-- Channel selection + opt-out enforcement (already partially wired via `clientId` in `send-feedback-request`)
-
-### Phase 3 — Reputation Dashboard + AI
-
-- New `Reputation Overview` page with bento cards (velocity, CTR, response rate, at-risk count, complaint/praise themes via Lovable AI sentiment summarization, location comparison, stylist trends)
-- AI helpers: template drafting, recovery response drafting, theme extraction — with hard-coded refusal of any prompt requesting review gating, incentive language, 5-star solicitation, or staff quotas
-- AI must surface its draft for human approval; never auto-sends
-
-### Phase 4 — Visual Flow Builder
-
-- The "Trigger → Delay → Message → Rating → Follow-up → Internal Action" canvas builder — only worthwhile after Phase 2 dispatcher proves out the underlying primitives
-
----
-
-### Files this build will touch
-
-**New**:
-- `supabase/migrations/<ts>_reputation_engine_phase1.sql`
-- `src/hooks/useRecoveryTasks.ts`, `src/hooks/useLocationReviewLinks.ts`, `src/hooks/useReviewAutomationRules.ts`, `src/hooks/useReviewComplianceLog.ts`
-- `src/pages/dashboard/admin/RecoveryInbox.tsx`
-- `src/pages/dashboard/admin/LocationReviewLinks.tsx`
-- `src/pages/dashboard/admin/ReviewAutomationRules.tsx`
-- `src/components/feedback/RecoveryTaskDrawer.tsx`, `src/components/feedback/RecoveryTaskCard.tsx`, `src/components/feedback/ComplianceBanner.tsx`
-- `src/lib/reputation/resolveReviewLinks.ts`
-- `mem://features/reputation-engine.md`
-
-**Edited**:
-- `src/pages/ClientFeedback.tsx` — remove gate-suppression of public links; resolve location-aware URLs; ensure recovery trigger always fires below threshold
-- `src/pages/dashboard/admin/FeedbackHub.tsx` — add Recovery tab + nav links to new pages, mount ComplianceBanner
-- `src/App.tsx` — register three new admin routes
-- `mem://index.md` — add reputation engine entry; consider Core rule for "public review links never rating-gated"
-
-### Why this scope split
-
-The full spec is a 4-phase initiative. Trying to ship the dispatcher, SMS, templating engine, AI drafting, dashboard, AND flow builder in one pass would produce shallow work everywhere and inevitably regress the existing feedback system. Phase 1 fixes the one **compliance bug** (rating-gated public links) and lays the persistent state (recovery tasks, location links, automation rules, compliance log) every later phase depends on.
-
-### Open questions
-
-1. **Recovery task assignment default**: assign to org owner, location manager, or unassigned-by-default (claimed from inbox)?
-2. **Frequency cap default**: spec says configurable; reasonable default of **90 days** OK?
-3. **Phase 2 SMS provider**: Twilio (already a connector here) vs. waiting for a Lovable-native SMS path?
-
-I can start Phase 1 immediately on approval, or adjust the slice if you'd rather lead with the dashboard or dispatcher.
+## Files to edit
+- `src/pages/dashboard/AppsMarketplace.tsx` — wire subscribe CTA
+- `src/pages/dashboard/admin/FeedbackHub.tsx` — top-level gate
+- `src/pages/dashboard/admin/TeamHub.tsx` (Operations Hub) — locked-card variant
+- `src/components/dashboard/website-editor/TestimonialsEditor.tsx` — hide library button
+- `src/hooks/useEligibleReviews.ts` — pre-flight checks on all 5 mutations
+- `src/components/feedback/StylistReputationCard.tsx` — wrap in `VisibilityGate`
+- `supabase/functions/ai-feedback-theme-tagger/index.ts` — server-side entitlement check

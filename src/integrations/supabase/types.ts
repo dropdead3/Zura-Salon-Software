@@ -22453,6 +22453,51 @@ export type Database = {
           },
         ]
       }
+      reputation_subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          grace_until: string | null
+          grant_source: string
+          id: string
+          organization_id: string
+          started_at: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          grace_until?: string | null
+          grant_source?: string
+          id?: string
+          organization_id: string
+          started_at?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          grace_until?: string | null
+          grant_source?: string
+          id?: string
+          organization_id?: string
+          started_at?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       responsibilities: {
         Row: {
           color: string

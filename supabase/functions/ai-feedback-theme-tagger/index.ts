@@ -48,6 +48,19 @@ Deno.serve(async (req) => {
     });
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
+    // Entitlement gate: AI theme tagger is part of Zura Reputation.
+    // Source of truth = `reputation_enabled` flag (synced by trigger from
+    // `reputation_subscriptions`). Prevents bypass via direct function call.
+    const { data: flag } = await supabase
+      .from("organization_feature_flags")
+      .select("is_enabled")
+      .eq("organization_id", organizationId)
+      .eq("flag_key", "reputation_enabled")
+      .maybeSingle();
+    if (!flag?.is_enabled) {
+      return json({ error: "Zura Reputation subscription required" }, 402);
+    }
+
     const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();
 
     const { data: responses } = await supabase

@@ -14,6 +14,26 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 import { toast } from 'sonner';
 import type { DisplayNamePreference } from '@/lib/reviewDisplayName';
 
+/**
+ * Pre-flight entitlement guard. Defense-in-depth against direct mutation calls
+ * from devtools when the org has not subscribed to Zura Reputation.
+ * Source of truth is the `reputation_enabled` flag on `organization_feature_flags`,
+ * kept in sync by the `sync_reputation_entitlement` trigger.
+ */
+async function assertReputationEntitled(orgId: string | undefined) {
+  if (!orgId) throw new Error('No organization context');
+  const { data, error } = await supabase
+    .from('organization_feature_flags')
+    .select('is_enabled')
+    .eq('organization_id', orgId)
+    .eq('flag_key', 'reputation_enabled')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.is_enabled) {
+    throw new Error('REPUTATION_NOT_ENTITLED');
+  }
+}
+
 const STALE_TIME_MS = 30_000;
 
 export interface EligibleReview {
@@ -145,7 +165,7 @@ export function useCurateReview() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({ response, displayNameOverride, consentOverride }: CurateReviewInput) => {
-      if (!orgId) throw new Error('No organization context');
+      await assertReputationEntitled(orgId);
       if (!response.comments) throw new Error('Source review has no body');
       if (!response.display_consent && !consentOverride) {
         throw new Error('CONSENT_REQUIRED');
@@ -214,6 +234,7 @@ export function useCurateReview() {
 }
 
 export function useUnpublishReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -223,6 +244,7 @@ export function useUnpublishReview() {
       testimonialId: string;
       responseId: string | null;
     }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('website_testimonials')
         .update({ enabled: false })
@@ -241,6 +263,7 @@ export function useUnpublishReview() {
 }
 
 export function useFeatureReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -252,6 +275,7 @@ export function useFeatureReview() {
       isFeatured: boolean;
       scopes?: string[];
     }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('website_testimonials')
         .update({
@@ -267,6 +291,7 @@ export function useFeatureReview() {
 }
 
 export function useUpdateDisplayCopy() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({
@@ -278,6 +303,7 @@ export function useUpdateDisplayCopy() {
       body?: string;
       displayNameOverride?: string | null;
     }) => {
+      await assertReputationEntitled(orgId);
       const updates: Record<string, unknown> = {};
       if (body !== undefined) {
         updates.body = body;
@@ -300,9 +326,11 @@ export function useUpdateDisplayCopy() {
 }
 
 export function useHideReview() {
+  const orgId = useSettingsOrgId();
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({ responseId }: { responseId: string }) => {
+      await assertReputationEntitled(orgId);
       const { error } = await supabase
         .from('client_feedback_responses')
         .update({ display_status: 'hidden' })
