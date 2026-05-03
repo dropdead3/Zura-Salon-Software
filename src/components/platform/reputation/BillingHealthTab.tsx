@@ -2,7 +2,7 @@
  * BillingHealthTab — Per-org Reputation billing posture for the platform console.
  * Mirrors the Color Bar pattern: KPI row + searchable / at-risk-filterable table.
  */
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +34,8 @@ import {
   Search,
   Building2,
   Loader2,
+  ChevronRight,
+  Percent,
 } from 'lucide-react';
 import {
   useReputationBillingHealth,
@@ -121,6 +123,7 @@ export function BillingHealthTab() {
   const { data, isLoading } = useReputationBillingHealth();
   const [search, setSearch] = useState('');
   const [atRiskOnly, setAtRiskOnly] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -137,7 +140,7 @@ export function BillingHealthTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <KPI icon={CheckCircle2} label="Active" value={data.totalActive} />
         <KPI
           icon={DollarSign}
@@ -159,7 +162,26 @@ export function BillingHealthTab() {
           subtitle="Past-due orgs"
           variant={data.mrrAtRisk > 0 ? 'danger' : 'default'}
         />
-        <KPI icon={Tag} label="Retention Coupons" value={data.retentionCouponsUsed} subtitle="Used" />
+        <KPI
+          icon={Tag}
+          label="Coupons"
+          value={`${data.retentionCouponsUsed} / ${data.retentionCouponsOffered}`}
+          subtitle="Applied / offered"
+        />
+        <KPI
+          icon={Percent}
+          label="Save Rate"
+          value={
+            data.retentionSaveRate === null
+              ? '—'
+              : `${Math.round(data.retentionSaveRate * 100)}%`
+          }
+          subtitle={
+            data.retentionSaveRate === null
+              ? 'No offers yet'
+              : `${data.retentionCouponsUsed} saved`
+          }
+        />
       </div>
 
       <PlatformCard variant="glass">
@@ -208,6 +230,7 @@ export function BillingHealthTab() {
             <Table>
               <TableHeader>
                 <TableRow className="border-[hsl(var(--platform-border)/0.5)]">
+                  <TableHead className="w-8" />
                   <TableHead>Organization</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Source</TableHead>
@@ -218,42 +241,146 @@ export function BillingHealthTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((o) => (
-                  <TableRow key={o.organizationId} className="border-[hsl(var(--platform-border)/0.3)]">
-                    <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
-                      {o.organizationName}
-                    </TableCell>
-                    <TableCell>{statusBadge(o.status)}</TableCell>
-                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
-                      {o.grantSource ?? '—'}
-                    </TableCell>
-                    <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] tabular-nums">
-                      {daysUntil(o.currentPeriodEnd)}
-                    </TableCell>
-                    <TableCell className="font-sans text-xs tabular-nums">
-                      {o.status === 'past_due' ? (
-                        <span className="text-rose-400">{daysUntil(o.graceUntil)}</span>
-                      ) : (
-                        <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                {filtered.map((o) => {
+                  const isOpen = expanded === o.organizationId;
+                  const couponState = o.retentionCouponUsed
+                    ? 'applied'
+                    : o.retentionCouponOfferedAt
+                      ? 'offered'
+                      : 'none';
+                  return (
+                    <Fragment key={o.organizationId}>
+                      <TableRow
+                        onClick={() => setExpanded(isOpen ? null : o.organizationId)}
+                        className="border-[hsl(var(--platform-border)/0.3)] cursor-pointer hover:bg-[hsl(var(--platform-bg-hover)/0.4)]"
+                      >
+                        <TableCell className="pl-4">
+                          <ChevronRight
+                            className={cn(
+                              'w-3.5 h-3.5 text-[hsl(var(--platform-foreground-subtle))] transition-transform',
+                              isOpen && 'rotate-90',
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell className="font-sans text-sm text-[hsl(var(--platform-foreground))]">
+                          {o.organizationName}
+                        </TableCell>
+                        <TableCell>{statusBadge(o.status)}</TableCell>
+                        <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground-muted))]">
+                          {o.grantSource ?? '—'}
+                        </TableCell>
+                        <TableCell className="font-sans text-xs text-[hsl(var(--platform-foreground)/0.85)] tabular-nums">
+                          {daysUntil(o.currentPeriodEnd)}
+                        </TableCell>
+                        <TableCell className="font-sans text-xs tabular-nums">
+                          {o.status === 'past_due' ? (
+                            <span className="text-rose-400">{daysUntil(o.graceUntil)}</span>
+                          ) : (
+                            <span className="text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {couponState === 'applied' ? (
+                            <PlatformBadge variant="success" size="sm">Applied</PlatformBadge>
+                          ) : couponState === 'offered' ? (
+                            <PlatformBadge variant="warning" size="sm">Offered</PlatformBadge>
+                          ) : (
+                            <span className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-sans text-sm tabular-nums text-right pr-4">
+                          <BlurredAmount disableTooltip>${o.estimatedMRR}</BlurredAmount>
+                        </TableCell>
+                      </TableRow>
+                      {isOpen && (
+                        <TableRow className="border-[hsl(var(--platform-border)/0.3)] bg-[hsl(var(--platform-bg-hover)/0.25)]">
+                          <TableCell colSpan={8} className="p-0">
+                            <OrgDetail row={o} />
+                          </TableCell>
+                        </TableRow>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {o.retentionCouponUsed ? (
-                        <PlatformBadge variant="default" size="sm">Used</PlatformBadge>
-                      ) : (
-                        <span className="font-sans text-xs text-[hsl(var(--platform-foreground-subtle))]">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-sans text-sm tabular-nums text-right pr-4">
-                      <BlurredAmount disableTooltip>${o.estimatedMRR}</BlurredAmount>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
         </PlatformCardContent>
       </PlatformCard>
+    </div>
+  );
+}
+
+function fmtDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function OrgDetail({ row }: { row: ReputationBillingOrgRow }) {
+  const offered = row.retentionCouponOfferedAt;
+  const applied = row.retentionCouponAppliedAt;
+  return (
+    <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
+      <DetailItem label="Started" value={fmtDateTime(row.startedAt)} />
+      <DetailItem label="Current period ends" value={fmtDateTime(row.currentPeriodEnd)} />
+      <DetailItem
+        label="Grace until"
+        value={fmtDateTime(row.graceUntil)}
+        tone={row.status === 'past_due' ? 'danger' : 'default'}
+      />
+      <DetailItem label="Canceled at" value={fmtDateTime(row.canceledAt)} />
+      <DetailItem label="Coupon offered" value={fmtDateTime(offered)} />
+      <DetailItem
+        label="Coupon applied"
+        value={fmtDateTime(applied)}
+        tone={applied ? 'success' : 'default'}
+      />
+      <DetailItem
+        label="Stripe customer"
+        value={row.stripeCustomerId ?? '—'}
+        mono
+      />
+      <DetailItem
+        label="Stripe subscription"
+        value={row.stripeSubscriptionId ?? '—'}
+        mono
+      />
+      <DetailItem label="Grant source" value={row.grantSource ?? '—'} />
+    </div>
+  );
+}
+
+function DetailItem({
+  label,
+  value,
+  mono = false,
+  tone = 'default',
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+  tone?: 'default' | 'success' | 'danger';
+}) {
+  const toneClass =
+    tone === 'success'
+      ? 'text-emerald-400'
+      : tone === 'danger'
+        ? 'text-rose-400'
+        : 'text-[hsl(var(--platform-foreground)/0.9)]';
+  return (
+    <div className="space-y-0.5">
+      <p className="font-display text-[10px] tracking-[0.08em] uppercase text-[hsl(var(--platform-foreground-subtle))]">
+        {label}
+      </p>
+      <p className={cn('text-xs', mono ? 'font-mono break-all' : 'font-sans', toneClass)}>
+        {value}
+      </p>
     </div>
   );
 }

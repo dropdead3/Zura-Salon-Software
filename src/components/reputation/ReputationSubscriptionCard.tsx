@@ -10,7 +10,7 @@
  * be hidden in 30 days") BEFORE the operator clicks through to Stripe — so
  * they don't accidentally torpedo their SEO proof.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Loader2, ExternalLink, AlertTriangle, ShieldCheck, Clock } from 'lucide-react';
@@ -35,6 +35,22 @@ export function ReputationSubscriptionCard() {
   const [opening, setOpening] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
+
+  const stampedRef = useRef(false);
+  const offeredAt = data?.retention_coupon_offered_at ?? null;
+  const couponApplied = !!data?.retention_coupon_applied_at;
+  const showSaveOffer =
+    !!data && (data.status === 'active' || data.status === 'trialing') && !couponApplied && !redeemed;
+
+  // Stamp coupon-offered-at exactly once per org when the operator actually
+  // sees the save offer. Powers Save Rate analytics on the platform console.
+  useEffect(() => {
+    if (!showSaveOffer || !orgId || offeredAt || stampedRef.current) return;
+    stampedRef.current = true;
+    void supabase.rpc('mark_reputation_retention_coupon_offered' as any, {
+      _organization_id: orgId,
+    });
+  }, [showSaveOffer, orgId, offeredAt]);
 
   if (!isEntitled || isLoading || !data) return null;
 
@@ -163,7 +179,7 @@ export function ReputationSubscriptionCard() {
           </div>
         )}
 
-        {(status === 'active' || status === 'trialing') && !redeemed && (
+        {showSaveOffer && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-3">
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
             <div className="text-sm flex-1">

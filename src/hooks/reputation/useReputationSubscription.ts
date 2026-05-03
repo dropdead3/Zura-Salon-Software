@@ -13,6 +13,8 @@ export interface ReputationSubscriptionState {
   current_period_end: string | null;
   grace_until: string | null;
   canceled_at: string | null;
+  retention_coupon_offered_at: string | null;
+  retention_coupon_applied_at: string | null;
   curated_testimonial_count: number;
 }
 
@@ -27,7 +29,7 @@ export function useReputationSubscription() {
       const [subRes, countRes] = await Promise.all([
         supabase
           .from('reputation_subscriptions' as any)
-          .select('status, current_period_end, grace_until, canceled_at')
+          .select('status, current_period_end, grace_until, canceled_at, retention_coupon_offered_at, retention_coupon_applied_at')
           .eq('organization_id', orgId!)
           .maybeSingle(),
         supabase
@@ -43,6 +45,8 @@ export function useReputationSubscription() {
         current_period_end: string | null;
         grace_until: string | null;
         canceled_at: string | null;
+        retention_coupon_offered_at: string | null;
+        retention_coupon_applied_at: string | null;
       } | null;
 
       return {
@@ -50,6 +54,8 @@ export function useReputationSubscription() {
         current_period_end: sub?.current_period_end ?? null,
         grace_until: sub?.grace_until ?? null,
         canceled_at: sub?.canceled_at ?? null,
+        retention_coupon_offered_at: sub?.retention_coupon_offered_at ?? null,
+        retention_coupon_applied_at: sub?.retention_coupon_applied_at ?? null,
         curated_testimonial_count: countRes.count ?? 0,
       };
     },

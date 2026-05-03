@@ -22540,6 +22540,7 @@ export type Database = {
           id: string
           organization_id: string
           retention_coupon_applied_at: string | null
+          retention_coupon_offered_at: string | null
           started_at: string
           status: string
           stripe_customer_id: string | null
@@ -22555,6 +22556,7 @@ export type Database = {
           id?: string
           organization_id: string
           retention_coupon_applied_at?: string | null
+          retention_coupon_offered_at?: string | null
           started_at?: string
           status?: string
           stripe_customer_id?: string | null
@@ -22570,6 +22572,7 @@ export type Database = {
           id?: string
           organization_id?: string
           retention_coupon_applied_at?: string | null
+          retention_coupon_offered_at?: string | null
           started_at?: string
           status?: string
           stripe_customer_id?: string | null
@@ -28187,6 +28190,71 @@ export type Database = {
           },
         ]
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          livemode: boolean
+          organization_id: string | null
+          payload: Json
+          processed_at: string | null
+          received_at: string
+          replay_count: number
+          replayed_at: string | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_event_id: string
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          livemode?: boolean
+          organization_id?: string | null
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+          replay_count?: number
+          replayed_at?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_event_id: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          livemode?: boolean
+          organization_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+          replay_count?: number
+          replayed_at?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_event_id?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stripe_webhook_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stylist_career_milestones: {
         Row: {
           achieved_at: string
@@ -33595,6 +33663,10 @@ export type Database = {
           _entity_type?: string
           _org_id: string
         }
+        Returns: string
+      }
+      mark_reputation_retention_coupon_offered: {
+        Args: { _organization_id: string }
         Returns: string
       }
       publish_all_menus: { Args: { _org_id: string }; Returns: number }
