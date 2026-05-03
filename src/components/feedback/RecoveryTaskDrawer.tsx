@@ -25,12 +25,22 @@ interface Props {
 const STATUS_OPTIONS: RecoveryStatus[] = ['new', 'contacted', 'resolved', 'refunded', 'redo_booked', 'closed'];
 const UNASSIGNED = '__unassigned__';
 
+const SNOOZE_PRESETS: { hours: number; label: string }[] = [
+  { hours: 4, label: '4 hours' },
+  { hours: 24, label: 'Tomorrow' },
+  { hours: 24 * 3, label: '3 days' },
+  { hours: 24 * 7, label: 'Next week' },
+];
+
 export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
   const update = useUpdateRecoveryTask();
+  const snooze = useSnoozeRecoveryTask();
+  const unsnooze = useUnsnoozeRecoveryTask();
   const { data: assignees = [] } = useOrgAssignees();
   const [notes, setNotes] = useState(task?.resolution_notes ?? '');
   const [status, setStatus] = useState<RecoveryStatus>(task?.status ?? 'new');
   const [assignedTo, setAssignedTo] = useState<string>(task?.assigned_to ?? UNASSIGNED);
+  const [snoozeReason, setSnoozeReason] = useState('');
 
   // Reset on task change (effect, not render-phase setState)
   useEffect(() => {
@@ -38,10 +48,12 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
     setNotes(task.resolution_notes ?? '');
     setStatus(task.status);
     setAssignedTo(task.assigned_to ?? UNASSIGNED);
+    setSnoozeReason('');
   }, [task?.id]);
 
   if (!task) return null;
   const fb = task.feedback;
+  const snoozed = isSnoozed(task);
 
   const priorityColor = task.priority === 'urgent' ? 'destructive' : task.priority === 'high' ? 'default' : 'secondary';
 
