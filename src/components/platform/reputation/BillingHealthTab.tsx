@@ -123,6 +123,7 @@ export function BillingHealthTab() {
   const { data, isLoading } = useReputationBillingHealth();
   const [search, setSearch] = useState('');
   const [atRiskOnly, setAtRiskOnly] = useState(false);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -139,7 +140,7 @@ export function BillingHealthTab() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <KPI icon={CheckCircle2} label="Active" value={data.totalActive} />
         <KPI
           icon={DollarSign}
@@ -161,7 +162,26 @@ export function BillingHealthTab() {
           subtitle="Past-due orgs"
           variant={data.mrrAtRisk > 0 ? 'danger' : 'default'}
         />
-        <KPI icon={Tag} label="Retention Coupons" value={data.retentionCouponsUsed} subtitle="Used" />
+        <KPI
+          icon={Tag}
+          label="Coupons"
+          value={`${data.retentionCouponsUsed} / ${data.retentionCouponsOffered}`}
+          subtitle="Applied / offered"
+        />
+        <KPI
+          icon={Percent}
+          label="Save Rate"
+          value={
+            data.retentionSaveRate === null
+              ? '—'
+              : `${Math.round(data.retentionSaveRate * 100)}%`
+          }
+          subtitle={
+            data.retentionSaveRate === null
+              ? 'No offers yet'
+              : `${data.retentionCouponsUsed} saved`
+          }
+        />
       </div>
 
       <PlatformCard variant="glass">
