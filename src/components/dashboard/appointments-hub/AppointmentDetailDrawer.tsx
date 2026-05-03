@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { useClientReviewHistory, useAppointmentFeedbackStatus } from '@/hooks/useClientReviewHistory';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { toast } from 'sonner';
 
 interface AppointmentDetailDrawerProps {
