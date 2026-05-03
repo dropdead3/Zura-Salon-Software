@@ -767,6 +767,11 @@ async function handleSubscriptionUpdated(
   // Reputation subscription state sync
   const subMetadata = subscription.metadata as Record<string, string> | null;
   if (subMetadata?.addon_type === 'reputation') {
+    const repGuard2 = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (repGuard2.blocked) {
+      console.log("[stripe-webhook] reputation sync branch skipped:", repGuard2.reason);
+      return;
+    }
     const repStatusMap: Record<string, 'trialing' | 'active' | 'past_due' | 'canceled'> = {
       trialing: 'trialing',
       active: 'active',
