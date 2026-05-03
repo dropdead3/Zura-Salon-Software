@@ -12,7 +12,10 @@ import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { RecoverySLABadge } from '@/components/feedback/RecoverySLABadge';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format, formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 
