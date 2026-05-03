@@ -82,6 +82,7 @@ export const platformNavGroups: PlatformNavGroup[] = [
     label: 'Products',
     items: [
       { href: '/platform/color-bar', label: 'Color Bar', icon: Package, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/platform/reputation', label: 'Reputation', icon: MessageSquare, platformRoles: ['platform_owner', 'platform_admin'] },
     ],
   },
   {
