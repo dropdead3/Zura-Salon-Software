@@ -42,7 +42,7 @@ export function ReputationGate({ children, silent, surfaceLabel }: ReputationGat
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className={tokens.label.uppercase}>
+              <span className={tokens.label.tiny}>
                 {surfaceLabel ?? 'Zura Reputation'}
               </span>
             </div>
