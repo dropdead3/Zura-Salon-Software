@@ -31911,6 +31911,8 @@ export type Database = {
       website_testimonials: {
         Row: {
           author: string
+          auto_hidden_at: string | null
+          auto_hidden_reason: string | null
           body: string
           created_at: string
           display_edited: boolean
@@ -31938,6 +31940,8 @@ export type Database = {
         }
         Insert: {
           author: string
+          auto_hidden_at?: string | null
+          auto_hidden_reason?: string | null
           body: string
           created_at?: string
           display_edited?: boolean
@@ -31965,6 +31969,8 @@ export type Database = {
         }
         Update: {
           author?: string
+          auto_hidden_at?: string | null
+          auto_hidden_reason?: string | null
           body?: string
           created_at?: string
           display_edited?: boolean
@@ -33663,6 +33669,7 @@ export type Database = {
         Args: { _pin: string; _target_user_id: string }
         Returns: undefined
       }
+      sweep_reputation_grace: { Args: never; Returns: number }
       update_booking_status: {
         Args: {
           p_appointment_id: string
