@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles, ChevronDown, Star } from 'lucide-react';
 import { REPUTATION_PRICING_SHEET, REPUTATION_STRIPE } from '@/config/reputationPricing';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
@@ -412,6 +412,14 @@ export default function BillingGuide() {
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Grace behavior:</span> {REPUTATION_PRICING_SHEET.graceWindow.behavior}</p>
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Refund policy:</span> {REPUTATION_PRICING_SHEET.refundPolicy}</p>
                 <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Per-location quoting:</span> {REPUTATION_PRICING_SHEET.perLocationAddOn.note}</p>
+                <p className="pt-2">
+                  <Link
+                    to="/platform/reputation?tab=pricing"
+                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                  >
+                    View sales-facing reference at /platform/reputation → Pricing Sheet →
+                  </Link>
+                </p>
               </div>
             </div>
           </PlatformCardContent>
