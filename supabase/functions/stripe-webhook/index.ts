@@ -706,11 +706,26 @@ async function handleSubscriptionUpdated(
     if (repStatus === 'canceled') {
       updates.canceled_at = new Date().toISOString();
     }
+    // Read prior status to detect first transition into past_due
+    const { data: priorSub } = await supabase
+      .from('reputation_subscriptions')
+      .select('status')
+      .eq('organization_id', org.id)
+      .maybeSingle();
     await supabase
       .from('reputation_subscriptions')
       .update(updates)
       .eq('organization_id', org.id);
     console.log(`Reputation subscription synced: org ${org.id} → ${repStatus}`);
+    if (repStatus === 'past_due' && priorSub?.status !== 'past_due') {
+      await sendReputationGraceEmail(
+        supabase,
+        resend,
+        org.id,
+        updates.grace_until as string,
+        'payment_past_due',
+      );
+    }
   }
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
