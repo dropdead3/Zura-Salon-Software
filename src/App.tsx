@@ -260,6 +260,7 @@ const DemoFeatures = lazyWithRetry(() => import("./pages/dashboard/platform/Demo
 const HealthScoresPage = lazyWithRetry(() => import("./pages/dashboard/platform/HealthScores"));
 const BenchmarksPage = lazyWithRetry(() => import("./pages/dashboard/platform/Benchmarks"));
 const ColorBarAdmin = lazyWithRetry(() => import("./pages/dashboard/platform/ColorBarAdmin"));
+const ReputationAdmin = lazyWithRetry(() => import("./pages/dashboard/platform/ReputationAdmin"));
 const CoachDashboard = lazyWithRetry(() => import("./pages/dashboard/platform/CoachDashboard"));
 const BillingGuide = lazyWithRetry(() => import("./pages/dashboard/platform/BillingGuide"));
 const PlatformNetwork = lazyWithRetry(() => import("./pages/dashboard/platform/Network"));
