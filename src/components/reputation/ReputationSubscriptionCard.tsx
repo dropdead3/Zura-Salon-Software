@@ -36,6 +36,22 @@ export function ReputationSubscriptionCard() {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemed, setRedeemed] = useState(false);
 
+  const stampedRef = useRef(false);
+  const offeredAt = data?.retention_coupon_offered_at ?? null;
+  const couponApplied = !!data?.retention_coupon_applied_at;
+  const showSaveOffer =
+    !!data && (data.status === 'active' || data.status === 'trialing') && !couponApplied && !redeemed;
+
+  // Stamp coupon-offered-at exactly once per org when the operator actually
+  // sees the save offer. Powers Save Rate analytics on the platform console.
+  useEffect(() => {
+    if (!showSaveOffer || !orgId || offeredAt || stampedRef.current) return;
+    stampedRef.current = true;
+    void supabase.rpc('mark_reputation_retention_coupon_offered' as any, {
+      _organization_id: orgId,
+    });
+  }, [showSaveOffer, orgId, offeredAt]);
+
   if (!isEntitled || isLoading || !data) return null;
 
   const { status, current_period_end, grace_until, curated_testimonial_count } = data;
