@@ -14,8 +14,7 @@ import { AlertTriangle, ExternalLink, Loader2, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReputationSubscription } from '@/hooks/reputation/useReputationSubscription';
 import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { dashPath } from '@/lib/dashPath';
+import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { toast } from 'sonner';
 
 const DISMISS_KEY = 'reputation-grace-banner-dismissed-until';
