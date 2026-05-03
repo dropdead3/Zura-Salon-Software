@@ -16,6 +16,7 @@ import { Sparkles, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import { useMyPraise, type MyPraiseItem } from '@/hooks/useMyPraise';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 
 function PraiseTile({ item }: { item: MyPraiseItem }) {
   return (
