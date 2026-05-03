@@ -335,3 +335,6 @@ verify_jwt = false
 
 [functions.setup-funnel-digest]
 verify_jwt = false
+
+[functions.reputation-grace-cadence]
+verify_jwt = false
