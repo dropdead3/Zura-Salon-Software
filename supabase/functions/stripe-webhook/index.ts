@@ -389,6 +389,11 @@ async function handleCheckoutCompleted(
 
   // ── Reputation addon ─────────────────────────────────────────
   if (metadata?.addon_type === 'reputation') {
+    const guard = await checkReputationKillSwitch("webhook_processing_disabled", supabase);
+    if (guard.blocked) {
+      console.log("[stripe-webhook] reputation branch skipped:", guard.reason, guard.message);
+      return;
+    }
     const orgId = metadata.organization_id;
     const stripeSubId = (session.subscription as string) || null;
     const stripeCustomerId = (session.customer as string) || null;
