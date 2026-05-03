@@ -22462,6 +22462,7 @@ export type Database = {
           grant_source: string
           id: string
           organization_id: string
+          retention_coupon_applied_at: string | null
           started_at: string
           status: string
           stripe_customer_id: string | null
@@ -22476,6 +22477,7 @@ export type Database = {
           grant_source?: string
           id?: string
           organization_id: string
+          retention_coupon_applied_at?: string | null
           started_at?: string
           status?: string
           stripe_customer_id?: string | null
@@ -22490,6 +22492,7 @@ export type Database = {
           grant_source?: string
           id?: string
           organization_id?: string
+          retention_coupon_applied_at?: string | null
           started_at?: string
           status?: string
           stripe_customer_id?: string | null

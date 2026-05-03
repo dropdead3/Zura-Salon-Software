@@ -54,6 +54,7 @@ import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 
 import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
 import { InitialSetupGateBanner } from '@/components/onboarding/setup/InitialSetupGateBanner';
+import { ReputationGraceBanner } from '@/components/reputation/ReputationGraceBanner';
 import { useBackfillTrigger } from '@/hooks/onboarding/useBackfillTrigger';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
@@ -629,6 +630,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
         <div className={cn(`flex-1 p-4 lg:px-8 lg:pt-4 ${hideFooter ? 'lg:pb-4' : 'lg:pb-8'}`, hideFooter && "flex min-h-0 flex-col overflow-hidden")}>
           <BackfillWelcomeBanner />
           <InitialSetupGateBanner />
+          <ReputationGraceBanner />
           {children}
         </div>
       </main>
