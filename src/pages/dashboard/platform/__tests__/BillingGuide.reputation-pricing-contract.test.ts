@@ -80,4 +80,16 @@ describe('BillingGuide × Reputation pricing contract', () => {
     expect(SOURCE).toMatch(/id:\s*['"]reputation['"]/);
     expect(SOURCE).toMatch(/id=["']reputation["']/);
   });
+
+  it('changelog top entry matches REPUTATION_PRICING_SHEET.pricingVersion', () => {
+    // Parity gate: any pricing edit MUST bump pricingVersion AND prepend a
+    // BILLING_CHANGELOG entry whose date equals the new version. Closes the
+    // silent-pricing-drift loop the same way a pre-commit hook would.
+    const match = SOURCE.match(
+      /const BILLING_CHANGELOG\s*=\s*\[\s*\{\s*date:\s*['"](\d{4}-\d{2}-\d{2})['"]/,
+    );
+    expect(match, 'BILLING_CHANGELOG[0].date not found in expected shape').toBeTruthy();
+    const topDate = match![1];
+    expect(topDate).toBe(REPUTATION_PRICING_SHEET.pricingVersion);
+  });
 });
