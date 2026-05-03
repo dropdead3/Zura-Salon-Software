@@ -82,6 +82,7 @@ const panels: Record<string, React.ReactNode> = {
   'sales-brief': <SalesBriefTab />,
   pricing: <PricingSheetTab />,
   roi: <RoiCalculatorTab />,
+  competitors: <CompetitorMatrixTab />,
   cohorts: <CohortsTab />,
   entitlements: <EntitlementsTab />,
   'billing-health': <BillingHealthTab />,
