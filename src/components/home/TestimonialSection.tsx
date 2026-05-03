@@ -4,6 +4,7 @@ import { Star, ArrowRight } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useVisibleTestimonials } from "@/hooks/useTestimonials";
 import { useTestimonialsConfig } from "@/hooks/useSectionConfig";
+import { usePlacementScope } from "@/components/home/PlacementScopeContext";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { InlineEditableText } from "@/components/home/InlineEditableText";
 import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
@@ -105,7 +106,10 @@ export function TestimonialSection() {
   const config = useLiveOverride('section_testimonials', dbConfig) ?? dbConfig;
 
   // Items: DB-backed + bridge override for live edits.
-  const { data: dbItems } = useVisibleTestimonials('general');
+  // Placement scope (homepage|service|stylist) is supplied by the page
+  // wrapper so service/stylist pages render their curated subset.
+  const placementScope = usePlacementScope();
+  const { data: dbItems } = useVisibleTestimonials('general', placementScope);
   const liveItems = useLiveOverride<ReviewItem[]>('testimonial_items:general', dbItems);
   const items = (liveItems ?? dbItems ?? []) as ReviewItem[];
   // Marketing site (no tenant context) gets the FALLBACK_REVIEWS demo deck.
