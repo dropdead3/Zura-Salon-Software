@@ -112,15 +112,36 @@ export async function trackExternalReviewClick(
   feedbackToken: string,
   platform: 'google' | 'apple' | 'yelp' | 'facebook' | 'copied'
 ) {
-  const { error } = await supabase
+  // Legacy proxy column on the response row — kept for backwards compatibility
+  // with reports that still read `external_review_clicked`. Wave 5 introduced
+  // a dedicated `review_click_events` table for true per-click attribution.
+  const { data: responseRow, error } = await supabase
     .from('client_feedback_responses')
     .update({
       external_review_clicked: platform,
       external_review_clicked_at: new Date().toISOString(),
     })
-    .eq('token', feedbackToken);
+    .eq('token', feedbackToken)
+    .select('id, organization_id')
+    .maybeSingle();
 
   if (error) {
     console.error('Failed to track review click:', error);
+    return;
+  }
+
+  // Dual-write the event log. Failure here is non-fatal — analytics-only.
+  if (responseRow?.id && responseRow.organization_id) {
+    const { error: evtError } = await supabase
+      .from('review_click_events')
+      .insert({
+        organization_id: responseRow.organization_id,
+        feedback_response_id: responseRow.id,
+        platform,
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      });
+    if (evtError) {
+      console.warn('Failed to log review_click_event (non-fatal):', evtError.message);
+    }
   }
 }
