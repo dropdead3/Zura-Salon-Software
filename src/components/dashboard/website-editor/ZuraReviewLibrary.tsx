@@ -215,6 +215,13 @@ export function ZuraReviewLibrary({ open, onOpenChange }: ZuraReviewLibraryProps
   );
 }
 
+type PlacementScope = 'homepage' | 'service_pages' | 'stylist_pages';
+const PLACEMENT_SCOPES: { value: PlacementScope; label: string }[] = [
+  { value: 'homepage', label: 'Homepage' },
+  { value: 'service_pages', label: 'Service pages' },
+  { value: 'stylist_pages', label: 'Stylist pages' },
+];
+
 interface ReviewRowProps {
   row: EligibleReview;
   isEditing: boolean;
@@ -223,7 +230,7 @@ interface ReviewRowProps {
   onCurate: () => void;
   onUnpublish: () => void;
   onHide: () => void;
-  onFeature: (featured: boolean) => void;
+  onFeature: (featured: boolean, scopes?: PlacementScope[]) => void;
   onSaveDisplay: (body: string) => void;
   pending: boolean;
 }
