@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PremiumFloatingPanel } from '@/components/ui/premium-floating-panel';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Star, AlertTriangle, X } from 'lucide-react';
+import { Star, AlertTriangle, X, UserCircle2 } from 'lucide-react';
 import {
   RecoveryTaskWithFeedback, RecoveryStatus, STATUS_LABELS,
   useUpdateRecoveryTask,
 } from '@/hooks/useRecoveryTasks';
+import { useOrgAssignees, assigneeLabel } from '@/hooks/useOrgAssignees';
 import { SendReviewRequestButton } from './SendReviewRequestButton';
 import { AIRecoveryDraftButton } from './AIRecoveryDraftButton';
 import { CoachingNoteComposer } from './CoachingNoteComposer';
@@ -22,18 +23,22 @@ interface Props {
 }
 
 const STATUS_OPTIONS: RecoveryStatus[] = ['new', 'contacted', 'resolved', 'refunded', 'redo_booked', 'closed'];
+const UNASSIGNED = '__unassigned__';
 
 export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
   const update = useUpdateRecoveryTask();
+  const { data: assignees = [] } = useOrgAssignees();
   const [notes, setNotes] = useState(task?.resolution_notes ?? '');
   const [status, setStatus] = useState<RecoveryStatus>(task?.status ?? 'new');
+  const [assignedTo, setAssignedTo] = useState<string>(task?.assigned_to ?? UNASSIGNED);
 
-  // Reset on task change
-  if (task && (task.id !== (window as Window & { __lastTaskId?: string }).__lastTaskId)) {
-    (window as Window & { __lastTaskId?: string }).__lastTaskId = task.id;
+  // Reset on task change (effect, not render-phase setState)
+  useEffect(() => {
+    if (!task) return;
     setNotes(task.resolution_notes ?? '');
     setStatus(task.status);
-  }
+    setAssignedTo(task.assigned_to ?? UNASSIGNED);
+  }, [task?.id]);
 
   if (!task) return null;
   const fb = task.feedback;
@@ -95,6 +100,29 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
           </div>
 
           <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <UserCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+              Assigned to
+            </Label>
+            <Select value={assignedTo} onValueChange={setAssignedTo}>
+              <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>
+                  <span className="text-muted-foreground">Unassigned</span>
+                </SelectItem>
+                {assignees.map((a) => (
+                  <SelectItem key={a.user_id} value={a.user_id}>
+                    {assigneeLabel(a)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Owner of this recovery — they'll see it in their queue and SLA clock applies.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label>Resolution Notes</Label>
             <Textarea
               value={notes}
@@ -141,6 +169,7 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
                 id: task.id,
                 status,
                 resolution_notes: notes || null,
+                assigned_to: assignedTo === UNASSIGNED ? null : assignedTo,
               });
               onClose();
             }}

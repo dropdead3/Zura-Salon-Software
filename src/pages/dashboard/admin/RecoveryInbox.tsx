@@ -12,7 +12,10 @@ import { RecoveryTaskDrawer } from '@/components/feedback/RecoveryTaskDrawer';
 import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { RecoverySLABadge } from '@/components/feedback/RecoverySLABadge';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
+import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { format, formatDistanceToNow } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 
@@ -24,9 +27,11 @@ const STATUS_GROUPS: { key: string; title: string; statuses: string[] }[] = [
 
 export default function RecoveryInbox() {
   const { dashPath } = useOrgDashboardPath();
+  const { user } = useAuth();
   const { data: tasks, isLoading } = useRecoveryTasks();
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [mineOnly, setMineOnly] = useState(false);
 
   // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
   useEffect(() => {
@@ -44,15 +49,26 @@ export default function RecoveryInbox() {
     }
   };
 
+  const visibleTasks = useMemo(() => {
+    if (!tasks) return [];
+    if (mineOnly && user?.id) return tasks.filter((t) => t.assigned_to === user.id);
+    return tasks;
+  }, [tasks, mineOnly, user?.id]);
+
+  const mineCount = useMemo(
+    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id).length,
+    [tasks, user?.id],
+  );
+
   const grouped = useMemo(() => {
     const out: Record<string, RecoveryTaskWithFeedback[]> = { new: [], inProgress: [], resolved: [] };
-    for (const t of tasks ?? []) {
+    for (const t of visibleTasks) {
       if (t.status === 'new') out.new.push(t);
       else if (t.status === 'contacted') out.inProgress.push(t);
       else out.resolved.push(t);
     }
     return out;
-  }, [tasks]);
+  }, [visibleTasks]);
 
   return (
     <DashboardLayout>
@@ -65,6 +81,20 @@ export default function RecoveryInbox() {
         />
 
         <ComplianceBanner />
+
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+          <div>
+            <Label htmlFor="mine-only" className="cursor-pointer">
+              Show only mine
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {mineCount > 0
+                ? `You're assigned to ${mineCount} recovery${mineCount === 1 ? '' : 'ies'}.`
+                : 'Nothing assigned to you yet.'}
+            </p>
+          </div>
+          <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+        </div>
 
         {isLoading ? (
           <div className="space-y-4">

@@ -22,6 +22,7 @@ import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/Re
 import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
 import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
 import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
+import { PraiseWall } from '@/components/feedback/PraiseWall';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
@@ -149,6 +150,8 @@ export default function FeedbackHub() {
             <NegativeReviewHeatmap />
 
             <CoachingLoopCard />
+
+            <PraiseWall />
 
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
