@@ -73,12 +73,7 @@ export default function ClientHub() {
               title="Client Health Hub"
               description="At-risk clients, rebooking, win-back outreach, and more"
             />
-            <HubCard
-              href={dashPath('/admin/feedback')}
-              icon={MessageSquarePlus}
-              title="Feedback Hub"
-              description="Client surveys, reviews, and NPS tracking"
-            />
+            {/* Feedback Hub lives in the Operations Hub — single home for review/recovery ops. */}
             <HubCard
               href={dashPath('/admin/reengagement')}
               icon={UserCheck}
