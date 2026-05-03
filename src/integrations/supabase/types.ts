@@ -22491,6 +22491,41 @@ export type Database = {
           },
         ]
       }
+      reputation_grace_emails_sent: {
+        Row: {
+          email_recipient: string | null
+          grace_until: string
+          id: string
+          organization_id: string
+          sent_at: string
+          stage: string
+        }
+        Insert: {
+          email_recipient?: string | null
+          grace_until: string
+          id?: string
+          organization_id: string
+          sent_at?: string
+          stage: string
+        }
+        Update: {
+          email_recipient?: string | null
+          grace_until?: string
+          id?: string
+          organization_id?: string
+          sent_at?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputation_grace_emails_sent_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reputation_kill_switches: {
         Row: {
           created_at: string
