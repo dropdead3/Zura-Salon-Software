@@ -179,7 +179,7 @@ export function ReputationSubscriptionCard() {
           </div>
         )}
 
-        {(status === 'active' || status === 'trialing') && !redeemed && (
+        {showSaveOffer && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-3">
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
             <div className="text-sm flex-1">
