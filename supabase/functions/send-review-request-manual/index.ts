@@ -58,6 +58,14 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+    const guard = await checkReputationKillSwitch("manual_send_disabled", supabase);
+    if (guard.blocked) {
+      return new Response(
+        JSON.stringify({ error: guard.reason, message: guard.message }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: appt, error: apptErr } = await supabase
       .from("appointments")
       .select("id, organization_id, location_id, client_id, client_name, client_phone, status")
