@@ -160,7 +160,7 @@ export function DispatchMonitorTab() {
                   <span className="font-sans text-sm text-[hsl(var(--platform-foreground)/0.85)]">
                     {r.reason}
                   </span>
-                  <PlatformBadge variant={r.count > 25 ? 'destructive' : 'default'} size="sm">
+                  <PlatformBadge variant={r.count > 25 ? 'error' : 'default'} size="sm">
                     {r.count}
                   </PlatformBadge>
                 </li>
