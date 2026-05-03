@@ -151,6 +151,8 @@ export default function FeedbackHub() {
 
             <CoachingLoopCard />
 
+            <PraiseWall />
+
             <FeedbackResponseList organizationId={organizationId} limit={10} />
           </TabsContent>
 
