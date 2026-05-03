@@ -43,7 +43,11 @@ function PraiseTile({ item }: { item: MyPraiseItem }) {
 }
 
 export function MyPraiseSection() {
+  const { isEntitled } = useReputationEntitlement();
   const { data, isLoading } = useMyPraise(9);
+
+  // Stylist Privacy Contract: silence is valid output. No paywalls on stylist surfaces.
+  if (!isEntitled) return null;
 
   if (isLoading) {
     return (
