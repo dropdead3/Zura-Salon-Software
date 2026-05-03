@@ -175,6 +175,7 @@ export default function FeedbackHub() {
             </TabsContent>
           )}
         </Tabs>
+        </ReputationGate>
       </div>
     </DashboardLayout>
   );
