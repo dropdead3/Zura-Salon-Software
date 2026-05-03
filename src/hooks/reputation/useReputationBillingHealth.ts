@@ -14,9 +14,15 @@ export interface ReputationBillingOrgRow {
   organizationName: string;
   status: 'trialing' | 'active' | 'past_due' | 'canceled' | null;
   grantSource: string | null;
+  startedAt: string | null;
   currentPeriodEnd: string | null;
   graceUntil: string | null;
+  canceledAt: string | null;
+  retentionCouponOfferedAt: string | null;
+  retentionCouponAppliedAt: string | null;
   retentionCouponUsed: boolean;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
   estimatedMRR: number; // USD
 }
 
@@ -25,7 +31,10 @@ export interface ReputationBillingHealth {
   totalTrialing: number;
   totalPastDue: number;
   totalCanceled: number;
+  retentionCouponsOffered: number;
   retentionCouponsUsed: number;
+  /** Save rate = applied / offered. Null if no offers yet. */
+  retentionSaveRate: number | null;
   monthlyRecurringRevenue: number; // active subs only
   mrrAtRisk: number; // past_due subs
   orgs: ReputationBillingOrgRow[];
