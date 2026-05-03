@@ -1811,109 +1811,169 @@ Deno.serve(async (req) => {
     const isConnectEvent = !!event.account; // G3: Connect events have an `account` field
     console.log(`Stripe webhook received: ${event.type}`, event.id, isConnectEvent ? `(Connect: ${event.account})` : '(Platform)');
 
-    switch (event.type) {
-      // --- Platform subscription events (non-Connect) ---
-      case "checkout.session.completed":
-        await handleCheckoutCompleted(supabase, event.data.object);
-        break;
-
-      case "invoice.payment_failed":
-        if (!isConnectEvent) await handlePaymentFailed(supabase, resend, event.data.object);
-        break;
-        
-      case "invoice.payment_succeeded":
-        if (!isConnectEvent) await handlePaymentSucceeded(supabase, event.data.object);
-        break;
-        
-      case "charge.failed":
-        if (!isConnectEvent) await handleChargeFailed(supabase, event.data.object);
-        break;
-        
-      case "customer.subscription.deleted":
-        if (!isConnectEvent) await handleSubscriptionDeleted(supabase, resend, event.data.object);
-        break;
-        
-      case "customer.subscription.updated":
-        if (!isConnectEvent) await handleSubscriptionUpdated(supabase, resend, event.data.object);
-        break;
-
-      // --- Connect terminal events ---
-      case "payment_intent.succeeded":
-        await handlePaymentIntentSucceeded(supabase, event.data.object);
-        break;
-
-      case "payment_intent.payment_failed":
-        await handlePaymentIntentFailed(supabase, event.data.object);
-        break;
-
-      // G3: Refunds initiated outside Zura
-      case "charge.refunded":
-        await handleChargeRefunded(supabase, event.data.object);
-        break;
-
-      // Auto-insert cards on file when SetupIntent completes
-      case "setup_intent.succeeded":
-        if (isConnectEvent) {
-          await handleSetupIntentSucceeded(supabase, event.data.object, event.account);
-        }
-        break;
-
-      // Auto-remove cards on file when payment method is detached
-      case "payment_method.detached":
-        if (isConnectEvent) {
-          await handlePaymentMethodDetached(supabase, event.data.object, event.account);
-        }
-        break;
-
-      // Sync card details when payment method is updated (e.g. network auto-update)
-      case "payment_method.updated":
-        if (isConnectEvent) {
-          await handlePaymentMethodUpdated(supabase, event.data.object, event.account);
-        }
-        break;
-
-      // Bulk-remove all cards on file when a Stripe Customer is deleted
-      case "customer.deleted":
-        if (isConnectEvent) {
-          await handleCustomerDeleted(supabase, event.data.object, event.account);
-        }
-        break;
-
-      // Connect account status changes
-      case "account.updated":
-        await handleAccountUpdated(supabase, event.data.object);
-        break;
-
-      // Dispute lifecycle
-      case "charge.dispute.created":
-        if (isConnectEvent) {
-          await handleDisputeCreated(supabase, event.data.object, event.account);
-        }
-        break;
-
-      case "charge.dispute.closed":
-      case "charge.dispute.funds_withdrawn":
-      case "charge.dispute.funds_reinstated":
-        await handleDisputeClosed(supabase, event.data.object);
-        break;
-
-      // Early fraud warnings from Radar
-      case "radar.early_fraud_warning.created":
-        if (isConnectEvent) {
-          await handleEarlyFraudWarning(supabase, event.data.object, event.account);
-        }
-        break;
-
-      // Radar risk scoring — capture risk data from every successful charge
-      case "charge.succeeded":
-        if (isConnectEvent) {
-          await handleChargeSucceeded(supabase, event.data.object, event.account);
-        }
-        break;
-         
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    // Best-effort: persist every webhook for replay + reconciliation. Idempotent
+    // on stripe_event_id. Does not block processing if logging fails.
+    const obj = event.data?.object ?? {};
+    const stripeCustomerId =
+      typeof obj.customer === 'string' ? obj.customer : obj.customer?.id ?? null;
+    const stripeSubscriptionId =
+      typeof obj.subscription === 'string'
+        ? obj.subscription
+        : obj.subscription?.id ?? (event.type?.startsWith('customer.subscription') ? obj.id : null);
+    let logRowId: string | null = null;
+    try {
+      const { data: logRow } = await supabase
+        .from('stripe_webhook_events')
+        .upsert(
+          {
+            stripe_event_id: event.id,
+            event_type: event.type,
+            livemode: !!event.livemode,
+            status: 'received',
+            stripe_customer_id: stripeCustomerId,
+            stripe_subscription_id: stripeSubscriptionId,
+            payload: event,
+          },
+          { onConflict: 'stripe_event_id' },
+        )
+        .select('id')
+        .maybeSingle();
+      logRowId = (logRow as any)?.id ?? null;
+    } catch (logErr) {
+      console.warn('[stripe-webhook] failed to log event', logErr);
     }
+
+    let handlerError: unknown = null;
+    try {
+      switch (event.type) {
+        // --- Platform subscription events (non-Connect) ---
+        case "checkout.session.completed":
+          await handleCheckoutCompleted(supabase, event.data.object);
+          break;
+
+        case "invoice.payment_failed":
+          if (!isConnectEvent) await handlePaymentFailed(supabase, resend, event.data.object);
+          break;
+
+        case "invoice.payment_succeeded":
+          if (!isConnectEvent) await handlePaymentSucceeded(supabase, event.data.object);
+          break;
+
+        case "charge.failed":
+          if (!isConnectEvent) await handleChargeFailed(supabase, event.data.object);
+          break;
+
+        case "customer.subscription.deleted":
+          if (!isConnectEvent) await handleSubscriptionDeleted(supabase, resend, event.data.object);
+          break;
+
+        case "customer.subscription.updated":
+          if (!isConnectEvent) await handleSubscriptionUpdated(supabase, resend, event.data.object);
+          break;
+
+        // --- Connect terminal events ---
+        case "payment_intent.succeeded":
+          await handlePaymentIntentSucceeded(supabase, event.data.object);
+          break;
+
+        case "payment_intent.payment_failed":
+          await handlePaymentIntentFailed(supabase, event.data.object);
+          break;
+
+        // G3: Refunds initiated outside Zura
+        case "charge.refunded":
+          await handleChargeRefunded(supabase, event.data.object);
+          break;
+
+        // Auto-insert cards on file when SetupIntent completes
+        case "setup_intent.succeeded":
+          if (isConnectEvent) {
+            await handleSetupIntentSucceeded(supabase, event.data.object, event.account);
+          }
+          break;
+
+        // Auto-remove cards on file when payment method is detached
+        case "payment_method.detached":
+          if (isConnectEvent) {
+            await handlePaymentMethodDetached(supabase, event.data.object, event.account);
+          }
+          break;
+
+        // Sync card details when payment method is updated (e.g. network auto-update)
+        case "payment_method.updated":
+          if (isConnectEvent) {
+            await handlePaymentMethodUpdated(supabase, event.data.object, event.account);
+          }
+          break;
+
+        // Bulk-remove all cards on file when a Stripe Customer is deleted
+        case "customer.deleted":
+          if (isConnectEvent) {
+            await handleCustomerDeleted(supabase, event.data.object, event.account);
+          }
+          break;
+
+        // Connect account status changes
+        case "account.updated":
+          await handleAccountUpdated(supabase, event.data.object);
+          break;
+
+        // Dispute lifecycle
+        case "charge.dispute.created":
+          if (isConnectEvent) {
+            await handleDisputeCreated(supabase, event.data.object, event.account);
+          }
+          break;
+
+        case "charge.dispute.closed":
+        case "charge.dispute.funds_withdrawn":
+        case "charge.dispute.funds_reinstated":
+          await handleDisputeClosed(supabase, event.data.object);
+          break;
+
+        // Early fraud warnings from Radar
+        case "radar.early_fraud_warning.created":
+          if (isConnectEvent) {
+            await handleEarlyFraudWarning(supabase, event.data.object, event.account);
+          }
+          break;
+
+        // Radar risk scoring — capture risk data from every successful charge
+        case "charge.succeeded":
+          if (isConnectEvent) {
+            await handleChargeSucceeded(supabase, event.data.object, event.account);
+          }
+          break;
+
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+    } catch (e) {
+      handlerError = e;
+      console.error(`[stripe-webhook] handler error for ${event.type}`, e);
+    }
+
+    // Update log row with final outcome
+    if (logRowId) {
+      try {
+        await supabase
+          .from('stripe_webhook_events')
+          .update({
+            status: handlerError ? 'failed' : 'processed',
+            processed_at: new Date().toISOString(),
+            error_message: handlerError
+              ? handlerError instanceof Error
+                ? handlerError.message
+                : String(handlerError)
+              : null,
+          })
+          .eq('id', logRowId);
+      } catch (updateErr) {
+        console.warn('[stripe-webhook] failed to update log row', updateErr);
+      }
+    }
+
+    if (handlerError) throw handlerError;
 
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
