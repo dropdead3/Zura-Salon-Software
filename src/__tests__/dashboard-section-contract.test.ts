@@ -72,6 +72,7 @@ describe('Dashboard section toggle ↔ render contract', () => {
       'my_quick_stats',       // stylist privacy contract — template-only
       'personal_goals',       // stylist privacy contract — template-only
       'my_performance',       // stylist privacy contract — template-only
+      'my_praise',            // stylist privacy contract — template-only
       'push_list',            // stylist privacy contract — template-only
       'inventory_manager',    // role-template-driven
       'seo_my_tasks',         // role-template-driven
