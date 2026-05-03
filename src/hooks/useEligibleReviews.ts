@@ -165,7 +165,7 @@ export function useCurateReview() {
   const invalidate = useInvalidate();
   return useMutation({
     mutationFn: async ({ response, displayNameOverride, consentOverride }: CurateReviewInput) => {
-      if (!orgId) throw new Error('No organization context');
+      await assertReputationEntitled(orgId);
       if (!response.comments) throw new Error('Source review has no body');
       if (!response.display_consent && !consentOverride) {
         throw new Error('CONSENT_REQUIRED');
