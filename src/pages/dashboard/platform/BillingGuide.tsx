@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles, ChevronDown } from 'lucide-react';
+import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles, ChevronDown, Star } from 'lucide-react';
+import { REPUTATION_PRICING_SHEET, REPUTATION_STRIPE } from '@/config/reputationPricing';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -31,6 +32,7 @@ import { PageExplainer } from '@/components/ui/PageExplainer';
 
 // --- Changelog entries (add newest first) ---
 const BILLING_CHANGELOG = [
+  { date: '2026-05-03', description: 'Added Zura Reputation add-on section: $49/mo base SKU, 14-day trial, $l1tzNWQq retention coupon, 30-day grace window doctrine.' },
   { date: '2026-03-17', description: 'Pricing restructure: monthly-only billing, per-location pricing ($99 Operator, $200/loc Growth/Infrastructure), removed cycle discounts.' },
   { date: '2026-03-16', description: 'Added Billing Guide page with live plan data and billing logic walkthrough.' },
   { date: '2026-03-16', description: 'Added interactive billing calculator widget and section anchor navigation.' },
@@ -46,6 +48,7 @@ const SECTIONS = [
   { id: 'calculator', label: 'Calculator' },
   { id: 'color-bar' , label: 'Color Bar' },
   { id: 'color-bar-calc', label: 'Color Bar Calc' },
+  { id: 'reputation', label: 'Reputation' },
   { id: 'quick-ref', label: 'Quick Ref' },
   { id: 'changelog', label: 'Changelog' },
 ];
@@ -363,6 +366,56 @@ export default function BillingGuide() {
 
         {/* Color Bar Add-On Calculator */}
         <ColorBarCalculatorWidget />
+
+        {/* Reputation Add-On */}
+        <PlatformCard variant="glass" id="reputation">
+          <PlatformCardHeader>
+            <div className="flex items-center gap-3">
+              <div className={tokens.card.iconBox}>
+                <Star className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <PlatformCardTitle className={tokens.card.title}>Zura Reputation Add-On</PlatformCardTitle>
+                <PlatformCardDescription>{REPUTATION_PRICING_SHEET.baseSku.description}</PlatformCardDescription>
+              </div>
+            </div>
+          </PlatformCardHeader>
+          <PlatformCardContent>
+            <div className="space-y-3 text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Base SKU (first location)</span>
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">${REPUTATION_PRICING_SHEET.baseSku.monthlyPrice}/mo</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Trial period</span>
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">{REPUTATION_PRICING_SHEET.baseSku.trialDays} days free</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Per-location add-on (deferred)</span>
+                <span className="font-medium text-[hsl(var(--platform-foreground-muted))]">${REPUTATION_PRICING_SHEET.perLocationAddOn.monthlyPrice}/loc/mo · {REPUTATION_PRICING_SHEET.perLocationAddOn.eta}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Retention coupon</span>
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">{REPUTATION_PRICING_SHEET.retentionCoupon.label} <span className="text-[hsl(var(--platform-foreground-muted))]">({REPUTATION_PRICING_SHEET.retentionCoupon.id})</span></span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Grace window on past_due</span>
+                <span className="font-medium text-[hsl(var(--platform-foreground))]">{REPUTATION_PRICING_SHEET.graceWindow.days} days</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-[hsl(var(--platform-border)/0.5)]">
+                <span>Stripe product</span>
+                <span className="font-mono text-xs text-[hsl(var(--platform-foreground-muted))]">{REPUTATION_STRIPE.productId}</span>
+              </div>
+              <div className="pt-3 space-y-2 text-xs text-[hsl(var(--platform-foreground-muted))]">
+                <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Authorized discounts:</span> {REPUTATION_PRICING_SHEET.authorizedDiscounts.join(', ')}. Do not negotiate ad-hoc discounts.</p>
+                <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Retention rules:</span> {REPUTATION_PRICING_SHEET.retentionCoupon.rules}</p>
+                <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Grace behavior:</span> {REPUTATION_PRICING_SHEET.graceWindow.behavior}</p>
+                <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Refund policy:</span> {REPUTATION_PRICING_SHEET.refundPolicy}</p>
+                <p><span className="text-[hsl(var(--platform-foreground))] font-medium">Per-location quoting:</span> {REPUTATION_PRICING_SHEET.perLocationAddOn.note}</p>
+              </div>
+            </div>
+          </PlatformCardContent>
+        </PlatformCard>
 
         {/* Changelog */}
         <PlatformCard variant="glass" id="changelog">
