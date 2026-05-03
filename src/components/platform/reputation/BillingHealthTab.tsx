@@ -2,7 +2,7 @@
  * BillingHealthTab — Per-org Reputation billing posture for the platform console.
  * Mirrors the Color Bar pattern: KPI row + searchable / at-risk-filterable table.
  */
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
@@ -34,6 +34,8 @@ import {
   Search,
   Building2,
   Loader2,
+  ChevronRight,
+  Percent,
 } from 'lucide-react';
 import {
   useReputationBillingHealth,
