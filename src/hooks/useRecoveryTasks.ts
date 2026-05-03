@@ -75,6 +75,8 @@ export function useUpdateRecoveryTask() {
       assigned_to?: string | null;
       resolution_notes?: string | null;
       priority?: RecoveryPriority;
+      snoozed_until?: string | null;
+      snooze_reason?: string | null;
     }) => {
       const { id, ...patch } = input;
       const { error } = await supabase
@@ -89,6 +91,67 @@ export function useUpdateRecoveryTask() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+}
+
+/**
+ * Snooze a recovery task until a future timestamp. Snoozed tasks are
+ * filtered out of the active inbox by default but remain visible under
+ * the "Snoozed" filter and re-surface automatically when the time elapses.
+ */
+export function useSnoozeRecoveryTask() {
+  const qc = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      hours: number;
+      reason?: string | null;
+    }) => {
+      const until = new Date(Date.now() + input.hours * 60 * 60 * 1000).toISOString();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('recovery_tasks')
+        .update({
+          snoozed_until: until,
+          snoozed_by: user?.id ?? null,
+          snooze_reason: input.reason ?? null,
+        })
+        .eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recovery-tasks', orgId] });
+      toast.success('Recovery snoozed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useUnsnoozeRecoveryTask() {
+  const qc = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('recovery_tasks')
+        .update({ snoozed_until: null, snoozed_by: null, snooze_reason: null })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recovery-tasks', orgId] });
+      toast.success('Recovery resumed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Is the task currently snoozed (snoozed_until in the future)? */
+export function isSnoozed(t: { snoozed_until?: string | null }): boolean {
+  if (!t.snoozed_until) return false;
+  return new Date(t.snoozed_until).getTime() > Date.now();
 }
 
 export const STATUS_LABELS: Record<RecoveryStatus, string> = {
