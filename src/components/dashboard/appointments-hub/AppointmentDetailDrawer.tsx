@@ -350,8 +350,8 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
               )}
             </div>
 
-            {/* ── Client Reviews ── */}
-            {(() => {
+            {/* ── Client Reviews ── (Reputation-gated; silent when org not subscribed) */}
+            {reputationEntitled && (() => {
               // Find if THIS appointment has a specific review
               const thisApptReview = reviewSummary?.reviews.find(
                 (r) => r.appointment_id === appointment.id
