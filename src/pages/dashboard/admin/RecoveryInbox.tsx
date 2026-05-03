@@ -90,18 +90,33 @@ export default function RecoveryInbox() {
 
         <ComplianceBanner />
 
-        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3">
-          <div>
-            <Label htmlFor="mine-only" className="cursor-pointer">
-              Show only mine
-            </Label>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {mineCount > 0
-                ? `You're assigned to ${mineCount} recovery${mineCount === 1 ? '' : 'ies'}.`
-                : 'Nothing assigned to you yet.'}
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+          <div className="flex items-center gap-6">
+            <div>
+              <Label htmlFor="mine-only" className="cursor-pointer">Show only mine</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {mineCount > 0
+                  ? `You're assigned to ${mineCount} active recovery${mineCount === 1 ? '' : 'ies'}.`
+                  : 'Nothing assigned to you yet.'}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-border/60" />
+            <div>
+              <Label htmlFor="show-snoozed" className="cursor-pointer flex items-center gap-1.5">
+                <BellOff className="h-3.5 w-3.5 text-muted-foreground" />
+                Show snoozed
+              </Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {snoozedCount > 0
+                  ? `${snoozedCount} task${snoozedCount === 1 ? '' : 's'} parked for later.`
+                  : 'No snoozed tasks.'}
+              </p>
+            </div>
           </div>
-          <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+          <div className="flex items-center gap-3">
+            <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+            <Switch id="show-snoozed" checked={showSnoozed} onCheckedChange={setShowSnoozed} />
+          </div>
         </div>
 
         {isLoading ? (
