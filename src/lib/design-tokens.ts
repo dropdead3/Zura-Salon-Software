@@ -176,12 +176,20 @@ export const tokens = {
     /** Filter dropdown: subtle filled background with soft border */
     filter: 'bg-muted/50 border-border/60',
     /**
-     * Canonical PILL shape — applies to inputs and select triggers.
+     * Canonical PILL shape — applies to single-line inputs and select triggers.
      * Never overridden, never animated, never changes on focus.
-     * Textareas are a deliberate exception: they use rounded-2xl because
-     * a fully-pill multi-line area would clip text into a lozenge.
+     * Multi-line inputs (textareas) use `multilineShape` below — square-ish
+     * with slightly rounded corners — so the eye reads them as containers,
+     * not lozenges.
      */
     shape: 'rounded-full',
+    /**
+     * Canonical multi-line input shape — Textarea / PlatformTextarea.
+     * Square-ish with slightly rounded corners (8px). Do NOT raise to
+     * rounded-xl/2xl/3xl/full — enforced by the Multi-line Input Radius
+     * Canon ESLint doctrine and `mem://style/input-shape-canon`.
+     */
+    multilineShape: 'rounded-lg',
     /** Idle border — subtle, theme-aware */
     border: 'border border-input',
     /** Idle fill — slightly recessed from card background */
