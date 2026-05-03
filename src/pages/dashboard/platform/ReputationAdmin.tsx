@@ -81,7 +81,15 @@ const panels: Record<string, React.ReactNode> = {
 };
 
 export default function ReputationAdmin() {
-  const [tab, setTab] = useState('sales-brief');
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const t = searchParams.get('tab');
+    return t && t in panels ? t : 'sales-brief';
+  });
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && t in panels) setTab(t);
+  }, [searchParams]);
 
   return (
     <PlatformPageContainer className="space-y-6">
