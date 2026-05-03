@@ -75,6 +75,30 @@ export function RecoveryTaskDrawer({ task, open, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {snoozed && task.snoozed_until && (
+            <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+              <BellOff className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+              <div className="flex-1 space-y-1 min-w-0">
+                <p className="text-xs font-medium">
+                  Snoozed until {format(new Date(task.snoozed_until), 'MMM d · h:mm a')}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Re-surfaces in {formatDistanceToNow(new Date(task.snoozed_until))}.
+                  {task.snooze_reason ? ` Reason: "${task.snooze_reason}"` : ''}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => unsnooze.mutate(task.id)}
+                disabled={unsnooze.isPending}
+              >
+                Resume now
+              </Button>
+            </div>
+          )}
+
           {fb && (
             <div className="space-y-3 rounded-xl border border-border/60 bg-card/50 p-4">
               <div className="flex items-center gap-2">
