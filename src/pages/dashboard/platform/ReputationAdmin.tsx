@@ -27,6 +27,7 @@ import {
   Megaphone,
   DollarSign,
   Calculator,
+  Swords,
   BarChart3,
   Building2,
   CreditCard,
