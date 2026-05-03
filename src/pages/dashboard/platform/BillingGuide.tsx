@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Loader2, BookOpen, Calculator, Receipt, Package, FileText, Clock, FlaskConical, Users, MapPin, Check, Sparkles, ChevronDown, Star } from 'lucide-react';
 import { REPUTATION_PRICING_SHEET, REPUTATION_STRIPE } from '@/config/reputationPricing';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
