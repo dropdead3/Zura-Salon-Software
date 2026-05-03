@@ -65,6 +65,9 @@ export default function FeedbackHub() {
         </div>
 
         <ReputationGate surfaceLabel="Feedback Hub · Zura Reputation">
+        <div className="mb-6">
+          <ReputationSubscriptionCard />
+        </div>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview" className="gap-2">
