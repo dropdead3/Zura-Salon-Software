@@ -32,6 +32,7 @@ export default function RecoveryInbox() {
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [mineOnly, setMineOnly] = useState(false);
+  const [showSnoozed, setShowSnoozed] = useState(false);
 
   // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
   useEffect(() => {
@@ -51,13 +52,20 @@ export default function RecoveryInbox() {
 
   const visibleTasks = useMemo(() => {
     if (!tasks) return [];
-    if (mineOnly && user?.id) return tasks.filter((t) => t.assigned_to === user.id);
-    return tasks;
-  }, [tasks, mineOnly, user?.id]);
+    let list = tasks;
+    if (!showSnoozed) list = list.filter((t) => !isSnoozed(t));
+    if (mineOnly && user?.id) list = list.filter((t) => t.assigned_to === user.id);
+    return list;
+  }, [tasks, mineOnly, user?.id, showSnoozed]);
 
   const mineCount = useMemo(
-    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id).length,
+    () => (tasks ?? []).filter((t) => t.assigned_to === user?.id && !isSnoozed(t)).length,
     [tasks, user?.id],
+  );
+
+  const snoozedCount = useMemo(
+    () => (tasks ?? []).filter((t) => isSnoozed(t)).length,
+    [tasks],
   );
 
   const grouped = useMemo(() => {
