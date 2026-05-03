@@ -10,7 +10,7 @@
  * be hidden in 30 days") BEFORE the operator clicks through to Stripe — so
  * they don't accidentally torpedo their SEO proof.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Loader2, ExternalLink, AlertTriangle, ShieldCheck, Clock } from 'lucide-react';
