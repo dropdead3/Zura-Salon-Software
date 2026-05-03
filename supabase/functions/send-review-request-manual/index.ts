@@ -9,6 +9,7 @@
 // is enforced by the manual_actor check).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendSms } from "../_shared/sms-sender.ts";
+import { checkReputationKillSwitch } from "../_shared/reputation-kill-switch.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
