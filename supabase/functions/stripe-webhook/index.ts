@@ -641,6 +641,82 @@ async function handleSubscriptionDeleted(
 }
 
 // Handler for customer.subscription.updated
+// Sends a one-time grace warning email when a Reputation subscription enters
+// the 30-day grace window (cancellation or payment_past_due). Closes the loop
+// for operators who don't open Feedback Hub before the auto-hide trigger fires.
+async function sendReputationGraceEmail(
+  supabase: SupabaseClientAny,
+  resend: Resend | null,
+  orgId: string,
+  graceUntil: string,
+  reason: 'cancellation' | 'payment_past_due',
+) {
+  if (!resend) {
+    console.log('[reputation-grace-email] Resend not configured — skipping');
+    return;
+  }
+  try {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name, slug, billing_email, primary_contact_email')
+      .eq('id', orgId)
+      .single();
+    if (!org) return;
+    const recipient = org.billing_email || org.primary_contact_email;
+    if (!recipient) {
+      console.log(`[reputation-grace-email] no recipient email for org ${orgId}`);
+      return;
+    }
+    const { count } = await supabase
+      .from('website_testimonials')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('enabled', true)
+      .not('source_response_id', 'is', null);
+    const curated = count ?? 0;
+    const graceDate = new Date(graceUntil).toLocaleDateString('en-US', {
+      month: 'long', day: 'numeric', year: 'numeric',
+    });
+    const subject = reason === 'cancellation'
+      ? `Zura Reputation cancelled — ${curated} curated review${curated === 1 ? '' : 's'} hide on ${graceDate}`
+      : `Action needed: Zura Reputation payment past due`;
+    const headline = reason === 'cancellation'
+      ? 'Your Zura Reputation subscription has been cancelled'
+      : 'Your Zura Reputation payment is past due';
+    const body = reason === 'cancellation'
+      ? `You've cancelled Zura Reputation. We'll keep collecting nothing new, and on <strong>${graceDate}</strong> we'll auto-hide the curated reviews wired into your website.`
+      : `Your last payment didn't go through. You have until <strong>${graceDate}</strong> to update your card before review collection pauses${curated > 0 ? ` and your ${curated} curated website review${curated === 1 ? '' : 's'} get auto-hidden` : ''}.`;
+    const curatedLine = curated > 0
+      ? `<p style="margin:0 0 16px;"><strong>${curated} curated review${curated === 1 ? '' : 's'}</strong> ${curated === 1 ? 'is' : 'are'} live on your site right now. Re-subscribing within 30 days restores them automatically.</p>`
+      : '';
+    await resend.emails.send({
+      from: 'Zura <notifications@mail.getzura.com>',
+      to: [recipient],
+      subject,
+      html: `
+        <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;">
+          <div style="background:#000;color:#fff;padding:20px 24px;border-radius:12px 12px 0 0;">
+            <h1 style="margin:0;font-size:18px;font-weight:500;letter-spacing:0.04em;">ZURA REPUTATION</h1>
+          </div>
+          <div style="padding:24px;border:1px solid #e4e4e7;border-top:none;border-radius:0 0 12px 12px;">
+            <h2 style="margin:0 0 16px;font-size:18px;color:#000;">${headline}</h2>
+            <p style="margin:0 0 16px;color:#27272a;line-height:1.5;">${body}</p>
+            ${curatedLine}
+            <a href="https://getzura.com/org/${org.slug}/dashboard/admin/feedback"
+               style="display:inline-block;background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-size:14px;">
+              ${reason === 'cancellation' ? 'Reactivate subscription' : 'Update payment method'}
+            </a>
+            <p style="margin:24px 0 0;font-size:12px;color:#71717a;">Questions? Reply to this email.</p>
+          </div>
+        </div>
+      `,
+    });
+    console.log(`[reputation-grace-email] sent (${reason}) to ${recipient} for org ${orgId}`);
+  } catch (e) {
+    console.error('[reputation-grace-email] failed:', e instanceof Error ? e.message : e);
+  }
+}
+
 async function handleSubscriptionUpdated(
   supabase: SupabaseClientAny,
   resend: Resend | null,
