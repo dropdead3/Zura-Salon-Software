@@ -47,23 +47,58 @@ export function useTestimonials(surface?: TestimonialSurface, explicitOrgId?: st
   });
 }
 
-export function useVisibleTestimonials(surface: TestimonialSurface, explicitOrgId?: string) {
+/**
+ * Visible testimonials for the live site. Optionally filter by placement scope
+ * (`homepage` | `service` | `stylist`) — only rows with `feature_scopes`
+ * containing the requested scope are returned. Rows missing the column
+ * (legacy / non-curated) fall back to homepage-only visibility to preserve
+ * historic behavior.
+ */
+export type PlacementScope = 'homepage' | 'service' | 'stylist';
+
+export function useVisibleTestimonials(
+  surface: TestimonialSurface,
+  explicitOrgIdOrScope?: string | PlacementScope,
+  maybeScope?: PlacementScope,
+) {
+  // Back-compat: second arg used to be explicitOrgId (a UUID). Treat scope
+  // strings ('homepage'|'service'|'stylist') as the scope; anything else as
+  // an explicit org id.
+  const KNOWN_SCOPES: PlacementScope[] = ['homepage', 'service', 'stylist'];
+  const isScope = (v: unknown): v is PlacementScope =>
+    typeof v === 'string' && (KNOWN_SCOPES as string[]).includes(v);
+  const explicitOrgId = isScope(explicitOrgIdOrScope) ? undefined : explicitOrgIdOrScope;
+  const scope: PlacementScope =
+    (isScope(explicitOrgIdOrScope) ? explicitOrgIdOrScope : maybeScope) ?? 'homepage';
+
   const orgId = useSettingsOrgId(explicitOrgId);
   return useQuery({
-    queryKey: ['website_testimonials', 'visible', orgId, surface],
+    queryKey: ['website_testimonials', 'visible', orgId, surface, scope],
     enabled: !!orgId,
     staleTime: STALE_TIME_MS,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('website_testimonials')
-        .select('id, title, author, body, rating, source_url, sort_order')
+        .select('id, title, author, body, rating, source_url, sort_order, feature_scopes')
         .eq('organization_id', orgId!)
         .eq('surface', surface)
         .eq('enabled', true)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Pick<Testimonial, 'id' | 'title' | 'author' | 'body' | 'rating' | 'source_url' | 'sort_order'>[];
+      const rows = (data ?? []) as Array<
+        Pick<Testimonial, 'id' | 'title' | 'author' | 'body' | 'rating' | 'source_url' | 'sort_order'> & {
+          feature_scopes: string[] | null;
+        }
+      >;
+      // Scope filter: include rows whose feature_scopes array contains the
+      // requested scope. Rows with empty/null feature_scopes are visible on
+      // homepage only (legacy / pre-scope rows).
+      return rows.filter((r) => {
+        const scopes = r.feature_scopes ?? [];
+        if (scopes.length === 0) return scope === 'homepage';
+        return scopes.includes(scope);
+      });
     },
   });
 }
