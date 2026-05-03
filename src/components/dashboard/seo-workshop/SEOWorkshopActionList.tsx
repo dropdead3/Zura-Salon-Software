@@ -9,6 +9,7 @@ import {
   type SEOWorkshopCategory,
 } from '@/config/seoWorkshopActions';
 import { useSEOWorkshopProgress, useCompleteSEOWorkshopAction, useUncompleteSEOWorkshopAction } from '@/hooks/useSEOWorkshop';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { useTasks } from '@/hooks/useTasks';
 import { ExternalLink, PlusCircle, BookOpen, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
