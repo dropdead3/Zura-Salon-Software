@@ -31,35 +31,45 @@ function formatDate(iso: string | null): string {
 
 export function ReputationSubscriptionCard() {
   const { isEntitled, orgId } = useReputationEntitlement();
-  const { data, isLoading } = useReputationSubscription();
+  const { data, isLoading, refetch } = useReputationSubscription();
   const [opening, setOpening] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemed, setRedeemed] = useState(false);
 
   if (!isEntitled || isLoading || !data) return null;
 
   const { status, current_period_end, grace_until, curated_testimonial_count } = data;
 
   async function openPortal() {
-    if (!orgId) {
-      toast.error('No organization context');
-      return;
-    }
+    if (!orgId) { toast.error('No organization context'); return; }
     setOpening(true);
     try {
       const { data: invoke, error } = await supabase.functions.invoke(
-        'reputation-customer-portal',
-        { body: { organization_id: orgId } },
+        'reputation-customer-portal', { body: { organization_id: orgId } },
       );
       if (error) throw error;
       const url = (invoke as { url?: string } | null)?.url;
       if (!url) throw new Error('No portal URL returned');
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch (e) {
-      toast.error(
-        'Failed to open billing portal: ' + (e instanceof Error ? e.message : 'Unknown error'),
+      toast.error('Failed to open billing portal: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    } finally { setOpening(false); }
+  }
+
+  async function redeemSaveOffer() {
+    if (!orgId) return;
+    setRedeeming(true);
+    try {
+      const { error } = await supabase.functions.invoke(
+        'reputation-retention-coupon', { body: { organization_id: orgId } },
       );
-    } finally {
-      setOpening(false);
-    }
+      if (error) throw error;
+      setRedeemed(true);
+      toast.success('Save offer applied — $20 off for the next 3 months.');
+      refetch();
+    } catch (e) {
+      toast.error('Could not apply save offer: ' + (e instanceof Error ? e.message : 'Unknown error'));
+    } finally { setRedeeming(false); }
   }
 
 
