@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { checkReputationKillSwitch } from "../_shared/reputation-kill-switch.ts";
 
 // Use 'any' for Supabase client since we don't have generated types in edge functions
 type SupabaseClientAny = SupabaseClient<any, any, any>;
