@@ -33,7 +33,7 @@ export function useReputationDispatchHealth() {
           .limit(1000),
         supabase
           .from('sms_opt_outs')
-          .select('created_at')
+          .select('opted_out_at')
           .limit(1000),
       ]);
 
