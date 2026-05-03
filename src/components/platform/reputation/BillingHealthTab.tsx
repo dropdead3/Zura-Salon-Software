@@ -310,3 +310,77 @@ export function BillingHealthTab() {
     </div>
   );
 }
+
+function fmtDateTime(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function OrgDetail({ row }: { row: ReputationBillingOrgRow }) {
+  const offered = row.retentionCouponOfferedAt;
+  const applied = row.retentionCouponAppliedAt;
+  return (
+    <div className="px-6 py-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-3">
+      <DetailItem label="Started" value={fmtDateTime(row.startedAt)} />
+      <DetailItem label="Current period ends" value={fmtDateTime(row.currentPeriodEnd)} />
+      <DetailItem
+        label="Grace until"
+        value={fmtDateTime(row.graceUntil)}
+        tone={row.status === 'past_due' ? 'danger' : 'default'}
+      />
+      <DetailItem label="Canceled at" value={fmtDateTime(row.canceledAt)} />
+      <DetailItem label="Coupon offered" value={fmtDateTime(offered)} />
+      <DetailItem
+        label="Coupon applied"
+        value={fmtDateTime(applied)}
+        tone={applied ? 'success' : 'default'}
+      />
+      <DetailItem
+        label="Stripe customer"
+        value={row.stripeCustomerId ?? '—'}
+        mono
+      />
+      <DetailItem
+        label="Stripe subscription"
+        value={row.stripeSubscriptionId ?? '—'}
+        mono
+      />
+      <DetailItem label="Grant source" value={row.grantSource ?? '—'} />
+    </div>
+  );
+}
+
+function DetailItem({
+  label,
+  value,
+  mono = false,
+  tone = 'default',
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+  tone?: 'default' | 'success' | 'danger';
+}) {
+  const toneClass =
+    tone === 'success'
+      ? 'text-emerald-400'
+      : tone === 'danger'
+        ? 'text-rose-400'
+        : 'text-[hsl(var(--platform-foreground)/0.9)]';
+  return (
+    <div className="space-y-0.5">
+      <p className="font-display text-[10px] tracking-[0.08em] uppercase text-[hsl(var(--platform-foreground-subtle))]">
+        {label}
+      </p>
+      <p className={cn('text-xs', mono ? 'font-mono break-all' : 'font-sans', toneClass)}>
+        {value}
+      </p>
+    </div>
+  );
+}
