@@ -148,6 +148,8 @@ export default function FeedbackHub() {
 
             <FeedbackTrendDriftCard />
 
+            <NegativeFeedbackThemes />
+
             <NegativeReviewHeatmap />
 
             <CoachingLoopCard />
