@@ -603,6 +603,7 @@ const App = () => (
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                         <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
                         <Route path="color-bar" element={<ProtectedRoute requirePlatformRole="platform_admin"><ColorBarAdmin /></ProtectedRoute>} />
+                        <Route path="reputation" element={<ProtectedRoute requirePlatformRole="platform_admin"><ReputationAdmin /></ProtectedRoute>} />
                         <Route path="capital" element={<ProtectedRoute requirePlatformRole="platform_admin"><CapitalControlTower /></ProtectedRoute>} />
                         <Route path="capital/guide" element={<ProtectedRoute requirePlatformRole="platform_admin"><CapitalKnowledgeBase /></ProtectedRoute>} />
                         <Route path="coach" element={<ProtectedRoute requireAnyPlatformRole><CoachDashboard /></ProtectedRoute>} />
