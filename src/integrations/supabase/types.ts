@@ -23001,6 +23001,36 @@ export type Database = {
           },
         ]
       }
+      review_click_events: {
+        Row: {
+          clicked_at: string
+          created_at: string
+          feedback_response_id: string
+          id: string
+          organization_id: string
+          platform: string
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          created_at?: string
+          feedback_response_id: string
+          id?: string
+          organization_id: string
+          platform: string
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          created_at?: string
+          feedback_response_id?: string
+          id?: string
+          organization_id?: string
+          platform?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       review_compliance_log: {
         Row: {
           actor_user_id: string | null
