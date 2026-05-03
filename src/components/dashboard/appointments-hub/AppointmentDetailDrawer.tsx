@@ -109,8 +109,10 @@ export function AppointmentDetailDrawer({ appointment, open, onOpenChange }: App
     staleTime: 5 * 60 * 1000,
   });
 
-  // Client review history
-  const { data: reviewSummary } = useClientReviewHistory(resolvedClientId);
+  // Client review history (only when org has Zura Reputation — otherwise the
+  // surrounding "Client Reviews" block has no signal to display).
+  const { isEntitled: reputationEntitled } = useReputationEntitlement();
+  const { data: reviewSummary } = useClientReviewHistory(reputationEntitled ? resolvedClientId : undefined);
 
   // Feedback status for THIS appointment
   const { data: feedbackStatus } = useAppointmentFeedbackStatus(appointment?.id);
