@@ -14,6 +14,26 @@ import { useSettingsOrgId } from './useSettingsOrgId';
 import { toast } from 'sonner';
 import type { DisplayNamePreference } from '@/lib/reviewDisplayName';
 
+/**
+ * Pre-flight entitlement guard. Defense-in-depth against direct mutation calls
+ * from devtools when the org has not subscribed to Zura Reputation.
+ * Source of truth is the `reputation_enabled` flag on `organization_feature_flags`,
+ * kept in sync by the `sync_reputation_entitlement` trigger.
+ */
+async function assertReputationEntitled(orgId: string | undefined) {
+  if (!orgId) throw new Error('No organization context');
+  const { data, error } = await supabase
+    .from('organization_feature_flags')
+    .select('is_enabled')
+    .eq('organization_id', orgId)
+    .eq('flag_key', 'reputation_enabled')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.is_enabled) {
+    throw new Error('REPUTATION_NOT_ENTITLED');
+  }
+}
+
 const STALE_TIME_MS = 30_000;
 
 export interface EligibleReview {
