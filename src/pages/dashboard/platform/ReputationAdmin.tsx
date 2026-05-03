@@ -21,11 +21,13 @@ import { KillSwitchesTab } from '@/components/platform/reputation/KillSwitchesTa
 import { AuditLogTab } from '@/components/platform/reputation/AuditLogTab';
 import { WebhookHealthTab } from '@/components/platform/reputation/WebhookHealthTab';
 import { RoiCalculatorTab } from '@/components/platform/reputation/RoiCalculatorTab';
+import { CompetitorMatrixTab } from '@/components/platform/reputation/CompetitorMatrixTab';
 import { cn } from '@/lib/utils';
 import {
   Megaphone,
   DollarSign,
   Calculator,
+  Swords,
   BarChart3,
   Building2,
   CreditCard,
@@ -53,6 +55,7 @@ const navGroups: NavGroup[] = [
       { value: 'sales-brief', label: 'Sales Brief', icon: Megaphone },
       { value: 'pricing', label: 'Pricing Sheet', icon: DollarSign },
       { value: 'roi', label: 'ROI Calculator', icon: Calculator },
+      { value: 'competitors', label: 'Competitor Matrix', icon: Swords },
     ],
   },
   {
@@ -79,6 +82,7 @@ const panels: Record<string, React.ReactNode> = {
   'sales-brief': <SalesBriefTab />,
   pricing: <PricingSheetTab />,
   roi: <RoiCalculatorTab />,
+  competitors: <CompetitorMatrixTab />,
   cohorts: <CohortsTab />,
   entitlements: <EntitlementsTab />,
   'billing-health': <BillingHealthTab />,

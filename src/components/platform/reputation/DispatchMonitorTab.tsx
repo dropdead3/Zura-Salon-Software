@@ -140,6 +140,38 @@ export function DispatchMonitorTab() {
 
       <PlatformCard>
         <PlatformCardHeader>
+          <PlatformCardTitle>Top failure reasons (24h)</PlatformCardTitle>
+          <PlatformCardDescription>
+            Bucketed from `last_error`. Carrier-blocked + landline = phone-list hygiene issue.
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent>
+          {data.topFailureReasons.length === 0 ? (
+            <p className="font-sans text-sm text-[hsl(var(--platform-foreground-subtle))]">
+              No failures in the last 24 hours.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {data.topFailureReasons.map((r) => (
+                <li
+                  key={r.reason}
+                  className="flex items-center justify-between p-3 rounded-lg border border-[hsl(var(--platform-border)/0.4)] bg-[hsl(var(--platform-bg-card)/0.4)]"
+                >
+                  <span className="font-sans text-sm text-[hsl(var(--platform-foreground)/0.85)]">
+                    {r.reason}
+                  </span>
+                  <PlatformBadge variant={r.count > 25 ? 'error' : 'default'} size="sm">
+                    {r.count}
+                  </PlatformBadge>
+                </li>
+              ))}
+            </ul>
+          )}
+        </PlatformCardContent>
+      </PlatformCard>
+
+      <PlatformCard>
+        <PlatformCardHeader>
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div>
               <PlatformCardTitle>Opt-out registry</PlatformCardTitle>

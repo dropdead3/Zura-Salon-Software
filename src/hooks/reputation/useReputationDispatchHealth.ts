@@ -15,6 +15,20 @@ export interface DispatchHealth {
   retryBuckets: { zero: number; one: number; two: number; threePlus: number };
   optOutsTotal: number;
   optOutsLast7d: number;
+  topFailureReasons: { reason: string; count: number }[];
+}
+
+/** Bucket raw Twilio / SMTP errors into operator-meaningful reasons. */
+function bucketFailureReason(raw: string): string {
+  const s = raw.toLowerCase();
+  if (s.includes('opt') && s.includes('out')) return 'Opted out';
+  if (s.includes('landline') || s.includes('not mobile') || s.includes('30006')) return 'Landline / not mobile';
+  if (s.includes('blocked') || s.includes('30007') || s.includes('carrier')) return 'Carrier blocked';
+  if (s.includes('invalid') || s.includes('21211') || s.includes('21614')) return 'Invalid number';
+  if (s.includes('unreachable') || s.includes('30005')) return 'Unreachable handset';
+  if (s.includes('quota') || s.includes('rate')) return 'Rate / quota limit';
+  if (s.includes('email') || s.includes('bounce') || s.includes('smtp')) return 'Email bounce';
+  return 'Other';
 }
 
 export function useReputationDispatchHealth() {
@@ -33,7 +47,7 @@ export function useReputationDispatchHealth() {
           .limit(1000),
         supabase
           .from('sms_opt_outs')
-          .select('created_at')
+          .select('opted_out_at')
           .limit(1000),
       ]);
 
@@ -44,6 +58,7 @@ export function useReputationDispatchHealth() {
       let failedLast24h = 0;
       let oldestPending: string | null = null;
       const buckets = { zero: 0, one: 0, two: 0, threePlus: 0 };
+      const reasonCounts = new Map<string, number>();
 
       for (const r of rows as any[]) {
         const isPending = !r.sent_at && !r.skipped_at;
@@ -58,7 +73,11 @@ export function useReputationDispatchHealth() {
         }
         if (r.sent_at && r.sent_at >= since24h) sentLast24h += 1;
         if (r.skipped_at && r.skipped_at >= since24h) skippedLast24h += 1;
-        if (r.last_error && r.enqueued_at >= since24h) failedLast24h += 1;
+        if (r.last_error && r.enqueued_at >= since24h) {
+          failedLast24h += 1;
+          const bucket = bucketFailureReason(String(r.last_error));
+          reasonCounts.set(bucket, (reasonCounts.get(bucket) ?? 0) + 1);
+        }
       }
 
       const oldestPendingAgeMinutes = oldestPending
@@ -66,7 +85,12 @@ export function useReputationDispatchHealth() {
         : null;
 
       const optOutRows = (optOuts ?? []) as any[];
-      const optOutsLast7d = optOutRows.filter((o) => o.created_at >= since7d).length;
+      const optOutsLast7d = optOutRows.filter((o) => o.opted_out_at >= since7d).length;
+
+      const topFailureReasons = [...reasonCounts.entries()]
+        .map(([reason, count]) => ({ reason, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
       return {
         pendingCount,
@@ -77,6 +101,7 @@ export function useReputationDispatchHealth() {
         retryBuckets: buckets,
         optOutsTotal: optOutRows.length,
         optOutsLast7d,
+        topFailureReasons,
       };
     },
   });
