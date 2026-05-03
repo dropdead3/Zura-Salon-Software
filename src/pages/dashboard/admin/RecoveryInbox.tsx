@@ -27,9 +27,11 @@ const STATUS_GROUPS: { key: string; title: string; statuses: string[] }[] = [
 
 export default function RecoveryInbox() {
   const { dashPath } = useOrgDashboardPath();
+  const { user } = useAuth();
   const { data: tasks, isLoading } = useRecoveryTasks();
   const [selected, setSelected] = useState<RecoveryTaskWithFeedback | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [mineOnly, setMineOnly] = useState(false);
 
   // Deep-link: /recovery?response=<feedback_response_id> opens that task's drawer
   useEffect(() => {
