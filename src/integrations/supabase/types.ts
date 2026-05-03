@@ -22453,6 +22453,83 @@ export type Database = {
           },
         ]
       }
+      reputation_admin_actions: {
+        Row: {
+          action_type: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          reason: string | null
+          target_organization_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          target_organization_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          target_organization_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputation_admin_actions_target_organization_id_fkey"
+            columns: ["target_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reputation_kill_switches: {
+        Row: {
+          created_at: string
+          disabled_at: string | null
+          disabled_by: string | null
+          disabled_reason: string | null
+          dispatch_disabled: boolean
+          id: string
+          manual_send_disabled: boolean
+          singleton: boolean
+          updated_at: string
+          webhook_processing_disabled: boolean
+        }
+        Insert: {
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
+          dispatch_disabled?: boolean
+          id?: string
+          manual_send_disabled?: boolean
+          singleton?: boolean
+          updated_at?: string
+          webhook_processing_disabled?: boolean
+        }
+        Update: {
+          created_at?: string
+          disabled_at?: string | null
+          disabled_by?: string | null
+          disabled_reason?: string | null
+          dispatch_disabled?: boolean
+          id?: string
+          manual_send_disabled?: boolean
+          singleton?: boolean
+          updated_at?: string
+          webhook_processing_disabled?: boolean
+        }
+        Relationships: []
+      }
       reputation_subscriptions: {
         Row: {
           canceled_at: string | null
