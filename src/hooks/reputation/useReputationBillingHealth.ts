@@ -50,7 +50,7 @@ export function useReputationBillingHealth() {
         supabase
           .from('reputation_subscriptions')
           .select(
-            'organization_id, status, grant_source, current_period_end, grace_until, retention_coupon_applied_at',
+            'organization_id, status, grant_source, started_at, current_period_end, grace_until, canceled_at, retention_coupon_applied_at, retention_coupon_offered_at, stripe_customer_id, stripe_subscription_id',
           ),
       ]);
       if (orgErr) throw orgErr;
@@ -67,14 +67,19 @@ export function useReputationBillingHealth() {
             organizationName: orgMap.get(s.organization_id) ?? '—',
             status,
             grantSource: s.grant_source ?? null,
+            startedAt: s.started_at ?? null,
             currentPeriodEnd: s.current_period_end ?? null,
             graceUntil: s.grace_until ?? null,
+            canceledAt: s.canceled_at ?? null,
+            retentionCouponOfferedAt: s.retention_coupon_offered_at ?? null,
+            retentionCouponAppliedAt: s.retention_coupon_applied_at ?? null,
             retentionCouponUsed: !!s.retention_coupon_applied_at,
+            stripeCustomerId: s.stripe_customer_id ?? null,
+            stripeSubscriptionId: s.stripe_subscription_id ?? null,
             estimatedMRR: isRevenueGenerating ? price : 0,
           };
         })
         .sort((a, b) => {
-          // Risk first
           const order = { past_due: 0, trialing: 1, active: 2, canceled: 3 } as const;
           const ar = order[(a.status ?? 'canceled') as keyof typeof order] ?? 4;
           const br = order[(b.status ?? 'canceled') as keyof typeof order] ?? 4;
@@ -88,6 +93,7 @@ export function useReputationBillingHealth() {
           if (r.status === 'trialing') acc.totalTrialing += 1;
           if (r.status === 'past_due') acc.totalPastDue += 1;
           if (r.status === 'canceled') acc.totalCanceled += 1;
+          if (r.retentionCouponOfferedAt) acc.retentionCouponsOffered += 1;
           if (r.retentionCouponUsed) acc.retentionCouponsUsed += 1;
           if (r.status === 'active') acc.monthlyRecurringRevenue += r.estimatedMRR;
           if (r.status === 'past_due') acc.mrrAtRisk += price;
@@ -98,13 +104,19 @@ export function useReputationBillingHealth() {
           totalTrialing: 0,
           totalPastDue: 0,
           totalCanceled: 0,
+          retentionCouponsOffered: 0,
           retentionCouponsUsed: 0,
           monthlyRecurringRevenue: 0,
           mrrAtRisk: 0,
         },
       );
 
-      return { ...totals, orgs: rows };
+      const retentionSaveRate =
+        totals.retentionCouponsOffered > 0
+          ? totals.retentionCouponsUsed / totals.retentionCouponsOffered
+          : null;
+
+      return { ...totals, retentionSaveRate, orgs: rows };
     },
   });
 }
