@@ -41,28 +41,31 @@ export function useReviewVelocity(daysBack = 30) {
       const currentSince = new Date(now - ms).toISOString();
       const priorSince = new Date(now - 2 * ms).toISOString();
 
+      // Wave 5: switched from the legacy `external_review_clicked` boolean
+      // proxy on client_feedback_responses to the dedicated event log so we
+      // count every click (not just last-write-wins) and can attribute by
+      // platform deterministically.
       const { data, error } = await supabase
-        .from('client_feedback_responses' as any)
-        .select('external_review_clicked, external_review_clicked_at')
+        .from('review_click_events' as any)
+        .select('platform, clicked_at')
         .eq('organization_id', orgId!)
-        .gte('external_review_clicked_at', priorSince)
-        .not('external_review_clicked', 'is', null)
+        .gte('clicked_at', priorSince)
         .limit(5000);
       if (error) throw error;
 
       const rows = ((data ?? []) as unknown) as Array<{
-        external_review_clicked: string | null;
-        external_review_clicked_at: string | null;
+        platform: string | null;
+        clicked_at: string | null;
       }>;
 
       const currentRows = rows.filter(
-        (r) => r.external_review_clicked_at && r.external_review_clicked_at >= currentSince,
+        (r) => r.clicked_at && r.clicked_at >= currentSince,
       );
       const priorRows = rows.filter(
         (r) =>
-          r.external_review_clicked_at &&
-          r.external_review_clicked_at < currentSince &&
-          r.external_review_clicked_at >= priorSince,
+          r.clicked_at &&
+          r.clicked_at < currentSince &&
+          r.clicked_at >= priorSince,
       );
 
       const current = currentRows.length;
@@ -71,7 +74,7 @@ export function useReviewVelocity(daysBack = 30) {
 
       const platformCounts: Record<string, number> = {};
       for (const r of currentRows) {
-        const p = (r.external_review_clicked ?? 'unknown').toLowerCase();
+        const p = (r.platform ?? 'unknown').toLowerCase();
         platformCounts[p] = (platformCounts[p] ?? 0) + 1;
       }
       const byPlatform = Object.entries(platformCounts)
