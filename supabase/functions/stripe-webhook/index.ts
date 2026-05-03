@@ -386,6 +386,32 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // ── Reputation addon ─────────────────────────────────────────
+  if (metadata?.addon_type === 'reputation') {
+    const orgId = metadata.organization_id;
+    const stripeSubId = (session.subscription as string) || null;
+    const stripeCustomerId = (session.customer as string) || null;
+    if (!orgId) {
+      console.warn("reputation checkout missing organization_id metadata");
+      return;
+    }
+    await supabase
+      .from('reputation_subscriptions')
+      .upsert({
+        organization_id: orgId,
+        status: 'trialing',
+        grant_source: 'stripe',
+        stripe_subscription_id: stripeSubId,
+        stripe_customer_id: stripeCustomerId,
+        started_at: new Date().toISOString(),
+        canceled_at: null,
+        grace_until: null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'organization_id' });
+    console.log(`Reputation subscription provisioned for org ${orgId} (sub ${stripeSubId})`);
+    return;
+  }
+
   // ── Color bar addon (existing logic) ─────────────────────────
   if (!metadata || metadata.addon_type !== 'color-bar' ) {
     console.log("Checkout session not a recognized type - skipping");
