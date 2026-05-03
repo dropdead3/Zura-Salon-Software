@@ -21,6 +21,11 @@ export interface RecoveryTask {
   resolution_notes: string | null;
   resolved_at: string | null;
   resolved_by: string | null;
+  first_contacted_at: string | null;
+  first_contacted_by: string | null;
+  snoozed_until: string | null;
+  snoozed_by: string | null;
+  snooze_reason: string | null;
   created_at: string;
   updated_at: string;
 }
