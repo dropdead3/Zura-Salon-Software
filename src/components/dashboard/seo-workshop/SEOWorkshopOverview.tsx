@@ -7,6 +7,7 @@ import {
   type SEOWorkshopAction,
 } from '@/config/seoWorkshopActions';
 import { useSEOWorkshopProgress } from '@/hooks/useSEOWorkshop';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
