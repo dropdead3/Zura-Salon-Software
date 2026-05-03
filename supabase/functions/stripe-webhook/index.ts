@@ -386,6 +386,32 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  // ── Reputation addon ─────────────────────────────────────────
+  if (metadata?.addon_type === 'reputation') {
+    const orgId = metadata.organization_id;
+    const stripeSubId = (session.subscription as string) || null;
+    const stripeCustomerId = (session.customer as string) || null;
+    if (!orgId) {
+      console.warn("reputation checkout missing organization_id metadata");
+      return;
+    }
+    await supabase
+      .from('reputation_subscriptions')
+      .upsert({
+        organization_id: orgId,
+        status: 'trialing',
+        grant_source: 'stripe',
+        stripe_subscription_id: stripeSubId,
+        stripe_customer_id: stripeCustomerId,
+        started_at: new Date().toISOString(),
+        canceled_at: null,
+        grace_until: null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'organization_id' });
+    console.log(`Reputation subscription provisioned for org ${orgId} (sub ${stripeSubId})`);
+    return;
+  }
+
   // ── Color bar addon (existing logic) ─────────────────────────
   if (!metadata || metadata.addon_type !== 'color-bar' ) {
     console.log("Checkout session not a recognized type - skipping");
@@ -576,6 +602,22 @@ async function handleSubscriptionDeleted(
     console.log(`Color Bar disabled for org ${org.id} after subscription cancellation`);
   }
 
+  // Reputation subscription cancellation → start 30-day grace window
+  if (subMetadata?.addon_type === 'reputation') {
+    const graceUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await supabase
+      .from('reputation_subscriptions')
+      .update({
+        status: 'past_due',
+        canceled_at: new Date().toISOString(),
+        grace_until: graceUntil,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('organization_id', org.id);
+    console.log(`Reputation subscription entered 30-day grace for org ${org.id} (until ${graceUntil})`);
+    return; // skip org-wide subscription_status / platform_notifications for addon-only cancellations
+  }
+
   await supabase
     .from('organizations')
     .update({ subscription_status: 'cancelled' })
@@ -632,6 +674,42 @@ async function handleSubscriptionUpdated(
     .from('organizations')
     .update({ subscription_status: mappedStatus })
     .eq('id', org.id);
+
+  // Reputation subscription state sync
+  const subMetadata = subscription.metadata as Record<string, string> | null;
+  if (subMetadata?.addon_type === 'reputation') {
+    const repStatusMap: Record<string, 'trialing' | 'active' | 'past_due' | 'canceled'> = {
+      trialing: 'trialing',
+      active: 'active',
+      past_due: 'past_due',
+      unpaid: 'past_due',
+      canceled: 'canceled',
+      incomplete: 'past_due',
+      incomplete_expired: 'canceled',
+    };
+    const repStatus = repStatusMap[status] ?? 'past_due';
+    const updates: Record<string, unknown> = {
+      status: repStatus,
+      updated_at: new Date().toISOString(),
+    };
+    // Set grace window when transitioning to past_due
+    if (repStatus === 'past_due') {
+      updates.grace_until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
+    // Clear grace + canceled_at when restored
+    if (repStatus === 'active' || repStatus === 'trialing') {
+      updates.grace_until = null;
+      updates.canceled_at = null;
+    }
+    if (repStatus === 'canceled') {
+      updates.canceled_at = new Date().toISOString();
+    }
+    await supabase
+      .from('reputation_subscriptions')
+      .update(updates)
+      .eq('organization_id', org.id);
+    console.log(`Reputation subscription synced: org ${org.id} → ${repStatus}`);
+  }
 
   console.log(`Subscription status updated to ${mappedStatus} for ${org.name}`);
 }
