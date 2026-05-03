@@ -6,7 +6,8 @@
  *
  * Memory: mem://architecture/platform-console-pattern
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { PageExplainer } from '@/components/ui/PageExplainer';
