@@ -122,6 +122,7 @@ export const SECTION_COMPONENT_IDS = [
   'my_quick_stats',
   'personal_goals',
   'my_performance',
+  'my_praise',
   'push_list',
   'level_progress',
   'graduation_kpi',
