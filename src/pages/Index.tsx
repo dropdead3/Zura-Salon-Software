@@ -3,6 +3,7 @@ import { SEO } from "@/components/SEO";
 import { useWebsitePages } from "@/hooks/useWebsitePages";
 import { PageSectionRenderer } from "@/components/home/PageSectionRenderer";
 import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
+import { PlacementScopeProvider } from "@/components/home/PlacementScopeContext";
 
 const Index = () => {
   const { data: pagesConfig } = useWebsitePages();
@@ -16,9 +17,11 @@ const Index = () => {
         type="local_business"
       />
       {/* Page-level style overrides — driven by chip rail in Page Settings. */}
-      <SectionStyleWrapper styleOverrides={homePage?.style_overrides}>
-        <PageSectionRenderer sections={homePage?.sections ?? []} pageId="home" />
-      </SectionStyleWrapper>
+      <PlacementScopeProvider scope="homepage">
+        <SectionStyleWrapper styleOverrides={homePage?.style_overrides}>
+          <PageSectionRenderer sections={homePage?.sections ?? []} pageId="home" />
+        </SectionStyleWrapper>
+      </PlacementScopeProvider>
     </Layout>
   );
 };

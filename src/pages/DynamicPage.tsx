@@ -5,6 +5,7 @@ import { SEO } from '@/components/SEO';
 import { useWebsitePages, getPageBySlug } from '@/hooks/useWebsitePages';
 import { PageSectionRenderer } from '@/components/home/PageSectionRenderer';
 import { SectionStyleWrapper } from '@/components/home/SectionStyleWrapper';
+import { PlacementScopeProvider, inferPlacementScopeFromSlug } from '@/components/home/PlacementScopeContext';
 
 export default function DynamicPage() {
   const { pageSlug } = useParams<{ pageSlug: string }>();
@@ -46,9 +47,11 @@ export default function DynamicPage() {
         description={page.seo_description}
       />
       {/* Page-level style overrides — driven by chip rail in Page Settings. */}
-      <SectionStyleWrapper styleOverrides={page.style_overrides}>
-        <PageSectionRenderer sections={page.sections} pageId={page.id} />
-      </SectionStyleWrapper>
+      <PlacementScopeProvider scope={inferPlacementScopeFromSlug(page.slug)}>
+        <SectionStyleWrapper styleOverrides={page.style_overrides}>
+          <PageSectionRenderer sections={page.sections} pageId={page.id} />
+        </SectionStyleWrapper>
+      </PlacementScopeProvider>
     </Layout>
   );
 }
