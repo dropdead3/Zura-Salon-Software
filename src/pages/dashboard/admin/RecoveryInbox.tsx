@@ -82,6 +82,20 @@ export default function RecoveryInbox() {
 
         <ComplianceBanner />
 
+        <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+          <div>
+            <Label htmlFor="mine-only" className="cursor-pointer">
+              Show only mine
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {mineCount > 0
+                ? `You're assigned to ${mineCount} recovery${mineCount === 1 ? '' : 'ies'}.`
+                : 'Nothing assigned to you yet.'}
+            </p>
+          </div>
+          <Switch id="mine-only" checked={mineOnly} onCheckedChange={setMineOnly} />
+        </div>
+
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => <Skeleton key={i} className={tokens.loading.skeleton} />)}
