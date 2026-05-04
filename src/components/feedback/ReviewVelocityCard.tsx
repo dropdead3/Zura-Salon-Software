@@ -29,7 +29,7 @@ export function ReviewVelocityCard() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Review Velocity</CardTitle>
+          <CardTitle className="text-sm font-medium">Review Momentum</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-8 w-24" />
