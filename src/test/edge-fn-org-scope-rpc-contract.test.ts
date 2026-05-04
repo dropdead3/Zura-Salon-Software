@@ -1,17 +1,21 @@
 /**
- * Edge Function `is_org_admin` arg-shape contract.
+ * Edge Function org-scope RPC arg-shape contract.
  *
- * The Postgres function is defined as `is_org_admin(_user_id uuid, _org_id uuid)`.
- * If an edge function calls it with `_organization_id` (or any other key), the
- * RPC silently returns NULL and authorization checks fall through — that's
- * exactly the bug the OAuth audit telemetry hit (silent 403s).
+ * Two Postgres helpers gate authorization across the edge layer:
+ *   - is_org_admin(_user_id uuid, _org_id uuid)
+ *   - is_org_member(_user_id uuid, _org_id uuid)
+ *
+ * Same silent-NULL footgun for both: passing `_organization_id` (or any other
+ * key) makes the RPC silently return NULL and authorization checks fall
+ * through. We've already hit this once in production (OAuth audit telemetry,
+ * `policy-draft-variants`).
  *
  * This test scans every `supabase/functions/**\/*.ts` file, finds each
- * `.rpc("is_org_admin", { ... })` call, and asserts the object literal uses
- * EXACTLY `_user_id` and `_org_id` keys — no aliases, no typos.
+ * `.rpc("is_org_admin"|"is_org_member", { ... })` call, and asserts the
+ * object literal uses EXACTLY `_user_id` and `_org_id` keys.
  *
- * Add a new edge function that mistypes the arg → this test fails at authoring
- * time instead of in production logs.
+ * Add a new edge function that mistypes the arg → this test fails at
+ * authoring time instead of in production logs.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -38,20 +42,20 @@ interface Call {
 }
 
 /**
- * Find every `.rpc("is_org_admin", { ... })` invocation and extract the keys
+ * Find every `.rpc("<rpcName>", { ... })` invocation and extract the keys
  * from its argument object literal. Tolerates multi-line object literals and
  * trailing commas.
  */
-function findIsOrgAdminCalls(source: string, file: string): Call[] {
+function findRpcCalls(source: string, file: string, rpcName: string): Call[] {
   const calls: Call[] = [];
-  // Match `.rpc("is_org_admin"` or `.rpc('is_org_admin'` then capture up to the
-  // matching closing brace of the args object. Greedy across newlines.
-  const re = /\.rpc\(\s*["']is_org_admin["']\s*,\s*\{([\s\S]*?)\}\s*\)/g;
+  const re = new RegExp(
+    String.raw`\.rpc\(\s*["']${rpcName}["']\s*,\s*\{([\s\S]*?)\}\s*\)`,
+    'g',
+  );
   let m: RegExpExecArray | null;
   while ((m = re.exec(source)) !== null) {
     const argsBlock = m[1];
     const lineNumber = source.slice(0, m.index).split('\n').length;
-    // Extract object-literal keys: `_foo:` or `_foo :` at start of token.
     const keyRe = /(?:^|[\s,{])(_[a-zA-Z_]+)\s*:/g;
     const keys: string[] = [];
     let km: RegExpExecArray | null;
@@ -64,38 +68,37 @@ function findIsOrgAdminCalls(source: string, file: string): Call[] {
 }
 
 const EXPECTED_KEYS = new Set(['_user_id', '_org_id']);
+const RPCS = ['is_org_admin', 'is_org_member'] as const;
+const ALL_FILES = walk(FUNCTIONS_DIR);
 
-describe('is_org_admin RPC arg-shape contract', () => {
-  const allFiles = walk(FUNCTIONS_DIR);
-  const allCalls: Call[] = [];
-  for (const f of allFiles) {
+describe.each(RPCS)('%s RPC arg-shape contract', (rpcName) => {
+  const calls: Call[] = [];
+  for (const f of ALL_FILES) {
     const src = readFileSync(f, 'utf8');
-    allCalls.push(...findIsOrgAdminCalls(src, f));
+    calls.push(...findRpcCalls(src, f, rpcName));
   }
 
-  it('finds at least one is_org_admin call (sanity)', () => {
-    expect(allCalls.length).toBeGreaterThan(5);
+  it(`finds at least one ${rpcName} call (sanity)`, () => {
+    expect(calls.length).toBeGreaterThan(0);
   });
 
   it.each(
-    allCalls.map((c) => [
+    calls.map((c) => [
       `${c.file.replace(process.cwd() + '/', '')}:${c.line}`,
       c,
     ] as const),
   )('%s — uses exactly { _user_id, _org_id }', (_label, call) => {
     const keys = new Set(call.keys);
-    // Must contain both expected keys.
     for (const expected of EXPECTED_KEYS) {
       expect(
         keys.has(expected),
         `Missing key "${expected}". Found: [${[...keys].join(', ')}]\nArgs block: ${call.argsBlock}`,
       ).toBe(true);
     }
-    // Must NOT contain any extra keys (catches `_organization_id`, `_uid`, etc).
     for (const k of keys) {
       expect(
         EXPECTED_KEYS.has(k),
-        `Unexpected key "${k}". The RPC signature is is_org_admin(_user_id uuid, _org_id uuid). Found: [${[...keys].join(', ')}]\nArgs block: ${call.argsBlock}`,
+        `Unexpected key "${k}". The RPC signature is ${rpcName}(_user_id uuid, _org_id uuid). Found: [${[...keys].join(', ')}]\nArgs block: ${call.argsBlock}`,
       ).toBe(true);
     }
   });
