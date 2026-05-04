@@ -90,7 +90,7 @@ export function PlatformConnectorTile({
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (options?: { reconnect?: boolean }) => {
     if (!effectiveOrganization?.id) return;
     setDisconnecting(true);
     try {
@@ -98,8 +98,14 @@ export function PlatformConnectorTile({
         body: { organization_id: effectiveOrganization.id },
       });
       if (error) throw error;
-      toast.success('Google disconnected.');
       await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+      if (options?.reconnect) {
+        toast.info('Disconnected — starting Google sign-in…');
+        setDisconnecting(false);
+        await handleConnect();
+        return;
+      }
+      toast.success('Google disconnected.');
     } catch (e) {
       console.error('Disconnect failed', e);
       toast.error('Could not disconnect Google. Please try again.');
