@@ -54,36 +54,51 @@ const FALLBACK_NAV_ITEMS = [
 const FALLBACK_CTA = { href: "/booking", label: "Book Now" };
 
 /** Transform published menu items into the nav format used by the Header */
-function menuItemToNavItem(item: MenuItem, index: number, orgPath: (p: string) => string): {
+function menuItemToNavItem(
+  item: MenuItem,
+  index: number,
+  orgPath: (p: string) => string,
+  pageSlugById: Map<string, string>,
+): {
   href: string;
   label: string;
   priority: number;
   type: 'link' | 'dropdown' | 'cta';
-  children?: { href: string; label: string }[];
+  children?: { href: string; label: string; openInNewTab?: boolean }[];
   openInNewTab?: boolean;
   ctaStyle?: string;
   visibility?: string;
 } {
-  const href = item.target_url
-    ? (item.target_url.startsWith('http') ? item.target_url : orgPath(item.target_url))
-    : item.target_page_id
-      ? orgPath(`/${item.target_page_id}`)
-      : '#';
+  const resolveHref = (i: MenuItem): string => {
+    // Anchor takes precedence — same-page jump.
+    if (i.item_type === 'anchor' && i.target_anchor) {
+      const anchor = i.target_anchor.startsWith('#') ? i.target_anchor : `#${i.target_anchor}`;
+      return anchor;
+    }
+    // Page link → resolve via slug map (NEVER use UUID as URL).
+    if (i.target_page_id) {
+      const slug = pageSlugById.get(i.target_page_id);
+      if (slug !== undefined) return orgPath(slug ? `/${slug}` : '/');
+    }
+    if (i.target_url) {
+      return i.target_url.startsWith('http') ? i.target_url : orgPath(i.target_url);
+    }
+    return '#';
+  };
 
   const type = item.item_type === 'cta' ? 'cta' as const
     : item.item_type === 'dropdown_parent' ? 'dropdown' as const
     : 'link' as const;
 
   return {
-    href,
+    href: resolveHref(item),
     label: item.label,
     priority: index + 1,
     type,
     children: item.children?.map(child => ({
-      href: child.target_url
-        ? (child.target_url.startsWith('http') ? child.target_url : orgPath(child.target_url))
-        : '#',
+      href: resolveHref(child),
       label: child.label,
+      openInNewTab: child.open_in_new_tab,
     })),
     openInNewTab: item.open_in_new_tab,
     ctaStyle: item.cta_style ?? undefined,
