@@ -173,9 +173,18 @@ export function PlatformConnectorTile({
 
         <div className="mt-auto flex flex-col items-center gap-2 w-full">
           {isActive && (
-            <Badge variant="outline" className="gap-1 text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+              title={connection?.external_account_label ?? undefined}
+            >
               <CheckCircle2 className="h-3 w-3" /> Connected
             </Badge>
+          )}
+          {polling && (
+            <p className="text-[11px] text-muted-foreground/80 inline-flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" /> Detecting new account…
+            </p>
           )}
           {isErrored && (
             <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
