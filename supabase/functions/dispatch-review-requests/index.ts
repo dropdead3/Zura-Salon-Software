@@ -23,11 +23,23 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PUBLIC_FEEDBACK_BASE = Deno.env.get("PUBLIC_FEEDBACK_BASE_URL") ??
   "https://getzura.com/feedback";
 
+interface FairnessTelemetry {
+  // Per-org enqueue/send counts so platform staff can see when the
+  // fairness allocator is actually clamping. `cappedOrgs` = orgs that
+  // hit PER_ORG_*_CAP this tick (early signal to raise GLOBAL_SEND_POOL
+  // or shorten the cron interval).
+  orgsServed: number;
+  maxPerOrg: number;
+  cappedOrgs: number;
+}
+
 interface DispatchSummary {
   enqueued: number;
   sent: number;
   skipped: number;
   errors: number;
+  enqueueFairness?: FairnessTelemetry;
+  sendFairness?: FairnessTelemetry;
 }
 
 function isExcluded(
@@ -81,6 +93,7 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
   // org can only queue this many requests per cron run; the rest are picked
   // up next tick. Tunable via env without redeploy.
   const PER_ORG_TICK_CAP = Number(Deno.env.get("REPUTATION_PER_ORG_TICK_CAP") ?? "100");
+  const enqueuePerOrg = new Map<string, number>();
 
   for (const [orgId, orgRules] of byOrg) {
     // Recent completed appointments for this org
@@ -180,7 +193,17 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
         // Unique violation = already queued; ignore silently.
       }
     }
+    if (enqueuedThisOrg > 0) enqueuePerOrg.set(orgId, enqueuedThisOrg);
   }
+
+  // Fairness telemetry — emit even when zero enqueues so platform staff
+  // can correlate ticks. cappedOrgs = orgs that hit PER_ORG_TICK_CAP this run.
+  const enqueueCounts = [...enqueuePerOrg.values()];
+  summary.enqueueFairness = {
+    orgsServed: enqueuePerOrg.size,
+    maxPerOrg: enqueueCounts.length ? Math.max(...enqueueCounts) : 0,
+    cappedOrgs: enqueueCounts.filter((n) => n >= PER_ORG_TICK_CAP).length,
+  };
 }
 
 const MAX_ATTEMPTS = 5;
@@ -273,6 +296,24 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
       exhausted = false;
     }
   }
+
+  // Fairness telemetry — see DispatchSummary.sendFairness. cappedOrgs counts
+  // orgs whose due-pool exceeded PER_ORG_SEND_CAP (i.e. they had more queued
+  // sends than they were allowed this tick: leftover rows in `buckets`). If
+  // cappedOrgs trends > 0 tick-over-tick, raise PER_ORG_SEND_CAP /
+  // GLOBAL_SEND_POOL or shorten the cron interval.
+  const sendCounts = [...sentPerOrg.values()];
+  let cappedOrgsCount = 0;
+  for (const [orgId, leftover] of buckets) {
+    if (leftover.length > 0 && (sentPerOrg.get(orgId) ?? 0) >= PER_ORG_SEND_CAP) {
+      cappedOrgsCount++;
+    }
+  }
+  summary.sendFairness = {
+    orgsServed: sentPerOrg.size,
+    maxPerOrg: sendCounts.length ? Math.max(...sendCounts) : 0,
+    cappedOrgs: cappedOrgsCount,
+  };
 
   for (const row of orderedDue) {
     try {
@@ -408,6 +449,18 @@ Deno.serve(async (req) => {
     }
     await enqueueEligible(supabase, summary);
     await sendDue(supabase, summary);
+    // Structured tick log for platform observability — greppable with
+    // `[dispatch-review-requests] tick` in edge-fn logs. cappedOrgs > 0 on
+    // either pass = signal to raise PER_ORG_*_CAP / GLOBAL_SEND_POOL or
+    // shorten the cron interval.
+    console.log("[dispatch-review-requests] tick:", JSON.stringify({
+      enqueued: summary.enqueued,
+      sent: summary.sent,
+      skipped: summary.skipped,
+      errors: summary.errors,
+      enqueueFairness: summary.enqueueFairness,
+      sendFairness: summary.sendFairness,
+    }));
     return new Response(JSON.stringify({ ok: true, ...summary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
