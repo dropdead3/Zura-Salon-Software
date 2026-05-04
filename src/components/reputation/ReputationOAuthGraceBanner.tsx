@@ -29,6 +29,7 @@ import { useGBPHealth } from '@/hooks/useGBPHealth';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useUiPreference } from '@/hooks/useUiPreference';
+import { describeReason } from '@/lib/reputation/describeReason';
 
 const THROTTLE_HOURS = 24;
 const SURFACE = 'reputation.gbp-grace-snooze';
