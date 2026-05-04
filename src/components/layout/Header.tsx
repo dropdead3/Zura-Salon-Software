@@ -130,10 +130,19 @@ export function Header() {
   // Fetch published primary menu
   const orgId = useSettingsOrgId();
   const { data: publishedMenuData } = usePublicMenuBySlug('primary', orgId);
+  const { data: pagesConfig } = useWebsitePages();
   const publishedMenu = publishedMenuData?.items ?? null;
   const menuConfig = publishedMenuData?.config;
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
   const mobileCTAVisible = menuConfig?.mobile_cta_visible ?? true;
+  const showLogo = menuConfig?.show_logo ?? true;
+
+  // Slug map for resolving page_link items by id (avoids UUID-as-URL bug).
+  const pageSlugById = useMemo(() => {
+    const m = new Map<string, string>();
+    pagesConfig?.pages.forEach(p => m.set(p.id, p.slug ?? ''));
+    return m;
+  }, [pagesConfig]);
 
   // Build nav items from published menu or fallback
   const { navItems, ctaItem } = useMemo(() => {
@@ -153,7 +162,7 @@ export function Header() {
 
     publishedMenu.forEach((item, idx) => {
       if (item.visibility === 'mobile_only') return;
-      const nav = menuItemToNavItem(item, idx, orgPath);
+      const nav = menuItemToNavItem(item, idx, orgPath, pageSlugById);
       if (nav.type === 'cta') {
         cta = { href: nav.href, label: nav.label };
       } else {
@@ -162,7 +171,7 @@ export function Header() {
     });
 
     return { navItems: nonCta, ctaItem: cta };
-  }, [publishedMenu, orgPath]);
+  }, [publishedMenu, orgPath, pageSlugById]);
 
   // Mobile nav items (include mobile_only, exclude desktop_only)
   const mobileNavItems = useMemo(() => {
@@ -183,15 +192,17 @@ export function Header() {
     publishedMenu.forEach((item) => {
       if (item.visibility === 'desktop_only') return;
       if (item.item_type === 'cta') return;
-      const nav = menuItemToNavItem(item, 0, orgPath);
+      const nav = menuItemToNavItem(item, 0, orgPath, pageSlugById);
       if (nav.type === 'dropdown' && nav.children) {
+        // Preserve parent label as a header row so mobile users keep context.
+        items.push({ href: nav.href, label: nav.label, type: 'link' });
         nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
       } else {
         items.push({ href: nav.href, label: nav.label, type: 'link' });
       }
     });
     return items;
-  }, [publishedMenu, orgPath]);
+  }, [publishedMenu, orgPath, pageSlugById]);
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
