@@ -192,7 +192,7 @@ export function Header() {
   // Mobile nav items (include mobile_only, exclude desktop_only)
   const mobileNavItems = useMemo(() => {
     if (!publishedMenu || publishedMenu.length === 0) {
-      const items: { href: string; label: string; type: string }[] = [];
+      const items: { href: string; label: string; type: string; openInNewTab?: boolean }[] = [];
       FALLBACK_NAV_ITEMS.forEach(item => {
         if (item.type === 'dropdown' && item.children) {
           items.push({ href: orgPath(item.href), label: item.label, type: 'link' });
@@ -204,17 +204,17 @@ export function Header() {
       return items;
     }
 
-    const items: { href: string; label: string; type: string }[] = [];
+    const items: { href: string; label: string; type: string; openInNewTab?: boolean }[] = [];
     publishedMenu.forEach((item) => {
       if (item.visibility === 'desktop_only') return;
       if (item.item_type === 'cta') return;
       const nav = menuItemToNavItem(item, 0, orgPath, pageSlugById);
       if (nav.type === 'dropdown' && nav.children) {
         // Preserve parent label as a header row so mobile users keep context.
-        items.push({ href: nav.href, label: nav.label, type: 'link' });
-        nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
+        items.push({ href: nav.href, label: nav.label, type: 'link', openInNewTab: nav.openInNewTab });
+        nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child', openInNewTab: c.openInNewTab }));
       } else {
-        items.push({ href: nav.href, label: nav.label, type: 'link' });
+        items.push({ href: nav.href, label: nav.label, type: 'link', openInNewTab: nav.openInNewTab });
       }
     });
     return items;
