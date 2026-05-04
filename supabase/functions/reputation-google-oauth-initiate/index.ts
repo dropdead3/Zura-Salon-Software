@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", GOOGLE_SCOPES);
     url.searchParams.set("access_type", "offline");
-    url.searchParams.set("prompt", "consent");
+    url.searchParams.set("prompt", "select_account consent");
     url.searchParams.set("state", state);
 
     return new Response(JSON.stringify({ url: url.toString() }), {
