@@ -5,10 +5,12 @@ import { useReviewFunnel } from '@/hooks/useReviewFunnel';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { openReputationGlossary } from './ReputationGlossary';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 /** Response Rate KPI tile — % of sent surveys that got a reply (last 30d). */
 export function ResponseRateCard() {
-  const { data, isLoading } = useReviewFunnel(30);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useReviewFunnel(30, locationId);
 
   if (isLoading) {
     return (
