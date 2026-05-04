@@ -8,7 +8,8 @@ export interface ReviewThresholdSettings {
   requireBothToPass: boolean;
   googleReviewUrl: string;
   appleReviewUrl: string;
-  yelpReviewUrl: string;
+  /** @deprecated Yelp removed from Online Reputation; column kept for back-compat reads only. */
+  yelpReviewUrl?: string;
   facebookReviewUrl: string;
   publicReviewPromptTitle: string;
   publicReviewPromptMessage: string;
@@ -22,7 +23,6 @@ const DEFAULT_SETTINGS: ReviewThresholdSettings = {
   requireBothToPass: false,
   googleReviewUrl: '',
   appleReviewUrl: '',
-  yelpReviewUrl: '',
   facebookReviewUrl: '',
   publicReviewPromptTitle: "We're Thrilled You Loved Your Visit!",
   publicReviewPromptMessage: 'Would you mind taking a moment to share your experience?',
@@ -110,7 +110,7 @@ export function checkBelowFollowUpThreshold(
 
 export async function trackExternalReviewClick(
   feedbackToken: string,
-  platform: 'google' | 'apple' | 'yelp' | 'facebook' | 'copied'
+  platform: 'google' | 'apple' | 'facebook' | 'copied'
 ) {
   // Legacy proxy column on the response row — kept for backwards compatibility
   // with reports that still read `external_review_clicked`. Wave 5 introduced

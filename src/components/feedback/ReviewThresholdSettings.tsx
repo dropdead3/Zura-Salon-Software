@@ -147,16 +147,6 @@ export function ReviewThresholdSettings() {
             </div>
 
             <div className="space-y-2">
-              <Label>Yelp URL (Optional)</Label>
-              <Input
-                placeholder="https://www.yelp.com/writeareview/biz/..."
-                value={formData.yelpReviewUrl}
-                onChange={(e) => setFormData({ ...formData, yelpReviewUrl: e.target.value })}
-                autoCapitalize="none"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label>Facebook URL (Optional)</Label>
               <Input
                 placeholder="https://www.facebook.com/..."

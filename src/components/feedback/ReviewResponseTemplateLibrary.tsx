@@ -99,7 +99,7 @@ export function ReviewResponseTemplateLibrary() {
             <div>
               <CardTitle className={tokens.card.title}>Review Response Library</CardTitle>
               <CardDescription>
-                Reusable replies for Google / Yelp / Facebook reviews — copy, personalize, post.
+                Reusable replies for Google / Facebook reviews — copy, personalize, post.
               </CardDescription>
             </div>
           </div>

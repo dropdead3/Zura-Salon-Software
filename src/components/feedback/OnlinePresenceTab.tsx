@@ -10,7 +10,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Zap } from 'lucide-react';
-import { Facebook, Star, MapPin } from 'lucide-react';
+import { Facebook, Star } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
 import { PlatformConnectorTile } from './PlatformConnectorTile';
@@ -43,7 +43,7 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
               <p className="text-sm text-muted-foreground mt-0.5">
                 {autoBoost?.enabled
                   ? `Asking after ${autoBoost.promptAfterNReviews} review${autoBoost.promptAfterNReviews === 1 ? '' : 's'} of ≥ ${autoBoost.minStarThreshold} stars`
-                  : 'Route happy clients to Google, Facebook, and Yelp automatically.'}
+                  : 'Route happy clients to Google and Facebook automatically.'}
               </p>
             </div>
           </div>
@@ -54,7 +54,7 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
       </Card>
 
       {/* Platform tiles */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <PlatformConnectorTile
           platform="google"
           label="Google"
@@ -71,14 +71,6 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
           iconColorClass="text-[#1877F2]"
           reviewUrl={primary?.facebook_review_url}
         />
-        <PlatformConnectorTile
-          platform="yelp"
-          label="Yelp"
-          Icon={MapPin}
-          iconBgClass="bg-red-500/10"
-          iconColorClass="text-red-500"
-          reviewUrl={primary?.yelp_review_url}
-        />
       </div>
 
       {/* Recent first-party feedback (proxy for the "All Reviews" wall until OAuth lands) */}
@@ -87,7 +79,7 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
           Recent client feedback
         </h3>
         <p className="text-xs text-muted-foreground px-1">
-          Aggregated Google / Facebook / Yelp reviews unlock once each platform is connected.
+          Aggregated Google / Facebook reviews unlock once each platform is connected.
           Until then, this is your first-party feedback stream.
         </p>
         <FeedbackResponseList organizationId={organizationId} limit={20} />

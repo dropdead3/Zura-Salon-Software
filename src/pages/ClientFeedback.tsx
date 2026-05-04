@@ -161,7 +161,6 @@ export default function ClientFeedback() {
       ...thresholdSettings,
       googleReviewUrl: resolvedLinks?.google || thresholdSettings.googleReviewUrl,
       appleReviewUrl: resolvedLinks?.apple || thresholdSettings.appleReviewUrl,
-      yelpReviewUrl: resolvedLinks?.yelp || thresholdSettings.yelpReviewUrl,
       facebookReviewUrl: resolvedLinks?.facebook || thresholdSettings.facebookReviewUrl,
     };
     return (

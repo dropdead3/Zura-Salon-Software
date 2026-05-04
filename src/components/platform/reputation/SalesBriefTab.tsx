@@ -84,7 +84,7 @@ export function SalesBriefTab() {
 
           <Section icon={Target} title="Who it's for">
             <ul className="list-disc pl-5 space-y-1">
-              <li>Operators with ≥ 50 monthly visits and a public review surface (Google / Yelp).</li>
+              <li>Operators with ≥ 50 monthly visits and a public review surface (Google / Facebook).</li>
               <li>Owners who already invest in their website and want compounding SEO returns.</li>
               <li>Multi-location groups that need throttled, brand-safe outreach at scale.</li>
             </ul>
@@ -150,7 +150,7 @@ export function SalesBriefTab() {
             <ul className="list-disc pl-5 space-y-1">
               <li>Per-location pricing tiers (deferred — quote first location only).</li>
               <li>Custom discounts beyond the authorized retention coupon.</li>
-              <li>Manual review removal from Google/Yelp (third-party policy).</li>
+              <li>Manual review removal from Google/Facebook (third-party policy).</li>
             </ul>
           </Section>
         </PlatformCardContent>

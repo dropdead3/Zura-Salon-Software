@@ -19,7 +19,6 @@ describe('shouldShowPublicShareScreen — non-gating doctrine', () => {
   it('returns true when ANY single link is configured', () => {
     expect(shouldShowPublicShareScreen({ googleReviewUrl: 'https://g.co/r' })).toBe(true);
     expect(shouldShowPublicShareScreen({ appleReviewUrl: 'https://maps.apple.com/r' })).toBe(true);
-    expect(shouldShowPublicShareScreen({ yelpReviewUrl: 'https://yelp.com/r' })).toBe(true);
     expect(shouldShowPublicShareScreen({ facebookReviewUrl: 'https://fb.com/r' })).toBe(true);
   });
 
@@ -28,7 +27,6 @@ describe('shouldShowPublicShareScreen — non-gating doctrine', () => {
       shouldShowPublicShareScreen({
         googleReviewUrl: '',
         appleReviewUrl: '',
-        yelpReviewUrl: '',
         facebookReviewUrl: '',
       }),
     ).toBe(false);

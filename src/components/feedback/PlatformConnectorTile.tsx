@@ -12,7 +12,7 @@ import { tokens } from '@/lib/design-tokens';
 import type { ComponentType } from 'react';
 
 interface PlatformConnectorTileProps {
-  platform: 'google' | 'facebook' | 'yelp';
+  platform: 'google' | 'facebook';
   label: string;
   Icon: ComponentType<{ className?: string }>;
   iconBgClass: string;

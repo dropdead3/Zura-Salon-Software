@@ -14,7 +14,6 @@ import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 const FIELDS: { key: keyof LocationReviewLink; label: string; placeholder: string }[] = [
   { key: 'google_review_url', label: 'Google Review URL', placeholder: 'https://g.page/r/...' },
   { key: 'apple_review_url', label: 'Apple Maps / Business URL', placeholder: 'https://maps.apple.com/...' },
-  { key: 'yelp_review_url', label: 'Yelp Profile URL', placeholder: 'https://www.yelp.com/biz/...' },
   { key: 'facebook_review_url', label: 'Facebook Reviews URL', placeholder: 'https://www.facebook.com/.../reviews' },
   { key: 'custom_review_url', label: 'Custom Review URL (optional)', placeholder: 'https://...' },
 ];
@@ -28,9 +27,9 @@ function LocationCard({ location }: { location: { id: string; name: string } }) 
   const [draft, setDraft] = useState<LocationReviewLink>({
     organization_id: effectiveOrganization?.id ?? '',
     location_id: location.id,
-    google_review_url: '', apple_review_url: '', yelp_review_url: '',
+    google_review_url: '', apple_review_url: '', yelp_review_url: null,
     facebook_review_url: '', custom_review_url: '', custom_review_label: '',
-    default_platform_priority: ['google', 'apple', 'yelp', 'facebook'],
+    default_platform_priority: ['google', 'apple', 'facebook'],
   });
 
   useEffect(() => {
@@ -74,7 +73,7 @@ export default function LocationReviewLinks() {
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         <DashboardPageHeader
           title="Location Review Links"
-          description="Set Google, Apple, Yelp, and Facebook review URLs per location. Used when sending review requests to clients."
+          description="Set Google, Apple, and Facebook review URLs per location. Used when sending review requests to clients."
           backTo={dashPath('/admin/feedback')}
           backLabel="Back to Online Reputation"
         />
