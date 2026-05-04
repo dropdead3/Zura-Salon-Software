@@ -236,9 +236,11 @@ export function NavigationManager() {
             </>
           )}
 
-          {/* Mobile Settings (primary menu only) */}
+          {/* Desktop + Mobile Settings (primary menu only) */}
           {selectedMenu?.slug === 'primary' && selectedMenu && (
             <>
+              <div className="border-t border-border/40" />
+              <DesktopNavConfig menu={selectedMenu} />
               <div className="border-t border-border/40" />
               <MobileNavConfig menu={selectedMenu} />
             </>
