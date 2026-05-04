@@ -149,8 +149,13 @@ export function PlatformConnectorTile({
           <Icon className={`w-7 h-7 ${iconColorClass}`} />
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 max-w-full">
           <h3 className="font-display text-base tracking-wide">{label}</h3>
+          {isActive && connection?.external_account_label && (
+            <p className="text-xs text-muted-foreground truncate max-w-[200px] mx-auto" title={connection.external_account_label}>
+              {connection.external_account_label}
+            </p>
+          )}
           {isActive && connection?.cached_review_count != null && (
             <p className="text-xs text-muted-foreground">
               {connection.cached_review_count} reviews
