@@ -132,23 +132,6 @@ const EXPLORE_APPS: AppDef[] = [
     missedOpportunity: 'Salons using targeted campaigns see 3x return on ad spend.',
   },
   {
-    key: 'reputation',
-    name: 'Zura Reputation',
-    tagline: 'Reviews + Social Proof Engine',
-    valueStatement: 'Convert happy clients into five-star proof.',
-    features: [
-      'Smart review request timing',
-      'Google review automation',
-      'Reputation scoring dashboard',
-      'AI review responses (brand-aligned)',
-    ],
-    icon: Star,
-    gradient: 'from-amber-500/30 to-yellow-500/30',
-    accentColor: 'border-amber-500/30',
-    comingSoon: true,
-    missedOpportunity: '90% of clients check reviews before booking. Automate the ask.',
-  },
-  {
     key: 'reception',
     name: 'Zura Reception',
     tagline: 'AI Receptionist',
