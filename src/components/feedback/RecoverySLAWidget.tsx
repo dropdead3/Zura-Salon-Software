@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, AlertTriangle } from 'lucide-react';
 import { useRecoverySLA } from '@/hooks/useRecoverySLA';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
+import { tokens } from '@/lib/design-tokens';
 
 function fmtHrs(h: number | null) {
   if (h == null) return '—';
@@ -13,7 +16,14 @@ export function RecoverySLAWidget() {
   const { data, isLoading } = useRecoverySLA();
 
   return (
-    <Card>
+    <Card className="relative">
+      <div className={tokens.kpi.infoIcon}>
+        <MetricInfoTooltip
+          title="Unhappy Client Follow-Up"
+          description="Tasks created when a client gives unhappy feedback. Reach out within 24h to win them back."
+          onLearnMore={() => openReputationGlossary('follow-up')}
+        />
+      </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />

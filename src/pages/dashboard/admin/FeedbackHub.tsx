@@ -75,6 +75,8 @@ export default function FeedbackHub() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const { data: slaData } = useRecoverySLA();
   const hasBreached = (slaData?.breachedSLA ?? 0) > 0;
+  const breachedCount = slaData?.breachedSLA ?? 0;
+  const hasAnyActivity = !!slaData && (slaData.open + slaData.contacted + slaData.resolved) > 0;
 
   useEffect(() => {
     if (requestedTab && FEEDBACK_TABS.has(requestedTab)) {
@@ -125,7 +127,7 @@ export default function FeedbackHub() {
               </p>
             </div>
           </div>
-          <ReputationGlossary />
+          <ReputationGlossary autoOpenOnFirstVisit={!hasAnyActivity} />
         </div>
 
         <ReputationGate surfaceLabel="Online Reputation">
@@ -155,6 +157,17 @@ export default function FeedbackHub() {
             {/* Overview */}
             <TabsContent value="overview" className="space-y-6 mt-6">
               <TodaysMustTouchStrip />
+              {hasBreached && (
+                <Link
+                  to={dashPath('/admin/feedback?tab=intelligence')}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive hover:bg-destructive/15 transition-colors"
+                >
+                  <span className="font-medium">
+                    {breachedCount} unhappy client{breachedCount === 1 ? '' : 's'} waiting over 24h. Reach out now to keep them.
+                  </span>
+                  <span className="text-xs font-medium underline-offset-4 hover:underline">Open Recovery Inbox →</span>
+                </Link>
+              )}
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
                 {hasBreached ? (
                   <>

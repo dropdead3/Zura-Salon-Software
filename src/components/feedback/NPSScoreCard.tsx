@@ -3,6 +3,9 @@ import { TrendingUp, TrendingDown, Minus, Users, ThumbsUp, Meh, ThumbsDown } fro
 import { useNPSStats } from '@/hooks/useNPSAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
+import { tokens } from '@/lib/design-tokens';
 
 interface NPSScoreCardProps {
   organizationId?: string;
@@ -30,7 +33,14 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
   if (!stats || totalReplies < NPS_MIN_REPLIES) {
     const remaining = Math.max(0, NPS_MIN_REPLIES - totalReplies);
     return (
-      <Card>
+      <Card className="relative">
+        <div className={tokens.kpi.infoIcon}>
+          <MetricInfoTooltip
+            title="Client Happiness"
+            description="A 0–100 score showing how your clients feel overall. Hidden until at least 5 clients reply."
+            onLearnMore={() => openReputationGlossary('happiness')}
+          />
+        </div>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Client Happiness</CardTitle>
         </CardHeader>
@@ -60,7 +70,14 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
   const tier = getTier(stats.currentNPS);
 
   return (
-    <Card>
+    <Card className="relative">
+      <div className={tokens.kpi.infoIcon}>
+        <MetricInfoTooltip
+          title="Client Happiness"
+          description="A 0–100 score combining how many clients love you vs. how many are unhappy. Above 30 is healthy, above 50 is excellent."
+          onLearnMore={() => openReputationGlossary('happiness')}
+        />
+      </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           Client Happiness

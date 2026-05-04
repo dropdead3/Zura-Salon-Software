@@ -14,6 +14,7 @@ import { TrendingUp, TrendingDown, Minus, Star } from 'lucide-react';
 import { useReviewVelocity } from '@/hooks/useReviewVelocity';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
 
 const PLATFORM_LABEL: Record<string, string> = {
   google: 'Google',
@@ -57,6 +58,7 @@ export function ReviewVelocityCard() {
         <MetricInfoTooltip
           title="Review Momentum"
           description="How many clients clicked through to leave a public review in the last 30 days, compared to the 30 days before. Hidden until at least 3 click-throughs."
+          onLearnMore={() => openReputationGlossary('momentum')}
         />
       </div>
       <CardHeader className="pb-2">

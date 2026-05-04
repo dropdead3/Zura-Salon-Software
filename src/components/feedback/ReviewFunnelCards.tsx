@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useReviewFunnel } from '@/hooks/useReviewFunnel';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
 
 /** Response Rate KPI tile — % of sent surveys that got a reply (last 30d). */
 export function ResponseRateCard() {
@@ -30,6 +31,7 @@ export function ResponseRateCard() {
         <MetricInfoTooltip
           title="Reply Rate"
           description="Of the feedback requests we sent in the last 30 days, the share that got a reply. Hidden until at least 10 have been sent."
+          onLearnMore={() => openReputationGlossary('reply-rate')}
         />
       </div>
       <CardHeader className="pb-2">
@@ -77,6 +79,7 @@ export function PublicConversionCard() {
         <MetricInfoTooltip
           title="Public Review Conversion"
           description="Of the happy clients we asked, the share who clicked through to leave a public review (Google, Yelp, etc.). Hidden until we have at least 5 replies."
+          onLearnMore={() => openReputationGlossary('public-reviews')}
         />
       </div>
       <CardHeader className="pb-2">

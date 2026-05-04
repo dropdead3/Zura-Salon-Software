@@ -8,6 +8,9 @@ interface MetricInfoTooltipProps {
   title?: string;
   side?: 'top' | 'bottom' | 'left' | 'right';
   className?: string;
+  /** Optional "Learn more →" link rendered at the end of the tooltip body. */
+  learnMoreLabel?: string;
+  onLearnMore?: () => void;
 }
 
 /**
@@ -29,7 +32,7 @@ const InfoIconTrigger = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpa
 );
 InfoIconTrigger.displayName = 'InfoIconTrigger';
 
-export function MetricInfoTooltip({ description, title, side = 'top', className }: MetricInfoTooltipProps) {
+export function MetricInfoTooltip({ description, title, side = 'top', className, learnMoreLabel, onLearnMore }: MetricInfoTooltipProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -38,6 +41,15 @@ export function MetricInfoTooltip({ description, title, side = 'top', className 
       <TooltipContent side={side} className="max-w-[280px] text-xs">
         {title && <p className="font-medium mb-1">{title}</p>}
         <p>{description}</p>
+        {onLearnMore && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onLearnMore(); }}
+            className="mt-1.5 text-xs font-medium text-primary hover:underline pointer-events-auto"
+          >
+            {learnMoreLabel ?? 'Learn more'} →
+          </button>
+        )}
       </TooltipContent>
     </Tooltip>
   );
