@@ -73,6 +73,8 @@ export default function FeedbackHub() {
   const googleOAuthError = searchParams.get('google_oauth_error');
   const initialTab = requestedTab && FEEDBACK_TABS.has(requestedTab) ? requestedTab : 'overview';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const { data: slaData } = useRecoverySLA();
+  const hasBreached = (slaData?.breachedSLA ?? 0) > 0;
 
   useEffect(() => {
     if (requestedTab && FEEDBACK_TABS.has(requestedTab)) {
