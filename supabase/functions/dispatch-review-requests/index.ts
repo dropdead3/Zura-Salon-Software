@@ -449,6 +449,18 @@ Deno.serve(async (req) => {
     }
     await enqueueEligible(supabase, summary);
     await sendDue(supabase, summary);
+    // Structured tick log for platform observability — greppable with
+    // `[dispatch-review-requests] tick` in edge-fn logs. cappedOrgs > 0 on
+    // either pass = signal to raise PER_ORG_*_CAP / GLOBAL_SEND_POOL or
+    // shorten the cron interval.
+    console.log("[dispatch-review-requests] tick:", JSON.stringify({
+      enqueued: summary.enqueued,
+      sent: summary.sent,
+      skipped: summary.skipped,
+      errors: summary.errors,
+      enqueueFairness: summary.enqueueFairness,
+      sendFairness: summary.sendFairness,
+    }));
     return new Response(JSON.stringify({ ok: true, ...summary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
