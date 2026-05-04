@@ -19,17 +19,18 @@ const MIN_COMMENT_LEN = 20;
  * Praise Wall — surfaces 5-star (or NPS 9-10) responses with substantive
  * written comments. Pure morale fuel for the team.
  */
-export function usePraiseWall(limit = 12) {
+export function usePraiseWall(limit = 12, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['praise-wall', orgId, limit],
+    queryKey: ['praise-wall', orgId, limit, locFilter ?? 'all'],
     enabled: !!orgId,
     staleTime: 60_000,
     queryFn: async (): Promise<PraiseItem[]> => {
       const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
+      let q = supabase
         .from('client_feedback_responses')
         .select('id, overall_rating, nps_score, comments, responded_at, staff_user_id, client_id, appointment_id')
         .eq('organization_id', orgId!)
@@ -37,6 +38,8 @@ export function usePraiseWall(limit = 12) {
         .not('comments', 'is', null)
         .order('responded_at', { ascending: false, nullsFirst: false })
         .limit(50);
+      if (locFilter) q = q.eq('location_id', locFilter);
+      const { data, error } = await q;
 
       if (error) throw error;
 
