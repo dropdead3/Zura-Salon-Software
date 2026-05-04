@@ -15,7 +15,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -23,6 +23,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, type ComponentType } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface PlatformConnectorTileProps {
   platform: ReviewPlatform;
