@@ -127,14 +127,14 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Target Page</Label>
             <Select
-              value={item.target_page_id ?? ''}
-              onValueChange={(v) => update({ target_page_id: v || null })}
+              value={item.target_page_id ?? '__none__'}
+              onValueChange={(v) => update({ target_page_id: v === '__none__' ? null : v })}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select page..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None (use URL) —</SelectItem>
+                <SelectItem value="__none__">— None (use URL) —</SelectItem>
                 {pagesConfig?.pages.map(p => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.title} {!p.enabled && '(disabled)'}
