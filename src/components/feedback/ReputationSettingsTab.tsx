@@ -1,25 +1,21 @@
 /**
- * ReputationSettingsTab — Consolidated settings: master toggle, cadence,
- * channel, message editor, auto-boost triggers, and links-out for the deeper
- * editors (Templates, Automations, Location Links).
+ * ReputationSettingsTab — Consolidated reputation settings.
  *
- * Keeps the standalone routes alive as deep-link targets per the
- * Routing redirects canon.
+ * Single primary card (`ReviewGateAndBoostCard`) merges what used to be two
+ * stacked cards: "Auto-Boost Triggers" + "Review Gate Settings". One mental
+ * model for the operator; one Save action.
+ *
+ * Deep-link cards still expose the dedicated editor routes (Templates,
+ * Automations, Location Links, Recovery Inbox) per the Routing redirects canon.
  */
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Send, Star, Settings as SettingsIcon, MessageSquareText, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowRight, Send, Star, Settings as SettingsIcon, MessageSquareText } from 'lucide-react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
-import { ReviewThresholdSettings } from './ReviewThresholdSettings';
-import { AutoBoostTriggerDialog, useAutoBoostConfig } from './AutoBoostTriggerDialog';
-import { tokens } from '@/lib/design-tokens';
+import { ReviewGateAndBoostCard } from './ReviewGateAndBoostCard';
 
 export function ReputationSettingsTab() {
   const { dashPath } = useOrgDashboardPath();
-  const { data: autoBoost } = useAutoBoostConfig();
-  const [autoBoostOpen, setAutoBoostOpen] = useState(false);
 
   const editors = [
     {
@@ -50,30 +46,8 @@ export function ReputationSettingsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Auto-Boost row */}
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-          <div>
-            <CardTitle className="font-display text-base tracking-wide flex items-center gap-2">
-              <Zap className="h-4 w-4 text-amber-500" />
-              Auto-Boost Triggers
-            </CardTitle>
-            <CardDescription className="mt-1">
-              {autoBoost?.enabled
-                ? `Ask after ${autoBoost.promptAfterNReviews} review${autoBoost.promptAfterNReviews === 1 ? '' : 's'} of ≥ ${autoBoost.minStarThreshold} stars`
-                : 'Off — happy clients are not routed to public platforms.'}
-            </CardDescription>
-          </div>
-          <Button variant="outline" size={tokens.button.card} onClick={() => setAutoBoostOpen(true)}>
-            Configure
-          </Button>
-        </CardHeader>
-      </Card>
+      <ReviewGateAndBoostCard />
 
-      {/* Review gate / threshold settings (existing component) */}
-      <ReviewThresholdSettings />
-
-      {/* Deep-link cards for the dedicated editors */}
       <div className="grid gap-3 md:grid-cols-2">
         {editors.map((e) => (
           <Card key={e.href} className="hover:bg-muted/30 transition-colors">
@@ -92,8 +66,6 @@ export function ReputationSettingsTab() {
           </Card>
         ))}
       </div>
-
-      <AutoBoostTriggerDialog open={autoBoostOpen} onOpenChange={setAutoBoostOpen} />
     </div>
   );
 }
