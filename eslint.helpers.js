@@ -122,6 +122,17 @@ export const CONSOLIDATED_RESTRICTED_SYNTAX = [
     selector: "JSXOpeningElement[name.name=/^(Textarea|PlatformTextarea)$/] JSXAttribute[name.name='className'] TemplateElement[value.raw=/(^|\\s)rounded-(xl|2xl|3xl|full)(\\s|$)/]",
     message: "Multi-line Input Radius Canon: <Textarea>/<PlatformTextarea> must use rounded-lg (8px). rounded-xl/2xl/3xl/full breaks the input shape canon — see mem://style/input-shape-canon.",
   },
+  // Org-Scope RPC Arg-Shape Canon — see src/test/edge-fn-org-scope-rpc-contract.test.ts.
+  // The Postgres helpers `is_org_admin(_user_id, _org_id)` and
+  // `is_org_member(_user_id, _org_id)` silently return NULL when called with
+  // `_organization_id` (or any other key), causing authorization checks to
+  // fall through. Bug history: OAuth audit telemetry silent 403s + the
+  // `policy-draft-variants` regression caught by the Vitest contract test.
+  // Belt + suspenders: Vitest catches at `bun run test`, ESLint catches on save.
+  {
+    selector: "CallExpression[callee.property.name='rpc'][arguments.0.value=/^is_org_(admin|member)$/] ObjectExpression > Property[key.name='_organization_id']",
+    message: "is_org_admin / is_org_member RPCs use `_org_id` (NOT `_organization_id`). Passing the wrong key silently returns NULL and authorization falls through. See src/test/edge-fn-org-scope-rpc-contract.test.ts.",
+  },
 ];
 
 /**
