@@ -74,9 +74,9 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         <PlatformConnectorTile
           platform="facebook"
           label="Facebook"
-          Icon={Facebook}
-          iconBgClass="bg-[#1877F2]/10"
-          iconColorClass="text-[#1877F2]"
+          Icon={FacebookFIcon}
+          iconBgClass="bg-background border border-border"
+          iconColorClass=""
           reviewUrl={primary?.facebook_review_url}
         />
       </div>
