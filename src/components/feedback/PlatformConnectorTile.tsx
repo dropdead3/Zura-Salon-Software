@@ -98,14 +98,15 @@ export function PlatformConnectorTile({
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
+    setPolling(false);
   };
   const startConnectionPoll = (priorAccountId: string | null) => {
     stopPolling();
+    setPolling(true);
     const startedAt = Date.now();
     pollRef.current = setInterval(async () => {
       const elapsed = Date.now() - startedAt;
-      const result = await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
-      void result;
+      await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
       const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
       const next = fresh?.find((c) => c.platform === platform);
       const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
