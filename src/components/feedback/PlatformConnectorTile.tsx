@@ -110,9 +110,15 @@ export function PlatformConnectorTile({
       const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
       const next = fresh?.find((c) => c.platform === platform);
       const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
-      if (switched || elapsed > 30_000) {
+      if (switched) {
         stopPolling();
-        if (switched) toast.success('Google account switched.');
+        toast.success('Google account switched.');
+      } else if (elapsed > 30_000) {
+        stopPolling();
+        toast.error("Didn't detect a new account — did you complete the new tab?", {
+          action: { label: 'Retry sign-in', onClick: () => { void handleConnect(); } },
+          duration: 12_000,
+        });
       }
     }, 2_500);
   };
@@ -181,11 +187,6 @@ export function PlatformConnectorTile({
               <CheckCircle2 className="h-3 w-3" /> Connected
             </Badge>
           )}
-          {polling && (
-            <p className="text-[11px] text-muted-foreground/80 inline-flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 animate-spin" /> Detecting new account…
-            </p>
-          )}
           {isErrored && (
             <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-3 w-3" /> Reconnect needed
@@ -248,9 +249,13 @@ export function PlatformConnectorTile({
                     variant="outline"
                     size={tokens.button.card}
                     className="w-full gap-1.5"
-                    disabled={disconnecting || connecting}
+                    disabled={disconnecting || connecting || polling}
                   >
-                    <RefreshCw className="h-3.5 w-3.5" /> Switch Google account
+                    {polling ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Waiting for new sign-in…</>
+                    ) : (
+                      <><RefreshCw className="h-3.5 w-3.5" /> Switch Google account</>
+                    )}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
