@@ -33,6 +33,7 @@ export interface FeedbackResponse {
   token: string;
   expires_at: string | null;
   created_at: string;
+  location_id: string | null;
 }
 
 export function useFeedbackSurveys(organizationId?: string) {
