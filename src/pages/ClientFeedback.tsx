@@ -169,10 +169,10 @@ export default function ClientFeedback() {
       facebookReviewUrl: resolvedLinks?.facebook || thresholdSettings.facebookReviewUrl,
     };
     // Option C — adaptive emphasis. Links shown to ALL clients (doctrine);
-    // only the framing/copy escalates when the client passed the operator's
-    // happiness threshold AND Auto-Boost rating threshold.
+    // celebrate framing only when client passed the happiness threshold AND
+    // their qualifying-visit count hits the operator's promptAfterNReviews cadence.
     const meetsAutoBoost = autoBoost?.enabled
-      ? overallRating >= (autoBoost.minStarThreshold ?? 5)
+      ? overallRating >= (autoBoost.minStarThreshold ?? 5) && hitsAutoBoostCadence
       : true;
     const emphasis: 'celebrate' | 'neutral' =
       passedGate && meetsAutoBoost ? 'celebrate' : 'neutral';
