@@ -78,6 +78,22 @@ const SUBSCRIBED_APPS: AppDef[] = [
     accentColor: 'border-blue-500/40',
     settingsPath: '/team-chat',
   },
+  {
+    key: 'reputation',
+    name: 'Zura Reputation',
+    tagline: 'Reviews + Social Proof Engine',
+    valueStatement: 'Convert happy clients into five-star proof.',
+    features: [
+      'Smart review request timing',
+      'Google review automation',
+      'Reputation scoring dashboard',
+      'AI review responses (brand-aligned)',
+    ],
+    icon: Star,
+    gradient: 'from-amber-500/30 to-yellow-500/30',
+    accentColor: 'border-amber-500/40',
+    settingsPath: '/admin/feedback',
+  },
 ];
 
 const EXPLORE_APPS: AppDef[] = [
