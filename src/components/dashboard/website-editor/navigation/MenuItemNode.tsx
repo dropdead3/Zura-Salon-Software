@@ -89,6 +89,16 @@ export function MenuItemNode({ item, depth, isSelected, selectedItemId, onSelect
           <AlertTriangle className="h-3 w-3 text-amber-500 flex-shrink-0" />
         )}
 
+        {/* Draft indicator */}
+        {!item.is_published && (
+          <span
+            className="text-[9px] font-medium text-amber-700 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-shrink-0"
+            title="Unpublished draft"
+          >
+            Draft
+          </span>
+        )}
+
         {/* CTA badge */}
         {item.item_type === 'cta' && (
           <span className="text-[9px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded-full flex-shrink-0">

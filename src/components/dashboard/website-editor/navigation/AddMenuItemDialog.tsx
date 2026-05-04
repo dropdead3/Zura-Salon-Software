@@ -38,6 +38,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
   const [label, setLabel] = useState('');
   const [targetPageId, setTargetPageId] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
+  const [targetAnchor, setTargetAnchor] = useState('');
   const [parentId, setParentId] = useState('');
   const createItem = useCreateMenuItem();
 
@@ -49,6 +50,10 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       toast.error('Label is required');
       return;
     }
+    if (type === 'page_link' && !targetPageId && !targetUrl.trim()) {
+      toast.error('Pick a page or enter a URL path');
+      return;
+    }
     if ((type === 'external_url' || type === 'cta') && !targetUrl.trim()) {
       toast.error('URL is required for this item type');
       return;
@@ -57,12 +62,23 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       toast.error('External URLs must start with http:// or https://');
       return;
     }
+    if (type === 'anchor' && !targetAnchor.trim()) {
+      toast.error('Anchor ID is required');
+      return;
+    }
+
+    // Append at end of the destination parent group to avoid sort_order collisions.
+    const effectiveParent = parentId || null;
+    const siblings = (menuItems ?? []).filter(i => (i.parent_id ?? null) === effectiveParent);
+    const nextOrder = siblings.length
+      ? Math.max(...siblings.map(s => s.sort_order)) + 1
+      : 0;
 
     const item: Record<string, unknown> = {
       menu_id: menuId,
       label: label.trim(),
       item_type: type,
-      sort_order: existingItemCount,
+      sort_order: nextOrder,
       ...(parentId ? { parent_id: parentId } : {}),
     };
 
@@ -75,8 +91,13 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       }
     }
 
-    if ((type === 'external_url' || type === 'cta') && targetUrl) {
+    if ((type === 'external_url' || type === 'cta' || type === 'page_link') && targetUrl) {
       item.target_url = targetUrl;
+    }
+
+    if (type === 'anchor') {
+      const t = targetAnchor.trim();
+      item.target_anchor = t.startsWith('#') ? t : `#${t}`;
     }
 
     if (type === 'cta') {
@@ -97,6 +118,7 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
     setLabel('');
     setTargetPageId('');
     setTargetUrl('');
+    setTargetAnchor('');
     setParentId('');
   };
 
@@ -181,6 +203,21 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
                 placeholder={type === 'external_url' ? 'https://example.com' : '/booking'}
                 className="h-9 text-sm"
               />
+            </div>
+          )}
+
+          {/* Anchor */}
+          {type === 'anchor' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Anchor ID</Label>
+              <Input
+                value={targetAnchor}
+                onChange={(e) => setTargetAnchor(e.target.value)}
+                placeholder="#section-name"
+                className="h-9 text-sm"
+                autoCapitalize="none"
+              />
+              <p className="text-[10px] text-muted-foreground">Jumps to an element with this id on the current page</p>
             </div>
           )}
 

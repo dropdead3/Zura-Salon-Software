@@ -47,12 +47,14 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
   const [label, setLabel] = useState(item.label);
   const [targetUrl, setTargetUrl] = useState(item.target_url ?? '');
   const [trackingKey, setTrackingKey] = useState(item.tracking_key ?? '');
+  const [anchor, setAnchor] = useState(item.target_anchor ?? '');
 
   useEffect(() => {
     setLabel(item.label);
     setTargetUrl(item.target_url ?? '');
     setTrackingKey(item.tracking_key ?? '');
-  }, [item.id, item.label, item.target_url, item.tracking_key]);
+    setAnchor(item.target_anchor ?? '');
+  }, [item.id, item.label, item.target_url, item.tracking_key, item.target_anchor]);
 
   const update = (updates: Partial<MenuItem>) => {
     updateItem.mutate({ id: item.id, ...updates });
@@ -107,7 +109,20 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <Label className="text-xs">Type</Label>
           <Select
             value={item.item_type}
-            onValueChange={(v) => update({ item_type: v as MenuItemType })}
+            onValueChange={(v) => {
+              const newType = v as MenuItemType;
+              if (newType === item.item_type) return;
+              // Clear fields that don't apply to the new type so we don't carry
+              // stale URLs/page links across type changes.
+              const reset: Partial<MenuItem> = { item_type: newType };
+              if (newType !== 'page_link') reset.target_page_id = null;
+              if (newType !== 'page_link' && newType !== 'external_url' && newType !== 'cta') reset.target_url = null;
+              if (newType !== 'anchor') reset.target_anchor = null;
+              if (newType !== 'cta') reset.cta_style = null;
+              if (newType === 'cta' && !item.cta_style) reset.cta_style = 'primary';
+              if (newType === 'dropdown_parent') reset.open_in_new_tab = false;
+              update(reset);
+            }}
           >
             <SelectTrigger className="h-9 text-sm">
               <SelectValue />
@@ -128,7 +143,19 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
             <Label className="text-xs">Target Page</Label>
             <Select
               value={item.target_page_id ?? '__none__'}
-              onValueChange={(v) => update({ target_page_id: v === '__none__' ? null : v })}
+              onValueChange={(v) => {
+                if (v === '__none__') {
+                  update({ target_page_id: null });
+                  return;
+                }
+                // Auto-sync target_url to the page's slug so renderers that
+                // fall back to target_url stay in sync.
+                const page = pagesConfig?.pages.find(p => p.id === v);
+                update({
+                  target_page_id: v,
+                  target_url: page ? (page.slug ? `/${page.slug}` : '/') : item.target_url,
+                });
+              }}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select page..." />
@@ -168,8 +195,19 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Anchor ID</Label>
             <Input
-              value={item.target_anchor ?? ''}
-              onChange={(e) => update({ target_anchor: e.target.value || null })}
+              value={anchor}
+              onChange={(e) => setAnchor(e.target.value)}
+              onBlur={() => {
+                const trimmed = anchor.trim();
+                // Normalize to a single leading '#' so renderers don't double-prefix.
+                const normalized = trimmed
+                  ? (trimmed.startsWith('#') ? trimmed : `#${trimmed}`)
+                  : '';
+                if (normalized !== (item.target_anchor ?? '')) {
+                  update({ target_anchor: normalized || null });
+                }
+                setAnchor(normalized);
+              }}
               placeholder="#section-name"
               className="h-9 text-sm"
               autoCapitalize="none"
@@ -252,20 +290,25 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
               const nextOrder = siblings.length
                 ? Math.max(...siblings.map(s => s.sort_order)) + 1
                 : 0;
-              createItem.mutate({
+              const payload: Record<string, unknown> = {
                 menu_id: menuId,
                 label: `${item.label} (copy)`,
                 item_type: item.item_type,
                 target_url: item.target_url,
                 target_page_id: item.target_page_id,
                 target_anchor: item.target_anchor,
-                cta_style: item.cta_style,
                 visibility: item.visibility,
                 open_in_new_tab: item.open_in_new_tab,
                 parent_id: item.parent_id,
                 sort_order: nextOrder,
                 is_published: false,
-              } as any, {
+              };
+              // Only carry cta_style for CTA items so non-CTA rows don't violate
+              // a possible NOT-NULL/check constraint on the column.
+              if (item.item_type === 'cta' && item.cta_style) {
+                payload.cta_style = item.cta_style;
+              }
+              createItem.mutate(payload as any, {
                 onSuccess: () => toast.success('Item duplicated (draft)'),
               });
             }}

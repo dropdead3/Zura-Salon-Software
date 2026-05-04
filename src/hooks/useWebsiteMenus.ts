@@ -127,7 +127,7 @@ export function useWebsiteMenu(menuId: string | null) {
   const orgId = useResolvedOrgId();
 
   return useQuery({
-    queryKey: ['website-menu', menuId],
+    queryKey: ['website-menu', orgId, menuId],
     queryFn: async () => {
       if (!menuId) return null;
       const { data: items, error } = await supabase
@@ -326,7 +326,8 @@ export function useCreateMenuItem() {
 
 /** Invalidate every cache that surfaces this menu's contents (admin + public). */
 function invalidateMenuCaches(queryClient: ReturnType<typeof useQueryClient>, menuId: string) {
-  queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
+  // Match any orgId scope (useWebsiteMenu key is ['website-menu', orgId, menuId]).
+  queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'website-menu' && q.queryKey[2] === menuId });
   // Public/preview surfaces key off slug, not id — invalidate the family.
   queryClient.invalidateQueries({ queryKey: ['public-menu'] });
   queryClient.invalidateQueries({ queryKey: ['published-menu'] });
