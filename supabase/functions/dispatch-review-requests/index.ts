@@ -438,6 +438,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const summary: DispatchSummary = { enqueued: 0, sent: 0, skipped: 0, errors: 0 };
+  const tickStart = Date.now();
 
   try {
     const guard = await checkReputationKillSwitch("dispatch_disabled", supabase);
