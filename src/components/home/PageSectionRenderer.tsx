@@ -108,6 +108,32 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
 
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
   useEffect(() => {
+    /**
+     * Parallax-aware scroll target resolver.
+     *
+     * The HeroParallaxLayout wraps the hero in a 200vh "scroll driver" with
+     * the hero `position: sticky` and the next section `position: absolute;
+     * bottom: 0`. Naive `scrollIntoView` on those inner boxes lies:
+     *  - The sticky hero's box is pinned, so its rect appears already in
+     *    view → "scroll to hero" no-ops or jumps mid-runway.
+     *  - The absolutely-anchored next section sits at ~200vh of document
+     *    flow, so scrolling there docks it but the upper viewport ends up
+     *    showing the section AFTER it — the visible "wrong" target.
+     *
+     * Fix: when a section lives inside a `[data-hero-parallax="driver"]`,
+     * scroll to the driver itself. For the hero (the sticky child) we land
+     * at the driver's top. For the rising panel (the absolute child) we
+     * land at the driver's bottom so the panel fully docks.
+     */
+    const resolveScrollTarget = (
+      el: HTMLElement,
+    ): { target: HTMLElement; block: ScrollLogicalPosition } => {
+      const driver = el.closest<HTMLElement>('[data-hero-parallax="driver"]');
+      if (!driver) return { target: el, block: 'start' };
+      const isRising = !!el.closest('[data-hero-parallax="rising"]');
+      return { target: driver, block: isRising ? 'end' : 'start' };
+    };
+
     const handler = (event: MessageEvent) => {
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;
@@ -123,7 +149,10 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
 
       if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
         const el = document.getElementById(`section-${msg.sectionId}`);
-        if (el) el.scrollIntoView({ behavior: msg.behavior ?? 'smooth', block: 'start' });
+        if (el) {
+          const { target, block } = resolveScrollTarget(el);
+          target.scrollIntoView({ behavior: msg.behavior ?? 'smooth', block });
+        }
       }
 
       if (msg.type === 'PREVIEW_HIGHLIGHT_SECTION') {
@@ -155,11 +184,15 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
             el.classList.add('preview-hover');
             // Auto-scroll only when the editor explicitly requests it
             // (debounced + reduced-motion-aware on the parent side).
-            // `block: 'nearest'` keeps already-visible sections from jumping.
             if (msg.scroll === true) {
-              el.scrollIntoView({
+              const { target, block } = resolveScrollTarget(el);
+              // Inside the parallax driver `block: 'nearest'` is unsafe —
+              // the sticky hero always reads as in-view, so "nearest" no-ops.
+              // Use the resolver's explicit block (start/end) instead.
+              const insideParallax = target !== el;
+              target.scrollIntoView({
                 behavior: msg.behavior === 'auto' ? 'auto' : 'smooth',
-                block: 'nearest',
+                block: insideParallax ? block : 'nearest',
               });
             }
           }
