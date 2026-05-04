@@ -49,8 +49,10 @@ export function PlatformConnectorTile({
 }: PlatformConnectorTileProps) {
   const { data: connections } = useReviewPlatformConnections();
   const { effectiveOrganization } = useOrganizationContext();
+  const queryClient = useQueryClient();
   const connection = connections?.find((c) => c.platform === platform);
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const isActive = connection?.status === 'active';
   const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
