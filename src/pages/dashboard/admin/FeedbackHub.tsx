@@ -75,6 +75,8 @@ export default function FeedbackHub() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const { data: slaData } = useRecoverySLA();
   const hasBreached = (slaData?.breachedSLA ?? 0) > 0;
+  const breachedCount = slaData?.breachedSLA ?? 0;
+  const hasAnyActivity = !!slaData && (slaData.open + slaData.contacted + slaData.resolved) > 0;
 
   useEffect(() => {
     if (requestedTab && FEEDBACK_TABS.has(requestedTab)) {
