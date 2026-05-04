@@ -107,7 +107,20 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <Label className="text-xs">Type</Label>
           <Select
             value={item.item_type}
-            onValueChange={(v) => update({ item_type: v as MenuItemType })}
+            onValueChange={(v) => {
+              const newType = v as MenuItemType;
+              if (newType === item.item_type) return;
+              // Clear fields that don't apply to the new type so we don't carry
+              // stale URLs/page links across type changes.
+              const reset: Partial<MenuItem> = { item_type: newType };
+              if (newType !== 'page_link') reset.target_page_id = null;
+              if (newType !== 'page_link' && newType !== 'external_url' && newType !== 'cta') reset.target_url = null;
+              if (newType !== 'anchor') reset.target_anchor = null;
+              if (newType !== 'cta') reset.cta_style = null;
+              if (newType === 'cta' && !item.cta_style) reset.cta_style = 'primary';
+              if (newType === 'dropdown_parent') reset.open_in_new_tab = false;
+              update(reset);
+            }}
           >
             <SelectTrigger className="h-9 text-sm">
               <SelectValue />
@@ -128,7 +141,19 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
             <Label className="text-xs">Target Page</Label>
             <Select
               value={item.target_page_id ?? '__none__'}
-              onValueChange={(v) => update({ target_page_id: v === '__none__' ? null : v })}
+              onValueChange={(v) => {
+                if (v === '__none__') {
+                  update({ target_page_id: null });
+                  return;
+                }
+                // Auto-sync target_url to the page's slug so renderers that
+                // fall back to target_url stay in sync.
+                const page = pagesConfig?.pages.find(p => p.id === v);
+                update({
+                  target_page_id: v,
+                  target_url: page ? (page.slug ? `/${page.slug}` : '/') : item.target_url,
+                });
+              }}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select page..." />
