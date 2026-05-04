@@ -27,7 +27,7 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import { useReviewPlatformConnections } from '@/hooks/useReviewPlatformConnections';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PlatformConnectorTile } from './PlatformConnectorTile';
-import { ReputationOAuthGraceBanner } from '@/components/reputation/ReputationOAuthGraceBanner';
+
 import { useAutoBoostConfig } from './AutoBoostTriggerDialog';
 import { FeedbackResponseList } from './FeedbackResponseList';
 
@@ -54,7 +54,6 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
 
   return (
     <div className="space-y-6">
-      <ReputationOAuthGraceBanner />
 
       {/* Auto-Boost status strip — config lives in Settings */}
       <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">

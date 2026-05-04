@@ -23,6 +23,12 @@ export function ReputationOAuthGraceBanner() {
     ? `${needsReconnect} of ${total} location${total === 1 ? '' : 's'} need a Google reconnect`
     : `${unmapped} Google connection${unmapped === 1 ? '' : 's'} not mapped to a location`;
 
+  // Unmapped → backfill page; reconnect needed → Online Presence tab.
+  const ctaHref = unmapped > 0 && needsReconnect === 0
+    ? dashPath('/admin/feedback/connect-google')
+    : `${dashPath('/admin/feedback')}?tab=presence`;
+  const ctaLabel = unmapped > 0 && needsReconnect === 0 ? 'Map connections' : 'Review connections';
+
   return (
     <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 mb-4 flex items-start gap-3">
       <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
@@ -33,10 +39,10 @@ export function ReputationOAuthGraceBanner() {
         </p>
       </div>
       <Link
-        to={`${dashPath('/admin/feedback')}?tab=presence`}
+        to={ctaHref}
         className="inline-flex items-center gap-1.5 rounded-full bg-amber-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-amber-700 shrink-0"
       >
-        Review connections <ArrowRight className="w-3.5 h-3.5" />
+        {ctaLabel} <ArrowRight className="w-3.5 h-3.5" />
       </Link>
     </div>
   );
