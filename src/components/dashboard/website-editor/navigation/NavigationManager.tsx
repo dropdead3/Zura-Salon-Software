@@ -66,6 +66,13 @@ export function NavigationManager() {
   const selectedItem = menuItems?.find(i => i.id === selectedItemId) ?? null;
   const selectedMenu = menus?.find(m => m.id === selectedMenuId) ?? null;
 
+  // Clear selection when the selected item is gone (deleted, menu switched, etc.)
+  useEffect(() => {
+    if (selectedItemId && menuItems && !menuItems.some(i => i.id === selectedItemId)) {
+      setSelectedItemId(null);
+    }
+  }, [selectedItemId, menuItems]);
+
   // Manual seed handler
   const handleManualSeed = () => {
     seedMenus.mutate(undefined, {

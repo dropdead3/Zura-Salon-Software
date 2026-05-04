@@ -10,6 +10,7 @@ import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } from "@/hooks/useWebsiteMenus";
 import { useSettingsOrgId } from "@/hooks/useSettingsOrgId";
+import { useWebsitePages } from "@/hooks/useWebsitePages";
 import { emitNavEvent } from "@/lib/nav-tracking";
 import { contrastRatio, readableForegroundFor } from "@/lib/color-contrast";
 
@@ -54,36 +55,51 @@ const FALLBACK_NAV_ITEMS = [
 const FALLBACK_CTA = { href: "/booking", label: "Book Now" };
 
 /** Transform published menu items into the nav format used by the Header */
-function menuItemToNavItem(item: MenuItem, index: number, orgPath: (p: string) => string): {
+function menuItemToNavItem(
+  item: MenuItem,
+  index: number,
+  orgPath: (p: string) => string,
+  pageSlugById: Map<string, string>,
+): {
   href: string;
   label: string;
   priority: number;
   type: 'link' | 'dropdown' | 'cta';
-  children?: { href: string; label: string }[];
+  children?: { href: string; label: string; openInNewTab?: boolean }[];
   openInNewTab?: boolean;
   ctaStyle?: string;
   visibility?: string;
 } {
-  const href = item.target_url
-    ? (item.target_url.startsWith('http') ? item.target_url : orgPath(item.target_url))
-    : item.target_page_id
-      ? orgPath(`/${item.target_page_id}`)
-      : '#';
+  const resolveHref = (i: MenuItem): string => {
+    // Anchor takes precedence — same-page jump.
+    if (i.item_type === 'anchor' && i.target_anchor) {
+      const anchor = i.target_anchor.startsWith('#') ? i.target_anchor : `#${i.target_anchor}`;
+      return anchor;
+    }
+    // Page link → resolve via slug map (NEVER use UUID as URL).
+    if (i.target_page_id) {
+      const slug = pageSlugById.get(i.target_page_id);
+      if (slug !== undefined) return orgPath(slug ? `/${slug}` : '/');
+    }
+    if (i.target_url) {
+      return i.target_url.startsWith('http') ? i.target_url : orgPath(i.target_url);
+    }
+    return '#';
+  };
 
   const type = item.item_type === 'cta' ? 'cta' as const
     : item.item_type === 'dropdown_parent' ? 'dropdown' as const
     : 'link' as const;
 
   return {
-    href,
+    href: resolveHref(item),
     label: item.label,
     priority: index + 1,
     type,
     children: item.children?.map(child => ({
-      href: child.target_url
-        ? (child.target_url.startsWith('http') ? child.target_url : orgPath(child.target_url))
-        : '#',
+      href: resolveHref(child),
       label: child.label,
+      openInNewTab: child.open_in_new_tab,
     })),
     openInNewTab: item.open_in_new_tab,
     ctaStyle: item.cta_style ?? undefined,
@@ -114,10 +130,19 @@ export function Header() {
   // Fetch published primary menu
   const orgId = useSettingsOrgId();
   const { data: publishedMenuData } = usePublicMenuBySlug('primary', orgId);
+  const { data: pagesConfig } = useWebsitePages();
   const publishedMenu = publishedMenuData?.items ?? null;
   const menuConfig = publishedMenuData?.config;
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
   const mobileCTAVisible = menuConfig?.mobile_cta_visible ?? true;
+  const showLogo = menuConfig?.show_logo ?? true;
+
+  // Slug map for resolving page_link items by id (avoids UUID-as-URL bug).
+  const pageSlugById = useMemo(() => {
+    const m = new Map<string, string>();
+    pagesConfig?.pages.forEach(p => m.set(p.id, p.slug ?? ''));
+    return m;
+  }, [pagesConfig]);
 
   // Build nav items from published menu or fallback
   const { navItems, ctaItem } = useMemo(() => {
@@ -137,7 +162,7 @@ export function Header() {
 
     publishedMenu.forEach((item, idx) => {
       if (item.visibility === 'mobile_only') return;
-      const nav = menuItemToNavItem(item, idx, orgPath);
+      const nav = menuItemToNavItem(item, idx, orgPath, pageSlugById);
       if (nav.type === 'cta') {
         cta = { href: nav.href, label: nav.label };
       } else {
@@ -146,7 +171,7 @@ export function Header() {
     });
 
     return { navItems: nonCta, ctaItem: cta };
-  }, [publishedMenu, orgPath]);
+  }, [publishedMenu, orgPath, pageSlugById]);
 
   // Mobile nav items (include mobile_only, exclude desktop_only)
   const mobileNavItems = useMemo(() => {
@@ -167,15 +192,17 @@ export function Header() {
     publishedMenu.forEach((item) => {
       if (item.visibility === 'desktop_only') return;
       if (item.item_type === 'cta') return;
-      const nav = menuItemToNavItem(item, 0, orgPath);
+      const nav = menuItemToNavItem(item, 0, orgPath, pageSlugById);
       if (nav.type === 'dropdown' && nav.children) {
+        // Preserve parent label as a header row so mobile users keep context.
+        items.push({ href: nav.href, label: nav.label, type: 'link' });
         nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
       } else {
         items.push({ href: nav.href, label: nav.label, type: 'link' });
       }
     });
     return items;
-  }, [publishedMenu, orgPath]);
+  }, [publishedMenu, orgPath, pageSlugById]);
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
@@ -476,8 +503,8 @@ export function Header() {
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
             <div className="flex items-center justify-between h-16 gap-4">
-            {/* Logo */}
-            <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
+            {/* Logo (suppressed when menu config opts out) */}
+            <div className={cn("w-40 lg:w-40 xl:w-56 shrink-0 flex items-center", !showLogo && "invisible pointer-events-none")}>
               <Link
                 to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-8"

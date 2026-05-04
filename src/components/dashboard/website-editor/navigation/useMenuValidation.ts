@@ -55,6 +55,24 @@ export function useMenuValidation(
         }
       }
 
+      // CTA must have a URL or page
+      if (item.item_type === 'cta' && !item.target_url && !item.target_page_id) {
+        errors.push({ level: 'error', message: `"${item.label}" CTA has no destination`, itemId: item.id });
+      }
+
+      // Anchor must have an anchor target
+      if (item.item_type === 'anchor' && !item.target_anchor) {
+        errors.push({ level: 'error', message: `"${item.label}" anchor item has no anchor ID`, itemId: item.id });
+      }
+
+      // Dropdown parent must have at least one child
+      if (item.item_type === 'dropdown_parent') {
+        const childCount = items.filter(i => i.parent_id === item.id).length;
+        if (childCount === 0) {
+          warnings.push({ level: 'warning', message: `"${item.label}" dropdown is empty`, itemId: item.id });
+        }
+      }
+
       // Nesting depth
       if (getDepth(item) > 2) {
         errors.push({ level: 'error', message: `"${item.label}" exceeds max nesting depth (2 levels)`, itemId: item.id });

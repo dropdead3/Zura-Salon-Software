@@ -127,14 +127,14 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Target Page</Label>
             <Select
-              value={item.target_page_id ?? ''}
-              onValueChange={(v) => update({ target_page_id: v || null })}
+              value={item.target_page_id ?? '__none__'}
+              onValueChange={(v) => update({ target_page_id: v === '__none__' ? null : v })}
             >
               <SelectTrigger className="h-9 text-sm">
                 <SelectValue placeholder="Select page..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— None (use URL) —</SelectItem>
+                <SelectItem value="__none__">— None (use URL) —</SelectItem>
                 {pagesConfig?.pages.map(p => (
                   <SelectItem key={p.id} value={p.id}>
                     {p.title} {!p.enabled && '(disabled)'}
@@ -247,6 +247,11 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
             size={tokens.button.inline}
             className="text-xs"
             onClick={() => {
+              // Append at end of the same parent group to avoid sort_order collision.
+              const siblings = (allItems ?? []).filter(i => i.parent_id === item.parent_id);
+              const nextOrder = siblings.length
+                ? Math.max(...siblings.map(s => s.sort_order)) + 1
+                : 0;
               createItem.mutate({
                 menu_id: menuId,
                 label: `${item.label} (copy)`,
@@ -258,9 +263,10 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
                 visibility: item.visibility,
                 open_in_new_tab: item.open_in_new_tab,
                 parent_id: item.parent_id,
-                sort_order: item.sort_order + 1,
+                sort_order: nextOrder,
+                is_published: false,
               } as any, {
-                onSuccess: () => toast.success('Item duplicated'),
+                onSuccess: () => toast.success('Item duplicated (draft)'),
               });
             }}
             disabled={createItem.isPending}

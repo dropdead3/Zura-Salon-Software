@@ -49,6 +49,14 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       toast.error('Label is required');
       return;
     }
+    if ((type === 'external_url' || type === 'cta') && !targetUrl.trim()) {
+      toast.error('URL is required for this item type');
+      return;
+    }
+    if (type === 'external_url' && !/^https?:\/\//i.test(targetUrl.trim())) {
+      toast.error('External URLs must start with http:// or https://');
+      return;
+    }
 
     const item: Record<string, unknown> = {
       menu_id: menuId,
@@ -180,12 +188,15 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
           {dropdownParents.length > 0 && type !== 'dropdown_parent' && (
             <div className="space-y-1.5">
               <Label className="text-xs">Parent Item</Label>
-              <Select value={parentId} onValueChange={setParentId}>
+              <Select
+                value={parentId || '__root__'}
+                onValueChange={(v) => setParentId(v === '__root__' ? '' : v)}
+              >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Top level (no parent)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Top Level</SelectItem>
+                  <SelectItem value="__root__">Top Level</SelectItem>
                   {dropdownParents.map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.label}
