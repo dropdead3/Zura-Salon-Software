@@ -165,6 +165,7 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   footer: FooterEditor,
   'sticky-footer': StickyFooterBarEditor,
   pages: PagesManager,
+  navigation: NavigationManager,
 };
 
 // Map home built-in section TYPES → editor tab keys (mirrors sidebar).
