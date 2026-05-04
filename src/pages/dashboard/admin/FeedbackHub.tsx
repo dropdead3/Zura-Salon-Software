@@ -1,46 +1,48 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquareText, BarChart3, Users, Send, Star, Settings, ArrowLeft } from 'lucide-react';
-import { tokens } from '@/lib/design-tokens';
+import {
+  MessageSquareText,
+  BarChart3,
+  Globe,
+  Sparkles,
+  Settings,
+  Star,
+  ArrowLeft,
+} from 'lucide-react';
 import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
-import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
-import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
-import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { RecoverySLAWidget } from '@/components/feedback/RecoverySLAWidget';
-import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
+import { ReviewVelocityCard } from '@/components/feedback/ReviewVelocityCard';
+import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
+import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
+import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackSummary';
+import { NegativeFeedbackThemes } from '@/components/feedback/NegativeFeedbackThemes';
+import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
+import { NegativeReviewHeatmap } from '@/components/feedback/NegativeReviewHeatmap';
+import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
 import { StylistReputationCard } from '@/components/feedback/StylistReputationCard';
 import { ServiceSatisfactionBriefCard } from '@/components/feedback/ServiceSatisfactionBriefCard';
-import { ParkedDispatchCard } from '@/components/feedback/ParkedDispatchCard';
-import { NegativeReviewHeatmap } from '@/components/feedback/NegativeReviewHeatmap';
-import { AIWeeklyFeedbackSummary } from '@/components/feedback/AIWeeklyFeedbackSummary';
-import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
-import { TodaysMustTouchStrip } from '@/components/feedback/TodaysMustTouchStrip';
-import { ResponseRateCard, PublicConversionCard } from '@/components/feedback/ReviewFunnelCards';
-import { ReviewVelocityCard } from '@/components/feedback/ReviewVelocityCard';
-import { StaffFeedbackSummary } from '@/components/feedback/StaffFeedbackSummary';
-import { FeedbackTrendDriftCard } from '@/components/feedback/FeedbackTrendDriftCard';
-import { CoachingLoopCard } from '@/components/feedback/CoachingLoopCard';
 import { PraiseWall } from '@/components/feedback/PraiseWall';
-import { NegativeFeedbackThemes } from '@/components/feedback/NegativeFeedbackThemes';
+import { RecoveryOutcomeCard } from '@/components/feedback/RecoveryOutcomeCard';
+import { ParkedDispatchCard } from '@/components/feedback/ParkedDispatchCard';
+import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
+import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
+import { ReviewsTable } from '@/components/feedback/ReviewsTable';
+import { OnlinePresenceTab } from '@/components/feedback/OnlinePresenceTab';
+import { ReputationSettingsTab } from '@/components/feedback/ReputationSettingsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ReputationGate } from '@/components/reputation/ReputationGate';
 import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
-
 
 export default function FeedbackHub() {
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
   const [activeTab, setActiveTab] = useState('overview');
-
-  const { data: profile } = useEmployeeProfile();
-  const isSuperAdmin = profile?.is_super_admin;
 
   return (
     <DashboardLayout>
@@ -55,132 +57,90 @@ export default function FeedbackHub() {
             </Button>
             <div>
               <h1 className="font-display text-2xl font-medium flex items-center gap-2">
-                <MessageSquareText className="h-6 w-6 text-primary" />
+                <Star className="h-6 w-6 text-amber-500" />
                 Online Reputation
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
-                Track NPS scores, reviews, and client satisfaction
+                Capture first-party feedback, route happy clients to public platforms, and surface what to fix next.
               </p>
             </div>
           </div>
         </div>
 
-        <ReputationGate surfaceLabel="Feedback Hub · Zura Reputation">
-        <div className="mb-6">
-          <ReputationSubscriptionCard />
-        </div>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="overview" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="responses" className="gap-2">
-              <MessageSquareText className="h-4 w-4" />
-              Responses
-            </TabsTrigger>
-            <TabsTrigger value="staff" className="gap-2">
-              <Users className="h-4 w-4" />
-              By Staff
-            </TabsTrigger>
-            {isSuperAdmin && (
-              <TabsTrigger value="settings" className="gap-2">
-                <Settings className="h-4 w-4" />
-                Review Settings
+        <ReputationGate surfaceLabel="Online Reputation">
+          <div className="mb-2">
+            <ReputationSubscriptionCard />
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="overview" className="gap-2">
+                <BarChart3 className="h-4 w-4" /> Overview
               </TabsTrigger>
-            )}
-          </TabsList>
+              <TabsTrigger value="reviews" className="gap-2">
+                <MessageSquareText className="h-4 w-4" /> Reviews
+              </TabsTrigger>
+              <TabsTrigger value="presence" className="gap-2">
+                <Globe className="h-4 w-4" /> Online Presence
+              </TabsTrigger>
+              <TabsTrigger value="intelligence" className="gap-2">
+                <Sparkles className="h-4 w-4" /> Intelligence
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" /> Settings
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <TodaysMustTouchStrip />
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-              <NPSScoreCard organizationId={organizationId} />
-              <RecoverySLAWidget />
-              <ResponseRateCard />
-              <PublicConversionCard />
-              <ReviewVelocityCard />
-            </div>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Star className="h-4 w-4 text-amber-500" />
-                  Reputation Engine
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
-                  <Link to={dashPath('/admin/feedback/recovery')}>
-                    <Send className="h-4 w-4" /> Recovery Inbox
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
-                  <Link to={dashPath('/admin/feedback/links')}>
-                    <Star className="h-4 w-4" /> Review Links
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
-                  <Link to={dashPath('/admin/feedback/automations')}>
-                    <Settings className="h-4 w-4" /> Automations
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
-                  <Link to={dashPath('/admin/feedback/templates')}>
-                    <MessageSquareText className="h-4 w-4" /> Templates
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size={tokens.button.card} className="justify-start gap-2">
-                  <Link to={dashPath('/admin/feedback/dispatch')}>
-                    <BarChart3 className="h-4 w-4" /> Dispatch Queue
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end">
-              <ComplianceExportButton />
-            </div>
-            <ComplianceBanner />
-
-            <ParkedDispatchCard />
-
-            <RecoveryOutcomeCard />
-
-            <AIWeeklyFeedbackSummary />
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              <ServiceSatisfactionBriefCard />
-              <StylistReputationCard />
-            </div>
-
-            <FeedbackTrendDriftCard />
-
-            <NegativeFeedbackThemes />
-
-            <NegativeReviewHeatmap />
-
-            <CoachingLoopCard />
-
-            <PraiseWall />
-
-            <FeedbackResponseList organizationId={organizationId} limit={10} />
-          </TabsContent>
-
-          <TabsContent value="responses" className="mt-6">
-            <FeedbackResponseList organizationId={organizationId} limit={50} />
-          </TabsContent>
-
-          <TabsContent value="staff" className="mt-6">
-            <StaffFeedbackSummary organizationId={organizationId} />
-          </TabsContent>
-
-          {isSuperAdmin && (
-            <TabsContent value="settings" className="mt-6">
-              <ReviewThresholdSettings />
+            {/* Overview */}
+            <TabsContent value="overview" className="space-y-6 mt-6">
+              <TodaysMustTouchStrip />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+                <NPSScoreCard organizationId={organizationId} />
+                <RecoverySLAWidget />
+                <ResponseRateCard />
+                <PublicConversionCard />
+                <ReviewVelocityCard />
+              </div>
+              <AIWeeklyFeedbackSummary />
+              <Card>
+                <CardContent className="p-4 text-xs text-muted-foreground flex items-center justify-between gap-3">
+                  <span>Compliance log is immutable. Export for audit on demand.</span>
+                  <ComplianceExportButton />
+                </CardContent>
+              </Card>
+              <ComplianceBanner />
             </TabsContent>
-          )}
-        </Tabs>
+
+            {/* Reviews — first-party post-visit table */}
+            <TabsContent value="reviews" className="mt-6">
+              <ReviewsTable organizationId={organizationId} />
+            </TabsContent>
+
+            {/* Online Presence — third-party connectors + auto-boost */}
+            <TabsContent value="presence" className="mt-6">
+              <OnlinePresenceTab organizationId={organizationId} />
+            </TabsContent>
+
+            {/* Intelligence — Zura's edge */}
+            <TabsContent value="intelligence" className="space-y-6 mt-6">
+              <ParkedDispatchCard />
+              <RecoveryOutcomeCard />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <ServiceSatisfactionBriefCard />
+                <StylistReputationCard />
+              </div>
+              <FeedbackTrendDriftCard />
+              <NegativeFeedbackThemes />
+              <NegativeReviewHeatmap />
+              <CoachingLoopCard />
+              <PraiseWall />
+            </TabsContent>
+
+            {/* Settings — consolidated */}
+            <TabsContent value="settings" className="mt-6">
+              <ReputationSettingsTab />
+            </TabsContent>
+          </Tabs>
         </ReputationGate>
       </div>
     </DashboardLayout>
