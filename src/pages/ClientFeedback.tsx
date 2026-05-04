@@ -14,6 +14,7 @@ import { ReviewThankYouScreen } from '@/components/feedback/ReviewThankYouScreen
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldShowPublicShareScreen } from '@/lib/reputation/shareScreenGate';
+import { useAutoBoostConfig } from '@/components/feedback/AutoBoostTriggerDialog';
 
 function StarRatingInput({ 
   value, 
@@ -102,6 +103,7 @@ export default function ClientFeedback() {
     (feedback as any)?.location_id,
   );
   const submitFeedback = useSubmitFeedback();
+  const { data: autoBoost } = useAutoBoostConfig();
 
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [overallRating, setOverallRating] = useState(0);
@@ -163,12 +165,22 @@ export default function ClientFeedback() {
       appleReviewUrl: resolvedLinks?.apple || thresholdSettings.appleReviewUrl,
       facebookReviewUrl: resolvedLinks?.facebook || thresholdSettings.facebookReviewUrl,
     };
+    // Option C — adaptive emphasis. Links shown to ALL clients (doctrine);
+    // only the framing/copy escalates when the client passed the operator's
+    // happiness threshold AND Auto-Boost rating threshold.
+    const meetsAutoBoost = autoBoost?.enabled
+      ? overallRating >= (autoBoost.minStarThreshold ?? 5)
+      : true;
+    const emphasis: 'celebrate' | 'neutral' =
+      passedGate && meetsAutoBoost ? 'celebrate' : 'neutral';
     return (
       <ReviewShareScreen
         settings={mergedSettings}
         comments={comments}
         feedbackToken={token}
         onSkip={() => setSubmissionState('thankyou')}
+        emphasis={emphasis}
+        celebrateMessage={autoBoost?.enabled ? autoBoost.customMessage : undefined}
       />
     );
   }
