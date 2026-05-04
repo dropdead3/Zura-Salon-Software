@@ -1,39 +1,48 @@
 /**
  * PlatformConnectorTile — Per-platform card for Online Presence tab.
- * Phase 1: shows platform identity + manual review URL state (from
- * location_review_settings). OAuth "Connect" is Phase 2 — see Deferral
- * Register entry on the Reputation Per-Location Metering Scope memory.
+ *
+ * State precedence:
+ *   1. OAuth connection (`review_platform_connections`) — when active, shows
+ *      cached review count / average rating + last synced timestamp.
+ *   2. Manual review URL (`location_review_settings`) — fallback when no
+ *      OAuth connection exists; shows "Open page" deep-link.
+ *   3. Empty — guides operator to add a URL in Settings.
+ *
+ * "Connect" CTA is deferred (P2.1 / P2.2) — surfaced as a disabled tooltip
+ * row so operators know it's coming. Doctrine: Visibility Contract — we
+ * surface the *intent*, not silence, because this is operator-toggled space.
  */
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
+import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
+import { formatDistanceToNow } from 'date-fns';
 import type { ComponentType } from 'react';
 
 interface PlatformConnectorTileProps {
-  platform: 'google' | 'facebook';
+  platform: ReviewPlatform;
   label: string;
   Icon: ComponentType<{ className?: string }>;
   iconBgClass: string;
   iconColorClass: string;
   reviewUrl?: string | null;
-  /** Aggregated stat (deferred — Phase 2 OAuth fills this). */
-  averageRating?: number | null;
-  totalReviews?: number | null;
-  lastReviewLabel?: string | null;
 }
 
 export function PlatformConnectorTile({
+  platform,
   label,
   Icon,
   iconBgClass,
   iconColorClass,
   reviewUrl,
-  averageRating,
-  totalReviews,
-  lastReviewLabel,
 }: PlatformConnectorTileProps) {
+  const { data: connections } = useReviewPlatformConnections();
+  const connection = connections?.find((c) => c.platform === platform);
+
+  const isActive = connection?.status === 'active';
+  const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
   const hasUrl = !!reviewUrl?.trim();
 
   return (
@@ -45,40 +54,63 @@ export function PlatformConnectorTile({
 
         <div className="space-y-1">
           <h3 className="font-display text-base tracking-wide">{label}</h3>
-          {totalReviews != null && (
+          {isActive && connection?.cached_review_count != null && (
             <p className="text-xs text-muted-foreground">
-              {totalReviews} reviews{averageRating != null && ` · ${averageRating.toFixed(1)} avg`}
+              {connection.cached_review_count} reviews
+              {connection.cached_average_rating != null && ` · ${connection.cached_average_rating.toFixed(1)} avg`}
             </p>
           )}
-          {lastReviewLabel && (
-            <p className="text-xs text-muted-foreground">Most recent: {lastReviewLabel}</p>
+          {isActive && connection?.last_synced_at && (
+            <p className="text-[11px] text-muted-foreground/70">
+              Synced {formatDistanceToNow(new Date(connection.last_synced_at), { addSuffix: true })}
+            </p>
           )}
         </div>
 
         <div className="mt-auto flex flex-col items-center gap-2 w-full">
-          {hasUrl ? (
-            <>
-              <Badge variant="outline" className="gap-1 text-xs">
-                <LinkIcon className="h-3 w-3" /> Review URL set
-              </Badge>
-              <Button
-                variant="outline"
-                size={tokens.button.card}
-                asChild
-                className="gap-1.5 w-full"
-              >
-                <a href={reviewUrl!} target="_blank" rel="noopener noreferrer">
-                  Open page <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            </>
-          ) : (
-            <>
-              <Badge variant="secondary" className="text-xs">Not connected</Badge>
-              <p className="text-xs text-muted-foreground">
-                Add a review URL in Settings → Review Links
-              </p>
-            </>
+          {isActive && (
+            <Badge variant="outline" className="gap-1 text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-3 w-3" /> Connected
+            </Badge>
+          )}
+          {isErrored && (
+            <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-3 w-3" /> Reconnect needed
+            </Badge>
+          )}
+          {!isActive && !isErrored && hasUrl && (
+            <Badge variant="outline" className="gap-1 text-xs">
+              <LinkIcon className="h-3 w-3" /> Review URL set
+            </Badge>
+          )}
+          {!isActive && !isErrored && !hasUrl && (
+            <Badge variant="secondary" className="text-xs">Not connected</Badge>
+          )}
+
+          {hasUrl && (
+            <Button
+              variant="outline"
+              size={tokens.button.card}
+              asChild
+              className="gap-1.5 w-full"
+            >
+              <a href={reviewUrl!} target="_blank" rel="noopener noreferrer">
+                Open page <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+          )}
+
+          {/* Connect CTA placeholder — OAuth flow is deferred (P2.1 / P2.2). */}
+          {!isActive && (
+            <Button
+              variant="ghost"
+              size={tokens.button.card}
+              disabled
+              className="w-full text-xs"
+              title="Live sync is coming soon — for now, set the review URL in Settings."
+            >
+              Connect (coming soon)
+            </Button>
           )}
         </div>
       </CardContent>
