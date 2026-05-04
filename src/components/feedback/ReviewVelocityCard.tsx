@@ -76,8 +76,8 @@ export function ReviewVelocityCard() {
         </div>
         <p className="text-xs text-muted-foreground">
           {v?.hasSignal
-            ? `${v.perWeek.toFixed(1)} per week · vs ${v.prior} prior 30d`
-            : `${v?.current ?? 0} click-throughs — need 3 to compute`}
+            ? `${v.perWeek.toFixed(1)} per week · vs ${v.prior} the month before`
+            : `${v?.current ?? 0} click-throughs — need 3 to show momentum`}
         </p>
         {v?.hasSignal && v.byPlatform.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
