@@ -24,14 +24,23 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
     );
   }
 
-  if (!stats) {
+  const NPS_MIN_REPLIES = 5;
+  const totalReplies = stats?.totalResponses ?? 0;
+
+  if (!stats || totalReplies < NPS_MIN_REPLIES) {
+    const remaining = Math.max(0, NPS_MIN_REPLIES - totalReplies);
     return (
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Client Happiness</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">No feedback yet — your score will appear once clients start replying.</p>
+        <CardContent className="space-y-2">
+          <p className="text-2xl font-medium text-muted-foreground">—</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {totalReplies === 0
+              ? 'Once 5 clients reply to a feedback request, you\'ll see a 0–100 score showing how your clients feel overall.'
+              : `${totalReplies} of 5 replies in — ${remaining} more and we'll show your happiness score.`}
+          </p>
         </CardContent>
       </Card>
     );

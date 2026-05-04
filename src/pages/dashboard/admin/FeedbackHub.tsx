@@ -38,6 +38,8 @@ import { useEffect, useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ReputationGate } from '@/components/reputation/ReputationGate';
 import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
+import { ReputationGlossary } from '@/components/feedback/ReputationGlossary';
+import { useRecoverySLA } from '@/hooks/useRecoverySLA';
 import { toast } from 'sonner';
 
 const FEEDBACK_TABS = new Set(['overview', 'reviews', 'presence', 'intelligence', 'settings']);
@@ -71,6 +73,8 @@ export default function FeedbackHub() {
   const googleOAuthError = searchParams.get('google_oauth_error');
   const initialTab = requestedTab && FEEDBACK_TABS.has(requestedTab) ? requestedTab : 'overview';
   const [activeTab, setActiveTab] = useState(initialTab);
+  const { data: slaData } = useRecoverySLA();
+  const hasBreached = (slaData?.breachedSLA ?? 0) > 0;
 
   useEffect(() => {
     if (requestedTab && FEEDBACK_TABS.has(requestedTab)) {
@@ -121,6 +125,7 @@ export default function FeedbackHub() {
               </p>
             </div>
           </div>
+          <ReputationGlossary />
         </div>
 
         <ReputationGate surfaceLabel="Online Reputation">
@@ -151,8 +156,17 @@ export default function FeedbackHub() {
             <TabsContent value="overview" className="space-y-6 mt-6">
               <TodaysMustTouchStrip />
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-                <NPSScoreCard organizationId={organizationId} />
-                <RecoverySLAWidget />
+                {hasBreached ? (
+                  <>
+                    <RecoverySLAWidget />
+                    <NPSScoreCard organizationId={organizationId} />
+                  </>
+                ) : (
+                  <>
+                    <NPSScoreCard organizationId={organizationId} />
+                    <RecoverySLAWidget />
+                  </>
+                )}
                 <ResponseRateCard />
                 <PublicConversionCard />
                 <ReviewVelocityCard />

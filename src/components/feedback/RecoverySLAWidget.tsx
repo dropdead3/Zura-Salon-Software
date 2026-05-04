@@ -21,8 +21,15 @@ export function RecoverySLAWidget() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isLoading ? (
           <p className="text-xs text-muted-foreground">Loading…</p>
+        ) : !data || (data.open + data.contacted + data.resolved) === 0 ? (
+          <div className="space-y-2">
+            <p className="text-2xl font-medium text-muted-foreground">—</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              When a client gives unhappy feedback, a follow-up task lands here. Reach out within 24 hours to win them back.
+            </p>
+          </div>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
