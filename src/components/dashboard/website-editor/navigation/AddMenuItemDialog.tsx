@@ -180,12 +180,15 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
           {dropdownParents.length > 0 && type !== 'dropdown_parent' && (
             <div className="space-y-1.5">
               <Label className="text-xs">Parent Item</Label>
-              <Select value={parentId} onValueChange={setParentId}>
+              <Select
+                value={parentId || '__root__'}
+                onValueChange={(v) => setParentId(v === '__root__' ? '' : v)}
+              >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue placeholder="Top level (no parent)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Top Level</SelectItem>
+                  <SelectItem value="__root__">Top Level</SelectItem>
                   {dropdownParents.map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.label}
