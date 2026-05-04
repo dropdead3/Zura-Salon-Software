@@ -74,10 +74,12 @@ export function ReviewVelocityCard() {
             </span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           {v?.hasSignal
             ? `${v.perWeek.toFixed(1)} per week · vs ${v.prior} the month before`
-            : `${v?.current ?? 0} click-throughs — need 3 to show momentum`}
+            : (v?.current ?? 0) === 0
+            ? 'Once 3 clients click through to leave a public review, you\'ll see whether your reputation is speeding up or slowing down.'
+            : `${v?.current ?? 0} of 3 click-throughs in — momentum trend appears soon.`}
         </p>
         {v?.hasSignal && v.byPlatform.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
