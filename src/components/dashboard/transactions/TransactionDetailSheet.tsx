@@ -384,7 +384,6 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                     },
                     reviewUrls: {
                       google: reviewSettings?.googleReviewUrl || '',
-                      yelp: reviewSettings?.yelpReviewUrl || '',
                       facebook: reviewSettings?.facebookReviewUrl || '',
                     },
                   };
@@ -417,7 +416,6 @@ export function TransactionDetailSheet({ transaction, open, onOpenChange }: Tran
                         },
                         reviewUrls: {
                           google: reviewSettings?.googleReviewUrl || '',
-                          yelp: reviewSettings?.yelpReviewUrl || '',
                           facebook: reviewSettings?.facebookReviewUrl || '',
                         },
                       };
