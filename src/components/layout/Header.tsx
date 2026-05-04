@@ -171,13 +171,16 @@ export function Header() {
     }
 
     const nonCta: typeof FALLBACK_NAV_ITEMS = [];
-    let cta = { href: orgPath('/booking'), label: 'Book Consult' };
+    let cta: { href: string; label: string; openInNewTab?: boolean } = {
+      href: orgPath('/booking'),
+      label: 'Book Consult',
+    };
 
     publishedMenu.forEach((item, idx) => {
       if (item.visibility === 'mobile_only') return;
       const nav = menuItemToNavItem(item, idx, orgPath, pageSlugById);
       if (nav.type === 'cta') {
-        cta = { href: nav.href, label: nav.label };
+        cta = { href: nav.href, label: nav.label, openInNewTab: nav.openInNewTab };
       } else {
         nonCta.push(nav as typeof FALLBACK_NAV_ITEMS[0]);
       }
