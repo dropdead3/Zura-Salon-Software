@@ -37,6 +37,8 @@ interface PlatformConnectorTileProps {
   iconBgClass: string;
   iconColorClass: string;
   reviewUrl?: string | null;
+  /** When provided, scopes the connection lookup to this location. */
+  locationId?: string | null;
 }
 
 export function PlatformConnectorTile({
@@ -46,11 +48,16 @@ export function PlatformConnectorTile({
   iconBgClass,
   iconColorClass,
   reviewUrl,
+  locationId,
 }: PlatformConnectorTileProps) {
   const { data: connections } = useReviewPlatformConnections();
   const { effectiveOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
-  const connection = connections?.find((c) => c.platform === platform);
+  const connection = connections?.find(
+    (c) =>
+      c.platform === platform &&
+      (locationId ? c.location_id === locationId : true),
+  );
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [polling, setPolling] = useState(false);
