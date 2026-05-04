@@ -54,7 +54,6 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
 
   return (
     <div className="space-y-6">
-      <ReputationOAuthGraceBanner />
 
       {/* Auto-Boost status strip — config lives in Settings */}
       <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
