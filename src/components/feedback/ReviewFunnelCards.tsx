@@ -57,7 +57,8 @@ export function ResponseRateCard() {
 
 /** Public Review Conversion KPI tile — % of promoters who clicked through to leave a public review. */
 export function PublicConversionCard() {
-  const { data, isLoading } = useReviewFunnel(30);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useReviewFunnel(30, locationId);
 
   if (isLoading) {
     return (
