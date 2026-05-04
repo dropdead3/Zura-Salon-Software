@@ -23110,6 +23110,77 @@ export type Database = {
           },
         ]
       }
+      review_platform_connections: {
+        Row: {
+          access_token: string | null
+          cached_average_rating: number | null
+          cached_review_count: number | null
+          created_at: string
+          created_by: string | null
+          external_account_id: string | null
+          external_account_label: string | null
+          id: string
+          last_error: string | null
+          last_synced_at: string | null
+          location_id: string | null
+          organization_id: string
+          platform: Database["public"]["Enums"]["review_platform"]
+          refresh_token: string | null
+          scopes: string[] | null
+          status: Database["public"]["Enums"]["review_connection_status"]
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          cached_average_rating?: number | null
+          cached_review_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          external_account_id?: string | null
+          external_account_label?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          location_id?: string | null
+          organization_id: string
+          platform: Database["public"]["Enums"]["review_platform"]
+          refresh_token?: string | null
+          scopes?: string[] | null
+          status?: Database["public"]["Enums"]["review_connection_status"]
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          cached_average_rating?: number | null
+          cached_review_count?: number | null
+          created_at?: string
+          created_by?: string | null
+          external_account_id?: string | null
+          external_account_label?: string | null
+          id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          location_id?: string | null
+          organization_id?: string
+          platform?: Database["public"]["Enums"]["review_platform"]
+          refresh_token?: string | null
+          scopes?: string[] | null
+          status?: Database["public"]["Enums"]["review_connection_status"]
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_platform_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_request_automation_rules: {
         Row: {
           channel: string
@@ -34218,6 +34289,13 @@ export type Database = {
         | "fixed_quantity"
         | "forecast_driven"
       retention_action_type: "coaching_flag" | "demotion_eligible"
+      review_connection_status:
+        | "pending"
+        | "active"
+        | "expired"
+        | "revoked"
+        | "error"
+      review_platform: "google" | "facebook"
       rsvp_status: "pending" | "accepted" | "declined"
       seo_campaign_status:
         | "planning"
@@ -34678,6 +34756,14 @@ export const Constants = {
         "forecast_driven",
       ],
       retention_action_type: ["coaching_flag", "demotion_eligible"],
+      review_connection_status: [
+        "pending",
+        "active",
+        "expired",
+        "revoked",
+        "error",
+      ],
+      review_platform: ["google", "facebook"],
       rsvp_status: ["pending", "accepted", "declined"],
       seo_campaign_status: [
         "planning",
