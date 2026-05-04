@@ -33,6 +33,7 @@ import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { useChangelogSummary } from '@/hooks/usePublishChangelog';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
