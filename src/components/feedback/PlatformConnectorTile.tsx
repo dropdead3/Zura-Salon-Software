@@ -143,6 +143,9 @@ export function PlatformConnectorTile({
               <p className="text-[11px] text-muted-foreground/80 leading-snug">
                 You'll be asked to sign in with the Google account that manages your Business Profile.
               </p>
+              <p className="text-[11px] text-muted-foreground/60 leading-snug">
+                Tip: if you're signed into multiple Google accounts, use an incognito window to avoid picking the wrong one.
+              </p>
             </>
           )}
           {!isActive && !supportsOAuth && (
