@@ -28,8 +28,8 @@ export function ResponseRateCard() {
     <Card className="relative">
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
-          title="Response Rate"
-          description="Surveys that got a reply ÷ surveys sent in the last 30 days. Suppressed below 10 sent."
+          title="Reply Rate"
+          description="Of the feedback requests we sent in the last 30 days, the share that got a reply. Hidden until at least 10 have been sent."
         />
       </div>
       <CardHeader className="pb-2">
