@@ -195,8 +195,19 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
           <div className="space-y-1.5">
             <Label className="text-xs">Anchor ID</Label>
             <Input
-              value={item.target_anchor ?? ''}
-              onChange={(e) => update({ target_anchor: e.target.value || null })}
+              value={anchor}
+              onChange={(e) => setAnchor(e.target.value)}
+              onBlur={() => {
+                const trimmed = anchor.trim();
+                // Normalize to a single leading '#' so renderers don't double-prefix.
+                const normalized = trimmed
+                  ? (trimmed.startsWith('#') ? trimmed : `#${trimmed}`)
+                  : '';
+                if (normalized !== (item.target_anchor ?? '')) {
+                  update({ target_anchor: normalized || null });
+                }
+                setAnchor(normalized);
+              }}
               placeholder="#section-name"
               className="h-9 text-sm"
               autoCapitalize="none"
