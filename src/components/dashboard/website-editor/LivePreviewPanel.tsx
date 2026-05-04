@@ -265,9 +265,45 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
     // Sidebar→canvas hover bridge. Forwards the typed CustomEvent across
     // the iframe boundary as a postMessage so the renderer can outline the
     // matching section without re-implementing the dispatcher contract.
+    //
+    // Three guards on the auto-scroll behaviour:
+    //   1. Debounce ~120ms — skimming the sidebar should not chase the cursor.
+    //   2. Skip when the hovered row IS the active editor section — the
+    //      click-to-edit flow already scrolled there; re-scrolling on hover
+    //      is noise.
+    //   3. `prefers-reduced-motion` → behavior:'auto' (instant, no smooth).
+    let hoverScrollTimer: ReturnType<typeof setTimeout> | null = null;
     const onSectionHover = (e: Event) => {
       const detail = (e as CustomEvent<EditorSectionHoverDetail>).detail;
-      post({ type: 'PREVIEW_HOVER_SECTION', sectionId: detail?.sectionId ?? null });
+      const sectionId = detail?.sectionId ?? null;
+
+      // Outline immediately — outline is cheap and instant feedback matters.
+      // The scroll itself is what we debounce / suppress.
+      post({
+        type: 'PREVIEW_HOVER_SECTION',
+        sectionId,
+        scroll: false,
+      });
+
+      if (hoverScrollTimer) {
+        clearTimeout(hoverScrollTimer);
+        hoverScrollTimer = null;
+      }
+      if (!sectionId) return;
+      // Suppress scroll when the operator is already editing this section.
+      if (sectionId === activeSectionIdRef.current) return;
+
+      hoverScrollTimer = setTimeout(() => {
+        const reduce =
+          typeof window !== 'undefined' &&
+          window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        post({
+          type: 'PREVIEW_HOVER_SECTION',
+          sectionId,
+          scroll: true,
+          behavior: reduce ? 'auto' : 'smooth',
+        });
+      }, 120);
     };
 
     window.addEventListener('editor-design-preview', onDesign);
@@ -287,8 +323,16 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       window.removeEventListener('promo-popup-preview-reset', onPromoReset);
       window.removeEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
       window.removeEventListener('message', onPromoPhaseMessage);
+      if (hoverScrollTimer) clearTimeout(hoverScrollTimer);
     };
   }, [previewOrigin]);
+
+  // Mirror activeSectionId into a ref so the hover handler (registered once
+  // per previewOrigin) reads the latest value without re-subscribing.
+  const activeSectionIdRef = useRef<string | undefined>(activeSectionId);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId;
+  }, [activeSectionId]);
 
   const handleRefresh = () => {
     if (!previewUrl) return;

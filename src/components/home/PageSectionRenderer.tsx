@@ -153,10 +153,15 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
           const el = document.getElementById(`section-${msg.sectionId}`);
           if (el) {
             el.classList.add('preview-hover');
-            // Auto-scroll the canvas to the hovered section. `block: 'nearest'`
-            // keeps already-visible sections from jumping; only off-screen
-            // rows trigger movement. Smooth keeps the motion calm.
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Auto-scroll only when the editor explicitly requests it
+            // (debounced + reduced-motion-aware on the parent side).
+            // `block: 'nearest'` keeps already-visible sections from jumping.
+            if (msg.scroll === true) {
+              el.scrollIntoView({
+                behavior: msg.behavior === 'auto' ? 'auto' : 'smooth',
+                block: 'nearest',
+              });
+            }
           }
         }
       }
