@@ -118,6 +118,9 @@ export default function ClientFeedback() {
   const [submissionState, setSubmissionState] = useState<SubmissionState>('form');
   const [passedGate, setPassedGate] = useState(false);
   const [showManagerFollowUp, setShowManagerFollowUp] = useState(false);
+  // Whether THIS submission's qualifying-visit count hits the operator's
+  // promptAfterNReviews cadence. Drives celebrate vs neutral emphasis.
+  const [hitsAutoBoostCadence, setHitsAutoBoostCadence] = useState(true);
 
   if (!token) {
     return (
