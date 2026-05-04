@@ -631,6 +631,7 @@ function DashboardLayoutInner({ children, hideFooter, hideTopBar, hideSidebar }:
           <BackfillWelcomeBanner />
           <InitialSetupGateBanner />
           <ReputationGraceBanner />
+          <ReputationOAuthGraceBanner />
           {children}
         </div>
       </main>
