@@ -600,24 +600,31 @@ export function Header() {
                           {item.label}
                           <ChevronDown size={14} className="transition-transform duration-200" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="center" 
+                        <DropdownMenuContent
+                          align="center"
                           sideOffset={12}
-                          className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
+                          className={cn(
+                            "rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5",
+                            // Mega panel: switch to wider 2-column grid when 5+ children.
+                            dropdownStyle === 'mega' && (item.children?.length ?? 0) >= 5
+                              ? "w-[420px] grid grid-cols-2 gap-1"
+                              : "w-[180px]",
+                          )}
                         >
                           {item.children.map((link) => (
                             <DropdownMenuItem key={link.href} asChild>
-                              <Link
+                              <NavLink
                                 to={link.href}
+                                openInNewTab={link.openInNewTab}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
                                   location.pathname === link.href
-                                    ? "bg-accent text-accent-foreground" 
+                                    ? "bg-accent text-accent-foreground"
                                     : "text-foreground/80"
                                 )}
                               >
                                 {link.label}
-                              </Link>
+                              </NavLink>
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
