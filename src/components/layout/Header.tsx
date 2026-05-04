@@ -137,6 +137,18 @@ export function Header() {
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
   const mobileCTAVisible = menuConfig?.mobile_cta_visible ?? true;
   const showLogo = menuConfig?.show_logo ?? true;
+  const desktopAlignment = menuConfig?.desktop_alignment ?? 'center';
+  const desktopDensity = menuConfig?.desktop_density ?? 'comfortable';
+  const dropdownStyle = menuConfig?.dropdown_style ?? 'simple';
+  const ctaTreatment = menuConfig?.cta_treatment ?? 'pill';
+
+  // Tailwind class maps for menu config — kept inline so token additions are local.
+  const navAlignmentClass = desktopAlignment === 'left'
+    ? 'justify-start'
+    : desktopAlignment === 'right'
+      ? 'justify-end'
+      : 'justify-center';
+  const navDensityClass = desktopDensity === 'compact' ? 'gap-3 xl:gap-5' : 'gap-4 xl:gap-8';
 
   // Slug map for resolving page_link items by id (avoids UUID-as-URL bug).
   const pageSlugById = useMemo(() => {
