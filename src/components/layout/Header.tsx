@@ -503,8 +503,8 @@ export function Header() {
             isOverDark ? "text-white [&_svg]:text-white" : "text-foreground"
           )}>
             <div className="flex items-center justify-between h-16 gap-4">
-            {/* Logo */}
-            <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
+            {/* Logo (suppressed when menu config opts out) */}
+            <div className={cn("w-40 lg:w-40 xl:w-56 shrink-0 flex items-center", !showLogo && "invisible pointer-events-none")}>
               <Link
                 to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-8"
