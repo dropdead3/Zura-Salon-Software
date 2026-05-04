@@ -2,12 +2,15 @@
  * reputation-google-oauth-callback
  *
  * Public endpoint Google redirects to after operator consent. Verifies the
- * signed state, exchanges the auth code for tokens, then upserts a row in
- * `review_platform_connections` (status='active'). Finally redirects the
- * operator back to the dashboard with ?google_connected=1.
+ * signed state, exchanges the auth code for tokens, then discovers every
+ * Google Business Profile the authorizing account can manage. Stashes the
+ * tokens + discovered locations in `oauth_pending_mappings` (15min TTL) and
+ * redirects the operator to the GBP-to-location mapping picker.
  *
  * NOTE: this function is unauthenticated (no JWT) — Google does the redirect.
  * Authenticity comes from the HMAC-signed state.
+ *
+ * GBP-to-Location Federation Contract: see mem://features/reputation-engine.md
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -35,15 +38,12 @@ async function verifyState(state: string, secret: string): Promise<any | null> {
   if (!ok) return null;
   try {
     const payload = JSON.parse(b64UrlDecode(b64));
-    // Reject states older than 10 minutes
     if (Date.now() - payload.ts > 10 * 60 * 1000) return null;
     return payload;
   } catch { return null; }
 }
 
 function htmlRedirect(url: string, message: string): Response {
-  // Use a real 302 redirect (most reliable across browsers and popup-blocker contexts).
-  // Fallback HTML body with meta-refresh + manual link in case the client ignores Location.
   return new Response(
     `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${message}</title>
      <meta http-equiv="refresh" content="0; url=${url}"></head>
@@ -60,6 +60,70 @@ function htmlRedirect(url: string, message: string): Response {
   );
 }
 
+interface GBPLocation {
+  place_id: string;
+  resource_name: string; // e.g. "accounts/123/locations/456"
+  account_id: string;
+  title: string;
+  address?: string;
+}
+
+/**
+ * Fetch all GBP locations the access_token can manage.
+ * Uses Account Management API + Business Information API (current generation;
+ * legacy My Business v4 was deprecated). Best-effort: returns [] on failure
+ * so the operator can still proceed and use manual review URLs.
+ */
+async function discoverGBPLocations(accessToken: string): Promise<GBPLocation[]> {
+  try {
+    const accountsRes = await fetch(
+      "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (!accountsRes.ok) {
+      console.warn("accounts list failed", accountsRes.status, await accountsRes.text());
+      return [];
+    }
+    const accountsData = await accountsRes.json();
+    const accounts: Array<{ name: string }> = accountsData.accounts ?? [];
+    const all: GBPLocation[] = [];
+
+    for (const acct of accounts) {
+      // acct.name is "accounts/{id}"
+      const accountId = acct.name.replace("accounts/", "");
+      const locRes = await fetch(
+        `https://mybusinessbusinessinformation.googleapis.com/v1/${acct.name}/locations?readMask=name,title,storefrontAddress,metadata.placeId`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (!locRes.ok) {
+        console.warn("locations list failed", acct.name, locRes.status);
+        continue;
+      }
+      const locData = await locRes.json();
+      const locations: Array<any> = locData.locations ?? [];
+      for (const loc of locations) {
+        const placeId = loc?.metadata?.placeId;
+        if (!placeId) continue; // unverified listings don't have a place id
+        const addr = loc?.storefrontAddress;
+        const addressStr = addr
+          ? [addr.addressLines?.join(" "), addr.locality, addr.administrativeArea].filter(Boolean).join(", ")
+          : undefined;
+        all.push({
+          place_id: placeId,
+          resource_name: loc.name,
+          account_id: accountId,
+          title: loc.title ?? "(untitled)",
+          address: addressStr,
+        });
+      }
+    }
+    return all;
+  } catch (e) {
+    console.error("GBP discovery failed", e);
+    return [];
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -67,8 +131,6 @@ Deno.serve(async (req) => {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
-  // Redirect base MUST come from server config — never the request `Origin`
-  // header (attacker-controllable in cross-site contexts → open-redirect).
   const appBase = Deno.env.get("APP_BASE_URL") ||
     "https://id-preview--b06a5744-64b6-4629-9f76-e0e2cb73ea52.lovable.app";
 
@@ -106,45 +168,45 @@ Deno.serve(async (req) => {
     const expiresAt = tokens.expires_in
       ? new Date(Date.now() + tokens.expires_in * 1000).toISOString() : null;
 
+    // Discover GBP locations the operator can manage. Best-effort.
+    const discovered = await discoverGBPLocations(tokens.access_token);
+    console.log(`Discovered ${discovered.length} GBP locations for org ${payload.org_id}`);
+
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { error: upsertErr } = await admin
-      .from("review_platform_connections")
-      .upsert({
+    // Stash in pending mappings table for the picker step
+    const { data: pending, error: insertErr } = await admin
+      .from("oauth_pending_mappings")
+      .insert({
         organization_id: payload.org_id,
-        location_id: null,
-        platform: "google",
-        status: "active",
-        external_account_id: userinfo.sub ?? null,
-        external_account_label: userinfo.email ?? null,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token ?? null,
-        token_expires_at: expiresAt,
-        scopes: (tokens.scope ?? "").split(" ").filter(Boolean),
-        last_error: null,
-        created_by: payload.user_id,
-      }, { onConflict: "organization_id,location_id,platform" });
+        user_id: payload.user_id,
+        provider: "google",
+        payload: {
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token ?? null,
+          expires_at: expiresAt,
+          scopes: (tokens.scope ?? "").split(" ").filter(Boolean),
+          external_account_id: userinfo.sub ?? null,
+          external_account_label: userinfo.email ?? null,
+          discovered_locations: discovered,
+        },
+      })
+      .select("nonce")
+      .single();
 
-    if (upsertErr) {
-      console.error("upsert failed", upsertErr);
-      return htmlRedirect(`${appBase}/?google_oauth_error=db_write`, "Failed to save connection");
+    if (insertErr || !pending) {
+      console.error("pending mapping insert failed", insertErr);
+      return htmlRedirect(`${appBase}/?google_oauth_error=staging_failed`, "Could not stage mapping");
     }
 
-    // Strict allowlist: the only legitimate post-connect destination is the
-    // org-scoped reputation hub. Anything else (including "/" or other admin
-    // pages) collapses to the org's feedback page when slug is recoverable,
-    // else "/". This is tighter than a same-origin shape check — it prevents
-    // a tampered state from bouncing the operator anywhere else in the app.
-    const ALLOWED_RETURN = /^\/org\/[A-Za-z0-9_-]+\/dashboard\/admin\/feedback(?:\?[^#]*)?$/;
-    const rawReturn = typeof payload.return_to === "string" ? payload.return_to : "";
-    const returnTo = ALLOWED_RETURN.test(rawReturn) ? rawReturn : "/";
-    const sep = returnTo.includes("?") ? "&" : "?";
-    return htmlRedirect(`${appBase}${returnTo}${sep}google_connected=1`, "Connected — redirecting");
+    // Redirect to mapping page with nonce. Client-side router resolves the org slug.
+    const returnTo = `/dashboard/admin/feedback/connect-google?nonce=${pending.nonce}`;
+    return htmlRedirect(`${appBase}${returnTo}`, "Connecting Google…");
   } catch (e) {
     console.error("callback error", e);
-    return htmlRedirect(`${appBase}/?google_oauth_error=server_error`, "Server error");
+    return htmlRedirect(`${appBase}/?google_oauth_error=internal`, "Connection failed");
   }
 });
