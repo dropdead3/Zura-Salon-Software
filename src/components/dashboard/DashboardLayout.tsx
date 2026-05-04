@@ -55,6 +55,7 @@ import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { BackfillWelcomeBanner } from '@/components/onboarding/BackfillWelcomeBanner';
 import { InitialSetupGateBanner } from '@/components/onboarding/setup/InitialSetupGateBanner';
 import { ReputationGraceBanner } from '@/components/reputation/ReputationGraceBanner';
+import { ReputationOAuthGraceBanner } from '@/components/reputation/ReputationOAuthGraceBanner';
 import { useBackfillTrigger } from '@/hooks/onboarding/useBackfillTrigger';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 
