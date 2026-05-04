@@ -6,6 +6,7 @@ import { OrganizationLogo } from "@/components/brand/OrganizationLogo";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug } from "@/hooks/useWebsiteMenus";
+import { useSettingsOrgId } from "@/hooks/useSettingsOrgId";
 import { emitNavEvent } from "@/lib/nav-tracking";
 
 const FALLBACK_FOOTER_LINKS = [
@@ -17,7 +18,8 @@ export function Footer() {
   const { data: locations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
   const orgPath = useOrgPath();
-  const { data: publishedFooterData } = usePublicMenuBySlug('footer');
+  const orgId = useSettingsOrgId();
+  const { data: publishedFooterData } = usePublicMenuBySlug('footer', orgId);
   
   const footerLinks = useMemo(() => {
     const items = publishedFooterData?.items;
