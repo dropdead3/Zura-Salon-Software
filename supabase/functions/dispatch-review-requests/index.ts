@@ -223,6 +223,17 @@ async function handleFailure(
 
 async function sendDue(supabase: any, summary: DispatchSummary) {
   const nowIso = new Date().toISOString();
+  // Per-org SEND cap mirrors the enqueue cap so one org's backlog cannot
+  // starve the rest of the fleet of dispatches in the same tick. Tunable
+  // via env without redeploy. Defaults to 50 (more conservative than
+  // enqueue, since each send hits Twilio).
+  const PER_ORG_SEND_CAP = Number(Deno.env.get("REPUTATION_PER_ORG_SEND_CAP") ?? "50");
+  // Global send budget per tick. We pull a larger pool than we'll send so
+  // we can fairness-allocate in memory; un-served rows stay queued for the
+  // next tick (next_retry_at unchanged).
+  const GLOBAL_SEND_POOL = Number(Deno.env.get("REPUTATION_GLOBAL_SEND_POOL") ?? "1000");
+  const GLOBAL_SEND_CAP = Number(Deno.env.get("REPUTATION_GLOBAL_SEND_CAP") ?? "200");
+
   // Pull due rows: scheduled, not sent, not skipped, attempts under cap (5),
   // and either never retried or past their next_retry_at.
   const { data: due } = await supabase
@@ -233,10 +244,37 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
     .is("skipped_at", null)
     .lt("attempts", 5)
     .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
-    .limit(200);
+    .order("scheduled_for", { ascending: true })
+    .limit(GLOBAL_SEND_POOL);
   if (!due?.length) return;
 
+  // Round-robin fairness: bucket due rows by org (preserving scheduled_for
+  // order within each), then interleave so every org gets a turn before any
+  // single org consumes its full PER_ORG_SEND_CAP.
+  const buckets = new Map<string, any[]>();
   for (const row of due) {
+    const list = buckets.get(row.organization_id) ?? [];
+    list.push(row);
+    buckets.set(row.organization_id, list);
+  }
+  const orderedDue: any[] = [];
+  const sentPerOrg = new Map<string, number>();
+  let exhausted = false;
+  while (!exhausted && orderedDue.length < GLOBAL_SEND_CAP) {
+    exhausted = true;
+    for (const [orgId, list] of buckets) {
+      if (orderedDue.length >= GLOBAL_SEND_CAP) break;
+      const usedByOrg = sentPerOrg.get(orgId) ?? 0;
+      if (usedByOrg >= PER_ORG_SEND_CAP) continue;
+      const next = list.shift();
+      if (!next) continue;
+      orderedDue.push(next);
+      sentPerOrg.set(orgId, usedByOrg + 1);
+      exhausted = false;
+    }
+  }
+
+  for (const row of orderedDue) {
     try {
       // Skip if no contact channel
       const phone = row.client_phone;
