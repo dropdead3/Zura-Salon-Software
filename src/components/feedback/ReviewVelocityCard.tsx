@@ -61,7 +61,7 @@ export function ReviewVelocityCard() {
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Star className="h-4 w-4 text-amber-500" /> Review Velocity
+          <Star className="h-4 w-4 text-amber-500" /> Review Momentum
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
