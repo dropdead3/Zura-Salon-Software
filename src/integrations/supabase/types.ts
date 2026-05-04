@@ -33972,6 +33972,10 @@ export type Database = {
         Args: { p_org_id: string }
         Returns: undefined
       }
+      reorder_menu_items: {
+        Args: { p_items: Json; p_menu_id: string }
+        Returns: undefined
+      }
       reschedule_booking: {
         Args: {
           p_appointment_id: string
