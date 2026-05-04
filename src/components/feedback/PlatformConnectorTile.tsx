@@ -167,6 +167,7 @@ export function PlatformConnectorTile({
       if (options?.reconnect) {
         toast.info('Disconnected — starting Google sign-in…');
         setDisconnecting(false);
+        logSwitchEvent('switch_initiated', { prior_account_id: priorAccountId });
         startConnectionPoll(priorAccountId);
         await handleConnect();
         return;
