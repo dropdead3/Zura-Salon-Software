@@ -17,6 +17,7 @@ import {
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useMenuValidation } from './useMenuValidation';
 import { MobileNavConfig } from './MobileNavConfig';
+import { DesktopNavConfig } from './DesktopNavConfig';
 import { toast } from '@/hooks/use-toast';
 import { tokens } from '@/lib/design-tokens';
 
