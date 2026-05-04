@@ -370,12 +370,14 @@ export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
   const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
+  const { isEntitled: reputationActive, isLoading: reputationLoading } = useReputationEntitlement();
 
-  const isLoading = connectLoading || colorBarLoading;
+  const isLoading = connectLoading || colorBarLoading || reputationLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
     if (key === 'backroom') return colorBarActive;
+    if (key === 'reputation') return reputationActive;
     return false;
   };
 
