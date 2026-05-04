@@ -117,7 +117,7 @@ export default function FeedbackHub() {
                 Online Reputation
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
-                Capture first-party feedback, route happy clients to public platforms, and surface what to fix next.
+                See how your clients feel, send happy ones to leave reviews, and reach out fast when something goes wrong.
               </p>
             </div>
           </div>
