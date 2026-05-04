@@ -34,7 +34,7 @@ export function ResponseRateCard() {
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <MailOpen className="h-4 w-4 text-primary" /> Response Rate
+          <MailOpen className="h-4 w-4 text-primary" /> Reply Rate
         </CardTitle>
       </CardHeader>
       <CardContent>
