@@ -90,8 +90,35 @@ export function PlatformConnectorTile({
     }
   };
 
+  // Auto-poll for ~30s after a switch so the tile flips to the new account.
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+  const startConnectionPoll = (priorAccountId: string | null) => {
+    stopPolling();
+    const startedAt = Date.now();
+    pollRef.current = setInterval(async () => {
+      const elapsed = Date.now() - startedAt;
+      const result = await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+      void result;
+      const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
+      const next = fresh?.find((c) => c.platform === platform);
+      const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
+      if (switched || elapsed > 30_000) {
+        stopPolling();
+        if (switched) toast.success('Google account switched.');
+      }
+    }, 2_500);
+  };
+  useEffect(() => () => stopPolling(), []);
+
   const handleDisconnect = async (options?: { reconnect?: boolean }) => {
     if (!effectiveOrganization?.id) return;
+    const priorAccountId = connection?.external_account_id ?? null;
     setDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke('reputation-google-oauth-disconnect', {
@@ -102,6 +129,7 @@ export function PlatformConnectorTile({
       if (options?.reconnect) {
         toast.info('Disconnected — starting Google sign-in…');
         setDisconnecting(false);
+        startConnectionPoll(priorAccountId);
         await handleConnect();
         return;
       }
