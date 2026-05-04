@@ -13,6 +13,7 @@ import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Zap, ArrowRight, Facebook, Star } from 'lucide-react';
+import { GoogleGIcon } from './GoogleGIcon';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
@@ -65,9 +66,9 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         <PlatformConnectorTile
           platform="google"
           label="Google"
-          Icon={Star}
-          iconBgClass="bg-blue-500/10"
-          iconColorClass="text-blue-500"
+          Icon={GoogleGIcon}
+          iconBgClass="bg-background border border-border"
+          iconColorClass=""
           reviewUrl={primary?.google_review_url}
         />
         <PlatformConnectorTile

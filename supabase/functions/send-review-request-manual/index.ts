@@ -87,6 +87,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Entitlement gate — refuse manual send if reputation_enabled is off.
+    const { data: flag } = await supabase
+      .from("organization_feature_flags")
+      .select("is_enabled")
+      .eq("organization_id", appt.organization_id)
+      .eq("flag_key", "reputation_enabled")
+      .maybeSingle();
+    if (!flag?.is_enabled) {
+      return new Response(JSON.stringify({ error: "reputation_subscription_required" }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!appt.client_phone) {
       return new Response(JSON.stringify({ error: "no_phone_on_file" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },

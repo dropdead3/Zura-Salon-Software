@@ -56,9 +56,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify caller is an admin of the org
+    // Verify caller is an admin of the org. NOTE: the RPC arg is `_org_id`
+    // (NOT `_organization_id`) — mismatched names silently return false → 403.
     const { data: isAdmin } = await userClient.rpc("is_org_admin", {
-      _user_id: user.id, _organization_id: organization_id,
+      _user_id: user.id, _org_id: organization_id,
     });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "forbidden" }), {

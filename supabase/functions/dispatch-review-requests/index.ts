@@ -53,9 +53,23 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
     .eq("is_active", true);
   if (!rules?.length) return;
 
-  // Group by org for efficiency
+  // Entitlement gate — only orgs with reputation_enabled=true may dispatch.
+  // Source of truth = organization_feature_flags (synced by trigger from
+  // reputation_subscriptions). Lapsed orgs MUST NOT continue blasting SMS.
+  const orgIds = Array.from(new Set(rules.map((r: any) => r.organization_id)));
+  const { data: flags } = await supabase
+    .from("organization_feature_flags")
+    .select("organization_id, is_enabled")
+    .eq("flag_key", "reputation_enabled")
+    .in("organization_id", orgIds);
+  const entitled = new Set(
+    (flags ?? []).filter((f: any) => f.is_enabled).map((f: any) => f.organization_id),
+  );
+
+  // Group entitled rules by org
   const byOrg = new Map<string, any[]>();
   for (const r of rules) {
+    if (!entitled.has(r.organization_id)) continue;
     const list = byOrg.get(r.organization_id) ?? [];
     list.push(r);
     byOrg.set(r.organization_id, list);
