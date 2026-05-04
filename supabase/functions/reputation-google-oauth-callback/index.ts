@@ -133,7 +133,10 @@ Deno.serve(async (req) => {
       return htmlRedirect(`${appBase}/?google_oauth_error=db_write`, "Failed to save connection");
     }
 
-    const returnTo = payload.return_to || "/";
+    // Validate return_to: must be a same-origin path (starts with single `/`,
+    // no protocol, no host, no `//` open-redirect prefix).
+    const rawReturn = typeof payload.return_to === "string" ? payload.return_to : "/";
+    const returnTo = /^\/(?!\/)/.test(rawReturn) ? rawReturn : "/";
     const sep = returnTo.includes("?") ? "&" : "?";
     return htmlRedirect(`${appBase}${returnTo}${sep}google_connected=1`, "Connected — redirecting");
   } catch (e) {
