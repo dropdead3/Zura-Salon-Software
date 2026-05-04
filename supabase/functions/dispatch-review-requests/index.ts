@@ -299,18 +299,20 @@ async function sendDue(supabase: any, summary: DispatchSummary) {
 
   // Fairness telemetry — see DispatchSummary.sendFairness. cappedOrgs counts
   // orgs whose due-pool exceeded PER_ORG_SEND_CAP (i.e. they had more queued
-  // sends than they were allowed this tick). If cappedOrgs trends > 0
-  // tick-over-tick, raise PER_ORG_SEND_CAP / GLOBAL_SEND_POOL or shorten cron.
+  // sends than they were allowed this tick: leftover rows in `buckets`). If
+  // cappedOrgs trends > 0 tick-over-tick, raise PER_ORG_SEND_CAP /
+  // GLOBAL_SEND_POOL or shorten the cron interval.
   const sendCounts = [...sentPerOrg.values()];
+  let cappedOrgsCount = 0;
+  for (const [orgId, leftover] of buckets) {
+    if (leftover.length > 0 && (sentPerOrg.get(orgId) ?? 0) >= PER_ORG_SEND_CAP) {
+      cappedOrgsCount++;
+    }
+  }
   summary.sendFairness = {
     orgsServed: sentPerOrg.size,
     maxPerOrg: sendCounts.length ? Math.max(...sendCounts) : 0,
-    cappedOrgs: [...buckets.values()].filter((list, i) => {
-      // After allocation: a non-empty leftover bucket means we had more
-      // pending rows for that org than PER_ORG_SEND_CAP allowed.
-      const orgId = [...buckets.keys()][i];
-      return (sentPerOrg.get(orgId) ?? 0) >= PER_ORG_SEND_CAP && list.length > 0;
-    }).length,
+    cappedOrgs: cappedOrgsCount,
   };
 
   for (const row of orderedDue) {
