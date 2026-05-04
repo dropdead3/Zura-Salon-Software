@@ -15,7 +15,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -23,6 +23,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useState, type ComponentType } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface PlatformConnectorTileProps {
   platform: ReviewPlatform;
@@ -43,8 +49,10 @@ export function PlatformConnectorTile({
 }: PlatformConnectorTileProps) {
   const { data: connections } = useReviewPlatformConnections();
   const { effectiveOrganization } = useOrganizationContext();
+  const queryClient = useQueryClient();
   const connection = connections?.find((c) => c.platform === platform);
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const isActive = connection?.status === 'active';
   const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
@@ -79,6 +87,24 @@ export function PlatformConnectorTile({
       console.error('Connect failed', e);
       toast.error('Could not start Google connection. Please try again.');
       setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!effectiveOrganization?.id) return;
+    setDisconnecting(true);
+    try {
+      const { error } = await supabase.functions.invoke('reputation-google-oauth-disconnect', {
+        body: { organization_id: effectiveOrganization.id },
+      });
+      if (error) throw error;
+      toast.success('Google disconnected.');
+      await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+    } catch (e) {
+      console.error('Disconnect failed', e);
+      toast.error('Could not disconnect Google. Please try again.');
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -163,6 +189,37 @@ export function PlatformConnectorTile({
                 </p>
               )}
             </>
+          )}
+          {isActive && supportsOAuth && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size={tokens.button.card}
+                  className="w-full gap-1.5"
+                  disabled={disconnecting}
+                >
+                  {disconnecting ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Disconnecting…</>
+                  ) : (
+                    <><Unlink className="h-3.5 w-3.5" /> Disconnect</>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Disconnect Google?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This revokes Zura's access to your Google Business Profile and removes the saved connection.
+                    Review syncing will stop until you reconnect. You can reconnect at any time.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDisconnect}>Disconnect</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           {!isActive && !supportsOAuth && (
             <Button
