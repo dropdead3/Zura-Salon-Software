@@ -15,7 +15,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink, RefreshCw } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
