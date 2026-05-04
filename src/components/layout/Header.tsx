@@ -9,6 +9,7 @@ import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useLiveOverride } from "@/hooks/usePreviewBridge";
 import { useOrgPath } from "@/hooks/useOrgPath";
 import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } from "@/hooks/useWebsiteMenus";
+import { useSettingsOrgId } from "@/hooks/useSettingsOrgId";
 import { emitNavEvent } from "@/lib/nav-tracking";
 import { contrastRatio, readableForegroundFor } from "@/lib/color-contrast";
 
@@ -111,7 +112,8 @@ export function Header() {
   const orgPath = useOrgPath();
 
   // Fetch published primary menu
-  const { data: publishedMenuData } = usePublicMenuBySlug('primary');
+  const orgId = useSettingsOrgId();
+  const { data: publishedMenuData } = usePublicMenuBySlug('primary', orgId);
   const publishedMenu = publishedMenuData?.items ?? null;
   const menuConfig = publishedMenuData?.config;
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
