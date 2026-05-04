@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useReviewFunnel } from '@/hooks/useReviewFunnel';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
 
 /** Response Rate KPI tile — % of sent surveys that got a reply (last 30d). */
 export function ResponseRateCard() {
