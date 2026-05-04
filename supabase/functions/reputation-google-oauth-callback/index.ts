@@ -42,12 +42,21 @@ async function verifyState(state: string, secret: string): Promise<any | null> {
 }
 
 function htmlRedirect(url: string, message: string): Response {
+  // Use a real 302 redirect (most reliable across browsers and popup-blocker contexts).
+  // Fallback HTML body with meta-refresh + manual link in case the client ignores Location.
   return new Response(
     `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${message}</title>
      <meta http-equiv="refresh" content="0; url=${url}"></head>
      <body style="font-family:system-ui;padding:2rem;text-align:center">
      <p>${message}</p><p><a href="${url}">Continue</a></p></body></html>`,
-    { status: 200, headers: { "Content-Type": "text/html" } },
+    {
+      status: 302,
+      headers: {
+        "Location": url,
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    },
   );
 }
 
