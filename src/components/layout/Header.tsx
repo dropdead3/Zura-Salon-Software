@@ -42,15 +42,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Fallback hardcoded links (used when no published menu exists)
-const FALLBACK_NAV_ITEMS = [
-  { href: "/services", label: "Services", priority: 1, type: "link" as const },
-  { href: "/about", label: "About", priority: 2, type: "dropdown" as const, children: [
+type NavChild = { href: string; label: string; openInNewTab?: boolean };
+type NavItem = {
+  href: string;
+  label: string;
+  priority: number;
+  type: 'link' | 'dropdown' | 'cta';
+  children?: NavChild[];
+  openInNewTab?: boolean;
+  ctaStyle?: string;
+  visibility?: string;
+};
+const FALLBACK_NAV_ITEMS: NavItem[] = [
+  { href: "/services", label: "Services", priority: 1, type: "link" },
+  { href: "/about", label: "About", priority: 2, type: "dropdown", children: [
     { href: "/about", label: "About Us" },
     { href: "/policies", label: "Policies" },
   ]},
-  { href: "/team", label: "Team", priority: 3, type: "link" as const },
-  { href: "/gallery", label: "Gallery", priority: 4, type: "link" as const },
-  { href: "/contact", label: "Contact", priority: 5, type: "link" as const },
+  { href: "/team", label: "Team", priority: 3, type: "link" },
+  { href: "/gallery", label: "Gallery", priority: 4, type: "link" },
+  { href: "/contact", label: "Contact", priority: 5, type: "link" },
 ];
 
 const FALLBACK_CTA = { href: "/booking", label: "Book Now" };
