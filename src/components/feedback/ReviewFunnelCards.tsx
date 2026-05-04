@@ -13,7 +13,7 @@ export function ResponseRateCard() {
     return (
       <Card className="relative">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
+          <CardTitle className="text-sm font-medium">Reply Rate</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-8 w-20" />
@@ -28,21 +28,21 @@ export function ResponseRateCard() {
     <Card className="relative">
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
-          title="Response Rate"
-          description="Surveys that got a reply ÷ surveys sent in the last 30 days. Suppressed below 10 sent."
+          title="Reply Rate"
+          description="Of the feedback requests we sent in the last 30 days, the share that got a reply. Hidden until at least 10 have been sent."
         />
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <MailOpen className="h-4 w-4 text-primary" /> Response Rate
+          <MailOpen className="h-4 w-4 text-primary" /> Reply Rate
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p className={tokens.kpi.value}>{display}</p>
         <p className="text-xs text-muted-foreground mt-1">
           {data?.hasResponseSignal
-            ? `${data.responded} of ${data.sent} sent`
-            : `${data?.sent ?? 0} sent — need 10 to compute`}
+            ? `${data.responded} replied of ${data.sent} asked`
+            : `${data?.sent ?? 0} sent — need 10 to show a rate`}
         </p>
       </CardContent>
     </Card>
@@ -74,7 +74,7 @@ export function PublicConversionCard() {
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
           title="Public Review Conversion"
-          description="Promoters (NPS 9–10) who clicked through to a public review platform ÷ all responders. Suppressed below 5 responses."
+          description="Of the happy clients we asked, the share who clicked through to leave a public review (Google, Yelp, etc.). Hidden until we have at least 5 replies."
         />
       </div>
       <CardHeader className="pb-2">

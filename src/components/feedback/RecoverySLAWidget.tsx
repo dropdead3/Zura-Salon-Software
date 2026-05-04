@@ -17,7 +17,7 @@ export function RecoverySLAWidget() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
-          Recovery SLA
+          Unhappy Client Follow-Up
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -28,30 +28,30 @@ export function RecoverySLAWidget() {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <p className="text-2xl font-medium">{data.open}</p>
-                <p className="text-xs text-muted-foreground">Open</p>
+                <p className="text-xs text-muted-foreground">Needs reach-out</p>
               </div>
               <div>
                 <p className="text-2xl font-medium">{data.contacted}</p>
-                <p className="text-xs text-muted-foreground">In progress</p>
+                <p className="text-xs text-muted-foreground">Talking now</p>
               </div>
               <div>
                 <p className="text-2xl font-medium">{data.resolved}</p>
-                <p className="text-xs text-muted-foreground">Resolved</p>
+                <p className="text-xs text-muted-foreground">Made it right</p>
               </div>
             </div>
             <div className="border-t border-border/60 pt-3 space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Avg time to first contact</span>
+                <span className="text-muted-foreground">Avg time to first reach-out</span>
                 <span className="font-medium">{fmtHrs(data.avgFirstContactHours)}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Avg time to resolution</span>
+                <span className="text-muted-foreground">Avg time to resolve</span>
                 <span className="font-medium">{fmtHrs(data.avgResolutionHours)}</span>
               </div>
               {data.breachedSLA > 0 && (
                 <div className="flex items-center gap-1.5 text-xs text-destructive pt-1">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  {data.breachedSLA} task{data.breachedSLA === 1 ? '' : 's'} past 24h SLA
+                  {data.breachedSLA} unhappy client{data.breachedSLA === 1 ? '' : 's'} waiting over 24h
                 </div>
               )}
             </div>

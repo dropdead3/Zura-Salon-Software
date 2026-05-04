@@ -29,7 +29,7 @@ export function ReviewVelocityCard() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Review Velocity</CardTitle>
+          <CardTitle className="text-sm font-medium">Review Momentum</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-8 w-24" />
@@ -55,13 +55,13 @@ export function ReviewVelocityCard() {
     <Card className="relative">
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
-          title="Review Velocity"
-          description="Public review click-throughs in the last 30 days vs. the prior 30. Suppressed below 3 click-throughs."
+          title="Review Momentum"
+          description="How many clients clicked through to leave a public review in the last 30 days, compared to the 30 days before. Hidden until at least 3 click-throughs."
         />
       </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Star className="h-4 w-4 text-amber-500" /> Review Velocity
+          <Star className="h-4 w-4 text-amber-500" /> Review Momentum
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -76,8 +76,8 @@ export function ReviewVelocityCard() {
         </div>
         <p className="text-xs text-muted-foreground">
           {v?.hasSignal
-            ? `${v.perWeek.toFixed(1)} per week · vs ${v.prior} prior 30d`
-            : `${v?.current ?? 0} click-throughs — need 3 to compute`}
+            ? `${v.perWeek.toFixed(1)} per week · vs ${v.prior} the month before`
+            : `${v?.current ?? 0} click-throughs — need 3 to show momentum`}
         </p>
         {v?.hasSignal && v.byPlatform.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
