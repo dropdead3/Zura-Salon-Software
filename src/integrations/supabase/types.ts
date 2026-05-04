@@ -12683,7 +12683,6 @@ export type Database = {
           location_id: string
           organization_id: string
           updated_at: string
-          yelp_review_url: string | null
         }
         Insert: {
           apple_review_url?: string | null
@@ -12697,7 +12696,6 @@ export type Database = {
           location_id: string
           organization_id: string
           updated_at?: string
-          yelp_review_url?: string | null
         }
         Update: {
           apple_review_url?: string | null
@@ -12711,7 +12709,6 @@ export type Database = {
           location_id?: string
           organization_id?: string
           updated_at?: string
-          yelp_review_url?: string | null
         }
         Relationships: [
           {
