@@ -40,24 +40,7 @@ interface SnoozeState {
   snoozedAt: number;
 }
 
-/**
- * Translate a raw `last_error` enum from the verify-locations cron into a
- * one-line operator-readable phrase. Unknown reasons fall back to the raw
- * code (better than silent erasure) so we get reports instead of mysteries.
- */
-function describeReason(reason: string | null): string | null {
-  if (!reason) return null;
-  switch (reason) {
-    case 'token_revoked':
-      return 'Google access was revoked from the Google account';
-    case 'refresh_failed':
-      return 'Google refused to refresh the access token';
-    case 'gbp_suspended_or_merged':
-      return 'The Business Profile was suspended or merged on Google';
-    default:
-      return `Last error: ${reason}`;
-  }
-}
+// describeReason is shared with PlatformConnectorTile via @/lib/reputation/describeReason
 
 export function ReputationOAuthGraceBanner() {
   const { data } = useGBPHealth();
