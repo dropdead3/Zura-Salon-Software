@@ -643,8 +643,9 @@ export function Header() {
                     transition={{ duration: 0.4, delay: 0.1 + index * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
                     className="shrink-0"
                   >
-                    <Link
+                    <NavLink
                       to={item.href}
+                      openInNewTab={item.openInNewTab}
                       onClick={() => emitNavEvent('nav_item_clicked', {
                         label: item.label,
                         href: item.href,
@@ -661,11 +662,11 @@ export function Header() {
                       <span className="transition-transform duration-300 group-hover:-translate-x-1">
                         {item.label}
                       </span>
-                      <ArrowRight 
-                        size={14} 
-                        className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                      <ArrowRight
+                        size={14}
+                        className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
                       />
-                    </Link>
+                    </NavLink>
                   </motion.div>
                 );
               })}
