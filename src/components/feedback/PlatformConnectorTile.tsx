@@ -249,8 +249,13 @@ export function PlatformConnectorTile({
                     variant="outline"
                     size={tokens.button.card}
                     className="w-full gap-1.5"
-                    disabled={disconnecting || connecting}
+                    disabled={disconnecting || connecting || polling}
                   >
+                    {polling ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Waiting for new sign-in…</>
+                    ) : (
+                      <><RefreshCw className="h-3.5 w-3.5" /> Switch Google account</>
+                    )}
                     <RefreshCw className="h-3.5 w-3.5" /> Switch Google account
                   </Button>
                 </AlertDialogTrigger>
