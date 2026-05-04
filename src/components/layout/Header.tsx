@@ -764,23 +764,40 @@ export function Header() {
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link
+                    <NavLink
                       to={ctaItem.href}
+                      openInNewTab={ctaItem.openInNewTab}
                       onClick={() => emitNavEvent('cta_clicked', {
                         label: ctaItem.label,
                         href: ctaItem.href,
-                        cta_style: 'primary',
+                        cta_style: ctaTreatment,
                         menu_location: 'header',
                       })}
                       className={cn(
-                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
-                        isOverDark 
-                          ? "bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60" 
-                          : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
+                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5",
+                        // CTA treatment from menu config:
+                        ctaTreatment === 'pill' && cn(
+                          "rounded-full border hover:shadow-lg",
+                          isOverDark
+                            ? "bg-white text-foreground border-white hover:bg-white/90"
+                            : "bg-foreground text-background border-foreground hover:bg-foreground/90"
+                        ),
+                        ctaTreatment === 'outline' && cn(
+                          "rounded-full border hover:shadow-lg",
+                          isOverDark
+                            ? "bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60"
+                            : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
+                        ),
+                        ctaTreatment === 'underline' && cn(
+                          "rounded-none border-0 border-b-2 px-1 py-1.5 hover:scale-100 hover:-translate-y-0",
+                          isOverDark
+                            ? "border-white/60 text-white hover:border-white"
+                            : "border-foreground/50 text-foreground hover:border-foreground"
+                        ),
                       )}
                     >
                       {ctaItem.label}
-                    </Link>
+                    </NavLink>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[320px] p-5 bg-background text-foreground border border-border shadow-lg">
                     <p className="text-sm text-center leading-relaxed">New-client consultations ($15) are required for all new clients to ensure we match you to your best suited stylist and prepare the best plan to achieve your end goal.</p>
