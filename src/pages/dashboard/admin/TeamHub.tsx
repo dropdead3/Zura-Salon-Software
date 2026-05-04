@@ -591,15 +591,7 @@ export default function TeamHub() {
               {...favProps('/admin/client-health', 'Client Health Hub', Brain)}
             />
           )}
-          {!isFavorited(dashPath('/admin/feedback')) && (
-            <ManagementCard
-              href={dashPath('/admin/feedback')}
-              icon={MessageSquarePlus}
-              title="Feedback Hub"
-              description="Client feedback collection and response tracking"
-              {...favProps('/admin/feedback', 'Feedback Hub', MessageSquarePlus)}
-            />
-          )}
+          {/* Client Reputation lives in Zura Apps — single gated entry point. */}
           {!isFavorited(dashPath('/admin/reengagement')) && (
             <ManagementCard
               href={dashPath('/admin/reengagement')}
