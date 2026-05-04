@@ -22,7 +22,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, type ComponentType } from 'react';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
