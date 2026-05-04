@@ -290,20 +290,25 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
               const nextOrder = siblings.length
                 ? Math.max(...siblings.map(s => s.sort_order)) + 1
                 : 0;
-              createItem.mutate({
+              const payload: Record<string, unknown> = {
                 menu_id: menuId,
                 label: `${item.label} (copy)`,
                 item_type: item.item_type,
                 target_url: item.target_url,
                 target_page_id: item.target_page_id,
                 target_anchor: item.target_anchor,
-                cta_style: item.cta_style,
                 visibility: item.visibility,
                 open_in_new_tab: item.open_in_new_tab,
                 parent_id: item.parent_id,
                 sort_order: nextOrder,
                 is_published: false,
-              } as any, {
+              };
+              // Only carry cta_style for CTA items so non-CTA rows don't violate
+              // a possible NOT-NULL/check constraint on the column.
+              if (item.item_type === 'cta' && item.cta_style) {
+                payload.cta_style = item.cta_style;
+              }
+              createItem.mutate(payload as any, {
                 onSuccess: () => toast.success('Item duplicated (draft)'),
               });
             }}
