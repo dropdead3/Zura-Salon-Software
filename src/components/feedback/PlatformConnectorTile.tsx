@@ -22,7 +22,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, type ComponentType } from 'react';
+import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -90,8 +90,35 @@ export function PlatformConnectorTile({
     }
   };
 
+  // Auto-poll for ~30s after a switch so the tile flips to the new account.
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+  const startConnectionPoll = (priorAccountId: string | null) => {
+    stopPolling();
+    const startedAt = Date.now();
+    pollRef.current = setInterval(async () => {
+      const elapsed = Date.now() - startedAt;
+      const result = await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+      void result;
+      const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
+      const next = fresh?.find((c) => c.platform === platform);
+      const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
+      if (switched || elapsed > 30_000) {
+        stopPolling();
+        if (switched) toast.success('Google account switched.');
+      }
+    }, 2_500);
+  };
+  useEffect(() => () => stopPolling(), []);
+
   const handleDisconnect = async (options?: { reconnect?: boolean }) => {
     if (!effectiveOrganization?.id) return;
+    const priorAccountId = connection?.external_account_id ?? null;
     setDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke('reputation-google-oauth-disconnect', {
@@ -102,6 +129,7 @@ export function PlatformConnectorTile({
       if (options?.reconnect) {
         toast.info('Disconnected — starting Google sign-in…');
         setDisconnecting(false);
+        startConnectionPoll(priorAccountId);
         await handleConnect();
         return;
       }
@@ -121,8 +149,13 @@ export function PlatformConnectorTile({
           <Icon className={`w-7 h-7 ${iconColorClass}`} />
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 max-w-full">
           <h3 className="font-display text-base tracking-wide">{label}</h3>
+          {isActive && connection?.external_account_label && (
+            <p className="text-xs text-muted-foreground truncate max-w-[200px] mx-auto" title={connection.external_account_label}>
+              {connection.external_account_label}
+            </p>
+          )}
           {isActive && connection?.cached_review_count != null && (
             <p className="text-xs text-muted-foreground">
               {connection.cached_review_count} reviews
