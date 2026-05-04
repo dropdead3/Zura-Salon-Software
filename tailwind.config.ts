@@ -14,9 +14,12 @@ export default {
     },
     extend: {
       fontFamily: {
+        // Fallback chains are license-safety nets: if a webfont fails to load
+        // (license lapse, CDN outage, cap exceeded), sites degrade to a near-
+        // metric-compatible neutral instead of Times New Roman.
         serif: ['"Laguna"', 'Georgia', 'serif'],
-        sans: ['"Aeonik Pro"', 'system-ui', 'sans-serif'],
-        display: ['"Termina"', 'sans-serif'],
+        sans: ['"Aeonik Pro"', 'Geist', 'Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['"Termina"', 'Geist', 'Inter', 'system-ui', 'sans-serif'],
         script: ['"Sloop Script"', 'cursive'],
       },
       colors: {
