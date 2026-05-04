@@ -33851,6 +33851,13 @@ export type Database = {
         Returns: string
       }
       publish_all_menus: { Args: { _org_id: string }; Returns: number }
+      publish_menu: {
+        Args: { p_change_summary?: string; p_menu_id: string }
+        Returns: {
+          items_published: number
+          version_number: number
+        }[]
+      }
       publish_policy_externally: {
         Args: { p_policy_id: string; p_publish: boolean }
         Returns: Json
