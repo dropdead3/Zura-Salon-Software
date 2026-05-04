@@ -103,6 +103,7 @@ export default function ClientFeedback() {
     (feedback as any)?.location_id,
   );
   const submitFeedback = useSubmitFeedback();
+  const { data: autoBoost } = useAutoBoostConfig();
 
   const [npsScore, setNpsScore] = useState<number | null>(null);
   const [overallRating, setOverallRating] = useState(0);
