@@ -110,9 +110,15 @@ export function PlatformConnectorTile({
       const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
       const next = fresh?.find((c) => c.platform === platform);
       const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
-      if (switched || elapsed > 30_000) {
+      if (switched) {
         stopPolling();
-        if (switched) toast.success('Google account switched.');
+        toast.success('Google account switched.');
+      } else if (elapsed > 30_000) {
+        stopPolling();
+        toast.error("Didn't detect a new account — did you complete the new tab?", {
+          action: { label: 'Retry sign-in', onClick: () => { void handleConnect(); } },
+          duration: 12_000,
+        });
       }
     }, 2_500);
   };
