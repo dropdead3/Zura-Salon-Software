@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { describeReason } from '@/lib/reputation/describeReason';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
