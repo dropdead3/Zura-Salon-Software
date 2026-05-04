@@ -225,6 +225,7 @@ const CampaignDetail = lazyWithRetry(() => import("./pages/dashboard/CampaignDet
 const ClientFeedbackPage = lazyWithRetry(() => import("./pages/ClientFeedback"));
 const ClientPortalPage = lazyWithRetry(() => import("./pages/ClientPortal"));
 const FeedbackHub = lazyWithRetry(() => import("./pages/dashboard/admin/FeedbackHub"));
+const ConnectGooglePage = lazyWithRetry(() => import("./pages/dashboard/admin/ConnectGooglePage"));
 const RecoveryInbox = lazyWithRetry(() => import("./pages/dashboard/admin/RecoveryInbox"));
 const LocationReviewLinks = lazyWithRetry(() => import("./pages/dashboard/admin/LocationReviewLinks"));
 const ReviewAutomationRules = lazyWithRetry(() => import("./pages/dashboard/admin/ReviewAutomationRules"));
