@@ -12,6 +12,7 @@ import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } fr
 import { useSettingsOrgId } from "@/hooks/useSettingsOrgId";
 import { useWebsitePages } from "@/hooks/useWebsitePages";
 import { emitNavEvent } from "@/lib/nav-tracking";
+import { NavLink } from "@/components/layout/NavLink";
 import { contrastRatio, readableForegroundFor } from "@/lib/color-contrast";
 
 function isColorDark(color: string): boolean {
