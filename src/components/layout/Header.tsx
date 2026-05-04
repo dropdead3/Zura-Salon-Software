@@ -112,7 +112,8 @@ export function Header() {
   const orgPath = useOrgPath();
 
   // Fetch published primary menu
-  const { data: publishedMenuData } = usePublicMenuBySlug('primary');
+  const orgId = useSettingsOrgId();
+  const { data: publishedMenuData } = usePublicMenuBySlug('primary', orgId);
   const publishedMenu = publishedMenuData?.items ?? null;
   const menuConfig = publishedMenuData?.config;
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
