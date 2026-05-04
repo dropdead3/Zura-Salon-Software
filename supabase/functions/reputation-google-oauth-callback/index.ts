@@ -133,10 +133,14 @@ Deno.serve(async (req) => {
       return htmlRedirect(`${appBase}/?google_oauth_error=db_write`, "Failed to save connection");
     }
 
-    // Validate return_to: must be a same-origin path (starts with single `/`,
-    // no protocol, no host, no `//` open-redirect prefix).
-    const rawReturn = typeof payload.return_to === "string" ? payload.return_to : "/";
-    const returnTo = /^\/(?!\/)/.test(rawReturn) ? rawReturn : "/";
+    // Strict allowlist: the only legitimate post-connect destination is the
+    // org-scoped reputation hub. Anything else (including "/" or other admin
+    // pages) collapses to the org's feedback page when slug is recoverable,
+    // else "/". This is tighter than a same-origin shape check — it prevents
+    // a tampered state from bouncing the operator anywhere else in the app.
+    const ALLOWED_RETURN = /^\/org\/[A-Za-z0-9_-]+\/dashboard\/admin\/feedback(?:\?[^#]*)?$/;
+    const rawReturn = typeof payload.return_to === "string" ? payload.return_to : "";
+    const returnTo = ALLOWED_RETURN.test(rawReturn) ? rawReturn : "/";
     const sep = returnTo.includes("?") ? "&" : "?";
     return htmlRedirect(`${appBase}${returnTo}${sep}google_connected=1`, "Connected — redirecting");
   } catch (e) {
