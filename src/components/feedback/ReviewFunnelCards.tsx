@@ -79,6 +79,7 @@ export function PublicConversionCard() {
         <MetricInfoTooltip
           title="Public Review Conversion"
           description="Of the happy clients we asked, the share who clicked through to leave a public review (Google, Yelp, etc.). Hidden until we have at least 5 replies."
+          onLearnMore={() => openReputationGlossary('public-reviews')}
         />
       </div>
       <CardHeader className="pb-2">
