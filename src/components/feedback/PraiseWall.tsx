@@ -68,7 +68,8 @@ function PraiseCard({
 }
 
 export function PraiseWall() {
-  const { data, isLoading } = usePraiseWall(12);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = usePraiseWall(12, locationId);
   const { data: assignees = [] } = useOrgAssignees();
   const createNote = useCreateCoachingNote();
   const [recognized, setRecognized] = useState<Set<string>>(new Set());
