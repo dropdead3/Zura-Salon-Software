@@ -206,6 +206,21 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
             </div>
           )}
 
+          {/* Anchor */}
+          {type === 'anchor' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Anchor ID</Label>
+              <Input
+                value={targetAnchor}
+                onChange={(e) => setTargetAnchor(e.target.value)}
+                placeholder="#section-name"
+                className="h-9 text-sm"
+                autoCapitalize="none"
+              />
+              <p className="text-[10px] text-muted-foreground">Jumps to an element with this id on the current page</p>
+            </div>
+          )}
+
           {/* Parent Item (nesting) */}
           {dropdownParents.length > 0 && type !== 'dropdown_parent' && (
             <div className="space-y-1.5">
