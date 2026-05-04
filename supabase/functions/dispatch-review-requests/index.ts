@@ -23,11 +23,23 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PUBLIC_FEEDBACK_BASE = Deno.env.get("PUBLIC_FEEDBACK_BASE_URL") ??
   "https://getzura.com/feedback";
 
+interface FairnessTelemetry {
+  // Per-org enqueue/send counts so platform staff can see when the
+  // fairness allocator is actually clamping. `cappedOrgs` = orgs that
+  // hit PER_ORG_*_CAP this tick (early signal to raise GLOBAL_SEND_POOL
+  // or shorten the cron interval).
+  orgsServed: number;
+  maxPerOrg: number;
+  cappedOrgs: number;
+}
+
 interface DispatchSummary {
   enqueued: number;
   sent: number;
   skipped: number;
   errors: number;
+  enqueueFairness?: FairnessTelemetry;
+  sendFairness?: FairnessTelemetry;
 }
 
 function isExcluded(
