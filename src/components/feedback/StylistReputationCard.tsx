@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Star, Users } from 'lucide-react';
 import { useStylistReputation } from '@/hooks/useStylistReputation';
+// ... keep existing code
+
 import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 
 function scoreBadgeVariant(score: number | null): 'default' | 'secondary' | 'destructive' {
