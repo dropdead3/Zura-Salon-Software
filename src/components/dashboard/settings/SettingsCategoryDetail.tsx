@@ -86,7 +86,7 @@ import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWei
 import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
 import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSettingsSection';
 import { CheckoutAlertsSection } from '@/components/dashboard/settings/CheckoutAlertsSection';
-import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+import { ReviewGateAndBoostCard } from '@/components/feedback/ReviewGateAndBoostCard';
 
 export type SettingsCategory = 'my-profile' | 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | 'account-billing' | 'terminals' | null;
 
@@ -911,12 +911,7 @@ export function SettingsCategoryDetail({ activeCategory, categoryLabel, category
           {activeCategory === 'dayrate' && <DayRateSettingsContent />}
           {activeCategory === 'loyalty' && <LoyaltySettingsContent />}
           {activeCategory === 'team-rewards' && <TeamRewardsConfigurator />}
-          {activeCategory === 'feedback' && (
-            <Card>
-              <CardHeader><CardTitle className="font-display text-lg">REVIEW THRESHOLD SETTINGS</CardTitle><CardDescription>Configure when clients are prompted to leave public reviews.</CardDescription></CardHeader>
-              <CardContent><ReviewThresholdSettings /></CardContent>
-            </Card>
-          )}
+          {activeCategory === 'feedback' && <ReviewGateAndBoostCard />}
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
           {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
           {activeCategory === 'account-billing' && <AccountBillingContent />}
