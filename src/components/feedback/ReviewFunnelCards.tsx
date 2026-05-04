@@ -74,7 +74,7 @@ export function PublicConversionCard() {
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
           title="Public Review Conversion"
-          description="Promoters (NPS 9–10) who clicked through to a public review platform ÷ all responders. Suppressed below 5 responses."
+          description="Of the happy clients we asked, the share who clicked through to leave a public review (Google, Yelp, etc.). Hidden until we have at least 5 replies."
         />
       </div>
       <CardHeader className="pb-2">
