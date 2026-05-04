@@ -40,12 +40,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id } = await req.json().catch(() => ({}));
+    const { organization_id, location_id } = await req.json().catch(() => ({}));
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "missing_organization_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // location_id optional: when provided, disconnect only that location's connection.
 
     // Authorization: must be org admin
     const { data: isAdmin, error: adminErr } = await userClient.rpc("is_org_admin", {
