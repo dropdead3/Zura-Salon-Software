@@ -15,11 +15,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
-import type { ComponentType } from 'react';
+import { useState, type ComponentType } from 'react';
 
 interface PlatformConnectorTileProps {
   platform: ReviewPlatform;
@@ -39,11 +42,34 @@ export function PlatformConnectorTile({
   reviewUrl,
 }: PlatformConnectorTileProps) {
   const { data: connections } = useReviewPlatformConnections();
+  const { effectiveOrganization } = useOrganizationContext();
   const connection = connections?.find((c) => c.platform === platform);
+  const [connecting, setConnecting] = useState(false);
 
   const isActive = connection?.status === 'active';
   const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
   const hasUrl = !!reviewUrl?.trim();
+  const supportsOAuth = platform === 'google';
+
+  const handleConnect = async () => {
+    if (!effectiveOrganization?.id) return;
+    setConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reputation-google-oauth-initiate', {
+        body: {
+          organization_id: effectiveOrganization.id,
+          return_to: window.location.pathname + window.location.search,
+        },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error('No authorization URL returned');
+      window.location.href = data.url;
+    } catch (e) {
+      console.error('Connect failed', e);
+      toast.error('Could not start Google connection. Please try again.');
+      setConnecting(false);
+    }
+  };
 
   return (
     <Card className="h-full">
@@ -100,8 +126,21 @@ export function PlatformConnectorTile({
             </Button>
           )}
 
-          {/* Connect CTA placeholder — OAuth flow is deferred (P2.1 / P2.2). */}
-          {!isActive && (
+          {/* Connect CTA — Google uses live OAuth; Facebook deferred. */}
+          {!isActive && supportsOAuth && (
+            <Button
+              variant="default"
+              size={tokens.button.card}
+              className="w-full gap-1.5"
+              onClick={handleConnect}
+              disabled={connecting}
+            >
+              {connecting ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirecting…</>
+              ) : isErrored ? 'Reconnect Google' : 'Connect Google'}
+            </Button>
+          )}
+          {!isActive && !supportsOAuth && (
             <Button
               variant="ghost"
               size={tokens.button.card}
