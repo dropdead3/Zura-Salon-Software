@@ -8,6 +8,9 @@ interface MetricInfoTooltipProps {
   title?: string;
   side?: 'top' | 'bottom' | 'left' | 'right';
   className?: string;
+  /** Optional "Learn more →" link rendered at the end of the tooltip body. */
+  learnMoreLabel?: string;
+  onLearnMore?: () => void;
 }
 
 /**
