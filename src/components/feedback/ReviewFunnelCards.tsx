@@ -13,7 +13,7 @@ export function ResponseRateCard() {
     return (
       <Card className="relative">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
+          <CardTitle className="text-sm font-medium">Reply Rate</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-8 w-20" />
