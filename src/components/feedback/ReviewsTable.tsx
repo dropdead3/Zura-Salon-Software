@@ -236,14 +236,10 @@ export function ReviewsTable({ organizationId, limit = 200 }: ReviewsTableProps)
                       </td>
                       <td className="px-3 py-3 text-right">
                         {r.comments && (
-                          <Button
-                            variant="ghost"
-                            size={tokens.button.inline}
-                            className="gap-1.5"
-                            onClick={() => setShareTarget(buildShareable(r))}
-                          >
-                            <Share2 className="h-3.5 w-3.5" /> Share
-                          </Button>
+                          <ShareCell
+                            locationId={r.location_id}
+                            onShare={() => setShareTarget(buildShareable(r))}
+                          />
                         )}
                       </td>
                     </tr>
