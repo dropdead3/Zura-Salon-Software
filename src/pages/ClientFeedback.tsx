@@ -208,6 +208,23 @@ export default function ClientFeedback() {
     setPassedGate(passes);
     setShowManagerFollowUp(belowThreshold);
 
+    // Auto-Boost cadence: count this client's prior passed-gate responses
+    // for the org. Celebrate fires only when (priorCount + 1) % N === 0.
+    // If client_id is missing (anonymous token), default to firing (N=1 behavior).
+    let cadenceHit = true;
+    if (autoBoost?.enabled && passes && feedback?.client_id && feedback?.organization_id) {
+      const n = Math.max(1, autoBoost.promptAfterNReviews ?? 1);
+      const { count } = await supabase
+        .from('client_feedback_responses')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', feedback.organization_id)
+        .eq('client_id', feedback.client_id)
+        .eq('passed_review_gate', true)
+        .neq('token', token);
+      cadenceHit = (((count ?? 0) + 1) % n) === 0;
+    }
+    setHitsAutoBoostCadence(cadenceHit);
+
     await submitFeedback.mutateAsync({
       token,
       npsScore: npsScore ?? undefined,
