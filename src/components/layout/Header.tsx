@@ -695,33 +695,35 @@ export function Header() {
                           if (item.type === "dropdown" && item.children) {
                             return item.children.map((link) => (
                               <DropdownMenuItem key={link.href} asChild>
-                                <Link
+                                <NavLink
                                   to={link.href}
+                                  openInNewTab={link.openInNewTab}
                                   className={cn(
                                     "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
                                     location.pathname === link.href
-                                      ? "bg-accent text-accent-foreground" 
+                                      ? "bg-accent text-accent-foreground"
                                       : "text-foreground/80"
                                   )}
                                 >
                                   {link.label}
-                                </Link>
+                                </NavLink>
                               </DropdownMenuItem>
                             ));
                           }
                           return (
                             <DropdownMenuItem key={item.href} asChild>
-                              <Link
+                              <NavLink
                                 to={item.href}
+                                openInNewTab={item.openInNewTab}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                  location.pathname === item.href 
-                                    ? "bg-accent text-accent-foreground" 
+                                  location.pathname === item.href
+                                    ? "bg-accent text-accent-foreground"
                                     : "text-foreground/80"
                                 )}
                               >
                                 {item.label}
-                              </Link>
+                              </NavLink>
                             </DropdownMenuItem>
                           );
                         })}
