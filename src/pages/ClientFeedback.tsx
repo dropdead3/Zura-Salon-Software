@@ -14,6 +14,7 @@ import { ReviewThankYouScreen } from '@/components/feedback/ReviewThankYouScreen
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { shouldShowPublicShareScreen } from '@/lib/reputation/shareScreenGate';
+import { useAutoBoostConfig } from '@/components/feedback/AutoBoostTriggerDialog';
 
 function StarRatingInput({ 
   value, 
