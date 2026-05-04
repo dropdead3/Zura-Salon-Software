@@ -49,14 +49,14 @@ export default function FeedbackHub() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-              <Link to={dashPath('/admin/management')}>
+              <Link to={dashPath('/apps')}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>
             <div>
               <h1 className="font-display text-2xl font-medium flex items-center gap-2">
                 <MessageSquareText className="h-6 w-6 text-primary" />
-                Client Feedback
+                Client Reputation
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
                 Track NPS scores, reviews, and client satisfaction

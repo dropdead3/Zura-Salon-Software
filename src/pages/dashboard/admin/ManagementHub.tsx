@@ -419,13 +419,7 @@ export default function ManagementHub() {
             description="At-risk clients, rebooking, win-back outreach, and more"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
-          <ManagementCard
-            href={dashPath('/admin/feedback')}
-            icon={MessageSquarePlus}
-            title="Feedback Hub"
-            description="Client surveys, reviews, and NPS tracking"
-            colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          />
+          {/* Client Reputation lives in Zura Apps — single gated entry point. */}
           <ManagementCard
             href={dashPath('/admin/reengagement')}
             icon={UserCheck}

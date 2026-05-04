@@ -76,7 +76,7 @@ export default function LocationReviewLinks() {
           title="Location Review Links"
           description="Set Google, Apple, Yelp, and Facebook review URLs per location. Used when sending review requests to clients."
           backTo={dashPath('/admin/feedback')}
-          backLabel="Back to Client Feedback"
+          backLabel="Back to Client Reputation"
         />
         <ComplianceBanner />
         <div className="grid gap-6 lg:grid-cols-2">

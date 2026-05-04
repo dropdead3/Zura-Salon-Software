@@ -425,12 +425,12 @@ export const NAV_DESTINATIONS: NavDestination[] = [
   },
   {
     id: 'client-feedback',
-    label: 'Client Feedback',
+    label: 'Client Reputation',
     path: '/dashboard/admin/feedback',
-    section: 'Sub-page',
-    parent: 'Operations Hub',
-    purpose: 'Review and manage client feedback and satisfaction surveys.',
-    keywords: ['feedback', 'reviews', 'satisfaction', 'survey', 'client feedback', 'nps'],
+    section: 'Apps',
+    parent: 'Zura Apps',
+    purpose: 'Review and manage client reputation, NPS, and recovery — gated by Zura Reputation app.',
+    keywords: ['feedback', 'reviews', 'reputation', 'satisfaction', 'survey', 'client feedback', 'client reputation', 'nps'],
     roles: LEADERSHIP_PLUS_MANAGER,
   },
 
