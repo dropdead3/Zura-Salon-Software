@@ -33,7 +33,14 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
   if (!stats || totalReplies < NPS_MIN_REPLIES) {
     const remaining = Math.max(0, NPS_MIN_REPLIES - totalReplies);
     return (
-      <Card>
+      <Card className="relative">
+        <div className={tokens.kpi.infoIcon}>
+          <MetricInfoTooltip
+            title="Client Happiness"
+            description="A 0–100 score showing how your clients feel overall. Hidden until at least 5 clients reply."
+            onLearnMore={() => openReputationGlossary('happiness')}
+          />
+        </div>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Client Happiness</CardTitle>
         </CardHeader>
