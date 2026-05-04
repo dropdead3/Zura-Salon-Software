@@ -18,10 +18,13 @@ import { cn } from '@/lib/utils';
  *
  * Silent when nothing needs attention.
  */
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
+
 export function TodaysMustTouchStrip() {
   const { dashPath } = useOrgDashboardPath();
-  const { data: sla, isLoading: slaLoading } = useRecoverySLA();
-  const { data: tasks, isLoading: tasksLoading } = useRecoveryTasks();
+  const { locationId } = useReputationFilter();
+  const { data: sla, isLoading: slaLoading } = useRecoverySLA(locationId);
+  const { data: tasks, isLoading: tasksLoading } = useRecoveryTasks(locationId);
 
   if (slaLoading || tasksLoading) {
     return <Skeleton className="h-28 w-full rounded-xl" />;
