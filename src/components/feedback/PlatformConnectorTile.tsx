@@ -187,11 +187,6 @@ export function PlatformConnectorTile({
               <CheckCircle2 className="h-3 w-3" /> Connected
             </Badge>
           )}
-          {polling && (
-            <p className="text-[11px] text-muted-foreground/80 inline-flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 animate-spin" /> Detecting new account…
-            </p>
-          )}
           {isErrored && (
             <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
               <AlertTriangle className="h-3 w-3" /> Reconnect needed
