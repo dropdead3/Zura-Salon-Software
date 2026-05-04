@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, AlertTriangle } from 'lucide-react';
 import { useRecoverySLA } from '@/hooks/useRecoverySLA';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
+import { tokens } from '@/lib/design-tokens';
 
 function fmtHrs(h: number | null) {
   if (h == null) return '—';
