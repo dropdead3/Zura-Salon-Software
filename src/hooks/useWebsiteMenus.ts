@@ -411,19 +411,23 @@ export interface MenuConfig {
 /** Update menu-level config (JSONB) */
 export function useUpdateMenuConfig() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({ menuId, config }: { menuId: string; config: MenuConfig }) => {
+      if (!orgId) throw new Error('No org');
       const { error } = await supabase
         .from('website_menus')
         .update({ config: config as never })
-        .eq('id', menuId);
+        .eq('id', menuId)
+        .eq('organization_id', orgId); // belt-and-suspenders tenant scope
       if (error) throw error;
       return menuId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-menus'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
+      queryClient.invalidateQueries({ queryKey: ['published-menu'] });
     },
   });
 }
@@ -481,8 +485,7 @@ export function usePublishMenu() {
       return menuId;
     },
     onSuccess: (menuId) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
-      queryClient.invalidateQueries({ queryKey: ['published-menu'] });
+      invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
