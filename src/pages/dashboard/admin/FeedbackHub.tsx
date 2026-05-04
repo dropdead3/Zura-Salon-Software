@@ -156,8 +156,17 @@ export default function FeedbackHub() {
             <TabsContent value="overview" className="space-y-6 mt-6">
               <TodaysMustTouchStrip />
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-                <NPSScoreCard organizationId={organizationId} />
-                <RecoverySLAWidget />
+                {hasBreached ? (
+                  <>
+                    <RecoverySLAWidget />
+                    <NPSScoreCard organizationId={organizationId} />
+                  </>
+                ) : (
+                  <>
+                    <NPSScoreCard organizationId={organizationId} />
+                    <RecoverySLAWidget />
+                  </>
+                )}
                 <ResponseRateCard />
                 <PublicConversionCard />
                 <ReviewVelocityCard />
