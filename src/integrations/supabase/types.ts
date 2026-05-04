@@ -5860,6 +5860,7 @@ export type Database = {
           external_review_clicked_at: string | null
           id: string
           is_public: boolean | null
+          location_id: string | null
           manager_notified: boolean | null
           manager_notified_at: string | null
           nps_score: number | null
@@ -5891,6 +5892,7 @@ export type Database = {
           external_review_clicked_at?: string | null
           id?: string
           is_public?: boolean | null
+          location_id?: string | null
           manager_notified?: boolean | null
           manager_notified_at?: string | null
           nps_score?: number | null
@@ -5922,6 +5924,7 @@ export type Database = {
           external_review_clicked_at?: string | null
           id?: string
           is_public?: boolean | null
+          location_id?: string | null
           manager_notified?: boolean | null
           manager_notified_at?: string | null
           nps_score?: number | null
@@ -5949,6 +5952,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {

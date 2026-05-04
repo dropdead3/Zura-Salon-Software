@@ -1,66 +1,74 @@
-## Goal
+# Location Filtering for Zura Reputation
 
-Make the **Navigation Menus** editor functional so operators can reconfigure the header (and footer) navigation: add/remove items, reorder, nest dropdowns, change item type (page link / external URL / anchor / dropdown / CTA), set visibility (desktop/mobile), choose CTA style, and adjust mobile layout — with versioned publish to the live site.
+Add a header-level location filter to `/admin/feedback` so multi-location operators can scope every review, NPS, recovery, and intelligence surface to one or more locations.
 
-## Current state (already shipped)
+## Why this is non-trivial
 
-The infrastructure is fully built and wired to the live `<Header />`:
+`client_feedback_responses` has **no `location_id` column today** — it only carries `appointment_id` and `staff_user_id`. Filtering through a join on every read (15+ surfaces) is slow, fights RLS, and breaks the public response token endpoint. We need to denormalize `location_id` onto the response row, backfill historical data, and keep it in sync going forward. `recovery_tasks` already has `location_id` so no schema change there.
 
-- **Tables**: `website_menus`, `website_menu_items` (with `parent_id` for nesting), `website_menu_versions` (publish snapshots).
-- **Hooks** (`src/hooks/useWebsiteMenus.ts`): `useWebsiteMenus`, `useWebsiteMenu`, `useCreateMenuItem`, `useUpdateMenuItem`, `useDeleteMenuItem`, `useReorderMenuItems`, `useUpdateMenuConfig`, `usePublishMenu`, `useSeedMenus`, `usePublicMenuBySlug`.
-- **Editor UI** (`src/components/dashboard/website-editor/navigation/`): `NavigationManager`, `MenuTreeEditor` (drag-and-drop tree), `MenuItemNode`, `MenuItemInspector` (type / target page / external URL / anchor / CTA style / visibility / new-tab / tracking key / duplicate / delete), `AddMenuItemDialog`, `MobileNavConfig` (overlay vs drawer + mobile CTA toggle), `MenuPublishBar` (validation + versioned publish), `useMenuValidation`.
-- **Live consumption**: `Header.tsx` reads `usePublicMenuBySlug('primary')`, with fallback to hardcoded items if no published menu. Footer pulls `'footer'` slug.
+## Schema migration
 
-**The only missing wire**: `WebsiteEditorShell.tsx` `BUILTIN_EDITORS` map (line 142) does not include `'navigation'`, so when the sidebar selects that tab the canvas falls through to the "Pick a section to edit" placeholder seen in your screenshot.
+1. `ALTER TABLE client_feedback_responses ADD COLUMN location_id text REFERENCES locations(id) ON DELETE SET NULL;`
+2. `CREATE INDEX idx_cfr_org_location_responded ON client_feedback_responses(organization_id, location_id, responded_at DESC);`
+3. Backfill: `UPDATE client_feedback_responses r SET location_id = a.location_id FROM appointments a WHERE r.appointment_id = a.id AND r.location_id IS NULL;`
+4. Trigger `set_feedback_response_location` BEFORE INSERT — when `location_id` is null and `appointment_id` is set, populate from `appointments.location_id`. Keeps the survey-creation edge function and any future ingestion paths honest.
+5. RLS: existing `is_org_member`/`is_org_admin` policies remain unchanged (org-scoped). Public token-based read policy unaffected (token, not location).
 
-## What to build
+## Frontend architecture
 
-### 1. Wire `NavigationManager` into the editor shell (the actual fix)
+### Header filter
 
-`src/components/dashboard/website-editor/WebsiteEditorShell.tsx`
+Reuse the existing `LocationMultiSelect` / `LocationSelect` pattern from `AnalyticsFilterBar`:
 
-- Import `NavigationManager` from `./navigation/NavigationManager`.
-- Add `navigation: NavigationManager` to the `BUILTIN_EDITORS` record.
+- Add a single filter row directly under the page header (above the subscription card), right-aligned next to `ReputationGlossary`.
+- Selection persists via `?location=<id>` (or comma-list) URL param so deep-links/back-button survive — same convention as analytics filters.
+- Account-owner / admin sees all locations. Stylists see read-only single-location badge (Stylist Privacy Contract — they can't pivot org-wide; this filter must respect their accessible-locations scope).
+- `'all'` = aggregate (only when `canViewAggregate`).
 
-That single change makes the existing editor surface in the canvas — operators can immediately reorder, add, edit, nest, and publish menu items.
+### Context propagation
 
-### 2. Layout controls (extend `MenuConfig` + `MobileNavConfig`)
+Introduce a tiny `ReputationFilterContext` (`{ locationId: string }`) at `FeedbackHub` so we don't drill props through 18 children. Hooks read it via `useReputationFilter()`.
 
-The current `MenuConfig` only carries `mobile_menu_style` and `mobile_cta_visible`. Add desktop layout knobs:
+```text
+FeedbackHub (filter state + URL sync)
+  └── ReputationFilterProvider
+        ├── Overview cards
+        ├── Reviews tab (ReviewsTable)
+        ├── Presence tab
+        ├── Intelligence tab
+        └── Settings (filter hidden)
+```
 
-- `desktop_alignment`: `'left' | 'center' | 'right'` — controls nav cluster alignment in `Header.tsx`.
-- `desktop_density`: `'comfortable' | 'compact'` — gap between items.
-- `dropdown_style`: `'mega' | 'simple'` — `simple` = current vertical list; `mega` = wider 2-column panel for dropdowns with >5 children.
-- `show_logo`: `boolean` — already implicit, expose toggle.
-- `cta_treatment`: `'pill' | 'underline' | 'outline'` — header CTA style override.
+### Hook updates (add `locationId` arg, append `.eq('location_id', …)` when set)
 
-Files:
-- Extend `MenuConfig` interface in `useWebsiteMenus.ts`.
-- Add a new `DesktopNavConfig.tsx` panel inside `NavigationManager` (mirrors `MobileNavConfig`), gated to the `'primary'` menu.
-- Read these in `Header.tsx` via `menuConfig` and apply with `cn()` class branching.
+- `useReviewVelocity` · `useNPSAnalytics` · `useReviewFunnel` · `useRecoverySLA` · `useRecoveryTasks` · `useEligibleReviews` · `useFeedbackTrendDrift` · `useNegativeReviewHeatmap` (already location-aware) · `useServiceSatisfaction` · `useStylistReputation` · `usePraiseWall` · `useReviewThreshold`
+- All queryKeys gain `locationId` so React Query caches per-location.
+- When `locationId === 'all'`, omit the filter (preserves current behavior).
 
-### 3. Live preview parity (optional but completes the loop)
+### Components
 
-Hover over a menu item in the editor tree posts `PREVIEW_HOVER_SECTION` with `sectionId: 'header'` so the live preview iframe outlines the header. Cheap reuse of the existing hover bridge.
+- `ReviewsTable` — accept `locationId`, pass through to its query, show active filter badge.
+- `NPSScoreCard`, `RecoverySLAWidget`, `ReviewVelocityCard`, `ReviewFunnelCards`, `TodaysMustTouchStrip`, `AutoBoostTelemetryCard`, `AIWeeklyFeedbackSummary`, `NegativeFeedbackThemes`, `FeedbackTrendDriftCard`, `CoachingLoopCard`, `StylistReputationCard`, `ServiceSatisfactionBriefCard`, `PraiseWall`, `RecoveryOutcomeCard`, `ParkedDispatchCard` — read `locationId` from context, no prop drilling.
+- Settings tab: hide the filter (settings are org-scoped). Online Presence tab: filter is meaningful (review-link overrides are per-location); show it.
 
-## Technical details
+### Edge functions
 
-- The `BUILTIN_EDITORS` value type is `React.ComponentType` (no props). `NavigationManager` already takes no props — drop-in compatible.
-- `MenuConfig` is JSONB on `website_menus.config`, so adding fields is additive — no migration required.
-- All RLS already exists (org-scoped on both `website_menus` and `website_menu_items`).
-- Publish flow already snapshots into `website_menu_versions` with `version_number`, `published_by`, `change_summary` — keep as-is.
-- Tenant isolation: all writes go through `useResolvedOrgId()` (effectiveOrganization) — no changes needed.
+Audit and patch any reputation edge functions that aggregate stats (e.g. weekly summary cron, recovery dispatch) — they iterate org-wide and don't need filtering, so no changes. The new column will simply flow through future analytics.
 
-## Out of scope (call out, don't build)
+## Settings hint
 
-- A new "menu type" beyond primary/footer (e.g., utility nav, mobile-only nav). Possible but not requested.
-- Per-page menu overrides.
-- Conditional visibility by auth state (logged-in vs guest).
+Add a small inline note in **Settings → Locations** explaining that per-location review links + the new location filter unlock per-store reputation reporting (drives adoption of `location_review_settings`).
 
-## Validation checklist
+## QA / regression
 
-- Open `/dashboard/admin/website-hub?tab=editor` → click **Navigation Menus** → tree renders, items editable.
-- Add a dropdown parent, nest two children, drag to reorder — saves and reflects in preview after publish.
-- Change CTA style → Header CTA visually updates after publish.
-- Toggle mobile menu style overlay ↔ drawer → live mobile preview swaps.
-- Switch desktop alignment center → header re-anchors.
+- New Vitest: `useReviewVelocity` honors `locationId` filter and cache key.
+- Existing Stylist Privacy Contract test extended: stylist role must not see `'all'` option.
+- Manual: switch between locations on Overview, Reviews, Intelligence — confirm card counts update; verify URL deep-link works.
+
+## Out of scope (deferred — note in memory)
+
+- Per-location reputation **billing/metering** (already deferred per `mem://features/reputation-per-location-metering-scope`). This work just unblocks the analytics signal; pricing tier change stays gated on its existing trigger.
+
+## Memory updates
+
+- Append filter contract to `mem://features/reputation-engine.md`: "Location filter scopes via denormalized `client_feedback_responses.location_id` (BEFORE INSERT trigger from `appointments.location_id`); all reputation hooks accept `locationId` and key React Query caches by it; stylist role is single-location only."

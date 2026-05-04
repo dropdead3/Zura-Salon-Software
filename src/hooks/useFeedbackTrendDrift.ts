@@ -40,23 +40,26 @@ function summarize(rows: Array<{ overall_rating: number | null; nps_score: numbe
   };
 }
 
-export function useFeedbackTrendDrift() {
+export function useFeedbackTrendDrift(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['feedback-trend-drift', orgId],
+    queryKey: ['feedback-trend-drift', orgId, locFilter ?? 'all'],
     enabled: !!orgId,
     staleTime: 60_000,
     queryFn: async (): Promise<FeedbackTrendDrift> => {
       const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await supabase
+      let q = supabase
         .from('client_feedback_responses')
         .select('overall_rating, nps_score, responded_at, created_at')
         .eq('organization_id', orgId!)
         .gte('created_at', since)
         .order('created_at', { ascending: false })
         .limit(1000);
+      if (locFilter) q = q.eq('location_id', locFilter);
+      const { data, error } = await q;
 
       if (error) throw error;
 

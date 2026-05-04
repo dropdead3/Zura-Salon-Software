@@ -6,13 +6,15 @@ import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { openReputationGlossary } from './ReputationGlossary';
 import { tokens } from '@/lib/design-tokens';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 interface NPSScoreCardProps {
   organizationId?: string;
 }
 
 export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
-  const { data: stats, isLoading } = useNPSStats(organizationId);
+  const { locationId } = useReputationFilter();
+  const { data: stats, isLoading } = useNPSStats(organizationId, locationId);
 
   if (isLoading) {
     return (

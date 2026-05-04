@@ -37,8 +37,11 @@ function DriftPill({ label, delta, unit }: { label: string; delta: number | null
   );
 }
 
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
+
 export function FeedbackTrendDriftCard() {
-  const { data, isLoading } = useFeedbackTrendDrift();
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useFeedbackTrendDrift(locationId);
 
   return (
     <Card>

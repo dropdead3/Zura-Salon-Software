@@ -17,12 +17,13 @@ export interface ServiceSatisfactionRow {
   nps: number;
 }
 
-export function useServiceSatisfaction(days: number = 30) {
+export function useServiceSatisfaction(days: number = 30, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['service-satisfaction', orgId, days],
+    queryKey: ['service-satisfaction', orgId, days, locFilter ?? 'all'],
     queryFn: async (): Promise<ServiceSatisfactionRow[]> => {
       const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
@@ -30,15 +31,17 @@ export function useServiceSatisfaction(days: number = 30) {
         appointment_id: string | null;
         overall_rating: number | null;
         nps_score: number | null;
-      }>((from, to) =>
-        supabase
+      }>((from, to) => {
+        let q = supabase
           .from('client_feedback_responses')
           .select('appointment_id, overall_rating, nps_score')
           .eq('organization_id', orgId!)
           .gte('responded_at', since)
           .not('appointment_id', 'is', null)
-          .range(from, to),
-      );
+          .range(from, to);
+        if (locFilter) q = q.eq('location_id', locFilter);
+        return q;
+      });
 
       const apptIds = Array.from(new Set(rows.map((r) => r.appointment_id).filter(Boolean) as string[]));
       if (apptIds.length === 0) return [];

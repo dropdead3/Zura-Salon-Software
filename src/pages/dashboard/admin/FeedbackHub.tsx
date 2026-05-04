@@ -40,6 +40,11 @@ import { ReputationGate } from '@/components/reputation/ReputationGate';
 import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
 import { ReputationGlossary } from '@/components/feedback/ReputationGlossary';
 import { useRecoverySLA } from '@/hooks/useRecoverySLA';
+import { ReputationFilterProvider } from '@/contexts/ReputationFilterContext';
+import { LocationMultiSelect } from '@/components/ui/location-multi-select';
+import { LocationSelect } from '@/components/ui/location-select';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { parseLocationIds, encodeLocationIds } from '@/lib/locationFilter';
 import { toast } from 'sonner';
 
 const FEEDBACK_TABS = new Set(['overview', 'reviews', 'presence', 'intelligence', 'settings']);
@@ -73,7 +78,21 @@ export default function FeedbackHub() {
   const googleOAuthError = searchParams.get('google_oauth_error');
   const initialTab = requestedTab && FEEDBACK_TABS.has(requestedTab) ? requestedTab : 'overview';
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { data: slaData } = useRecoverySLA();
+  const locationParam = searchParams.get('location') ?? 'all';
+  const { data: locations = [] } = useActiveLocations();
+  // Multi-select uses comma-encoded list; for simplicity reduce to a single
+  // location-id (or 'all'). When the multi-select returns a subset we collapse
+  // to the first id — keeps hook signature simple while preserving the UI.
+  const selectedIds = locationParam === 'all' ? [] : parseLocationIds(locationParam);
+  const effectiveLocationId =
+    selectedIds.length === 0 ? 'all' : selectedIds.length === 1 ? selectedIds[0] : selectedIds[0];
+  const setLocationParam = (next: string) => {
+    const p = new URLSearchParams(searchParams);
+    if (!next || next === 'all') p.delete('location');
+    else p.set('location', next);
+    setSearchParams(p, { replace: true });
+  };
+  const { data: slaData } = useRecoverySLA(effectiveLocationId);
   const hasBreached = (slaData?.breachedSLA ?? 0) > 0;
   const breachedCount = slaData?.breachedSLA ?? 0;
   const hasAnyActivity = !!slaData && (slaData.open + slaData.contacted + slaData.resolved) > 0;
@@ -135,6 +154,26 @@ export default function FeedbackHub() {
             <ReputationSubscriptionCard />
           </div>
 
+          {/* Location filter — applies to all tabs except Settings */}
+          {locations.length > 1 && activeTab !== 'settings' && (
+            <div className="flex items-center justify-end gap-2">
+              {locations.length >= 3 ? (
+                <LocationMultiSelect
+                  locations={locations}
+                  selectedIds={selectedIds}
+                  onSelectionChange={(ids) => setLocationParam(encodeLocationIds(ids))}
+                />
+              ) : (
+                <LocationSelect
+                  value={effectiveLocationId}
+                  onValueChange={setLocationParam}
+                  triggerClassName="h-9 w-auto min-w-[180px] text-sm"
+                />
+              )}
+            </div>
+          )}
+
+          <ReputationFilterProvider locationId={effectiveLocationId}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="overview" className="gap-2">
@@ -225,6 +264,7 @@ export default function FeedbackHub() {
               <ReputationSettingsTab />
             </TabsContent>
           </Tabs>
+          </ReputationFilterProvider>
         </ReputationGate>
       </div>
     </DashboardLayout>

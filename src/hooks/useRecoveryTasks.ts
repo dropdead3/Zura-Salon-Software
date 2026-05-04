@@ -39,13 +39,14 @@ export interface RecoveryTaskWithFeedback extends RecoveryTask {
   } | null;
 }
 
-export function useRecoveryTasks() {
+export function useRecoveryTasks(locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
   return useQuery({
-    queryKey: ['recovery-tasks', orgId],
+    queryKey: ['recovery-tasks', orgId, locFilter ?? 'all'],
     queryFn: async (): Promise<RecoveryTaskWithFeedback[]> => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('recovery_tasks')
         .select(`
           *,
@@ -56,6 +57,8 @@ export function useRecoveryTasks() {
         .eq('organization_id', orgId!)
         .order('created_at', { ascending: false })
         .limit(500);
+      if (locFilter) q = q.eq('location_id', locFilter);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as RecoveryTaskWithFeedback[];
     },

@@ -22,21 +22,24 @@ const MIN_RESPONDED_FOR_CONVERSION = 5;
  *
  * Signal-suppressed below thresholds (visibility contract).
  */
-export function useReviewFunnel(daysBack = 30) {
+export function useReviewFunnel(daysBack = 30, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['review-funnel', orgId, daysBack],
+    queryKey: ['review-funnel', orgId, daysBack, locFilter ?? 'all'],
     queryFn: async (): Promise<ReviewFunnelStats> => {
       const since = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase
+      let q = supabase
         .from('client_feedback_responses' as any)
         .select('responded_at, nps_score, external_review_clicked, created_at')
         .eq('organization_id', orgId!)
         .gte('created_at', since)
         .limit(5000);
+      if (locFilter) q = q.eq('location_id', locFilter);
+      const { data, error } = await q;
       if (error) throw error;
 
       const rows = ((data ?? []) as unknown) as Array<{

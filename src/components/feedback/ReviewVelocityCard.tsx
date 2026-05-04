@@ -15,6 +15,7 @@ import { useReviewVelocity } from '@/hooks/useReviewVelocity';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { openReputationGlossary } from './ReputationGlossary';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 const PLATFORM_LABEL: Record<string, string> = {
   google: 'Google',
@@ -24,7 +25,8 @@ const PLATFORM_LABEL: Record<string, string> = {
 };
 
 export function ReviewVelocityCard() {
-  const { data, isLoading } = useReviewVelocity(30);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useReviewVelocity(30, locationId);
 
   if (isLoading) {
     return (

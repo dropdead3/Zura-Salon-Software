@@ -52,17 +52,20 @@ export function useFeedbackSurveys(organizationId?: string) {
   });
 }
 
-export function useFeedbackResponses(organizationId?: string, limit = 50) {
+export function useFeedbackResponses(organizationId?: string, limit = 50, locationId?: string) {
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
   return useQuery({
-    queryKey: ['feedback-responses', organizationId, limit],
+    queryKey: ['feedback-responses', organizationId, limit, locFilter ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('client_feedback_responses' as any)
         .select('*')
         .eq('organization_id', organizationId)
         .not('responded_at', 'is', null)
         .order('responded_at', { ascending: false })
         .limit(limit);
+      if (locFilter) q = q.eq('location_id', locFilter);
+      const { data, error } = await q;
 
       if (error) throw error;
       return (data || []) as unknown as FeedbackResponse[];

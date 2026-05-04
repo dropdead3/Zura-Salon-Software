@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Users } from 'lucide-react';
 import { useStylistReputation } from '@/hooks/useStylistReputation';
 import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 function scoreBadgeVariant(score: number | null): 'default' | 'secondary' | 'destructive' {
   if (score == null) return 'secondary';
@@ -13,7 +14,8 @@ function scoreBadgeVariant(score: number | null): 'default' | 'secondary' | 'des
 
 export function StylistReputationCard() {
   const { isEntitled } = useReputationEntitlement();
-  const { data, isLoading } = useStylistReputation(90);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useStylistReputation(90, locationId);
 
   // Silence is valid output: when the org is unsubscribed from Zura Reputation,
   // stylists shouldn't see a paywall they can't act on (Stylist Privacy Contract).

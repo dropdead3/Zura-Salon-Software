@@ -26,12 +26,13 @@ export interface StylistReputationRow {
   reputationScore: number | null; // null when below MIN_RESPONSES
 }
 
-export function useStylistReputation(days: number = 90) {
+export function useStylistReputation(days: number = 90, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['stylist-reputation', orgId, days],
+    queryKey: ['stylist-reputation', orgId, days, locFilter ?? 'all'],
     queryFn: async (): Promise<StylistReputationRow[]> => {
       const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
@@ -39,22 +40,26 @@ export function useStylistReputation(days: number = 90) {
         staff_user_id: string | null;
         overall_rating: number | null;
         nps_score: number | null;
-      }>((from, to) =>
-        supabase
+      }>((from, to) => {
+        let q = supabase
           .from('client_feedback_responses')
           .select('staff_user_id, overall_rating, nps_score')
           .eq('organization_id', orgId!)
           .gte('responded_at', since)
           .not('staff_user_id', 'is', null)
-          .range(from, to),
-      );
+          .range(from, to);
+        if (locFilter) q = q.eq('location_id', locFilter);
+        return q;
+      });
 
-      const { data: recovery } = await supabase
+      let recoveryQ = supabase
         .from('recovery_tasks')
         .select('staff_user_id, status')
         .eq('organization_id', orgId!)
         .gte('created_at', since)
         .not('staff_user_id', 'is', null);
+      if (locFilter) recoveryQ = recoveryQ.eq('location_id', locFilter);
+      const { data: recovery } = await recoveryQ;
 
       const { data: profiles } = await supabase
         .from('employee_profiles')

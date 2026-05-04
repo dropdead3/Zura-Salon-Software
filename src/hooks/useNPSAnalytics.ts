@@ -46,30 +46,30 @@ export function useNPSSnapshots(organizationId?: string, days = 30) {
   });
 }
 
-export function useNPSStats(organizationId?: string) {
+export function useNPSStats(organizationId?: string, locationId?: string) {
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
   return useQuery({
-    queryKey: ['nps-stats', organizationId],
+    queryKey: ['nps-stats', organizationId, locFilter ?? 'all'],
     queryFn: async () => {
-      // Get responses from the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-      // Current period (last 30 days)
-      const { data: currentData, error: currentError } = await supabase
+      let currentQ = supabase
         .from('client_feedback_responses' as any)
         .select('nps_score, overall_rating')
         .eq('organization_id', organizationId)
         .not('responded_at', 'is', null)
         .not('nps_score', 'is', null)
         .gte('responded_at', thirtyDaysAgo.toISOString());
+      if (locFilter) currentQ = currentQ.eq('location_id', locFilter);
+      const { data: currentData, error: currentError } = await currentQ;
 
       if (currentError) throw currentError;
 
-      // Previous period (30-60 days ago)
-      const { data: previousData, error: previousError } = await supabase
+      let previousQ = supabase
         .from('client_feedback_responses' as any)
         .select('nps_score')
         .eq('organization_id', organizationId)
@@ -77,6 +77,8 @@ export function useNPSStats(organizationId?: string) {
         .not('nps_score', 'is', null)
         .gte('responded_at', sixtyDaysAgo.toISOString())
         .lt('responded_at', thirtyDaysAgo.toISOString());
+      if (locFilter) previousQ = previousQ.eq('location_id', locFilter);
+      const { data: previousData, error: previousError } = await previousQ;
 
       if (previousError) throw previousError;
 
