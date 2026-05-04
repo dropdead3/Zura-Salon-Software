@@ -151,7 +151,13 @@ export function PageSectionRenderer({ sections, pageId }: PageSectionRendererPro
         });
         if (msg.sectionId) {
           const el = document.getElementById(`section-${msg.sectionId}`);
-          if (el) el.classList.add('preview-hover');
+          if (el) {
+            el.classList.add('preview-hover');
+            // Auto-scroll the canvas to the hovered section. `block: 'nearest'`
+            // keeps already-visible sections from jumping; only off-screen
+            // rows trigger movement. Smooth keeps the motion calm.
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
         }
       }
 
