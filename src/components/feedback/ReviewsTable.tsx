@@ -27,6 +27,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { ShareReviewDialog, type ShareableReview } from './ShareReviewDialog';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 interface ReviewsTableProps {
   organizationId?: string;
@@ -53,7 +54,8 @@ function StarRow({ rating }: { rating: number | null }) {
 }
 
 export function ReviewsTable({ organizationId, limit = 200 }: ReviewsTableProps) {
-  const { data: responses, isLoading } = useFeedbackResponses(organizationId, limit);
+  const { locationId } = useReputationFilter();
+  const { data: responses, isLoading } = useFeedbackResponses(organizationId, limit, locationId);
   const { formatDate } = useFormatDate();
 
   const [search, setSearch] = useState('');
