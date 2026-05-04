@@ -42,11 +42,34 @@ export function PlatformConnectorTile({
   reviewUrl,
 }: PlatformConnectorTileProps) {
   const { data: connections } = useReviewPlatformConnections();
+  const { effectiveOrganization } = useOrganizationContext();
   const connection = connections?.find((c) => c.platform === platform);
+  const [connecting, setConnecting] = useState(false);
 
   const isActive = connection?.status === 'active';
   const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
   const hasUrl = !!reviewUrl?.trim();
+  const supportsOAuth = platform === 'google';
+
+  const handleConnect = async () => {
+    if (!effectiveOrganization?.id) return;
+    setConnecting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reputation-google-oauth-initiate', {
+        body: {
+          organization_id: effectiveOrganization.id,
+          return_to: window.location.pathname + window.location.search,
+        },
+      });
+      if (error) throw error;
+      if (!data?.url) throw new Error('No authorization URL returned');
+      window.location.href = data.url;
+    } catch (e) {
+      console.error('Connect failed', e);
+      toast.error('Could not start Google connection. Please try again.');
+      setConnecting(false);
+    }
+  };
 
   return (
     <Card className="h-full">
