@@ -12,8 +12,8 @@
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Facebook, Star } from 'lucide-react';
-import { GoogleGIcon } from './GoogleGIcon';
+import { Zap, ArrowRight, Star } from 'lucide-react';
+import { GoogleGIcon, FacebookFIcon } from '@/components/brand/marks';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
@@ -74,9 +74,9 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         <PlatformConnectorTile
           platform="facebook"
           label="Facebook"
-          Icon={Facebook}
-          iconBgClass="bg-[#1877F2]/10"
-          iconColorClass="text-[#1877F2]"
+          Icon={FacebookFIcon}
+          iconBgClass="bg-background border border-border"
+          iconColorClass=""
           reviewUrl={primary?.facebook_review_url}
         />
       </div>
