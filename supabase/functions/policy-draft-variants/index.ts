@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     // Authorization: only org admins may draft
     const { data: isAdmin } = await admin.rpc("is_org_admin", {
       _user_id: userId,
-      _organization_id: version.organization_id,
+      _org_id: version.organization_id,
     });
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
