@@ -122,7 +122,8 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         ) : (
           <Accordion
             type="multiple"
-            defaultValue={locations.length === 1 ? [locations[0].id] : []}
+            value={openItems}
+            onValueChange={setOpenItems}
             className="space-y-2"
           >
             {locations.map((loc) => {
@@ -132,7 +133,8 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
                 <AccordionItem
                   key={loc.id}
                   value={loc.id}
-                  className="border border-border rounded-xl bg-card/60 px-4 [&[data-state=open]]:bg-card"
+                  id={`presence-loc-${loc.id}`}
+                  className="border border-border rounded-xl bg-card/60 px-4 [&[data-state=open]]:bg-card scroll-mt-24"
                 >
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
