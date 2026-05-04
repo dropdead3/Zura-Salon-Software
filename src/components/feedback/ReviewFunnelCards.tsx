@@ -41,8 +41,8 @@ export function ResponseRateCard() {
         <p className={tokens.kpi.value}>{display}</p>
         <p className="text-xs text-muted-foreground mt-1">
           {data?.hasResponseSignal
-            ? `${data.responded} of ${data.sent} sent`
-            : `${data?.sent ?? 0} sent — need 10 to compute`}
+            ? `${data.responded} replied of ${data.sent} asked`
+            : `${data?.sent ?? 0} sent — need 10 to show a rate`}
         </p>
       </CardContent>
     </Card>
