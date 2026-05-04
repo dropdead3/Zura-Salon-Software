@@ -167,7 +167,10 @@ export function PlatformConnectorTile({
     setDisconnecting(true);
     try {
       const { error } = await supabase.functions.invoke('reputation-google-oauth-disconnect', {
-        body: { organization_id: effectiveOrganization.id },
+        body: {
+          organization_id: effectiveOrganization.id,
+          ...(locationId ? { location_id: locationId } : {}),
+        },
       });
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
