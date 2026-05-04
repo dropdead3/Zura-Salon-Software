@@ -14151,6 +14151,44 @@ export type Database = {
           },
         ]
       }
+      oauth_pending_mappings: {
+        Row: {
+          created_at: string
+          expires_at: string
+          nonce: string
+          organization_id: string
+          payload: Json
+          provider: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          organization_id: string
+          payload: Json
+          provider?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          nonce?: string
+          organization_id?: string
+          payload?: Json
+          provider?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_pending_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_section_config: {
         Row: {
           created_at: string | null
@@ -23173,15 +23211,19 @@ export type Database = {
           access_token: string | null
           cached_average_rating: number | null
           cached_review_count: number | null
+          connected_by_user_id: string | null
           created_at: string
           created_by: string | null
           external_account_id: string | null
           external_account_label: string | null
+          google_account_id: string | null
           id: string
           last_error: string | null
           last_synced_at: string | null
+          last_verified_at: string | null
           location_id: string | null
           organization_id: string
+          place_id: string | null
           platform: Database["public"]["Enums"]["review_platform"]
           refresh_token: string | null
           scopes: string[] | null
@@ -23193,15 +23235,19 @@ export type Database = {
           access_token?: string | null
           cached_average_rating?: number | null
           cached_review_count?: number | null
+          connected_by_user_id?: string | null
           created_at?: string
           created_by?: string | null
           external_account_id?: string | null
           external_account_label?: string | null
+          google_account_id?: string | null
           id?: string
           last_error?: string | null
           last_synced_at?: string | null
+          last_verified_at?: string | null
           location_id?: string | null
           organization_id: string
+          place_id?: string | null
           platform: Database["public"]["Enums"]["review_platform"]
           refresh_token?: string | null
           scopes?: string[] | null
@@ -23213,15 +23259,19 @@ export type Database = {
           access_token?: string | null
           cached_average_rating?: number | null
           cached_review_count?: number | null
+          connected_by_user_id?: string | null
           created_at?: string
           created_by?: string | null
           external_account_id?: string | null
           external_account_label?: string | null
+          google_account_id?: string | null
           id?: string
           last_error?: string | null
           last_synced_at?: string | null
+          last_verified_at?: string | null
           location_id?: string | null
           organization_id?: string
+          place_id?: string | null
           platform?: Database["public"]["Enums"]["review_platform"]
           refresh_token?: string | null
           scopes?: string[] | null
@@ -33876,6 +33926,7 @@ export type Database = {
         Args: { _org_id: string }
         Returns: number
       }
+      purge_expired_oauth_mappings: { Args: never; Returns: undefined }
       rebuild_inventory_projection: {
         Args: { p_location_id?: string; p_org_id: string; p_product_id: string }
         Returns: undefined
@@ -34084,6 +34135,10 @@ export type Database = {
       }
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_can_act_on_location: {
+        Args: { _location_id: string; _org_id: string; _user_id: string }
         Returns: boolean
       }
       user_has_location_access: {

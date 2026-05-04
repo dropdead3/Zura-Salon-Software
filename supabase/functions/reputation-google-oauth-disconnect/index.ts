@@ -40,12 +40,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { organization_id } = await req.json().catch(() => ({}));
+    const { organization_id, location_id } = await req.json().catch(() => ({}));
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "missing_organization_id" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    // location_id optional: when provided, disconnect only that location's connection.
 
     // Authorization: must be org admin
     const { data: isAdmin, error: adminErr } = await userClient.rpc("is_org_admin", {
@@ -60,32 +61,47 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Fetch tokens to revoke
-    const { data: rows } = await admin
+    // Fetch tokens to revoke (scope to location if provided)
+    let fetchQuery = admin
       .from("review_platform_connections")
       .select("id, refresh_token, access_token")
       .eq("organization_id", organization_id)
       .eq("platform", "google");
+    if (location_id) fetchQuery = fetchQuery.eq("location_id", location_id);
+    const { data: rows } = await fetchQuery;
 
-    // Best-effort revoke at Google
-    for (const row of rows ?? []) {
-      const token = row.refresh_token || row.access_token;
-      if (!token) continue;
-      try {
-        await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        });
-      } catch (e) {
-        console.warn("revoke failed (continuing)", e);
+    // Best-effort revoke at Google. NOTE: revoking one row's token will revoke
+    // ALL sibling locations' tokens too (they share a grant). Only revoke at
+    // Google when this is the LAST remaining row for the org.
+    const { count: remainingCount } = await admin
+      .from("review_platform_connections")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organization_id)
+      .eq("platform", "google");
+
+    const willBeLast = !location_id || (remainingCount ?? 0) <= (rows?.length ?? 0);
+    if (willBeLast) {
+      for (const row of rows ?? []) {
+        const token = row.refresh_token || row.access_token;
+        if (!token) continue;
+        try {
+          await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          });
+        } catch (e) {
+          console.warn("revoke failed (continuing)", e);
+        }
       }
     }
 
-    const { error: delErr } = await admin
+    let delQuery = admin
       .from("review_platform_connections")
       .delete()
       .eq("organization_id", organization_id)
       .eq("platform", "google");
+    if (location_id) delQuery = delQuery.eq("location_id", location_id);
+    const { error: delErr } = await delQuery;
 
     if (delErr) {
       console.error("delete failed", delErr);
