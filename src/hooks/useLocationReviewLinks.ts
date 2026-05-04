@@ -9,7 +9,6 @@ export interface LocationReviewLink {
   location_id: string;
   google_review_url: string | null;
   apple_review_url: string | null;
-  yelp_review_url: string | null;
   facebook_review_url: string | null;
   custom_review_url: string | null;
   custom_review_label: string | null;

@@ -8,8 +8,6 @@ export interface ReviewThresholdSettings {
   requireBothToPass: boolean;
   googleReviewUrl: string;
   appleReviewUrl: string;
-  /** @deprecated Yelp removed from Online Reputation; column kept for back-compat reads only. */
-  yelpReviewUrl?: string;
   facebookReviewUrl: string;
   publicReviewPromptTitle: string;
   publicReviewPromptMessage: string;
