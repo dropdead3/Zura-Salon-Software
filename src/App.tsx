@@ -436,6 +436,7 @@ function DashboardRoutes() {
       <Route path="settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
       <Route path="admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
       <Route path="admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
+      <Route path="admin/feedback/connect-google" element={<ProtectedRoute requiredPermission="manage_settings"><ConnectGooglePage /></ProtectedRoute>} />
       <Route path="admin/feedback/recovery" element={<ProtectedRoute requiredPermission="manage_settings"><RecoveryInbox /></ProtectedRoute>} />
       <Route path="admin/feedback/links" element={<ProtectedRoute requiredPermission="manage_settings"><LocationReviewLinks /></ProtectedRoute>} />
       <Route path="admin/feedback/automations" element={<ProtectedRoute requiredPermission="manage_settings"><ReviewAutomationRules /></ProtectedRoute>} />
