@@ -46,18 +46,27 @@ export function useReviewVelocity(daysBack = 30, locationId?: string) {
       // proxy on client_feedback_responses to the dedicated event log so we
       // count every click (not just last-write-wins) and can attribute by
       // platform deterministically.
+      // review_click_events has no location_id; when filtering by location we
+      // join through the source feedback response and filter client-side.
+      const selectClause = locFilter
+        ? 'platform, clicked_at, feedback:client_feedback_responses!review_click_events_feedback_response_id_fkey(location_id)'
+        : 'platform, clicked_at';
       const { data, error } = await supabase
         .from('review_click_events' as any)
-        .select('platform, clicked_at')
+        .select(selectClause)
         .eq('organization_id', orgId!)
         .gte('clicked_at', priorSince)
         .limit(5000);
       if (error) throw error;
 
-      const rows = ((data ?? []) as unknown) as Array<{
+      const allRows = ((data ?? []) as unknown) as Array<{
         platform: string | null;
         clicked_at: string | null;
+        feedback?: { location_id: string | null } | null;
       }>;
+      const rows = locFilter
+        ? allRows.filter((r) => r.feedback?.location_id === locFilter)
+        : allRows;
 
       const currentRows = rows.filter(
         (r) => r.clicked_at && r.clicked_at >= currentSince,
