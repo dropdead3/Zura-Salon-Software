@@ -90,7 +90,7 @@ export default function RecoveryInbox() {
           title="Client Recovery Inbox"
           description="Follow up with clients who left low feedback. All clients still see public review options regardless of their rating."
           backTo={dashPath('/admin/feedback')}
-          backLabel="Back to Client Feedback"
+          backLabel="Back to Client Reputation"
         />
 
         <ComplianceBanner />

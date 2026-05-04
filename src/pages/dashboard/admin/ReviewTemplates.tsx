@@ -67,7 +67,7 @@ export default function ReviewTemplates() {
           title="Review Request Templates"
           description="Edit the SMS the dispatcher sends after eligible appointments. Variables are interpolated at send time."
           backTo={dashPath('/admin/feedback')}
-          backLabel="Back to Client Feedback"
+          backLabel="Back to Client Reputation"
         />
         <ComplianceBanner />
 

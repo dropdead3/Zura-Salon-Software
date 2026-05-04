@@ -141,7 +141,7 @@ export default function ReviewAutomationRules() {
           title="Review Request Automations"
           description="Configure when and how clients are asked for feedback after appointments."
           backTo={dashPath('/admin/feedback')}
-          backLabel="Back to Client Feedback"
+          backLabel="Back to Client Reputation"
           actions={
             <Button onClick={() => setCreating(true)} className="gap-2">
               <Plus className="h-4 w-4" /> New Rule
