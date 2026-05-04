@@ -29,12 +29,13 @@ const MIN_FOR_SIGNAL = 3;
  * the UI can render a "need N more clicks to compute" empty state instead of
  * a misleading 0% trend.
  */
-export function useReviewVelocity(daysBack = 30) {
+export function useReviewVelocity(daysBack = 30, locationId?: string) {
   const { effectiveOrganization } = useOrganizationContext();
   const orgId = effectiveOrganization?.id;
+  const locFilter = locationId && locationId !== 'all' ? locationId : undefined;
 
   return useQuery({
-    queryKey: ['review-velocity', orgId, daysBack],
+    queryKey: ['review-velocity', orgId, daysBack, locFilter ?? 'all'],
     queryFn: async (): Promise<ReviewVelocityStats> => {
       const now = Date.now();
       const ms = daysBack * 24 * 60 * 60 * 1000;
