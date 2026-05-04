@@ -1,40 +1,68 @@
+/**
+ * ReviewShareScreen — Public review share surface shown after feedback submit.
+ *
+ * Doctrine: per `shareScreenGate.ts`, this screen is offered to EVERY client
+ * who has at least one public link configured — never gated by rating. To
+ * avoid feeling tone-deaf for low-rating clients while still capturing the
+ * full conversion lift on high-rating clients, the surface adapts via
+ * `emphasis`:
+ *
+ *   - 'celebrate'  → operator's custom Auto-Boost copy, prominent platform CTAs
+ *   - 'neutral'    → muted, optional-feeling prompt with outline CTAs
+ *
+ * `emphasis` is a presentational hint only. Platform link visibility is
+ * identical in both modes (Non-Gating Doctrine, Reputation Engine §3 + §10).
+ */
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Copy, ExternalLink, Check, MapPin, MessageSquare } from 'lucide-react';
-// MapPin retained for Apple Maps tile.
+import { Star, Copy, ExternalLink, Check, MapPin, MessageSquare, Heart } from 'lucide-react';
 import { ReviewThresholdSettings, trackExternalReviewClick } from '@/hooks/useReviewThreshold';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+
+export type ShareScreenEmphasis = 'celebrate' | 'neutral';
 
 interface ReviewShareScreenProps {
   settings: ReviewThresholdSettings;
   comments: string;
   feedbackToken: string;
   onSkip: () => void;
+  /**
+   * Adaptive presentation based on whether the client passed the operator's
+   * happiness threshold. Defaults to 'neutral' to stay safe if the caller
+   * forgets to wire it. NEVER controls link visibility.
+   */
+  emphasis?: ShareScreenEmphasis;
+  /**
+   * Operator-authored celebratory copy. Used as the prompt body in
+   * 'celebrate' mode; ignored in 'neutral' mode.
+   */
+  celebrateMessage?: string;
 }
 
-export function ReviewShareScreen({ 
-  settings, 
-  comments, 
+export function ReviewShareScreen({
+  settings,
+  comments,
   feedbackToken,
-  onSkip 
+  onSkip,
+  emphasis = 'neutral',
+  celebrateMessage,
 }: ReviewShareScreenProps) {
   const [copied, setCopied] = useState(false);
   const [clickedPlatform, setClickedPlatform] = useState<string | null>(null);
+  const isCelebrate = emphasis === 'celebrate';
 
   const handleCopyReview = async () => {
     if (!comments) {
       toast.error('No review text to copy');
       return;
     }
-    
     await navigator.clipboard.writeText(comments);
     setCopied(true);
     await trackExternalReviewClick(feedbackToken, 'copied');
     toast.success('Review copied to clipboard!');
-    
     setTimeout(() => setCopied(false), 3000);
   };
 
@@ -44,53 +72,55 @@ export function ReviewShareScreen({
       apple: settings.appleReviewUrl,
       facebook: settings.facebookReviewUrl,
     };
-
     const url = urls[platform];
     if (!url) {
       toast.error(`${platform} review link not configured`);
       return;
     }
-
-    // Copy review text first
     if (comments) {
       await navigator.clipboard.writeText(comments);
     }
-
-    // Track the click
     await trackExternalReviewClick(feedbackToken, platform);
     setClickedPlatform(platform);
-
-    // Open in new tab
     window.open(url, '_blank');
-
     toast.info('Review copied! Paste it on the page that just opened.', {
       duration: 5000,
     });
   };
 
   const platformButtons = [
-    { 
-      id: 'google', 
-      label: 'Google Reviews', 
+    {
+      id: 'google',
+      label: 'Google Reviews',
       url: settings.googleReviewUrl,
       icon: <span className="text-lg">🔵</span>,
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-blue-500 hover:bg-blue-600',
     },
-    { 
-      id: 'apple', 
-      label: 'Apple Maps', 
+    {
+      id: 'apple',
+      label: 'Apple Maps',
       url: settings.appleReviewUrl,
       icon: <MapPin className="h-4 w-4" />,
-      color: 'bg-gray-800 hover:bg-gray-900'
+      color: 'bg-gray-800 hover:bg-gray-900',
     },
-    { 
-      id: 'facebook', 
-      label: 'Facebook', 
+    {
+      id: 'facebook',
+      label: 'Facebook',
       url: settings.facebookReviewUrl,
       icon: <MessageSquare className="h-4 w-4" />,
-      color: 'bg-blue-600 hover:bg-blue-700'
+      color: 'bg-blue-600 hover:bg-blue-700',
     },
-  ].filter(p => p.url);
+  ].filter((p) => p.url);
+
+  // Headline + body copy adapt to emphasis. Links themselves do not.
+  const headline = isCelebrate
+    ? settings.publicReviewPromptTitle || "We're Thrilled You Loved Your Visit!"
+    : 'Thanks for sharing your feedback';
+  const body = isCelebrate
+    ? celebrateMessage ||
+      settings.publicReviewPromptMessage ||
+      'Would you mind taking a moment to share your experience publicly?'
+    : "We've heard you and a manager will follow up shortly. If you'd still like to leave a public review, the options are below — entirely optional.";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
@@ -99,19 +129,24 @@ export function ReviewShareScreen({
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center">
-                <Star className="h-8 w-8 text-amber-500 fill-amber-500" />
+              <div
+                className={cn(
+                  'h-16 w-16 rounded-full flex items-center justify-center',
+                  isCelebrate ? 'bg-amber-100' : 'bg-muted',
+                )}
+              >
+                {isCelebrate ? (
+                  <Star className="h-8 w-8 text-amber-500 fill-amber-500" />
+                ) : (
+                  <Heart className="h-8 w-8 text-muted-foreground" />
+                )}
               </div>
             </div>
-            <h2 className="text-2xl font-medium">
-              {settings.publicReviewPromptTitle || "We're Thrilled You Loved Your Visit!"}
-            </h2>
-            <p className="text-muted-foreground">
-              {settings.publicReviewPromptMessage || 'Would you mind taking a moment to share your experience?'}
-            </p>
+            <h2 className="text-2xl font-medium">{headline}</h2>
+            <p className="text-muted-foreground whitespace-pre-line">{body}</p>
           </div>
 
-          {/* Copy Review Section */}
+          {/* Copy Review */}
           {comments && (
             <div className="border rounded-lg p-4 bg-muted/30">
               <div className="flex items-center justify-between mb-2">
@@ -144,21 +179,27 @@ export function ReviewShareScreen({
             </div>
           )}
 
-          {/* Platform Buttons */}
+          {/* Platform Buttons — present in both modes; styling differs only */}
           {platformButtons.length > 0 && (
             <div className="space-y-3">
               <p className="text-sm text-center text-muted-foreground">
-                Share on your preferred platform:
+                {isCelebrate
+                  ? 'Share on your preferred platform:'
+                  : 'Optional — share publicly if you wish:'}
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {platformButtons.map((platform) => (
                   <Button
                     key={platform.id}
-                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'facebook')}
+                    variant={isCelebrate ? 'default' : 'outline'}
+                    onClick={() =>
+                      handleShareTo(platform.id as 'google' | 'apple' | 'facebook')
+                    }
                     className={cn(
-                      'text-white gap-2',
-                      platform.color,
-                      clickedPlatform === platform.id && 'ring-2 ring-offset-2 ring-primary'
+                      'gap-2',
+                      isCelebrate && cn('text-white', platform.color),
+                      clickedPlatform === platform.id &&
+                        'ring-2 ring-offset-2 ring-primary',
                     )}
                   >
                     {platform.icon}
@@ -170,10 +211,14 @@ export function ReviewShareScreen({
             </div>
           )}
 
-          {/* Skip button */}
+          {/* Skip */}
           <div className="text-center pt-2">
-            <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">
-              Skip - I'll do it later
+            <Button
+              variant="ghost"
+              onClick={onSkip}
+              className="text-muted-foreground"
+            >
+              {isCelebrate ? "Skip - I'll do it later" : 'No thanks, close'}
             </Button>
           </div>
         </CardContent>
