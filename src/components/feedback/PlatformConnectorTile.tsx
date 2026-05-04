@@ -53,6 +53,7 @@ export function PlatformConnectorTile({
   const connection = connections?.find((c) => c.platform === platform);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   const isActive = connection?.status === 'active';
   const isErrored = connection?.status === 'error' || connection?.status === 'expired' || connection?.status === 'revoked';
@@ -97,14 +98,15 @@ export function PlatformConnectorTile({
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
+    setPolling(false);
   };
   const startConnectionPoll = (priorAccountId: string | null) => {
     stopPolling();
+    setPolling(true);
     const startedAt = Date.now();
     pollRef.current = setInterval(async () => {
       const elapsed = Date.now() - startedAt;
-      const result = await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
-      void result;
+      await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
       const fresh = queryClient.getQueryData<typeof connections>(['review-platform-connections', effectiveOrganization?.id]);
       const next = fresh?.find((c) => c.platform === platform);
       const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
@@ -171,9 +173,18 @@ export function PlatformConnectorTile({
 
         <div className="mt-auto flex flex-col items-center gap-2 w-full">
           {isActive && (
-            <Badge variant="outline" className="gap-1 text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+              title={connection?.external_account_label ?? undefined}
+            >
               <CheckCircle2 className="h-3 w-3" /> Connected
             </Badge>
+          )}
+          {polling && (
+            <p className="text-[11px] text-muted-foreground/80 inline-flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" /> Detecting new account…
+            </p>
           )}
           {isErrored && (
             <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
