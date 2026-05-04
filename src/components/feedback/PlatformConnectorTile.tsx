@@ -15,7 +15,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink } from 'lucide-react';
+import { ExternalLink, Link as LinkIcon, CheckCircle2, AlertTriangle, Loader2, Unlink, RefreshCw } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { useReviewPlatformConnections, ReviewPlatform } from '@/hooks/useReviewPlatformConnections';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -90,7 +90,7 @@ export function PlatformConnectorTile({
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = async (options?: { reconnect?: boolean }) => {
     if (!effectiveOrganization?.id) return;
     setDisconnecting(true);
     try {
@@ -98,8 +98,14 @@ export function PlatformConnectorTile({
         body: { organization_id: effectiveOrganization.id },
       });
       if (error) throw error;
-      toast.success('Google disconnected.');
       await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+      if (options?.reconnect) {
+        toast.info('Disconnected — starting Google sign-in…');
+        setDisconnecting(false);
+        await handleConnect();
+        return;
+      }
+      toast.success('Google disconnected.');
     } catch (e) {
       console.error('Disconnect failed', e);
       toast.error('Could not disconnect Google. Please try again.');
@@ -191,35 +197,65 @@ export function PlatformConnectorTile({
             </>
           )}
           {isActive && supportsOAuth && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size={tokens.button.card}
-                  className="w-full gap-1.5"
-                  disabled={disconnecting}
-                >
-                  {disconnecting ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Disconnecting…</>
-                  ) : (
-                    <><Unlink className="h-3.5 w-3.5" /> Disconnect</>
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Disconnect Google?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This revokes Zura's access to your Google Business Profile and removes the saved connection.
-                    Review syncing will stop until you reconnect. You can reconnect at any time.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDisconnect}>Disconnect</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="w-full flex flex-col gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size={tokens.button.card}
+                    className="w-full gap-1.5"
+                    disabled={disconnecting || connecting}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" /> Switch Google account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Switch Google account?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      We'll disconnect the current Google account and immediately re-open the Google sign-in
+                      so you can pick the right Business Profile owner.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDisconnect({ reconnect: true })}>
+                      Switch account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size={tokens.button.card}
+                    className="w-full gap-1.5"
+                    disabled={disconnecting || connecting}
+                  >
+                    {disconnecting ? (
+                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Disconnecting…</>
+                    ) : (
+                      <><Unlink className="h-3.5 w-3.5" /> Disconnect</>
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Disconnect Google?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This revokes Zura's access to your Google Business Profile and removes the saved connection.
+                      Review syncing will stop until you reconnect. You can reconnect at any time.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDisconnect()}>Disconnect</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           )}
           {!isActive && !supportsOAuth && (
             <Button
