@@ -24,7 +24,8 @@ const PLATFORM_LABEL: Record<string, string> = {
 };
 
 export function ReviewVelocityCard() {
-  const { data, isLoading } = useReviewVelocity(30);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useReviewVelocity(30, locationId);
 
   if (isLoading) {
     return (
