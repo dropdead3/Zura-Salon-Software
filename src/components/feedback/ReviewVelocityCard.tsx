@@ -55,8 +55,8 @@ export function ReviewVelocityCard() {
     <Card className="relative">
       <div className={tokens.kpi.infoIcon}>
         <MetricInfoTooltip
-          title="Review Velocity"
-          description="Public review click-throughs in the last 30 days vs. the prior 30. Suppressed below 3 click-throughs."
+          title="Review Momentum"
+          description="How many clients clicked through to leave a public review in the last 30 days, compared to the 30 days before. Hidden until at least 3 click-throughs."
         />
       </div>
       <CardHeader className="pb-2">
