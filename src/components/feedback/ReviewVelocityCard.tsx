@@ -58,6 +58,7 @@ export function ReviewVelocityCard() {
         <MetricInfoTooltip
           title="Review Momentum"
           description="How many clients clicked through to leave a public review in the last 30 days, compared to the 30 days before. Hidden until at least 3 click-throughs."
+          onLearnMore={() => openReputationGlossary('momentum')}
         />
       </div>
       <CardHeader className="pb-2">
