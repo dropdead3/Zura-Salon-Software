@@ -12,6 +12,10 @@ export interface RecoverySLAStats {
 }
 
 const SLA_HOURS = 24;
+const RESOLVED_STATUSES = ['resolved', 'refunded', 'redo_booked', 'closed'];
+// Bounded sample for averages — enough to stabilize the moving average
+// without paging through full history as orgs scale to thousands of rows.
+const AVG_SAMPLE_LIMIT = 200;
 
 export function useRecoverySLA() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -20,40 +24,53 @@ export function useRecoverySLA() {
   return useQuery({
     queryKey: ['recovery-sla', orgId],
     queryFn: async (): Promise<RecoverySLAStats> => {
-      const { data, error } = await supabase
-        .from('recovery_tasks' as any)
-        .select('status, created_at, first_contacted_at, resolved_at, snoozed_until')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false })
-        .limit(500);
-      if (error) throw error;
+      const nowIso = new Date().toISOString();
+      const slaCutoffIso = new Date(Date.now() - SLA_HOURS * 3_600_000).toISOString();
 
-      const rows = ((data ?? []) as unknown) as Array<{
-        status: string;
+      // Parallel head:true counts — no row payloads. Indexed on
+      // (organization_id, status) and (organization_id, snoozed_until).
+      // Replaces the prior 500-row scan that grew unboundedly per org.
+      const base = () =>
+        supabase
+          .from('recovery_tasks' as any)
+          .select('id', { head: true, count: 'exact' })
+          .eq('organization_id', orgId);
+
+      const [openRes, contactedRes, resolvedRes, breachedRes, sampleRes] = await Promise.all([
+        base().eq('status', 'new').or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`),
+        base().eq('status', 'contacted').or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`),
+        base().in('status', RESOLVED_STATUSES),
+        base()
+          .eq('status', 'new')
+          .lt('created_at', slaCutoffIso)
+          .is('first_contacted_at', null)
+          .or(`snoozed_until.is.null,snoozed_until.lte.${nowIso}`),
+        supabase
+          .from('recovery_tasks' as any)
+          .select('created_at, first_contacted_at, resolved_at')
+          .eq('organization_id', orgId)
+          .in('status', RESOLVED_STATUSES)
+          .not('resolved_at', 'is', null)
+          .order('resolved_at', { ascending: false })
+          .limit(AVG_SAMPLE_LIMIT),
+      ]);
+
+      if (openRes.error) throw openRes.error;
+      if (contactedRes.error) throw contactedRes.error;
+      if (resolvedRes.error) throw resolvedRes.error;
+      if (breachedRes.error) throw breachedRes.error;
+      if (sampleRes.error) throw sampleRes.error;
+
+      const sample = ((sampleRes.data ?? []) as unknown) as Array<{
         created_at: string;
         first_contacted_at: string | null;
         resolved_at: string | null;
-        snoozed_until: string | null;
       }>;
 
-      const now = Date.now();
-      let open = 0, contacted = 0, resolved = 0, breachedSLA = 0;
       const firstContactGaps: number[] = [];
       const resolutionGaps: number[] = [];
-
-      for (const r of rows) {
+      for (const r of sample) {
         const created = new Date(r.created_at).getTime();
-        const snoozed = !!r.snoozed_until && new Date(r.snoozed_until).getTime() > now;
-        if (r.status === 'new') {
-          if (!snoozed) {
-            open += 1;
-            if ((now - created) / 3_600_000 > SLA_HOURS) breachedSLA += 1;
-          }
-        } else if (r.status === 'contacted') {
-          if (!snoozed) contacted += 1;
-        } else if (['resolved', 'refunded', 'redo_booked', 'closed'].includes(r.status)) {
-          resolved += 1;
-        }
         if (r.first_contacted_at) {
           firstContactGaps.push((new Date(r.first_contacted_at).getTime() - created) / 3_600_000);
         }
@@ -61,16 +78,16 @@ export function useRecoverySLA() {
           resolutionGaps.push((new Date(r.resolved_at).getTime() - created) / 3_600_000);
         }
       }
-
-      const avg = (xs: number[]) => xs.length === 0 ? null : Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10;
+      const avg = (xs: number[]) =>
+        xs.length === 0 ? null : Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10;
 
       return {
-        open,
-        contacted,
-        resolved,
+        open: openRes.count ?? 0,
+        contacted: contactedRes.count ?? 0,
+        resolved: resolvedRes.count ?? 0,
         avgFirstContactHours: avg(firstContactGaps),
         avgResolutionHours: avg(resolutionGaps),
-        breachedSLA,
+        breachedSLA: breachedRes.count ?? 0,
       };
     },
     enabled: !!orgId,

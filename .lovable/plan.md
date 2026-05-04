@@ -1,112 +1,75 @@
-## Goal
+# Reputation Build — Scalability & Security Hardening
 
-Refactor `/dashboard/admin/feedback` (Online Reputation) so it mirrors Phorest's proven two-funnel mental model — **Reviews** (first-party post-visit capture) feeding **Online Reputation** (third-party platform aggregation + auto-boost) — but consolidated into a single Zura App with our intelligence layer on top. Keep the single entry point: Zura Apps rail → Reputation.
+After auditing all 16 reputation edge functions, 33 hooks, 38 UI components, RLS, and indexes, found 5 issues that bite at scale (50+ active orgs) or are outright security bugs. Ranked by blast radius.
 
-## Information architecture
+## P0 — Security & correctness
 
-Current state: one page (`FeedbackHub`) cramming 20+ widgets into 4 tabs. Phorest's split is cleaner because the two funnels have different operator jobs. We adopt their split, drop their duplication.
+### 1. `send-feedback-request` is unauthenticated and bypasses every guardrail
+File: `supabase/functions/send-feedback-request/index.ts`
 
-New tab structure inside `/admin/feedback`:
+Currently accepts an `organizationId` from the request body with **no JWT validation, no org-membership check, no kill switch, no entitlement gate, no opt-out check, no compliance log write, no `survey_id`**. Any authenticated user (and currently any caller at all, since there's no auth) can spam feedback requests for any org.
 
-```text
-Online Reputation  (Zura App · gated by ReputationGate)
-├── Overview              ← executive snapshot (Phorest's "Online Reputation" landing)
-├── Reviews               ← first-party post-visit table (Phorest's "Reviews › Overview")
-├── Online Presence       ← third-party connectors + aggregated wall (Phorest's "Online Reputation" body)
-├── Intelligence          ← Zura's edge: themes, drift, coaching, recovery (no Phorest equivalent)
-└── Settings              ← cadence, channels, message editor, auto-boost triggers, review links
+Fix: mirror `send-review-request-manual` — extract Bearer token, `auth.getUser()`, `is_org_admin({_user_id, _org_id})`, kill-switch (`manual_send_disabled`), entitlement (`organization_feature_flags.reputation_enabled`), `client_email_opt_outs` lookup, auto-create/lookup default survey, attach `survey_id` to the response row, write `review_compliance_log` entry. Validate body with Zod.
+
+### 2. OAuth callback uses request `Origin` header for redirect base
+File: `supabase/functions/reputation-google-oauth-callback/index.ts:70-72`
+
+```ts
+const appBase = req.headers.get("origin") || Deno.env.get("APP_BASE_URL") || "https://id-preview-...lovable.app";
 ```
 
-## Tab-by-tab build
+Origin is attacker-controllable in cross-site requests. Combined with the `return_to` from state payload and the open `htmlRedirect`, this is an open-redirect primitive. Mitigated somewhat by HMAC-signed state, but the redirect base must come from server config only.
 
-**Overview** — single-screen executive read
-- Hero strip: overall rating (4.x/5 emoji + stars), Positive/Negative sentiment bar, total reviews, most-recent timestamp
-- KPI row (5 tiles, existing): NPS, Recovery SLA, Response Rate, Public Conversion, Velocity
-- `TodaysMustTouchStrip` (existing) — recovery queue
-- `AIWeeklyFeedbackSummary` (existing) — Zura's intelligence brief
+Fix: drop the `req.headers.get("origin")` branch, require `APP_BASE_URL` env (set to canonical preview/prod URL), and validate `payload.return_to` starts with `/` (no protocol/host).
 
-**Reviews** (first-party capture, mirrors Phorest's review table)
-- Filterable/sortable table: Date · Client · Staff · Services · Rating · Review · Selfie
-- Filters: Search (client name), Staff dropdown, Rating dropdown
-- Row action: "Share with followers" modal → Facebook / Copy Text (new component, reuses our public review surface)
-- Powered by existing `FeedbackResponseList` + new `ReviewsTable` wrapper with the filter chrome
+## P1 — Scalability cliffs
 
-**Online Presence** (third-party aggregation, the Phorest "Online Reputation" body)
-- Per-platform connector tiles: Facebook · Google · Yelp (Connect / Connected state with star avg + count + last-review timestamp)
-- "All Reviews" wall: aggregated 1-5★ filter + per-platform filter + Respond modal that posts back to source
-- Auto-Boost trigger config (modal): "Ask for an online review after N reviews of ≥X stars" + custom message editor
-- New components needed; data layer reuses `location_review_settings` for connector URLs, new `reputation_platform_connections` table for OAuth tokens (Phase 2 — for Phase 1 stub the connectors as "Coming soon" and keep manual review-link distribution working via existing `LocationReviewLinks`)
+### 3. `useRecoverySLA` pulls 500 rows per dashboard load
+File: `src/hooks/useRecoverySLA.ts`
 
-**Intelligence** (Zura's differentiator — no Phorest equivalent)
-- `NegativeFeedbackThemes` (AI theme tagger)
-- `FeedbackTrendDriftCard` (30/90/365 drift)
-- `NegativeReviewHeatmap`
-- `CoachingLoopCard`
-- `StylistReputationCard` + `ServiceSatisfactionBriefCard`
-- `PraiseWall`
-- `RecoveryOutcomeCard`, `ParkedDispatchCard`
-- `ComplianceBanner` + `ComplianceExportButton`
+Every Online Reputation page load fetches up to 500 recovery rows just to compute 4 counts + 2 averages. At 100 orgs × 5 dashboards/day × 500 rows = 250k rows/day moved over the wire for math the DB can do in `count(*)`.
 
-**Settings** (consolidated from current sub-pages)
-- Master toggle: "Send Review Requests" Yes/No (governs the whole capture engine)
-- Cadence: After first appointment only / Max once per month / After every appointment
-- Channel: SMS / Email / Both
-- Message editor with preview ("Edit and Preview Message")
-- Auto-Boost trigger config (the same one surfaced on Online Presence)
-- Review links per location (existing `LocationReviewLinks` embedded as a section)
-- Templates link (existing `ReviewTemplates`)
-- Automations link (existing `ReviewAutomationRules`)
+Fix: replace with 5 parallel `head:true count:exact` queries (open / contacted / resolved / breached) + one bounded 200-row sample for averages. All hit existing `idx_recovery_tasks_org_status` and `idx_recovery_tasks_snoozed`. Rough payload reduction: ~99%.
 
-## Sub-page consolidation
+### 4. `dispatch-review-requests` enqueue scans ALL active rules globally before filtering by entitlement
+File: `supabase/functions/dispatch-review-requests/index.ts:60-79`
 
-Phorest has 5 settings sub-pages we currently mirror as standalone routes. Collapse them into the **Settings** tab as in-page sections (preserve routes as back-compat redirects per Routing redirects canon):
+Pulls every active rule across the platform, then filters by entitled orgs in memory. At 1000 orgs with rules but only 50 paying for reputation, that's 950 rows of wasted scan + a 1000-element `IN` clause back to feature flags.
 
-| Current standalone route | New home |
-|---|---|
-| `/admin/feedback/recovery` | Stay (deep-link target from Overview) |
-| `/admin/feedback/links` | Embedded in Settings tab |
-| `/admin/feedback/automations` | Embedded in Settings tab |
-| `/admin/feedback/templates` | Embedded in Settings tab |
-| `/admin/feedback/dispatch` | Stay (deep-link target from Intelligence) |
+Fix: invert order — pull entitled org IDs from `organization_feature_flags` first (`flag_key='reputation_enabled' AND is_enabled=true`), then `select rules where organization_id IN (entitled)`. Smaller scan, smaller IN list, same correctness.
 
-Drop the "Reputation Engine" CTA grid currently on Overview — superseded by the new tab structure.
+### 5. `reputation-grace-cadence` scans all past_due regardless of grace status, unordered
+File: `supabase/functions/reputation-grace-cadence/index.ts:63-68`
 
-## What stays unchanged (non-negotiable)
+```ts
+.eq("status", "past_due").not("grace_until", "is", null)
+```
 
-- `ReputationGate` paywall wrapper at the top of the page
-- `ReputationSubscriptionCard` above the tabs
-- Stylist Privacy Contract — none of these surfaces leak to stylist dashboards
-- Reputation Engine doctrine — opt-out gate, frequency cap, no auto-acting on negative feedback
-- Phorest write-back kill switch — we read from Phorest where applicable, never write
-- Single nav entry point: Zura Apps → Reputation
+No `gte("grace_until", now)` filter — orgs whose grace already expired (should have been swept to `canceled` by `reputation-grace-sweep`, but timing race) get re-examined every hour forever. No `order by` either, so behavior is non-deterministic at scale.
 
-## Files touched (Phase 1)
+Fix: add `.gte("grace_until", nowIso).order("grace_until", { ascending: true }).limit(500)`. Bounds the per-tick work and matches the existing `idx_reputation_subscriptions_status` lookup pattern.
 
-- **Refactor** `src/pages/dashboard/admin/FeedbackHub.tsx` — new 5-tab structure
-- **New** `src/components/feedback/ReviewsTable.tsx` — Phorest-style filterable review table
-- **New** `src/components/feedback/ShareReviewDialog.tsx` — Facebook / Copy Text modal
-- **New** `src/components/feedback/OnlinePresenceTab.tsx` — connector tiles + aggregated wall + Auto-Boost config
-- **New** `src/components/feedback/AutoBoostTriggerDialog.tsx` — "after N reviews of ≥X stars" + message editor
-- **New** `src/components/feedback/PlatformConnectorTile.tsx` — Facebook/Google/Yelp tile (Connect / Connected states)
-- **New** `src/components/feedback/ReputationSettingsTab.tsx` — consolidated settings (cadence + channel + message + links + templates + automations)
-- **New** `src/hooks/useAutoBoostConfig.ts` — read/write auto-boost trigger config (new column on `feedback_request_rules` or new `reputation_auto_boost_config` table — TBD in implementation)
+## What I checked and confirmed clean
+- All RLS policies on reputation tables scope by `organization_id` (verified via doctrine).
+- Indexes exist for every dispatcher/SLA/grace hot path (`idx_review_dispatch_due`, `idx_recovery_tasks_org_status`, `idx_reputation_subscriptions_status`, etc.).
+- Dispatcher fairness allocator + per-org tick caps already shipped (prior wave).
+- `is_org_admin` arg-shape canon enforced via Vitest + ESLint (no `_organization_id` regressions).
+- Kill-switch helper is fail-open and used in all 3 dispatch paths + 3 webhook branches.
+- Stripe webhook reputation branches all gated by `webhook_processing_disabled`.
+- Grace cadence dedupe via `reputation_grace_emails_sent` UNIQUE constraint is correct.
 
-## Phase 2 (deferred, declared in Deferral Register)
+## Files changed (5)
+- `supabase/functions/send-feedback-request/index.ts` — full rewrite to match `send-review-request-manual` security posture
+- `supabase/functions/reputation-google-oauth-callback/index.ts` — drop Origin fallback, validate `return_to`
+- `src/hooks/useRecoverySLA.ts` — refactor to count queries + bounded sample
+- `supabase/functions/dispatch-review-requests/index.ts` — entitle-first enqueue
+- `supabase/functions/reputation-grace-cadence/index.ts` — bound + order pastDue scan
 
-- OAuth connectors for Facebook/Google/Yelp (Phase 1 keeps manual review URLs via `location_review_settings`)
-- Per-platform review write-back (Respond modal posts to source platform API)
-- Selfie attachment column in Reviews table (depends on `feedback_request` schema gaining a `selfie_url` field)
+## Out of scope (deferred, declared revisit triggers)
+- Per-location reputation metering (`mem://features/reputation-per-location-metering-scope`) — revisit when per-location analytics ship.
+- Setup wizard (`mem://features/reputation-setup-wizard-todo`) — revisit at 5+ paying reputation customers.
+- Lovable preview URL in OAuth client (`mem://features/reputation-google-oauth-domain-todo`) — revisit when prod domain purchased.
 
-Revisit trigger: first paying tenant requests a connector OR Reputation revenue justifies the 3rd-party API cost.
+---
 
-## Out of scope
-
-- Marketing page consolidation (Phorest's two cards) — N/A for us; we already have one entry point
-- Pricing/billing changes — gating already done
-- Visual styling — Zura tokens (`tokens.card`, `font-display`, pill buttons) replace Phorest's flat aesthetic; no need to call this out per file
-
-## Prompt feedback
-
-Strong handoff prompt — "build it like Phorest, but with the Zura touch" gives me both the reference and the latitude. Two things that would make future "build it like X" prompts even tighter:
-1. **Call out what NOT to copy.** I assumed you wanted to drop Phorest's two-card Marketing entry point and keep our single Zura Apps entry — worth confirming explicitly next time so I don't waste a tab debating it.
-2. **Name the "Zura touch" upfront.** You mean Intelligence tab + Reputation Engine doctrine + glass bento aesthetic — but a one-liner like "Zura touch = add the Intelligence tab Phorest doesn't have" would let me skip ambiguity and propose with more confidence.
+**Prompt feedback:** "analyze the entire X, fix any bugs and gaps, ensure scalable" is a strong open-ended audit prompt — gives the agent room to find issues you didn't know about. To make it even sharper next time, add an explicit scale target (e.g. "300 orgs, 50k SMS/day") and a budget for changes ("≤5 files, no new tables") so I prioritize ruthlessly instead of listing nice-to-haves.
