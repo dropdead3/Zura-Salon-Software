@@ -39,10 +39,12 @@ export function ResponseRateCard() {
       </CardHeader>
       <CardContent>
         <p className={tokens.kpi.value}>{display}</p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
           {data?.hasResponseSignal
             ? `${data.responded} replied of ${data.sent} asked`
-            : `${data?.sent ?? 0} sent — need 10 to show a rate`}
+            : (data?.sent ?? 0) === 0
+            ? 'Once we send 10 feedback requests, you\'ll see what share of clients reply.'
+            : `${data?.sent ?? 0} of 10 sent — keep going to see your reply rate.`}
         </p>
       </CardContent>
     </Card>
