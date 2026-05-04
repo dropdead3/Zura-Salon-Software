@@ -3,6 +3,9 @@ import { TrendingUp, TrendingDown, Minus, Users, ThumbsUp, Meh, ThumbsDown } fro
 import { useNPSStats } from '@/hooks/useNPSAnalytics';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
+import { tokens } from '@/lib/design-tokens';
 
 interface NPSScoreCardProps {
   organizationId?: string;
