@@ -51,6 +51,10 @@ export function PlatformConnectorTile({
   const hasUrl = !!reviewUrl?.trim();
   const supportsOAuth = platform === 'google';
 
+  // Detect iframe (e.g. Lovable preview) — Google blocks OAuth inside iframes,
+  // so we must break out to the top window or open in a new tab.
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   const handleConnect = async () => {
     if (!effectiveOrganization?.id) return;
     setConnecting(true);
@@ -63,7 +67,14 @@ export function PlatformConnectorTile({
       });
       if (error) throw error;
       if (!data?.url) throw new Error('No authorization URL returned');
-      window.location.href = data.url;
+      if (isInIframe) {
+        // Open in a new top-level tab — Google's consent screen refuses to render in iframes.
+        window.open(data.url, '_blank', 'noopener,noreferrer');
+        setConnecting(false);
+        toast.info('Complete the Google sign-in in the new tab, then return here.');
+      } else {
+        window.location.href = data.url;
+      }
     } catch (e) {
       console.error('Connect failed', e);
       toast.error('Could not start Google connection. Please try again.');
@@ -146,6 +157,11 @@ export function PlatformConnectorTile({
               <p className="text-[11px] text-muted-foreground/60 leading-snug">
                 Tip: if you're signed into multiple Google accounts, use an incognito window to avoid picking the wrong one.
               </p>
+              {isInIframe && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-snug">
+                  Heads up: Google sign-in can't run inside this preview. We'll open it in a new tab.
+                </p>
+              )}
             </>
           )}
           {!isActive && !supportsOAuth && (
