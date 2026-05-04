@@ -31,6 +31,7 @@ import { ComplianceBanner } from '@/components/feedback/ComplianceBanner';
 import { ComplianceExportButton } from '@/components/feedback/ComplianceExportButton';
 import { ReviewsTable } from '@/components/feedback/ReviewsTable';
 import { OnlinePresenceTab } from '@/components/feedback/OnlinePresenceTab';
+import { AutoBoostTelemetryCard } from '@/components/feedback/AutoBoostTelemetryCard';
 import { ReputationSettingsTab } from '@/components/feedback/ReputationSettingsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useState } from 'react';
@@ -101,6 +102,7 @@ export default function FeedbackHub() {
                 <PublicConversionCard />
                 <ReviewVelocityCard />
               </div>
+              <AutoBoostTelemetryCard />
               <AIWeeklyFeedbackSummary />
               <Card>
                 <CardContent className="p-4 text-xs text-muted-foreground flex items-center justify-between gap-3">
