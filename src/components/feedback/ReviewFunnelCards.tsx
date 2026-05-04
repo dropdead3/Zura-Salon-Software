@@ -31,6 +31,7 @@ export function ResponseRateCard() {
         <MetricInfoTooltip
           title="Reply Rate"
           description="Of the feedback requests we sent in the last 30 days, the share that got a reply. Hidden until at least 10 have been sent."
+          onLearnMore={() => openReputationGlossary('reply-rate')}
         />
       </div>
       <CardHeader className="pb-2">
