@@ -229,8 +229,15 @@ export function PlatformConnectorTile({
             </Badge>
           )}
           {isErrored && (
-            <Badge variant="outline" className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400">
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs border-amber-500/40 text-amber-600 dark:text-amber-400"
+              title={connection?.last_error ?? undefined}
+            >
               <AlertTriangle className="h-3 w-3" /> Reconnect needed
+              {connection?.last_error && (
+                <span className="ml-1 opacity-80">· {connection.last_error}</span>
+              )}
             </Badge>
           )}
           {!isActive && !isErrored && hasUrl && (
