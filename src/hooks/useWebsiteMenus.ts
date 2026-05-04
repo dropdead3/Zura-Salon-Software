@@ -127,7 +127,7 @@ export function useWebsiteMenu(menuId: string | null) {
   const orgId = useResolvedOrgId();
 
   return useQuery({
-    queryKey: ['website-menu', menuId],
+    queryKey: ['website-menu', orgId, menuId],
     queryFn: async () => {
       if (!menuId) return null;
       const { data: items, error } = await supabase
