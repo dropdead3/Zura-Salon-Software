@@ -126,6 +126,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
+  const { isEntitled: isReputationEntitled } = useReputationEntitlement();
   const { hasChanges: websiteHasUnpublished } = useChangelogSummary();
   const WEBSITE_HUB_HREF = '/dashboard/admin/website-hub';
   const { user } = useAuth();
