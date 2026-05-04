@@ -123,6 +123,7 @@ export default function FeedbackHub() {
               </p>
             </div>
           </div>
+          <ReputationGlossary />
         </div>
 
         <ReputationGate surfaceLabel="Online Reputation">
