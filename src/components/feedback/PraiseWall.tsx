@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { usePraiseWall, type PraiseItem } from '@/hooks/usePraiseWall';
 import { useOrgAssignees, assigneeLabel } from '@/hooks/useOrgAssignees';
 import { useCreateCoachingNote } from '@/hooks/useStylistCoachingNotes';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 function PraiseCard({
   item,
