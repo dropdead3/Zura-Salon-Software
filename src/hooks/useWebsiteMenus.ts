@@ -317,7 +317,9 @@ export function useCreateMenuItem() {
       return data as unknown as MenuItem;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', data.menu_id] });
+      invalidateMenuCaches(queryClient, data.menu_id);
+      // Refresh menu list so item counts/badges in the sidebar update.
+      queryClient.invalidateQueries({ queryKey: ['website-menus'] });
     },
   });
 }
