@@ -47,12 +47,14 @@ export function MenuItemInspector({ item, menuId, pagesConfig, allItems }: MenuI
   const [label, setLabel] = useState(item.label);
   const [targetUrl, setTargetUrl] = useState(item.target_url ?? '');
   const [trackingKey, setTrackingKey] = useState(item.tracking_key ?? '');
+  const [anchor, setAnchor] = useState(item.target_anchor ?? '');
 
   useEffect(() => {
     setLabel(item.label);
     setTargetUrl(item.target_url ?? '');
     setTrackingKey(item.tracking_key ?? '');
-  }, [item.id, item.label, item.target_url, item.tracking_key]);
+    setAnchor(item.target_anchor ?? '');
+  }, [item.id, item.label, item.target_url, item.tracking_key, item.target_anchor]);
 
   const update = (updates: Partial<MenuItem>) => {
     updateItem.mutate({ id: item.id, ...updates });
