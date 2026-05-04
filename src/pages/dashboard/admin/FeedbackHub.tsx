@@ -154,6 +154,26 @@ export default function FeedbackHub() {
             <ReputationSubscriptionCard />
           </div>
 
+          {/* Location filter — applies to all tabs except Settings */}
+          {locations.length > 1 && activeTab !== 'settings' && (
+            <div className="flex items-center justify-end gap-2">
+              {locations.length >= 3 ? (
+                <LocationMultiSelect
+                  locations={locations}
+                  selectedIds={selectedIds}
+                  onSelectionChange={(ids) => setLocationParam(encodeLocationIds(ids))}
+                />
+              ) : (
+                <LocationSelect
+                  value={effectiveLocationId}
+                  onValueChange={setLocationParam}
+                  triggerClassName="h-9 w-auto min-w-[180px] text-sm"
+                />
+              )}
+            </div>
+          )}
+
+          <ReputationFilterProvider locationId={effectiveLocationId}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="overview" className="gap-2">
