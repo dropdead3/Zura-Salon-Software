@@ -126,8 +126,21 @@ export function PlatformConnectorTile({
             </Button>
           )}
 
-          {/* Connect CTA placeholder — OAuth flow is deferred (P2.1 / P2.2). */}
-          {!isActive && (
+          {/* Connect CTA — Google uses live OAuth; Facebook deferred. */}
+          {!isActive && supportsOAuth && (
+            <Button
+              variant="default"
+              size={tokens.button.card}
+              className="w-full gap-1.5"
+              onClick={handleConnect}
+              disabled={connecting}
+            >
+              {connecting ? (
+                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirecting…</>
+              ) : isErrored ? 'Reconnect Google' : 'Connect Google'}
+            </Button>
+          )}
+          {!isActive && !supportsOAuth && (
             <Button
               variant="ghost"
               size={tokens.button.card}
