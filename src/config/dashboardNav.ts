@@ -181,7 +181,7 @@ export const hubChildrenItems: { href: string; label: string }[] = [
   { href: '/dashboard/clients', label: 'Client Directory' },
   { href: '/dashboard/admin/client-health', label: 'Client Health' },
   { href: '/dashboard/admin/reengagement', label: 'Re-engagement' },
-  { href: '/dashboard/admin/feedback', label: 'Client Reputation' },
+  { href: '/dashboard/admin/feedback', label: 'Online Reputation' },
   { href: '/dashboard/campaigns', label: 'Campaigns' },
   { href: '/dashboard/admin/seo-workshop', label: 'SEO Workshop' },
   { href: '/dashboard/admin/leads', label: 'Lead Management' },
