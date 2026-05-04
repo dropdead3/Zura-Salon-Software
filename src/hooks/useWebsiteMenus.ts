@@ -388,6 +388,7 @@ export function useDeleteMenuItem() {
  */
 export function useReorderMenuItems() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({
@@ -404,8 +405,30 @@ export function useReorderMenuItems() {
       if (error) throw error;
       return menuId;
     },
-    onSuccess: (menuId) => {
-      invalidateMenuCaches(queryClient, menuId);
+    // Optimistic update: apply the new order locally so the drag doesn't snap
+    // back while the RPC round-trips. Snapshot the previous list to roll back
+    // on failure.
+    onMutate: async ({ items, menuId }) => {
+      const queryKey = ['website-menu', orgId, menuId] as const;
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<MenuItem[]>(queryKey);
+      if (previous) {
+        const updates = new Map(items.map(u => [u.id, u]));
+        const next = previous.map(item => {
+          const u = updates.get(item.id);
+          return u ? { ...item, sort_order: u.sort_order, parent_id: u.parent_id } : item;
+        });
+        queryClient.setQueryData<MenuItem[]>(queryKey, next);
+      }
+      return { previous, queryKey };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(ctx.queryKey, ctx.previous);
+      }
+    },
+    onSettled: (menuId) => {
+      if (menuId) invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
