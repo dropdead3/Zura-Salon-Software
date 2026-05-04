@@ -7924,6 +7924,54 @@ export type Database = {
           },
         ]
       }
+      dispatch_tick_log: {
+        Row: {
+          duration_ms: number | null
+          enqueue_capped_orgs: number
+          enqueue_max_per_org: number
+          enqueue_orgs_served: number
+          enqueued: number
+          errors: number
+          id: string
+          ran_at: string
+          send_capped_orgs: number
+          send_max_per_org: number
+          send_orgs_served: number
+          sent: number
+          skipped: number
+        }
+        Insert: {
+          duration_ms?: number | null
+          enqueue_capped_orgs?: number
+          enqueue_max_per_org?: number
+          enqueue_orgs_served?: number
+          enqueued?: number
+          errors?: number
+          id?: string
+          ran_at?: string
+          send_capped_orgs?: number
+          send_max_per_org?: number
+          send_orgs_served?: number
+          sent?: number
+          skipped?: number
+        }
+        Update: {
+          duration_ms?: number | null
+          enqueue_capped_orgs?: number
+          enqueue_max_per_org?: number
+          enqueue_orgs_served?: number
+          enqueued?: number
+          errors?: number
+          id?: string
+          ran_at?: string
+          send_capped_orgs?: number
+          send_max_per_org?: number
+          send_orgs_served?: number
+          sent?: number
+          skipped?: number
+        }
+        Relationships: []
+      }
       draft_bookings: {
         Row: {
           appointment_date: string | null
@@ -33903,6 +33951,17 @@ export type Database = {
             }
             Returns: undefined
           }
+      recovery_sla_stats: {
+        Args: { p_org: string }
+        Returns: {
+          avg_first_contact_hours: number
+          avg_resolution_hours: number
+          breached_count: number
+          contacted_count: number
+          open_count: number
+          resolved_count: number
+        }[]
+      }
       refresh_client_visit_stats: {
         Args: { p_organization_id?: string }
         Returns: {
