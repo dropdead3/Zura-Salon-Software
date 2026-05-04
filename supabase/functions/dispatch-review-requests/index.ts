@@ -193,7 +193,17 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
         // Unique violation = already queued; ignore silently.
       }
     }
+    if (enqueuedThisOrg > 0) enqueuePerOrg.set(orgId, enqueuedThisOrg);
   }
+
+  // Fairness telemetry — emit even when zero enqueues so platform staff
+  // can correlate ticks. cappedOrgs = orgs that hit PER_ORG_TICK_CAP this run.
+  const enqueueCounts = [...enqueuePerOrg.values()];
+  summary.enqueueFairness = {
+    orgsServed: enqueuePerOrg.size,
+    maxPerOrg: enqueueCounts.length ? Math.max(...enqueueCounts) : 0,
+    cappedOrgs: enqueueCounts.filter((n) => n >= PER_ORG_TICK_CAP).length,
+  };
 }
 
 const MAX_ATTEMPTS = 5;
