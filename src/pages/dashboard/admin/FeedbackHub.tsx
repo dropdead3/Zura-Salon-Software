@@ -127,7 +127,7 @@ export default function FeedbackHub() {
               </p>
             </div>
           </div>
-          <ReputationGlossary />
+          <ReputationGlossary autoOpenOnFirstVisit={!hasAnyActivity} />
         </div>
 
         <ReputationGate surfaceLabel="Online Reputation">
