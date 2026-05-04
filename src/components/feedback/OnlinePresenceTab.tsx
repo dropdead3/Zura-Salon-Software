@@ -1,24 +1,33 @@
 /**
- * OnlinePresenceTab — Phorest's "Online Reputation" body, Zura-styled.
+ * OnlinePresenceTab — Per-location GBP/Facebook connection management.
  *
- * Renders platform connector tiles (Google / Facebook) sourced from the
- * operator's primary location's `location_review_settings`. OAuth-based
- * aggregation + per-platform Respond is Phase 2 (P2.1 / P2.2 in build plan).
+ * Post-federation: renders one accordion per active Zura location. Each
+ * accordion contains the location's PlatformConnectorTile pair, scoped to
+ * that location's `review_platform_connections` row.
  *
- * Auto-Boost configuration intentionally lives in Settings → Review Gate &
- * Auto-Boost (single source of truth per the P4.1 consolidation). This tab
- * shows a thin status strip with a deep-link, but never re-implements the form.
+ * Auto-Boost configuration intentionally lives in Settings (single source of
+ * truth per P4.1 consolidation); this tab shows a thin status strip with a
+ * deep-link, but never re-implements the form.
  */
-import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, ArrowRight, Star } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Zap, ArrowRight, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { GoogleGIcon, FacebookFIcon } from '@/components/brand/marks';
 import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useReviewPlatformConnections } from '@/hooks/useReviewPlatformConnections';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PlatformConnectorTile } from './PlatformConnectorTile';
+import { ReputationOAuthGraceBanner } from '@/components/reputation/ReputationOAuthGraceBanner';
 import { useAutoBoostConfig } from './AutoBoostTriggerDialog';
 import { FeedbackResponseList } from './FeedbackResponseList';
 
@@ -28,15 +37,25 @@ interface OnlinePresenceTabProps {
 
 export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
   const { data: links } = useLocationReviewLinks();
+  const { data: locations = [] } = useActiveLocations();
+  const { data: connections } = useReviewPlatformConnections();
   const { data: autoBoost } = useAutoBoostConfig();
   const { dashPath } = useOrgDashboardPath();
 
-  // Use first location's links as the org default surface
-  const primary = useMemo(() => links?.[0], [links]);
   const settingsHref = `${dashPath('/admin/feedback')}?tab=settings`;
+  const linkByLocation = (locId: string) => links?.find((l) => l.location_id === locId);
+  const googleStatusForLocation = (locId: string) => {
+    const c = connections?.find((c) => c.platform === 'google' && c.location_id === locId);
+    if (!c) return 'none';
+    if (c.status === 'active') return 'active';
+    if (c.status === 'expired' || c.status === 'revoked' || c.status === 'error') return 'attention';
+    return 'pending';
+  };
 
   return (
     <div className="space-y-6">
+      <ReputationOAuthGraceBanner />
+
       {/* Auto-Boost status strip — config lives in Settings */}
       <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-yellow-500/5">
         <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -61,33 +80,87 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         </CardContent>
       </Card>
 
-      {/* Platform tiles */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <PlatformConnectorTile
-          platform="google"
-          label="Google"
-          Icon={GoogleGIcon}
-          iconBgClass="bg-background border border-border"
-          iconColorClass=""
-          reviewUrl={primary?.google_review_url}
-        />
-        <PlatformConnectorTile
-          platform="facebook"
-          label="Facebook"
-          Icon={FacebookFIcon}
-          iconBgClass="bg-background border border-border"
-          iconColorClass=""
-          reviewUrl={primary?.facebook_review_url}
-        />
+      {/* Per-location connections */}
+      <div className="space-y-2">
+        <h3 className="font-display text-base tracking-wide px-1">
+          Connections by location
+        </h3>
+        <p className="text-xs text-muted-foreground px-1">
+          Each location can connect its own Google Business Profile. Facebook live sync is coming soon.
+        </p>
+
+        {locations.length === 0 ? (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">No active locations found.</CardContent></Card>
+        ) : (
+          <Accordion
+            type="multiple"
+            defaultValue={locations.length === 1 ? [locations[0].id] : []}
+            className="space-y-2"
+          >
+            {locations.map((loc) => {
+              const link = linkByLocation(loc.id);
+              const status = googleStatusForLocation(loc.id);
+              return (
+                <AccordionItem
+                  key={loc.id}
+                  value={loc.id}
+                  className="border border-border rounded-xl bg-card/60 px-4 [&[data-state=open]]:bg-card"
+                >
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-sm truncate">{loc.name}</span>
+                      {status === 'active' && (
+                        <Badge variant="outline" className="gap-1 text-[11px] border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" /> Google connected
+                        </Badge>
+                      )}
+                      {status === 'attention' && (
+                        <Badge variant="outline" className="gap-1 text-[11px] border-amber-500/40 text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="h-3 w-3" /> Reconnect needed
+                        </Badge>
+                      )}
+                      {status === 'none' && (
+                        <Badge variant="secondary" className="text-[11px]">Not connected</Badge>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <PlatformConnectorTile
+                        platform="google"
+                        label="Google"
+                        Icon={GoogleGIcon}
+                        iconBgClass="bg-background border border-border"
+                        iconColorClass=""
+                        reviewUrl={link?.google_review_url}
+                        locationId={loc.id}
+                      />
+                      <PlatformConnectorTile
+                        platform="facebook"
+                        label="Facebook"
+                        Icon={FacebookFIcon}
+                        iconBgClass="bg-background border border-border"
+                        iconColorClass=""
+                        reviewUrl={link?.facebook_review_url}
+                        locationId={loc.id}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
       </div>
 
-      {/* Recent first-party feedback (proxy for the "All Reviews" wall until OAuth lands) */}
+      {/* Recent first-party feedback */}
       <div className="space-y-2">
         <h3 className={`${tokens.heading?.section ?? 'font-display text-base tracking-wide'} px-1`}>
           Recent client feedback
         </h3>
         <p className="text-xs text-muted-foreground px-1">
-          Aggregated Google / Facebook reviews unlock once each platform is connected.
+          Aggregated Google / Facebook reviews unlock once each location is connected.
           Until then, this is your first-party feedback stream.
         </p>
         <FeedbackResponseList organizationId={organizationId} limit={20} />
