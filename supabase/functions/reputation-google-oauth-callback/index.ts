@@ -67,8 +67,9 @@ Deno.serve(async (req) => {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
-  const appBase = req.headers.get("origin") ||
-    Deno.env.get("APP_BASE_URL") ||
+  // Redirect base MUST come from server config — never the request `Origin`
+  // header (attacker-controllable in cross-site contexts → open-redirect).
+  const appBase = Deno.env.get("APP_BASE_URL") ||
     "https://id-preview--b06a5744-64b6-4629-9f76-e0e2cb73ea52.lovable.app";
 
   try {
@@ -132,7 +133,10 @@ Deno.serve(async (req) => {
       return htmlRedirect(`${appBase}/?google_oauth_error=db_write`, "Failed to save connection");
     }
 
-    const returnTo = payload.return_to || "/";
+    // Validate return_to: must be a same-origin path (starts with single `/`,
+    // no protocol, no host, no `//` open-redirect prefix).
+    const rawReturn = typeof payload.return_to === "string" ? payload.return_to : "/";
+    const returnTo = /^\/(?!\/)/.test(rawReturn) ? rawReturn : "/";
     const sep = returnTo.includes("?") ? "&" : "?";
     return htmlRedirect(`${appBase}${returnTo}${sep}google_connected=1`, "Connected — redirecting");
   } catch (e) {

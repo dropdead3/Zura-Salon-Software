@@ -60,11 +60,19 @@ Deno.serve(async (req) => {
 
   try {
     const now = new Date();
+    const nowIso = now.toISOString();
+    // Bounded scan: only orgs whose grace window is still open. Expired
+    // grace_until rows belong to `reputation-grace-sweep` (flips to canceled);
+    // re-examining them every hour is wasted work. Ordered + capped so the
+    // per-tick footprint stays predictable as the past_due cohort grows.
     const { data: pastDue, error } = await supabase
       .from("reputation_subscriptions")
       .select("organization_id, grace_until")
       .eq("status", "past_due")
-      .not("grace_until", "is", null);
+      .not("grace_until", "is", null)
+      .gte("grace_until", nowIso)
+      .order("grace_until", { ascending: true })
+      .limit(500);
     if (error) throw error;
 
     let sent = 0;
