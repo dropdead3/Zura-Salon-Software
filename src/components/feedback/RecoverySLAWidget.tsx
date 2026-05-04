@@ -4,6 +4,7 @@ import { useRecoverySLA } from '@/hooks/useRecoverySLA';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { openReputationGlossary } from './ReputationGlossary';
 import { tokens } from '@/lib/design-tokens';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
 
 function fmtHrs(h: number | null) {
   if (h == null) return '—';
@@ -13,7 +14,8 @@ function fmtHrs(h: number | null) {
 }
 
 export function RecoverySLAWidget() {
-  const { data, isLoading } = useRecoverySLA();
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useRecoverySLA(locationId);
 
   return (
     <Card className="relative">
