@@ -42,6 +42,34 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
   const { data: connections } = useReviewPlatformConnections();
   const { data: autoBoost } = useAutoBoostConfig();
   const { dashPath } = useOrgDashboardPath();
+  const [searchParams] = useSearchParams();
+  const focusLocationId = searchParams.get('focus');
+
+  // Accordion is controlled so the deep-link can force-open the focused
+  // location even if the operator had collapsed it. Default open: single
+  // location → that one; multi-location with ?focus → that one; otherwise
+  // none. Once mounted, the operator regains full control.
+  const initialOpen = useMemo(() => {
+    if (focusLocationId && locations.some((l) => l.id === focusLocationId)) {
+      return [focusLocationId];
+    }
+    return locations.length === 1 ? [locations[0].id] : [];
+  }, [focusLocationId, locations]);
+  const [openItems, setOpenItems] = useState<string[]>(initialOpen);
+
+  // If the focus param arrives after locations load (or changes), re-open
+  // and scroll into view. Runs once per focus value.
+  useEffect(() => {
+    if (!focusLocationId) return;
+    if (!locations.some((l) => l.id === focusLocationId)) return;
+    setOpenItems((prev) => (prev.includes(focusLocationId) ? prev : [...prev, focusLocationId]));
+    // Scroll on next tick so accordion has expanded.
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(`presence-loc-${focusLocationId}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [focusLocationId, locations]);
 
   const settingsHref = `${dashPath('/admin/feedback')}?tab=settings`;
   const linkByLocation = (locId: string) => links?.find((l) => l.location_id === locId);
