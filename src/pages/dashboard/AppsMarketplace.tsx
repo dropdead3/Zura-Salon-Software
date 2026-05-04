@@ -24,6 +24,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /* ------------------------------------------------------------------ */
@@ -77,6 +78,22 @@ const SUBSCRIBED_APPS: AppDef[] = [
     accentColor: 'border-blue-500/40',
     settingsPath: '/team-chat',
   },
+  {
+    key: 'reputation',
+    name: 'Zura Reputation',
+    tagline: 'Reviews + Social Proof Engine',
+    valueStatement: 'Convert happy clients into five-star proof.',
+    features: [
+      'Smart review request timing',
+      'Google review automation',
+      'Reputation scoring dashboard',
+      'AI review responses (brand-aligned)',
+    ],
+    icon: Star,
+    gradient: 'from-amber-500/30 to-yellow-500/30',
+    accentColor: 'border-amber-500/40',
+    settingsPath: '/admin/feedback',
+  },
 ];
 
 const EXPLORE_APPS: AppDef[] = [
@@ -113,23 +130,6 @@ const EXPLORE_APPS: AppDef[] = [
     accentColor: 'border-pink-500/30',
     comingSoon: true,
     missedOpportunity: 'Salons using targeted campaigns see 3x return on ad spend.',
-  },
-  {
-    key: 'reputation',
-    name: 'Zura Reputation',
-    tagline: 'Reviews + Social Proof Engine',
-    valueStatement: 'Convert happy clients into five-star proof.',
-    features: [
-      'Smart review request timing',
-      'Google review automation',
-      'Reputation scoring dashboard',
-      'AI review responses (brand-aligned)',
-    ],
-    icon: Star,
-    gradient: 'from-amber-500/30 to-yellow-500/30',
-    accentColor: 'border-amber-500/30',
-    comingSoon: true,
-    missedOpportunity: '90% of clients check reviews before booking. Automate the ask.',
   },
   {
     key: 'reception',
@@ -370,12 +370,14 @@ export default function AppsMarketplace() {
   const { dashPath } = useOrgDashboardPath();
   const { isEntitled: connectActive, isLoading: connectLoading } = useConnectEntitlement();
   const { isEntitled: colorBarActive, isLoading: colorBarLoading } = useColorBarEntitlement();
+  const { isEntitled: reputationActive, isLoading: reputationLoading } = useReputationEntitlement();
 
-  const isLoading = connectLoading || colorBarLoading;
+  const isLoading = connectLoading || colorBarLoading || reputationLoading;
 
   const getActiveStatus = (key: string) => {
     if (key === 'connect') return connectActive;
     if (key === 'backroom') return colorBarActive;
+    if (key === 'reputation') return reputationActive;
     return false;
   };
 

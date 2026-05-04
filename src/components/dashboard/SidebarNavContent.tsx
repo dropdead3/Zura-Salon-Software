@@ -33,6 +33,7 @@ import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 import { useChangelogSummary } from '@/hooks/usePublishChangelog';
 import { usePayrollEntitlement } from '@/hooks/payroll/usePayrollEntitlement';
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -125,6 +126,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const { isEntitled: isConnectEntitled } = useConnectEntitlement();
   const { isEntitled: isPayrollEntitled } = usePayrollEntitlement();
   const { isEntitled: isColorBarEntitled } = useColorBarEntitlement();
+  const { isEntitled: isReputationEntitled } = useReputationEntitlement();
   const { hasChanges: websiteHasUnpublished } = useChangelogSummary();
   const WEBSITE_HUB_HREF = '/dashboard/admin/website-hub';
   const { user } = useAuth();
@@ -627,6 +629,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
             { hrefSuffix: '/team-chat', entitled: isConnectEntitled },
             { hrefSuffix: '/admin/color-bar-settings', entitled: isColorBarEntitled },
+            { hrefSuffix: '/admin/feedback', entitled: isReputationEntitled },
           ];
 
           filteredItems = filteredItems.filter(item => {
