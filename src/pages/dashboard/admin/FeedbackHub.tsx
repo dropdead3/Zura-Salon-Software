@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -34,16 +34,71 @@ import { OnlinePresenceTab } from '@/components/feedback/OnlinePresenceTab';
 import { AutoBoostTelemetryCard } from '@/components/feedback/AutoBoostTelemetryCard';
 import { ReputationSettingsTab } from '@/components/feedback/ReputationSettingsTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ReputationGate } from '@/components/reputation/ReputationGate';
 import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
+import { toast } from 'sonner';
+
+const FEEDBACK_TABS = new Set(['overview', 'reviews', 'presence', 'intelligence', 'settings']);
+
+function getGoogleOAuthErrorMessage(code: string) {
+  switch (code) {
+    case 'access_denied':
+      return 'Google sign-in was cancelled before the connection finished.';
+    case 'invalid_state':
+      return 'The Google connection session expired. Please try Connect Google again.';
+    case 'token_exchange':
+      return 'Google accepted the login, but did not issue tokens to finish the connection.';
+    case 'db_write':
+      return 'Google returned successfully, but the connection could not be saved yet.';
+    case 'missing_params':
+      return 'Google returned an incomplete callback. Please try again.';
+    case 'server_error':
+      return 'The Google connection hit a server error before it could finish.';
+    default:
+      return `Google returned: ${code.replace(/_/g, ' ')}.`;
+  }
+}
 
 export default function FeedbackHub() {
   const { dashPath } = useOrgDashboardPath();
   const { effectiveOrganization } = useOrganizationContext();
   const organizationId = effectiveOrganization?.id;
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const googleConnected = searchParams.get('google_connected');
+  const googleOAuthError = searchParams.get('google_oauth_error');
+  const initialTab = requestedTab && FEEDBACK_TABS.has(requestedTab) ? requestedTab : 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    if (requestedTab && FEEDBACK_TABS.has(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
+
+  useEffect(() => {
+    if (!googleConnected && !googleOAuthError) return;
+
+    setActiveTab('presence');
+
+    if (googleConnected === '1') {
+      toast.success('Google Business Profile connected.');
+    }
+
+    if (googleOAuthError) {
+      toast.error('Google connection failed.', {
+        description: getGoogleOAuthErrorMessage(googleOAuthError),
+      });
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('google_connected');
+    nextParams.delete('google_oauth_error');
+    nextParams.set('tab', 'presence');
+    setSearchParams(nextParams, { replace: true });
+  }, [googleConnected, googleOAuthError, searchParams, setSearchParams]);
 
   return (
     <DashboardLayout>
