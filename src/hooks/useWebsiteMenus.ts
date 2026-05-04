@@ -378,6 +378,11 @@ export function useReorderMenuItems() {
 export interface MenuConfig {
   mobile_menu_style?: 'overlay' | 'drawer';
   mobile_cta_visible?: boolean;
+  desktop_alignment?: 'left' | 'center' | 'right';
+  desktop_density?: 'comfortable' | 'compact';
+  dropdown_style?: 'simple' | 'mega';
+  show_logo?: boolean;
+  cta_treatment?: 'pill' | 'underline' | 'outline';
 }
 
 /** Update menu-level config (JSONB) */
