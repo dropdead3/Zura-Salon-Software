@@ -629,6 +629,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             { hrefSuffix: '/admin/connect', entitled: isConnectEntitled },
             { hrefSuffix: '/team-chat', entitled: isConnectEntitled },
             { hrefSuffix: '/admin/color-bar-settings', entitled: isColorBarEntitled },
+            { hrefSuffix: '/admin/feedback', entitled: isReputationEntitled },
           ];
 
           filteredItems = filteredItems.filter(item => {
