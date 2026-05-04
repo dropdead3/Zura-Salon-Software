@@ -93,6 +93,7 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
   // org can only queue this many requests per cron run; the rest are picked
   // up next tick. Tunable via env without redeploy.
   const PER_ORG_TICK_CAP = Number(Deno.env.get("REPUTATION_PER_ORG_TICK_CAP") ?? "100");
+  const enqueuePerOrg = new Map<string, number>();
 
   for (const [orgId, orgRules] of byOrg) {
     // Recent completed appointments for this org
