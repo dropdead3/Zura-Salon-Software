@@ -49,6 +49,14 @@ export function AddMenuItemDialog({ open, onOpenChange, menuId, pagesConfig, exi
       toast.error('Label is required');
       return;
     }
+    if ((type === 'external_url' || type === 'cta') && !targetUrl.trim()) {
+      toast.error('URL is required for this item type');
+      return;
+    }
+    if (type === 'external_url' && !/^https?:\/\//i.test(targetUrl.trim())) {
+      toast.error('External URLs must start with http:// or https://');
+      return;
+    }
 
     const item: Record<string, unknown> = {
       menu_id: menuId,
