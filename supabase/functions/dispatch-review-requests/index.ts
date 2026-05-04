@@ -58,30 +58,31 @@ function isExcluded(
 }
 
 async function enqueueEligible(supabase: any, summary: DispatchSummary) {
-  // Pull active rules per org
+  // Entitle-first: pull paying orgs from the feature-flag table BEFORE rules.
+  // At fleet scale (1000s of orgs, 50 paying), this collapses the rule scan
+  // from "all rules platform-wide" to "rules belonging to entitled orgs only"
+  // and shrinks the in() list passed back to feature_flags by orders of
+  // magnitude. Source of truth for entitlement = organization_feature_flags
+  // (synced by trigger from reputation_subscriptions). Lapsed orgs MUST NOT
+  // continue blasting SMS.
+  const { data: flags } = await supabase
+    .from("organization_feature_flags")
+    .select("organization_id")
+    .eq("flag_key", "reputation_enabled")
+    .eq("is_enabled", true);
+  const entitledOrgIds = (flags ?? []).map((f: any) => f.organization_id);
+  if (!entitledOrgIds.length) return;
+
   const { data: rules } = await supabase
     .from("review_request_automation_rules")
     .select("*")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .in("organization_id", entitledOrgIds);
   if (!rules?.length) return;
 
-  // Entitlement gate — only orgs with reputation_enabled=true may dispatch.
-  // Source of truth = organization_feature_flags (synced by trigger from
-  // reputation_subscriptions). Lapsed orgs MUST NOT continue blasting SMS.
-  const orgIds = Array.from(new Set(rules.map((r: any) => r.organization_id)));
-  const { data: flags } = await supabase
-    .from("organization_feature_flags")
-    .select("organization_id, is_enabled")
-    .eq("flag_key", "reputation_enabled")
-    .in("organization_id", orgIds);
-  const entitled = new Set(
-    (flags ?? []).filter((f: any) => f.is_enabled).map((f: any) => f.organization_id),
-  );
-
-  // Group entitled rules by org
+  // Group rules by org (every rule here is already entitled).
   const byOrg = new Map<string, any[]>();
   for (const r of rules) {
-    if (!entitled.has(r.organization_id)) continue;
     const list = byOrg.get(r.organization_id) ?? [];
     list.push(r);
     byOrg.set(r.organization_id, list);
