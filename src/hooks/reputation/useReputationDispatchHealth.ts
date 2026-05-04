@@ -39,15 +39,44 @@ export function useReputationDispatchHealth() {
       const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+      // Entitlement-aware health: only count queue/opt-out activity for orgs
+      // that currently have reputation_enabled=true. Lapsed orgs would
+      // otherwise inflate "pending" / "failed" forever and trigger noisy
+      // alerts for activity the platform no longer authorizes.
+      const { data: flags } = await supabase
+        .from('organization_feature_flags')
+        .select('organization_id, is_enabled')
+        .eq('flag_key', 'reputation_enabled');
+      const entitledOrgIds = (flags ?? [])
+        .filter((f: any) => f.is_enabled)
+        .map((f: any) => f.organization_id);
+
+      // No entitled orgs → return zeroed health rather than a global scan.
+      if (!entitledOrgIds.length) {
+        return {
+          pendingCount: 0,
+          sentLast24h: 0,
+          skippedLast24h: 0,
+          failedLast24h: 0,
+          oldestPendingAgeMinutes: null,
+          retryBuckets: { zero: 0, one: 0, two: 0, threePlus: 0 },
+          optOutsTotal: 0,
+          optOutsLast7d: 0,
+          topFailureReasons: [],
+        };
+      }
+
       const [{ data: queue }, { data: optOuts }] = await Promise.all([
         supabase
           .from('review_request_dispatch_queue')
           .select('scheduled_for, sent_at, skipped_at, last_error, attempts, enqueued_at')
+          .in('organization_id', entitledOrgIds)
           .order('scheduled_for', { ascending: true })
           .limit(1000),
         supabase
           .from('sms_opt_outs')
           .select('opted_out_at')
+          .in('organization_id', entitledOrgIds)
           .limit(1000),
       ]);
 
