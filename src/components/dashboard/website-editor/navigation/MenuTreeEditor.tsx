@@ -9,7 +9,6 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
@@ -58,24 +57,49 @@ export function MenuTreeEditor({
     const overItem = items.find(i => i.id === over.id);
     if (!activeItem || !overItem) return;
 
-    // Only reorder within same parent group
-    if (activeItem.parent_id !== overItem.parent_id) return;
+    // Cross-parent move support (max depth = 2, enforced by RPC):
+    // - Dropping onto a sibling (same parent_id) reorders within the group.
+    // - Dropping onto a different item adopts that item's parent_id (or, if
+    //   the target is a root-level item with no children of the active item
+    //   creating depth>2, becomes a sibling of the target at root). The
+    //   server RPC rejects any move that would exceed depth=2.
+    const activeWouldBeParent = items.some(i => i.parent_id === activeItem.id);
+    const targetIsChild = overItem.parent_id !== null;
 
-    const siblings = items
-      .filter(i => i.parent_id === activeItem.parent_id)
+    // If we're moving a parent (has children) under another parent, that
+    // would create depth=3 — block at the client to avoid a server round-trip.
+    if (activeWouldBeParent && targetIsChild) return;
+
+    const newParentId = overItem.parent_id;
+
+    // Build the new sibling list at the destination parent.
+    const destSiblings = items
+      .filter(i => i.parent_id === newParentId && i.id !== activeItem.id)
       .sort((a, b) => a.sort_order - b.sort_order);
 
-    const oldIndex = siblings.findIndex(i => i.id === active.id);
-    const newIndex = siblings.findIndex(i => i.id === over.id);
+    const overIndex = destSiblings.findIndex(i => i.id === overItem.id);
+    const insertAt = overIndex === -1 ? destSiblings.length : overIndex;
+    const movedItem: MenuItem = { ...activeItem, parent_id: newParentId };
+    const newDest = [
+      ...destSiblings.slice(0, insertAt),
+      movedItem,
+      ...destSiblings.slice(insertAt),
+    ];
 
-    if (oldIndex === -1 || newIndex === -1) return;
+    // Re-sequence: destination siblings get fresh sort_order; if the active
+    // item changed parent, also re-sequence the source siblings.
+    const updates: { id: string; sort_order: number; parent_id: string | null }[] = newDest.map(
+      (item, idx) => ({ id: item.id, sort_order: idx, parent_id: newParentId }),
+    );
 
-    const reordered = arrayMove(siblings, oldIndex, newIndex);
-    const updates = reordered.map((item, idx) => ({
-      id: item.id,
-      sort_order: idx,
-      parent_id: item.parent_id,
-    }));
+    if (activeItem.parent_id !== newParentId) {
+      const sourceSiblings = items
+        .filter(i => i.parent_id === activeItem.parent_id && i.id !== activeItem.id)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      sourceSiblings.forEach((item, idx) => {
+        updates.push({ id: item.id, sort_order: idx, parent_id: activeItem.parent_id });
+      });
+    }
 
     reorder.mutate({ items: updates, menuId });
   };

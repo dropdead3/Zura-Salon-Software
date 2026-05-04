@@ -311,23 +311,34 @@ export function useCreateMenuItem() {
   });
 }
 
+/** Invalidate every cache that surfaces this menu's contents (admin + public). */
+function invalidateMenuCaches(queryClient: ReturnType<typeof useQueryClient>, menuId: string) {
+  queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
+  // Public/preview surfaces key off slug, not id — invalidate the family.
+  queryClient.invalidateQueries({ queryKey: ['public-menu'] });
+  queryClient.invalidateQueries({ queryKey: ['published-menu'] });
+}
+
 /** Update a menu item */
 export function useUpdateMenuItem() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<MenuItem> & { id: string }) => {
+      if (!orgId) throw new Error('No org');
       const { data, error } = await supabase
         .from('website_menu_items')
         .update(updates)
         .eq('id', id)
+        .eq('organization_id', orgId) // belt-and-suspenders tenant scope
         .select()
         .single();
       if (error) throw error;
       return data as unknown as MenuItem;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', data.menu_id] });
+      invalidateMenuCaches(queryClient, data.menu_id);
     },
   });
 }
@@ -335,40 +346,52 @@ export function useUpdateMenuItem() {
 /** Delete a menu item */
 export function useDeleteMenuItem() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({ id, menuId }: { id: string; menuId: string }) => {
+      if (!orgId) throw new Error('No org');
       const { error } = await supabase
         .from('website_menu_items')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('organization_id', orgId); // belt-and-suspenders tenant scope
       if (error) throw error;
       return menuId;
     },
     onSuccess: (menuId) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
+      invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
 
-/** Batch reorder menu items */
+/**
+ * Batch reorder menu items via atomic RPC.
+ *
+ * Single round-trip — the `reorder_menu_items` RPC validates org admin,
+ * enforces max-depth=2, and updates all rows in one transaction. Avoids
+ * the previous N-sequential-PATCH flicker and partial-failure window.
+ */
 export function useReorderMenuItems() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ items, menuId }: { items: { id: string; sort_order: number; parent_id: string | null }[]; menuId: string }) => {
-      // Update each item's sort_order and parent_id
-      for (const item of items) {
-        const { error } = await supabase
-          .from('website_menu_items')
-          .update({ sort_order: item.sort_order, parent_id: item.parent_id })
-          .eq('id', item.id);
-        if (error) throw error;
-      }
+    mutationFn: async ({
+      items,
+      menuId,
+    }: {
+      items: { id: string; sort_order: number; parent_id: string | null }[];
+      menuId: string;
+    }) => {
+      const { error } = await supabase.rpc('reorder_menu_items', {
+        p_menu_id: menuId,
+        p_items: items as never,
+      });
+      if (error) throw error;
       return menuId;
     },
     onSuccess: (menuId) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
+      invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
@@ -388,19 +411,23 @@ export interface MenuConfig {
 /** Update menu-level config (JSONB) */
 export function useUpdateMenuConfig() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({ menuId, config }: { menuId: string; config: MenuConfig }) => {
+      if (!orgId) throw new Error('No org');
       const { error } = await supabase
         .from('website_menus')
         .update({ config: config as never })
-        .eq('id', menuId);
+        .eq('id', menuId)
+        .eq('organization_id', orgId); // belt-and-suspenders tenant scope
       if (error) throw error;
       return menuId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-menus'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
+      queryClient.invalidateQueries({ queryKey: ['published-menu'] });
     },
   });
 }
@@ -458,8 +485,7 @@ export function usePublishMenu() {
       return menuId;
     },
     onSuccess: (menuId) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', menuId] });
-      queryClient.invalidateQueries({ queryKey: ['published-menu'] });
+      invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
