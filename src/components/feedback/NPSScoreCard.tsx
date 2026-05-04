@@ -70,7 +70,14 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
   const tier = getTier(stats.currentNPS);
 
   return (
-    <Card>
+    <Card className="relative">
+      <div className={tokens.kpi.infoIcon}>
+        <MetricInfoTooltip
+          title="Client Happiness"
+          description="A 0–100 score combining how many clients love you vs. how many are unhappy. Above 30 is healthy, above 50 is excellent."
+          onLearnMore={() => openReputationGlossary('happiness')}
+        />
+      </div>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           Client Happiness
