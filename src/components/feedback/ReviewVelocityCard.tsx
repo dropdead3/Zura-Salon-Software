@@ -14,6 +14,7 @@ import { TrendingUp, TrendingDown, Minus, Star } from 'lucide-react';
 import { useReviewVelocity } from '@/hooks/useReviewVelocity';
 import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { openReputationGlossary } from './ReputationGlossary';
 
 const PLATFORM_LABEL: Record<string, string> = {
   google: 'Google',
