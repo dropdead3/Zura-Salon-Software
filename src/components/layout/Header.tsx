@@ -562,7 +562,11 @@ export function Header() {
             {/* Desktop Navigation */}
             <motion.nav 
               ref={navContainerRef}
-              className="hidden lg:flex items-center gap-4 xl:gap-8 shrink-0"
+              className={cn(
+                "hidden lg:flex items-center shrink-0 flex-1",
+                navAlignmentClass,
+                navDensityClass,
+              )}
               animate={{ 
                 opacity: isStaffMenuOpen ? 0 : 1,
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
