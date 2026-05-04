@@ -20,13 +20,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Zap, ArrowRight, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { GoogleGIcon, FacebookFIcon } from '@/components/brand/marks';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useReviewPlatformConnections } from '@/hooks/useReviewPlatformConnections';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PlatformConnectorTile } from './PlatformConnectorTile';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAutoBoostConfig } from './AutoBoostTriggerDialog';
 import { FeedbackResponseList } from './FeedbackResponseList';
