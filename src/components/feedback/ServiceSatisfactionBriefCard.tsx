@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Star, AlertTriangle } from 'lucide-react';
 import { useServiceSatisfaction } from '@/hooks/useServiceSatisfaction';
+import { useReputationFilter } from '@/contexts/ReputationFilterContext';
+// ... keep existing code
 
 /**
  * ServiceSatisfactionBriefCard — Surfaces top + bottom services by satisfaction
