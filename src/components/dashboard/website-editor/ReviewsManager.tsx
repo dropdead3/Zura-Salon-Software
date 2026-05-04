@@ -301,7 +301,7 @@ function SortableReview({
               placeholder="https://g.page/..."
             />
             <p className="font-sans text-xs text-muted-foreground/70">
-              Link visitors to the original review on Google, Yelp, or Instagram.
+              Link visitors to the original review on Google, Facebook, or Instagram.
             </p>
           </div>
 

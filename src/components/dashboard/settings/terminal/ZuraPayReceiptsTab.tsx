@@ -28,7 +28,7 @@ interface ReceiptPreviewProps {
   phone: string | null;
   website: string | null;
   socials: { instagram?: string; facebook?: string; tiktok?: string };
-  reviewUrls: { google?: string; yelp?: string; facebook?: string };
+  reviewUrls: { google?: string; facebook?: string };
   redoPolicyFallback?: string;
 }
 
@@ -38,7 +38,6 @@ function ReceiptPreview({ config, businessName, logoUrl, iconUrl, address, phone
 
   const activeReviewPlatforms = [
     reviewUrls.google && 'Google',
-    reviewUrls.yelp && 'Yelp',
     reviewUrls.facebook && 'Facebook',
   ].filter(Boolean) as string[];
 
@@ -227,7 +226,6 @@ export function ZuraPayReceiptsTab() {
 
   const reviewUrls = {
     google: reviewSettings?.googleReviewUrl || '',
-    yelp: reviewSettings?.yelpReviewUrl || '',
     facebook: reviewSettings?.facebookReviewUrl || '',
   };
 
@@ -381,7 +379,7 @@ export function ZuraPayReceiptsTab() {
                 maxLength={120}
                 autoCapitalize="off"
               />
-              {!reviewUrls.google && !reviewUrls.yelp && !reviewUrls.facebook && (
+              {!reviewUrls.google && !reviewUrls.facebook && (
                 <p className="text-xs text-amber-500">No review URLs configured yet. Add them in Review Settings.</p>
               )}
             </div>

@@ -14,7 +14,6 @@
 export interface PublicReviewLinkBag {
   googleReviewUrl?: string | null;
   appleReviewUrl?: string | null;
-  yelpReviewUrl?: string | null;
   facebookReviewUrl?: string | null;
 }
 
@@ -27,7 +26,6 @@ export function shouldShowPublicShareScreen(links: PublicReviewLinkBag | null | 
   return !!(
     links.googleReviewUrl ||
     links.appleReviewUrl ||
-    links.yelpReviewUrl ||
     links.facebookReviewUrl
   );
 }

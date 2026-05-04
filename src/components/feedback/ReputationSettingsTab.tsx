@@ -36,7 +36,7 @@ export function ReputationSettingsTab() {
     },
     {
       label: 'Location Review Links',
-      description: 'Per-location Google, Facebook, and Yelp URLs.',
+      description: 'Per-location Google, Apple, and Facebook URLs.',
       href: dashPath('/admin/feedback/links'),
       icon: Star,
     },

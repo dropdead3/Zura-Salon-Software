@@ -21,7 +21,7 @@ export interface ReceiptBusinessInfo {
   phone?: string | null;
   website?: string | null;
   socials?: { instagram?: string; facebook?: string; tiktok?: string };
-  reviewUrls?: { google?: string; yelp?: string; facebook?: string };
+  reviewUrls?: { google?: string; facebook?: string };
 }
 
 function getLogoStyle(size?: string): string {
@@ -165,7 +165,6 @@ export function buildReceiptHtml(
   ${cfg.show_review_prompt && cfg.review_prompt_text ? (() => {
     const platforms = [
       businessInfo?.reviewUrls?.google ? `<a href="${escapeHtml(businessInfo.reviewUrls.google)}">Google</a>` : '',
-      businessInfo?.reviewUrls?.yelp ? `<a href="${escapeHtml(businessInfo.reviewUrls.yelp)}">Yelp</a>` : '',
       businessInfo?.reviewUrls?.facebook ? `<a href="${escapeHtml(businessInfo.reviewUrls.facebook)}">Facebook</a>` : '',
     ].filter(Boolean).join(' &middot; ');
     return `<div style="margin-top:12px;padding-top:8px;border-top:1px solid ${borderColor};text-align:center;">

@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 export interface ResolvedReviewLinks {
   google: string;
   apple: string;
-  yelp: string;
   facebook: string;
   custom: string;
   customLabel: string;
@@ -11,8 +10,8 @@ export interface ResolvedReviewLinks {
 }
 
 const EMPTY: ResolvedReviewLinks = {
-  google: '', apple: '', yelp: '', facebook: '', custom: '', customLabel: '',
-  priority: ['google', 'apple', 'yelp', 'facebook'],
+  google: '', apple: '', facebook: '', custom: '', customLabel: '',
+  priority: ['google', 'apple', 'facebook'],
 };
 
 /**
@@ -49,7 +48,6 @@ export async function resolveReviewLinks(
   return {
     google: pick('google_review_url', 'googleReviewUrl'),
     apple: pick('apple_review_url', 'appleReviewUrl'),
-    yelp: pick('yelp_review_url', 'yelpReviewUrl'),
     facebook: pick('facebook_review_url', 'facebookReviewUrl'),
     custom: (loc.custom_review_url as string) || '',
     customLabel: (loc.custom_review_label as string) || 'Leave a Review',

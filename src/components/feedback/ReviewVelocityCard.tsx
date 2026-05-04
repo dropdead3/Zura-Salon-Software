@@ -18,7 +18,6 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 const PLATFORM_LABEL: Record<string, string> = {
   google: 'Google',
   apple: 'Apple',
-  yelp: 'Yelp',
   facebook: 'Facebook',
   custom: 'Custom',
 };

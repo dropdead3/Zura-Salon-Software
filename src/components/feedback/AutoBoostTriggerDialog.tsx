@@ -165,7 +165,7 @@ export function AutoBoostTriggerDialog({ open, onOpenChange }: AutoBoostTriggerD
           </div>
 
           <div className="rounded-lg border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-            Auto-boost asks happy clients to repost their review on Google / Facebook / Yelp.
+            Auto-boost asks happy clients to repost their review on Google / Facebook.
             Negative feedback is never auto-routed to public platforms — that stays in the
             Recovery Inbox per the Reputation Engine doctrine.
           </div>

@@ -83,7 +83,6 @@ export function GroupedTransactionTable({
       },
       reviewUrls: {
         google: reviewSettings?.googleReviewUrl || '',
-        yelp: reviewSettings?.yelpReviewUrl || '',
         facebook: reviewSettings?.facebookReviewUrl || '',
       },
     };

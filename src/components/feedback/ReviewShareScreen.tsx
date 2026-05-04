@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Copy, ExternalLink, Check, MapPin, MessageSquare } from 'lucide-react';
+// MapPin retained for Apple Maps tile.
 import { ReviewThresholdSettings, trackExternalReviewClick } from '@/hooks/useReviewThreshold';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -37,11 +38,10 @@ export function ReviewShareScreen({
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const handleShareTo = async (platform: 'google' | 'apple' | 'yelp' | 'facebook') => {
+  const handleShareTo = async (platform: 'google' | 'apple' | 'facebook') => {
     const urls: Record<string, string> = {
       google: settings.googleReviewUrl,
       apple: settings.appleReviewUrl,
-      yelp: settings.yelpReviewUrl,
       facebook: settings.facebookReviewUrl,
     };
 
@@ -82,13 +82,6 @@ export function ReviewShareScreen({
       url: settings.appleReviewUrl,
       icon: <MapPin className="h-4 w-4" />,
       color: 'bg-gray-800 hover:bg-gray-900'
-    },
-    { 
-      id: 'yelp', 
-      label: 'Yelp', 
-      url: settings.yelpReviewUrl,
-      icon: <span className="text-lg">🔴</span>,
-      color: 'bg-red-500 hover:bg-red-600'
     },
     { 
       id: 'facebook', 
@@ -161,7 +154,7 @@ export function ReviewShareScreen({
                 {platformButtons.map((platform) => (
                   <Button
                     key={platform.id}
-                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'yelp' | 'facebook')}
+                    onClick={() => handleShareTo(platform.id as 'google' | 'apple' | 'facebook')}
                     className={cn(
                       'text-white gap-2',
                       platform.color,
