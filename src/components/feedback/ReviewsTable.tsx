@@ -28,6 +28,33 @@ import { supabase } from '@/integrations/supabase/client';
 import { tokens } from '@/lib/design-tokens';
 import { ShareReviewDialog, type ShareableReview } from './ShareReviewDialog';
 import { useReputationFilter } from '@/contexts/ReputationFilterContext';
+import { useCanActOnLocation } from '@/hooks/useCanActOnLocation';
+
+/**
+ * ShareCell — gates the "Share" affordance with `useCanActOnLocation`.
+ * A user mapped to Location A must not publish a Location B review even
+ * though their org owns the OAuth token. Fail-closed: hook returns false on
+ * RPC error, hiding the button. When location_id is missing on the response
+ * (legacy data pre-federation), we surface the action to org-admins via the
+ * SQL function's own org-admin bypass.
+ */
+function ShareCell({ locationId, onShare }: { locationId: string | null; onShare: () => void }) {
+  const { data: canAct, isLoading } = useCanActOnLocation(locationId);
+  // While probing, render nothing rather than flashing the button.
+  if (locationId && isLoading) return null;
+  // No location_id yet → defer to RLS at write-time; allow click for org admins.
+  if (locationId && canAct !== true) return null;
+  return (
+    <Button
+      variant="ghost"
+      size={tokens.button.inline}
+      className="gap-1.5"
+      onClick={onShare}
+    >
+      <Share2 className="h-3.5 w-3.5" /> Share
+    </Button>
+  );
+}
 
 interface ReviewsTableProps {
   organizationId?: string;
