@@ -64,6 +64,17 @@ export function PlatformConnectorTile({
   // so we must break out to the top window or open in a new tab.
   const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
 
+  // Track the popped OAuth tab so Retry can refocus it instead of opening a duplicate.
+  const oauthTabRef = useRef<Window | null>(null);
+
+  const logSwitchEvent = (stage: 'switch_initiated' | 'switch_detected' | 'switch_timeout' | 'switch_retry', metadata?: Record<string, unknown>) => {
+    if (!effectiveOrganization?.id) return;
+    // Fire-and-forget — never block UI on telemetry.
+    void supabase.functions.invoke('reputation-google-oauth-audit', {
+      body: { organization_id: effectiveOrganization.id, stage, metadata },
+    }).catch((e) => console.warn('audit log failed', stage, e));
+  };
+
   const handleConnect = async () => {
     if (!effectiveOrganization?.id) return;
     setConnecting(true);
@@ -77,8 +88,19 @@ export function PlatformConnectorTile({
       if (error) throw error;
       if (!data?.url) throw new Error('No authorization URL returned');
       if (isInIframe) {
-        // Open in a new top-level tab — Google's consent screen refuses to render in iframes.
-        window.open(data.url, '_blank', 'noopener,noreferrer');
+        // If the prior tab is still open, refocus it instead of opening a second one.
+        const existing = oauthTabRef.current;
+        if (existing && !existing.closed) {
+          try {
+            existing.location.href = data.url;
+            existing.focus();
+          } catch {
+            // Cross-origin — we can't navigate it; just focus.
+            existing.focus();
+          }
+        } else {
+          oauthTabRef.current = window.open(data.url, '_blank', 'noopener,noreferrer');
+        }
         setConnecting(false);
         toast.info('Complete the Google sign-in in the new tab, then return here.');
       } else {
@@ -112,11 +134,19 @@ export function PlatformConnectorTile({
       const switched = next?.status === 'active' && (next.external_account_id ?? null) !== priorAccountId;
       if (switched) {
         stopPolling();
+        logSwitchEvent('switch_detected', { elapsed_ms: elapsed });
         toast.success('Google account switched.');
       } else if (elapsed > 30_000) {
         stopPolling();
+        logSwitchEvent('switch_timeout', { elapsed_ms: elapsed });
         toast.error("Didn't detect a new account — did you complete the new tab?", {
-          action: { label: 'Retry sign-in', onClick: () => { void handleConnect(); } },
+          action: {
+            label: 'Retry sign-in',
+            onClick: () => {
+              logSwitchEvent('switch_retry');
+              void handleConnect();
+            },
+          },
           duration: 12_000,
         });
       }
