@@ -12,6 +12,7 @@ import { usePublicMenuBySlug, buildMenuTree, type MenuItem, type MenuConfig } fr
 import { useSettingsOrgId } from "@/hooks/useSettingsOrgId";
 import { useWebsitePages } from "@/hooks/useWebsitePages";
 import { emitNavEvent } from "@/lib/nav-tracking";
+import { NavLink } from "@/components/layout/NavLink";
 import { contrastRatio, readableForegroundFor } from "@/lib/color-contrast";
 
 function isColorDark(color: string): boolean {
@@ -41,15 +42,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Fallback hardcoded links (used when no published menu exists)
-const FALLBACK_NAV_ITEMS = [
-  { href: "/services", label: "Services", priority: 1, type: "link" as const },
-  { href: "/about", label: "About", priority: 2, type: "dropdown" as const, children: [
+type NavChild = { href: string; label: string; openInNewTab?: boolean };
+type NavItem = {
+  href: string;
+  label: string;
+  priority: number;
+  type: 'link' | 'dropdown' | 'cta';
+  children?: NavChild[];
+  openInNewTab?: boolean;
+  ctaStyle?: string;
+  visibility?: string;
+};
+const FALLBACK_NAV_ITEMS: NavItem[] = [
+  { href: "/services", label: "Services", priority: 1, type: "link" },
+  { href: "/about", label: "About", priority: 2, type: "dropdown", children: [
     { href: "/about", label: "About Us" },
     { href: "/policies", label: "Policies" },
   ]},
-  { href: "/team", label: "Team", priority: 3, type: "link" as const },
-  { href: "/gallery", label: "Gallery", priority: 4, type: "link" as const },
-  { href: "/contact", label: "Contact", priority: 5, type: "link" as const },
+  { href: "/team", label: "Team", priority: 3, type: "link" },
+  { href: "/gallery", label: "Gallery", priority: 4, type: "link" },
+  { href: "/contact", label: "Contact", priority: 5, type: "link" },
 ];
 
 const FALLBACK_CTA = { href: "/booking", label: "Book Now" };
@@ -136,6 +148,18 @@ export function Header() {
   const mobileMenuStyle = menuConfig?.mobile_menu_style ?? 'overlay';
   const mobileCTAVisible = menuConfig?.mobile_cta_visible ?? true;
   const showLogo = menuConfig?.show_logo ?? true;
+  const desktopAlignment = menuConfig?.desktop_alignment ?? 'center';
+  const desktopDensity = menuConfig?.desktop_density ?? 'comfortable';
+  const dropdownStyle = menuConfig?.dropdown_style ?? 'simple';
+  const ctaTreatment = menuConfig?.cta_treatment ?? 'pill';
+
+  // Tailwind class maps for menu config — kept inline so token additions are local.
+  const navAlignmentClass = desktopAlignment === 'left'
+    ? 'justify-start'
+    : desktopAlignment === 'right'
+      ? 'justify-end'
+      : 'justify-center';
+  const navDensityClass = desktopDensity === 'compact' ? 'gap-3 xl:gap-5' : 'gap-4 xl:gap-8';
 
   // Slug map for resolving page_link items by id (avoids UUID-as-URL bug).
   const pageSlugById = useMemo(() => {
@@ -158,13 +182,16 @@ export function Header() {
     }
 
     const nonCta: typeof FALLBACK_NAV_ITEMS = [];
-    let cta = { href: orgPath('/booking'), label: 'Book Consult' };
+    let cta: { href: string; label: string; openInNewTab?: boolean } = {
+      href: orgPath('/booking'),
+      label: 'Book Consult',
+    };
 
     publishedMenu.forEach((item, idx) => {
       if (item.visibility === 'mobile_only') return;
       const nav = menuItemToNavItem(item, idx, orgPath, pageSlugById);
       if (nav.type === 'cta') {
-        cta = { href: nav.href, label: nav.label };
+        cta = { href: nav.href, label: nav.label, openInNewTab: nav.openInNewTab };
       } else {
         nonCta.push(nav as typeof FALLBACK_NAV_ITEMS[0]);
       }
@@ -176,7 +203,7 @@ export function Header() {
   // Mobile nav items (include mobile_only, exclude desktop_only)
   const mobileNavItems = useMemo(() => {
     if (!publishedMenu || publishedMenu.length === 0) {
-      const items: { href: string; label: string; type: string }[] = [];
+      const items: { href: string; label: string; type: string; openInNewTab?: boolean }[] = [];
       FALLBACK_NAV_ITEMS.forEach(item => {
         if (item.type === 'dropdown' && item.children) {
           items.push({ href: orgPath(item.href), label: item.label, type: 'link' });
@@ -188,17 +215,17 @@ export function Header() {
       return items;
     }
 
-    const items: { href: string; label: string; type: string }[] = [];
+    const items: { href: string; label: string; type: string; openInNewTab?: boolean }[] = [];
     publishedMenu.forEach((item) => {
       if (item.visibility === 'desktop_only') return;
       if (item.item_type === 'cta') return;
       const nav = menuItemToNavItem(item, 0, orgPath, pageSlugById);
       if (nav.type === 'dropdown' && nav.children) {
         // Preserve parent label as a header row so mobile users keep context.
-        items.push({ href: nav.href, label: nav.label, type: 'link' });
-        nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child' }));
+        items.push({ href: nav.href, label: nav.label, type: 'link', openInNewTab: nav.openInNewTab });
+        nav.children.forEach(c => items.push({ href: c.href, label: c.label, type: 'child', openInNewTab: c.openInNewTab }));
       } else {
-        items.push({ href: nav.href, label: nav.label, type: 'link' });
+        items.push({ href: nav.href, label: nav.label, type: 'link', openInNewTab: nav.openInNewTab });
       }
     });
     return items;
@@ -546,7 +573,11 @@ export function Header() {
             {/* Desktop Navigation */}
             <motion.nav 
               ref={navContainerRef}
-              className="hidden lg:flex items-center gap-4 xl:gap-8 shrink-0"
+              className={cn(
+                "hidden lg:flex items-center shrink-0 flex-1",
+                navAlignmentClass,
+                navDensityClass,
+              )}
               animate={{ 
                 opacity: isStaffMenuOpen ? 0 : 1,
                 pointerEvents: isStaffMenuOpen ? "none" : "auto"
@@ -580,24 +611,31 @@ export function Header() {
                           {item.label}
                           <ChevronDown size={14} className="transition-transform duration-200" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="center" 
+                        <DropdownMenuContent
+                          align="center"
                           sideOffset={12}
-                          className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
+                          className={cn(
+                            "rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5",
+                            // Mega panel: switch to wider 2-column grid when 5+ children.
+                            dropdownStyle === 'mega' && (item.children?.length ?? 0) >= 5
+                              ? "w-[420px] grid grid-cols-2 gap-1"
+                              : "w-[180px]",
+                          )}
                         >
                           {item.children.map((link) => (
                             <DropdownMenuItem key={link.href} asChild>
-                              <Link
+                              <NavLink
                                 to={link.href}
+                                openInNewTab={link.openInNewTab}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
                                   location.pathname === link.href
-                                    ? "bg-accent text-accent-foreground" 
+                                    ? "bg-accent text-accent-foreground"
                                     : "text-foreground/80"
                                 )}
                               >
                                 {link.label}
-                              </Link>
+                              </NavLink>
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuContent>
@@ -616,8 +654,9 @@ export function Header() {
                     transition={{ duration: 0.4, delay: 0.1 + index * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
                     className="shrink-0"
                   >
-                    <Link
+                    <NavLink
                       to={item.href}
+                      openInNewTab={item.openInNewTab}
                       onClick={() => emitNavEvent('nav_item_clicked', {
                         label: item.label,
                         href: item.href,
@@ -634,11 +673,11 @@ export function Header() {
                       <span className="transition-transform duration-300 group-hover:-translate-x-1">
                         {item.label}
                       </span>
-                      <ArrowRight 
-                        size={14} 
-                        className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0" 
+                      <ArrowRight
+                        size={14}
+                        className="opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
                       />
-                    </Link>
+                    </NavLink>
                   </motion.div>
                 );
               })}
@@ -667,33 +706,35 @@ export function Header() {
                           if (item.type === "dropdown" && item.children) {
                             return item.children.map((link) => (
                               <DropdownMenuItem key={link.href} asChild>
-                                <Link
+                                <NavLink
                                   to={link.href}
+                                  openInNewTab={link.openInNewTab}
                                   className={cn(
                                     "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
                                     location.pathname === link.href
-                                      ? "bg-accent text-accent-foreground" 
+                                      ? "bg-accent text-accent-foreground"
                                       : "text-foreground/80"
                                   )}
                                 >
                                   {link.label}
-                                </Link>
+                                </NavLink>
                               </DropdownMenuItem>
                             ));
                           }
                           return (
                             <DropdownMenuItem key={item.href} asChild>
-                              <Link
+                              <NavLink
                                 to={item.href}
+                                openInNewTab={item.openInNewTab}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                  location.pathname === item.href 
-                                    ? "bg-accent text-accent-foreground" 
+                                  location.pathname === item.href
+                                    ? "bg-accent text-accent-foreground"
                                     : "text-foreground/80"
                                 )}
                               >
                                 {item.label}
-                              </Link>
+                              </NavLink>
                             </DropdownMenuItem>
                           );
                         })}
@@ -723,23 +764,40 @@ export function Header() {
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Link
+                    <NavLink
                       to={ctaItem.href}
+                      openInNewTab={ctaItem.openInNewTab}
                       onClick={() => emitNavEvent('cta_clicked', {
                         label: ctaItem.label,
                         href: ctaItem.href,
-                        cta_style: 'primary',
+                        cta_style: ctaTreatment,
                         menu_location: 'header',
                       })}
                       className={cn(
-                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
-                        isOverDark 
-                          ? "bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60" 
-                          : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
+                        "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5",
+                        // CTA treatment from menu config:
+                        ctaTreatment === 'pill' && cn(
+                          "rounded-full border hover:shadow-lg",
+                          isOverDark
+                            ? "bg-white text-foreground border-white hover:bg-white/90"
+                            : "bg-foreground text-background border-foreground hover:bg-foreground/90"
+                        ),
+                        ctaTreatment === 'outline' && cn(
+                          "rounded-full border hover:shadow-lg",
+                          isOverDark
+                            ? "bg-transparent border-white/40 text-white hover:bg-white/10 hover:border-white/60"
+                            : "bg-transparent border-foreground/30 text-foreground hover:bg-foreground/5 hover:border-foreground/50"
+                        ),
+                        ctaTreatment === 'underline' && cn(
+                          "rounded-none border-0 border-b-2 px-1 py-1.5 hover:scale-100 hover:-translate-y-0",
+                          isOverDark
+                            ? "border-white/60 text-white hover:border-white"
+                            : "border-foreground/50 text-foreground hover:border-foreground"
+                        ),
                       )}
                     >
                       {ctaItem.label}
-                    </Link>
+                    </NavLink>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[320px] p-5 bg-background text-foreground border border-border shadow-lg">
                     <p className="text-sm text-center leading-relaxed">New-client consultations ($15) are required for all new clients to ensure we match you to your best suited stylist and prepare the best plan to achieve your end goal.</p>
