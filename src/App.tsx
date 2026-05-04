@@ -225,6 +225,7 @@ const CampaignDetail = lazyWithRetry(() => import("./pages/dashboard/CampaignDet
 const ClientFeedbackPage = lazyWithRetry(() => import("./pages/ClientFeedback"));
 const ClientPortalPage = lazyWithRetry(() => import("./pages/ClientPortal"));
 const FeedbackHub = lazyWithRetry(() => import("./pages/dashboard/admin/FeedbackHub"));
+const ConnectGooglePage = lazyWithRetry(() => import("./pages/dashboard/admin/ConnectGooglePage"));
 const RecoveryInbox = lazyWithRetry(() => import("./pages/dashboard/admin/RecoveryInbox"));
 const LocationReviewLinks = lazyWithRetry(() => import("./pages/dashboard/admin/LocationReviewLinks"));
 const ReviewAutomationRules = lazyWithRetry(() => import("./pages/dashboard/admin/ReviewAutomationRules"));
@@ -435,6 +436,7 @@ function DashboardRoutes() {
       <Route path="settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
       <Route path="admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
       <Route path="admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
+      <Route path="admin/feedback/connect-google" element={<ProtectedRoute requiredPermission="manage_settings"><ConnectGooglePage /></ProtectedRoute>} />
       <Route path="admin/feedback/recovery" element={<ProtectedRoute requiredPermission="manage_settings"><RecoveryInbox /></ProtectedRoute>} />
       <Route path="admin/feedback/links" element={<ProtectedRoute requiredPermission="manage_settings"><LocationReviewLinks /></ProtectedRoute>} />
       <Route path="admin/feedback/automations" element={<ProtectedRoute requiredPermission="manage_settings"><ReviewAutomationRules /></ProtectedRoute>} />
