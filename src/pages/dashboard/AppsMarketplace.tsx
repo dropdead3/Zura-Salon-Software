@@ -24,6 +24,7 @@ import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { useConnectEntitlement } from '@/hooks/connect/useConnectEntitlement';
 
 import { useColorBarEntitlement } from '@/hooks/color-bar/useColorBarEntitlement';
+import { useReputationEntitlement } from '@/hooks/reputation/useReputationEntitlement';
 import { Skeleton } from '@/components/ui/skeleton';
 
 /* ------------------------------------------------------------------ */
