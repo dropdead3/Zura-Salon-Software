@@ -38,6 +38,8 @@ import { useEffect, useState } from 'react';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { ReputationGate } from '@/components/reputation/ReputationGate';
 import { ReputationSubscriptionCard } from '@/components/reputation/ReputationSubscriptionCard';
+import { ReputationGlossary } from '@/components/feedback/ReputationGlossary';
+import { useRecoverySLA } from '@/hooks/useRecoverySLA';
 import { toast } from 'sonner';
 
 const FEEDBACK_TABS = new Set(['overview', 'reviews', 'presence', 'intelligence', 'settings']);
