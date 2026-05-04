@@ -107,6 +107,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   apps: [
     '/dashboard/admin/color-bar-settings',
     '/dashboard/team-chat',
+    '/dashboard/admin/feedback',
   ],
   system: [
     '/dashboard/admin/access-hub',
