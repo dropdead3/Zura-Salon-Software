@@ -455,6 +455,7 @@ Deno.serve(async (req) => {
     // `[dispatch-review-requests] tick` in edge-fn logs. cappedOrgs > 0 on
     // either pass = signal to raise PER_ORG_*_CAP / GLOBAL_SEND_POOL or
     // shorten the cron interval.
+    const durationMs = Date.now() - tickStart;
     console.log("[dispatch-review-requests] tick:", JSON.stringify({
       enqueued: summary.enqueued,
       sent: summary.sent,
@@ -462,7 +463,29 @@ Deno.serve(async (req) => {
       errors: summary.errors,
       enqueueFairness: summary.enqueueFairness,
       sendFairness: summary.sendFairness,
+      durationMs,
     }));
+    // Persist fairness telemetry for graphable observability — platform staff
+    // query dispatch_tick_log to spot capped orgs trending up before customers
+    // complain. Best-effort: a write failure here must NOT mask dispatch
+    // success in the response payload.
+    try {
+      await supabase.from("dispatch_tick_log").insert({
+        enqueued: summary.enqueued,
+        sent: summary.sent,
+        skipped: summary.skipped,
+        errors: summary.errors,
+        enqueue_orgs_served: summary.enqueueFairness?.orgsServed ?? 0,
+        enqueue_max_per_org: summary.enqueueFairness?.maxPerOrg ?? 0,
+        enqueue_capped_orgs: summary.enqueueFairness?.cappedOrgs ?? 0,
+        send_orgs_served: summary.sendFairness?.orgsServed ?? 0,
+        send_max_per_org: summary.sendFairness?.maxPerOrg ?? 0,
+        send_capped_orgs: summary.sendFairness?.cappedOrgs ?? 0,
+        duration_ms: durationMs,
+      });
+    } catch (logErr: any) {
+      console.error("[dispatch-review-requests] tick-log write failed:", logErr?.message ?? logErr);
+    }
     return new Response(JSON.stringify({ ok: true, ...summary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
