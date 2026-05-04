@@ -264,6 +264,7 @@ export default function FeedbackHub() {
               <ReputationSettingsTab />
             </TabsContent>
           </Tabs>
+          </ReputationFilterProvider>
         </ReputationGate>
       </div>
     </DashboardLayout>
