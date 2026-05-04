@@ -20,13 +20,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Zap, ArrowRight, MapPin, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { GoogleGIcon, FacebookFIcon } from '@/components/brand/marks';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { useLocationReviewLinks } from '@/hooks/useLocationReviewLinks';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useReviewPlatformConnections } from '@/hooks/useReviewPlatformConnections';
 import { useOrgDashboardPath } from '@/hooks/useOrgDashboardPath';
 import { PlatformConnectorTile } from './PlatformConnectorTile';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useAutoBoostConfig } from './AutoBoostTriggerDialog';
 import { FeedbackResponseList } from './FeedbackResponseList';
@@ -41,6 +42,34 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
   const { data: connections } = useReviewPlatformConnections();
   const { data: autoBoost } = useAutoBoostConfig();
   const { dashPath } = useOrgDashboardPath();
+  const [searchParams] = useSearchParams();
+  const focusLocationId = searchParams.get('focus');
+
+  // Accordion is controlled so the deep-link can force-open the focused
+  // location even if the operator had collapsed it. Default open: single
+  // location → that one; multi-location with ?focus → that one; otherwise
+  // none. Once mounted, the operator regains full control.
+  const initialOpen = useMemo(() => {
+    if (focusLocationId && locations.some((l) => l.id === focusLocationId)) {
+      return [focusLocationId];
+    }
+    return locations.length === 1 ? [locations[0].id] : [];
+  }, [focusLocationId, locations]);
+  const [openItems, setOpenItems] = useState<string[]>(initialOpen);
+
+  // If the focus param arrives after locations load (or changes), re-open
+  // and scroll into view. Runs once per focus value.
+  useEffect(() => {
+    if (!focusLocationId) return;
+    if (!locations.some((l) => l.id === focusLocationId)) return;
+    setOpenItems((prev) => (prev.includes(focusLocationId) ? prev : [...prev, focusLocationId]));
+    // Scroll on next tick so accordion has expanded.
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(`presence-loc-${focusLocationId}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [focusLocationId, locations]);
 
   const settingsHref = `${dashPath('/admin/feedback')}?tab=settings`;
   const linkByLocation = (locId: string) => links?.find((l) => l.location_id === locId);
@@ -93,7 +122,8 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
         ) : (
           <Accordion
             type="multiple"
-            defaultValue={locations.length === 1 ? [locations[0].id] : []}
+            value={openItems}
+            onValueChange={setOpenItems}
             className="space-y-2"
           >
             {locations.map((loc) => {
@@ -103,7 +133,8 @@ export function OnlinePresenceTab({ organizationId }: OnlinePresenceTabProps) {
                 <AccordionItem
                   key={loc.id}
                   value={loc.id}
-                  className="border border-border rounded-xl bg-card/60 px-4 [&[data-state=open]]:bg-card"
+                  id={`presence-loc-${loc.id}`}
+                  className="border border-border rounded-xl bg-card/60 px-4 [&[data-state=open]]:bg-card scroll-mt-24"
                 >
                   <AccordionTrigger className="hover:no-underline py-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">

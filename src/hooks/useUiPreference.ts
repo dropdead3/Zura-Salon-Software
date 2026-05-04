@@ -14,10 +14,47 @@
  *     promise transactional resolution because these are personal nudges,
  *     not business records.
  */
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+
+/**
+ * Legacy localStorage keys that should be backfilled into `user_ui_preferences`
+ * the first time the corresponding surface is read after the cutover. Each
+ * entry is a one-shot: once a DB row exists OR the migration has run for this
+ * user+surface, we never read localStorage again.
+ *
+ * Add new entries here when promoting a `localStorage`-backed nudge to the
+ * cross-device store, then delete the entry one release later.
+ */
+const LEGACY_LOCALSTORAGE_KEYS: Record<string, string> = {
+  'reputation.gbp-grace-snooze': 'reputation-oauth-grace-snooze-v1',
+};
+
+const migratedSurfaces = new Set<string>();
+
+function readLegacyValue<T>(surface: string): T | null {
+  const legacyKey = LEGACY_LOCALSTORAGE_KEYS[surface];
+  if (!legacyKey || typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(legacyKey);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function clearLegacyValue(surface: string) {
+  const legacyKey = LEGACY_LOCALSTORAGE_KEYS[surface];
+  if (!legacyKey || typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(legacyKey);
+  } catch {
+    /* noop */
+  }
+}
 
 export function useUiPreference<T>(surface: string) {
   const { user } = useAuth();
@@ -80,6 +117,31 @@ export function useUiPreference<T>(surface: string) {
     },
     [qc, queryKey, surface, userId],
   );
+
+  // One-shot legacy localStorage backfill. Runs once per surface per session
+  // after the initial read resolves with no DB row. Idempotent: even if the
+  // hook unmounts/remounts, the in-memory `migratedSurfaces` set blocks
+  // re-runs, and the localStorage key is cleared on success.
+  const migrationRan = useRef(false);
+  useEffect(() => {
+    if (migrationRan.current) return;
+    if (!userId || isLoading) return;
+    if (migratedSurfaces.has(`${userId}:${surface}`)) return;
+    if (data !== null && data !== undefined) {
+      // DB already wins — drop the stale legacy key so we never reconsider it.
+      migratedSurfaces.add(`${userId}:${surface}`);
+      clearLegacyValue(surface);
+      migrationRan.current = true;
+      return;
+    }
+    const legacy = readLegacyValue<T>(surface);
+    migrationRan.current = true;
+    migratedSurfaces.add(`${userId}:${surface}`);
+    if (legacy !== null) {
+      void setValue(legacy);
+      clearLegacyValue(surface);
+    }
+  }, [data, isLoading, setValue, surface, userId]);
 
   return { value: (data ?? null) as T | null, isLoading, setValue };
 }
