@@ -90,6 +90,24 @@ export function PlatformConnectorTile({
     }
   };
 
+  const handleDisconnect = async () => {
+    if (!effectiveOrganization?.id) return;
+    setDisconnecting(true);
+    try {
+      const { error } = await supabase.functions.invoke('reputation-google-oauth-disconnect', {
+        body: { organization_id: effectiveOrganization.id },
+      });
+      if (error) throw error;
+      toast.success('Google disconnected.');
+      await queryClient.invalidateQueries({ queryKey: ['review-platform-connections'] });
+    } catch (e) {
+      console.error('Disconnect failed', e);
+      toast.error('Could not disconnect Google. Please try again.');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
   return (
     <Card className="h-full">
       <CardContent className="p-6 flex flex-col items-center text-center gap-4 h-full">
