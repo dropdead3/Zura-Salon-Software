@@ -181,14 +181,24 @@ export interface PublicMenuResult {
   config: MenuConfig | null;
 }
 
-/** Fetch published menu by slug without requiring org context (for public site) */
-export function usePublicMenuBySlug(menuSlug: string) {
+/**
+ * Fetch a published menu by org + slug for the public site.
+ *
+ * **Tenant isolation contract**: must always pass `orgId`. Without it, the
+ * `Public can read menus` RLS policy (USING true) returns whatever org
+ * happens to come back first for `slug = 'primary'`, leaking another
+ * tenant's menu onto the wrong website. Header.tsx resolves orgId via
+ * `usePublicOrg()` before calling this hook.
+ */
+export function usePublicMenuBySlug(menuSlug: string, orgId: string | undefined) {
   return useQuery({
-    queryKey: ['public-menu', menuSlug],
+    queryKey: ['public-menu', orgId, menuSlug],
     queryFn: async (): Promise<PublicMenuResult | null> => {
+      if (!orgId) return null;
       const { data: menu, error: menuError } = await supabase
         .from('website_menus')
         .select('id, config')
+        .eq('organization_id', orgId)
         .eq('slug', menuSlug)
         .limit(1)
         .maybeSingle();
@@ -209,6 +219,7 @@ export function usePublicMenuBySlug(menuSlug: string) {
         config: (menu.config as MenuConfig) ?? null,
       };
     },
+    enabled: !!orgId,
     staleTime: 60_000,
   });
 }
@@ -306,7 +317,9 @@ export function useCreateMenuItem() {
       return data as unknown as MenuItem;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['website-menu', data.menu_id] });
+      invalidateMenuCaches(queryClient, data.menu_id);
+      // Refresh menu list so item counts/badges in the sidebar update.
+      queryClient.invalidateQueries({ queryKey: ['website-menus'] });
     },
   });
 }
