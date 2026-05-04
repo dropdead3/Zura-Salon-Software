@@ -388,6 +388,7 @@ export function useDeleteMenuItem() {
  */
 export function useReorderMenuItems() {
   const queryClient = useQueryClient();
+  const orgId = useResolvedOrgId();
 
   return useMutation({
     mutationFn: async ({
@@ -404,8 +405,30 @@ export function useReorderMenuItems() {
       if (error) throw error;
       return menuId;
     },
-    onSuccess: (menuId) => {
-      invalidateMenuCaches(queryClient, menuId);
+    // Optimistic update: apply the new order locally so the drag doesn't snap
+    // back while the RPC round-trips. Snapshot the previous list to roll back
+    // on failure.
+    onMutate: async ({ items, menuId }) => {
+      const queryKey = ['website-menu', orgId, menuId] as const;
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<MenuItem[]>(queryKey);
+      if (previous) {
+        const updates = new Map(items.map(u => [u.id, u]));
+        const next = previous.map(item => {
+          const u = updates.get(item.id);
+          return u ? { ...item, sort_order: u.sort_order, parent_id: u.parent_id } : item;
+        });
+        queryClient.setQueryData<MenuItem[]>(queryKey, next);
+      }
+      return { previous, queryKey };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(ctx.queryKey, ctx.previous);
+      }
+    },
+    onSettled: (menuId) => {
+      if (menuId) invalidateMenuCaches(queryClient, menuId);
     },
   });
 }
@@ -446,7 +469,15 @@ export function useUpdateMenuConfig() {
   });
 }
 
-/** Publish a menu: validate, snapshot, set all items as published */
+/**
+ * Publish a menu — version + snapshot + flip drafts to published.
+ *
+ * Backed by the `publish_menu` Postgres function which takes a row-level
+ * `FOR UPDATE` lock on the menu before computing the next version_number.
+ * This eliminates the read-then-insert race where two concurrent publishers
+ * could collide on `(menu_id, version_number)` (now also enforced by a
+ * UNIQUE constraint as a safety net).
+ */
 export function usePublishMenu() {
   const queryClient = useQueryClient();
   const orgId = useResolvedOrgId();
@@ -454,51 +485,14 @@ export function usePublishMenu() {
   return useMutation({
     mutationFn: async ({ menuId, changeSummary }: { menuId: string; changeSummary?: string }) => {
       if (!orgId) throw new Error('No org');
-
-      // Get all items
-      const { data: items, error: fetchError } = await supabase
-        .from('website_menu_items')
-        .select('*')
-        .eq('menu_id', menuId)
-        .order('sort_order');
-      if (fetchError) throw fetchError;
-
-      // Get current version number
-      const { data: versions } = await supabase
-        .from('website_menu_versions')
-        .select('version_number')
-        .eq('menu_id', menuId)
-        .order('version_number', { ascending: false })
-        .limit(1);
-
-      const nextVersion = (versions?.[0]?.version_number ?? 0) + 1;
-
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Create version snapshot
-      const { error: versionError } = await supabase
-        .from('website_menu_versions')
-        .insert({
-          menu_id: menuId,
-          organization_id: orgId,
-          version_number: nextVersion,
-          snapshot: items as never,
-          published_by: user?.id,
-          change_summary: changeSummary,
-        });
-      if (versionError) throw versionError;
-
-      // Mark all items as published
-      const { error: publishError } = await supabase
-        .from('website_menu_items')
-        .update({ is_published: true })
-        .eq('menu_id', menuId);
-      if (publishError) throw publishError;
-
-      return menuId;
+      const { data, error } = await supabase.rpc('publish_menu', {
+        p_menu_id: menuId,
+        p_change_summary: changeSummary ?? null,
+      });
+      if (error) throw error;
+      return { menuId, result: data };
     },
-    onSuccess: (menuId) => {
+    onSuccess: ({ menuId }) => {
       invalidateMenuCaches(queryClient, menuId);
     },
   });
