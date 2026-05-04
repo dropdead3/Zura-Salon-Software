@@ -27,7 +27,7 @@ function LocationCard({ location }: { location: { id: string; name: string } }) 
   const [draft, setDraft] = useState<LocationReviewLink>({
     organization_id: effectiveOrganization?.id ?? '',
     location_id: location.id,
-    google_review_url: '', apple_review_url: '', yelp_review_url: null,
+    google_review_url: '', apple_review_url: '',
     facebook_review_url: '', custom_review_url: '', custom_review_label: '',
     default_platform_priority: ['google', 'apple', 'facebook'],
   });
