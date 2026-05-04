@@ -17,6 +17,7 @@ import {
 import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { useMenuValidation } from './useMenuValidation';
 import { MobileNavConfig } from './MobileNavConfig';
+import { DesktopNavConfig } from './DesktopNavConfig';
 import { toast } from '@/hooks/use-toast';
 import { tokens } from '@/lib/design-tokens';
 
@@ -235,9 +236,11 @@ export function NavigationManager() {
             </>
           )}
 
-          {/* Mobile Settings (primary menu only) */}
+          {/* Desktop + Mobile Settings (primary menu only) */}
           {selectedMenu?.slug === 'primary' && selectedMenu && (
             <>
+              <div className="border-t border-border/40" />
+              <DesktopNavConfig menu={selectedMenu} />
               <div className="border-t border-border/40" />
               <MobileNavConfig menu={selectedMenu} />
             </>

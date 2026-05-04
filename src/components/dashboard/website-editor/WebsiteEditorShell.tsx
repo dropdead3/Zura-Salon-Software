@@ -123,6 +123,7 @@ import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
+import { NavigationManager } from './navigation/NavigationManager';
 import { InlineEditCommitHandler } from './InlineEditCommitHandler';
 import {
   EditorHistoryProvider,
@@ -164,6 +165,7 @@ const BUILTIN_EDITORS: Record<string, React.ComponentType> = {
   footer: FooterEditor,
   'sticky-footer': StickyFooterBarEditor,
   pages: PagesManager,
+  navigation: NavigationManager,
 };
 
 // Map home built-in section TYPES → editor tab keys (mirrors sidebar).
