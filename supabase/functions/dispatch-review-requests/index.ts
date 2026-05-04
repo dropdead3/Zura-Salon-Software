@@ -76,6 +76,11 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
   }
 
   const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Per-org enqueue cap per tick — protects margin once dozens of orgs are
+  // active. Even if a backlog of completed appointments lands at once, each
+  // org can only queue this many requests per cron run; the rest are picked
+  // up next tick. Tunable via env without redeploy.
+  const PER_ORG_TICK_CAP = Number(Deno.env.get("REPUTATION_PER_ORG_TICK_CAP") ?? "100");
 
   for (const [orgId, orgRules] of byOrg) {
     // Recent completed appointments for this org
@@ -88,24 +93,60 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
       .limit(500);
     if (!appts?.length) continue;
 
+    // ------------------------------------------------------------------
+    // N+1 batch query: pre-load recent dispatches for ALL clients in one
+    // shot, then look up frequency-cap hits in memory. Replaces the old
+    // per-(appt, rule) head-count query that would issue 500×N round-trips
+    // per org per tick.
+    // ------------------------------------------------------------------
+    const maxCapDays = Math.max(
+      0,
+      ...orgRules.map((r: any) => Number(r.frequency_cap_days ?? 0)),
+    );
+    const recentSentByClient = new Map<string, string[]>(); // clientId -> sent_at ISOs
+    if (maxCapDays > 0) {
+      const clientIds = Array.from(
+        new Set(appts.map((a: any) => a.client_id).filter(Boolean)),
+      ) as string[];
+      if (clientIds.length) {
+        const cutoffIso = new Date(
+          Date.now() - maxCapDays * 86400 * 1000,
+        ).toISOString();
+        // Page through in chunks of 500 client_ids to stay within URL/IN limits.
+        const chunkSize = 500;
+        for (let i = 0; i < clientIds.length; i += chunkSize) {
+          const chunk = clientIds.slice(i, i + chunkSize);
+          const { data: recent } = await supabase
+            .from("review_request_dispatch_queue")
+            .select("client_id, sent_at")
+            .eq("organization_id", orgId)
+            .in("client_id", chunk)
+            .not("sent_at", "is", null)
+            .gte("sent_at", cutoffIso);
+          for (const r of (recent ?? []) as any[]) {
+            const list = recentSentByClient.get(r.client_id) ?? [];
+            list.push(r.sent_at);
+            recentSentByClient.set(r.client_id, list);
+          }
+        }
+      }
+    }
+
+    let enqueuedThisOrg = 0;
     for (const appt of appts) {
+      if (enqueuedThisOrg >= PER_ORG_TICK_CAP) break;
       for (const rule of orgRules) {
+        if (enqueuedThisOrg >= PER_ORG_TICK_CAP) break;
         // Location filter
         if (rule.location_ids?.length && !rule.location_ids.includes(appt.location_id)) continue;
         // Service filter
         if (isExcluded(appt.service_category, appt.service_name, rule)) continue;
 
-        // Frequency cap — skip client if any prior dispatch within window
+        // Frequency cap — in-memory check against pre-loaded recent dispatches.
         if (appt.client_id && rule.frequency_cap_days) {
-          const cutoff = new Date(Date.now() - rule.frequency_cap_days * 86400 * 1000).toISOString();
-          const { count } = await supabase
-            .from("review_request_dispatch_queue")
-            .select("id", { head: true, count: "exact" })
-            .eq("organization_id", orgId)
-            .eq("client_id", appt.client_id)
-            .not("sent_at", "is", null)
-            .gte("sent_at", cutoff);
-          if ((count ?? 0) > 0) continue;
+          const ruleCutoff = Date.now() - rule.frequency_cap_days * 86400 * 1000;
+          const sent = recentSentByClient.get(appt.client_id) ?? [];
+          if (sent.some((iso) => new Date(iso).getTime() >= ruleCutoff)) continue;
         }
 
         const scheduledFor = new Date(
@@ -125,7 +166,17 @@ async function enqueueEligible(supabase: any, summary: DispatchSummary) {
             channel: rule.channel === "email" ? "email" : "sms",
             scheduled_for: scheduledFor,
           });
-        if (!error) summary.enqueued++;
+        if (!error) {
+          summary.enqueued++;
+          enqueuedThisOrg++;
+          // Track the synthetic "would-have-sent" against the cap so multiple
+          // rules for the same client in the same tick don't all enqueue.
+          if (appt.client_id) {
+            const list = recentSentByClient.get(appt.client_id) ?? [];
+            list.push(new Date().toISOString());
+            recentSentByClient.set(appt.client_id, list);
+          }
+        }
         // Unique violation = already queued; ignore silently.
       }
     }
