@@ -755,12 +755,6 @@ export function Header() {
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
               className="hidden lg:flex items-center gap-3 xl:gap-6 shrink-0"
             >
-              <Link
-                to="/contact"
-                className="text-sm tracking-wide font-sans font-medium opacity-70 hover:opacity-100 transition-opacity duration-300 link-underline"
-              >
-                Contact Us
-              </Link>
               <TooltipProvider delayDuration={200}>
                 <Tooltip>
                   <TooltipTrigger asChild>
