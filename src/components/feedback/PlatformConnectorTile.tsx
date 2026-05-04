@@ -157,6 +157,11 @@ export function PlatformConnectorTile({
               <p className="text-[11px] text-muted-foreground/60 leading-snug">
                 Tip: if you're signed into multiple Google accounts, use an incognito window to avoid picking the wrong one.
               </p>
+              {isInIframe && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-snug">
+                  Heads up: Google sign-in can't run inside this preview. We'll open it in a new tab.
+                </p>
+              )}
             </>
           )}
           {!isActive && !supportsOAuth && (
