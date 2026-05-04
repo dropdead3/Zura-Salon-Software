@@ -123,6 +123,7 @@ import { PageSettingsEditor } from './PageSettingsEditor';
 import { CustomSectionEditor } from './CustomSectionEditor';
 import { PageTemplatePicker } from './PageTemplatePicker';
 import { SiteDesignPanel } from './SiteDesignPanel';
+import { NavigationManager } from './navigation/NavigationManager';
 import { InlineEditCommitHandler } from './InlineEditCommitHandler';
 import {
   EditorHistoryProvider,
