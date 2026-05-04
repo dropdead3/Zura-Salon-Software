@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, Star, AlertTriangle } from 'lucide-react';
 import { useServiceSatisfaction } from '@/hooks/useServiceSatisfaction';
 import { useReputationFilter } from '@/contexts/ReputationFilterContext';
-// ... keep existing code
 
 /**
  * ServiceSatisfactionBriefCard — Surfaces top + bottom services by satisfaction
@@ -11,7 +10,8 @@ import { useReputationFilter } from '@/contexts/ReputationFilterContext';
  * service crosses the 5-response materiality threshold.
  */
 export function ServiceSatisfactionBriefCard() {
-  const { data, isLoading } = useServiceSatisfaction(30);
+  const { locationId } = useReputationFilter();
+  const { data, isLoading } = useServiceSatisfaction(30, locationId);
 
   if (isLoading) return null;
   if (!data || data.length === 0) return null;
