@@ -53,7 +53,7 @@ export default function DispatchQueue() {
           title="Dispatch Queue"
           description="Read-only health view of review request sends, skips, and errors. Hourly cron runs at minute 15."
           backTo={dashPath('/admin/feedback')}
-          backLabel="Back to Client Reputation"
+          backLabel="Back to Online Reputation"
           actions={
             <Button onClick={runDispatcher} disabled={running} className="gap-2">
               {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

@@ -419,7 +419,7 @@ export default function ManagementHub() {
             description="At-risk clients, rebooking, win-back outreach, and more"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
-          {/* Client Reputation lives in Zura Apps — single gated entry point. */}
+          {/* Online Reputation lives in Zura Apps — single gated entry point. */}
           <ManagementCard
             href={dashPath('/admin/reengagement')}
             icon={UserCheck}

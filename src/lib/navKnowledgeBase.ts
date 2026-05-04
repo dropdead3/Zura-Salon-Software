@@ -425,7 +425,7 @@ export const NAV_DESTINATIONS: NavDestination[] = [
   },
   {
     id: 'client-feedback',
-    label: 'Client Reputation',
+    label: 'Online Reputation',
     path: '/dashboard/admin/feedback',
     section: 'Apps',
     parent: 'Zura Apps',

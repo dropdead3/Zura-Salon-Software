@@ -591,7 +591,7 @@ export default function TeamHub() {
               {...favProps('/admin/client-health', 'Client Health Hub', Brain)}
             />
           )}
-          {/* Client Reputation lives in Zura Apps — single gated entry point. */}
+          {/* Online Reputation lives in Zura Apps — single gated entry point. */}
           {!isFavorited(dashPath('/admin/reengagement')) && (
             <ManagementCard
               href={dashPath('/admin/reengagement')}
