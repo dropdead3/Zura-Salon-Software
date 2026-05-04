@@ -128,17 +128,22 @@ export function PlatformConnectorTile({
 
           {/* Connect CTA — Google uses live OAuth; Facebook deferred. */}
           {!isActive && supportsOAuth && (
-            <Button
-              variant="default"
-              size={tokens.button.card}
-              className="w-full gap-1.5"
-              onClick={handleConnect}
-              disabled={connecting}
-            >
-              {connecting ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirecting…</>
-              ) : isErrored ? 'Reconnect Google' : 'Connect Google'}
-            </Button>
+            <>
+              <Button
+                variant="default"
+                size={tokens.button.card}
+                className="w-full gap-1.5"
+                onClick={handleConnect}
+                disabled={connecting}
+              >
+                {connecting ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirecting…</>
+                ) : isErrored ? 'Reconnect Google' : 'Connect Google'}
+              </Button>
+              <p className="text-[11px] text-muted-foreground/80 leading-snug">
+                You'll be asked to sign in with the Google account that manages your Business Profile.
+              </p>
+            </>
           )}
           {!isActive && !supportsOAuth && (
             <Button
