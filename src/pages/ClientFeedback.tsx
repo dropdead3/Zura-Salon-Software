@@ -118,6 +118,9 @@ export default function ClientFeedback() {
   const [submissionState, setSubmissionState] = useState<SubmissionState>('form');
   const [passedGate, setPassedGate] = useState(false);
   const [showManagerFollowUp, setShowManagerFollowUp] = useState(false);
+  // Whether THIS submission's qualifying-visit count hits the operator's
+  // promptAfterNReviews cadence. Drives celebrate vs neutral emphasis.
+  const [hitsAutoBoostCadence, setHitsAutoBoostCadence] = useState(true);
 
   if (!token) {
     return (
@@ -166,10 +169,10 @@ export default function ClientFeedback() {
       facebookReviewUrl: resolvedLinks?.facebook || thresholdSettings.facebookReviewUrl,
     };
     // Option C — adaptive emphasis. Links shown to ALL clients (doctrine);
-    // only the framing/copy escalates when the client passed the operator's
-    // happiness threshold AND Auto-Boost rating threshold.
+    // celebrate framing only when client passed the happiness threshold AND
+    // their qualifying-visit count hits the operator's promptAfterNReviews cadence.
     const meetsAutoBoost = autoBoost?.enabled
-      ? overallRating >= (autoBoost.minStarThreshold ?? 5)
+      ? overallRating >= (autoBoost.minStarThreshold ?? 5) && hitsAutoBoostCadence
       : true;
     const emphasis: 'celebrate' | 'neutral' =
       passedGate && meetsAutoBoost ? 'celebrate' : 'neutral';
@@ -204,6 +207,23 @@ export default function ClientFeedback() {
     
     setPassedGate(passes);
     setShowManagerFollowUp(belowThreshold);
+
+    // Auto-Boost cadence: count this client's prior passed-gate responses
+    // for the org. Celebrate fires only when (priorCount + 1) % N === 0.
+    // If client_id is missing (anonymous token), default to firing (N=1 behavior).
+    let cadenceHit = true;
+    if (autoBoost?.enabled && passes && feedback?.client_id && feedback?.organization_id) {
+      const n = Math.max(1, autoBoost.promptAfterNReviews ?? 1);
+      const { count } = await supabase
+        .from('client_feedback_responses')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', feedback.organization_id)
+        .eq('client_id', feedback.client_id)
+        .eq('passed_review_gate', true)
+        .neq('token', token);
+      cadenceHit = (((count ?? 0) + 1) % n) === 0;
+    }
+    setHitsAutoBoostCadence(cadenceHit);
 
     await submitFeedback.mutateAsync({
       token,
