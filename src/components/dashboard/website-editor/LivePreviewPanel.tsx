@@ -323,8 +323,16 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       window.removeEventListener('promo-popup-preview-reset', onPromoReset);
       window.removeEventListener(EDITOR_SECTION_HOVER_EVENT, onSectionHover);
       window.removeEventListener('message', onPromoPhaseMessage);
+      if (hoverScrollTimer) clearTimeout(hoverScrollTimer);
     };
   }, [previewOrigin]);
+
+  // Mirror activeSectionId into a ref so the hover handler (registered once
+  // per previewOrigin) reads the latest value without re-subscribing.
+  const activeSectionIdRef = useRef<string | undefined>(activeSectionId);
+  useEffect(() => {
+    activeSectionIdRef.current = activeSectionId;
+  }, [activeSectionId]);
 
   const handleRefresh = () => {
     if (!previewUrl) return;
